@@ -1,0 +1,4 @@
+/target
+.env
+/videos
+.DS_Store

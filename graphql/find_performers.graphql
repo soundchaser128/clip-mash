@@ -1,0 +1,13 @@
+query FindPerformersQuery {
+  findPerformers(
+    filter: {per_page: -1}
+    performer_filter: {scene_count: {value: 0, modifier: GREATER_THAN}, gender: {value: FEMALE, modifier: EQUALS}}
+  ) {
+    count
+    performers {
+      id
+      name
+      scene_count
+    }
+  }
+}

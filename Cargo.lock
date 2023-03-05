@@ -965,6 +965,7 @@ name = "stash-compilation-maker"
 version = "0.1.0"
 dependencies = [
  "camino",
+ "console",
  "dialoguer",
  "dotenvy",
  "graphql_client",

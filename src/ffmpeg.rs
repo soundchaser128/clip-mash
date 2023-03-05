@@ -92,6 +92,8 @@ impl Ffmpeg {
         markers: Vec<Marker>,
         clip_duration: u32,
     ) -> Result<Vec<Utf8PathBuf>> {
+        tokio::fs::create_dir_all(&self.video_dir).await?;
+
         let pb = ProgressBar::new(markers.len() as u64);
         pb.set_style(ProgressStyle::with_template(
             "{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",

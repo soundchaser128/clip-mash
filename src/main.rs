@@ -8,9 +8,9 @@ use api::{
 use dialoguer::Select;
 use dotenvy::dotenv;
 use ffmpeg::{ClipOrder, Ffmpeg};
-use std::{cmp::Reverse, collections::HashSet, env};
+use std::{cmp::Reverse, env};
 
-use crate::{api::find_markers_query::MultiCriterionInput, ffmpeg::find_direct_stream};
+use crate::api::find_markers_query::MultiCriterionInput;
 
 mod api;
 mod ffmpeg;
@@ -30,14 +30,17 @@ async fn select_tags(client: &Api) -> Result<Vec<String>> {
         .iter()
         .map(|t| {
             format!(
-                "{} ({} occurrences)",
+                "{} ({} markers)",
                 t.name,
                 t.scene_marker_count.unwrap_or_default()
             )
         })
         .collect();
 
-    let chosen_indices = MultiSelect::new().items(&options).interact()?;
+    let chosen_indices = MultiSelect::new()
+        .with_prompt("Choose marker tags to include")
+        .items(&options)
+        .interact()?;
 
     Ok(chosen_indices
         .into_iter()
@@ -57,7 +60,10 @@ async fn select_performers(client: &Api) -> Result<Vec<String>> {
         .iter()
         .map(|p| format!("{} ({} scenes)", p.name, p.scene_count.unwrap_or_default()))
         .collect();
-    let chosen_indices = MultiSelect::new().items(&options).interact()?;
+    let chosen_indices = MultiSelect::new()
+        .with_prompt("Select performers to include")
+        .items(&options)
+        .interact()?;
 
     Ok(chosen_indices
         .into_iter()
@@ -102,6 +108,14 @@ async fn main() -> Result<()> {
 
     let api_url = env::var("STASHAPP_URL").expect("missing STASHAPP_URL");
     let api_key = env::var("STASHAPP_API_KEY").expect("missing STASHAPP_API_KEY");
+
+    println!("{}", console::style("stash-compilation-maker").bold());
+    println!("
+    Create a video compilation from scene markers on your Stash instance.
+    Answer a few questions about what videos should be included, and then wait until the clips are downloaded and assembled.
+    The resulting clips will be in the `videos` subfolder of the current working directory.
+    Select options with arrow keys, use TAB to select options when multiple are allowed and enter to confirm.");
+    println!();
 
     let client = Api::new(&api_url, &api_key);
     let filter_type = select_filter()?;

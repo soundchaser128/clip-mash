@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 camino = "1.1.3"
+console = "0.15.5"
 dialoguer = "0.10.3"
 dotenvy = "0.15.6"
 graphql_client = "0.12.0"

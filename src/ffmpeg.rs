@@ -8,8 +8,29 @@ use tokio::process::Command;
 
 use crate::{
     api::find_markers_query::{FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, GenderEnum},
+    cli::CompilationInfo,
     Result,
 };
+
+pub struct OutputFormat {
+    pub order: ClipOrder,
+    pub video_name: String,
+    pub resolution: (u32, u32),
+    pub fps: f64,
+    pub clip_duration: u32,
+}
+
+impl From<CompilationInfo> for OutputFormat {
+    fn from(value: CompilationInfo) -> Self {
+        OutputFormat {
+            order: value.clip_order,
+            video_name: value.video_name,
+            resolution: value.output_resolution,
+            fps: value.output_fps,
+            clip_duration: value.clip_duration,
+        }
+    }
+}
 
 pub struct Ffmpeg {
     path: Utf8PathBuf,
@@ -90,7 +111,7 @@ impl Ffmpeg {
     pub async fn gather_clips(
         &self,
         markers: Vec<Marker>,
-        clip_duration: u32,
+        output: &OutputFormat,
     ) -> Result<Vec<Utf8PathBuf>> {
         tokio::fs::create_dir_all(&self.video_dir).await?;
 
@@ -106,18 +127,22 @@ impl Ffmpeg {
                 "{}_{}-{}.mp4",
                 marker.scene.id,
                 seconds,
-                seconds + clip_duration
+                seconds + output.clip_duration
             ));
             pb.set_message(format!(
                 "Creating clip for scene {} at seconds {} to {}",
                 formatted_scene(&marker),
                 seconds,
-                seconds + clip_duration
+                seconds + output.clip_duration
             ));
 
             if !out_file.is_file() {
-                let clip_str = clip_duration.to_string();
+                let clip_str = output.clip_duration.to_string();
                 let seconds_str = seconds.to_string();
+                let (width, height) = output.resolution;
+                let filter = format!("scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:-1:-1:color=black,fps={fps}",
+                    fps=output.fps,
+                );
 
                 let args = vec![
                     "-hide_banner",
@@ -138,7 +163,7 @@ impl Ffmpeg {
                     "-acodec",
                     "aac",
                     "-vf",
-                    "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:-1:-1:color=black,fps=60",
+                    &filter,
                     "-ar",
                     "48000",
                     out_file.as_str(),
@@ -159,11 +184,11 @@ impl Ffmpeg {
     pub async fn compile_clips(
         &self,
         mut clips: Vec<Utf8PathBuf>,
-        order: ClipOrder,
+        output_format: OutputFormat,
     ) -> Result<Utf8PathBuf> {
         use rand::seq::SliceRandom;
 
-        match order {
+        match output_format.order {
             ClipOrder::Random => {
                 let mut rng = rand::thread_rng();
                 clips.shuffle(&mut rng);
@@ -179,7 +204,8 @@ impl Ffmpeg {
             .collect();
         let file_content = lines.join("\n");
         tokio::fs::write(self.video_dir.join("clips.txt"), file_content).await?;
-        let destination = self.video_dir.join("compilation.mp4");
+        let file_name = format!("{}.mp4", output_format.video_name);
+        let destination = self.video_dir.join(&file_name);
 
         let args = vec![
             "-hide_banner",
@@ -192,7 +218,7 @@ impl Ffmpeg {
             "clips.txt",
             "-c",
             "copy",
-            "compilation.mp4",
+            &file_name,
         ];
 
         let output = Command::new(self.path.as_str())

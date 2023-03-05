@@ -126,7 +126,7 @@ impl Ffmpeg {
                     "-ss",
                     seconds_str.as_str(),
                     "-i",
-                    &url,
+                    url,
                     "-t",
                     clip_str.as_str(),
                     "-c:v",

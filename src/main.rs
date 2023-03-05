@@ -5,7 +5,8 @@ use api::{
     },
     find_performers_query, find_tags_query, Api,
 };
-use dialoguer::Select;
+use camino::Utf8Path;
+use dialoguer::{Input, Password, Select};
 use dotenvy::dotenv;
 use ffmpeg::{ClipOrder, Ffmpeg};
 use std::{cmp::Reverse, env};
@@ -102,9 +103,40 @@ fn select_clip_order() -> Result<ClipOrder> {
     }
 }
 
+fn setup_dotenv() -> Result<()> {
+    if !Utf8Path::new(".env").is_dir() {
+        let mut url = Input::<String>::new()
+            .with_prompt("Enter the URL of your Stash instance (e.g. http://localhost:9999)")
+            .interact_text()?;
+
+        if url.ends_with('/') {
+            url.pop();
+        }
+
+        let api_key = Password::new()
+            .with_prompt(format!(
+                "Enter your Stash API key from {}/settings?tab=security",
+                url
+            ))
+            .interact()?;
+
+        let file_contents = &[
+            format!("STASHAPP_URL={url}"),
+            format!("STASHAPP_API_KEY={api_key}"),
+        ]
+        .join("\n");
+
+        std::fs::write(".env", file_contents)?;
+        println!("Wrote configuration data to .env file.");
+    }
+
+    dotenv().expect("failed to dotenv");
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenv().expect("failed to dotenv");
+    setup_dotenv()?;
 
     let api_url = env::var("STASHAPP_URL").expect("missing STASHAPP_URL");
     let api_key = env::var("STASHAPP_API_KEY").expect("missing STASHAPP_API_KEY");

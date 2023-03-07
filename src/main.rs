@@ -6,28 +6,25 @@ use api::{
     Api,
 };
 use ffmpeg::Ffmpeg;
-use std::env;
 
 use crate::{
     api::find_markers_query::MultiCriterionInput,
     cli::{Cli, Filter},
+    config::setup_config,
     ffmpeg::OutputFormat,
 };
 
 mod api;
 mod cli;
+mod config;
 mod ffmpeg;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    cli::setup_dotenv()?;
-
-    let api_url = env::var("STASHAPP_URL").expect("missing STASHAPP_URL");
-    let api_key = env::var("STASHAPP_API_KEY").expect("missing STASHAPP_API_KEY");
-
-    let client = Api::new(&api_url, &api_key);
+    let config = setup_config()?;
+    let client = Api::new(&config.stash_url, &config.api_key);
     let cli = Cli::new(&client);
     cli.print_info();
     let options = cli.ask_questions().await?;

@@ -1,7 +1,6 @@
 use std::cmp::Reverse;
 
-use dialoguer::{Input, Password, Select};
-use dotenvy::dotenv;
+use dialoguer::{Input, Select};
 
 use crate::api::{find_performers_query, find_tags_query};
 use crate::Result;
@@ -202,35 +201,4 @@ impl<'a> Cli<'a> {
         Select options with arrow keys, use TAB to select options when multiple are allowed and enter to confirm.");
         println!();
     }
-}
-
-pub fn setup_dotenv() -> Result<()> {
-    if dotenv().is_err() {
-        let mut url = Input::<String>::new()
-            .with_prompt("Enter the URL of your Stash instance (e.g. http://localhost:9999)")
-            .interact_text()?;
-
-        if url.ends_with('/') {
-            url.pop();
-        }
-
-        let api_key = Password::new()
-            .with_prompt(format!(
-                "Enter your Stash API key from {}/settings?tab=security",
-                url
-            ))
-            .interact()?;
-
-        let file_contents = &[
-            format!("STASHAPP_URL={url}"),
-            format!("STASHAPP_API_KEY={api_key}"),
-        ]
-        .join("\n");
-
-        std::fs::write(".env", file_contents)?;
-        println!("Wrote configuration data to .env file.");
-        dotenv().expect("failed to dotenv");
-    }
-
-    Ok(())
 }

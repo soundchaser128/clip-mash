@@ -2,7 +2,7 @@ use std::{collections::HashMap, error::Error};
 
 use crate::Result;
 use camino::{Utf8Path, Utf8PathBuf};
-use dialoguer::{Input, Password};
+use dialoguer::Input;
 use directories::ProjectDirs;
 use tinyjson::JsonValue;
 
@@ -50,6 +50,7 @@ fn config_file_folder() -> Option<Utf8PathBuf> {
 pub fn setup_config() -> Result<Config> {
     let config_folder = config_file_folder().expect("no configuration file path found");
     let config_file = config_folder.join("config.json");
+    tracing::info!("trying to load config file from {}", config_file);
 
     let config = if !config_file.is_file() {
         let mut url = Input::<String>::new()
@@ -60,12 +61,12 @@ pub fn setup_config() -> Result<Config> {
             url.pop();
         }
 
-        let api_key = Password::new()
+        let api_key = Input::<String>::new()
             .with_prompt(format!(
                 "Enter your Stash API key from {}/settings?tab=security",
                 url
             ))
-            .interact()?;
+            .interact_text()?;
 
         let config = Config {
             api_key: api_key.trim().to_string(),

@@ -23,6 +23,13 @@ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .with(EnvFilter::from_default_env())
+        .init();
+
     let config = setup_config()?;
     let client = Api::new(&config.stash_url, &config.api_key);
     let cli = Cli::new(&client);

@@ -37,15 +37,28 @@ pub struct Ffmpeg {
     video_dir: Utf8PathBuf,
 }
 
-pub fn find_direct_stream(marker: &Marker) -> &str {
-    marker
-        .scene
-        .scene_streams
-        .iter()
-        .find(|v| v.label == Some("Direct stream".to_string()))
-        .map(|v| &v.url)
-        .unwrap()
+pub fn find_stream_url(marker: &Marker) -> &str {
+    const LABEL_PRIORITIES: &[&str] = &["Direct stream", "webm", "HLS"];
+
+    let streams = &marker.scene.scene_streams;
+    for stream in streams {
+        for label in LABEL_PRIORITIES {
+            if let Some(l) = &stream.label {
+                if l == label {
+                    tracing::info!("returning stream {stream:?}");
+                    return &stream.url;
+                }
+            }
+        }
+    }
+    // fallback to returning the first URL
+    tracing::info!(
+        "could not find any stream URL with the preferred labels, returning {:?}",
+        streams[0]
+    );
+    &streams[0].url
 }
+
 
 fn formatted_scene(marker: &Marker) -> String {
     let female_performers: Vec<_> = marker
@@ -121,7 +134,7 @@ impl Ffmpeg {
         )?);
         let mut paths = vec![];
         for marker in markers {
-            let url = find_direct_stream(&marker);
+            let url = find_stream_url(&marker);
             let seconds = marker.seconds as u32;
             let out_file = self.video_dir.join(format!(
                 "{}_{}-{}.mp4",

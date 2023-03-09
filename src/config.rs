@@ -16,6 +16,13 @@ fn error(e: &str) -> Box<dyn Error> {
     e.into()
 }
 
+fn string(value: &JsonValue) -> Result<String> {
+    match value {
+        JsonValue::String(str) => Ok(str.into()),
+        _ => Err(format!("not a string: {:?}", value).into()),
+    }
+}
+
 impl TryFrom<JsonValue> for Config {
     type Error = Box<dyn Error>;
 
@@ -23,13 +30,12 @@ impl TryFrom<JsonValue> for Config {
         let object: &HashMap<_, _> = value.get().ok_or(error("invalid json value"))?;
         let stash_url = object
             .get("stash_url")
-            .ok_or(error("missing `stash_url`"))?
-            .stringify()?;
-        let api_key = object
-            .get("api_key")
-            .ok_or(error("missing `api_key`"))?
-            .stringify()?;
-        Ok(Config { stash_url, api_key })
+            .ok_or(error("missing `stash_url`"))?;
+        let api_key = object.get("api_key").ok_or(error("missing `api_key`"))?;
+        Ok(Config {
+            stash_url: string(stash_url)?,
+            api_key: string(api_key)?,
+        })
     }
 }
 

@@ -20,7 +20,7 @@ pub struct FindTagsQuery;
 #[graphql(
     schema_path = "graphql/schema.json",
     query_path = "graphql/find_markers.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, Clone"
 )]
 pub struct FindMarkersQuery;
 
@@ -53,6 +53,7 @@ impl Api {
     ) -> Result<Vec<FindTagsQueryFindTagsTags>> {
         let request_body = FindTagsQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
+        tracing::info!("url = {url}");
 
         let response = self
             .client

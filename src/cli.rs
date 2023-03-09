@@ -1,8 +1,14 @@
 use std::cmp::Reverse;
 
-use dialoguer::{Input, Select};
+use dialoguer::{Input, MultiSelect, Select};
 
+use crate::api::find_markers_query::{
+    self, CriterionModifier, FindFilterType,
+    FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, HierarchicalMultiCriterionInput,
+    MultiCriterionInput, SceneMarkerFilterType,
+};
 use crate::api::{find_performers_query, find_tags_query};
+use crate::ffmpeg::formatted_scene;
 use crate::Result;
 use crate::{api::Api, ffmpeg::ClipOrder};
 
@@ -25,6 +31,7 @@ pub struct CompilationInfo {
     pub clip_duration: u32,
     pub output_resolution: (u32, u32),
     pub output_fps: f64,
+    pub markers: Vec<Marker>,
 }
 
 pub struct Cli<'a> {
@@ -37,8 +44,6 @@ impl<'a> Cli<'a> {
     }
 
     async fn select_tags(&self) -> Result<Vec<String>> {
-        use dialoguer::MultiSelect;
-
         let tags = self.client.find_tags(find_tags_query::Variables {}).await?;
         let mut tags: Vec<_> = tags
             .into_iter()
@@ -68,8 +73,6 @@ impl<'a> Cli<'a> {
     }
 
     async fn select_performers(&self) -> Result<Vec<String>> {
-        use dialoguer::MultiSelect;
-
         let mut performers = self
             .client
             .find_performers(find_performers_query::Variables {})
@@ -170,6 +173,72 @@ impl<'a> Cli<'a> {
         Ok(answer)
     }
 
+    async fn select_markers(&self, filter: &Filter) -> Result<Vec<Marker>> {
+        let mut scene_filter = SceneMarkerFilterType {
+            created_at: None,
+            scene_created_at: None,
+            scene_updated_at: None,
+            updated_at: None,
+            performers: None,
+            scene_date: None,
+            scene_tags: None,
+            tag_id: None,
+            tags: None,
+        };
+
+        match filter {
+            Filter::PerformerFilter(ids) => {
+                scene_filter.performers = Some(MultiCriterionInput {
+                    modifier: CriterionModifier::INCLUDES,
+                    value: Some(ids.clone()),
+                });
+            }
+            Filter::TagFilter(ids) => {
+                scene_filter.tags = Some(HierarchicalMultiCriterionInput {
+                    depth: None,
+                    modifier: CriterionModifier::INCLUDES,
+                    value: Some(ids.clone()),
+                });
+            }
+        }
+
+        let markers = self
+            .client
+            .find_markers(find_markers_query::Variables {
+                filter: Some(FindFilterType {
+                    per_page: Some(-1),
+                    page: None,
+                    q: None,
+                    sort: None,
+                    direction: None,
+                }),
+                scene_marker_filter: Some(scene_filter),
+            })
+            .await?;
+        let items: Vec<_> = markers
+            .iter()
+            .map(|m| {
+                format!(
+                    "Scene {}: {} at {} seconds",
+                    formatted_scene(&m),
+                    m.primary_tag.name,
+                    m.seconds
+                )
+            })
+            .collect();
+        let defaults: Vec<_> = std::iter::repeat(true).take(markers.len()).collect();
+        let chosen_indices = MultiSelect::new()
+            .with_prompt("Select markers to include")
+            .items(&items)
+            .defaults(&defaults)
+            .interact()?;
+
+        Ok(chosen_indices
+            .into_iter()
+            .map(|idx| markers[idx].clone())
+            .collect())
+    }
+
     pub async fn ask_questions(&self) -> Result<CompilationInfo> {
         let filter_type = self.select_filter()?;
         let filter = match filter_type {
@@ -181,6 +250,7 @@ impl<'a> Cli<'a> {
         let clip_duration = self.select_clip_duration()?;
         let output_resolution = self.select_output_resolution()?;
         let output_fps = self.select_output_fps()?;
+        let markers = self.select_markers(&filter).await?;
 
         Ok(CompilationInfo {
             filter,
@@ -189,6 +259,7 @@ impl<'a> Cli<'a> {
             clip_duration,
             output_fps,
             output_resolution,
+            markers,
         })
     }
 

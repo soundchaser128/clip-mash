@@ -2,15 +2,15 @@ use std::cmp::Reverse;
 
 use dialoguer::{Input, MultiSelect, Select};
 
-use crate::api::find_markers_query::{
+use crate::stash_api::find_markers_query::{
     self, CriterionModifier, FindFilterType,
     FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, HierarchicalMultiCriterionInput,
     MultiCriterionInput, SceneMarkerFilterType,
 };
-use crate::api::{find_performers_query, find_tags_query};
+use crate::stash_api::{find_performers_query, find_tags_query};
 use crate::ffmpeg::formatted_scene;
 use crate::Result;
-use crate::{api::Api, ffmpeg::ClipOrder};
+use crate::{stash_api::Api, ffmpeg::ClipOrder};
 
 #[derive(Debug)]
 pub enum Filter {

@@ -9,7 +9,7 @@ use serde::Serialize;
 use tokio::process::Command;
 
 use crate::{
-    api::find_markers_query::{FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, GenderEnum},
+    stash_api::find_markers_query::{FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, GenderEnum},
     cli::CompilationInfo,
     Result,
 };

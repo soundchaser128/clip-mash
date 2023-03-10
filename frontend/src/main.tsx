@@ -1,9 +1,15 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import "./index.css";
-import App, { loader as indexLoader } from "./routes";
-import Root from "./routes/root";
+import {createStore, StateMachineProvider} from "little-state-machine"
+import React from "react"
+import ReactDOM from "react-dom/client"
+import {createBrowserRouter, RouterProvider} from "react-router-dom"
+import "./index.css"
+import SelectMode from "./routes/select-mode"
+import Root from "./routes/root"
+import SelectCriteria, {
+  loader as criteriaLoader,
+} from "./routes/select-criteria"
+import {FormStage} from "./types/types"
+import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 
 const router = createBrowserRouter([
   {
@@ -12,15 +18,49 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <App />,
-        loader: indexLoader
+        element: <SelectMode />,
       },
     ],
   },
-]);
+  {
+    path: "/select-criteria",
+    element: <Root />,
+    children: [
+      {
+        index: true,
+        element: <SelectCriteria />,
+        loader: criteriaLoader,
+      },
+    ],
+  },
+  {
+    path: "/select-markers",
+    element: <Root />,
+    children: [
+      {
+        index: true,
+        element: <SelectMarkers />,
+        loader: markerLoader,
+      },
+    ],
+  },
+])
+
+createStore(
+  {
+    data: {
+      stage: FormStage.SelectMode,
+    },
+  },
+  {
+    name: "form-state",
+  }
+)
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <StateMachineProvider>
+      <RouterProvider router={router} />
+    </StateMachineProvider>
   </React.StrictMode>
-);
+)

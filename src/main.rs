@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use axum::{routing::get, Json, Router};
+use axum::{routing::get, Router};
 use config::Config;
 
-use crate::{cli::Cli, config::setup_config, ffmpeg::Ffmpeg, stash_api::Api};
+use crate::{config::setup_config, ffmpeg::Ffmpeg, stash_api::Api};
 
 mod cli;
 mod config;
@@ -41,6 +41,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/api/tags", get(http::fetch_tags))
         .route("/api/performers", get(http::fetch_performers))
+        .route("/api/markers", get(http::fetch_markers))
         .with_state(state);
 
     let addr = "0.0.0.0:5174";

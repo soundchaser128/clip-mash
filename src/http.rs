@@ -26,6 +26,16 @@ pub struct Performer {
     pub image_url: Option<String>,
 }
 
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Marker {
+    pub name: String,
+    pub id: String,
+    pub scene_count: i64,
+    pub image_url: Option<String>,
+}
+
 fn add_api_key(url: &str, api_key: &str) -> String {
     let mut url = Url::parse(url).expect("invalid url");
     url.query_pairs_mut().append_pair("apikey", api_key);
@@ -76,4 +86,11 @@ pub async fn fetch_performers(
     tracing::debug!("returning performers {:?}", performers);
 
     Ok(Json(performers))
+}
+
+#[axum::debug_handler]
+pub async fn fetch_markers(
+    state: State<Arc<AppState>>
+) -> Result<Json<Vec<Marker>>, AppError> {
+    todo!()
 }

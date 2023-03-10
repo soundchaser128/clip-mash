@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::cmp::Reverse;
 
 use dialoguer::{Input, MultiSelect, Select};

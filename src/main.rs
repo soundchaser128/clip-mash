@@ -1,11 +1,22 @@
-use crate::{api::Api, cli::Cli, config::setup_config, ffmpeg::Ffmpeg};
+use std::sync::Arc;
 
-mod api;
+use axum::{routing::get, Router};
+use config::Config;
+
+use crate::{cli::Cli, config::setup_config, ffmpeg::Ffmpeg, stash_api::Api};
+
 mod cli;
 mod config;
 mod ffmpeg;
+mod stash_api;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+pub struct State {
+    pub config: Config,
+    pub api: Api,
+    pub ffmpeg: Ffmpeg,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -17,15 +28,24 @@ async fn main() -> Result<()> {
         .init();
 
     let config = setup_config()?;
-    let client = Api::new(&config.stash_url, &config.api_key);
-    let cli = Cli::new(&client);
-    cli.print_info();
-    let options = cli.ask_questions().await?;
-
+    let api = Api::new(&config.stash_url, &config.stash_url);
     let ffmpeg = Ffmpeg::new();
-    let clips = ffmpeg.gather_clips(&options).await?;
-    let result_file = ffmpeg.compile_clips(clips, &options).await?;
-    println!("wrote result to {}", result_file);
+    let state = Arc::new(State {
+        api,
+        ffmpeg,
+        config,
+    });
+
+    let app = Router::new()
+        .with_state(state)
+        .route("/api/hello", get(|| async { "Hello world!" }));
+
+    let addr = "[::1]:5174";
+    tracing::info!("running at {}", addr);
+    axum::Server::bind(&addr.parse().unwrap())
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 
     Ok(())
 }

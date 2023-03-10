@@ -1,18 +1,20 @@
 use std::sync::Arc;
 
-use axum::{routing::get, Router};
+use axum::{routing::get, Json, Router};
 use config::Config;
 
 use crate::{cli::Cli, config::setup_config, ffmpeg::Ffmpeg, stash_api::Api};
 
 mod cli;
 mod config;
+mod error;
 mod ffmpeg;
+mod http;
 mod stash_api;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub struct State {
+pub struct AppState {
     pub config: Config,
     pub api: Api,
     pub ffmpeg: Ffmpeg,
@@ -28,24 +30,24 @@ async fn main() -> Result<()> {
         .init();
 
     let config = setup_config()?;
-    let api = Api::new(&config.stash_url, &config.stash_url);
+    let api = Api::new(&config.stash_url, &config.api_key);
     let ffmpeg = Ffmpeg::new();
-    let state = Arc::new(State {
+    let state = Arc::new(AppState {
         api,
         ffmpeg,
         config,
     });
 
     let app = Router::new()
-        .with_state(state)
-        .route("/api/hello", get(|| async { "Hello world!" }));
+        .route("/api/tags", get(http::fetch_tags))
+        .route("/api/performers", get(http::fetch_performers))
+        .with_state(state);
 
-    let addr = "[::1]:5174";
+    let addr = "0.0.0.0:5174";
     tracing::info!("running at {}", addr);
     axum::Server::bind(&addr.parse().unwrap())
         .serve(app.into_make_service())
-        .await
-        .unwrap();
+        .await?;
 
     Ok(())
 }

@@ -53,7 +53,7 @@ impl Api {
     ) -> Result<Vec<FindTagsQueryFindTagsTags>> {
         let request_body = FindTagsQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
-        tracing::info!("url = {url}");
+        tracing::debug!("url = '{url}', api key = '{}'", self.api_key);
 
         let response = self
             .client

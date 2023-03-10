@@ -8,6 +8,7 @@ query FindPerformersQuery {
       id
       name
       scene_count
+      image_path
     }
   }
 }

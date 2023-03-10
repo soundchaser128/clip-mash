@@ -1,12 +1,22 @@
 use std::{cmp::Reverse, sync::Arc};
 
-use axum::{extract::State, Json};
+use axum::{
+    extract::{Query, State},
+    Json,
+};
 use reqwest::Url;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     error::AppError,
-    stash_api::{find_performers_query, find_tags_query},
+    ffmpeg::formatted_scene,
+    stash_api::{
+        find_markers_query::{
+            self, CriterionModifier, FindFilterType, HierarchicalMultiCriterionInput,
+            MultiCriterionInput, SceneMarkerFilterType,
+        },
+        find_performers_query, find_tags_query,
+    },
     AppState,
 };
 
@@ -26,14 +36,30 @@ pub struct Performer {
     pub image_url: Option<String>,
 }
 
-
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Marker {
-    pub name: String,
     pub id: String,
-    pub scene_count: i64,
-    pub image_url: Option<String>,
+    pub primary_tag: String,
+    pub stream_url: String,
+    pub screenshot_url: String,
+    pub start: u32,
+    pub end: Option<u32>,
+    pub scene_title: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub enum FilterMode {
+    Performers,
+    Tags,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct MarkerOptions {
+    pub selected_ids: String,
+    pub mode: FilterMode,
 }
 
 fn add_api_key(url: &str, api_key: &str) -> String {
@@ -90,7 +116,72 @@ pub async fn fetch_performers(
 
 #[axum::debug_handler]
 pub async fn fetch_markers(
-    state: State<Arc<AppState>>
+    state: State<Arc<AppState>>,
+    Query(query): Query<MarkerOptions>,
 ) -> Result<Json<Vec<Marker>>, AppError> {
-    todo!()
+    tracing::info!("fetching markers for query {query:?}");
+
+    let mut scene_filter = SceneMarkerFilterType {
+        created_at: None,
+        scene_created_at: None,
+        scene_updated_at: None,
+        updated_at: None,
+        performers: None,
+        scene_date: None,
+        scene_tags: None,
+        tag_id: None,
+        tags: None,
+    };
+
+    let ids: Vec<_> = query.selected_ids.split(",").map(From::from).collect();
+
+    match query.mode {
+        FilterMode::Performers => {
+            scene_filter.performers = Some(MultiCriterionInput {
+                modifier: CriterionModifier::INCLUDES,
+                value: Some(ids),
+            });
+        }
+        FilterMode::Tags => {
+            scene_filter.tags = Some(HierarchicalMultiCriterionInput {
+                depth: None,
+                modifier: CriterionModifier::INCLUDES,
+                value: Some(ids),
+            });
+        }
+    }
+
+    let markers = state
+        .api
+        .find_markers(find_markers_query::Variables {
+            filter: Some(FindFilterType {
+                per_page: Some(-1),
+                page: None,
+                q: None,
+                sort: None,
+                direction: None,
+            }),
+            scene_marker_filter: Some(scene_filter),
+        })
+        .await?;
+
+    let api_key = &state.config.api_key;
+    let markers = markers
+        .into_iter()
+        .map(|m| {
+            let title = formatted_scene(&m);
+            let (_, end) = state.ffmpeg.get_time_range(&m);
+            Marker {
+                id: m.id,
+                primary_tag: m.primary_tag.name,
+                stream_url: add_api_key(&m.stream, api_key),
+                screenshot_url: add_api_key(&m.screenshot, api_key),
+                start: m.seconds as u32,
+                end,
+                scene_title: title,
+            }
+        })
+        .collect();
+
+    Ok(Json(markers))
 }

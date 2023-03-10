@@ -2,7 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {useLoaderData, useNavigate} from "react-router-dom"
 import {FormStage, Performer, Tag} from "../types/types"
-import { updateForm } from "./actions"
+import {updateForm} from "./actions"
 
 interface Data {
   performers: Performer[]
@@ -45,7 +45,9 @@ function SelectCriteria() {
   const [filter, setFilter] = useState("")
   const {tags, performers} = filterData(data, filter)
   const {state, actions} = useStateMachine({updateForm})
-  const [selection, setSelection] = useState<string[]>(state.data.selectedIds || [])
+  const [selection, setSelection] = useState<string[]>(
+    state.data.selectedIds || []
+  )
   const queryType = state.data.selectMode
   const navigate = useNavigate()
 
@@ -60,7 +62,7 @@ function SelectCriteria() {
   const onNextStage = () => {
     actions.updateForm({
       stage: FormStage.SelectMarkers,
-      selectedIds: selection
+      selectedIds: selection,
     })
     navigate("/select-markers")
   }

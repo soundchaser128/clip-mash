@@ -11,6 +11,7 @@ import SelectCriteria, {
 import {FormStage} from "./types/types"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
+import Progress from "./routes/progress"
 
 const router = createBrowserRouter([
   {
@@ -52,6 +53,16 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <VideoOptions />,
+      },
+    ],
+  },
+  {
+    path: "/progress",
+    element: <Root />,
+    children: [
+      {
+        index: true,
+        element: <Progress />,
       },
     ],
   },

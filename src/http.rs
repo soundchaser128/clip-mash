@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     error::AppError,
+    ffmpeg::ClipOrder,
     stash_api::{
         find_markers_query::{
             self, CriterionModifier, FindFilterType, HierarchicalMultiCriterionInput,
@@ -61,6 +62,28 @@ pub enum FilterMode {
 pub struct MarkerOptions {
     pub selected_ids: String,
     pub mode: FilterMode,
+}
+
+#[derive(Deserialize, Debug)]
+pub enum Resolution {
+    #[serde(rename = "720")]
+    SevenTwenty,
+    #[serde(rename = "1080")]
+    TenEighty,
+    #[serde(rename = "4K")]
+    FourK,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateVideoBody {
+    pub select_mode: FilterMode,
+    pub selected_ids: Vec<String>,
+    pub clip_order: ClipOrder,
+    pub clip_duration: u32,
+    pub output_resolution: Resolution,
+    pub output_fps: u32,
+    pub selected_markers: Vec<String>,
 }
 
 fn add_api_key(url: &str, api_key: &str) -> String {
@@ -186,4 +209,10 @@ pub async fn fetch_markers(
         .collect();
 
     Ok(Json(markers))
+}
+
+#[axum::debug_handler]
+pub async fn create_video(state: State<Arc<AppState>>, Json(body): Json<CreateVideoBody>) {
+    tracing::info!("received json body: {:?}", body);
+    todo!()
 }

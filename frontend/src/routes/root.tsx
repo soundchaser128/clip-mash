@@ -1,11 +1,29 @@
 import clsx from "clsx"
 import {useStateMachine} from "little-state-machine"
-import {Outlet} from "react-router-dom"
+import {useEffect} from "react"
+import {Outlet, useLocation, useNavigate} from "react-router-dom"
 import {FormStage} from "../types/types"
+
+const stageMap = {
+  [FormStage.SelectMode]: "/",
+  [FormStage.SelectCriteria]: "/select-criteria",
+  [FormStage.SelectMarkers]: "/select-markers",
+  [FormStage.VideoOptions]: "/video-options",
+  [FormStage.Wait]: "/progress",
+}
 
 export default function Root() {
   const {state} = useStateMachine()
   const stage = state.data.stage
+  const correctUrl = stageMap[stage]
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (location.pathname !== correctUrl) {
+      navigate(correctUrl)
+    }
+  }, [, correctUrl, location])
 
   return (
     <main className="container ml-auto mr-auto w-screen h-screen">

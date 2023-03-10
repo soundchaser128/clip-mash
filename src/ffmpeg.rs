@@ -5,7 +5,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
 use rand::{seq::SliceRandom, thread_rng};
 use regex::Regex;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
 use crate::{
@@ -79,7 +79,8 @@ fn commandline_error<T>(output: Output) -> Result<T> {
     .into())
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum ClipOrder {
     Random,
     SceneOrder,

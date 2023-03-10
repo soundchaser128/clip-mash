@@ -1,5 +1,8 @@
-import {LoaderFunction, useLoaderData} from "react-router-dom"
-import {FormState} from "../types/types"
+import {useStateMachine} from "little-state-machine"
+import {useState} from "react"
+import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
+import {FormStage, FormState} from "../types/types"
+import {updateForm} from "./actions"
 
 interface Marker {
   id: string
@@ -8,7 +11,9 @@ interface Marker {
   screenshotUrl: string
   start: number
   end?: number
-  sceneTitle: string
+  sceneTitle?: string
+  performers: string[]
+  fileName: string
 }
 
 interface Data {
@@ -31,24 +36,113 @@ export const loader: LoaderFunction = async () => {
   }
 }
 
+function formatDuration(start: number, end?: number): string {
+  if (end) {
+    const seconds = end - start
+    return `${seconds} seconds`
+  } else {
+    return `No end found, defaulting to 30 seconds.`
+  }
+}
+
+function filterMarkers(markers: Marker[], filter?: string) {
+  if (!filter || filter.trim().length === 0) {
+    return markers
+  } else {
+    const regex = new RegExp(filter, "i")
+    return markers.filter(
+      (m) =>
+        regex.test(m.fileName) ||
+        regex.test(m.primaryTag) ||
+        regex.test(m.performers.join(" "))
+    )
+  }
+}
+
 function SelectMarkers() {
+  const {state, actions} = useStateMachine({updateForm})
+
   const data = useLoaderData() as Data
+  const [selection, setSelection] = useState(
+    () => state.data.selectedMarkers || data.markers.map((m) => m.id)
+  )
+  const [filter, setFilter] = useState("")
+  const navigate = useNavigate()
+  const markers = filterMarkers(data.markers, filter)
+
+  const onCheckboxChange = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelection((s) => [...s, id])
+    } else {
+      setSelection((s) => s.filter((string) => string !== id))
+    }
+  }
+
+  const onNextStage = () => {
+    actions.updateForm({
+      stage: FormStage.VideoOptions,
+      selectedIds: selection,
+    })
+    navigate("/video-options")
+  }
 
   return (
     <div>
+      <div className="w-full flex justify-between mb-4">
+        <input
+          type="text"
+          placeholder="Filter..."
+          className="input input-bordered"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        />
+        <button
+          type="button"
+          onClick={onNextStage}
+          className="btn btn-success"
+          disabled={selection.length === 0}
+        >
+          Next
+        </button>
+      </div>
       <section className="grid grid-cols-4 gap-2 w-full">
-        {data.markers.map((marker) => (
+        {markers.map((marker) => (
           <article key={marker.id} className="card bg-base-100 shadow-xl">
             <figure>
               <img
                 src={marker.screenshotUrl}
-                alt={marker.primaryTag}
-                className="aspect-[2/3] object-cover object-top w-full"
+                className="aspect-[16/9] object-cover object-top w-full"
               />
             </figure>
             <div className="card-body">
               <h2 className="card-title">{marker.primaryTag}</h2>
-              <p>{marker.sceneTitle}</p>
+              <p>
+                <strong>Scene: </strong>
+                {marker.sceneTitle || marker.fileName}
+              </p>
+              <p>
+                <strong>Performers: </strong>
+                {marker.performers.join(", ") || "No performers found"}
+              </p>
+              <p>
+                <strong>Duration: </strong>
+                {formatDuration(marker.start, marker.end)}
+              </p>
+            </div>
+            <div className="card-actions justify-end">
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Include</span>
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-primary ml-2"
+                    checked={selection.includes(marker.id)}
+                    onChange={(e) =>
+                      onCheckboxChange(marker.id, e.target.checked)
+                    }
+                  />
+                </label>
+              </div>
             </div>
           </article>
         ))}

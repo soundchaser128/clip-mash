@@ -10,6 +10,7 @@ import SelectCriteria, {
 } from "./routes/select-criteria"
 import {FormStage} from "./types/types"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
+import VideoOptions from "./routes/video-options"
 
 const router = createBrowserRouter([
   {
@@ -41,6 +42,16 @@ const router = createBrowserRouter([
         index: true,
         element: <SelectMarkers />,
         loader: markerLoader,
+      },
+    ],
+  },
+  {
+    path: "/video-options",
+    element: <Root />,
+    children: [
+      {
+        index: true,
+        element: <VideoOptions />,
       },
     ],
   },

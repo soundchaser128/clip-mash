@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     error::AppError,
-    ffmpeg::formatted_scene,
     stash_api::{
         find_markers_query::{
             self, CriterionModifier, FindFilterType, HierarchicalMultiCriterionInput,
@@ -45,7 +44,9 @@ pub struct Marker {
     pub screenshot_url: String,
     pub start: u32,
     pub end: Option<u32>,
-    pub scene_title: String,
+    pub scene_title: Option<String>,
+    pub performers: Vec<String>,
+    pub file_name: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -169,7 +170,6 @@ pub async fn fetch_markers(
     let markers = markers
         .into_iter()
         .map(|m| {
-            let title = formatted_scene(&m);
             let (_, end) = state.ffmpeg.get_time_range(&m);
             Marker {
                 id: m.id,
@@ -178,7 +178,9 @@ pub async fn fetch_markers(
                 screenshot_url: add_api_key(&m.screenshot, api_key),
                 start: m.seconds as u32,
                 end,
-                scene_title: title,
+                file_name: m.scene.files[0].basename.clone(),
+                performers: m.scene.performers.into_iter().map(|p| p.name).collect(),
+                scene_title: m.scene.title,
             }
         })
         .collect();

@@ -5,6 +5,7 @@ query FindMarkersQuery(
   findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter) {
     count
     scene_markers {
+      id
       seconds
       primary_tag {
         name
@@ -19,6 +20,13 @@ query FindMarkersQuery(
         sceneStreams {
           url
           label
+        }
+        scene_markers {
+          id
+          seconds
+          primary_tag {
+            name
+          }
         }
       }
     }

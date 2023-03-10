@@ -1,8 +1,9 @@
-use std::process::Output;
+use std::{process::Output, time::Duration};
 
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
+use rand::{seq::SliceRandom, thread_rng};
 use regex::Regex;
 use tokio::process::Command;
 
@@ -100,71 +101,143 @@ impl Ffmpeg {
         }
     }
 
+    fn get_time_range(&self, marker: &Marker) -> (u32, Option<u32>) {
+        let start = marker.seconds;
+        let next_marker = marker
+            .scene
+            .scene_markers
+            .iter()
+            .find(|m| m.seconds > marker.seconds);
+        if let Some(next) = next_marker {
+            (start as u32, Some(next.seconds as u32))
+        } else {
+            (start as u32, None)
+        }
+    }
+
+    fn get_clip_offsets(&self, marker: &Marker, clip_duration_max: u32) -> Vec<(u32, u32)> {
+        let clip_lengths = [
+            (clip_duration_max / 2).max(2),
+            (clip_duration_max / 3).max(2),
+            (clip_duration_max / 4).max(2),
+        ];
+
+        let mut rng = thread_rng();
+
+        let time_range = self.get_time_range(marker);
+        if let (start, Some(end)) = time_range {
+            let mut offset = start;
+            let mut offsets = vec![];
+            while offset < end {
+                let duration = clip_lengths.choose(&mut rng).unwrap();
+                offsets.push((offset, *duration));
+                offset += duration;
+            }
+            offsets
+        } else {
+            vec![(marker.seconds as u32, clip_duration_max.into())]
+        }
+    }
+
+    async fn create_clip(
+        &self,
+        url: &str,
+        start: u32,
+        duration: u32,
+        width: u32,
+        height: u32,
+        fps: f64,
+        out_file: &Utf8Path,
+    ) -> Result<()> {
+        let clip_str = duration.to_string();
+        let seconds_str = start.to_string();
+        let filter = format!("scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:-1:-1:color=black,fps={fps}",
+            fps=fps,
+        );
+
+        let args = vec![
+            "-hide_banner",
+            "-loglevel",
+            "warning",
+            "-ss",
+            seconds_str.as_str(),
+            "-i",
+            url,
+            "-t",
+            clip_str.as_str(),
+            "-c:v",
+            "libx264",
+            "-preset",
+            "slow",
+            "-crf",
+            "22",
+            "-acodec",
+            "aac",
+            "-vf",
+            &filter,
+            "-ar",
+            "48000",
+            out_file.as_str(),
+        ];
+        let output = Command::new(self.path.as_str()).args(args).output().await?;
+        if !output.status.success() {
+            commandline_error(output)
+        } else {
+            Ok(())
+        }
+    }
+
     pub async fn gather_clips(&self, output: &CompilationInfo) -> Result<Vec<Utf8PathBuf>> {
         tokio::fs::create_dir_all(&self.video_dir).await?;
 
-        let markers = &output.markers;
-        let pb = ProgressBar::new(markers.len() as u64);
+        let markers: Vec<_> = output
+            .markers
+            .iter()
+            .map(|m| (m, self.get_clip_offsets(m, output.clip_duration)))
+            .collect();
+
+        let pb_sgments = markers
+            .iter()
+            .fold(0, |count, (_, offsets)| count + offsets.len());
+        let pb = ProgressBar::new(pb_sgments as u64);
         pb.set_style(ProgressStyle::with_template(
             "{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
         )?);
+        pb.enable_steady_tick(Duration::from_secs(1));
+
         let mut paths = vec![];
-        for marker in markers {
+        for (marker, offsets) in markers {
             let url = find_stream_url(&marker);
-            let seconds = marker.seconds as u32;
-            let out_file = self.video_dir.join(format!(
-                "{}_{}-{}.mp4",
-                marker.scene.id,
-                seconds,
-                seconds + output.clip_duration
-            ));
-            pb.set_message(format!(
-                "Creating clip for scene {} at seconds {} to {}",
-                formatted_scene(&marker),
-                seconds,
-                seconds + output.clip_duration
-            ));
-
-            if !out_file.is_file() {
-                let clip_str = output.clip_duration.to_string();
-                let seconds_str = seconds.to_string();
-                let (width, height) = output.output_resolution;
-                let filter = format!("scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:-1:-1:color=black,fps={fps}",
-                    fps=output.output_fps,
-                );
-
-                let args = vec![
-                    "-hide_banner",
-                    "-loglevel",
-                    "warning",
-                    "-ss",
-                    seconds_str.as_str(),
-                    "-i",
-                    url,
-                    "-t",
-                    clip_str.as_str(),
-                    "-c:v",
-                    "libx264",
-                    "-preset",
-                    "slow",
-                    "-crf",
-                    "22",
-                    "-acodec",
-                    "aac",
-                    "-vf",
-                    &filter,
-                    "-ar",
-                    "48000",
-                    out_file.as_str(),
-                ];
-                let output = Command::new(self.path.as_str()).args(args).output().await?;
-                if !output.status.success() {
-                    return commandline_error(output);
+            let (width, height) = output.output_resolution;
+            tracing::info!("offsets: {}", offsets.len());
+            for (start, duration) in offsets {
+                let out_file = self.video_dir.join(format!(
+                    "{}_{}-{}.mp4",
+                    marker.scene.id,
+                    start,
+                    start + duration
+                ));
+                pb.set_message(format!(
+                    "Creating clip for scene {} at seconds {} to {}",
+                    formatted_scene(&marker),
+                    start,
+                    start + duration
+                ));
+                if !out_file.is_file() {
+                    self.create_clip(
+                        &url,
+                        start,
+                        duration,
+                        width,
+                        height,
+                        output.output_fps,
+                        &out_file,
+                    )
+                    .await?;
                 }
+                pb.inc(1);
+                paths.push(out_file);
             }
-
-            paths.push(out_file);
-            pb.inc(1);
         }
         pb.finish();
         Ok(paths)
@@ -175,8 +248,6 @@ impl Ffmpeg {
         mut clips: Vec<Utf8PathBuf>,
         options: &CompilationInfo,
     ) -> Result<Utf8PathBuf> {
-        use rand::seq::SliceRandom;
-
         match options.clip_order {
             ClipOrder::Random => {
                 let mut rng = rand::thread_rng();

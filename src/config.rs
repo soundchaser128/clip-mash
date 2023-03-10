@@ -12,7 +12,7 @@ pub struct Config {
 
 fn config_file_folder() -> Option<Utf8PathBuf> {
     let dirs = ProjectDirs::from("xyz", "soundchaser128", "stash-compilation-maker")?;
-    Utf8Path::from_path(dirs.cache_dir()).map(|p| p.to_owned())
+    Utf8Path::from_path(dirs.config_dir()).map(|p| p.to_owned())
 }
 
 pub fn setup_config() -> Result<Config> {

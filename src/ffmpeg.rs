@@ -9,8 +9,10 @@ use serde::Serialize;
 use tokio::process::Command;
 
 use crate::{
-    stash_api::find_markers_query::{FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, GenderEnum},
     cli::CompilationInfo,
+    stash_api::find_markers_query::{
+        FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, GenderEnum,
+    },
     Result,
 };
 

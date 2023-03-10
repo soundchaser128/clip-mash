@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use config::Config;
 
 use crate::{config::setup_config, ffmpeg::Ffmpeg, stash_api::Api};
@@ -42,6 +45,7 @@ async fn main() -> Result<()> {
         .route("/api/tags", get(http::fetch_tags))
         .route("/api/performers", get(http::fetch_performers))
         .route("/api/markers", get(http::fetch_markers))
+        .route("/api/create", post(http::create_video))
         .with_state(state);
 
     let addr = "0.0.0.0:5174";

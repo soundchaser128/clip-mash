@@ -81,7 +81,7 @@ function SelectMarkers() {
   const onNextStage = () => {
     actions.updateForm({
       stage: FormStage.VideoOptions,
-      selectedIds: selection,
+      selectedMarkers: selection,
     })
     navigate("/video-options")
   }

@@ -7,6 +7,8 @@ query FindMarkersQuery(
     scene_markers {
       id
       seconds
+      stream
+      screenshot
       primary_tag {
         name
       }

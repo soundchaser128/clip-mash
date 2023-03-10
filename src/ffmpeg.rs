@@ -5,6 +5,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
 use rand::{seq::SliceRandom, thread_rng};
 use regex::Regex;
+use serde::Serialize;
 use tokio::process::Command;
 
 use crate::{
@@ -54,8 +55,16 @@ pub fn formatted_scene(marker: &Marker) -> String {
         .map(|p| p.name.as_str())
         .collect();
 
-    let title = marker.scene.title.as_deref().unwrap_or("<no title>");
-    format!("'{}' ({})", title, female_performers.join(", "))
+    let title = match &marker.scene.title {
+        Some(title) if title.trim().len() > 0 => &title,
+        _ => &marker.scene.files[0].basename,
+    };
+    let performers = female_performers.join(",");
+    let performers = match performers.as_str() {
+        "" => "<no performers found>",
+        _ => &performers,
+    };
+    format!("'{}' ({})", title, performers)
 }
 
 fn commandline_error<T>(output: Output) -> Result<T> {
@@ -187,6 +196,33 @@ impl Ffmpeg {
         }
     }
 
+    async fn write_markers_with_offsets(
+        &self,
+        markers: &[(&Marker, Vec<(u32, u32)>)],
+    ) -> Result<()> {
+        #[derive(Serialize)]
+        struct MarkerJson<'a> {
+            scene: String,
+            scene_id: &'a str,
+            offsets: &'a [(u32, u32)],
+            tag: &'a str,
+        }
+
+        let path = self.video_dir.join("markers.json");
+        let markers: Vec<_> = markers
+            .iter()
+            .map(|(marker, offsets)| MarkerJson {
+                scene: formatted_scene(marker),
+                offsets: &offsets,
+                scene_id: marker.scene.id.as_str(),
+                tag: &marker.primary_tag.name,
+            })
+            .collect();
+        let contents = serde_json::to_string_pretty(&markers)?;
+        tokio::fs::write(path, contents).await?;
+        Ok(())
+    }
+
     pub async fn gather_clips(&self, output: &CompilationInfo) -> Result<Vec<Utf8PathBuf>> {
         tokio::fs::create_dir_all(&self.video_dir).await?;
 
@@ -195,6 +231,7 @@ impl Ffmpeg {
             .iter()
             .map(|m| (m, self.get_clip_offsets(m, output.clip_duration)))
             .collect();
+        self.write_markers_with_offsets(markers.as_slice()).await?;
 
         let pb_sgments = markers
             .iter()

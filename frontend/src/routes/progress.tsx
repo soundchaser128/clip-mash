@@ -60,7 +60,11 @@ function Progress() {
             <strong>Success!</strong>
           </p>
           <p>You can download your finished video here:</p>
-          <a href={`/api/download/${state.data.id}`} className="btn btn-success btn-lg" download>
+          <a
+            href={`/api/download/${state.data.id}`}
+            className="btn btn-success btn-lg"
+            download
+          >
             Download
           </a>
         </div>

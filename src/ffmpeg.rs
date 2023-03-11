@@ -122,13 +122,8 @@ fn clip_sort_key(filename: &str) -> (u32, u32) {
 
 impl Ffmpeg {
     pub fn new() -> Result<Self> {
-        tracing::info!("trying to download ffmpeg...");
-        ffmpeg_sidecar::download::auto_download()?;
-        let path = Utf8PathBuf::from_path_buf(ffmpeg_sidecar::paths::ffmpeg_path()).unwrap();
-        tracing::info!("downloaded ffmpeg to {}", path);
-
         Ok(Ffmpeg {
-            path,
+            path: Utf8PathBuf::from("ffmpeg"),
             video_dir: Utf8PathBuf::from("./videos"),
         })
     }

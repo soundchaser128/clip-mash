@@ -12,6 +12,7 @@ import {FormStage} from "./types/types"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
 import Progress from "./routes/progress"
+import { nanoid } from "nanoid"
 
 const router = createBrowserRouter([
   {
@@ -72,6 +73,7 @@ createStore(
   {
     data: {
       stage: FormStage.SelectMode,
+      id: nanoid(8),
     },
   },
   {

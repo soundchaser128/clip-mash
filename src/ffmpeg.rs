@@ -1,4 +1,4 @@
-use std::process::Output;
+use std::{cmp::Reverse, process::Output};
 
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
@@ -106,6 +106,7 @@ fn create_seeded_rng() -> StdRng {
     StdRng::seed_from_u64(123456789)
 }
 
+#[derive(Debug)]
 struct Clip {
     scene_id: u32,
     path: Utf8PathBuf,
@@ -151,7 +152,7 @@ fn intersperse_scene_clips(clips: Vec<Utf8PathBuf>) -> Vec<Utf8PathBuf> {
         }
     }
 
-    clips.sort_by_key(|(idx, rand, _)| (*idx, *rand));
+    clips.sort_by_key(|(idx, rand, _)| Reverse((*idx, *rand)));
     clips.into_iter().map(|(_, _, c)| c.path).collect()
 }
 
@@ -250,6 +251,7 @@ impl Ffmpeg {
 
     async fn write_markers_with_offsets(
         &self,
+        id: &str,
         markers: &[(&Marker, Vec<(u32, u32)>)],
     ) -> Result<()> {
         #[derive(Serialize)]
@@ -260,7 +262,7 @@ impl Ffmpeg {
             tag: &'a str,
         }
 
-        let path = self.video_dir.join("markers.json");
+        let path = self.video_dir.join(format!("markers-{id}.json"));
         let markers: Vec<_> = markers
             .iter()
             .map(|(marker, offsets)| MarkerJson {
@@ -298,7 +300,8 @@ impl Ffmpeg {
             .iter()
             .map(|m| (m, self.get_clip_offsets(m, output.clip_duration)))
             .collect();
-        self.write_markers_with_offsets(markers.as_slice()).await?;
+        self.write_markers_with_offsets(&output.id, markers.as_slice())
+            .await?;
 
         let total_items = markers
             .iter()

@@ -68,6 +68,30 @@ fn unzip(
     Ok(dest_file)
 }
 
+#[cfg(target_os = "windows")]
+fn unzip(
+    path: impl AsRef<Utf8Path>,
+    destination_folder: impl AsRef<Utf8Path>,
+) -> Result<Utf8PathBuf> {
+    use std::fs::File;
+    use std::io::BufReader;
+    use zip::ZipArchive;
+
+    let file = BufReader::new(File::open(path.as_ref())?);
+    let mut zip = ZipArchive::new(file)?;
+    let dest_path = destination_folder.as_ref().join("ffmpeg.exe");
+    let mut dest_file = File::create(&dest_path)?;
+
+    for i in 0..zip.len() {
+        let mut file = zip.by_index(i)?;
+        if file.name().contains("ffmpeg.exe") {
+            std::io::copy(&mut file, &mut dest_file)?;
+            return Ok(dest_path);
+        }
+    }
+    Err("no file found".into())
+}
+
 async fn download_archive(url: &str, destination: &Utf8Path) -> Result<()> {
     let mut response = reqwest::get(url).await?.error_for_status()?;
     let mut file = fs::File::create(destination).await?;
@@ -100,5 +124,8 @@ pub async fn download() -> Result<Utf8PathBuf> {
     }
 
     tracing::info!("downloaded ffmpeg archive");
-    unzip(&archive_dest, dest)
+    let ffmpeg_path = unzip(&archive_dest, dest)?;
+    fs::remove_file(archive_dest).await?;
+
+    Ok(ffmpeg_path)
 }

@@ -25,3 +25,4 @@ tokio-util = { version = "0.7.7", features = ["io"] }
 tower-http = { version = "0.4.0", features = ["fs"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+webbrowser = "0.8.7"

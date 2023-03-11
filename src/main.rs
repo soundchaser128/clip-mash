@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use axum::{
     routing::{get, post},
@@ -25,7 +25,12 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    use std::env;
     use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info");
+    }
 
     tracing_subscriber::registry()
         .with(fmt::layer())
@@ -53,6 +58,16 @@ async fn main() -> Result<()> {
 
     let addr = "[::1]:5174";
     tracing::info!("running at {}", addr);
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(500)).await;
+
+        if webbrowser::open("http://localhost:5174").is_err() {
+            tracing::warn!(
+                "failed to open UI in browser, please navigate to http://localhost:5147"
+            );
+        }
+    });
+
     axum::Server::bind(&addr.parse().unwrap())
         .serve(app.into_make_service())
         .await?;

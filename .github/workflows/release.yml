@@ -38,6 +38,5 @@ jobs:
           bin: stash-compilation-maker
           tar: unix
           zip: windows
-          include: frontend/dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

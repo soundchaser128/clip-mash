@@ -38,50 +38,72 @@ export default function Root() {
   }
 
   return (
-    <main className="container ml-auto mr-auto w-screen h-screen">
-      <section className="py-4 flex flex-col">
-        <h1 className="text-4xl font-bold mb-4 text-center">
-          Stash Compilation Generator
-        </h1>
-        <div className="self-center flex gap-2 mb-4">
-          <button onClick={onReset} className="btn btn-sm btn-error">
-            Reset
-          </button>
-        </div>
-        <ul className="steps mb-4">
-          <li className="step step-primary">Choose mode</li>
-          <li
-            className={clsx(
-              "step",
-              stage >= FormStage.SelectCriteria && "step-primary"
-            )}
+    <div className="min-h-screen flex flex-col justify-between">
+      <main className="container ml-auto mr-auto">
+        <section className="py-4 flex flex-col">
+          <h1 className="text-4xl font-bold mb-4 text-center">
+            Stash Compilation Generator
+          </h1>
+          <div className="self-center flex gap-2 mb-4">
+            <button onClick={onReset} className="btn btn-sm btn-error">
+              Reset
+            </button>
+          </div>
+          <ul className="steps mb-4">
+            <li className="step step-primary">Choose mode</li>
+            <li
+              className={clsx(
+                "step",
+                stage >= FormStage.SelectCriteria && "step-primary"
+              )}
+            >
+              Select criteria
+            </li>
+            <li
+              className={clsx(
+                "step",
+                stage >= FormStage.SelectMarkers && "step-primary"
+              )}
+            >
+              Select markers
+            </li>
+            <li
+              className={clsx(
+                "step",
+                stage >= FormStage.VideoOptions && "step-primary"
+              )}
+            >
+              Select video options
+            </li>
+            <li
+              className={clsx(
+                "step",
+                stage >= FormStage.Wait && "step-primary"
+              )}
+            >
+              Wait for video
+            </li>
+          </ul>
+          <Outlet />
+        </section>
+      </main>
+      <footer className="w-full text-center text-sm font-light flex flex-col gap-1 my-4">
+        <p>
+          Made by{" "}
+          <a href="https://soundchaser128.xyz" className="link">
+            soundchaser128
+          </a>
+        </p>
+        <p>
+          This project is open source and available on{" "}
+          <a
+            className="link"
+            href="https://github.com/soundchaser128/stash-compilation-maker"
           >
-            Select criteria
-          </li>
-          <li
-            className={clsx(
-              "step",
-              stage >= FormStage.SelectMarkers && "step-primary"
-            )}
-          >
-            Select markers
-          </li>
-          <li
-            className={clsx(
-              "step",
-              stage >= FormStage.VideoOptions && "step-primary"
-            )}
-          >
-            Select video options
-          </li>
-          <li
-            className={clsx("step", stage >= FormStage.Wait && "step-primary")}
-          >
-            Wait for video
-          </li>
-        </ul>
-        <Outlet />
-      </section>
-    </main>
+            GitHub
+          </a>
+        </p>
+      </footer>
+    </div>
   )
 }

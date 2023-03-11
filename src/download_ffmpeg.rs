@@ -9,14 +9,11 @@ fn download_url() -> Result<(&'static str, &'static str)> {
     if cfg!(not(target_arch = "x86_64")) {
         return Err("Downloads must be manually provided for non-x86_64 architectures".into());
     }
-
     if cfg!(target_os = "windows") {
         Ok((
             "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
             "ffmpeg.zip",
         ))
-    } else if cfg!(target_os = "macos") {
-        Ok(("https://evermeet.cx/ffmpeg/getrelease", "ffmpeg.7z"))
     } else if cfg!(target_os = "unix") || cfg!(target_os = "linux") {
         Ok((
             "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz",
@@ -92,6 +89,14 @@ fn unzip(
     Err("no file found".into())
 }
 
+#[cfg(target_os = "macos")]
+fn unzip(
+    _path: impl AsRef<Utf8Path>,
+    _destination_folder: impl AsRef<Utf8Path>,
+) -> Result<Utf8PathBuf> {
+    Err("Please use `brew` to install ffmpeg manually.".into())
+}
+
 async fn download_archive(url: &str, destination: &Utf8Path) -> Result<()> {
     let mut response = reqwest::get(url).await?.error_for_status()?;
     let mut file = fs::File::create(destination).await?;
@@ -111,7 +116,7 @@ async fn download_archive(url: &str, destination: &Utf8Path) -> Result<()> {
 pub async fn download() -> Result<Utf8PathBuf> {
     let dest = Utf8Path::new("ffmpeg");
     fs::create_dir_all(dest).await?;
-    if is_installed(&dest) {
+    if is_installed(dest) {
         tracing::info!("ffmpeg already installed, not doing anything.");
         return Ok("ffmpeg".into());
     }

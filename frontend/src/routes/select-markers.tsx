@@ -3,6 +3,7 @@ import {useState} from "react"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
 import {FormStage, FormState} from "../types/types"
 import {updateForm} from "./actions"
+import {formatDistance} from "date-fns"
 
 interface Marker {
   id: string
@@ -39,19 +40,16 @@ export const loader: LoaderFunction = async () => {
   }
 }
 
-function formatDuration(start: number, end?: number): string {
+function getDuration({start, end}: Marker): number {
   if (end) {
-    const seconds = end - start
-    if (seconds < 60) {
-      return `${seconds} seconds`
-    } else {
-      const duration = new Date(seconds * 1000).toISOString().substring(14, 19)
-      return `${duration} minutes`
-    }
+    return end - start
   } else {
-    return `No next marker found, defaulting to maximum clip duration.`
+    return 15
   }
 }
+
+const formatDuration = (s: number) =>
+  formatDistance(0, s * 1000, {includeSeconds: true})
 
 function filterMarkers(markers: Marker[], filter?: string) {
   if (!filter || filter.trim().length === 0) {
@@ -76,6 +74,12 @@ function SelectMarkers() {
   const [filter, setFilter] = useState("")
   const navigate = useNavigate()
   const markers = filterMarkers(data.markers.dtos, filter)
+
+  const totalDuration = formatDuration(
+    markers
+      .filter((m) => selection.includes(m.id))
+      .reduce((total, marker) => total + getDuration(marker), 0)
+  )
 
   const onCheckboxChange = (id: string, checked: boolean) => {
     if (checked) {
@@ -105,7 +109,7 @@ function SelectMarkers() {
           onChange={(e) => setFilter(e.target.value)}
         />
         <div className="text-center">
-          Total duration
+          Estimated total duration: <strong>{totalDuration}</strong>
         </div>
         <button
           type="button"
@@ -137,7 +141,7 @@ function SelectMarkers() {
               </p>
               <p>
                 <strong>Duration: </strong>
-                {formatDuration(marker.start, marker.end)}
+                {formatDuration(getDuration(marker))}
               </p>
             </div>
             <div className="card-actions justify-end">

@@ -188,7 +188,7 @@ pub async fn fetch_markers(
         tags: None,
     };
 
-    let ids: Vec<_> = query.selected_ids.split(",").map(From::from).collect();
+    let ids: Vec<_> = query.selected_ids.split(',').map(From::from).collect();
 
     match query.mode {
         FilterMode::Performers => {
@@ -241,7 +241,7 @@ pub async fn fetch_markers(
         .collect();
 
     Ok(Json(MarkerResult {
-        dtos: dtos,
+        dtos,
         gql: gql_markers,
     }))
 }
@@ -275,10 +275,9 @@ pub async fn create_video(
 
 #[axum::debug_handler]
 pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
-    let stream =
-        futures::StreamExt::flat_map(stream::repeat_with(|| ffmpeg::get_progress()), |f| {
-            f.into_stream()
-        });
+    let stream = futures::StreamExt::flat_map(stream::repeat_with(ffmpeg::get_progress), |f| {
+        f.into_stream()
+    });
     let stream = stream
         .map(|p| Event::default().json_data(p))
         .throttle(Duration::from_secs(1));

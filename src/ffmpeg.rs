@@ -70,7 +70,7 @@ pub fn formatted_scene(marker: &Marker) -> String {
         .collect();
 
     let title = match &marker.scene.title {
-        Some(title) if title.trim().len() > 0 => &title,
+        Some(title) if title.trim().len() > 0 => title,
         _ => &marker.scene.files[0].basename,
     };
     let performers = female_performers.join(",");
@@ -107,7 +107,6 @@ fn create_seeded_rng() -> StdRng {
 }
 
 struct Clip {
-    seconds: u32,
     scene_id: u32,
     path: Utf8PathBuf,
 }
@@ -120,7 +119,7 @@ impl Clip {
 
         let filename = path.file_name().expect("path must have file name");
         let matches = FILE_REGEX.captures(filename);
-        let (scene_id, seconds) = match matches {
+        let (scene_id, _) = match matches {
             Some(matches) => {
                 let scene_id = matches.get(1).unwrap().as_str();
                 let scene_id: u32 = scene_id.parse().unwrap();
@@ -132,11 +131,7 @@ impl Clip {
             }
             None => (0, 0),
         };
-        Clip {
-            path,
-            scene_id,
-            seconds,
-        }
+        Clip { path, scene_id }
     }
 }
 
@@ -270,7 +265,7 @@ impl Ffmpeg {
             .iter()
             .map(|(marker, offsets)| MarkerJson {
                 scene: formatted_scene(marker),
-                offsets: &offsets,
+                offsets,
                 scene_id: marker.scene.id.as_str(),
                 tag: &marker.primary_tag.name,
             })
@@ -312,7 +307,7 @@ impl Ffmpeg {
 
         let mut paths = vec![];
         for (marker, offsets) in markers {
-            let url = find_stream_url(&marker);
+            let url = find_stream_url(marker);
             let (width, height) = output.output_resolution.resolution();
             tracing::info!(
                 "computed {} offsets for marker {}",
@@ -329,7 +324,7 @@ impl Ffmpeg {
                 if !out_file.is_file() {
                     tracing::info!("creating clip {out_file}");
                     self.create_clip(
-                        &url,
+                        url,
                         start,
                         duration,
                         width,
@@ -354,6 +349,8 @@ impl Ffmpeg {
         mut clips: Vec<Utf8PathBuf>,
         options: &CreateVideoBody,
     ) -> Result<Utf8PathBuf> {
+        tracing::info!("assembling {} clips into video", clips.len());
+
         let clips = match options.clip_order {
             ClipOrder::Random => {
                 let mut rng = rand::thread_rng();
@@ -395,6 +392,8 @@ impl Ffmpeg {
         if !output.status.success() {
             return commandline_error(output);
         }
+
+        tracing::info!("finished assembling video, result at {destination}");
 
         Ok(destination)
     }

@@ -13,6 +13,7 @@ mod error;
 mod ffmpeg;
 mod http;
 mod stash_api;
+mod static_files;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -47,6 +48,7 @@ async fn main() -> Result<()> {
         .route("/api/create", post(http::create_video))
         .route("/api/progress", get(http::get_progress))
         .route("/api/download/:id", get(http::download_video))
+        .fallback_service(static_files::service())
         .with_state(state);
 
     let addr = "[::1]:5174";

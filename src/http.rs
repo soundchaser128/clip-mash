@@ -1,10 +1,11 @@
 use std::{cmp::Reverse, sync::Arc, time::Duration};
 
 use axum::{
-    extract::{Query, State},
+    body::StreamBody,
+    extract::{Path, Query, State},
     response::{
         sse::{Event, KeepAlive},
-        Sse,
+        IntoResponse, Sse,
     },
     Json,
 };
@@ -15,6 +16,7 @@ use futures::{
 use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
 use tokio_stream::StreamExt;
+use tokio_util::io::ReaderStream;
 
 use crate::{
     error::AppError,
@@ -112,6 +114,7 @@ pub struct CreateVideoBody {
     pub output_fps: u32,
     pub selected_markers: Vec<String>,
     pub markers: Vec<GqlMarker>,
+    pub id: String,
 }
 
 fn add_api_key(url: &str, api_key: &str) -> String {
@@ -260,7 +263,7 @@ pub async fn create_video(
     state: State<Arc<AppState>>,
     Json(body): Json<CreateVideoBody>,
 ) -> StatusCode {
-    tracing::info!("received json body: {:?}", body);
+    tracing::debug!("received json body: {:?}", body);
     tokio::spawn(async move {
         if let Err(e) = create_video_inner(state, body).await {
             tracing::error!("error: {e:?}");
@@ -270,6 +273,7 @@ pub async fn create_video(
     StatusCode::NO_CONTENT
 }
 
+#[axum::debug_handler]
 pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
     let stream =
         futures::StreamExt::flat_map(stream::repeat_with(|| ffmpeg::get_progress()), |f| {
@@ -280,4 +284,26 @@ pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::
         .throttle(Duration::from_secs(1));
 
     Sse::new(stream).keep_alive(KeepAlive::default())
+}
+
+#[axum::debug_handler]
+pub async fn download_video(
+    state: State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+    use axum::{http::header, response::AppendHeaders};
+
+    tracing::info!("downloading video {id}");
+    let path = state.ffmpeg.video_dir.join(format!("{id}.mp4"));
+    let file = tokio::fs::File::open(path).await?;
+    let stream = ReaderStream::new(file);
+    let content_disposition = format!("attachment; filename=\"{}\"", id);
+
+    let headers = AppendHeaders([
+        (header::CONTENT_TYPE, "video/mp4".to_string()),
+        (header::CONTENT_DISPOSITION, content_disposition),
+    ]);
+
+    let body = StreamBody::new(stream);
+    Ok((headers, body))
 }

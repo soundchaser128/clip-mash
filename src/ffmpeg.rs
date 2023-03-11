@@ -29,7 +29,7 @@ lazy_static! {
 #[derive(Clone)]
 pub struct Ffmpeg {
     path: Utf8PathBuf,
-    video_dir: Utf8PathBuf,
+    pub video_dir: Utf8PathBuf,
 }
 
 pub fn find_stream_url(marker: &Marker) -> &str {
@@ -321,8 +321,7 @@ impl Ffmpeg {
             .collect();
         let file_content = lines.join("\n");
         tokio::fs::write(self.video_dir.join("clips.txt"), file_content).await?;
-        // TODO
-        let file_name = format!("{}.mp4", "compilation");
+        let file_name = format!("{}.mp4", options.id);
         let destination = self.video_dir.join(&file_name);
 
         let args = vec![

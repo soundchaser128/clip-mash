@@ -15,8 +15,6 @@ function SelectMode() {
     navigate("/select-criteria")
   }
 
-
-
   return (
     <section className="py-4 flex flex-col">
       <div className="flex flex-col items-start gap-4">

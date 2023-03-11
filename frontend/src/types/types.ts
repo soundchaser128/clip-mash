@@ -27,6 +27,7 @@ export interface FormState {
   outputResolution?: "720" | "1080" | "4K"
   outputFps?: number
   selectedMarkers?: string[]
-  stage: FormStage
   markers?: unknown[]
+  stage: FormStage
+  id: string
 }

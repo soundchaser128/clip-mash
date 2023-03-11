@@ -42,7 +42,12 @@ export const loader: LoaderFunction = async () => {
 function formatDuration(start: number, end?: number): string {
   if (end) {
     const seconds = end - start
-    return `${seconds} seconds`
+    if (seconds < 60) {
+      return `${seconds} seconds`
+    } else {
+      const duration = new Date(seconds * 1000).toISOString().substring(14, 19)
+      return `${duration} minutes`
+    }
   } else {
     return `No next marker found, defaulting to maximum clip duration.`
   }

@@ -11,7 +11,7 @@ type Inputs = Pick<
 
 const defaultOptions: Inputs = {
   clipDuration: 15,
-  clipOrder: "random",
+  clipOrder: "scene-order",
   outputFps: 30,
   outputResolution: "720",
 }
@@ -94,8 +94,8 @@ function VideoOptions() {
               <option disabled value="none">
                 Select clip ordering
               </option>
+              <option value="scene-order">Scene order</option>
               <option value="random">Random</option>
-              <option value="scene-order">Sccene order`</option>
             </select>
           </div>
         </div>

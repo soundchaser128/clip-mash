@@ -1,4 +1,4 @@
-use std::{process::Output};
+use std::process::Output;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
@@ -41,7 +41,7 @@ pub fn find_stream_url(marker: &Marker) -> &str {
         for label in LABEL_PRIORITIES {
             if let Some(l) = &stream.label {
                 if l == label {
-                    tracing::info!("returning stream {stream:?}");
+                    tracing::debug!("returning stream {stream:?}");
                     return &stream.url;
                 }
             }
@@ -146,17 +146,17 @@ fn intersperse_scene_clips(clips: Vec<Utf8PathBuf>) -> Vec<Utf8PathBuf> {
     let mut clips: Vec<_> = clips.into_iter().map(Clip::from_path).collect();
     clips.sort_by_key(|c| c.scene_id);
 
-    let iter = clips.into_iter().enumerate().group_by(|(_, c)| c.scene_id);
+    let iter = clips.into_iter().group_by(|c| c.scene_id);
     let mut rng = create_seeded_rng();
     let mut clips = vec![];
     for (_, group) in &iter {
-        for (idx, clip) in group {
+        for (idx, clip) in group.enumerate() {
             let rand = rng.next_u32();
             clips.push((idx, rand, clip));
         }
     }
-    clips.sort_by_key(|(idx, rand, _)| (*idx, *rand));
 
+    clips.sort_by_key(|(idx, rand, _)| (*idx, *rand));
     clips.into_iter().map(|(_, _, c)| c.path).collect()
 }
 
@@ -314,7 +314,11 @@ impl Ffmpeg {
         for (marker, offsets) in markers {
             let url = find_stream_url(&marker);
             let (width, height) = output.output_resolution.resolution();
-            tracing::info!("offsets: {}", offsets.len());
+            tracing::info!(
+                "computed {} offsets for marker {}",
+                offsets.len(),
+                marker.id
+            );
             for (start, duration) in offsets {
                 let out_file = self.video_dir.join(format!(
                     "{}_{}-{}.mp4",
@@ -323,6 +327,7 @@ impl Ffmpeg {
                     start + duration
                 ));
                 if !out_file.is_file() {
+                    tracing::info!("creating clip {out_file}");
                     self.create_clip(
                         &url,
                         start,
@@ -333,6 +338,8 @@ impl Ffmpeg {
                         &out_file,
                     )
                     .await?;
+                } else {
+                    tracing::info!("clip {out_file} already exists, skipping");
                 }
                 self.increase_progress().await;
                 paths.push(out_file);
@@ -353,9 +360,7 @@ impl Ffmpeg {
                 clips.shuffle(&mut rng);
                 clips
             }
-            ClipOrder::SceneOrder => {
-                intersperse_scene_clips(clips)
-            }
+            ClipOrder::SceneOrder => intersperse_scene_clips(clips),
         };
 
         let lines: Vec<_> = clips

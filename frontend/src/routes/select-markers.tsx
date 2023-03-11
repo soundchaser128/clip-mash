@@ -96,18 +96,21 @@ function SelectMarkers() {
 
   return (
     <div>
-      <div className="w-full flex justify-between mb-4">
+      <div className="w-full grid grid-cols-3 mb-4 items-baseline">
         <input
           type="text"
           placeholder="Filter..."
-          className="input input-bordered"
+          className="input input-bordered w-64"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
+        <div className="text-center">
+          Total duration
+        </div>
         <button
           type="button"
           onClick={onNextStage}
-          className="btn btn-success"
+          className="btn btn-success place-self-end"
           disabled={selection.length === 0}
         >
           Next

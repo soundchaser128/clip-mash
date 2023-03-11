@@ -30,3 +30,6 @@ webbrowser = "0.8.7"
 [target.'cfg(unix)'.dependencies]
 tar = "0.4"
 xz2 = "0.1"
+
+[target.'cfg(windows)'.dependencies]
+zip = "0.6"

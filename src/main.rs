@@ -14,6 +14,7 @@ mod ffmpeg;
 mod http;
 mod stash_api;
 mod static_files;
+mod download_ffmpeg;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 

@@ -296,7 +296,7 @@ pub async fn download_video(
     let path = state.ffmpeg.video_dir.join(format!("{id}.mp4"));
     let file = tokio::fs::File::open(path).await?;
     let stream = ReaderStream::new(file);
-    let content_disposition = format!("attachment; filename=\"{}\"", id);
+    let content_disposition = format!("attachment; filename=\"{}.mp4\"", id);
 
     let headers = AppendHeaders([
         (header::CONTENT_TYPE, "video/mp4".to_string()),

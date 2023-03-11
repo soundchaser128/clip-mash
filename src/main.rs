@@ -54,6 +54,8 @@ async fn main() -> Result<()> {
         .route("/api/create", post(http::create_video))
         .route("/api/progress", get(http::get_progress))
         .route("/api/download/:id", get(http::download_video))
+        .route("/api/config", get(http::get_config))
+        .route("/api/config", post(http::set_config))
         .fallback_service(static_files::service())
         .with_state(state);
 

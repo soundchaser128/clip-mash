@@ -1,7 +1,7 @@
 import clsx from "clsx"
 import {useStateMachine} from "little-state-machine"
 import {useEffect} from "react"
-import {Outlet, useLocation, useNavigate} from "react-router-dom"
+import {Outlet, useLocation, useNavigate, useNavigation} from "react-router-dom"
 import {FormStage} from "../types/types"
 import {resetForm} from "./actions"
 
@@ -19,6 +19,8 @@ export default function Root() {
   const correctUrl = stageMap[stage]
   const location = useLocation()
   const navigate = useNavigate()
+  const navigation = useNavigation()
+  const isLoading = navigation.state === "loading"
 
   useEffect(() => {
     if (location.pathname !== correctUrl) {
@@ -38,7 +40,12 @@ export default function Root() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between">
+    <div
+      className={clsx(
+        "min-h-screen flex flex-col justify-between transition",
+        isLoading && "opacity-25"
+      )}
+    >
       <main className="container ml-auto mr-auto">
         <section className="py-4 flex flex-col">
           <h1 className="text-4xl font-bold mb-4 text-center">

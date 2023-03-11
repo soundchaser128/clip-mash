@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
 
     let config = setup_config()?;
     let api = Api::new(&config.stash_url, &config.api_key);
-    let ffmpeg = Ffmpeg::new();
+    let ffmpeg = Ffmpeg::new()?;
     let state = Arc::new(AppState {
         api,
         ffmpeg,

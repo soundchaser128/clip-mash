@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use axum::routing::{get_service, MethodRouter};
 use include_dir::{include_dir, Dir};

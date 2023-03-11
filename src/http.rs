@@ -27,7 +27,7 @@ use crate::{
             FindMarkersQueryFindSceneMarkersSceneMarkers as GqlMarker,
             HierarchicalMultiCriterionInput, MultiCriterionInput, SceneMarkerFilterType,
         },
-        find_performers_query, find_tags_query,
+        find_performers_query, find_tags_query, Api,
     },
     AppState,
 };
@@ -125,7 +125,8 @@ fn add_api_key(url: &str, api_key: &str) -> String {
 
 #[axum::debug_handler]
 pub async fn fetch_tags(state: State<Arc<AppState>>) -> Result<Json<Vec<Tag>>, AppError> {
-    let tags = state.api.find_tags(find_tags_query::Variables {}).await?;
+    let api = Api::from_config()?;
+    let tags = api.find_tags(find_tags_query::Variables {}).await?;
     let mut tags: Vec<_> = tags
         .into_iter()
         .map(|t| Tag {
@@ -146,8 +147,8 @@ pub async fn fetch_tags(state: State<Arc<AppState>>) -> Result<Json<Vec<Tag>>, A
 pub async fn fetch_performers(
     state: State<Arc<AppState>>,
 ) -> Result<Json<Vec<Performer>>, AppError> {
-    let performers = state
-        .api
+    let api = Api::from_config()?;
+    let performers = api
         .find_performers(find_performers_query::Variables {})
         .await?;
     let mut performers: Vec<_> = performers
@@ -305,4 +306,14 @@ pub async fn download_video(
 
     let body = StreamBody::new(stream);
     Ok((headers, body))
+}
+
+#[axum::debug_handler]
+pub async fn get_config() {
+    todo!()
+}
+
+#[axum::debug_handler]
+pub async fn set_config() {
+
 }

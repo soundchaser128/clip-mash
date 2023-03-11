@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{Result, config::Config};
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::Client;
 
@@ -45,6 +45,11 @@ impl Api {
             api_key: api_key.into(),
             client: Client::new(),
         }
+    }
+
+    pub fn from_config() -> Result<Self> {
+        let config = Config::load()?;
+        Ok(Self::new(&config.stash_url, &config.api_key))
     }
 
     pub async fn find_tags(

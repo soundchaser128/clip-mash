@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
 use crate::{
+    download_ffmpeg,
     http::CreateVideoBody,
     stash_api::find_markers_query::{
         FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, GenderEnum,
@@ -121,9 +122,11 @@ fn clip_sort_key(filename: &str) -> (u32, u32) {
 }
 
 impl Ffmpeg {
-    pub fn new() -> Result<Self> {
+    pub async fn new() -> Result<Self> {
+        let path = download_ffmpeg::download().await?;
+
         Ok(Ffmpeg {
-            path: Utf8PathBuf::from("ffmpeg"),
+            path,
             video_dir: Utf8PathBuf::from("./videos"),
         })
     }

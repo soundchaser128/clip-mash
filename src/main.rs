@@ -9,12 +9,12 @@ use config::Config;
 use crate::{config::setup_config, ffmpeg::Ffmpeg, stash_api::Api};
 
 mod config;
+mod download_ffmpeg;
 mod error;
 mod ffmpeg;
 mod http;
 mod stash_api;
 mod static_files;
-mod download_ffmpeg;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
 
     let config = setup_config()?;
     let api = Api::new(&config.stash_url, &config.api_key);
-    let ffmpeg = Ffmpeg::new()?;
+    let ffmpeg = Ffmpeg::new().await?;
     let state = Arc::new(AppState {
         api,
         ffmpeg,

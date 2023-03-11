@@ -3,7 +3,7 @@ import {useStateMachine} from "little-state-machine"
 import {useEffect} from "react"
 import {Outlet, useLocation, useNavigate} from "react-router-dom"
 import {FormStage} from "../types/types"
-import { resetForm } from "./actions"
+import {resetForm} from "./actions"
 
 const stageMap = {
   [FormStage.SelectMode]: "/",
@@ -43,7 +43,7 @@ export default function Root() {
         <h1 className="text-4xl font-bold mb-4 text-center">
           Stash Compilation Generator
         </h1>
-        <div className="self-center flex gap-2">
+        <div className="self-center flex gap-2 mb-4">
           <button onClick={onReset} className="btn btn-sm btn-error">
             Reset
           </button>

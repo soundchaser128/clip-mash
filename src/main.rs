@@ -46,6 +46,7 @@ async fn main() -> Result<()> {
         .route("/api/markers", get(http::fetch_markers))
         .route("/api/create", post(http::create_video))
         .route("/api/progress", get(http::get_progress))
+        .route("/api/download/:id", get(http::download_video))
         .with_state(state);
 
     let addr = "[::1]:5174";

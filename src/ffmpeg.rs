@@ -1,9 +1,9 @@
-use std::process::Output;
+use std::{process::Output};
 
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{rngs::StdRng, seq::SliceRandom, RngCore, SeedableRng};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
@@ -102,23 +102,62 @@ pub enum ClipOrder {
     SceneOrder,
 }
 
-fn clip_sort_key(filename: &str) -> (u32, u32) {
-    lazy_static! {
-        static ref FILE_REGEX: Regex = Regex::new(r#"(\d+)_(\d+)-(\d+)\.mp4"#).unwrap();
-    }
-    let matches = FILE_REGEX.captures(filename);
-    match matches {
-        Some(matches) => {
-            let scene_id = matches.get(1).unwrap().as_str();
-            let scene_id: u32 = scene_id.parse().unwrap();
+fn create_seeded_rng() -> StdRng {
+    StdRng::seed_from_u64(123456789)
+}
 
-            let start = matches.get(2).unwrap().as_str();
-            let start: u32 = start.parse().unwrap();
+struct Clip {
+    seconds: u32,
+    scene_id: u32,
+    path: Utf8PathBuf,
+}
 
-            (scene_id, start)
+impl Clip {
+    fn from_path(path: Utf8PathBuf) -> Self {
+        lazy_static! {
+            static ref FILE_REGEX: Regex = Regex::new(r#"(\d+)_(\d+)-(\d+)\.mp4"#).unwrap();
         }
-        None => (0, 0),
+
+        let filename = path.file_name().expect("path must have file name");
+        let matches = FILE_REGEX.captures(filename);
+        let (scene_id, seconds) = match matches {
+            Some(matches) => {
+                let scene_id = matches.get(1).unwrap().as_str();
+                let scene_id: u32 = scene_id.parse().unwrap();
+
+                let start = matches.get(2).unwrap().as_str();
+                let start: u32 = start.parse().unwrap();
+
+                (scene_id, start)
+            }
+            None => (0, 0),
+        };
+        Clip {
+            path,
+            scene_id,
+            seconds,
+        }
     }
+}
+
+fn intersperse_scene_clips(clips: Vec<Utf8PathBuf>) -> Vec<Utf8PathBuf> {
+    use itertools::Itertools;
+
+    let mut clips: Vec<_> = clips.into_iter().map(Clip::from_path).collect();
+    clips.sort_by_key(|c| c.scene_id);
+
+    let iter = clips.into_iter().enumerate().group_by(|(_, c)| c.scene_id);
+    let mut rng = create_seeded_rng();
+    let mut clips = vec![];
+    for (_, group) in &iter {
+        for (idx, clip) in group {
+            let rand = rng.next_u32();
+            clips.push((idx, rand, clip));
+        }
+    }
+    clips.sort_by_key(|(idx, rand, _)| (*idx, *rand));
+
+    clips.into_iter().map(|(_, _, c)| c.path).collect()
 }
 
 impl Ffmpeg {
@@ -152,7 +191,7 @@ impl Ffmpeg {
             (clip_duration_max / 4).max(2),
         ];
 
-        let mut rng = thread_rng();
+        let mut rng = create_seeded_rng();
         let (start, end) = self.get_time_range(marker);
         let end = end.unwrap_or(start + clip_duration_max);
 
@@ -308,15 +347,16 @@ impl Ffmpeg {
         mut clips: Vec<Utf8PathBuf>,
         options: &CreateVideoBody,
     ) -> Result<Utf8PathBuf> {
-        match options.clip_order {
+        let clips = match options.clip_order {
             ClipOrder::Random => {
                 let mut rng = rand::thread_rng();
                 clips.shuffle(&mut rng);
+                clips
             }
             ClipOrder::SceneOrder => {
-                clips.sort_by_key(|str| clip_sort_key(str.file_name().unwrap()));
+                intersperse_scene_clips(clips)
             }
-        }
+        };
 
         let lines: Vec<_> = clips
             .into_iter()

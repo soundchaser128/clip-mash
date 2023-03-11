@@ -20,7 +20,7 @@ pub struct FindTagsQuery;
 #[graphql(
     schema_path = "graphql/schema.json",
     query_path = "graphql/find_markers.graphql",
-    response_derives = "Debug, Clone"
+    response_derives = "Debug, Clone, Serialize"
 )]
 pub struct FindMarkersQuery;
 

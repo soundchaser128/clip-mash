@@ -28,4 +28,5 @@ export interface FormState {
   outputFps?: number
   selectedMarkers?: string[]
   stage: FormStage
+  markers?: unknown[]
 }

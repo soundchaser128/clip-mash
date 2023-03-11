@@ -8,7 +8,6 @@ use config::Config;
 
 use crate::{config::setup_config, ffmpeg::Ffmpeg, stash_api::Api};
 
-mod cli;
 mod config;
 mod error;
 mod ffmpeg;
@@ -46,9 +45,10 @@ async fn main() -> Result<()> {
         .route("/api/performers", get(http::fetch_performers))
         .route("/api/markers", get(http::fetch_markers))
         .route("/api/create", post(http::create_video))
+        .route("/api/progress", get(http::get_progress))
         .with_state(state);
 
-    let addr = "0.0.0.0:5174";
+    let addr = "[::1]:5174";
     tracing::info!("running at {}", addr);
     axum::Server::bind(&addr.parse().unwrap())
         .serve(app.into_make_service())

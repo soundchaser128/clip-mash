@@ -1,7 +1,7 @@
-use std::{process::Output, time::Duration};
+use std::process::Output;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use indicatif::{ProgressBar, ProgressStyle};
+use futures::lock::Mutex;
 use lazy_static::lazy_static;
 use rand::{seq::SliceRandom, thread_rng};
 use regex::Regex;
@@ -9,13 +9,24 @@ use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
 use crate::{
-    cli::CompilationInfo,
+    http::CreateVideoBody,
     stash_api::find_markers_query::{
         FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, GenderEnum,
     },
     Result,
 };
 
+#[derive(Debug, Default, Clone, Serialize)]
+pub struct Progress {
+    pub finished: usize,
+    pub total: usize,
+}
+
+lazy_static! {
+    static ref PROGRESS: Mutex<Progress> = Default::default();
+}
+
+#[derive(Clone)]
 pub struct Ffmpeg {
     path: Utf8PathBuf,
     video_dir: Utf8PathBuf,
@@ -79,6 +90,10 @@ fn commandline_error<T>(output: Output) -> Result<T> {
     .into())
 }
 
+pub async fn get_progress() -> Progress {
+    PROGRESS.lock().await.clone()
+}
+
 #[derive(Clone, Copy, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ClipOrder {
@@ -135,20 +150,17 @@ impl Ffmpeg {
         ];
 
         let mut rng = thread_rng();
+        let (start, end) = self.get_time_range(marker);
+        let end = end.unwrap_or(start + clip_duration_max);
 
-        let time_range = self.get_time_range(marker);
-        if let (start, Some(end)) = time_range {
-            let mut offset = start;
-            let mut offsets = vec![];
-            while offset < end {
-                let duration = clip_lengths.choose(&mut rng).unwrap();
-                offsets.push((offset, *duration));
-                offset += duration;
-            }
-            offsets
-        } else {
-            vec![(marker.seconds as u32, clip_duration_max.into())]
+        let mut offset = start;
+        let mut offsets = vec![];
+        while offset < end {
+            let duration = clip_lengths.choose(&mut rng).unwrap();
+            offsets.push((offset, *duration));
+            offset += duration;
         }
+        offsets
     }
 
     async fn create_clip(
@@ -226,7 +238,22 @@ impl Ffmpeg {
         Ok(())
     }
 
-    pub async fn gather_clips(&self, output: &CompilationInfo) -> Result<Vec<Utf8PathBuf>> {
+    async fn initialize_progress(&self, total_items: usize) {
+        let mut progress = PROGRESS.lock().await;
+        progress.total = total_items;
+    }
+
+    async fn increase_progress(&self) {
+        let mut progress = PROGRESS.lock().await;
+        progress.finished += 1;
+    }
+
+    async fn reset_progress(&self) {
+        let mut progress = PROGRESS.lock().await;
+        *progress = Default::default();
+    }
+
+    pub async fn gather_clips(&self, output: &CreateVideoBody) -> Result<Vec<Utf8PathBuf>> {
         tokio::fs::create_dir_all(&self.video_dir).await?;
 
         let markers: Vec<_> = output
@@ -236,30 +263,20 @@ impl Ffmpeg {
             .collect();
         self.write_markers_with_offsets(markers.as_slice()).await?;
 
-        let pb_sgments = markers
+        let total_items = markers
             .iter()
             .fold(0, |count, (_, offsets)| count + offsets.len());
-        let pb = ProgressBar::new(pb_sgments as u64);
-        pb.set_style(ProgressStyle::with_template(
-            "{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
-        )?);
-        pb.enable_steady_tick(Duration::from_secs(1));
+        self.initialize_progress(total_items).await;
 
         let mut paths = vec![];
         for (marker, offsets) in markers {
             let url = find_stream_url(&marker);
-            let (width, height) = output.output_resolution;
+            let (width, height) = output.output_resolution.resolution();
             tracing::info!("offsets: {}", offsets.len());
             for (start, duration) in offsets {
                 let out_file = self.video_dir.join(format!(
                     "{}_{}-{}.mp4",
                     marker.scene.id,
-                    start,
-                    start + duration
-                ));
-                pb.set_message(format!(
-                    "Creating clip for scene {} at seconds {} to {}",
-                    formatted_scene(&marker),
                     start,
                     start + duration
                 ));
@@ -270,23 +287,23 @@ impl Ffmpeg {
                         duration,
                         width,
                         height,
-                        output.output_fps,
+                        output.output_fps as f64,
                         &out_file,
                     )
                     .await?;
                 }
-                pb.inc(1);
+                self.increase_progress().await;
                 paths.push(out_file);
             }
         }
-        pb.finish();
+        self.reset_progress().await;
         Ok(paths)
     }
 
     pub async fn compile_clips(
         &self,
         mut clips: Vec<Utf8PathBuf>,
-        options: &CompilationInfo,
+        options: &CreateVideoBody,
     ) -> Result<Utf8PathBuf> {
         match options.clip_order {
             ClipOrder::Random => {
@@ -304,7 +321,8 @@ impl Ffmpeg {
             .collect();
         let file_content = lines.join("\n");
         tokio::fs::write(self.video_dir.join("clips.txt"), file_content).await?;
-        let file_name = format!("{}.mp4", options.video_name);
+        // TODO
+        let file_name = format!("{}.mp4", "compilation");
         let destination = self.video_dir.join(&file_name);
 
         let args = vec![

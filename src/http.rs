@@ -1,19 +1,29 @@
-use std::{cmp::Reverse, sync::Arc};
+use std::{cmp::Reverse, sync::Arc, time::Duration};
 
 use axum::{
     extract::{Query, State},
+    response::{
+        sse::{Event, KeepAlive},
+        Sse,
+    },
     Json,
 };
-use reqwest::Url;
+use futures::{
+    stream::{self, Stream},
+    FutureExt,
+};
+use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
+use tokio_stream::StreamExt;
 
 use crate::{
     error::AppError,
-    ffmpeg::ClipOrder,
+    ffmpeg::{self, ClipOrder},
     stash_api::{
         find_markers_query::{
-            self, CriterionModifier, FindFilterType, HierarchicalMultiCriterionInput,
-            MultiCriterionInput, SceneMarkerFilterType,
+            self, CriterionModifier, FindFilterType,
+            FindMarkersQueryFindSceneMarkersSceneMarkers as GqlMarker,
+            HierarchicalMultiCriterionInput, MultiCriterionInput, SceneMarkerFilterType,
         },
         find_performers_query, find_tags_query,
     },
@@ -50,6 +60,13 @@ pub struct Marker {
     pub file_name: String,
 }
 
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct MarkerResult {
+    pub dtos: Vec<Marker>,
+    pub gql: Vec<GqlMarker>,
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub enum FilterMode {
@@ -64,7 +81,7 @@ pub struct MarkerOptions {
     pub mode: FilterMode,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone, Copy)]
 pub enum Resolution {
     #[serde(rename = "720")]
     SevenTwenty,
@@ -72,6 +89,16 @@ pub enum Resolution {
     TenEighty,
     #[serde(rename = "4K")]
     FourK,
+}
+
+impl Resolution {
+    pub fn resolution(&self) -> (u32, u32) {
+        match self {
+            Resolution::SevenTwenty => (1280, 720),
+            Resolution::TenEighty => (1920, 1080),
+            Resolution::FourK => (3840, 2160),
+        }
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -84,6 +111,7 @@ pub struct CreateVideoBody {
     pub output_resolution: Resolution,
     pub output_fps: u32,
     pub selected_markers: Vec<String>,
+    pub markers: Vec<GqlMarker>,
 }
 
 fn add_api_key(url: &str, api_key: &str) -> String {
@@ -142,7 +170,7 @@ pub async fn fetch_performers(
 pub async fn fetch_markers(
     state: State<Arc<AppState>>,
     Query(query): Query<MarkerOptions>,
-) -> Result<Json<Vec<Marker>>, AppError> {
+) -> Result<Json<MarkerResult>, AppError> {
     tracing::info!("fetching markers for query {query:?}");
 
     let mut scene_filter = SceneMarkerFilterType {
@@ -175,7 +203,7 @@ pub async fn fetch_markers(
         }
     }
 
-    let markers = state
+    let gql_markers = state
         .api
         .find_markers(find_markers_query::Variables {
             filter: Some(FindFilterType {
@@ -190,7 +218,8 @@ pub async fn fetch_markers(
         .await?;
 
     let api_key = &state.config.api_key;
-    let markers = markers
+    let dtos = gql_markers
+        .clone()
         .into_iter()
         .map(|m| {
             let (_, end) = state.ffmpeg.get_time_range(&m);
@@ -208,11 +237,47 @@ pub async fn fetch_markers(
         })
         .collect();
 
-    Ok(Json(markers))
+    Ok(Json(MarkerResult {
+        dtos: dtos,
+        gql: gql_markers,
+    }))
+}
+
+async fn create_video_inner(
+    state: State<Arc<AppState>>,
+    mut body: CreateVideoBody,
+) -> Result<(), AppError> {
+    body.markers
+        .retain(|e| body.selected_markers.contains(&e.id));
+    let clips = state.ffmpeg.gather_clips(&body).await?;
+    state.ffmpeg.compile_clips(clips, &body).await?;
+
+    Ok(())
 }
 
 #[axum::debug_handler]
-pub async fn create_video(state: State<Arc<AppState>>, Json(body): Json<CreateVideoBody>) {
+pub async fn create_video(
+    state: State<Arc<AppState>>,
+    Json(body): Json<CreateVideoBody>,
+) -> StatusCode {
     tracing::info!("received json body: {:?}", body);
-    todo!()
+    tokio::spawn(async move {
+        if let Err(e) = create_video_inner(state, body).await {
+            tracing::error!("error: {e:?}");
+        }
+    });
+
+    StatusCode::NO_CONTENT
+}
+
+pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
+    let stream =
+        futures::StreamExt::flat_map(stream::repeat_with(|| ffmpeg::get_progress()), |f| {
+            f.into_stream()
+        });
+    let stream = stream
+        .map(|p| Event::default().json_data(p))
+        .throttle(Duration::from_secs(1));
+
+    Sse::new(stream).keep_alive(KeepAlive::default())
 }

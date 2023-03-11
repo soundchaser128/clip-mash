@@ -12,3 +12,11 @@ export function updateForm(
     },
   }
 }
+
+export function resetForm(): GlobalState {
+  return {
+    data: {
+      stage: FormStage.SelectMode,
+    },
+  }
+}

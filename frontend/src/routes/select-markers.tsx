@@ -17,7 +17,10 @@ interface Marker {
 }
 
 interface Data {
-  markers: Marker[]
+  markers: {
+    dtos: Marker[]
+    gql: unknown[]
+  }
 }
 
 export const loader: LoaderFunction = async () => {
@@ -41,7 +44,7 @@ function formatDuration(start: number, end?: number): string {
     const seconds = end - start
     return `${seconds} seconds`
   } else {
-    return `No end found, defaulting to 30 seconds.`
+    return `No next marker found, defaulting to maximum clip duration.`
   }
 }
 
@@ -61,14 +64,13 @@ function filterMarkers(markers: Marker[], filter?: string) {
 
 function SelectMarkers() {
   const {state, actions} = useStateMachine({updateForm})
-
   const data = useLoaderData() as Data
   const [selection, setSelection] = useState(
-    () => state.data.selectedMarkers || data.markers.map((m) => m.id)
+    () => state.data.selectedMarkers || data.markers.dtos.map((m) => m.id)
   )
   const [filter, setFilter] = useState("")
   const navigate = useNavigate()
-  const markers = filterMarkers(data.markers, filter)
+  const markers = filterMarkers(data.markers.dtos, filter)
 
   const onCheckboxChange = (id: string, checked: boolean) => {
     if (checked) {
@@ -82,6 +84,7 @@ function SelectMarkers() {
     actions.updateForm({
       stage: FormStage.VideoOptions,
       selectedMarkers: selection,
+      markers: data.markers.gql,
     })
     navigate("/video-options")
   }

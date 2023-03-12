@@ -48,7 +48,7 @@ function VideoOptions() {
               type="number"
               placeholder="Type here"
               className="input input-bordered"
-              {...register("clipDuration")}
+              {...register("clipDuration", {valueAsNumber: true})}
             />
           </div>
 
@@ -79,7 +79,7 @@ function VideoOptions() {
               className="input input-bordered"
               min="30"
               max="120"
-              {...register("outputFps")}
+              {...register("outputFps", {valueAsNumber: true})}
             />
           </div>
 

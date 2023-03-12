@@ -166,7 +166,7 @@ impl Ffmpeg {
         })
     }
 
-    pub fn get_time_range(&self, marker: &Marker) -> (u32, Option<u32>) {
+    pub fn get_time_range(&self, marker: &Marker, max_duration: Option<u32>) -> (u32, Option<u32>) {
         let start = marker.seconds;
         let next_marker = marker
             .scene

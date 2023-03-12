@@ -104,6 +104,13 @@ impl Resolution {
     }
 }
 
+#[derive(Deserialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct SelectedMarker {
+    pub id: String,
+    pub duration: Option<u32>,
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateVideoBody {
@@ -113,7 +120,7 @@ pub struct CreateVideoBody {
     pub clip_duration: u32,
     pub output_resolution: Resolution,
     pub output_fps: u32,
-    pub selected_markers: Vec<String>,
+    pub selected_markers: Vec<SelectedMarker>,
     pub markers: Vec<GqlMarker>,
     pub id: String,
 }
@@ -251,7 +258,7 @@ async fn create_video_inner(
     mut body: CreateVideoBody,
 ) -> Result<(), AppError> {
     body.markers
-        .retain(|e| body.selected_markers.contains(&e.id));
+        .retain(|e| body.selected_markers.iter().any(|m| m.id == e.id));
     let clips = state.ffmpeg.gather_clips(&body).await?;
     state.ffmpeg.compile_clips(clips, &body).await?;
 
@@ -308,10 +315,10 @@ pub async fn download_video(
 }
 
 #[axum::debug_handler]
-pub async fn get_config() -> StatusCode {
+pub async fn get_config() -> impl IntoResponse {
     match Config::get().await {
-        Ok(_) => StatusCode::OK,
-        Err(_) => StatusCode::NOT_FOUND,
+        Ok(config) => Json(Some(config)),
+        Err(_) => Json(None),
     }
 }
 

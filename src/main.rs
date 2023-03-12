@@ -50,7 +50,7 @@ async fn main() -> Result<()> {
         .fallback_service(static_files::service())
         .with_state(state);
 
-    let addr = "[::1]:5174";
+    let addr = "0.0.0.0:5174";
     tracing::info!("running at {}", addr);
     tokio::spawn(async move {
         tokio::time::sleep(Duration::from_millis(500)).await;

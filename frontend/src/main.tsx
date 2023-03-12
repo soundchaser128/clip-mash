@@ -13,59 +13,42 @@ import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
 import Progress from "./routes/progress"
 import {nanoid} from "nanoid"
+import {loader as rootLoader} from "./routes/root"
+import ConfigPage from "./routes/config"
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Root />,
+    loader: rootLoader,
     children: [
       {
         index: true,
         element: <SelectMode />,
       },
-    ],
-  },
-  {
-    path: "/select-criteria",
-    element: <Root />,
-    children: [
       {
-        index: true,
+        path: "/select-criteria",
         element: <SelectCriteria />,
         loader: criteriaLoader,
       },
-    ],
-  },
-  {
-    path: "/select-markers",
-    element: <Root />,
-    children: [
       {
-        index: true,
+        path: "/select-markers",
         element: <SelectMarkers />,
         loader: markerLoader,
       },
-    ],
-  },
-  {
-    path: "/video-options",
-    element: <Root />,
-    children: [
       {
-        index: true,
+        path: "/video-options",
         element: <VideoOptions />,
       },
-    ],
-  },
-  {
-    path: "/progress",
-    element: <Root />,
-    children: [
       {
-        index: true,
+        path: "/progress",
         element: <Progress />,
       },
     ],
+  },
+  {
+    path: "/config",
+    element: <ConfigPage />,
   },
 ])
 

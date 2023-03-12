@@ -1,12 +1,9 @@
-use std::{sync::Arc, time::Duration};
-
+use crate::ffmpeg::Ffmpeg;
 use axum::{
     routing::{get, post},
     Router,
 };
-use config::Config;
-
-use crate::{ffmpeg::Ffmpeg, stash_api::Api};
+use std::{sync::Arc, time::Duration};
 
 mod config;
 mod download_ffmpeg;
@@ -19,8 +16,6 @@ mod static_files;
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub struct AppState {
-    // pub config: Config,
-    // pub api: Api,
     pub ffmpeg: Ffmpeg,
 }
 
@@ -38,14 +33,10 @@ async fn main() -> Result<()> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    // let config = setup_config()?;
-    // let api = Api::new(&config.stash_url, &config.api_key);
+    config::init().await;
+
     let ffmpeg = Ffmpeg::new().await?;
-    let state = Arc::new(AppState {
-        // api,
-        ffmpeg,
-        // config,
-    });
+    let state = Arc::new(AppState { ffmpeg });
 
     let app = Router::new()
         .route("/api/tags", get(http::fetch_tags))

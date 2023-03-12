@@ -6,6 +6,7 @@ and it will take (currently) the first 15 seconds of video after the marker star
 all of the markers into one video.
 
 ## Usage
-Download the binary for your OS from the releases page, download [ffmpeg](https://ffmpeg.org/download.html), 
-put them both either in the same directory, or in your `PATH` and run `stash-compilation-maker` from your terminal.
-You will need an API key for accessing your Stash instance, you can generate one in the settings page under security.
+Download the binary for your OS from the releases page and run it. A new browser tab should open with the GUI
+prompting you for your configuration information, then you can select filters, (de)select individual markers,
+enter some video information and then generate the video. Should the download in the browser not work, the videos
+are stored in the `videos` subdirectory of where the executable is stored.

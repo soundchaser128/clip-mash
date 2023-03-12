@@ -63,6 +63,7 @@ function SelectCriteria() {
     actions.updateForm({
       stage: FormStage.SelectMarkers,
       selectedIds: selection,
+      selectedMarkers: undefined
     })
     navigate("/select-markers")
   }

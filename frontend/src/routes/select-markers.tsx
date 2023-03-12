@@ -72,8 +72,17 @@ function SelectMarkers() {
     () => state.data.selectedMarkers || data.markers.dtos.map((m) => m.id)
   )
   const [filter, setFilter] = useState("")
+  const [videoPreview, setVideoPreview] = useState<string>()
   const navigate = useNavigate()
   const markers = filterMarkers(data.markers.dtos, filter)
+
+  const onVideoPreviewChange = (id: string, checked: boolean) => {
+    if (checked) {
+      setVideoPreview(id)
+    } else {
+      setVideoPreview(undefined)
+    }
+  }
 
   const totalDuration = formatDuration(
     markers
@@ -124,10 +133,15 @@ function SelectMarkers() {
         {markers.map((marker) => (
           <article key={marker.id} className="card bg-base-100 shadow-xl">
             <figure>
-              <img
-                src={marker.screenshotUrl}
-                className="aspect-[16/9] object-cover object-top w-full"
-              />
+              {videoPreview === marker.id && (
+                <video muted autoPlay src={marker.streamUrl} />
+              )}
+              {videoPreview !== marker.id && (
+                <img
+                  src={marker.screenshotUrl}
+                  className="aspect-[16/9] object-cover object-top w-full"
+                />
+              )}
             </figure>
             <div className="card-body">
               <h2 className="card-title">{marker.primaryTag}</h2>
@@ -143,20 +157,33 @@ function SelectMarkers() {
                 <strong>Duration: </strong>
                 {formatDuration(getDuration(marker))}
               </p>
-            </div>
-            <div className="card-actions justify-end">
-              <div className="form-control">
-                <label className="label cursor-pointer">
-                  <span className="label-text">Include</span>
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary ml-2"
-                    checked={selection.includes(marker.id)}
-                    onChange={(e) =>
-                      onCheckboxChange(marker.id, e.target.checked)
-                    }
-                  />
-                </label>
+              <div className="card-actions justify-between">
+                <div className="form-control">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">Video preview</span>
+                    <input
+                      onChange={(e) =>
+                        onVideoPreviewChange(marker.id, e.target.checked)
+                      }
+                      checked={videoPreview === marker.id}
+                      type="checkbox"
+                      className="toggle ml-2"
+                    />
+                  </label>
+                </div>
+                <div className="form-control">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">Include</span>
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-primary ml-2"
+                      checked={selection.includes(marker.id)}
+                      onChange={(e) =>
+                        onCheckboxChange(marker.id, e.target.checked)
+                      }
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           </article>

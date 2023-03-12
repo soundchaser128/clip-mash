@@ -1,9 +1,21 @@
 import clsx from "clsx"
 import {useStateMachine} from "little-state-machine"
 import {useEffect} from "react"
-import {Outlet, useLocation, useNavigate, useNavigation} from "react-router-dom"
+import {
+  LoaderFunction,
+  Outlet,
+  useLoaderData,
+  useLocation,
+  useNavigate,
+  useNavigation,
+} from "react-router-dom"
 import {FormStage} from "../types/types"
 import {resetForm} from "./actions"
+
+export const loader: LoaderFunction = async () => {
+  const response = await fetch("/api/config")
+  return response.ok
+}
 
 const stageMap = {
   [FormStage.SelectMode]: "/",
@@ -21,12 +33,20 @@ export default function Root() {
   const navigate = useNavigate()
   const navigation = useNavigation()
   const isLoading = navigation.state === "loading"
+  const configExists = useLoaderData() as boolean
+  console.log({configExists})
+
+  // useEffect(() => {
+  //   if (location.pathname !== correctUrl) {
+  //     navigate(correctUrl)
+  //   }
+  // }, [, correctUrl, location])
 
   useEffect(() => {
-    if (location.pathname !== correctUrl) {
-      navigate(correctUrl)
+    if (!configExists) {
+      navigate("/config")
     }
-  }, [, correctUrl, location])
+  }, [configExists])
 
   const onReset = () => {
     if (

@@ -1,4 +1,4 @@
-use crate::{Result, config::Config};
+use crate::{config::Config, Result};
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::Client;
 
@@ -47,8 +47,12 @@ impl Api {
         }
     }
 
-    pub fn from_config() -> Result<Self> {
-        let config = Config::load()?;
+    pub fn from_config(config: &Config) -> Self {
+        Self::new(&config.stash_url, &config.api_key)
+    }
+
+    pub async fn load_config() -> Result<Self> {
+        let config = Config::get().await?;
         Ok(Self::new(&config.stash_url, &config.api_key))
     }
 

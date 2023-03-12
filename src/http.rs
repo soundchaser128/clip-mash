@@ -19,6 +19,7 @@ use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
 use crate::{
+    config::{self, Config},
     error::AppError,
     ffmpeg::{self, ClipOrder},
     stash_api::{
@@ -124,8 +125,8 @@ fn add_api_key(url: &str, api_key: &str) -> String {
 }
 
 #[axum::debug_handler]
-pub async fn fetch_tags(state: State<Arc<AppState>>) -> Result<Json<Vec<Tag>>, AppError> {
-    let api = Api::from_config()?;
+pub async fn fetch_tags() -> Result<Json<Vec<Tag>>, AppError> {
+    let api = Api::load_config().await?;
     let tags = api.find_tags(find_tags_query::Variables {}).await?;
     let mut tags: Vec<_> = tags
         .into_iter()
@@ -144,10 +145,9 @@ pub async fn fetch_tags(state: State<Arc<AppState>>) -> Result<Json<Vec<Tag>>, A
 }
 
 #[axum::debug_handler]
-pub async fn fetch_performers(
-    state: State<Arc<AppState>>,
-) -> Result<Json<Vec<Performer>>, AppError> {
-    let api = Api::from_config()?;
+pub async fn fetch_performers() -> Result<Json<Vec<Performer>>, AppError> {
+    let config = Config::get().await?;
+    let api = Api::from_config(&config);
     let performers = api
         .find_performers(find_performers_query::Variables {})
         .await?;
@@ -157,9 +157,7 @@ pub async fn fetch_performers(
             id: p.id,
             scene_count: p.scene_count.unwrap_or_default(),
             name: p.name,
-            image_url: p
-                .image_path
-                .map(|url| add_api_key(&url, &state.config.api_key)),
+            image_url: p.image_path.map(|url| add_api_key(&url, &config.api_key)),
         })
         .filter(|p| p.scene_count > 0)
         .collect();
@@ -175,6 +173,8 @@ pub async fn fetch_markers(
     state: State<Arc<AppState>>,
     Query(query): Query<MarkerOptions>,
 ) -> Result<Json<MarkerResult>, AppError> {
+    let config = Config::get().await?;
+    let api = Api::from_config(&config);
     tracing::info!("fetching markers for query {query:?}");
 
     let mut scene_filter = SceneMarkerFilterType {
@@ -207,8 +207,7 @@ pub async fn fetch_markers(
         }
     }
 
-    let gql_markers = state
-        .api
+    let gql_markers = api
         .find_markers(find_markers_query::Variables {
             filter: Some(FindFilterType {
                 per_page: Some(-1),
@@ -221,7 +220,7 @@ pub async fn fetch_markers(
         })
         .await?;
 
-    let api_key = &state.config.api_key;
+    let api_key = &config.api_key;
     let dtos = gql_markers
         .clone()
         .into_iter()
@@ -309,11 +308,17 @@ pub async fn download_video(
 }
 
 #[axum::debug_handler]
-pub async fn get_config() {
-    todo!()
+pub async fn get_config() -> StatusCode {
+    match Config::get().await {
+        Ok(_) => StatusCode::OK,
+        Err(_) => StatusCode::NOT_FOUND,
+    }
 }
 
 #[axum::debug_handler]
-pub async fn set_config() {
+pub async fn set_config(Json(config): Json<Config>) -> Result<StatusCode, AppError> {
+    tracing::info!("setting config with URL {}", config.stash_url);
+    config::set_config(config).await?;
 
+    Ok(StatusCode::NO_CONTENT)
 }

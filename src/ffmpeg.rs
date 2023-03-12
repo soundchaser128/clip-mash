@@ -173,14 +173,21 @@ impl Ffmpeg {
             .scene_markers
             .iter()
             .find(|m| m.seconds > marker.seconds);
-        if let Some(next) = next_marker {
+        if let Some(max_duration) = max_duration {
+            (start as u32, Some(start as u32 + max_duration))
+        } else if let Some(next) = next_marker {
             (start as u32, Some(next.seconds as u32))
         } else {
             (start as u32, None)
         }
     }
 
-    fn get_clip_offsets(&self, marker: &Marker, clip_duration_max: u32) -> Vec<(u32, u32)> {
+    fn get_clip_offsets(
+        &self,
+        marker: &Marker,
+        clip_duration_max: u32,
+        max_duration: Option<u32>,
+    ) -> Vec<(u32, u32)> {
         let clip_lengths = [
             (clip_duration_max / 2).max(2),
             (clip_duration_max / 3).max(2),
@@ -188,7 +195,7 @@ impl Ffmpeg {
         ];
 
         let mut rng = create_seeded_rng();
-        let (start, end) = self.get_time_range(marker);
+        let (start, end) = self.get_time_range(marker, max_duration);
         let end = end.unwrap_or(start + clip_duration_max);
 
         let mut offset = start;
@@ -298,7 +305,20 @@ impl Ffmpeg {
         let markers: Vec<_> = output
             .markers
             .iter()
-            .map(|m| (m, self.get_clip_offsets(m, output.clip_duration)))
+            .map(|m| {
+                (
+                    m,
+                    self.get_clip_offsets(
+                        m,
+                        output.clip_duration,
+                        output
+                            .selected_markers
+                            .iter()
+                            .find(|n| n.id == m.id)
+                            .and_then(|m| m.duration),
+                    ),
+                )
+            })
             .collect();
         self.write_markers_with_offsets(&output.id, markers.as_slice())
             .await?;

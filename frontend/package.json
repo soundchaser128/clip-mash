@@ -13,6 +13,7 @@
   "dependencies": {
     "clsx": "^1.2.1",
     "date-fns": "^2.29.3",
+    "immer": "^9.0.19",
     "little-state-machine": "^4.8.0",
     "localforage": "^1.10.0",
     "match-sorter": "^6.3.1",

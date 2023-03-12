@@ -232,7 +232,7 @@ pub async fn fetch_markers(
         .clone()
         .into_iter()
         .map(|m| {
-            let (_, end) = state.ffmpeg.get_time_range(&m);
+            let (_, end) = state.ffmpeg.get_time_range(&m, None);
             Marker {
                 id: m.id,
                 primary_tag: m.primary_tag.name,

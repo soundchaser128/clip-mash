@@ -19,6 +19,11 @@ export enum FormStage {
   Wait = 5,
 }
 
+export interface SelectedMarker {
+  id: string
+  duration?: number
+}
+
 export interface FormState {
   selectMode?: "tags" | "performers"
   selectedIds?: string[]
@@ -26,7 +31,7 @@ export interface FormState {
   clipDuration?: number
   outputResolution?: "720" | "1080" | "4K"
   outputFps?: number
-  selectedMarkers?: string[]
+  selectedMarkers?: SelectedMarker[]
   markers?: unknown[]
   stage: FormStage
   id: string

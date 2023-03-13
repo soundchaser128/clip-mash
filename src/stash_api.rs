@@ -8,6 +8,8 @@ use self::{
     find_tags_query::FindTagsQueryFindTagsTags,
 };
 
+pub type GqlMarker = FindMarkersQueryFindSceneMarkersSceneMarkers;
+
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.json",
@@ -81,7 +83,7 @@ impl Api {
     pub async fn find_markers(
         &self,
         variables: find_markers_query::Variables,
-    ) -> Result<Vec<FindMarkersQueryFindSceneMarkersSceneMarkers>> {
+    ) -> Result<Vec<GqlMarker>> {
         let request_body = FindMarkersQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
         let response = self

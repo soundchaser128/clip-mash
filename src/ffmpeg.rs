@@ -9,12 +9,13 @@ use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
 use crate::{
+    clip::{self, Clip, ClipOrder, MarkerWithClips},
     download_ffmpeg,
     http::CreateVideoBody,
     stash_api::find_markers_query::{
         FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, GenderEnum,
     },
-    Result,
+    util, Result,
 };
 
 #[derive(Debug, Default, Clone, Serialize)]
@@ -95,24 +96,13 @@ pub async fn get_progress() -> Progress {
     PROGRESS.lock().await.clone()
 }
 
-#[derive(Clone, Copy, Debug, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum ClipOrder {
-    Random,
-    SceneOrder,
-}
-
-fn create_seeded_rng() -> StdRng {
-    StdRng::seed_from_u64(123456789)
-}
-
 #[derive(Debug)]
-struct Clip {
+struct ParsedClip {
     scene_id: u32,
     path: Utf8PathBuf,
 }
 
-impl Clip {
+impl ParsedClip {
     fn from_path(path: Utf8PathBuf) -> Self {
         lazy_static! {
             static ref FILE_REGEX: Regex = Regex::new(r#"(\d+)_(\d+)-(\d+)\.mp4"#).unwrap();
@@ -132,18 +122,18 @@ impl Clip {
             }
             None => (0, 0),
         };
-        Clip { path, scene_id }
+        ParsedClip { path, scene_id }
     }
 }
 
 fn intersperse_scene_clips(clips: Vec<Utf8PathBuf>) -> Vec<Utf8PathBuf> {
     use itertools::Itertools;
 
-    let mut clips: Vec<_> = clips.into_iter().map(Clip::from_path).collect();
+    let mut clips: Vec<_> = clips.into_iter().map(ParsedClip::from_path).collect();
     clips.sort_by_key(|c| c.scene_id);
 
     let iter = clips.into_iter().group_by(|c| c.scene_id);
-    let mut rng = create_seeded_rng();
+    let mut rng = util::create_seeded_rng();
     let mut clips = vec![];
     for (_, group) in &iter {
         for (idx, clip) in group.enumerate() {
@@ -166,47 +156,31 @@ impl Ffmpeg {
         })
     }
 
-    pub fn get_time_range(&self, marker: &Marker, max_duration: Option<u32>) -> (u32, Option<u32>) {
-        let start = marker.seconds;
-        let next_marker = marker
-            .scene
-            .scene_markers
-            .iter()
-            .find(|m| m.seconds > marker.seconds);
-        if let Some(max_duration) = max_duration {
-            (start as u32, Some(start as u32 + max_duration))
-        } else if let Some(next) = next_marker {
-            (start as u32, Some(next.seconds as u32))
-        } else {
-            (start as u32, None)
-        }
-    }
+    // fn get_clip_offsets(
+    //     &self,
+    //     marker: &Marker,
+    //     clip_duration_max: u32,
+    //     max_duration: Option<u32>,
+    // ) -> Vec<(u32, u32)> {
+    //     let clip_lengths = [
+    //         (clip_duration_max / 2).max(2),
+    //         (clip_duration_max / 3).max(2),
+    //         (clip_duration_max / 4).max(2),
+    //     ];
 
-    fn get_clip_offsets(
-        &self,
-        marker: &Marker,
-        clip_duration_max: u32,
-        max_duration: Option<u32>,
-    ) -> Vec<(u32, u32)> {
-        let clip_lengths = [
-            (clip_duration_max / 2).max(2),
-            (clip_duration_max / 3).max(2),
-            (clip_duration_max / 4).max(2),
-        ];
+    //     let mut rng = util::create_seeded_rng();
+    //     let (start, end) = self.get_time_range(marker, max_duration);
+    //     let end = end.unwrap_or(start + clip_duration_max);
 
-        let mut rng = create_seeded_rng();
-        let (start, end) = self.get_time_range(marker, max_duration);
-        let end = end.unwrap_or(start + clip_duration_max);
-
-        let mut offset = start;
-        let mut offsets = vec![];
-        while offset < end {
-            let duration = clip_lengths.choose(&mut rng).unwrap();
-            offsets.push((offset, *duration));
-            offset += duration;
-        }
-        offsets
-    }
+    //     let mut offset = start;
+    //     let mut offsets = vec![];
+    //     while offset < end {
+    //         let duration = clip_lengths.choose(&mut rng).unwrap();
+    //         offsets.push((offset, *duration));
+    //         offset += duration;
+    //     }
+    //     offsets
+    // }
 
     async fn create_clip(
         &self,
@@ -302,54 +276,50 @@ impl Ffmpeg {
     pub async fn gather_clips(&self, output: &CreateVideoBody) -> Result<Vec<Utf8PathBuf>> {
         tokio::fs::create_dir_all(&self.video_dir).await?;
 
-        let markers: Vec<_> = output
-            .markers
-            .iter()
-            .map(|m| {
-                (
-                    m,
-                    self.get_clip_offsets(
-                        m,
-                        output.clip_duration,
-                        output
-                            .selected_markers
-                            .iter()
-                            .find(|n| n.id == m.id)
-                            .and_then(|m| m.duration),
-                    ),
-                )
-            })
-            .collect();
-        self.write_markers_with_offsets(&output.id, markers.as_slice())
-            .await?;
+        let clips = clip::get_all_clips(&output);
+        // let markers: Vec<_> = output
+        //     .markers
+        //     .iter()
+        //     .map(|m| {
+        //         (
+        //             m,
+        //             self.get_clip_offsets(
+        //                 m,
+        //                 output.clip_duration,
+        //                 output
+        //                     .selected_markers
+        //                     .iter()
+        //                     .find(|n| n.id == m.id)
+        //                     .and_then(|m| m.duration),
+        //             ),
+        //         )
+        //     })
+        //     .collect();
 
-        let total_items = markers
+        let total_items = clips
             .iter()
-            .fold(0, |count, (_, offsets)| count + offsets.len());
+            .fold(0, |count, marker| count + marker.clips.len());
         self.initialize_progress(total_items).await;
 
         let mut paths = vec![];
-        for (marker, offsets) in markers {
-            let url = find_stream_url(marker);
+        for MarkerWithClips { clips, marker } in clips {
+            let url = find_stream_url(&marker);
             let (width, height) = output.output_resolution.resolution();
-            tracing::info!(
-                "computed {} offsets for marker {}",
-                offsets.len(),
-                marker.id
-            );
-            for (start, duration) in offsets {
-                let out_file = self.video_dir.join(format!(
-                    "{}_{}-{}.mp4",
-                    marker.scene.id,
-                    start,
-                    start + duration
-                ));
+            tracing::info!("computed {} clips for marker {}", clips.len(), marker.id);
+            for Clip {
+                range: (start, end),
+                ..
+            } in clips
+            {
+                let out_file = self
+                    .video_dir
+                    .join(format!("{}_{}-{}.mp4", marker.scene.id, start, end));
                 if !out_file.is_file() {
                     tracing::info!("creating clip {out_file}");
                     self.create_clip(
                         url,
                         start,
-                        duration,
+                        end - start,
                         width,
                         height,
                         output.output_fps as f64,

@@ -19,9 +19,10 @@ use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
 use crate::{
+    clip::{Clip, ClipOrder},
     config::{self, Config},
     error::AppError,
-    ffmpeg::{self, ClipOrder},
+    ffmpeg,
     stash_api::{
         find_markers_query::{
             self, CriterionModifier, FindFilterType,
@@ -63,11 +64,10 @@ pub struct Marker {
     pub file_name: String,
 }
 
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Clip {
-    pub marker: Marker,
-    pub range: (u32, u32),
+impl From<GqlMarker> for Marker {
+    fn from(value: GqlMarker) -> Self {
+        todo!()
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -235,24 +235,25 @@ pub async fn fetch_markers(
         .await?;
 
     let api_key = &config.api_key;
-    let dtos = gql_markers
-        .clone()
-        .into_iter()
-        .map(|m| {
-            let (_, end) = state.ffmpeg.get_time_range(&m, None);
-            Marker {
-                id: m.id,
-                primary_tag: m.primary_tag.name,
-                stream_url: add_api_key(&m.stream, api_key),
-                screenshot_url: add_api_key(&m.screenshot, api_key),
-                start: m.seconds as u32,
-                end,
-                file_name: m.scene.files[0].basename.clone(),
-                performers: m.scene.performers.into_iter().map(|p| p.name).collect(),
-                scene_title: m.scene.title,
-            }
-        })
-        .collect();
+    let dtos = vec![];
+    // let dtos = gql_markers
+    //     .clone()
+    //     .into_iter()
+    //     .map(|m| {
+    //         let (_, end) = state.ffmpeg.get_time_range(&m, None);
+    //         Marker {
+    //             id: m.id,
+    //             primary_tag: m.primary_tag.name,
+    //             stream_url: add_api_key(&m.stream, api_key),
+    //             screenshot_url: add_api_key(&m.screenshot, api_key),
+    //             start: m.seconds as u32,
+    //             end,
+    //             file_name: m.scene.files[0].basename.clone(),
+    //             performers: m.scene.performers.into_iter().map(|p| p.name).collect(),
+    //             scene_title: m.scene.title,
+    //         }
+    //     })
+    //     .collect();
 
     Ok(Json(MarkerResult {
         dtos,

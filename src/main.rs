@@ -5,6 +5,7 @@ use axum::{
 };
 use std::{sync::Arc, time::Duration};
 
+mod clip;
 mod config;
 mod download_ffmpeg;
 mod error;
@@ -12,6 +13,7 @@ mod ffmpeg;
 mod http;
 mod stash_api;
 mod static_files;
+mod util;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 

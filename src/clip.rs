@@ -1,11 +1,11 @@
-use std::cmp::Ordering;
+use std::cmp::{Ordering, Reverse};
 
 use crate::{
     http::{CreateVideoBody, Marker},
     stash_api::GqlMarker,
     util,
 };
-use rand::{rngs::StdRng, seq::SliceRandom};
+use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Deserialize)]
@@ -23,6 +23,7 @@ pub struct ClipSettings {
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Clip {
+    pub marker_id: String,
     pub range: (u32, u32),
     pub marker_index: usize,
 }
@@ -69,6 +70,7 @@ pub fn get_clips(
     while offset < end {
         let duration = clip_lengths.choose(rng).unwrap();
         clips.push(Clip {
+            marker_id: marker.id.clone(),
             range: (offset, *duration),
             marker_index: index,
         });
@@ -103,6 +105,14 @@ pub fn get_all_clips(output: &CreateVideoBody) -> Vec<MarkerWithClips> {
         .collect()
 }
 
-pub fn compile_clips(clips: Vec<Clip>, order: ClipOrder) {
-    todo!()
+pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder) -> Vec<Clip> {
+    let mut rng = util::create_seeded_rng();
+    let mut clips: Vec<_> = clips
+        .into_iter()
+        .flat_map(|m| m.clips)
+        .map(|c| (c, rng.gen::<u32>()))
+        .collect();
+
+    clips.sort_by_key(|(clip, random)| Reverse((clip.marker_index, *random)));
+    clips.into_iter().map(|(clip, _)| clip).collect()
 }

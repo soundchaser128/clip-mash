@@ -156,32 +156,6 @@ impl Ffmpeg {
         })
     }
 
-    // fn get_clip_offsets(
-    //     &self,
-    //     marker: &Marker,
-    //     clip_duration_max: u32,
-    //     max_duration: Option<u32>,
-    // ) -> Vec<(u32, u32)> {
-    //     let clip_lengths = [
-    //         (clip_duration_max / 2).max(2),
-    //         (clip_duration_max / 3).max(2),
-    //         (clip_duration_max / 4).max(2),
-    //     ];
-
-    //     let mut rng = util::create_seeded_rng();
-    //     let (start, end) = self.get_time_range(marker, max_duration);
-    //     let end = end.unwrap_or(start + clip_duration_max);
-
-    //     let mut offset = start;
-    //     let mut offsets = vec![];
-    //     while offset < end {
-    //         let duration = clip_lengths.choose(&mut rng).unwrap();
-    //         offsets.push((offset, *duration));
-    //         offset += duration;
-    //     }
-    //     offsets
-    // }
-
     async fn create_clip(
         &self,
         url: &str,

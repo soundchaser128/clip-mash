@@ -235,25 +235,11 @@ pub async fn fetch_markers(
         .await?;
 
     let api_key = &config.api_key;
-    let dtos = vec![];
-    // let dtos = gql_markers
-    //     .clone()
-    //     .into_iter()
-    //     .map(|m| {
-    //         let (_, end) = state.ffmpeg.get_time_range(&m, None);
-    //         Marker {
-    //             id: m.id,
-    //             primary_tag: m.primary_tag.name,
-    //             stream_url: add_api_key(&m.stream, api_key),
-    //             screenshot_url: add_api_key(&m.screenshot, api_key),
-    //             start: m.seconds as u32,
-    //             end,
-    //             file_name: m.scene.files[0].basename.clone(),
-    //             performers: m.scene.performers.into_iter().map(|p| p.name).collect(),
-    //             scene_title: m.scene.title,
-    //         }
-    //     })
-    //     .collect();
+    let dtos = gql_markers
+        .clone()
+        .into_iter()
+        .map(|m| Marker::from(m))
+        .collect();
 
     Ok(Json(MarkerResult {
         dtos,

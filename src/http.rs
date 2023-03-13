@@ -19,7 +19,7 @@ use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
 use crate::{
-    clip::{Clip, ClipOrder},
+    clip::{self, Clip, ClipOrder},
     config::{self, Config},
     error::AppError,
     ffmpeg,
@@ -64,9 +64,29 @@ pub struct Marker {
     pub file_name: String,
 }
 
-impl From<GqlMarker> for Marker {
-    fn from(value: GqlMarker) -> Self {
-        todo!()
+impl Marker {
+    pub fn from(value: GqlMarker, api_key: &str) -> Self {
+        Marker {
+            id: value.id,
+            primary_tag: value.primary_tag.name,
+            stream_url: add_api_key(&value.stream, api_key),
+            screenshot_url: add_api_key(&value.screenshot, api_key),
+            start: value.seconds as u32,
+            end: value
+                .scene
+                .scene_markers
+                .iter()
+                .find(|m| m.seconds > value.seconds)
+                .map(|m| m.seconds as u32),
+            scene_title: value.scene.title,
+            performers: value.scene.performers.into_iter().map(|p| p.name).collect(),
+            file_name: value
+                .scene
+                .files
+                .get(0)
+                .map(|f| f.basename.clone())
+                .unwrap_or_else(|| "<no name>".to_string()),
+        }
     }
 }
 
@@ -238,7 +258,7 @@ pub async fn fetch_markers(
     let dtos = gql_markers
         .clone()
         .into_iter()
-        .map(|m| Marker::from(m))
+        .map(|m| Marker::from(m, api_key))
         .collect();
 
     Ok(Json(MarkerResult {
@@ -325,27 +345,8 @@ pub async fn set_config(Json(config): Json<Config>) -> Result<StatusCode, AppErr
 }
 
 #[axum::debug_handler]
-pub async fn fetch_clips(
-    state: State<Arc<AppState>>,
-    Json(body): Json<CreateVideoBody>,
-) -> Json<Vec<Clip>> {
-    // let clips: Vec<_> = body
-    //     .markers
-    //     .iter()
-    //     .map(|marker| {
-    //         let dto = body.selected_markers.iter().find(|m| m.id == marker.id).expect("no matching dto found");
-    //         let range = state.ffmpeg.get_clip_offsets(
-    //             marker,
-    //             body.clip_duration,
-    //             body.selected_markers
-    //                 .iter()
-    //                 .find(|n| n.id == marker.id)
-    //                 .and_then(|m| m.duration),
-    //         );
-
-    //         Clip { marker: dto, range }
-    //     })
-    //     .collect();
-
-    todo!()
+pub async fn fetch_clips(Json(body): Json<CreateVideoBody>) -> Json<Vec<Clip>> {
+    let clips = clip::get_all_clips(&body);
+    let clips = clip::compile_clips(clips, ClipOrder::SceneOrder);
+    Json(clips)
 }

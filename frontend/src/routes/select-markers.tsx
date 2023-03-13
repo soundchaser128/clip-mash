@@ -128,11 +128,11 @@ function SelectMarkers() {
     }
 
     actions.updateForm({
-      stage: FormStage.VideoOptions,
+      stage: FormStage.PreviewClips,
       selectedMarkers,
       markers: data.markers.gql,
     })
-    navigate("/video-options")
+    navigate("/clips")
   }
 
   return (

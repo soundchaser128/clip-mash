@@ -79,6 +79,14 @@ export default function Root() {
             <li
               className={clsx(
                 "step",
+                stage >= FormStage.PreviewClips && "step-primary"
+              )}
+            >
+              Preview clips
+            </li>
+            <li
+              className={clsx(
+                "step",
                 stage >= FormStage.VideoOptions && "step-primary"
               )}
             >

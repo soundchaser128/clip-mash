@@ -65,6 +65,13 @@ pub struct Marker {
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct Clip {
+    pub marker: Marker,
+    pub range: (u32, u32),
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct MarkerResult {
     pub dtos: Vec<Marker>,
     pub gql: Vec<GqlMarker>,
@@ -328,4 +335,30 @@ pub async fn set_config(Json(config): Json<Config>) -> Result<StatusCode, AppErr
     config::set_config(config).await?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[axum::debug_handler]
+pub async fn fetch_clips(
+    state: State<Arc<AppState>>,
+    Json(body): Json<CreateVideoBody>,
+) -> Json<Vec<Clip>> {
+    // let clips: Vec<_> = body
+    //     .markers
+    //     .iter()
+    //     .map(|marker| {
+    //         let dto = body.selected_markers.iter().find(|m| m.id == marker.id).expect("no matching dto found");
+    //         let range = state.ffmpeg.get_clip_offsets(
+    //             marker,
+    //             body.clip_duration,
+    //             body.selected_markers
+    //                 .iter()
+    //                 .find(|n| n.id == marker.id)
+    //                 .and_then(|m| m.duration),
+    //         );
+
+    //         Clip { marker: dto, range }
+    //     })
+    //     .collect();
+
+    todo!()
 }

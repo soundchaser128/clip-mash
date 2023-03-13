@@ -5,6 +5,7 @@ import {FormStage, FormState, SelectedMarker} from "../types/types"
 import {updateForm} from "./actions"
 import {formatDistance, formatDuration} from "date-fns"
 import produce from "immer"
+import clsx from "clsx"
 
 interface Marker {
   id: string
@@ -50,8 +51,15 @@ function getDuration({start, end}: Marker): number {
 }
 
 function formatSeconds(s: number) {
-  // const date =
-  return formatDuration({seconds: s}, {format: ["hours", "minutes", "seconds"]})
+  const date = new Date(s * 1000)
+  return formatDuration(
+    {
+      hours: date.getUTCHours(),
+      minutes: date.getUTCMinutes(),
+      seconds: date.getUTCSeconds(),
+    },
+    {format: ["hours", "minutes", "seconds"]}
+  )
 }
 
 function filterMarkers(markers: Marker[], filter?: string) {
@@ -71,10 +79,8 @@ function filterMarkers(markers: Marker[], filter?: string) {
 function SelectMarkers() {
   const {state, actions} = useStateMachine({updateForm})
   const data = useLoaderData() as Data
-  const [selection, setSelection] = useState<string[]>(
-    () =>
-      state.data.selectedMarkers?.map((s) => s.id) ||
-      data.markers.dtos.map((m) => m.id)
+  const [selection, setSelection] = useState<boolean[]>(() =>
+    data.markers.dtos.map((m) => true)
   )
   const [durations, setDurations] = useState<number[]>(
     data.markers.dtos.map((m) => getDuration(m))
@@ -93,29 +99,37 @@ function SelectMarkers() {
   }
 
   const totalDuration = formatSeconds(
-    markers
-      .filter((m) => selection.includes(m.id))
-      .reduce((total, marker) => total + getDuration(marker), 0)
+    durations
+      .filter((t, index) => selection[index])
+      .reduce((sum, next) => sum + next, 0)
   )
 
-  const onCheckboxChange = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelection((s) => [...s, id])
-    } else {
-      setSelection((s) => s.filter((string) => string !== id))
-    }
+  const onCheckboxChange = (index: number, checked: boolean) => {
+    setSelection((s) =>
+      produce(s, (draft) => {
+        draft[index] = checked
+      })
+    )
   }
 
   const onNextStage = () => {
     const selectedMarkers = []
     for (let i = 0; i < selection.length; i++) {
+      const marker = data.markers.dtos[i]
       const duration = durations[i]
       const selected = selection[i]
+
+      if (selected) {
+        selectedMarkers.push({
+          id: marker.id,
+          duration: duration,
+        })
+      }
     }
 
     actions.updateForm({
       stage: FormStage.VideoOptions,
-      selectedMarkers: [], // todo,
+      selectedMarkers,
       markers: data.markers.gql,
     })
     navigate("/video-options")
@@ -145,7 +159,13 @@ function SelectMarkers() {
       </div>
       <section className="grid grid-cols-4 gap-2 w-full">
         {markers.map((marker, index) => (
-          <article key={marker.id} className="card bg-base-100 shadow-xl">
+          <article
+            key={marker.id}
+            className={clsx(
+              "card card-compact bg-base-100 shadow-xl",
+              !selection[index] && "opacity-50"
+            )}
+          >
             <figure>
               {videoPreview === marker.id && (
                 <video muted autoPlay src={marker.streamUrl} />
@@ -182,6 +202,7 @@ function SelectMarkers() {
                         })
                       )
                     }
+                    disabled={!selection[index]}
                     max={getDuration(marker)}
                     min={15}
                     type="range"
@@ -198,6 +219,7 @@ function SelectMarkers() {
                           onVideoPreviewChange(marker.id, e.target.checked)
                         }
                         checked={videoPreview === marker.id}
+                        disabled={!selection[index]}
                         type="checkbox"
                         className="toggle ml-2"
                       />
@@ -209,9 +231,9 @@ function SelectMarkers() {
                       <input
                         type="checkbox"
                         className="checkbox checkbox-primary ml-2"
-                        checked={selection.includes(marker.id)}
+                        checked={selection[index]}
                         onChange={(e) =>
-                          onCheckboxChange(marker.id, e.target.checked)
+                          onCheckboxChange(index, e.target.checked)
                         }
                       />
                     </label>

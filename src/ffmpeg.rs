@@ -3,9 +3,9 @@ use std::{cmp::Reverse, process::Output};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
-use rand::{rngs::StdRng, seq::SliceRandom, RngCore, SeedableRng};
+use rand::{seq::SliceRandom, RngCore};
 use regex::Regex;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tokio::process::Command;
 
 use crate::{
@@ -54,32 +54,6 @@ pub fn find_stream_url(marker: &Marker) -> &str {
         streams[0]
     );
     &streams[0].url
-}
-
-pub fn formatted_scene(marker: &Marker) -> String {
-    let female_performers: Vec<_> = marker
-        .scene
-        .performers
-        .iter()
-        .filter(|p| {
-            matches!(
-                &p.gender.as_ref().unwrap_or(&GenderEnum::FEMALE),
-                GenderEnum::FEMALE
-            )
-        })
-        .map(|p| p.name.as_str())
-        .collect();
-
-    let title = match &marker.scene.title {
-        Some(title) if title.trim().len() > 0 => title,
-        _ => &marker.scene.files[0].basename,
-    };
-    let performers = female_performers.join(",");
-    let performers = match performers.as_str() {
-        "" => "<no performers found>",
-        _ => &performers,
-    };
-    format!("'{}' ({})", title, performers)
 }
 
 fn commandline_error<T>(output: Output) -> Result<T> {
@@ -204,34 +178,6 @@ impl Ffmpeg {
         }
     }
 
-    async fn write_markers_with_offsets(
-        &self,
-        id: &str,
-        markers: &[(&Marker, Vec<(u32, u32)>)],
-    ) -> Result<()> {
-        #[derive(Serialize)]
-        struct MarkerJson<'a> {
-            scene: String,
-            scene_id: &'a str,
-            offsets: &'a [(u32, u32)],
-            tag: &'a str,
-        }
-
-        let path = self.video_dir.join(format!("markers-{id}.json"));
-        let markers: Vec<_> = markers
-            .iter()
-            .map(|(marker, offsets)| MarkerJson {
-                scene: formatted_scene(marker),
-                offsets,
-                scene_id: marker.scene.id.as_str(),
-                tag: &marker.primary_tag.name,
-            })
-            .collect();
-        let contents = serde_json::to_string_pretty(&markers)?;
-        tokio::fs::write(path, contents).await?;
-        Ok(())
-    }
-
     async fn initialize_progress(&self, total_items: usize) {
         let mut progress = PROGRESS.lock().await;
         progress.total = total_items;
@@ -251,25 +197,6 @@ impl Ffmpeg {
         tokio::fs::create_dir_all(&self.video_dir).await?;
 
         let clips = clip::get_all_clips(&output);
-        // let markers: Vec<_> = output
-        //     .markers
-        //     .iter()
-        //     .map(|m| {
-        //         (
-        //             m,
-        //             self.get_clip_offsets(
-        //                 m,
-        //                 output.clip_duration,
-        //                 output
-        //                     .selected_markers
-        //                     .iter()
-        //                     .find(|n| n.id == m.id)
-        //                     .and_then(|m| m.duration),
-        //             ),
-        //         )
-        //     })
-        //     .collect();
-
         let total_items = clips
             .iter()
             .fold(0, |count, marker| count + marker.clips.len());

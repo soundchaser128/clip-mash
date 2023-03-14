@@ -1,10 +1,6 @@
-use std::cmp::{Ordering, Reverse};
+use std::cmp::Reverse;
 
-use crate::{
-    http::{CreateVideoBody, Marker},
-    stash_api::GqlMarker,
-    util,
-};
+use crate::{http::CreateVideoBody, stash_api::GqlMarker, util};
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 
@@ -105,7 +101,7 @@ pub fn get_all_clips(output: &CreateVideoBody) -> Vec<MarkerWithClips> {
         .collect()
 }
 
-pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder) -> Vec<Clip> {
+pub fn compile_clips(clips: Vec<MarkerWithClips>, _order: ClipOrder) -> Vec<Clip> {
     let mut rng = util::create_seeded_rng();
     let mut clips: Vec<_> = clips
         .into_iter()

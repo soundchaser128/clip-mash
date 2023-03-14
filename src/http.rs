@@ -24,12 +24,7 @@ use crate::{
     error::AppError,
     ffmpeg,
     stash_api::{
-        find_markers_query::{
-            self, CriterionModifier, FindFilterType,
-            FindMarkersQueryFindSceneMarkersSceneMarkers as GqlMarker,
-            HierarchicalMultiCriterionInput, MultiCriterionInput, SceneMarkerFilterType,
-        },
-        find_performers_query, find_tags_query, Api,
+        find_markers_query::FindMarkersQueryFindSceneMarkersSceneMarkers as GqlMarker, Api,
     },
     AppState,
 };
@@ -161,7 +156,7 @@ fn add_api_key(url: &str, api_key: &str) -> String {
 #[axum::debug_handler]
 pub async fn fetch_tags() -> Result<Json<Vec<Tag>>, AppError> {
     let api = Api::load_config().await?;
-    let tags = api.find_tags(find_tags_query::Variables {}).await?;
+    let tags = api.find_tags().await?;
     let mut tags: Vec<_> = tags
         .into_iter()
         .map(|t| Tag {
@@ -182,9 +177,7 @@ pub async fn fetch_tags() -> Result<Json<Vec<Tag>>, AppError> {
 pub async fn fetch_performers() -> Result<Json<Vec<Performer>>, AppError> {
     let config = Config::get().await?;
     let api = Api::from_config(&config);
-    let performers = api
-        .find_performers(find_performers_query::Variables {})
-        .await?;
+    let performers = api.find_performers().await?;
     let mut performers: Vec<_> = performers
         .into_iter()
         .map(|p| Performer {
@@ -204,56 +197,14 @@ pub async fn fetch_performers() -> Result<Json<Vec<Performer>>, AppError> {
 
 #[axum::debug_handler]
 pub async fn fetch_markers(
-    state: State<Arc<AppState>>,
     Query(query): Query<MarkerOptions>,
 ) -> Result<Json<MarkerResult>, AppError> {
     let config = Config::get().await?;
     let api = Api::from_config(&config);
     tracing::info!("fetching markers for query {query:?}");
-
-    let mut scene_filter = SceneMarkerFilterType {
-        created_at: None,
-        scene_created_at: None,
-        scene_updated_at: None,
-        updated_at: None,
-        performers: None,
-        scene_date: None,
-        scene_tags: None,
-        tag_id: None,
-        tags: None,
-    };
-
     let ids: Vec<_> = query.selected_ids.split(',').map(From::from).collect();
 
-    match query.mode {
-        FilterMode::Performers => {
-            scene_filter.performers = Some(MultiCriterionInput {
-                modifier: CriterionModifier::INCLUDES,
-                value: Some(ids),
-            });
-        }
-        FilterMode::Tags => {
-            scene_filter.tags = Some(HierarchicalMultiCriterionInput {
-                depth: None,
-                modifier: CriterionModifier::INCLUDES,
-                value: Some(ids),
-            });
-        }
-    }
-
-    let gql_markers = api
-        .find_markers(find_markers_query::Variables {
-            filter: Some(FindFilterType {
-                per_page: Some(-1),
-                page: None,
-                q: None,
-                sort: None,
-                direction: None,
-            }),
-            scene_marker_filter: Some(scene_filter),
-        })
-        .await?;
-
+    let gql_markers = api.find_markers(ids, query.mode).await?;
     let api_key = &config.api_key;
     let dtos = gql_markers
         .clone()

@@ -37,3 +37,10 @@ export interface FormState {
   stage: FormStage
   id: string
 }
+
+export interface Clip {
+  markerId: string
+  sceneId: string
+  range: [number, number]
+  markerIndex: number
+}

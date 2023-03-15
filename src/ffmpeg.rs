@@ -11,10 +11,8 @@ use tokio::process::Command;
 use crate::{
     clip::{self, Clip, ClipOrder, MarkerWithClips},
     download_ffmpeg,
-    http::CreateVideoBody,
-    stash_api::find_markers_query::{
-        FindMarkersQueryFindSceneMarkersSceneMarkers as Marker, GenderEnum,
-    },
+    http::{CreateClipsBody, CreateVideoBody},
+    stash_api::find_markers_query::FindMarkersQueryFindSceneMarkersSceneMarkers as Marker,
     util, Result,
 };
 
@@ -196,7 +194,12 @@ impl Ffmpeg {
     pub async fn gather_clips(&self, output: &CreateVideoBody) -> Result<Vec<Utf8PathBuf>> {
         tokio::fs::create_dir_all(&self.video_dir).await?;
 
-        let clips = clip::get_all_clips(&output);
+        let clips = clip::get_all_clips(&CreateClipsBody {
+            clip_duration: output.clip_duration,
+            clip_order: output.clip_order,
+            markers: output.markers.clone(),
+            selected_markers: output.selected_markers.clone(),
+        });
         let total_items = clips
             .iter()
             .fold(0, |count, marker| count + marker.clips.len());

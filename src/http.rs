@@ -1,4 +1,4 @@
-use std::{cmp::Reverse, sync::Arc, time::Duration};
+use std::{cmp::Reverse, collections::HashMap, sync::Arc, time::Duration};
 
 use axum::{
     body::StreamBody,
@@ -22,7 +22,7 @@ use crate::{
     clip::{self, Clip, ClipOrder},
     config::{self, Config},
     error::AppError,
-    ffmpeg,
+    ffmpeg::{self, find_stream_url},
     stash_api::{
         find_markers_query::FindMarkersQueryFindSceneMarkersSceneMarkers as GqlMarker, Api,
     },
@@ -126,7 +126,7 @@ impl Resolution {
     }
 }
 
-#[derive(Deserialize, Debug, PartialEq, Eq)]
+#[derive(Clone, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct SelectedMarker {
     pub id: String,
@@ -145,6 +145,15 @@ pub struct CreateVideoBody {
     pub selected_markers: Vec<SelectedMarker>,
     pub markers: Vec<GqlMarker>,
     pub id: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateClipsBody {
+    pub clip_order: ClipOrder,
+    pub clip_duration: u32,
+    pub selected_markers: Vec<SelectedMarker>,
+    pub markers: Vec<GqlMarker>,
 }
 
 fn add_api_key(url: &str, api_key: &str) -> String {
@@ -295,9 +304,20 @@ pub async fn set_config(Json(config): Json<Config>) -> Result<StatusCode, AppErr
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[derive(Serialize)]
+pub struct ClipsResponse {
+    pub clips: Vec<Clip>,
+    pub streams: HashMap<String, String>,
+}
+
 #[axum::debug_handler]
-pub async fn fetch_clips(Json(body): Json<CreateVideoBody>) -> Json<Vec<Clip>> {
+pub async fn fetch_clips(Json(body): Json<CreateClipsBody>) -> Json<ClipsResponse> {
     let clips = clip::get_all_clips(&body);
     let clips = clip::compile_clips(clips, ClipOrder::SceneOrder);
-    Json(clips)
+    let streams: HashMap<String, String> = body
+        .markers
+        .iter()
+        .map(|m| (m.scene.id.clone(), find_stream_url(m).to_string()))
+        .collect();
+    Json(ClipsResponse { clips, streams })
 }

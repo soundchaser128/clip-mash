@@ -129,11 +129,11 @@ function SelectMarkers() {
     }
 
     actions.updateForm({
-      stage: FormStage.PreviewClips,
+      stage: FormStage.VideoOptions,
       selectedMarkers,
       markers: data.markers.gql,
     })
-    navigate("/clips")
+    navigate("/video-options")
   }
 
   return (
@@ -155,16 +155,15 @@ function SelectMarkers() {
         <input
           type="text"
           placeholder="Filter..."
-          className="input input-bordered w-64"
+          className="input input-bordered w-80"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
 
         <input
           type="number"
-          className="input input-bordered place-self-start"
+          className="input input-bordered w-80"
           placeholder="Limit maximum marker length (in seconds)"
-          required
           value={maxMarkerLength || ""}
           onChange={(e) => {
             const num = e.target.valueAsNumber
@@ -172,7 +171,15 @@ function SelectMarkers() {
           }}
           onBlur={() => {
             setDurations((durations) =>
-              durations.map((d) => Math.min(d, maxMarkerLength || Infinity))
+              durations.map((d, index) => {
+                const defaultDuration = getDuration(markers[index])
+                const maxLen = maxMarkerLength || defaultDuration
+                if (d >= maxLen) {
+                  return maxLen
+                } else {
+                  return defaultDuration
+                }
+              })
             )
           }}
         />

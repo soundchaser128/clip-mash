@@ -15,8 +15,8 @@ export enum FormStage {
   SelectMode = 1,
   SelectCriteria = 2,
   SelectMarkers = 3,
-  PreviewClips = 4,
-  VideoOptions = 5,
+  VideoOptions = 4,
+  PreviewClips = 5,
   Wait = 6,
 }
 

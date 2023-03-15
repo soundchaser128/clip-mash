@@ -1,6 +1,8 @@
+import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
-import {LoaderFunction, useLoaderData} from "react-router-dom"
-import {Clip, FormState} from "../types/types"
+import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
+import {Clip, FormStage, FormState} from "../types/types"
+import {updateForm} from "./actions"
 
 interface ClipsResponse {
   clips: Clip[]
@@ -13,8 +15,8 @@ export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/clips", {
     method: "POST",
     body: JSON.stringify({
-      clipOrder: "scene-order",
-      clipDuration: 15,
+      clipOrder: state.data.clipOrder,
+      clipDuration: state.data.clipDuration,
       selectedMarkers: state.data.selectedMarkers,
       markers: state.data.markers,
     }),
@@ -29,8 +31,15 @@ function PreviewClips() {
   const currentClip = data.clips[currentClipIndex]
   const streamUrl = data.streams[currentClip.sceneId]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
+  const {actions} = useStateMachine({updateForm})
+  const navigate = useNavigate()
 
-  const onNextStage = () => {}
+  const onNextStage = () => {
+    actions.updateForm({
+      stage: FormStage.Wait,
+    })
+    navigate("/progress")
+  }
 
   return (
     <>

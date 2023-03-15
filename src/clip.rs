@@ -14,7 +14,7 @@ pub struct ClipSettings {
     pub max_clip_length: u32,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Clip {
     pub scene_id: String,
@@ -101,14 +101,24 @@ pub fn get_all_clips(output: &CreateClipsBody) -> Vec<MarkerWithClips> {
         .collect()
 }
 
-pub fn compile_clips(clips: Vec<MarkerWithClips>, _order: ClipOrder) -> Vec<Clip> {
+pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder) -> Vec<Clip> {
     let mut rng = util::create_seeded_rng();
-    let mut clips: Vec<_> = clips
-        .into_iter()
-        .flat_map(|m| m.clips)
-        .map(|c| (c, rng.gen::<u32>()))
-        .collect();
 
-    clips.sort_by_key(|(clip, random)| (clip.marker_index, *random));
-    clips.into_iter().map(|(clip, _)| clip).collect()
+    match order {
+        ClipOrder::SceneOrder => {
+            let mut clips: Vec<_> = clips
+                .into_iter()
+                .flat_map(|m| m.clips)
+                .map(|c| (c, rng.gen::<u32>()))
+                .collect();
+
+            clips.sort_by_key(|(clip, random)| (clip.marker_index, *random));
+            clips.into_iter().map(|(clip, _)| clip).collect()
+        }
+        ClipOrder::Random => {
+            let mut clips: Vec<_> = clips.into_iter().flat_map(|c| c.clips).collect();
+            clips.shuffle(&mut rng);
+            clips
+        }
+    }
 }

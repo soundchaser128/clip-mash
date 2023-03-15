@@ -1,5 +1,3 @@
-use std::cmp::Reverse;
-
 use crate::{http::CreateClipsBody, stash_api::GqlMarker, util};
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};

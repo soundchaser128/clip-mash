@@ -77,10 +77,10 @@ function filterMarkers(markers: Marker[], filter?: string) {
 }
 
 function SelectMarkers() {
-  const {state, actions} = useStateMachine({updateForm})
+  const {actions} = useStateMachine({updateForm})
   const data = useLoaderData() as Data
   const [selection, setSelection] = useState<boolean[]>(() =>
-    data.markers.dtos.map((m) => true)
+    data.markers.dtos.map(() => true)
   )
   const [durations, setDurations] = useState<number[]>(
     data.markers.dtos.map((m) => getDuration(m))
@@ -89,6 +89,7 @@ function SelectMarkers() {
   const [videoPreview, setVideoPreview] = useState<string>()
   const navigate = useNavigate()
   const markers = filterMarkers(data.markers.dtos, filter)
+  const [maxMarkerLength, setMaxMarkerLength] = useState<number>()
 
   const onVideoPreviewChange = (id: string, checked: boolean) => {
     if (checked) {
@@ -137,14 +138,7 @@ function SelectMarkers() {
 
   return (
     <div>
-      <div className="w-full grid grid-cols-3 mb-4 items-baseline">
-        <input
-          type="text"
-          placeholder="Filter..."
-          className="input input-bordered w-64"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
+      <div className="w-full flex justify-between items-center">
         <div className="text-center">
           Estimated total duration: <strong>{totalDuration}</strong>
         </div>
@@ -156,6 +150,32 @@ function SelectMarkers() {
         >
           Next
         </button>
+      </div>
+      <div className="flex mb-4 gap-2">
+        <input
+          type="text"
+          placeholder="Filter..."
+          className="input input-bordered w-64"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        />
+
+        <input
+          type="number"
+          className="input input-bordered place-self-start"
+          placeholder="Limit maximum marker length (in seconds)"
+          required
+          value={maxMarkerLength || ""}
+          onChange={(e) => {
+            const num = e.target.valueAsNumber
+            setMaxMarkerLength(num)
+          }}
+          onBlur={() => {
+            setDurations((durations) =>
+              durations.map((d) => Math.min(d, maxMarkerLength || Infinity))
+            )
+          }}
+        />
       </div>
       <section className="grid grid-cols-4 gap-2 w-full">
         {markers.map((marker, index) => (

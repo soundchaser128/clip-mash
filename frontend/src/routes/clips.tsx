@@ -30,11 +30,31 @@ function PreviewClips() {
   const streamUrl = data.streams[currentClip.sceneId]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
 
+  const onNextStage = () => {}
+
   return (
     <>
-      <video src={clipUrl} muted controls autoPlay />
+      <div className="mb-4 grid grid-cols-3 items-center">
+        <div></div>
+        <p className=" text-center text-xl">
+          Showing clip{" "}
+          <strong>
+            {currentClipIndex + 1} / {data.clips.length}
+          </strong>
+        </p>
 
-      <div className="flex justify-between">
+        <button
+          type="button"
+          onClick={onNextStage}
+          className="btn btn-success place-self-end"
+        >
+          Next
+        </button>
+      </div>
+
+      <video className="max-h-screen" src={clipUrl} muted controls autoPlay />
+
+      <div className="flex justify-between mt-4">
         <button
           className="btn"
           onClick={() => setCurrentClipIndex((i) => i - 1)}

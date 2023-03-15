@@ -18,9 +18,11 @@ function SelectMode() {
   return (
     <section className="py-4 flex flex-col">
       <div className="flex flex-col items-start gap-4">
-        <div className="flex w-full items-center justify-between">
-          <span>You can filter markers either by performers or by tags.</span>
-        </div>
+        <p className="text-center w-full">
+          Choose how to filter markers: You can filter either by performers or
+          by tags.
+        </p>
+
         <div className="self-center flex gap-2">
           <button
             onClick={() => onNextStage("performers")}

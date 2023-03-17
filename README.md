@@ -14,3 +14,11 @@ are stored in the `videos` subdirectory of where the executable is stored.
 The app requires `ffmpeg` to run, and will attempt to download it, if it isn't installed on your machine.
 This currently only works for Windows and Linux systems, Mac users will have to install it either by 
 downloading the executable and placing it into their `$PATH` or installing it with `brew install ffmpeg`.
+
+## Screenshots
+
+![Step 1](./screenshots/step-1.png)
+
+![Step 2](./screenshots/step-2.png)
+
+![Step 3](./screenshots/step-3.png)

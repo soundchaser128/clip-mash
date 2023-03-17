@@ -13,7 +13,8 @@ import {resetForm} from "./actions"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/config")
-  return response.ok
+  const config = await response.json()
+  return config
 }
 
 export default function Root() {
@@ -22,7 +23,8 @@ export default function Root() {
   const navigate = useNavigate()
   const navigation = useNavigation()
   const isLoading = navigation.state === "loading"
-  const configExists = useLoaderData() as boolean
+  const config = useLoaderData()
+  const configExists = config !== null
 
   useEffect(() => {
     if (!configExists) {

@@ -15,8 +15,22 @@ The app requires `ffmpeg` to run, and will attempt to download it, if it isn't i
 This currently only works for Windows and Linux systems, Mac users will have to install it either by 
 downloading the executable and placing it into their `$PATH` or installing it with `brew install ffmpeg`.
 
-## Screenshots
+## Building
+Requires `cargo`, `rustc` (see http://rustup.rs/) and `node` and `npm` (see https://nodejs.org/en). When those
+tools are installed, build and the application like this:
 
+```shell
+# Build the frontend first, it gets packaged with the executable:
+cd frontend
+npm install
+npm run build
+
+# Then build the frontend, and run it:
+cd ..
+cargo run --release
+```
+
+## Screenshots
 ![Step 1](./screenshots/step-1.png)
 
 ![Step 2](./screenshots/step-2.png)

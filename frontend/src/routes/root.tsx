@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import {useStateMachine} from "little-state-machine"
-import {useEffect} from "react"
+import {PropsWithChildren, useEffect} from "react"
 import {
   LoaderFunction,
   Outlet,
@@ -15,6 +15,33 @@ export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/config")
   const config = await response.json()
   return config
+}
+
+export const styles = {
+  root: "min-h-screen flex flex-col justify-between transition",
+  main: "flex flex-col container ml-auto mr-auto",
+}
+
+export const Footer = () => {
+  return (
+    <footer className="w-full text-center text-sm font-light flex flex-col gap-1 my-4">
+      <p>
+        Made by{" "}
+        <a href="https://soundchaser128.xyz" className="link">
+          soundchaser128
+        </a>
+      </p>
+      <p>
+        This project is open source and available on{" "}
+        <a
+          className="link"
+          href="https://github.com/soundchaser128/stash-compilation-maker"
+        >
+          GitHub
+        </a>
+      </p>
+    </footer>
+  )
 }
 
 export default function Root() {
@@ -44,13 +71,8 @@ export default function Root() {
   }
 
   return (
-    <div
-      className={clsx(
-        "min-h-screen flex flex-col justify-between transition",
-        isLoading && "opacity-25"
-      )}
-    >
-      <main className="container ml-auto mr-auto">
+    <div className={clsx(styles.root, isLoading && "opacity-25")}>
+      <main className={styles.main}>
         <section className="py-4 flex flex-col">
           <h1 className="text-4xl font-bold mb-4 text-center">
             Stash Compilation Generator
@@ -106,23 +128,7 @@ export default function Root() {
           <Outlet />
         </section>
       </main>
-      <footer className="w-full text-center text-sm font-light flex flex-col gap-1 my-4">
-        <p>
-          Made by{" "}
-          <a href="https://soundchaser128.xyz" className="link">
-            soundchaser128
-          </a>
-        </p>
-        <p>
-          This project is open source and available on{" "}
-          <a
-            className="link"
-            href="https://github.com/soundchaser128/stash-compilation-maker"
-          >
-            GitHub
-          </a>
-        </p>
-      </footer>
+      <Footer />
     </div>
   )
 }

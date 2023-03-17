@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
-import {useLoaderData, useNavigate} from "react-router-dom"
+import {json, useLoaderData, useNavigate} from "react-router-dom"
 import {FormStage, Performer, Tag} from "../types/types"
 import {updateForm} from "./actions"
 
@@ -20,9 +20,17 @@ async function fetchPerformers(): Promise<Performer[]> {
 }
 
 export async function loader(): Promise<Data> {
-  const [tags, performers] = await Promise.all([fetchTags(), fetchPerformers()])
-
-  return {tags, performers}
+  try {
+    const [tags, performers] = await Promise.all([
+      fetchTags(),
+      fetchPerformers(),
+    ])
+    return {tags, performers}
+  } catch (e) {
+    const error = e as Error
+    console.error(error)
+    throw json({error: error.toString()}, {status: 500})
+  }
 }
 
 function filterData(data: Data, filter?: string): Data {

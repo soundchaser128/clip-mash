@@ -1,10 +1,15 @@
 import {createStore, StateMachineProvider} from "little-state-machine"
-import React from "react"
+import React, {PropsWithChildren} from "react"
 import ReactDOM from "react-dom/client"
-import {createBrowserRouter, RouterProvider} from "react-router-dom"
+import {
+  createBrowserRouter,
+  isRouteErrorResponse,
+  RouterProvider,
+  useRouteError,
+} from "react-router-dom"
 import "./index.css"
 import SelectMode from "./routes/select-mode"
-import Root from "./routes/root"
+import Root, {Footer, styles} from "./routes/root"
 import SelectCriteria, {
   loader as criteriaLoader,
 } from "./routes/select-criteria"
@@ -17,11 +22,43 @@ import {loader as rootLoader} from "./routes/root"
 import ConfigPage from "./routes/config"
 import PreviewClips, {loader as clipLoader} from "./routes/clips"
 
+const Layout: React.FC<PropsWithChildren> = ({children}) => {
+  return (
+    <div className={styles.root}>
+      <main className={styles.main}>{children}</main>
+      <Footer />
+    </div>
+  )
+}
+
+const ErrorBoundary = () => {
+  const error = useRouteError()
+  if (isRouteErrorResponse(error)) {
+    return (
+      <Layout>
+        <div className="self-center shrink mt-8">
+          <h1 className="font-bold text-3xl mb-4">
+            Sorry, something went wrong!
+          </h1>
+          Details: <code>{error.data.error}</code>
+        </div>
+      </Layout>
+    )
+  }
+
+  return (
+    <Layout>
+      <p>Something went wrong.</p>
+    </Layout>
+  )
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Root />,
     loader: rootLoader,
+    errorElement: <ErrorBoundary />,
     children: [
       {
         index: true,

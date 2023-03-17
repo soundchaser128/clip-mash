@@ -24,7 +24,7 @@ function VideoOptions() {
   })
 
   const onSubmit = (values: Inputs) => {
-    actions.updateForm({...values, stage: FormStage.Wait})
+    actions.updateForm({...values, stage: FormStage.PreviewClips})
     navigate("/clips")
   }
 

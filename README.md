@@ -25,7 +25,7 @@ cd frontend
 npm install
 npm run build
 
-# Then build the frontend, and run it:
+# Then build the backend, and run it:
 cd ..
 cargo run --release
 ```

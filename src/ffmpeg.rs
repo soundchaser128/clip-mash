@@ -263,7 +263,7 @@ impl Ffmpeg {
             .collect();
         let file_content = lines.join("\n");
         tokio::fs::write(self.video_dir.join("clips.txt"), file_content).await?;
-        let file_name = format!("{}.mp4", options.id);
+        let file_name = &options.file_name;
         let destination = self.video_dir.join(&file_name);
 
         let args = vec![

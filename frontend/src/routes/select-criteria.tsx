@@ -1,12 +1,13 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {json, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, Performer, Tag} from "../types/types"
+import {FormStage, Performer, Tag, Scene} from "../types/types"
 import {updateForm} from "./actions"
 
 interface Data {
   performers: Performer[]
   tags: Tag[]
+  scenes: Scene[]
 }
 
 async function fetchTags(): Promise<Tag[]> {
@@ -19,13 +20,18 @@ async function fetchPerformers(): Promise<Performer[]> {
   return await response.json()
 }
 
+async function fetchScenes(): Promise<Scene[]> {
+  return []
+}
+
 export async function loader(): Promise<Data> {
   try {
-    const [tags, performers] = await Promise.all([
+    const [tags, performers, scenes] = await Promise.all([
       fetchTags(),
       fetchPerformers(),
+      fetchScenes(),
     ])
-    return {tags, performers}
+    return {tags, performers, scenes}
   } catch (e) {
     const error = e as Error
     console.error(error)
@@ -44,6 +50,9 @@ function filterData(data: Data, filter?: string): Data {
       tags: data.tags.filter((t) =>
         t.name.toLowerCase().includes(filter.toLowerCase())
       ),
+      scenes: data.scenes.filter((s) =>
+        s.title.toLowerCase().includes(filter.toLowerCase())
+      ),
     }
   }
 }
@@ -58,12 +67,15 @@ function SelectCriteria() {
   )
   const queryType = state.data.selectMode
   const navigate = useNavigate()
+  const [fileNameComponents, setFileNameComponents] = useState<string[]>([])
 
-  const onCheckboxChange = (id: string, checked: boolean) => {
+  const onCheckboxChange = (id: string, checked: boolean, name: string) => {
     if (checked) {
       setSelection((s) => [...s, id])
+      setFileNameComponents((s) => [...s, name])
     } else {
       setSelection((s) => s.filter((string) => string !== id))
+      setFileNameComponents((s) => s.filter((string) => string !== name))
     }
   }
 
@@ -72,6 +84,7 @@ function SelectCriteria() {
       stage: FormStage.SelectMarkers,
       selectedIds: selection,
       selectedMarkers: undefined,
+      fileName: fileNameComponents.join(", "),
     })
     navigate("/select-markers")
   }
@@ -120,7 +133,11 @@ function SelectCriteria() {
                         className="checkbox checkbox-primary ml-2"
                         checked={selection.includes(performer.id)}
                         onChange={(e) =>
-                          onCheckboxChange(performer.id, e.target.checked)
+                          onCheckboxChange(
+                            performer.id,
+                            e.target.checked,
+                            performer.name
+                          )
                         }
                       />
                     </label>
@@ -148,7 +165,7 @@ function SelectCriteria() {
                         className="checkbox checkbox-primary ml-2"
                         checked={selection.includes(tag.id)}
                         onChange={(e) =>
-                          onCheckboxChange(tag.id, e.target.checked)
+                          onCheckboxChange(tag.id, e.target.checked, tag.name)
                         }
                       />
                     </label>

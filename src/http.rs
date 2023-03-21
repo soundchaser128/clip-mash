@@ -146,6 +146,7 @@ pub struct CreateVideoBody {
     pub selected_markers: Vec<SelectedMarker>,
     pub markers: Vec<GqlMarker>,
     pub id: String,
+    pub file_name: String,
 }
 
 #[derive(Deserialize, Debug)]

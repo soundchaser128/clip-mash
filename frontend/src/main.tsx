@@ -38,7 +38,7 @@ const ErrorBoundary = () => {
       <Layout>
         <div className="self-center shrink mt-8">
           <h1 className="font-bold text-3xl mb-4">
-            Sorry, something went wrong!
+            Sorry, something went wrong.
           </h1>
           Details: <code>{error.data.error}</code>
         </div>
@@ -48,7 +48,11 @@ const ErrorBoundary = () => {
 
   return (
     <Layout>
-      <p>Something went wrong.</p>
+      <div className="self-center shrink mt-8">
+        <h1 className="font-bold text-3xl mb-4">
+          Sorry, something went wrong.
+        </h1>
+      </div>
     </Layout>
   )
 }

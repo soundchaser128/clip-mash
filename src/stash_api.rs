@@ -108,6 +108,9 @@ impl Api {
                     value: Some(ids),
                 });
             }
+            FilterMode::Scenes => {
+                
+            }
         }
         let variables = find_markers_query::Variables {
             filter: Some(FindFilterType {

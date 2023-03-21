@@ -97,6 +97,7 @@ pub struct MarkerResult {
 pub enum FilterMode {
     Performers,
     Tags,
+    Scenes,
 }
 
 #[derive(Deserialize, Debug)]

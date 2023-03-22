@@ -46,4 +46,8 @@ export interface Clip {
   markerIndex: number
 }
 
-export interface Scene {}
+export interface Scene {
+  id: string
+  title: string
+  imageUrl: string
+}

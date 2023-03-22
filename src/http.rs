@@ -59,6 +59,14 @@ pub struct Marker {
     pub file_name: String,
 }
 
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Scene {
+    pub id: String,
+    pub title: String,
+    pub image_url: String,
+}
+
 impl Marker {
     pub fn from(value: GqlMarker, api_key: &str) -> Self {
         Marker {
@@ -187,6 +195,7 @@ pub async fn fetch_tags() -> Result<Json<Vec<Tag>>, AppError> {
 #[axum::debug_handler]
 pub async fn fetch_performers() -> Result<Json<Vec<Performer>>, AppError> {
     let config = Config::get().await?;
+    let api_key = &config.api_key;
     let api = Api::from_config(&config);
     let performers = api.find_performers().await?;
     let mut performers: Vec<_> = performers
@@ -227,6 +236,27 @@ pub async fn fetch_markers(
         dtos,
         gql: gql_markers,
     }))
+}
+
+#[axum::debug_handler]
+pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
+    let config = Config::get().await?;
+    let api = Api::from_config(&config);
+    let api_key = &config.api_key;
+    let scenes = api.find_scenes().await?;
+    let scenes = scenes
+        .into_iter()
+        .map(|s| Scene {
+            title: s.title.unwrap_or_default(),
+            id: s.id,
+            image_url: s
+                .paths
+                .screenshot
+                .map(|s| add_api_key(&s, api_key))
+                .unwrap_or_default(),
+        })
+        .collect();
+    Ok(Json(scenes))
 }
 
 async fn create_video_inner(

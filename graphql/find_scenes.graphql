@@ -1,0 +1,13 @@
+query FindScenesQuery {
+  findScenes(scene_filter: {has_markers:"true"}) {
+    scenes {
+      id
+      title
+      paths {
+        screenshot
+        preview
+        sprite
+      }
+    }
+  }
+}

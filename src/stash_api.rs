@@ -8,6 +8,7 @@ use self::{
         HierarchicalMultiCriterionInput, MultiCriterionInput, SceneMarkerFilterType,
     },
     find_performers_query::FindPerformersQueryFindPerformersPerformers as Performer,
+    find_scenes_query::FindScenesQueryFindScenesScenes,
     find_tags_query::FindTagsQueryFindTagsTags as Tag,
 };
 
@@ -37,6 +38,14 @@ pub struct FindMarkersQuery;
 )]
 pub struct FindPerformersQuery;
 
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/find_scenes.graphql",
+    response_derives = "Debug"
+)]
+pub struct FindScenesQuery;
+
 pub struct Api {
     api_url: String,
     api_key: String,
@@ -59,6 +68,24 @@ impl Api {
     pub async fn load_config() -> Result<Self> {
         let config = Config::get().await?;
         Ok(Self::new(&config.stash_url, &config.api_key))
+    }
+
+    pub async fn find_scenes(&self) -> Result<Vec<FindScenesQueryFindScenesScenes>> {
+        let variables = find_scenes_query::Variables {};
+        let request_body = FindScenesQuery::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+        let response: Response<find_scenes_query::ResponseData> = response.json().await?;
+        let scenes = response.data.unwrap().find_scenes.scenes;
+
+        Ok(scenes)
     }
 
     pub async fn find_tags(&self) -> Result<Vec<Tag>> {

@@ -43,6 +43,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/api/tags", get(http::fetch_tags))
         .route("/api/performers", get(http::fetch_performers))
+        .route("/api/scenes", get(http::fetch_scenes))
         .route("/api/markers", get(http::fetch_markers))
         .route("/api/clips", post(http::fetch_clips))
         .route("/api/create", post(http::create_video))

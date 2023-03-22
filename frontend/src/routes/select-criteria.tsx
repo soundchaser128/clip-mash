@@ -21,7 +21,8 @@ async function fetchPerformers(): Promise<Performer[]> {
 }
 
 async function fetchScenes(): Promise<Scene[]> {
-  return []
+  const response = await fetch("/api/scenes")
+  return await response.json()
 }
 
 export async function loader(): Promise<Data> {
@@ -60,7 +61,7 @@ function filterData(data: Data, filter?: string): Data {
 function SelectCriteria() {
   const data = useLoaderData() as Data
   const [filter, setFilter] = useState("")
-  const {tags, performers} = filterData(data, filter)
+  const {tags, performers, scenes} = filterData(data, filter)
   const {state, actions} = useStateMachine({updateForm})
   const [selection, setSelection] = useState<string[]>(
     state.data.selectedIds || []
@@ -166,6 +167,44 @@ function SelectCriteria() {
                         checked={selection.includes(tag.id)}
                         onChange={(e) =>
                           onCheckboxChange(tag.id, e.target.checked, tag.name)
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
+
+      {state.data.selectMode === "scenes" && (
+        <section className="grid grid-cols-4 gap-2 w-full">
+          {scenes.map((scene) => (
+            <article key={scene.id} className="card bg-base-100 shadow-xl">
+              <figure>
+                <img
+                  src={scene.imageUrl}
+                  alt={scene.title}
+                  className="aspect-[16/9] object-cover object-top w-full"
+                />
+              </figure>
+              <div className="card-body">
+                <h2 className="card-title">{scene.title}</h2>
+                <div className="card-actions justify-end">
+                  <div className="form-control">
+                    <label className="label cursor-pointer">
+                      <span className="label-text">Select</span>
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-primary ml-2"
+                        checked={selection.includes(scene.id)}
+                        onChange={(e) =>
+                          onCheckboxChange(
+                            scene.id,
+                            e.target.checked,
+                            scene.title
+                          )
                         }
                       />
                     </label>

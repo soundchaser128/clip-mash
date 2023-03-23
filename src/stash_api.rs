@@ -1,7 +1,3 @@
-use crate::{config::Config, http::FilterMode, Result};
-use graphql_client::{GraphQLQuery, Response};
-use reqwest::Client;
-
 use self::{
     find_markers_query::{
         CriterionModifier, FindFilterType, FindMarkersQueryFindSceneMarkersSceneMarkers,
@@ -11,6 +7,9 @@ use self::{
     find_scenes_query::FindScenesQueryFindScenesScenes,
     find_tags_query::FindTagsQueryFindTagsTags as Tag,
 };
+use crate::{config::Config, http::FilterMode, Result};
+use graphql_client::{GraphQLQuery, Response};
+use reqwest::Client;
 
 pub type GqlMarker = FindMarkersQueryFindSceneMarkersSceneMarkers;
 
@@ -71,7 +70,30 @@ impl Api {
     }
 
     pub async fn find_scenes(&self) -> Result<Vec<FindScenesQueryFindScenesScenes>> {
-        let variables = find_scenes_query::Variables {};
+        let variables = find_scenes_query::Variables { scene_ids: None };
+        let request_body = FindScenesQuery::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+        let response: Response<find_scenes_query::ResponseData> = response.json().await?;
+        let scenes = response.data.unwrap().find_scenes.scenes;
+
+        Ok(scenes)
+    }
+
+    pub async fn find_scenes_by_ids(
+        &self,
+        ids: Vec<i64>,
+    ) -> Result<Vec<FindScenesQueryFindScenesScenes>> {
+        let variables = find_scenes_query::Variables {
+            scene_ids: Some(ids),
+        };
         let request_body = FindScenesQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
         let response = self
@@ -135,7 +157,13 @@ impl Api {
                     value: Some(ids),
                 });
             }
-            FilterMode::Scenes => {}
+            FilterMode::Scenes => {
+                let ids = ids
+                    .into_iter()
+                    .map(|s| s.parse().expect("not number id"))
+                    .collect();
+                let scenes = self.find_scenes_by_ids(ids).await?;
+            }
         }
         let variables = find_markers_query::Variables {
             filter: Some(FindFilterType {

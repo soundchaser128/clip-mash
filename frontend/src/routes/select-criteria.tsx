@@ -191,6 +191,7 @@ function SelectCriteria() {
               </figure>
               <div className="card-body">
                 <h2 className="card-title">{scene.title}</h2>
+                <p>{scene.performers.join(", ")}</p>
                 <div className="card-actions justify-end">
                   <div className="form-control">
                     <label className="label cursor-pointer">

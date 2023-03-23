@@ -1,8 +1,20 @@
-query FindScenesQuery {
-  findScenes(scene_filter: {has_markers:"true"}) {
+query FindScenesQuery($scene_ids: [Int!]) {
+  findScenes(scene_filter: {has_markers: "true"}, scene_ids: $scene_ids) {
     scenes {
       id
       title
+      performers {
+        name
+      }
+      scene_markers {
+        id
+        seconds
+        stream
+        screenshot
+        primary_tag {
+          name
+        }
+      }
       paths {
         screenshot
         preview

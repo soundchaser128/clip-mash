@@ -65,6 +65,7 @@ pub struct Scene {
     pub id: String,
     pub title: String,
     pub image_url: String,
+    pub performers: Vec<String>,
 }
 
 impl Marker {
@@ -195,7 +196,6 @@ pub async fn fetch_tags() -> Result<Json<Vec<Tag>>, AppError> {
 #[axum::debug_handler]
 pub async fn fetch_performers() -> Result<Json<Vec<Performer>>, AppError> {
     let config = Config::get().await?;
-    let api_key = &config.api_key;
     let api = Api::from_config(&config);
     let performers = api.find_performers().await?;
     let mut performers: Vec<_> = performers
@@ -247,8 +247,9 @@ pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
     let scenes = scenes
         .into_iter()
         .map(|s| Scene {
-            title: s.title.unwrap_or_default(),
             id: s.id,
+            title: s.title.unwrap_or_default(),
+            performers: s.performers.into_iter().map(|p| p.name).collect(),
             image_url: s
                 .paths
                 .screenshot

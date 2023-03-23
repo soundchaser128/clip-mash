@@ -50,4 +50,5 @@ export interface Scene {
   id: string
   title: string
   imageUrl: string
+  performers: string[]
 }

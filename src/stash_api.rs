@@ -10,8 +10,9 @@ use self::{
 use crate::{config::Config, http::FilterMode, Result};
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::Client;
+use serde::{Serialize, Deserialize};
 
-pub type GqlMarker = FindMarkersQueryFindSceneMarkersSceneMarkers;
+// pub type GqlMarker = FindMarkersQueryFindSceneMarkersSceneMarkers;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -44,6 +45,28 @@ pub struct FindPerformersQuery;
     response_derives = "Debug"
 )]
 pub struct FindScenesQuery;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Marker {
+    pub id: String,
+    pub primary_tag: String,
+    pub stream_url: String,
+    pub screenshot_url: String,
+    pub start: u32,
+    pub end: Option<u32>,
+    pub scene_title: Option<String>,
+    pub performers: Vec<String>,
+    pub file_name: String,
+    // TOOD refactor
+    pub seconds: u32
+}
+
+impl From<FindMarkersQueryFindSceneMarkersSceneMarkers> for Marker {
+    fn from(value: FindMarkersQueryFindSceneMarkersSceneMarkers) -> Self {
+        todo!()
+    }
+}
 
 pub struct Api {
     api_url: String,
@@ -130,7 +153,7 @@ impl Api {
         Ok(tags)
     }
 
-    pub async fn find_markers(&self, ids: Vec<String>, mode: FilterMode) -> Result<Vec<GqlMarker>> {
+    pub async fn find_markers(&self, ids: Vec<String>, mode: FilterMode) -> Result<Vec<Marker>> {
         let mut scene_filter = SceneMarkerFilterType {
             created_at: None,
             scene_created_at: None,

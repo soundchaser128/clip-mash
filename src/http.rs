@@ -23,9 +23,7 @@ use crate::{
     config::{self, Config},
     error::AppError,
     ffmpeg::{self, find_stream_url},
-    stash_api::{
-        find_markers_query::FindMarkersQueryFindSceneMarkersSceneMarkers as GqlMarker, Api,
-    },
+    stash_api::{Api, Marker},
     AppState,
 };
 
@@ -47,20 +45,6 @@ pub struct Performer {
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Marker {
-    pub id: String,
-    pub primary_tag: String,
-    pub stream_url: String,
-    pub screenshot_url: String,
-    pub start: u32,
-    pub end: Option<u32>,
-    pub scene_title: Option<String>,
-    pub performers: Vec<String>,
-    pub file_name: String,
-}
-
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct Scene {
     pub id: String,
     pub title: String,
@@ -68,37 +52,11 @@ pub struct Scene {
     pub performers: Vec<String>,
 }
 
-impl Marker {
-    pub fn from(value: GqlMarker, api_key: &str) -> Self {
-        Marker {
-            id: value.id,
-            primary_tag: value.primary_tag.name,
-            stream_url: add_api_key(&value.stream, api_key),
-            screenshot_url: add_api_key(&value.screenshot, api_key),
-            start: value.seconds as u32,
-            end: value
-                .scene
-                .scene_markers
-                .iter()
-                .find(|m| m.seconds > value.seconds)
-                .map(|m| m.seconds as u32),
-            scene_title: value.scene.title,
-            performers: value.scene.performers.into_iter().map(|p| p.name).collect(),
-            file_name: value
-                .scene
-                .files
-                .get(0)
-                .map(|f| f.basename.clone())
-                .unwrap_or_else(|| "<no name>".to_string()),
-        }
-    }
-}
-
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkerResult {
     pub dtos: Vec<Marker>,
-    pub gql: Vec<GqlMarker>,
+    // pub gql: Vec<GqlMarker>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -153,7 +111,7 @@ pub struct CreateVideoBody {
     pub output_resolution: Resolution,
     pub output_fps: u32,
     pub selected_markers: Vec<SelectedMarker>,
-    pub markers: Vec<GqlMarker>,
+    pub markers: Vec<Marker>,
     pub id: String,
     pub file_name: String,
 }
@@ -164,7 +122,7 @@ pub struct CreateClipsBody {
     pub clip_order: ClipOrder,
     pub clip_duration: u32,
     pub selected_markers: Vec<SelectedMarker>,
-    pub markers: Vec<GqlMarker>,
+    pub markers: Vec<Marker>,
 }
 
 fn add_api_key(url: &str, api_key: &str) -> String {

@@ -1,4 +1,4 @@
-use crate::{http::CreateClipsBody, stash_api::GqlMarker, util};
+use crate::{http::CreateClipsBody, stash_api::Marker, util};
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 
@@ -24,11 +24,11 @@ pub struct Clip {
 }
 
 pub struct MarkerWithClips {
-    pub marker: GqlMarker,
+    pub marker: Marker,
     pub clips: Vec<Clip>,
 }
 
-pub fn get_time_range(marker: &GqlMarker, max_duration: Option<u32>) -> (u32, Option<u32>) {
+pub fn get_time_range(marker: &Marker, max_duration: Option<u32>) -> (u32, Option<u32>) {
     let start = marker.seconds;
     let next_marker = marker
         .scene
@@ -45,7 +45,7 @@ pub fn get_time_range(marker: &GqlMarker, max_duration: Option<u32>) -> (u32, Op
 }
 
 pub fn get_clips(
-    marker: &GqlMarker,
+    marker: &Marker,
     settings: &ClipSettings,
     max_duration: Option<u32>,
     rng: &mut StdRng,

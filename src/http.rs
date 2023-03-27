@@ -56,7 +56,6 @@ pub struct Scene {
 #[serde(rename_all = "camelCase")]
 pub struct MarkerResult {
     pub dtos: Vec<Marker>,
-    // pub gql: Vec<GqlMarker>,
 }
 
 #[derive(Deserialize, Debug)]

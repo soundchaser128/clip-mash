@@ -16,8 +16,6 @@ use graphql_client::{GraphQLQuery, Response};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-// pub type GqlMarker = FindMarkersQueryFindSceneMarkersSceneMarkers;
-
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.json",

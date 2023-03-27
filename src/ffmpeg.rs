@@ -58,8 +58,10 @@ fn commandline_error<T>(output: Output) -> Result<T> {
     let stdout = std::str::from_utf8(&output.stdout).unwrap();
     let stderr = std::str::from_utf8(&output.stderr).unwrap();
     Err(format!(
-        "ffmpeg failed with nonzero exit code, stdout:\n{}\nstderr:\n{}",
-        stdout, stderr
+        "ffmpeg failed with exit code {}, stdout:\n{}\nstderr:\n{}",
+        output.status.code().unwrap_or(1),
+        stdout,
+        stderr
     )
     .into())
 }
@@ -168,6 +170,8 @@ impl Ffmpeg {
             "48000",
             out_file.as_str(),
         ];
+        tracing::info!("executing command ffmpeg {}", args.join(" "));
+
         let output = Command::new(self.path.as_str()).args(args).output().await?;
         if !output.status.success() {
             commandline_error(output)

@@ -2,7 +2,7 @@ use std::{cmp::Reverse, collections::HashMap, sync::Arc, time::Duration};
 
 use axum::{
     body::StreamBody,
-    extract::{Path, Query, State},
+    extract::{Query, State},
     response::{
         sse::{Event, KeepAlive},
         IntoResponse, Sse,
@@ -19,7 +19,7 @@ use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
 use crate::{
-    clip::{self, Clip, ClipOrder},
+    clip::{self, Clip, ClipOrder, MarkerWithClips},
     config::{self, Config},
     error::AppError,
     ffmpeg::{self, find_stream_url},
@@ -58,7 +58,7 @@ pub struct MarkerResult {
     pub dtos: Vec<Marker>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum FilterMode {
     Performers,
@@ -113,6 +113,7 @@ pub struct CreateVideoBody {
     pub markers: Vec<Marker>,
     pub id: String,
     pub file_name: String,
+    pub clips: Vec<MarkerWithClips>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -122,6 +123,7 @@ pub struct CreateClipsBody {
     pub clip_duration: u32,
     pub selected_markers: Vec<SelectedMarker>,
     pub markers: Vec<Marker>,
+    pub select_mode: FilterMode,
 }
 
 pub fn add_api_key(url: &str, api_key: &str) -> String {
@@ -299,7 +301,7 @@ pub struct ClipsResponse {
 #[axum::debug_handler]
 pub async fn fetch_clips(Json(body): Json<CreateClipsBody>) -> Json<ClipsResponse> {
     let clips = clip::get_all_clips(&body);
-    let clips = clip::compile_clips(clips, ClipOrder::SceneOrder);
+    let clips = clip::compile_clips(clips, body.clip_order, body.select_mode);
     let streams: HashMap<String, String> = body
         .markers
         .iter()

@@ -203,6 +203,7 @@ impl Ffmpeg {
             clip_order: output.clip_order,
             markers: output.markers.clone(),
             selected_markers: output.selected_markers.clone(),
+            select_mode: output.select_mode,
         });
         let total_items = clips
             .iter()
@@ -247,19 +248,11 @@ impl Ffmpeg {
 
     pub async fn compile_clips(
         &self,
-        mut clips: Vec<Utf8PathBuf>,
         options: &CreateVideoBody,
     ) -> Result<Utf8PathBuf> {
-        tracing::info!("assembling {} clips into video", clips.len());
+        tracing::info!("assembling {} clips into video", options.clips.len());
 
-        let clips = match options.clip_order {
-            ClipOrder::Random => {
-                let mut rng = rand::thread_rng();
-                clips.shuffle(&mut rng);
-                clips
-            }
-            ClipOrder::SceneOrder => intersperse_scene_clips(clips),
-        };
+        let clips = clip::compile_clips(options.clips, options.clip_order, options.select_mode);
 
         let lines: Vec<_> = clips
             .into_iter()

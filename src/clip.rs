@@ -1,4 +1,10 @@
-use crate::{http::CreateClipsBody, stash_api::Marker, util};
+use std::cmp::Reverse;
+
+use crate::{
+    http::{CreateClipsBody, FilterMode},
+    stash_api::Marker,
+    util,
+};
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 
@@ -101,19 +107,25 @@ pub fn get_all_clips(output: &CreateClipsBody) -> Vec<MarkerWithClips> {
         .collect()
 }
 
-pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder) -> Vec<Clip> {
+pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder, mode: FilterMode) -> Vec<Clip> {
     let mut rng = util::create_seeded_rng();
 
     match order {
         ClipOrder::SceneOrder => {
-            let mut clips: Vec<_> = clips
-                .into_iter()
-                .flat_map(|m| m.clips)
-                .map(|c| (c, rng.gen::<u32>()))
-                .collect();
+            if let FilterMode::Scenes = mode {
+                let mut clips: Vec<_> = clips.into_iter().flat_map(|c| c.clips).collect();
+                clips.sort_by_key(|c| Reverse(c.range.0));
+                clips
+            } else {
+                let mut clips: Vec<_> = clips
+                    .into_iter()
+                    .flat_map(|m| m.clips)
+                    .map(|c| (c, rng.gen::<u32>()))
+                    .collect();
 
-            clips.sort_by_key(|(clip, random)| (clip.marker_index, *random));
-            clips.into_iter().map(|(clip, _)| clip).collect()
+                clips.sort_by_key(|(clip, random)| (clip.marker_index, *random));
+                clips.into_iter().map(|(clip, _)| clip).collect()
+            }
         }
         ClipOrder::Random => {
             let mut clips: Vec<_> = clips.into_iter().flat_map(|c| c.clips).collect();

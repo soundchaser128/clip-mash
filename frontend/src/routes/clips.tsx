@@ -19,6 +19,7 @@ export const loader: LoaderFunction = async () => {
       clipDuration: state.data.clipDuration,
       selectedMarkers: state.data.selectedMarkers,
       markers: state.data.markers,
+      selectMode: state.data.selectMode,
     }),
     headers: {"content-type": "application/json"},
   })

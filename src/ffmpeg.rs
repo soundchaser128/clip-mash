@@ -12,7 +12,7 @@ use crate::{
     clip::{self, Clip, ClipOrder, MarkerWithClips},
     download_ffmpeg,
     http::{CreateClipsBody, CreateVideoBody},
-    stash_api::find_markers_query::FindMarkersQueryFindSceneMarkersSceneMarkers as Marker,
+    stash_api::Marker,
     util, Result,
 };
 

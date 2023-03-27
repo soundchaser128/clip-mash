@@ -3,8 +3,15 @@ query FindScenesQuery($scene_ids: [Int!]) {
     scenes {
       id
       title
+      files {
+        basename
+      }
       performers {
         name
+      }
+      sceneStreams {
+        url
+        label
       }
       scene_markers {
         id

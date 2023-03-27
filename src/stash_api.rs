@@ -7,10 +7,14 @@ use self::{
     find_scenes_query::FindScenesQueryFindScenesScenes,
     find_tags_query::FindTagsQueryFindTagsTags as Tag,
 };
-use crate::{config::Config, http::FilterMode, Result};
+use crate::{
+    config::Config,
+    http::{add_api_key, FilterMode},
+    Result,
+};
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::Client;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // pub type GqlMarker = FindMarkersQueryFindSceneMarkersSceneMarkers;
 
@@ -58,13 +62,112 @@ pub struct Marker {
     pub scene_title: Option<String>,
     pub performers: Vec<String>,
     pub file_name: String,
-    // TOOD refactor
-    pub seconds: u32
+    pub scene: Scene,
 }
 
-impl From<FindMarkersQueryFindSceneMarkersSceneMarkers> for Marker {
-    fn from(value: FindMarkersQueryFindSceneMarkersSceneMarkers) -> Self {
-        todo!()
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Scene {
+    pub id: String,
+    pub scene_markers: Vec<SceneMarker>,
+    pub scene_streams: Vec<Stream>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Stream {
+    pub url: String,
+    pub label: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SceneMarker {
+    pub start: u32,
+}
+
+impl Marker {
+    pub fn from_marker(value: FindMarkersQueryFindSceneMarkersSceneMarkers, api_key: &str) -> Self {
+        let end = value
+            .scene
+            .scene_markers
+            .iter()
+            .find(|m| m.seconds > value.seconds)
+            .map(|m| m.seconds as u32);
+
+        Marker {
+            id: value.id,
+            start: value.seconds as u32,
+            end,
+            file_name: value.scene.files[0].basename.clone(),
+            performers: value.scene.performers.into_iter().map(|p| p.name).collect(),
+            primary_tag: value.primary_tag.name,
+            scene_title: value.scene.title,
+            screenshot_url: add_api_key(&value.screenshot, api_key),
+            stream_url: add_api_key(&value.stream, api_key),
+            scene: Scene {
+                id: value.scene.id,
+                scene_markers: value
+                    .scene
+                    .scene_markers
+                    .into_iter()
+                    .map(|m| SceneMarker {
+                        start: m.seconds as u32,
+                    })
+                    .collect(),
+                scene_streams: value
+                    .scene
+                    .scene_streams
+                    .into_iter()
+                    .map(|s| Stream {
+                        label: s.label,
+                        url: s.url,
+                    })
+                    .collect(),
+            },
+        }
+    }
+
+    fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Marker> {
+        let mut markers = vec![];
+
+        for marker in &scene.scene_markers {
+            let end = scene
+                .scene_markers
+                .iter()
+                .find(|m| m.seconds > marker.seconds)
+                .map(|m| m.seconds as u32);
+            markers.push(Marker {
+                id: marker.id.clone(),
+                primary_tag: marker.primary_tag.name.clone(),
+                stream_url: add_api_key(&marker.stream, api_key),
+                screenshot_url: add_api_key(&marker.screenshot, api_key),
+                start: marker.seconds as u32,
+                end,
+                file_name: scene.files[0].basename.clone(),
+                scene_title: scene.title.clone(),
+                performers: scene.performers.iter().map(|p| p.name.clone()).collect(),
+                scene: Scene {
+                    id: scene.id.clone(),
+                    scene_markers: scene
+                        .scene_markers
+                        .iter()
+                        .map(|m| SceneMarker {
+                            start: m.seconds as u32,
+                        })
+                        .collect(),
+                    scene_streams: scene
+                        .scene_streams
+                        .iter()
+                        .map(|s| Stream {
+                            label: s.label.clone(),
+                            url: s.url.clone(),
+                        })
+                        .collect(),
+                },
+            })
+        }
+        markers
     }
 }
 
@@ -186,6 +289,11 @@ impl Api {
                     .map(|s| s.parse().expect("not number id"))
                     .collect();
                 let scenes = self.find_scenes_by_ids(ids).await?;
+
+                return Ok(scenes
+                    .into_iter()
+                    .flat_map(|s| Marker::from_scene(s, &self.api_key))
+                    .collect());
             }
         }
         let variables = find_markers_query::Variables {
@@ -212,7 +320,11 @@ impl Api {
 
         let response: Response<find_markers_query::ResponseData> = response.json().await?;
         let markers = response.data.unwrap();
-        Ok(markers.find_scene_markers.scene_markers)
+        let markers = markers.find_scene_markers.scene_markers;
+        Ok(markers
+            .into_iter()
+            .map(|m| Marker::from_marker(m, &self.api_key))
+            .collect())
     }
 
     pub async fn find_performers(&self) -> Result<Vec<Performer>> {

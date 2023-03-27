@@ -125,7 +125,7 @@ pub struct CreateClipsBody {
     pub markers: Vec<Marker>,
 }
 
-fn add_api_key(url: &str, api_key: &str) -> String {
+pub fn add_api_key(url: &str, api_key: &str) -> String {
     let mut url = Url::parse(url).expect("invalid url");
     url.query_pairs_mut().append_pair("apikey", api_key);
     url.to_string()
@@ -182,18 +182,8 @@ pub async fn fetch_markers(
     tracing::info!("fetching markers for query {query:?}");
     let ids: Vec<_> = query.selected_ids.split(',').map(From::from).collect();
 
-    let gql_markers = api.find_markers(ids, query.mode).await?;
-    let api_key = &config.api_key;
-    let dtos = gql_markers
-        .clone()
-        .into_iter()
-        .map(|m| Marker::from(m, api_key))
-        .collect();
-
-    Ok(Json(MarkerResult {
-        dtos,
-        gql: gql_markers,
-    }))
+    let markers = api.find_markers(ids, query.mode).await?;
+    Ok(Json(MarkerResult { dtos: markers }))
 }
 
 #[axum::debug_handler]

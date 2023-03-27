@@ -29,16 +29,16 @@ pub struct MarkerWithClips {
 }
 
 pub fn get_time_range(marker: &Marker, max_duration: Option<u32>) -> (u32, Option<u32>) {
-    let start = marker.seconds;
+    let start = marker.start;
     let next_marker = marker
         .scene
         .scene_markers
         .iter()
-        .find(|m| m.seconds > marker.seconds);
+        .find(|m| m.start > marker.start);
     if let Some(max_duration) = max_duration {
         (start as u32, Some(start as u32 + max_duration))
     } else if let Some(next) = next_marker {
-        (start as u32, Some(next.seconds as u32))
+        (start as u32, Some(next.start as u32))
     } else {
         (start as u32, None)
     }

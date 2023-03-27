@@ -81,11 +81,12 @@ function SelectCriteria() {
   }
 
   const onNextStage = () => {
+    const fileName = Array.from(new Set(fileNameComponents).values()).join(", ")
     actions.updateForm({
       stage: FormStage.SelectMarkers,
       selectedIds: selection,
       selectedMarkers: undefined,
-      fileName: fileNameComponents.join(", "),
+      fileName: `${fileName}.mp4`,
     })
     navigate("/select-markers")
   }

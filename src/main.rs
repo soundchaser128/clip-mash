@@ -48,13 +48,13 @@ async fn main() -> Result<()> {
         .route("/api/clips", post(http::fetch_clips))
         .route("/api/create", post(http::create_video))
         .route("/api/progress", get(http::get_progress))
-        .route("/api/download/:id", get(http::download_video))
+        .route("/api/download", get(http::download_video))
         .route("/api/config", get(http::get_config))
         .route("/api/config", post(http::set_config))
         .fallback_service(static_files::service())
         .with_state(state);
 
-    let addr = "0.0.0.0:5174";
+    let addr = "[::1]:5174";
     tracing::info!("running at {}", addr);
     tokio::spawn(async move {
         tokio::time::sleep(Duration::from_millis(500)).await;

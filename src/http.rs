@@ -246,18 +246,24 @@ pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FilenameQuery {
+    file_name: String,
+}
+
 #[axum::debug_handler]
 pub async fn download_video(
     state: State<Arc<AppState>>,
-    Path(id): Path<String>,
+    Query(FilenameQuery { file_name }): Query<FilenameQuery>,
 ) -> Result<impl IntoResponse, AppError> {
     use axum::{http::header, response::AppendHeaders};
 
-    tracing::info!("downloading video {id}");
-    let path = state.ffmpeg.video_dir.join(format!("{id}.mp4"));
+    tracing::info!("downloading video {file_name}");
+    let path = state.ffmpeg.video_dir.join(&file_name);
     let file = tokio::fs::File::open(path).await?;
     let stream = ReaderStream::new(file);
-    let content_disposition = format!("attachment; filename=\"{}.mp4\"", id);
+    let content_disposition = format!("attachment; filename=\"{}\"", file_name);
 
     let headers = AppendHeaders([
         (header::CONTENT_TYPE, "video/mp4".to_string()),

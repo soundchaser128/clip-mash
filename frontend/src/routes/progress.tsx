@@ -62,7 +62,7 @@ function Progress() {
           <p>You can download your finished video here:</p>
           <a
             href={`/api/download?fileName=${encodeURIComponent(
-              state.data.fileName
+              state.data.fileName!
             )}`}
             className="btn btn-success btn-lg"
             download

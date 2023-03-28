@@ -38,6 +38,7 @@ function PreviewClips() {
   const onNextStage = () => {
     actions.updateForm({
       stage: FormStage.Wait,
+      clips: data.clips,
     })
     navigate("/progress")
   }

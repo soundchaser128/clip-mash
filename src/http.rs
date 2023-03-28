@@ -216,8 +216,7 @@ async fn create_video_inner(
     body.markers
         .retain(|e| body.selected_markers.iter().any(|m| m.id == e.id));
     let clips = state.ffmpeg.gather_clips(&body).await?;
-    state.ffmpeg.compile_clips(clips, &body).await?;
-
+    state.ffmpeg.compile_clips(&body, clips).await?;
     Ok(())
 }
 

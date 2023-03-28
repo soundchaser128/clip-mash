@@ -29,6 +29,8 @@ pub struct Clip {
     pub marker_index: usize,
 }
 
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct MarkerWithClips {
     pub marker: Marker,
     pub clips: Vec<Clip>,

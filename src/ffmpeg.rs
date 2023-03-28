@@ -1,19 +1,17 @@
-use std::{cmp::Reverse, process::Output};
+use std::process::Output;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
-use rand::{seq::SliceRandom, RngCore};
-use regex::Regex;
 use serde::Serialize;
 use tokio::process::Command;
 
 use crate::{
-    clip::{self, Clip, ClipOrder, MarkerWithClips},
+    clip::{self, Clip, MarkerWithClips},
     download_ffmpeg,
     http::{CreateClipsBody, CreateVideoBody},
     stash_api::Marker,
-    util, Result,
+    Result,
 };
 
 #[derive(Debug, Default, Clone, Serialize)]
@@ -68,56 +66,6 @@ fn commandline_error<T>(output: Output) -> Result<T> {
 
 pub async fn get_progress() -> Progress {
     PROGRESS.lock().await.clone()
-}
-
-#[derive(Debug)]
-struct ParsedClip {
-    scene_id: u32,
-    path: Utf8PathBuf,
-}
-
-impl ParsedClip {
-    fn from_path(path: Utf8PathBuf) -> Self {
-        lazy_static! {
-            static ref FILE_REGEX: Regex = Regex::new(r#"(\d+)_(\d+)-(\d+)\.mp4"#).unwrap();
-        }
-
-        let filename = path.file_name().expect("path must have file name");
-        let matches = FILE_REGEX.captures(filename);
-        let (scene_id, _) = match matches {
-            Some(matches) => {
-                let scene_id = matches.get(1).unwrap().as_str();
-                let scene_id: u32 = scene_id.parse().unwrap();
-
-                let start = matches.get(2).unwrap().as_str();
-                let start: u32 = start.parse().unwrap();
-
-                (scene_id, start)
-            }
-            None => (0, 0),
-        };
-        ParsedClip { path, scene_id }
-    }
-}
-
-fn intersperse_scene_clips(clips: Vec<Utf8PathBuf>) -> Vec<Utf8PathBuf> {
-    use itertools::Itertools;
-
-    let mut clips: Vec<_> = clips.into_iter().map(ParsedClip::from_path).collect();
-    clips.sort_by_key(|c| c.scene_id);
-
-    let iter = clips.into_iter().group_by(|c| c.scene_id);
-    let mut rng = util::create_seeded_rng();
-    let mut clips = vec![];
-    for (_, group) in &iter {
-        for (idx, clip) in group.enumerate() {
-            let rand = rng.next_u32();
-            clips.push((idx, rand, clip));
-        }
-    }
-
-    clips.sort_by_key(|(idx, rand, _)| Reverse((*idx, *rand)));
-    clips.into_iter().map(|(_, _, c)| c.path).collect()
 }
 
 impl Ffmpeg {
@@ -197,14 +145,7 @@ impl Ffmpeg {
 
     pub async fn gather_clips(&self, output: &CreateVideoBody) -> Result<Vec<Utf8PathBuf>> {
         tokio::fs::create_dir_all(&self.video_dir).await?;
-
-        let clips = clip::get_all_clips(&CreateClipsBody {
-            clip_duration: output.clip_duration,
-            clip_order: output.clip_order,
-            markers: output.markers.clone(),
-            selected_markers: output.selected_markers.clone(),
-            select_mode: output.select_mode,
-        });
+        let clips = &output.clips;
         let total_items = clips
             .iter()
             .fold(0, |count, marker| count + marker.clips.len());
@@ -227,7 +168,7 @@ impl Ffmpeg {
                     tracing::info!("creating clip {out_file}");
                     self.create_clip(
                         url,
-                        start,
+                        *start,
                         end - start,
                         width,
                         height,
@@ -249,11 +190,9 @@ impl Ffmpeg {
     pub async fn compile_clips(
         &self,
         options: &CreateVideoBody,
+        clips: Vec<Utf8PathBuf>,
     ) -> Result<Utf8PathBuf> {
         tracing::info!("assembling {} clips into video", options.clips.len());
-
-        let clips = clip::compile_clips(options.clips, options.clip_order, options.select_mode);
-
         let lines: Vec<_> = clips
             .into_iter()
             .map(|file| format!("file '{}", file.file_name().unwrap()))

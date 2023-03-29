@@ -1,8 +1,13 @@
-use std::{cmp::Reverse, collections::HashMap, sync::Arc, time::Duration};
+use std::{
+    cmp::Reverse,
+    collections::{BTreeSet, HashMap},
+    sync::Arc,
+    time::Duration,
+};
 
 use axum::{
     body::StreamBody,
-    extract::{Path, Query, State},
+    extract::{Query, State},
     response::{
         sse::{Event, KeepAlive},
         IntoResponse, Sse,
@@ -23,9 +28,7 @@ use crate::{
     config::{self, Config},
     error::AppError,
     ffmpeg::{self, find_stream_url},
-    stash_api::{
-        find_markers_query::FindMarkersQueryFindSceneMarkersSceneMarkers as GqlMarker, Api,
-    },
+    stash_api::{Api, Marker},
     AppState,
 };
 
@@ -47,56 +50,27 @@ pub struct Performer {
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Marker {
+pub struct Scene {
     pub id: String,
-    pub primary_tag: String,
-    pub stream_url: String,
-    pub screenshot_url: String,
-    pub start: u32,
-    pub end: Option<u32>,
-    pub scene_title: Option<String>,
+    pub title: String,
+    pub image_url: String,
     pub performers: Vec<String>,
-    pub file_name: String,
-}
-
-impl Marker {
-    pub fn from(value: GqlMarker, api_key: &str) -> Self {
-        Marker {
-            id: value.id,
-            primary_tag: value.primary_tag.name,
-            stream_url: add_api_key(&value.stream, api_key),
-            screenshot_url: add_api_key(&value.screenshot, api_key),
-            start: value.seconds as u32,
-            end: value
-                .scene
-                .scene_markers
-                .iter()
-                .find(|m| m.seconds > value.seconds)
-                .map(|m| m.seconds as u32),
-            scene_title: value.scene.title,
-            performers: value.scene.performers.into_iter().map(|p| p.name).collect(),
-            file_name: value
-                .scene
-                .files
-                .get(0)
-                .map(|f| f.basename.clone())
-                .unwrap_or_else(|| "<no name>".to_string()),
-        }
-    }
+    pub marker_count: usize,
+    pub tags: BTreeSet<String>,
 }
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkerResult {
     pub dtos: Vec<Marker>,
-    pub gql: Vec<GqlMarker>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum FilterMode {
     Performers,
     Tags,
+    Scenes,
 }
 
 #[derive(Deserialize, Debug)]
@@ -143,8 +117,10 @@ pub struct CreateVideoBody {
     pub output_resolution: Resolution,
     pub output_fps: u32,
     pub selected_markers: Vec<SelectedMarker>,
-    pub markers: Vec<GqlMarker>,
+    pub markers: Vec<Marker>,
     pub id: String,
+    pub file_name: String,
+    pub clips: Vec<Clip>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -153,10 +129,11 @@ pub struct CreateClipsBody {
     pub clip_order: ClipOrder,
     pub clip_duration: u32,
     pub selected_markers: Vec<SelectedMarker>,
-    pub markers: Vec<GqlMarker>,
+    pub markers: Vec<Marker>,
+    pub select_mode: FilterMode,
 }
 
-fn add_api_key(url: &str, api_key: &str) -> String {
+pub fn add_api_key(url: &str, api_key: &str) -> String {
     let mut url = Url::parse(url).expect("invalid url");
     url.query_pairs_mut().append_pair("apikey", api_key);
     url.to_string()
@@ -213,18 +190,40 @@ pub async fn fetch_markers(
     tracing::info!("fetching markers for query {query:?}");
     let ids: Vec<_> = query.selected_ids.split(',').map(From::from).collect();
 
-    let gql_markers = api.find_markers(ids, query.mode).await?;
-    let api_key = &config.api_key;
-    let dtos = gql_markers
-        .clone()
-        .into_iter()
-        .map(|m| Marker::from(m, api_key))
-        .collect();
+    let markers = api.find_markers(ids, query.mode).await?;
+    Ok(Json(MarkerResult { dtos: markers }))
+}
 
-    Ok(Json(MarkerResult {
-        dtos,
-        gql: gql_markers,
-    }))
+#[axum::debug_handler]
+pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
+    let config = Config::get().await?;
+    let api = Api::from_config(&config);
+    let api_key = &config.api_key;
+    let scenes = api.find_scenes().await?;
+    let scenes = scenes
+        .into_iter()
+        .map(|s| {
+            let tags = s
+                .tags
+                .into_iter()
+                .map(|t| t.name)
+                .chain(s.scene_markers.iter().map(|m| m.primary_tag.name.clone()))
+                .collect();
+            Scene {
+                id: s.id,
+                title: s.title.unwrap_or_default(),
+                performers: s.performers.into_iter().map(|p| p.name).collect(),
+                marker_count: s.scene_markers.len(),
+                tags,
+                image_url: s
+                    .paths
+                    .screenshot
+                    .map(|s| add_api_key(&s, api_key))
+                    .unwrap_or_default(),
+            }
+        })
+        .collect();
+    Ok(Json(scenes))
 }
 
 async fn create_video_inner(
@@ -234,8 +233,7 @@ async fn create_video_inner(
     body.markers
         .retain(|e| body.selected_markers.iter().any(|m| m.id == e.id));
     let clips = state.ffmpeg.gather_clips(&body).await?;
-    state.ffmpeg.compile_clips(clips, &body).await?;
-
+    state.ffmpeg.compile_clips(&body, clips).await?;
     Ok(())
 }
 
@@ -266,18 +264,24 @@ pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FilenameQuery {
+    file_name: String,
+}
+
 #[axum::debug_handler]
 pub async fn download_video(
     state: State<Arc<AppState>>,
-    Path(id): Path<String>,
+    Query(FilenameQuery { file_name }): Query<FilenameQuery>,
 ) -> Result<impl IntoResponse, AppError> {
     use axum::{http::header, response::AppendHeaders};
 
-    tracing::info!("downloading video {id}");
-    let path = state.ffmpeg.video_dir.join(format!("{id}.mp4"));
+    tracing::info!("downloading video {file_name}");
+    let path = state.ffmpeg.video_dir.join(&file_name);
     let file = tokio::fs::File::open(path).await?;
     let stream = ReaderStream::new(file);
-    let content_disposition = format!("attachment; filename=\"{}.mp4\"", id);
+    let content_disposition = format!("attachment; filename=\"{}\"", file_name);
 
     let headers = AppendHeaders([
         (header::CONTENT_TYPE, "video/mp4".to_string()),
@@ -313,7 +317,8 @@ pub struct ClipsResponse {
 #[axum::debug_handler]
 pub async fn fetch_clips(Json(body): Json<CreateClipsBody>) -> Json<ClipsResponse> {
     let clips = clip::get_all_clips(&body);
-    let clips = clip::compile_clips(clips, ClipOrder::SceneOrder);
+    let clips = clip::compile_clips(clips, body.clip_order, body.select_mode);
+    tracing::info!("compiled clips {clips:#?}");
     let streams: HashMap<String, String> = body
         .markers
         .iter()

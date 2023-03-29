@@ -19,6 +19,7 @@ export const loader: LoaderFunction = async () => {
       clipDuration: state.data.clipDuration,
       selectedMarkers: state.data.selectedMarkers,
       markers: state.data.markers,
+      selectMode: state.data.selectMode,
     }),
     headers: {"content-type": "application/json"},
   })
@@ -37,6 +38,7 @@ function PreviewClips() {
   const onNextStage = () => {
     actions.updateForm({
       stage: FormStage.Wait,
+      clips: data.clips,
     })
     navigate("/progress")
   }

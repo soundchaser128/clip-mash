@@ -26,7 +26,7 @@ export interface SelectedMarker {
 }
 
 export interface FormState {
-  selectMode?: "tags" | "performers"
+  selectMode?: "tags" | "performers" | "scenes"
   selectedIds?: string[]
   clipOrder?: "random" | "scene-order"
   clipDuration?: number
@@ -34,6 +34,8 @@ export interface FormState {
   outputFps?: number
   selectedMarkers?: SelectedMarker[]
   markers?: unknown[]
+  fileName?: string
+  clips?: Clip[]
   stage: FormStage
   id: string
 }
@@ -43,4 +45,13 @@ export interface Clip {
   sceneId: string
   range: [number, number]
   markerIndex: number
+}
+
+export interface Scene {
+  id: string
+  title: string
+  imageUrl: string
+  performers: string[]
+  tags: string[]
+  markerCount: number
 }

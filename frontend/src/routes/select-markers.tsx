@@ -22,7 +22,6 @@ interface Marker {
 interface Data {
   markers: {
     dtos: Marker[]
-    gql: unknown[]
   }
 }
 
@@ -131,7 +130,7 @@ function SelectMarkers() {
     actions.updateForm({
       stage: FormStage.VideoOptions,
       selectedMarkers,
-      markers: data.markers.gql,
+      markers: data.markers.dtos,
     })
     navigate("/video-options")
   }
@@ -172,6 +171,7 @@ function SelectMarkers() {
           onBlur={() => {
             setDurations((durations) =>
               durations.map((d, index) => {
+                // BUG when markers are filtered, this fails
                 const defaultDuration = getDuration(markers[index])
                 const maxLen = maxMarkerLength || defaultDuration
                 if (d >= maxLen) {

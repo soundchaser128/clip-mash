@@ -1,20 +1,12 @@
-use std::{cmp::Reverse, process::Output};
+use std::process::Output;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
-use rand::{seq::SliceRandom, RngCore};
-use regex::Regex;
 use serde::Serialize;
 use tokio::process::Command;
 
-use crate::{
-    clip::{self, Clip, ClipOrder, MarkerWithClips},
-    download_ffmpeg,
-    http::{CreateClipsBody, CreateVideoBody},
-    stash_api::find_markers_query::FindMarkersQueryFindSceneMarkersSceneMarkers as Marker,
-    util, Result,
-};
+use crate::{clip::Clip, download_ffmpeg, http::CreateVideoBody, stash_api::Marker, Result};
 
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct Progress {
@@ -58,64 +50,16 @@ fn commandline_error<T>(output: Output) -> Result<T> {
     let stdout = std::str::from_utf8(&output.stdout).unwrap();
     let stderr = std::str::from_utf8(&output.stderr).unwrap();
     Err(format!(
-        "ffmpeg failed with nonzero exit code, stdout:\n{}\nstderr:\n{}",
-        stdout, stderr
+        "ffmpeg failed with exit code {}, stdout:\n{}\nstderr:\n{}",
+        output.status.code().unwrap_or(1),
+        stdout,
+        stderr
     )
     .into())
 }
 
 pub async fn get_progress() -> Progress {
     PROGRESS.lock().await.clone()
-}
-
-#[derive(Debug)]
-struct ParsedClip {
-    scene_id: u32,
-    path: Utf8PathBuf,
-}
-
-impl ParsedClip {
-    fn from_path(path: Utf8PathBuf) -> Self {
-        lazy_static! {
-            static ref FILE_REGEX: Regex = Regex::new(r#"(\d+)_(\d+)-(\d+)\.mp4"#).unwrap();
-        }
-
-        let filename = path.file_name().expect("path must have file name");
-        let matches = FILE_REGEX.captures(filename);
-        let (scene_id, _) = match matches {
-            Some(matches) => {
-                let scene_id = matches.get(1).unwrap().as_str();
-                let scene_id: u32 = scene_id.parse().unwrap();
-
-                let start = matches.get(2).unwrap().as_str();
-                let start: u32 = start.parse().unwrap();
-
-                (scene_id, start)
-            }
-            None => (0, 0),
-        };
-        ParsedClip { path, scene_id }
-    }
-}
-
-fn intersperse_scene_clips(clips: Vec<Utf8PathBuf>) -> Vec<Utf8PathBuf> {
-    use itertools::Itertools;
-
-    let mut clips: Vec<_> = clips.into_iter().map(ParsedClip::from_path).collect();
-    clips.sort_by_key(|c| c.scene_id);
-
-    let iter = clips.into_iter().group_by(|c| c.scene_id);
-    let mut rng = util::create_seeded_rng();
-    let mut clips = vec![];
-    for (_, group) in &iter {
-        for (idx, clip) in group.enumerate() {
-            let rand = rng.next_u32();
-            clips.push((idx, rand, clip));
-        }
-    }
-
-    clips.sort_by_key(|(idx, rand, _)| Reverse((*idx, *rand)));
-    clips.into_iter().map(|(_, _, c)| c.path).collect()
 }
 
 impl Ffmpeg {
@@ -168,6 +112,8 @@ impl Ffmpeg {
             "48000",
             out_file.as_str(),
         ];
+        tracing::info!("executing command ffmpeg {}", args.join(" "));
+
         let output = Command::new(self.path.as_str()).args(args).output().await?;
         if !output.status.success() {
             commandline_error(output)
@@ -193,77 +139,63 @@ impl Ffmpeg {
 
     pub async fn gather_clips(&self, output: &CreateVideoBody) -> Result<Vec<Utf8PathBuf>> {
         tokio::fs::create_dir_all(&self.video_dir).await?;
-
-        let clips = clip::get_all_clips(&CreateClipsBody {
-            clip_duration: output.clip_duration,
-            clip_order: output.clip_order,
-            markers: output.markers.clone(),
-            selected_markers: output.selected_markers.clone(),
-        });
-        let total_items = clips
-            .iter()
-            .fold(0, |count, marker| count + marker.clips.len());
+        let clips = &output.clips;
+        let total_items = clips.len();
         self.initialize_progress(total_items).await;
 
         let mut paths = vec![];
-        for MarkerWithClips { clips, marker } in clips {
-            let url = find_stream_url(&marker);
+        for Clip {
+            range: (start, end),
+            marker_id,
+            ..
+        } in clips
+        {
+            let marker = output
+                .markers
+                .iter()
+                .find(|m| &m.id == marker_id)
+                .expect(&format!("no marker with ID {marker_id} found"));
+            let url = find_stream_url(marker);
             let (width, height) = output.output_resolution.resolution();
-            tracing::info!("computed {} clips for marker {}", clips.len(), marker.id);
-            for Clip {
-                range: (start, end),
-                ..
-            } in clips
-            {
-                let out_file = self
-                    .video_dir
-                    .join(format!("{}_{}-{}.mp4", marker.scene.id, start, end));
-                if !out_file.is_file() {
-                    tracing::info!("creating clip {out_file}");
-                    self.create_clip(
-                        url,
-                        start,
-                        end - start,
-                        width,
-                        height,
-                        output.output_fps as f64,
-                        &out_file,
-                    )
-                    .await?;
-                } else {
-                    tracing::info!("clip {out_file} already exists, skipping");
-                }
-                self.increase_progress().await;
-                paths.push(out_file);
+            let out_file = self
+                .video_dir
+                .join(format!("{}_{}-{}.mp4", marker.scene.id, start, end));
+            if !out_file.is_file() {
+                tracing::info!("creating clip {out_file}");
+                self.create_clip(
+                    url,
+                    *start,
+                    end - start,
+                    width,
+                    height,
+                    output.output_fps as f64,
+                    &out_file,
+                )
+                .await?;
+            } else {
+                tracing::info!("clip {out_file} already exists, skipping");
             }
+            self.increase_progress().await;
+            paths.push(out_file);
         }
+        // }
         self.reset_progress().await;
         Ok(paths)
     }
 
     pub async fn compile_clips(
         &self,
-        mut clips: Vec<Utf8PathBuf>,
         options: &CreateVideoBody,
+        clips: Vec<Utf8PathBuf>,
     ) -> Result<Utf8PathBuf> {
-        tracing::info!("assembling {} clips into video", clips.len());
-
-        let clips = match options.clip_order {
-            ClipOrder::Random => {
-                let mut rng = rand::thread_rng();
-                clips.shuffle(&mut rng);
-                clips
-            }
-            ClipOrder::SceneOrder => intersperse_scene_clips(clips),
-        };
-
+        tracing::info!("assembling {} clips into video", options.clips.len());
         let lines: Vec<_> = clips
             .into_iter()
             .map(|file| format!("file '{}", file.file_name().unwrap()))
             .collect();
         let file_content = lines.join("\n");
         tokio::fs::write(self.video_dir.join("clips.txt"), file_content).await?;
-        let file_name = format!("{}.mp4", options.id);
+        let file_name = &options.file_name;
         let destination = self.video_dir.join(&file_name);
 
         let args = vec![

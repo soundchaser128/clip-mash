@@ -1,4 +1,10 @@
-use crate::{http::CreateClipsBody, stash_api::GqlMarker, util};
+use std::cmp::Reverse;
+
+use crate::{
+    http::{CreateClipsBody, FilterMode},
+    stash_api::Marker,
+    util,
+};
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
 
@@ -23,29 +29,31 @@ pub struct Clip {
     pub marker_index: usize,
 }
 
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct MarkerWithClips {
-    pub marker: GqlMarker,
+    pub marker: Marker,
     pub clips: Vec<Clip>,
 }
 
-pub fn get_time_range(marker: &GqlMarker, max_duration: Option<u32>) -> (u32, Option<u32>) {
-    let start = marker.seconds;
+pub fn get_time_range(marker: &Marker, max_duration: Option<u32>) -> (u32, Option<u32>) {
+    let start = marker.start;
     let next_marker = marker
         .scene
         .scene_markers
         .iter()
-        .find(|m| m.seconds > marker.seconds);
+        .find(|m| m.start > marker.start);
     if let Some(max_duration) = max_duration {
         (start as u32, Some(start as u32 + max_duration))
     } else if let Some(next) = next_marker {
-        (start as u32, Some(next.seconds as u32))
+        (start as u32, Some(next.start as u32))
     } else {
         (start as u32, None)
     }
 }
 
 pub fn get_clips(
-    marker: &GqlMarker,
+    marker: &Marker,
     settings: &ClipSettings,
     max_duration: Option<u32>,
     rng: &mut StdRng,
@@ -101,19 +109,25 @@ pub fn get_all_clips(output: &CreateClipsBody) -> Vec<MarkerWithClips> {
         .collect()
 }
 
-pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder) -> Vec<Clip> {
+pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder, mode: FilterMode) -> Vec<Clip> {
     let mut rng = util::create_seeded_rng();
 
     match order {
         ClipOrder::SceneOrder => {
-            let mut clips: Vec<_> = clips
-                .into_iter()
-                .flat_map(|m| m.clips)
-                .map(|c| (c, rng.gen::<u32>()))
-                .collect();
+            if let FilterMode::Scenes = mode {
+                let mut clips: Vec<_> = clips.into_iter().flat_map(|c| c.clips).collect();
+                clips.sort_by_key(|c| c.range.0);
+                clips
+            } else {
+                let mut clips: Vec<_> = clips
+                    .into_iter()
+                    .flat_map(|m| m.clips)
+                    .map(|c| (c, rng.gen::<u32>()))
+                    .collect();
 
-            clips.sort_by_key(|(clip, random)| (clip.marker_index, *random));
-            clips.into_iter().map(|(clip, _)| clip).collect()
+                clips.sort_by_key(|(clip, random)| (clip.marker_index, *random));
+                clips.into_iter().map(|(clip, _)| clip).collect()
+            }
         }
         ClipOrder::Random => {
             let mut clips: Vec<_> = clips.into_iter().flat_map(|c| c.clips).collect();

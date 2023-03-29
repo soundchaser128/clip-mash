@@ -19,7 +19,7 @@ use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
 use crate::{
-    clip::{self, Clip, ClipOrder, MarkerWithClips},
+    clip::{self, Clip, ClipOrder},
     config::{self, Config},
     error::AppError,
     ffmpeg::{self, find_stream_url},
@@ -113,7 +113,7 @@ pub struct CreateVideoBody {
     pub markers: Vec<Marker>,
     pub id: String,
     pub file_name: String,
-    pub clips: Vec<MarkerWithClips>,
+    pub clips: Vec<Clip>,
 }
 
 #[derive(Deserialize, Debug)]

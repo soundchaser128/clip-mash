@@ -6,13 +6,7 @@ use lazy_static::lazy_static;
 use serde::Serialize;
 use tokio::process::Command;
 
-use crate::{
-    clip::{self, Clip, MarkerWithClips},
-    download_ffmpeg,
-    http::{CreateClipsBody, CreateVideoBody},
-    stash_api::Marker,
-    Result,
-};
+use crate::{clip::Clip, download_ffmpeg, http::CreateVideoBody, stash_api::Marker, Result};
 
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct Progress {
@@ -146,43 +140,45 @@ impl Ffmpeg {
     pub async fn gather_clips(&self, output: &CreateVideoBody) -> Result<Vec<Utf8PathBuf>> {
         tokio::fs::create_dir_all(&self.video_dir).await?;
         let clips = &output.clips;
-        let total_items = clips
-            .iter()
-            .fold(0, |count, marker| count + marker.clips.len());
+        let total_items = clips.len();
         self.initialize_progress(total_items).await;
 
         let mut paths = vec![];
-        for MarkerWithClips { clips, marker } in clips {
-            let url = find_stream_url(&marker);
+        for Clip {
+            range: (start, end),
+            marker_id,
+            ..
+        } in clips
+        {
+            let marker = output
+                .markers
+                .iter()
+                .find(|m| &m.id == marker_id)
+                .expect(&format!("no marker with ID {marker_id} found"));
+            let url = find_stream_url(marker);
             let (width, height) = output.output_resolution.resolution();
-            tracing::info!("computed {} clips for marker {}", clips.len(), marker.id);
-            for Clip {
-                range: (start, end),
-                ..
-            } in clips
-            {
-                let out_file = self
-                    .video_dir
-                    .join(format!("{}_{}-{}.mp4", marker.scene.id, start, end));
-                if !out_file.is_file() {
-                    tracing::info!("creating clip {out_file}");
-                    self.create_clip(
-                        url,
-                        *start,
-                        end - start,
-                        width,
-                        height,
-                        output.output_fps as f64,
-                        &out_file,
-                    )
-                    .await?;
-                } else {
-                    tracing::info!("clip {out_file} already exists, skipping");
-                }
-                self.increase_progress().await;
-                paths.push(out_file);
+            let out_file = self
+                .video_dir
+                .join(format!("{}_{}-{}.mp4", marker.scene.id, start, end));
+            if !out_file.is_file() {
+                tracing::info!("creating clip {out_file}");
+                self.create_clip(
+                    url,
+                    *start,
+                    end - start,
+                    width,
+                    height,
+                    output.output_fps as f64,
+                    &out_file,
+                )
+                .await?;
+            } else {
+                tracing::info!("clip {out_file} already exists, skipping");
             }
+            self.increase_progress().await;
+            paths.push(out_file);
         }
+        // }
         self.reset_progress().await;
         Ok(paths)
     }

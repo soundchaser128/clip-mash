@@ -1,4 +1,9 @@
-use std::{cmp::Reverse, collections::HashMap, sync::Arc, time::Duration};
+use std::{
+    cmp::Reverse,
+    collections::{BTreeSet, HashMap},
+    sync::Arc,
+    time::Duration,
+};
 
 use axum::{
     body::StreamBody,
@@ -50,6 +55,8 @@ pub struct Scene {
     pub title: String,
     pub image_url: String,
     pub performers: Vec<String>,
+    pub marker_count: usize,
+    pub tags: BTreeSet<String>,
 }
 
 #[derive(Serialize, Debug)]
@@ -195,15 +202,25 @@ pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
     let scenes = api.find_scenes().await?;
     let scenes = scenes
         .into_iter()
-        .map(|s| Scene {
-            id: s.id,
-            title: s.title.unwrap_or_default(),
-            performers: s.performers.into_iter().map(|p| p.name).collect(),
-            image_url: s
-                .paths
-                .screenshot
-                .map(|s| add_api_key(&s, api_key))
-                .unwrap_or_default(),
+        .map(|s| {
+            let tags = s
+                .tags
+                .into_iter()
+                .map(|t| t.name)
+                .chain(s.scene_markers.iter().map(|m| m.primary_tag.name.clone()))
+                .collect();
+            Scene {
+                id: s.id,
+                title: s.title.unwrap_or_default(),
+                performers: s.performers.into_iter().map(|p| p.name).collect(),
+                marker_count: s.scene_markers.len(),
+                tags,
+                image_url: s
+                    .paths
+                    .screenshot
+                    .map(|s| add_api_key(&s, api_key))
+                    .unwrap_or_default(),
+            }
         })
         .collect();
     Ok(Json(scenes))
@@ -301,6 +318,7 @@ pub struct ClipsResponse {
 pub async fn fetch_clips(Json(body): Json<CreateClipsBody>) -> Json<ClipsResponse> {
     let clips = clip::get_all_clips(&body);
     let clips = clip::compile_clips(clips, body.clip_order, body.select_mode);
+    tracing::info!("compiled clips {clips:#?}");
     let streams: HashMap<String, String> = body
         .markers
         .iter()

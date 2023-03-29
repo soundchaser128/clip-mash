@@ -52,4 +52,6 @@ export interface Scene {
   title: string
   imageUrl: string
   performers: string[]
+  tags: string[]
+  markerCount: number
 }

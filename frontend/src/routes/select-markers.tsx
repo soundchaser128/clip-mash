@@ -171,6 +171,7 @@ function SelectMarkers() {
           onBlur={() => {
             setDurations((durations) =>
               durations.map((d, index) => {
+                // BUG when markers are filtered, this fails
                 const defaultDuration = getDuration(markers[index])
                 const maxLen = maxMarkerLength || defaultDuration
                 if (d >= maxLen) {

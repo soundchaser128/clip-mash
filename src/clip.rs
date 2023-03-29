@@ -116,7 +116,7 @@ pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder, mode: Filter
         ClipOrder::SceneOrder => {
             if let FilterMode::Scenes = mode {
                 let mut clips: Vec<_> = clips.into_iter().flat_map(|c| c.clips).collect();
-                clips.sort_by_key(|c| Reverse(c.range.0));
+                clips.sort_by_key(|c| c.range.0);
                 clips
             } else {
                 let mut clips: Vec<_> = clips

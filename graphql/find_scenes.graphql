@@ -27,6 +27,9 @@ query FindScenesQuery($scene_ids: [Int!]) {
         preview
         sprite
       }
+      tags {
+        name
+      }
     }
   }
 }

@@ -58,6 +58,31 @@ function filterData(data: Data, filter?: string): Data {
   }
 }
 
+function TagIcon({className}: {className: string}) {
+  return (
+    <svg
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 6h.008v.008H6V6z"
+      />
+    </svg>
+  )
+}
+
 function SelectCriteria() {
   const data = useLoaderData() as Data
   const [filter, setFilter] = useState("")
@@ -182,7 +207,10 @@ function SelectCriteria() {
       {state.data.selectMode === "scenes" && (
         <section className="grid grid-cols-4 gap-2 w-full">
           {scenes.map((scene) => (
-            <article key={scene.id} className="card bg-base-100 shadow-xl">
+            <article
+              key={scene.id}
+              className="card card-compact bg-base-100 shadow-xl"
+            >
               <figure>
                 <img
                   src={scene.imageUrl}
@@ -191,8 +219,19 @@ function SelectCriteria() {
                 />
               </figure>
               <div className="card-body">
-                <h2 className="card-title">{scene.title}</h2>
-                <p>{scene.performers.join(", ")}</p>
+                <h2 className="card-title tooltip" data-tip={scene.title}>
+                  <span className="truncate">{scene.title}</span>
+                </h2>
+                <ul className="text-base">
+                  <li>{scene.performers.join(", ")}</li>
+                  <li>{scene.markerCount} markers</li>
+                  <li>
+                    <div className="tooltip" data-tip={scene.tags.join(", ")}>
+                      <TagIcon className="w-4 h-4 mr-0.5 inline-block" />{" "}
+                      {scene.tags.length}
+                    </div>
+                  </li>
+                </ul>
                 <div className="card-actions justify-end">
                   <div className="form-control">
                     <label className="label cursor-pointer">

@@ -112,6 +112,14 @@ function SelectMarkers() {
     )
   }
 
+  const onDeselectAll = () => {
+    setSelection((s) => s.map(() => false))
+  }
+
+  const onSelectAll = () => {
+    setSelection((s) => s.map(() => true))
+  }
+
   const onNextStage = () => {
     const selectedMarkers = []
     for (let i = 0; i < selection.length; i++) {
@@ -150,39 +158,50 @@ function SelectMarkers() {
           Next
         </button>
       </div>
-      <div className="flex mb-4 gap-2">
-        <input
-          type="text"
-          placeholder="Filter..."
-          className="input input-bordered w-80"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
+      <div className="w-full flex justify-between my-4">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Filter..."
+            className="input input-bordered w-80"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
 
-        <input
-          type="number"
-          className="input input-bordered w-80"
-          placeholder="Limit maximum marker length (in seconds)"
-          value={maxMarkerLength || ""}
-          onChange={(e) => {
-            const num = e.target.valueAsNumber
-            setMaxMarkerLength(num)
-          }}
-          onBlur={() => {
-            setDurations((durations) =>
-              durations.map((d, index) => {
-                // BUG when markers are filtered, this fails
-                const defaultDuration = getDuration(markers[index])
-                const maxLen = maxMarkerLength || defaultDuration
-                if (d >= maxLen) {
-                  return maxLen
-                } else {
-                  return defaultDuration
-                }
-              })
-            )
-          }}
-        />
+          <input
+            type="number"
+            className="input input-bordered w-80"
+            placeholder="Limit maximum marker length (in seconds)"
+            value={maxMarkerLength || ""}
+            onChange={(e) => {
+              const num = e.target.valueAsNumber
+              setMaxMarkerLength(num)
+            }}
+            onBlur={() => {
+              setDurations((durations) =>
+                durations.map((d, index) => {
+                  // BUG when markers are filtered, this fails
+                  const defaultDuration = getDuration(markers[index])
+                  const maxLen = maxMarkerLength || defaultDuration
+                  if (d >= maxLen) {
+                    return maxLen
+                  } else {
+                    return defaultDuration
+                  }
+                })
+              )
+            }}
+          />
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={onDeselectAll} className="btn btn-error">
+            Deselect all
+          </button>
+          <button onClick={onSelectAll} className="btn btn-primary">
+            Select all
+          </button>
+        </div>
       </div>
       <section className="grid grid-cols-4 gap-2 w-full">
         {markers.map((marker, index) => (
@@ -215,7 +234,7 @@ function SelectMarkers() {
                 {marker.performers.join(", ") || "No performers found"}
               </p>
               <p>
-                <strong>Duration: </strong>
+                <strong>Selected duration: </strong>
                 {formatSeconds(durations[index])}
               </p>
               <div className="">

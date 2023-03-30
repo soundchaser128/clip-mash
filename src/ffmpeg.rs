@@ -188,14 +188,18 @@ impl Ffmpeg {
         options: &CreateVideoBody,
         clips: Vec<Utf8PathBuf>,
     ) -> Result<Utf8PathBuf> {
-        tracing::info!("assembling {} clips into video", options.clips.len());
+        let file_name = &options.file_name;
+        tracing::info!(
+            "assembling {} clips into video with file name '{}'",
+            options.clips.len(),
+            file_name
+        );
         let lines: Vec<_> = clips
             .into_iter()
             .map(|file| format!("file '{}", file.file_name().unwrap()))
             .collect();
         let file_content = lines.join("\n");
         tokio::fs::write(self.video_dir.join("clips.txt"), file_content).await?;
-        let file_name = &options.file_name;
         let destination = self.video_dir.join(&file_name);
 
         let args = vec![

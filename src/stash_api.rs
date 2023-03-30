@@ -6,6 +6,7 @@ use self::{
     find_performers_query::FindPerformersQueryFindPerformersPerformers as Performer,
     find_scenes_query::FindScenesQueryFindScenesScenes,
     find_tags_query::FindTagsQueryFindTagsTags as Tag,
+    healt_check_query::SystemStatusEnum,
 };
 use crate::{
     config::Config,
@@ -47,6 +48,14 @@ pub struct FindPerformersQuery;
     response_derives = "Debug"
 )]
 pub struct FindScenesQuery;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/health_check.graphql",
+    response_derives = "Debug"
+)]
+pub struct HealtCheckQuery;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -341,5 +350,22 @@ impl Api {
         let response: Response<find_performers_query::ResponseData> = response.json().await?;
         let performers = response.data.unwrap();
         Ok(performers.find_performers.performers)
+    }
+
+    pub async fn health(&self) -> Result<SystemStatusEnum> {
+        let variables = healt_check_query::Variables {};
+        let request_body = HealtCheckQuery::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+        let response: Response<healt_check_query::ResponseData> = response.json().await?;
+        let status = response.data.unwrap().system_status.status;
+        Ok(status)
     }
 }

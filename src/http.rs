@@ -28,7 +28,7 @@ use crate::{
     config::{self, Config},
     error::AppError,
     ffmpeg::{self, find_stream_url},
-    stash_api::{Api, Marker},
+    stash_api::{healt_check_query::SystemStatusEnum, Api, Marker},
     AppState,
 };
 
@@ -211,7 +211,11 @@ pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
                 .collect();
             Scene {
                 id: s.id,
-                title: s.title.unwrap_or_default(),
+                title: s
+                    .title
+                    .filter(|s| !s.is_empty())
+                    .or_else(|| s.files.get(0).map(|f| f.basename.clone()))
+                    .unwrap_or_default(),
                 performers: s.performers.into_iter().map(|p| p.name).collect(),
                 marker_count: s.scene_markers.len(),
                 tags,
@@ -240,16 +244,21 @@ async fn create_video_inner(
 #[axum::debug_handler]
 pub async fn create_video(
     state: State<Arc<AppState>>,
-    Json(body): Json<CreateVideoBody>,
-) -> StatusCode {
+    Json(mut body): Json<CreateVideoBody>,
+) -> String {
+    use sanitise_file_name::sanitise;
+
+    body.file_name = sanitise(&body.file_name);
+    let file_name = body.file_name.clone();
     tracing::debug!("received json body: {:?}", body);
+
     tokio::spawn(async move {
         if let Err(e) = create_video_inner(state, body).await {
             tracing::error!("error: {e:?}");
         }
     });
 
-    StatusCode::NO_CONTENT
+    file_name
 }
 
 #[axum::debug_handler]
@@ -277,7 +286,7 @@ pub async fn download_video(
 ) -> Result<impl IntoResponse, AppError> {
     use axum::{http::header, response::AppendHeaders};
 
-    tracing::info!("downloading video {file_name}");
+    tracing::info!("downloading video '{file_name}'");
     let path = state.ffmpeg.video_dir.join(&file_name);
     let file = tokio::fs::File::open(path).await?;
     let stream = ReaderStream::new(file);
@@ -325,4 +334,20 @@ pub async fn fetch_clips(Json(body): Json<CreateClipsBody>) -> Json<ClipsRespons
         .map(|m| (m.scene.id.clone(), find_stream_url(m).to_string()))
         .collect();
     Json(ClipsResponse { clips, streams })
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConfigQuery {
+    url: String,
+    api_key: String,
+}
+
+#[axum::debug_handler]
+pub async fn get_health(
+    Query(ConfigQuery { url, api_key }): Query<ConfigQuery>,
+) -> Result<Json<SystemStatusEnum>, AppError> {
+    let api = Api::new(&url, &api_key);
+    let result = api.health().await?;
+    Ok(Json(result))
 }

@@ -1250,6 +1250,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "sanitise-file-name"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19d36299972b96b8ae7e8f04ecbf75fb41a27bf3781af00abcf57609774cb911"
+
+[[package]]
 name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1403,6 +1409,7 @@ dependencies = [
  "rand",
  "regex",
  "reqwest",
+ "sanitise-file-name",
  "serde",
  "serde_json",
  "tar",

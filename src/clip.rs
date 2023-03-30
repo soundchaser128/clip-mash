@@ -1,5 +1,3 @@
-use std::cmp::Reverse;
-
 use crate::{
     http::{CreateClipsBody, FilterMode},
     stash_api::Marker,

@@ -1,3 +1,5 @@
+import clsx from "clsx"
+import {useState} from "react"
 import {useForm} from "react-hook-form"
 import {useNavigate} from "react-router-dom"
 
@@ -6,21 +8,51 @@ interface Inputs {
   apiKey: string
 }
 
+async function testCredentials(inputs: Inputs) {
+  const params = new URLSearchParams()
+  params.set("apiKey", inputs.apiKey)
+  params.set("url", inputs.stashUrl)
+  const url = `/api/health?${params.toString()}`
+  const response = await fetch(url)
+  if (response.ok) {
+    const status = await response.json()
+    return status
+  } else {
+    const text = await response.text()
+    return text
+  }
+}
+
 function ConfigPage() {
   const {watch, register, handleSubmit} = useForm<Inputs>()
   const urlValue = watch("stashUrl") || "http://localhost:9999"
+  const apiKeyValue = watch("apiKey")
   const settingsPage = `${urlValue}/settings?tab=security`
   const navigate = useNavigate()
+  const [healthResult, setHealthResult] = useState<string>()
 
   const onSubmit = async (inputs: Inputs) => {
-    const response = await fetch("/api/config", {
-      method: "POST",
-      body: JSON.stringify(inputs),
-      headers: {"content-type": "application/json"},
-    })
-    if (response.ok) {
-      navigate("/")
+    const health = await testCredentials(inputs)
+    if (health === "OK") {
+      const response = await fetch("/api/config", {
+        method: "POST",
+        body: JSON.stringify(inputs),
+        headers: {"content-type": "application/json"},
+      })
+      if (response.ok) {
+        navigate("/")
+      }
+    } else {
+      // todo
     }
+  }
+
+  const onTestCredentials = async () => {
+    const response = await testCredentials({
+      stashUrl: urlValue,
+      apiKey: apiKeyValue,
+    })
+    setHealthResult(response)
   }
 
   return (
@@ -65,9 +97,32 @@ function ConfigPage() {
               </span>
             </label>
           </div>
-          <button type="submit" className="btn btn-success">
-            Submit
-          </button>
+          <div className="w-full flex justify-between">
+            <button
+              onClick={onTestCredentials}
+              type="button"
+              className="btn btn-secondary"
+            >
+              Test credentials
+            </button>
+            <button type="submit" className="btn btn-success">
+              Submit
+            </button>
+          </div>
+          {healthResult && (
+            <div
+              className={clsx(
+                "mt-4",
+                healthResult === "OK" && "text-green-400",
+                healthResult !== "OK" && "text-red-600"
+              )}
+            >
+              {healthResult === "OK"
+                ? "Credentials work: "
+                : "Error validating credentials: "}{" "}
+              <pre>{healthResult}</pre>
+            </div>
+          )}
         </form>
       </section>
     </main>

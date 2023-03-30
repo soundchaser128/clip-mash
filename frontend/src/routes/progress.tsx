@@ -10,6 +10,7 @@ function Progress() {
   const {state} = useStateMachine()
   const [progress, setProgress] = useState<Progress>()
   const [finished, setFinished] = useState(false)
+  const [fileName, setFileName] = useState("")
 
   const onSubmit = async () => {
     const body = JSON.stringify(state.data)
@@ -20,6 +21,8 @@ function Progress() {
     })
 
     if (response.ok) {
+      let fileName = await response.text()
+      setFileName(fileName)
       const es = new EventSource("/api/progress")
       es.onmessage = (event) => {
         const data = JSON.parse(event.data) as Progress
@@ -61,9 +64,7 @@ function Progress() {
           </p>
           <p>You can download your finished video here:</p>
           <a
-            href={`/api/download?fileName=${encodeURIComponent(
-              state.data.fileName!
-            )}`}
+            href={`/api/download?fileName=${encodeURIComponent(fileName)}`}
             className="btn btn-success btn-lg"
             download
           >

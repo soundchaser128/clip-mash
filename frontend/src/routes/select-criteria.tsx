@@ -111,7 +111,7 @@ function SelectCriteria() {
       stage: FormStage.SelectMarkers,
       selectedIds: selection,
       selectedMarkers: undefined,
-      fileName: `${fileName}.mp4`,
+      fileName: `${fileName} [${state.data.id}].mp4`,
     })
     navigate("/select-markers")
   }

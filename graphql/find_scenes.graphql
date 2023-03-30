@@ -1,5 +1,9 @@
 query FindScenesQuery($scene_ids: [Int!]) {
-  findScenes(scene_filter: {has_markers: "true"}, scene_ids: $scene_ids) {
+  findScenes(
+    scene_filter: {has_markers: "true"}
+    scene_ids: $scene_ids
+    filter: {per_page: -1, sort: "created_at", direction: DESC}
+  ) {
     scenes {
       id
       title

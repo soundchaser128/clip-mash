@@ -70,6 +70,7 @@ pub struct Marker {
     pub performers: Vec<String>,
     pub file_name: String,
     pub scene: Scene,
+    pub index_in_scene: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -102,6 +103,13 @@ impl Marker {
             .find(|m| m.seconds > value.seconds)
             .map(|m| m.seconds as u32);
 
+        let index_in_scene = value
+            .scene
+            .scene_markers
+            .iter()
+            .position(|m| m.id == value.id)
+            .expect("marker must exist within its own scene");
+
         Marker {
             id: value.id,
             start: value.seconds as u32,
@@ -112,6 +120,7 @@ impl Marker {
             scene_title: value.scene.title,
             screenshot_url: add_api_key(&value.screenshot, api_key),
             stream_url: add_api_key(&value.stream, api_key),
+            index_in_scene,
             scene: Scene {
                 id: value.scene.id,
                 scene_markers: value
@@ -138,7 +147,7 @@ impl Marker {
     fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Marker> {
         let mut markers = vec![];
 
-        for marker in &scene.scene_markers {
+        for (index_in_scene, marker) in scene.scene_markers.iter().enumerate() {
             let end = scene
                 .scene_markers
                 .iter()
@@ -151,6 +160,7 @@ impl Marker {
                 screenshot_url: add_api_key(&marker.screenshot, api_key),
                 start: marker.seconds as u32,
                 end,
+                index_in_scene,
                 file_name: scene.files[0].basename.clone(),
                 scene_title: scene.title.clone(),
                 performers: scene.performers.iter().map(|p| p.name.clone()).collect(),

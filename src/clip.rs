@@ -25,6 +25,7 @@ pub struct Clip {
     pub marker_id: String,
     pub range: (u32, u32),
     pub marker_index: usize,
+    pub scene_index: usize,
 }
 
 #[derive(Deserialize, Debug)]
@@ -75,6 +76,7 @@ pub fn get_clips(
             marker_id: marker.id.clone(),
             range: (offset, offset + duration),
             marker_index: index,
+            scene_index: marker.index_in_scene,
         });
         offset += duration;
         index += 1;
@@ -111,12 +113,8 @@ pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder, mode: Filter
     let mut rng = util::create_seeded_rng();
 
     match order {
-        ClipOrder::SceneOrder => {
-            if let FilterMode::Scenes = mode {
-                let mut clips: Vec<_> = clips.into_iter().flat_map(|c| c.clips).collect();
-                clips.sort_by_key(|c| c.range.0);
-                clips
-            } else {
+        ClipOrder::SceneOrder => match mode {
+            FilterMode::Performers | FilterMode::Tags => {
                 let mut clips: Vec<_> = clips
                     .into_iter()
                     .flat_map(|m| m.clips)
@@ -126,7 +124,17 @@ pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder, mode: Filter
                 clips.sort_by_key(|(clip, random)| (clip.marker_index, *random));
                 clips.into_iter().map(|(clip, _)| clip).collect()
             }
-        }
+            FilterMode::Scenes => {
+                let mut clips: Vec<_> = clips
+                    .into_iter()
+                    .flat_map(|m| m.clips)
+                    .map(|c| (c, rng.gen::<u32>()))
+                    .collect();
+
+                clips.sort_by_key(|(clip, random)| (clip.scene_index, *random));
+                clips.into_iter().map(|(clip, _)| clip).collect()
+            }
+        },
         ClipOrder::Random => {
             let mut clips: Vec<_> = clips.into_iter().flat_map(|c| c.clips).collect();
             clips.shuffle(&mut rng);

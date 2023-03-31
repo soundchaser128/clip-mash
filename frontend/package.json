@@ -13,6 +13,7 @@
   "dependencies": {
     "clsx": "^1.2.1",
     "date-fns": "^2.29.3",
+    "fuse.js": "^6.6.2",
     "immer": "^9.0.21",
     "little-state-machine": "^4.8.0",
     "match-sorter": "^6.3.1",
@@ -20,7 +21,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.43.8",
-    "react-router-dom": "^6.10.0"
+    "react-router-dom": "^6.10.0",
+    "use-immer": "^0.8.1"
   },
   "devDependencies": {
     "@types/react": "^18.0.31",

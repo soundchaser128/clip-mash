@@ -1,7 +1,8 @@
 import {useStateMachine} from "little-state-machine"
-import {useState} from "react"
+import {useMemo, useState} from "react"
 import {json, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, Performer, Tag, Scene} from "../types/types"
+import useFuse from "../hooks/useFuse"
+import {FormStage, Performer, Tag, Scene, SelectMode} from "../types/types"
 import {updateForm} from "./actions"
 
 interface Data {
@@ -40,24 +41,6 @@ export async function loader(): Promise<Data> {
   }
 }
 
-function filterData(data: Data, filter?: string): Data {
-  if (!filter || filter.trim().length === 0) {
-    return data
-  } else {
-    return {
-      performers: data.performers.filter((p) =>
-        p.name.toLowerCase().includes(filter.toLowerCase())
-      ),
-      tags: data.tags.filter((t) =>
-        t.name.toLowerCase().includes(filter.toLowerCase())
-      ),
-      scenes: data.scenes.filter((s) =>
-        s.title.toLowerCase().includes(filter.toLowerCase())
-      ),
-    }
-  }
-}
-
 function TagIcon({className}: {className: string}) {
   return (
     <svg
@@ -83,11 +66,201 @@ function TagIcon({className}: {className: string}) {
   )
 }
 
+function Scenes({
+  scenes,
+  selection,
+  onCheckboxChange,
+}: {
+  scenes: Scene[]
+  selection: string[]
+  onCheckboxChange: (id: string, checked: boolean, name: string) => void
+}) {
+  return (
+    <section className="grid grid-cols-4 gap-2 w-full">
+      {scenes.map((scene) => (
+        <article
+          key={scene.id}
+          className="card card-compact bg-base-100 shadow-xl"
+        >
+          <figure>
+            <img
+              src={scene.imageUrl}
+              alt={scene.title}
+              className="aspect-[16/9] object-cover object-top w-full"
+            />
+          </figure>
+          <div className="card-body">
+            <h2 className="card-title tooltip" data-tip={scene.title}>
+              <span className="truncate">{scene.title}</span>
+            </h2>
+            <ul className="text-base">
+              <li>{scene.performers.join(", ")}</li>
+              <li>{scene.markerCount} markers</li>
+              <li>
+                <div className="tooltip" data-tip={scene.tags.join(", ")}>
+                  <TagIcon className="w-4 h-4 mr-0.5 inline-block" />{" "}
+                  {scene.tags.length}
+                </div>
+              </li>
+            </ul>
+            <div className="card-actions justify-end">
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Select</span>
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-primary ml-2"
+                    checked={selection.includes(scene.id)}
+                    onChange={(e) =>
+                      onCheckboxChange(scene.id, e.target.checked, scene.title)
+                    }
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </article>
+      ))}
+    </section>
+  )
+}
+
+function Tags({
+  tags,
+  selection,
+  onCheckboxChange,
+}: {
+  tags: Tag[]
+  selection: string[]
+  onCheckboxChange: (id: string, checked: boolean, name: string) => void
+}) {
+  return (
+    <section className="grid grid-cols-4 gap-2 w-full">
+      {tags.map((tag) => (
+        <article key={tag.id} className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">{tag.name}</h2>
+            <p>{tag.count} markers</p>
+            <div className="card-actions justify-end">
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Select</span>
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-primary ml-2"
+                    checked={selection.includes(tag.id)}
+                    onChange={(e) =>
+                      onCheckboxChange(tag.id, e.target.checked, tag.name)
+                    }
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </article>
+      ))}
+    </section>
+  )
+}
+
+function Performers({
+  performers,
+  selection,
+  onCheckboxChange,
+}: {
+  performers: Performer[]
+  selection: string[]
+  onCheckboxChange: (id: string, checked: boolean, name: string) => void
+}) {
+  return (
+    <section className="grid grid-cols-4 gap-2 w-full">
+      {performers.map((performer) => (
+        <article key={performer.id} className="card bg-base-100 shadow-xl">
+          <figure>
+            <img
+              src={performer.imageUrl}
+              alt={performer.name}
+              className="aspect-[2/3] object-cover object-top w-full"
+            />
+          </figure>
+          <div className="card-body">
+            <h2 className="card-title">{performer.name}</h2>
+            <p>{performer.sceneCount} scenes</p>
+            <div className="card-actions justify-end">
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Select</span>
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-primary ml-2"
+                    checked={selection.includes(performer.id)}
+                    onChange={(e) =>
+                      onCheckboxChange(
+                        performer.id,
+                        e.target.checked,
+                        performer.name
+                      )
+                    }
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </article>
+      ))}
+    </section>
+  )
+}
+
+interface SearchItem {
+  id: string
+  tokens: string[]
+}
+
+function getSearchItems(data: Data, mode: SelectMode): SearchItem[] {
+  switch (mode) {
+    case "performers":
+      return data.performers.map((p) => ({id: p.id, tokens: [p.name]}))
+    case "scenes":
+      return data.scenes.map((s) => ({
+        id: s.id,
+        tokens: [s.title, ...s.tags, ...s.performers],
+      }))
+    case "tags":
+      return data.tags.map((t) => ({id: t.id, tokens: [t.name]}))
+  }
+}
+
+function getResults(
+  data: Data,
+  mode: SelectMode,
+  ids: string[]
+): Performer[] | Tag[] | Scene[] {
+  switch (mode) {
+    case "performers":
+      return ids.map((id) => data.performers.find((p) => p.id === id)!)
+    case "scenes":
+      return ids.map((id) => data.scenes.find((p) => p.id === id)!)
+    case "tags":
+      return ids.map((id) => data.tags.find((p) => p.id === id)!)
+  }
+}
+
 function SelectCriteria() {
   const data = useLoaderData() as Data
   const [filter, setFilter] = useState("")
-  const {tags, performers, scenes} = filterData(data, filter)
   const {state, actions} = useStateMachine({updateForm})
+  const mode = state.data.selectMode!
+  const searchItems = getSearchItems(data, mode)
+
+  const ids = useFuse({
+    items: searchItems,
+    keys: ["tokens"],
+    query: filter,
+  }).map((r) => r.id)
+
+  const results = getResults(data, mode, ids)
+
   const [selection, setSelection] = useState<string[]>(
     state.data.selectedIds || []
   )
@@ -138,123 +311,27 @@ function SelectCriteria() {
         </div>
       )}
       {state.data.selectMode === "performers" && (
-        <section className="grid grid-cols-4 gap-2 w-full">
-          {performers.map((performer) => (
-            <article key={performer.id} className="card bg-base-100 shadow-xl">
-              <figure>
-                <img
-                  src={performer.imageUrl}
-                  alt={performer.name}
-                  className="aspect-[2/3] object-cover object-top w-full"
-                />
-              </figure>
-              <div className="card-body">
-                <h2 className="card-title">{performer.name}</h2>
-                <p>{performer.sceneCount} scenes</p>
-                <div className="card-actions justify-end">
-                  <div className="form-control">
-                    <label className="label cursor-pointer">
-                      <span className="label-text">Select</span>
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-primary ml-2"
-                        checked={selection.includes(performer.id)}
-                        onChange={(e) =>
-                          onCheckboxChange(
-                            performer.id,
-                            e.target.checked,
-                            performer.name
-                          )
-                        }
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
+        <Performers
+          performers={results as Performer[]}
+          onCheckboxChange={onCheckboxChange}
+          selection={selection}
+        />
       )}
 
       {state.data.selectMode === "tags" && (
-        <section className="grid grid-cols-4 gap-2 w-full">
-          {tags.map((tag) => (
-            <article key={tag.id} className="card bg-base-100 shadow-xl">
-              <div className="card-body">
-                <h2 className="card-title">{tag.name}</h2>
-                <p>{tag.count} markers</p>
-                <div className="card-actions justify-end">
-                  <div className="form-control">
-                    <label className="label cursor-pointer">
-                      <span className="label-text">Select</span>
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-primary ml-2"
-                        checked={selection.includes(tag.id)}
-                        onChange={(e) =>
-                          onCheckboxChange(tag.id, e.target.checked, tag.name)
-                        }
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
+        <Tags
+          tags={results as Tag[]}
+          onCheckboxChange={onCheckboxChange}
+          selection={selection}
+        />
       )}
 
       {state.data.selectMode === "scenes" && (
-        <section className="grid grid-cols-4 gap-2 w-full">
-          {scenes.map((scene) => (
-            <article
-              key={scene.id}
-              className="card card-compact bg-base-100 shadow-xl"
-            >
-              <figure>
-                <img
-                  src={scene.imageUrl}
-                  alt={scene.title}
-                  className="aspect-[16/9] object-cover object-top w-full"
-                />
-              </figure>
-              <div className="card-body">
-                <h2 className="card-title tooltip" data-tip={scene.title}>
-                  <span className="truncate">{scene.title}</span>
-                </h2>
-                <ul className="text-base">
-                  <li>{scene.performers.join(", ")}</li>
-                  <li>{scene.markerCount} markers</li>
-                  <li>
-                    <div className="tooltip" data-tip={scene.tags.join(", ")}>
-                      <TagIcon className="w-4 h-4 mr-0.5 inline-block" />{" "}
-                      {scene.tags.length}
-                    </div>
-                  </li>
-                </ul>
-                <div className="card-actions justify-end">
-                  <div className="form-control">
-                    <label className="label cursor-pointer">
-                      <span className="label-text">Select</span>
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-primary ml-2"
-                        checked={selection.includes(scene.id)}
-                        onChange={(e) =>
-                          onCheckboxChange(
-                            scene.id,
-                            e.target.checked,
-                            scene.title
-                          )
-                        }
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
+        <Scenes
+          scenes={results as Scene[]}
+          onCheckboxChange={onCheckboxChange}
+          selection={selection}
+        />
       )}
     </div>
   )

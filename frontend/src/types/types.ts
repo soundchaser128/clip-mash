@@ -22,11 +22,14 @@ export enum FormStage {
 
 export interface SelectedMarker {
   id: string
-  duration?: number
+  duration: number
+  selected: boolean
 }
 
+export type SelectMode = "tags" | "performers" | "scenes"
+
 export interface FormState {
-  selectMode?: "tags" | "performers" | "scenes"
+  selectMode?: SelectMode
   selectedIds?: string[]
   clipOrder?: "random" | "scene-order"
   clipDuration?: number

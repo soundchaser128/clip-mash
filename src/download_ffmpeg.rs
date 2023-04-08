@@ -25,7 +25,7 @@ fn download_url() -> Result<(&'static str, &'static str)> {
 }
 
 fn is_installed(dest: &Utf8Path) -> bool {
-    if dest.join("ffmpeg").is_file() {
+    if dest.join("ffmpeg").is_file() || dest.join("ffmpeg.exe").is_file() {
         true
     } else {
         Command::new("ffmpeg")

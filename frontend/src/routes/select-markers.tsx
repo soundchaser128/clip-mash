@@ -50,7 +50,10 @@ function getDuration({start, end}: Marker): number {
   }
 }
 
-function formatSeconds(s: number) {
+export function formatSeconds(s: number): string {
+  if (s === 0) {
+    return "0 seconds"
+  }
   const date = new Date(s * 1000)
   return formatDuration(
     {
@@ -84,7 +87,10 @@ function SelectMarkers() {
     () => {
       const entries =
         state.data.selectedMarkers?.map((m) => [m.id, m]) ||
-        data.markers.dtos.map((m) => [m.id, {...m, selected: true}])
+        data.markers.dtos.map((m) => [
+          m.id,
+          {...m, selected: true, duration: getDuration(m)} as SelectedMarker,
+        ])
       return Object.fromEntries(entries)
     }
   )
@@ -104,10 +110,9 @@ function SelectMarkers() {
   }
 
   const totalDuration = formatSeconds(
-    Object.values(selection).reduce(
-      (sum, next) => sum + (next.duration || 0),
-      0
-    )
+    Object.values(selection)
+      .filter((m) => m.selected)
+      .reduce((sum, next) => sum + (next.duration || 0), 0)
   )
 
   const onCheckboxChange = (id: string, checked: boolean) => {

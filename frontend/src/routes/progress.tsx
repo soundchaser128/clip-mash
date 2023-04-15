@@ -1,6 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useEffect, useRef, useState} from "react"
 import {HiCheckBadge, HiOutlineArrowDownOnSquare} from "react-icons/hi2"
+import {formatSeconds} from "./select-markers"
 
 interface Progress {
   finished: number
@@ -37,13 +38,33 @@ function Progress() {
     }
   }
 
+  const totalDuration = state.data.clips!.reduce(
+    (duration, clip) => duration + (clip.range[1] - clip.range[0]),
+    0
+  )
+
   return (
     <div className="mt-8 max-w-lg w-full self-center flex flex-col items-center">
       {!progress && !finished && (
-        <button onClick={onSubmit} className="btn btn-lg btn-success">
-          <HiCheckBadge className="mr-2 w-6 h-6" />
-          Create video
-        </button>
+        <>
+          <div className="mb-8 text-center">
+            <p>
+              Generating video with <strong>{state.data.clips?.length}</strong>{" "}
+              clips.
+            </p>
+            <p>
+              Estimated final duration:{" "}
+              <strong>{formatSeconds(totalDuration)}</strong>.
+            </p>
+            <p>
+              File name: <strong>{state.data.fileName}</strong>
+            </p>
+          </div>
+          <button onClick={onSubmit} className="btn btn-lg btn-success">
+            <HiCheckBadge className="mr-2 w-6 h-6" />
+            Create video
+          </button>
+        </>
       )}
 
       {progress && !finished && (

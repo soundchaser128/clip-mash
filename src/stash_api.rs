@@ -10,6 +10,7 @@ use self::{
 };
 use crate::{
     config::Config,
+    funscript::FunScript,
     http::{add_api_key, FilterMode},
     Result,
 };
@@ -377,5 +378,20 @@ impl Api {
         let response: Response<healt_check_query::ResponseData> = response.json().await?;
         let status = response.data.unwrap().system_status.status;
         Ok(status)
+    }
+
+    pub async fn get_funscript(&self, scene_id: &str) -> Result<FunScript> {
+        let url = format!("{}/scene/{}/funscript", self.api_key, scene_id);
+        let response = self
+            .client
+            .get(url)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+
+        Ok(response)
     }
 }

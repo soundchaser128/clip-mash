@@ -23,9 +23,16 @@ pub struct ClipSettings {
 pub struct Clip {
     pub scene_id: String,
     pub marker_id: String,
+    /// Start and endpoint inside the video in seconds.
     pub range: (u32, u32),
     pub marker_index: usize,
     pub scene_index: usize,
+}
+
+impl Clip {
+    pub fn range_millis(&self) -> (u32, u32) {
+        (self.range.0 * 1000, self.range.1 * 1000)
+    }
 }
 
 #[derive(Deserialize, Debug)]

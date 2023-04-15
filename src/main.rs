@@ -3,6 +3,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use color_eyre::Report;
 use std::{sync::Arc, time::Duration};
 
 mod clip;
@@ -10,12 +11,13 @@ mod config;
 mod download_ffmpeg;
 mod error;
 mod ffmpeg;
+mod funscript;
 mod http;
 mod stash_api;
 mod static_files;
 mod util;
 
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub type Result<T> = std::result::Result<T, Report>;
 
 pub struct AppState {
     pub ffmpeg: Ffmpeg,
@@ -25,6 +27,8 @@ pub struct AppState {
 async fn main() -> Result<()> {
     use std::env;
     use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+
+    color_eyre::install()?;
 
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "info");

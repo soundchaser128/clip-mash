@@ -47,15 +47,16 @@ pub fn find_stream_url(marker: &Marker) -> &str {
 }
 
 fn commandline_error<T>(output: Output) -> Result<T> {
+    use color_eyre::eyre::eyre;
+
     let stdout = std::str::from_utf8(&output.stdout).unwrap();
     let stderr = std::str::from_utf8(&output.stderr).unwrap();
-    Err(format!(
+    Err(eyre!(
         "ffmpeg failed with exit code {}, stdout:\n{}\nstderr:\n{}",
         output.status.code().unwrap_or(1),
         stdout,
         stderr
-    )
-    .into())
+    ))
 }
 
 pub async fn get_progress() -> Progress {
@@ -178,7 +179,6 @@ impl Ffmpeg {
             self.increase_progress().await;
             paths.push(out_file);
         }
-        // }
         self.reset_progress().await;
         Ok(paths)
     }

@@ -28,6 +28,7 @@ use crate::{
     config::{self, Config},
     error::AppError,
     ffmpeg::{self, find_stream_url},
+    funscript::{FunScript, ScriptBuilder},
     stash_api::{healt_check_query::SystemStatusEnum, Api, Marker},
     AppState,
 };
@@ -57,6 +58,7 @@ pub struct Scene {
     pub performers: Vec<String>,
     pub marker_count: usize,
     pub tags: BTreeSet<String>,
+    pub interactive: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -210,6 +212,7 @@ pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
                 .chain(s.scene_markers.iter().map(|m| m.primary_tag.name.clone()))
                 .collect();
             Scene {
+                interactive: s.interactive,
                 id: s.id,
                 title: s
                     .title
@@ -259,6 +262,15 @@ pub async fn create_video(
     });
 
     file_name
+}
+
+#[axum::debug_handler]
+pub async fn get_funscript(Json(body): Json<CreateVideoBody>) -> Result<Json<FunScript>, AppError> {
+    let api = Api::load_config().await?;
+    let script_builder = ScriptBuilder::new(&api);
+    let script = script_builder.combine_scripts(body.clips).await?;
+
+    Ok(Json(script))
 }
 
 #[axum::debug_handler]

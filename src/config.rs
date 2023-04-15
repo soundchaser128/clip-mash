@@ -1,5 +1,6 @@
 use crate::Result;
 use camino::{Utf8Path, Utf8PathBuf};
+use color_eyre::eyre::eyre;
 use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -30,8 +31,9 @@ impl Config {
 
     pub async fn get() -> Result<Config> {
         let config = CONFIG.lock().await;
+
         config.as_ref().map(|c| c.clone()).ok_or_else(|| {
-            "No configuration set up yet. Please enter your data in the web UI".into()
+            eyre!("No configuration set up yet. Please enter your data in the web UI")
         })
     }
 }

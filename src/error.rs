@@ -13,6 +13,7 @@ type StdError = Box<dyn std::error::Error>;
 pub enum AppError {
     Generic(StdError),
     Io(io::Error),
+    Report(color_eyre::Report),
 }
 
 impl From<StdError> for AppError {
@@ -27,12 +28,19 @@ impl From<io::Error> for AppError {
     }
 }
 
+impl From<color_eyre::Report> for AppError {
+    fn from(value: color_eyre::Report) -> Self {
+        AppError::Report(value)
+    }
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         tracing::error!("request failed: {:?}", self);
         let error_message = match self {
             AppError::Generic(e) => e.to_string(),
             AppError::Io(e) => format!("io error: {e}"),
+            AppError::Report(e) => e.to_string(),
         };
 
         let body = Json(json!({

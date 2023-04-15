@@ -1,14 +1,16 @@
 use std::process::{Command, Stdio};
 
 use camino::{Utf8Path, Utf8PathBuf};
+use color_eyre::eyre::bail;
 use tokio::{fs, io::AsyncWriteExt};
 
 use crate::Result;
 
 fn download_url() -> Result<(&'static str, &'static str)> {
     if cfg!(not(target_arch = "x86_64")) {
-        return Err("Downloads must be manually provided for non-x86_64 architectures".into());
+        bail!("Downloads must be manually provided for non-x86_64 architectures")
     }
+
     if cfg!(target_os = "windows") {
         Ok((
             "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
@@ -20,7 +22,7 @@ fn download_url() -> Result<(&'static str, &'static str)> {
             "ffmpeg.tar.xz",
         ))
     } else {
-        Err("Unsupported platform".into())
+        bail!("Sorry, unsupported platform.");
     }
 }
 

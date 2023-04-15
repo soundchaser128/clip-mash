@@ -1,5 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useEffect, useRef, useState} from "react"
+import {HiCheckBadge, HiOutlineArrowDownOnSquare} from "react-icons/hi2"
 
 interface Progress {
   finished: number
@@ -40,6 +41,7 @@ function Progress() {
     <div className="mt-8 max-w-lg w-full self-center flex flex-col items-center">
       {!progress && !finished && (
         <button onClick={onSubmit} className="btn btn-lg btn-success">
+          <HiCheckBadge className="mr-2 w-6 h-6" />
           Create video
         </button>
       )}
@@ -68,6 +70,7 @@ function Progress() {
             className="btn btn-success btn-lg"
             download
           >
+            <HiOutlineArrowDownOnSquare className="w-6 h-6 mr-2" />
             Download
           </a>
         </div>

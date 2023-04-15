@@ -2,6 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import {useNavigate} from "react-router-dom"
 import {FormStage} from "../types/types"
 import {updateForm} from "./actions"
+import {HiFilm, HiTag, HiUser} from "react-icons/hi2"
 
 function SelectMode() {
   const {actions} = useStateMachine({updateForm})
@@ -23,25 +24,28 @@ function SelectMode() {
           tags or by scenes.
         </p>
 
-        <div className="self-center flex gap-2">
+        <div className="self-center grid grid-cols-3 gap-2">
           <button
             onClick={() => onNextStage("performers")}
-            className="btn btn-lg btn-secondary w-48"
+            className="btn btn-lg btn-secondary"
           >
+            <HiUser className="mr-2 w-6 h-6" />
             Performers
           </button>
 
           <button
-            className="btn btn-lg btn-secondary w-48"
+            className="btn btn-lg btn-secondary"
             onClick={() => onNextStage("tags")}
           >
+            <HiTag className="mr-2 w-6 h-6" />
             Tags
           </button>
 
           <button
-            className="btn btn-lg btn-secondary w-48"
+            className="btn btn-lg btn-secondary"
             onClick={() => onNextStage("scenes")}
           >
+            <HiFilm className="mr-2 w-6 h-6" />
             Scenes
           </button>
         </div>

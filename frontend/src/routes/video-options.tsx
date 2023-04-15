@@ -3,6 +3,7 @@ import {useForm} from "react-hook-form"
 import {useNavigate} from "react-router-dom"
 import {FormStage, FormState} from "../types/types"
 import {updateForm} from "./actions"
+import {HiChevronRight} from "react-icons/hi2"
 
 type Inputs = Pick<
   FormState,
@@ -35,6 +36,7 @@ function VideoOptions() {
           <span />
           <button type="submit" className="btn btn-success">
             Next
+            <HiChevronRight className="ml-1" />
           </button>
         </div>
         <div className="flex flex-col gap-4 max-w-sm w-full">

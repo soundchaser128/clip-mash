@@ -3,6 +3,7 @@ import {useState} from "react"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
 import {Clip, FormStage, FormState} from "../types/types"
 import {updateForm} from "./actions"
+import {HiChevronRight} from "react-icons/hi2"
 
 interface ClipsResponse {
   clips: Clip[]
@@ -60,6 +61,7 @@ function PreviewClips() {
           className="btn btn-success place-self-end"
         >
           Next
+          <HiChevronRight className="ml-1" />
         </button>
       </div>
 

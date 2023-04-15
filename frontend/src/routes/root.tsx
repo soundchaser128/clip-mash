@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import {useStateMachine} from "little-state-machine"
-import {PropsWithChildren, useEffect} from "react"
+import {useEffect} from "react"
 import {
   LoaderFunction,
   Outlet,
@@ -8,6 +8,7 @@ import {
   useNavigate,
   useNavigation,
 } from "react-router-dom"
+import {HiXMark} from "react-icons/hi2"
 import {FormStage} from "../types/types"
 import {resetForm} from "./actions"
 
@@ -79,6 +80,7 @@ export default function Root() {
           </h1>
           <div className="self-center flex gap-2 mb-4">
             <button onClick={onReset} className="btn btn-sm btn-error">
+              <HiXMark className="w-5 h-5 mr-2" />
               Reset
             </button>
           </div>

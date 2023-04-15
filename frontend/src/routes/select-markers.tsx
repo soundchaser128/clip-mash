@@ -6,6 +6,7 @@ import {updateForm} from "./actions"
 import {formatDuration} from "date-fns"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
+import {HiCheck, HiChevronRight, HiXMark} from "react-icons/hi2"
 
 interface Marker {
   id: string
@@ -87,7 +88,6 @@ function SelectMarkers() {
       return Object.fromEntries(entries)
     }
   )
-  console.log(selection)
   const [filter, setFilter] = useState("")
   const [videoPreview, setVideoPreview] = useState<string>()
   const navigate = useNavigate()
@@ -168,6 +168,7 @@ function SelectMarkers() {
           disabled={allDisabled}
         >
           Next
+          <HiChevronRight className="ml-1" />
         </button>
       </div>
       <div className="w-full flex justify-between my-4">
@@ -195,9 +196,11 @@ function SelectMarkers() {
 
         <div className="flex gap-2">
           <button onClick={onDeselectAll} className="btn btn-error">
+            <HiXMark className="mr-1" />
             Deselect all
           </button>
           <button onClick={onSelectAll} className="btn btn-primary">
+            <HiCheck className="mr-1" />
             Select all
           </button>
         </div>
@@ -247,7 +250,7 @@ function SelectMarkers() {
                           draft[marker.id].duration = e.target.valueAsNumber
                         })
                       }
-                      disabled={!selection[index]}
+                      disabled={!selectedMarker.selected}
                       max={getDuration(marker)}
                       min={15}
                       type="range"
@@ -264,7 +267,7 @@ function SelectMarkers() {
                             onVideoPreviewChange(marker.id, e.target.checked)
                           }
                           checked={videoPreview === marker.id}
-                          disabled={!selection[index]}
+                          disabled={!selectedMarker.selected}
                           type="checkbox"
                           className="toggle ml-2"
                         />

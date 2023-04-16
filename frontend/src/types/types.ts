@@ -55,6 +55,7 @@ export interface Clip {
 export interface Scene {
   id: string
   title: string
+  studio?: string
   imageUrl: string
   performers: string[]
   tags: string[]

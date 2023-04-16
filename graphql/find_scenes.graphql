@@ -35,6 +35,9 @@ query FindScenesQuery($scene_ids: [Int!]) {
       tags {
         name
       }
+      studio {
+        name
+      }
     }
   }
 }

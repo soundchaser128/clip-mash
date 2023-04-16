@@ -6,6 +6,7 @@ import {FormStage, Performer, Tag, Scene, SelectMode} from "../types/types"
 import {updateForm} from "./actions"
 import {
   HiAdjustmentsVertical,
+  HiCamera,
   HiCheck,
   HiChevronRight,
   HiStar,
@@ -14,6 +15,7 @@ import {
   HiVideoCamera,
   HiXMark,
 } from "react-icons/hi2"
+import Rating from "../components/Rating"
 
 interface Data {
   performers: Performer[]
@@ -78,22 +80,34 @@ function Scenes({
             <h2 className="card-title tooltip" data-tip={scene.title}>
               <span className="truncate">{scene.title}</span>
             </h2>
-            <ul className="text-base">
-              <li>
+            <ul className="text-base grow flex flex-col items-start">
+              <li className="tooltip" data-tip="Performers">
                 <HiUser className="inline mr-2" />
                 {scene.performers.join(", ")}
               </li>
-              <li>
+              {scene.studio && (
+                <li className="tooltip" data-tip="Studio">
+                  <HiCamera className="inline mr-2" />
+                  {scene.studio}
+                </li>
+              )}
+              <li
+                className="tooltip"
+                data-tip="Number of scene markers in this scene"
+              >
                 <HiVideoCamera className="inline mr-2" />
-                {scene.markerCount} markers
+                {scene.markerCount} marker(s)
               </li>
               <li>
                 <div className="tooltip" data-tip={scene.tags.join(", ")}>
                   <HiTag className="inline mr-2" />
-                  {scene.tags.length}
+                  {scene.tags.length} tags
                 </div>
               </li>
-              <li>
+              <li
+                className="tooltip"
+                data-tip="Whether the scene has an associated .funscript file."
+              >
                 <HiAdjustmentsVertical className="inline mr-2" />
                 Interactive:{" "}
                 <strong>
@@ -142,7 +156,9 @@ function Tags({
         <article key={tag.id} className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title">{tag.name}</h2>
-            <p>{tag.count} markers</p>
+            <p>
+              <strong>{tag.count}</strong> markers
+            </p>
             <div className="card-actions justify-end">
               <div className="form-control">
                 <label className="label cursor-pointer">
@@ -193,20 +209,25 @@ function Performers({
             <ul className="text-base flex flex-col gap-2 grow">
               <li>
                 <HiVideoCamera className="inline mr-2" />
-                {performer.sceneCount} scenes
+                <strong>{performer.sceneCount}</strong> scenes
               </li>
+              {performer.rating && (
+                <li className="flex items-center">
+                  <HiStar className="inline mr-2" />
+                  Rating
+                  <Rating
+                    className="ml-1"
+                    maxRating={5}
+                    rating={performer.rating / 20}
+                  />
+                </li>
+              )}
               <li>
-                <HiStar className="inline mr-2" />
-                {performer.rating && <>Rating: {performer.rating / 20}/5</>}
-                {!performer.rating && "No rating"}
-              </li>
-              <li>
-                {performer.tags.length === 0 && "No tags"}
                 {performer.tags.length > 0 && (
-                  <div className="inline-flex flex-wrap gap-x-2 gap-y-1">
+                  <div className="inline-flex flex-wrap gap-x-1.5 gap-y-1.5">
                     {performer.tags.map((tag) => (
                       <span
-                        className="bg-gray-200 px-1 py-0.5 rounded-lg"
+                        className="bg-gray-200 px-1.5 py-0.5 rounded-lg"
                         key={tag}
                       >
                         <HiTag className="inline mr-2" />

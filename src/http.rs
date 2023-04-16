@@ -64,6 +64,7 @@ pub struct Scene {
     pub marker_count: usize,
     pub tags: BTreeSet<String>,
     pub interactive: bool,
+    pub studio: Option<String>,
 }
 
 impl From<FindScenesQueryFindScenesScenes> for Scene {
@@ -76,6 +77,7 @@ impl From<FindScenesQueryFindScenesScenes> for Scene {
             marker_count: scene.scene_markers.len(),
             tags: scene.tags.into_iter().map(|t| t.name).collect(),
             interactive: scene.interactive,
+            studio: scene.studio.map(|s| s.name),
         }
     }
 }
@@ -243,6 +245,7 @@ pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
                 performers: s.performers.into_iter().map(|p| p.name).collect(),
                 marker_count: s.scene_markers.len(),
                 tags,
+                studio: s.studio.map(|s| s.name),
                 image_url: s
                     .paths
                     .screenshot

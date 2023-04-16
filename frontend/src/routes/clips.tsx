@@ -1,13 +1,21 @@
 import {useStateMachine} from "little-state-machine"
-import {useState} from "react"
+import {useMemo, useState} from "react"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {Clip, FormStage, FormState} from "../types/types"
+import {Clip, FormStage, FormState, Scene} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight} from "react-icons/hi2"
+import clsx from "clsx"
 
 interface ClipsResponse {
   clips: Clip[]
   streams: Record<string, string>
+  scenes: Scene[]
+}
+
+interface Data {
+  clips: Clip[]
+  streams: Record<string, string>
+  scenes: Record<string, Scene>
 }
 
 export const loader: LoaderFunction = async () => {
@@ -24,11 +32,31 @@ export const loader: LoaderFunction = async () => {
     }),
     headers: {"content-type": "application/json"},
   })
-  return await response.json()
+  const data: ClipsResponse = await response.json()
+
+  const scenes: Record<string, Scene> = {}
+  data.scenes.forEach((s) => {
+    scenes[s.id] = s
+  })
+
+  return {
+    ...data,
+    scenes,
+  } satisfies Data
 }
 
+const segmentColors = [
+  "bg-purple-400",
+  "bg-green-400",
+  "bg-yellow-400",
+  "bg-red-400",
+  "bg-teal-400",
+  "bg-orange-600",
+  "bg-rose-400",
+]
+
 function PreviewClips() {
-  const data = useLoaderData() as ClipsResponse
+  const data = useLoaderData() as Data
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const currentClip = data.clips[currentClipIndex]
   const streamUrl = data.streams[currentClip.sceneId]
@@ -43,6 +71,21 @@ function PreviewClips() {
     })
     navigate("/progress")
   }
+
+  const [segments, sceneColors] = useMemo(() => {
+    const clipLengths = data.clips.map((clip) => clip.range[1] - clip.range[0])
+    const total = clipLengths.reduce((total, len) => total + len, 0)
+    const segments = clipLengths.map((len) => `${(len / total) * 100}%`)
+
+    const sceneIds = Array.from(new Set(data.clips.map((c) => c.sceneId)))
+    sceneIds.sort()
+    const sceneColors = new Map()
+    sceneIds.forEach((id, index) => {
+      sceneColors.set(id, segmentColors[index % segmentColors.length])
+    })
+
+    return [segments, sceneColors]
+  }, [data])
 
   return (
     <>
@@ -66,6 +109,26 @@ function PreviewClips() {
       </div>
 
       <video className="max-h-screen" src={clipUrl} muted controls autoPlay />
+
+      <div className="w-full h-8 flex mt-2 gap-0.5">
+        {segments.map((width, index) => {
+          const clip = data.clips[index]
+          const scene = data.scenes[clip.sceneId]
+          return (
+            <div
+              data-tip={`${scene.performers.join(", ")} - ${scene.title}`}
+              className={clsx(
+                "h-full tooltip transition-opacity",
+                sceneColors.get(clip.sceneId),
+                index !== currentClipIndex &&
+                  "bg-opacity-25 hover:bg-opacity-50"
+              )}
+              style={{width}}
+              onClick={() => setCurrentClipIndex(index)}
+            />
+          )
+        })}
+      </div>
 
       <div className="flex justify-between mt-4">
         <button

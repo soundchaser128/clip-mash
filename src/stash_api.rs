@@ -249,9 +249,11 @@ impl Api {
             .await?
             .error_for_status()?;
         let response: Response<find_scenes_query::ResponseData> = response.json().await?;
-        let scenes = response.data.unwrap().find_scenes.scenes;
 
-        Ok(scenes)
+        match response.data {
+            Some(scenes) => Ok(scenes.find_scenes.scenes),
+            None => Ok(vec![]),
+        }
     }
 
     pub async fn find_tags(&self) -> Result<Vec<Tag>> {

@@ -29,7 +29,10 @@ use crate::{
     error::AppError,
     ffmpeg::{self, find_stream_url},
     funscript::{FunScript, ScriptBuilder},
-    stash_api::{healt_check_query::SystemStatusEnum, Api, Marker},
+    stash_api::{
+        find_scenes_query::FindScenesQueryFindScenesScenes, healt_check_query::SystemStatusEnum,
+        Api, Marker,
+    },
     AppState,
 };
 
@@ -61,6 +64,20 @@ pub struct Scene {
     pub marker_count: usize,
     pub tags: BTreeSet<String>,
     pub interactive: bool,
+}
+
+impl From<FindScenesQueryFindScenesScenes> for Scene {
+    fn from(scene: FindScenesQueryFindScenesScenes) -> Self {
+        Scene {
+            id: scene.id,
+            title: scene.title.unwrap_or(scene.files[0].basename.clone()),
+            image_url: "TODO".into(),
+            performers: scene.performers.into_iter().map(|p| p.name).collect(),
+            marker_count: scene.scene_markers.len(),
+            tags: scene.tags.into_iter().map(|t| t.name).collect(),
+            interactive: scene.interactive,
+        }
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -337,19 +354,44 @@ pub async fn set_config(Json(config): Json<Config>) -> Result<StatusCode, AppErr
 pub struct ClipsResponse {
     pub clips: Vec<Clip>,
     pub streams: HashMap<String, String>,
+    pub scenes: Vec<Scene>,
 }
 
 #[axum::debug_handler]
-pub async fn fetch_clips(Json(body): Json<CreateClipsBody>) -> Json<ClipsResponse> {
+pub async fn fetch_clips(
+    Json(body): Json<CreateClipsBody>,
+) -> Result<Json<ClipsResponse>, AppError> {
+    let api = Api::load_config().await?;
+
     let clips = clip::get_all_clips(&body);
     let clips = clip::compile_clips(clips, body.clip_order, body.select_mode);
-    tracing::info!("compiled clips {clips:#?}");
+    tracing::debug!("compiled clips {clips:#?}");
     let streams: HashMap<String, String> = body
         .markers
         .iter()
         .map(|m| (m.scene.id.clone(), find_stream_url(m).to_string()))
         .collect();
-    Json(ClipsResponse { clips, streams })
+
+    let mut scene_ids: Vec<_> = clips
+        .iter()
+        .filter_map(|c| c.scene_id.parse().ok())
+        .collect();
+    scene_ids.sort();
+    scene_ids.dedup();
+
+    tracing::info!("scene IDs: {:?}", scene_ids);
+    let scenes = api
+        .find_scenes_by_ids(scene_ids)
+        .await?
+        .into_iter()
+        .map(Scene::from)
+        .collect();
+
+    Ok(Json(ClipsResponse {
+        clips,
+        streams,
+        scenes,
+    }))
 }
 
 #[derive(Deserialize)]

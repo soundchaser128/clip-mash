@@ -4,7 +4,16 @@ import {json, useLoaderData, useNavigate} from "react-router-dom"
 import useFuse from "../hooks/useFuse"
 import {FormStage, Performer, Tag, Scene, SelectMode} from "../types/types"
 import {updateForm} from "./actions"
-import {HiChevronRight} from "react-icons/hi2"
+import {
+  HiAdjustmentsVertical,
+  HiCheck,
+  HiChevronRight,
+  HiStar,
+  HiTag,
+  HiUser,
+  HiVideoCamera,
+  HiXMark,
+} from "react-icons/hi2"
 
 interface Data {
   performers: Performer[]
@@ -42,31 +51,6 @@ export async function loader(): Promise<Data> {
   }
 }
 
-function TagIcon({className}: {className: string}) {
-  return (
-    <svg
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-      className={className}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M6 6h.008v.008H6V6z"
-      />
-    </svg>
-  )
-}
-
 function Scenes({
   scenes,
   selection,
@@ -96,18 +80,30 @@ function Scenes({
             </h2>
             <ul className="text-base">
               <li>
-                <strong>{scene.performers.join(", ")}</strong>
+                <HiUser className="inline mr-2" />
+                {scene.performers.join(", ")}
               </li>
-              <li>{scene.markerCount} markers</li>
+              <li>
+                <HiVideoCamera className="inline mr-2" />
+                {scene.markerCount} markers
+              </li>
               <li>
                 <div className="tooltip" data-tip={scene.tags.join(", ")}>
-                  <TagIcon className="w-4 h-4 mr-0.5 inline-block" />{" "}
+                  <HiTag className="inline mr-2" />
                   {scene.tags.length}
                 </div>
               </li>
-              {scene.interactive && (
-                <li>Scene has attached .funscript file.</li>
-              )}
+              <li>
+                <HiAdjustmentsVertical className="inline mr-2" />
+                Interactive:{" "}
+                <strong>
+                  {scene.interactive ? (
+                    <HiCheck className="text-green-600 inline" />
+                  ) : (
+                    <HiXMark className="text-red-600 inline" />
+                  )}
+                </strong>
+              </li>
             </ul>
             <div className="card-actions justify-end">
               <div className="form-control">
@@ -179,11 +175,11 @@ function Performers({
   onCheckboxChange: (id: string, checked: boolean, name: string) => void
 }) {
   return (
-    <section className="grid grid-cols-6 gap-2 w-full">
+    <section className="grid grid-cols-4 gap-2 w-full">
       {performers.map((performer) => (
         <article
           key={performer.id}
-          className="card bg-base-100 shadow-xl card-compact"
+          className="card card-compact bg-base-100 shadow-xl"
         >
           <figure>
             <img
@@ -194,7 +190,33 @@ function Performers({
           </figure>
           <div className="card-body">
             <h2 className="card-title">{performer.name}</h2>
-            <p>{performer.sceneCount} scenes</p>
+            <ul className="text-base flex flex-col gap-2 grow">
+              <li>
+                <HiVideoCamera className="inline mr-2" />
+                {performer.sceneCount} scenes
+              </li>
+              <li>
+                <HiStar className="inline mr-2" />
+                {performer.rating && <>Rating: {performer.rating / 20}/5</>}
+                {!performer.rating && "No rating"}
+              </li>
+              <li>
+                {performer.tags.length === 0 && "No tags"}
+                {performer.tags.length > 0 && (
+                  <div className="inline-flex flex-wrap gap-x-2 gap-y-1">
+                    {performer.tags.map((tag) => (
+                      <span
+                        className="bg-gray-200 px-1 py-0.5 rounded-lg"
+                        key={tag}
+                      >
+                        <HiTag className="inline mr-2" />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </li>
+            </ul>
             <div className="card-actions justify-end">
               <div className="form-control">
                 <label className="label cursor-pointer">

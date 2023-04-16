@@ -6,7 +6,14 @@ import {updateForm} from "./actions"
 import {formatDuration} from "date-fns"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
-import {HiCheck, HiChevronRight, HiXMark} from "react-icons/hi2"
+import {
+  HiCheck,
+  HiChevronRight,
+  HiClock,
+  HiUser,
+  HiVideoCamera,
+  HiXMark,
+} from "react-icons/hi2"
 
 interface Marker {
   id: string
@@ -211,7 +218,7 @@ function SelectMarkers() {
         </div>
       </div>
       <section className="grid grid-cols-4 gap-2 w-full">
-        {markers.map((marker, index) => {
+        {markers.map((marker) => {
           const selectedMarker = selection[marker.id]!
           return (
             <article
@@ -235,15 +242,24 @@ function SelectMarkers() {
               <div className="card-body">
                 <h2 className="card-title">{marker.primaryTag}</h2>
                 <p>
-                  <strong>Scene: </strong>
+                  <strong>
+                    <HiVideoCamera className="mr-2 inline" />
+                    Scene:{" "}
+                  </strong>
                   {marker.sceneTitle || marker.fileName}
                 </p>
                 <p>
-                  <strong>Performers: </strong>
+                  <strong>
+                    <HiUser className="mr-2 inline" />
+                    Performers:{" "}
+                  </strong>
                   {marker.performers.join(", ") || "No performers found"}
                 </p>
                 <p>
-                  <strong>Selected duration: </strong>
+                  <strong>
+                    <HiClock className="mr-2 inline" />
+                    Selected duration:{" "}
+                  </strong>
                   {formatSeconds(selectedMarker.duration)}
                 </p>
                 <div className="">

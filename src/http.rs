@@ -47,6 +47,8 @@ pub struct Performer {
     pub id: String,
     pub scene_count: i64,
     pub image_url: Option<String>,
+    pub tags: Vec<String>,
+    pub rating: Option<i64>,
 }
 
 #[derive(Serialize, Debug)]
@@ -173,6 +175,8 @@ pub async fn fetch_performers() -> Result<Json<Vec<Performer>>, AppError> {
             scene_count: p.scene_count.unwrap_or_default(),
             name: p.name,
             image_url: p.image_path.map(|url| add_api_key(&url, &config.api_key)),
+            tags: p.tags.into_iter().map(|t| t.name).collect(),
+            rating: p.rating100,
         })
         .filter(|p| p.scene_count > 0)
         .collect();

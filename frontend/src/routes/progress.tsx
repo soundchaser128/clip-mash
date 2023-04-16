@@ -1,6 +1,11 @@
 import {useStateMachine} from "little-state-machine"
 import {useEffect, useRef, useState} from "react"
-import {HiCheckBadge, HiOutlineArrowDownOnSquare} from "react-icons/hi2"
+import {
+  HiArrowDown,
+  HiCheckBadge,
+  HiCodeBracket,
+  HiOutlineArrowDownOnSquare,
+} from "react-icons/hi2"
 import {formatSeconds} from "./select-markers"
 
 interface Progress {
@@ -14,6 +19,7 @@ function Progress() {
   const [finished, setFinished] = useState(false)
   const [fileName, setFileName] = useState("")
   const downloadLink = useRef<HTMLAnchorElement>(null)
+  const [creatingScript, setCreatingScript] = useState(false)
 
   const onSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -40,7 +46,11 @@ function Progress() {
     }
   }
 
-  const onDownloadFunscript = async () => {
+  const onDownloadFunscript = async (
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    e.preventDefault()
+    setCreatingScript(true)
     const body = JSON.stringify(state.data)
     const response = await fetch("/api/funscript", {
       method: "POST",
@@ -54,6 +64,7 @@ function Progress() {
     downloadLink.current!.href = downloadUrl
     downloadLink.current!.download = file
     downloadLink.current!.click()
+    setCreatingScript(false)
   }
 
   const totalDuration = state.data.clips!.reduce(
@@ -65,7 +76,7 @@ function Progress() {
     <div className="mt-8 max-w-lg w-full self-center flex flex-col items-center">
       {!progress && !finished && (
         <>
-          <div className="mb-8 text-center">
+          <div className="mb-8">
             <p>
               Generating video with <strong>{state.data.clips?.length}</strong>{" "}
               clips.
@@ -78,11 +89,7 @@ function Progress() {
               File name: <strong>{state.data.fileName}</strong>
             </p>
           </div>
-          <a
-            ref={downloadLink}
-            onClick={onSubmit}
-            className="btn btn-lg btn-success"
-          >
+          <a onClick={onSubmit} className="btn btn-lg btn-success">
             <HiCheckBadge className="mr-2 w-6 h-6" />
             Create video
           </a>
@@ -103,27 +110,33 @@ function Progress() {
       )}
 
       {finished && (
-        <div className="text-center flex flex-col text-xl gap-4 mt-8">
-          <p>
-            <strong>Success!</strong>
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-bold mb-6">Success!</h1>
+          <p className="font-light self-start mb-1">
+            Download the finished compilation
           </p>
-          <p>You can download your finished video here:</p>
           <a
             href={`/api/download?fileName=${encodeURIComponent(fileName)}`}
-            className="btn btn-success btn-lg"
+            className="btn btn-success btn-lg mb-8"
             download
           >
-            <HiOutlineArrowDownOnSquare className="w-6 h-6 mr-2" />
+            <HiArrowDown className="w-6 h-6 mr-2" />
             Download
           </a>
 
-          <p>You can optionally download the generated .funscript file here:</p>
+          <p className="font-light self-start mb-1">
+            Download the generated .funscript file
+          </p>
           <button
             onClick={onDownloadFunscript}
             className="btn btn-success btn-lg"
+            disabled={creatingScript}
           >
+            <HiCodeBracket className="w-6 h-6 mr-2" />
             Funscript
           </button>
+
+          <a className="hidden" ref={downloadLink} />
         </div>
       )}
     </div>

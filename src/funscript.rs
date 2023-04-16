@@ -138,6 +138,12 @@ impl<'a> ScriptBuilder<'a> {
         let mut script = FunScript::default();
 
         script.actions = resulting_actions;
+        let mut metadata = OFSMetadata::default();
+        metadata.creator = "stash-compilation-maker".into();
+        script.metadata = Some(metadata);
+
+        tracing::info!("generated funscript with {} actions", script.actions.len());
+
         Ok(script)
     }
 }

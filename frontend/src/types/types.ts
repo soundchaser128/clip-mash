@@ -9,6 +9,8 @@ export interface Performer {
   id: string
   sceneCount: number
   imageUrl?: string
+  tags: string[]
+  rating?: number
 }
 
 export enum FormStage {

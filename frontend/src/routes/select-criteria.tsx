@@ -48,8 +48,7 @@ export async function loader(): Promise<Data> {
     return {tags, performers, scenes}
   } catch (e) {
     const error = e as Error
-    console.error(error)
-    throw json({error: error.toString()}, {status: 500})
+    throw json({error: error.toString(), request: "todo"}, {status: 500})
   }
 }
 
@@ -272,11 +271,19 @@ interface SearchItem {
 function getSearchItems(data: Data, mode: SelectMode): SearchItem[] {
   switch (mode) {
     case "performers":
-      return data.performers.map((p) => ({id: p.id, tokens: [p.name]}))
+      return data.performers.map((p) => ({
+        id: p.id,
+        tokens: [p.name, ...p.tags],
+      }))
     case "scenes":
       return data.scenes.map((s) => ({
         id: s.id,
-        tokens: [s.title, ...s.tags, ...s.performers],
+        tokens: [
+          s.title,
+          ...s.tags,
+          ...s.performers,
+          s.interactive ? "interactive" : "non-interactive",
+        ],
       }))
     case "tags":
       return data.tags.map((t) => ({id: t.id, tokens: [t.name]}))

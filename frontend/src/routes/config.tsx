@@ -1,7 +1,7 @@
 import clsx from "clsx"
 import {useState} from "react"
 import {useForm} from "react-hook-form"
-import {useNavigate} from "react-router-dom"
+import {json, useNavigate} from "react-router-dom"
 
 interface Inputs {
   stashUrl: string
@@ -19,7 +19,7 @@ async function testCredentials(inputs: Inputs) {
     return status
   } else {
     const text = await response.text()
-    return text
+    throw json({error: text, request: "/api/health"}, {status: 500})
   }
 }
 

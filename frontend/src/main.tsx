@@ -33,14 +33,28 @@ const Layout: React.FC<PropsWithChildren> = ({children}) => {
 
 const ErrorBoundary = () => {
   const error = useRouteError()
+  console.error(error)
+
   if (isRouteErrorResponse(error)) {
+    const is404 = error.status === 404
+
     return (
       <Layout>
         <div className="self-center shrink mt-8">
           <h1 className="font-bold text-3xl mb-4">
-            Sorry, something went wrong.
+            {is404 ? "404 - Page not found" : "Sorry, something went wrong."}
           </h1>
-          Details: <code>{error.data.error}</code>
+          {!is404 && (
+            <div>
+              <p>Status code {error.status}</p>
+              {error.data.error && <p>{error.data.error}</p>}
+              {error.data.request && (
+                <p>
+                  Request to <code>{error.data.request}</code> failed.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </Layout>
     )
@@ -52,6 +66,9 @@ const ErrorBoundary = () => {
         <h1 className="font-bold text-3xl mb-4">
           Sorry, something went wrong.
         </h1>
+        <div>
+          <pre>{JSON.stringify(error, null, 2)}</pre>
+        </div>
       </div>
     </Layout>
   )

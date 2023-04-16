@@ -3,6 +3,8 @@ use serde_json::Value;
 
 use crate::{clip::Clip, stash_api::Api, Result};
 
+// Funscript structs taken from  https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FSPoint {

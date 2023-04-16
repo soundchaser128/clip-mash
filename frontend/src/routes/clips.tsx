@@ -1,6 +1,11 @@
 import {useStateMachine} from "little-state-machine"
 import {useMemo, useState} from "react"
-import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
+import {
+  LoaderFunction,
+  json,
+  useLoaderData,
+  useNavigate,
+} from "react-router-dom"
 import {Clip, FormStage, FormState, Scene} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight} from "react-icons/hi2"
@@ -19,8 +24,8 @@ interface Data {
 }
 
 export const loader: LoaderFunction = async () => {
-  const json = sessionStorage.getItem("form-state")
-  const state: {data: FormState} = JSON.parse(json!)
+  const formJson = sessionStorage.getItem("form-state")
+  const state: {data: FormState} = JSON.parse(formJson!)
   const response = await fetch("/api/clips", {
     method: "POST",
     body: JSON.stringify({
@@ -32,17 +37,22 @@ export const loader: LoaderFunction = async () => {
     }),
     headers: {"content-type": "application/json"},
   })
-  const data: ClipsResponse = await response.json()
+  if (response.ok) {
+    const data: ClipsResponse = await response.json()
 
-  const scenes: Record<string, Scene> = {}
-  data.scenes.forEach((s) => {
-    scenes[s.id] = s
-  })
+    const scenes: Record<string, Scene> = {}
+    data.scenes.forEach((s) => {
+      scenes[s.id] = s
+    })
 
-  return {
-    ...data,
-    scenes,
-  } satisfies Data
+    return {
+      ...data,
+      scenes,
+    } satisfies Data
+  } else {
+    const text = await response.text()
+    throw json({error: text, request: "/api/clips"}, {status: 500})
+  }
 }
 
 const segmentColors = [

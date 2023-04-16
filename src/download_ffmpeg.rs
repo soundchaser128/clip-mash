@@ -88,7 +88,7 @@ fn unzip(
             return Ok(dest_path);
         }
     }
-    Err("no file found".into())
+    bail!("no file found")
 }
 
 #[cfg(target_os = "macos")]

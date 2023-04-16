@@ -96,7 +96,7 @@ fn unzip(
     _path: impl AsRef<Utf8Path>,
     _destination_folder: impl AsRef<Utf8Path>,
 ) -> Result<Utf8PathBuf> {
-    Err("Please use `brew` to install ffmpeg manually.".into())
+    bail!("Please use `brew` to install ffmpeg manually.")
 }
 
 async fn download_archive(url: &str, destination: &Utf8Path) -> Result<()> {

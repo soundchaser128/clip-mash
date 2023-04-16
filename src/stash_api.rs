@@ -381,7 +381,7 @@ impl Api {
     }
 
     pub async fn get_funscript(&self, scene_id: &str) -> Result<FunScript> {
-        let url = format!("{}/scene/{}/funscript", self.api_key, scene_id);
+        let url = format!("{}/scene/{}/funscript", self.api_url, scene_id);
         let response = self
             .client
             .get(url)

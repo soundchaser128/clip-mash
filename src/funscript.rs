@@ -4,7 +4,7 @@ use serde_json::Value;
 use crate::{clip::Clip, stash_api::Api, Result};
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct FSPoint {
     pub pos: i32,
     /// Position in the video in milliseconds
@@ -14,7 +14,7 @@ pub struct FSPoint {
 /// properties about a pressure simulator
 /// that can be used to input points in a .funscript
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct SimulatorPresets {
     pub name: String,
     pub full_range: bool,
@@ -26,16 +26,12 @@ pub struct SimulatorPresets {
     pub color: String,
 }
 
-/// extra metadata, specifically for OpenFunscripter (OFS)
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
+#[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase", default)]
 pub struct OFSMetadata {
-    pub bookmarks: Vec<i32>,
-    pub chapters: Vec<String>,
     pub creator: String,
     pub description: String,
     pub duration: i32,
-    pub license: String,
     pub notes: String,
     pub performers: Vec<String>,
     #[serde(rename = "script_url")]
@@ -50,7 +46,7 @@ pub struct OFSMetadata {
 
 /// a serializable and deserializable .funscript file
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default)]
 pub struct FunScript {
     pub version: String,
     pub inverted: bool,
@@ -69,14 +65,12 @@ pub struct FunScript {
     pub clips: Vec<Value>,
     pub actions: Vec<FSPoint>,
     pub raw_actions: Vec<FSPoint>,
-    pub metadata: OFSMetadata,
+    pub metadata: Option<OFSMetadata>,
 }
 
 impl Default for FunScript {
     fn default() -> Self {
-        Self {
-            version: "".to_string(),
-            inverted: false,
+        FunScript {
             range: -1,
             bookmark: -1,
             last_position: -1,
@@ -92,21 +86,9 @@ impl Default for FunScript {
             clips: Vec::new(),
             actions: Vec::new(),
             raw_actions: Vec::new(),
-            metadata: OFSMetadata {
-                bookmarks: Vec::new(),
-                chapters: Vec::new(),
-                creator: "".to_string(),
-                description: "".to_string(),
-                duration: -1,
-                license: "".to_string(),
-                notes: "".to_string(),
-                performers: Vec::new(),
-                script_url: "".to_string(),
-                tags: Vec::new(),
-                title: "".to_string(),
-                ofs_type: "".to_string(),
-                video_url: "".to_string(),
-            },
+            metadata: Default::default(),
+            inverted: false,
+            version: "".to_string(),
         }
     }
 }
@@ -127,26 +109,35 @@ impl<'a> ScriptBuilder<'a> {
         for clip in clips {
             let (start, end) = clip.range_millis();
             let duration = end - start;
-            let script = self.api.get_funscript(&clip.scene_id).await?;
+            let script = self.api.get_funscript(&clip.scene_id).await;
+            match script {
+                Ok(script) => {
+                    let actions: Vec<_> = script
+                        .actions
+                        .into_iter()
+                        .filter(|a| a.at >= start && a.at <= end)
+                        .map(|action| FSPoint {
+                            pos: action.pos,
+                            at: (action.at - start) + offset,
+                        })
+                        .collect();
 
-            let actions: Vec<_> = script
-                .actions
-                .into_iter()
-                .filter(|a| a.at >= start && a.at <= end)
-                .map(|action| FSPoint {
-                    pos: action.pos,
-                    at: (action.at - start) + offset,
-                })
-                .collect();
-
-            resulting_actions.extend(actions);
-            offset += duration;
+                    resulting_actions.extend(actions);
+                    offset += duration;
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "failed to get .funscript for scene ID {}: {}",
+                        clip.scene_id,
+                        e
+                    )
+                }
+            }
         }
 
         let mut script = FunScript::default();
 
         script.actions = resulting_actions;
-        script.metadata.creator = "stash-compilation-maker".into();
         Ok(script)
     }
 }

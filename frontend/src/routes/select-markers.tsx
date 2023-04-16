@@ -164,7 +164,7 @@ function SelectMarkers() {
     <div>
       <div className="w-full flex justify-between items-center">
         <div className="text-center">
-          Estimated total duration: <strong>{totalDuration}</strong>
+          Estimated total duration of video: <strong>{totalDuration}</strong>
         </div>
         <button
           type="button"

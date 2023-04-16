@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import {useMemo, useState} from "react"
+import {useState} from "react"
 import {json, useLoaderData, useNavigate} from "react-router-dom"
 import useFuse from "../hooks/useFuse"
 import {FormStage, Performer, Tag, Scene, SelectMode} from "../types/types"
@@ -95,7 +95,9 @@ function Scenes({
               <span className="truncate">{scene.title}</span>
             </h2>
             <ul className="text-base">
-              <li>{scene.performers.join(", ")}</li>
+              <li>
+                <strong>{scene.performers.join(", ")}</strong>
+              </li>
               <li>{scene.markerCount} markers</li>
               <li>
                 <div className="tooltip" data-tip={scene.tags.join(", ")}>
@@ -103,6 +105,9 @@ function Scenes({
                   {scene.tags.length}
                 </div>
               </li>
+              {scene.interactive && (
+                <li>Scene has attached .funscript file.</li>
+              )}
             </ul>
             <div className="card-actions justify-end">
               <div className="form-control">

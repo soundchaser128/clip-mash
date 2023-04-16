@@ -57,4 +57,5 @@ export interface Scene {
   performers: string[]
   tags: string[]
   markerCount: number
+  interactive: boolean
 }

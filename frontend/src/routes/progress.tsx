@@ -13,8 +13,10 @@ function Progress() {
   const [progress, setProgress] = useState<Progress>()
   const [finished, setFinished] = useState(false)
   const [fileName, setFileName] = useState("")
+  const downloadLink = useRef<HTMLAnchorElement>(null)
 
-  const onSubmit = async () => {
+  const onSubmit = async (e: React.MouseEvent) => {
+    e.preventDefault()
     const body = JSON.stringify(state.data)
     const response = await fetch("/api/create", {
       method: "POST",
@@ -36,6 +38,22 @@ function Progress() {
         setProgress(data)
       }
     }
+  }
+
+  const onDownloadFunscript = async () => {
+    const body = JSON.stringify(state.data)
+    const response = await fetch("/api/funscript", {
+      method: "POST",
+      body,
+      headers: {"content-type": "application/json"},
+    })
+
+    const script = await response.blob()
+    const file = fileName.replace(".mp4", ".funscript")
+    const downloadUrl = URL.createObjectURL(script)
+    downloadLink.current!.href = downloadUrl
+    downloadLink.current!.download = file
+    downloadLink.current!.click()
   }
 
   const totalDuration = state.data.clips!.reduce(
@@ -60,10 +78,14 @@ function Progress() {
               File name: <strong>{state.data.fileName}</strong>
             </p>
           </div>
-          <button onClick={onSubmit} className="btn btn-lg btn-success">
+          <a
+            ref={downloadLink}
+            onClick={onSubmit}
+            className="btn btn-lg btn-success"
+          >
             <HiCheckBadge className="mr-2 w-6 h-6" />
             Create video
-          </button>
+          </a>
         </>
       )}
 
@@ -94,6 +116,14 @@ function Progress() {
             <HiOutlineArrowDownOnSquare className="w-6 h-6 mr-2" />
             Download
           </a>
+
+          <p>You can optionally download the generated .funscript file here:</p>
+          <button
+            onClick={onDownloadFunscript}
+            className="btn btn-success btn-lg"
+          >
+            Funscript
+          </button>
         </div>
       )}
     </div>

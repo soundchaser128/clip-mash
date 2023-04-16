@@ -379,7 +379,7 @@ pub async fn fetch_clips(
     scene_ids.sort();
     scene_ids.dedup();
 
-    tracing::info!("scene IDs: {:?}", scene_ids);
+    tracing::debug!("scene IDs: {:?}", scene_ids);
     let scenes = api
         .find_scenes_by_ids(scene_ids)
         .await?

@@ -116,6 +116,7 @@ function PreviewClips() {
           const scene = data.scenes[clip.sceneId]
           return (
             <div
+              key={index}
               data-tip={`${scene.performers.join(", ")} - ${scene.title}`}
               className={clsx(
                 "h-full tooltip transition-opacity",

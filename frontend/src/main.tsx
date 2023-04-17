@@ -113,6 +113,7 @@ const router = createBrowserRouter([
   {
     path: "/config",
     element: <ConfigPage />,
+    loader: rootLoader,
   },
 ])
 

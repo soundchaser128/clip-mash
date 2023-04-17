@@ -1,14 +1,19 @@
 import clsx from "clsx"
-import {useState} from "react"
+import {useCallback, useState} from "react"
 import {useForm} from "react-hook-form"
-import {json, useNavigate} from "react-router-dom"
+import {useLoaderData, useNavigate} from "react-router-dom"
 
 interface Inputs {
   stashUrl: string
   apiKey: string
 }
 
-async function testCredentials(inputs: Inputs) {
+interface HealthResult {
+  success: boolean
+  message: string
+}
+
+async function testCredentials(inputs: Inputs): Promise<HealthResult> {
   const params = new URLSearchParams()
   params.set("apiKey", inputs.apiKey)
   params.set("url", inputs.stashUrl)
@@ -16,24 +21,27 @@ async function testCredentials(inputs: Inputs) {
   const response = await fetch(url)
   if (response.ok) {
     const status = await response.json()
-    return status
+    return {success: true, message: status}
   } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/health"}, {status: 500})
+    const text = await response.json()
+    return {success: false, message: text.error}
   }
 }
 
 function ConfigPage() {
-  const {watch, register, handleSubmit} = useForm<Inputs>()
+  const config = useLoaderData() as Inputs
+  const {watch, register, handleSubmit} = useForm<Inputs>({
+    defaultValues: config,
+  })
   const urlValue = watch("stashUrl") || "http://localhost:9999"
   const apiKeyValue = watch("apiKey")
   const settingsPage = `${urlValue}/settings?tab=security`
   const navigate = useNavigate()
-  const [healthResult, setHealthResult] = useState<string>()
+  const [healthResult, setHealthResult] = useState<HealthResult>()
 
   const onSubmit = async (inputs: Inputs) => {
     const health = await testCredentials(inputs)
-    if (health === "OK") {
+    if (health.success) {
       const response = await fetch("/api/config", {
         method: "POST",
         body: JSON.stringify(inputs),
@@ -43,17 +51,17 @@ function ConfigPage() {
         navigate("/")
       }
     } else {
-      // todo
+      // TODO
     }
   }
 
-  const onTestCredentials = async () => {
+  const onTestCredentials = useCallback(async () => {
     const response = await testCredentials({
       stashUrl: urlValue,
       apiKey: apiKeyValue,
     })
     setHealthResult(response)
-  }
+  }, [urlValue, apiKeyValue])
 
   return (
     <main className="container ml-auto mr-auto">
@@ -113,14 +121,14 @@ function ConfigPage() {
             <div
               className={clsx(
                 "mt-4",
-                healthResult === "OK" && "text-green-400",
-                healthResult !== "OK" && "text-red-600"
+                healthResult.success && "text-green-600",
+                !healthResult.success && "text-red-600"
               )}
             >
-              {healthResult === "OK"
-                ? "Credentials work: "
-                : "Error validating credentials: "}{" "}
-              <pre>{healthResult}</pre>
+              {healthResult.success
+                ? "Credentials work!"
+                : "Error validating credentials: "}
+              {!healthResult.success && <pre>{healthResult.message}</pre>}
             </div>
           )}
         </form>

@@ -220,9 +220,11 @@ function SelectMarkers() {
       </div>
       {markers.length === 0 && (
         <div className="mt-4 alert alert-info w-fit">
-          <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6"/>
-          <span>No markers found for selection. Either create some scene markers in
-          Stash or change your search criteria.</span>
+          <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />
+          <span>
+            No markers found for selection. Either create some scene markers in
+            Stash or change your search criteria.
+          </span>
         </div>
       )}
       <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">

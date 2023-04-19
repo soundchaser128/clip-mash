@@ -11,6 +11,7 @@ export interface Performer {
   imageUrl?: string
   tags: string[]
   rating?: number
+  favorite: boolean
 }
 
 export enum FormStage {
@@ -61,4 +62,5 @@ export interface Scene {
   tags: string[]
   markerCount: number
   interactive: boolean
+  rating?: number
 }

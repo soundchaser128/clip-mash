@@ -52,6 +52,7 @@ pub struct Performer {
     pub image_url: Option<String>,
     pub tags: Vec<String>,
     pub rating: Option<i64>,
+    pub favorite: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -65,6 +66,7 @@ pub struct Scene {
     pub tags: BTreeSet<String>,
     pub interactive: bool,
     pub studio: Option<String>,
+    pub rating: Option<i64>,
 }
 
 impl From<FindScenesQueryFindScenesScenes> for Scene {
@@ -78,6 +80,7 @@ impl From<FindScenesQueryFindScenesScenes> for Scene {
             tags: scene.tags.into_iter().map(|t| t.name).collect(),
             interactive: scene.interactive,
             studio: scene.studio.map(|s| s.name),
+            rating: scene.rating100,
         }
     }
 }
@@ -196,6 +199,7 @@ pub async fn fetch_performers() -> Result<Json<Vec<Performer>>, AppError> {
             image_url: p.image_path.map(|url| add_api_key(&url, &config.api_key)),
             tags: p.tags.into_iter().map(|t| t.name).collect(),
             rating: p.rating100,
+            favorite: p.favorite,
         })
         .filter(|p| p.scene_count > 0)
         .collect();
@@ -236,6 +240,7 @@ pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
                 .collect();
             Scene {
                 interactive: s.interactive,
+                rating: s.rating100,
                 id: s.id,
                 title: s
                     .title

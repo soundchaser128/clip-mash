@@ -9,6 +9,8 @@ import {
   HiCamera,
   HiCheck,
   HiChevronRight,
+  HiHeart,
+  HiOutlineHeart,
   HiStar,
   HiTag,
   HiUser,
@@ -16,6 +18,7 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import Rating from "../components/Rating"
+import clsx from "clsx"
 
 interface Data {
   performers: Performer[]
@@ -117,6 +120,17 @@ function Scenes({
                   )}
                 </strong>
               </li>
+              {scene.rating && (
+                <li className="flex items-center">
+                  <HiStar className="inline mr-2" />
+                  Rating
+                  <Rating
+                    className="ml-1"
+                    maxRating={5}
+                    rating={scene.rating / 20}
+                  />
+                </li>
+              )}
             </ul>
             <div className="card-actions justify-end">
               <div className="form-control">
@@ -196,7 +210,13 @@ function Performers({
           key={performer.id}
           className="card card-compact bg-base-100 shadow-xl"
         >
-          <figure>
+          <figure className="relative">
+            <HiOutlineHeart
+              className={clsx(
+                "w-12 h-12 absolute bottom-2 right-2 text-red-600",
+                performer.favorite && "fill-red-600"
+              )}
+            />
             <img
               src={performer.imageUrl}
               alt={performer.name}

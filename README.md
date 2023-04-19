@@ -17,7 +17,7 @@ downloading the executable and placing it into their `$PATH` or installing it wi
 
 ## Building
 Requires `cargo`, `rustc` (see http://rustup.rs/) and `node` and `npm` (see https://nodejs.org/en). When those
-tools are installed, build and the application like this:
+tools are installed, build and run the application like this:
 
 ```shell
 # Build the frontend first, it gets packaged with the executable:

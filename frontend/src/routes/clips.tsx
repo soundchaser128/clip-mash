@@ -10,7 +10,7 @@ import {Clip, FormStage, FormState, Scene} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import clsx from "clsx"
-import { useRef } from "react"
+import {useRef} from "react"
 
 interface ClipsResponse {
   clips: Clip[]

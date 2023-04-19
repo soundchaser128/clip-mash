@@ -12,6 +12,7 @@ query FindPerformersQuery {
       tags {
         name
       }
+      favorite
 			rating100
     }
   }

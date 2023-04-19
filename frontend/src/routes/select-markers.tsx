@@ -10,6 +10,7 @@ import {
   HiCheck,
   HiChevronRight,
   HiClock,
+  HiInformationCircle,
   HiUser,
   HiVideoCamera,
   HiXMark,
@@ -183,19 +184,19 @@ function SelectMarkers() {
           <HiChevronRight className="ml-1" />
         </button>
       </div>
-      <div className="w-full flex justify-between my-4">
-        <div className="flex gap-2">
+      <div className="w-full flex flex-col lg:flex-row justify-between gap-4 my-4">
+        <div className="flex flex-col lg:flex-row gap-2">
           <input
             type="text"
             placeholder="Filter..."
-            className="input input-bordered w-80"
+            className="input input-bordered w-full lg:w-96"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
 
           <input
             type="number"
-            className="input input-bordered w-80"
+            className="input input-bordered w-full lg:w-96"
             placeholder="Limit maximum marker length (in seconds)"
             value={maxMarkerLength || ""}
             onChange={(e) => {
@@ -206,7 +207,7 @@ function SelectMarkers() {
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-center">
           <button onClick={onDeselectAll} className="btn btn-error">
             <HiXMark className="mr-1" />
             Deselect all
@@ -217,7 +218,14 @@ function SelectMarkers() {
           </button>
         </div>
       </div>
-      <section className="grid grid-cols-4 gap-2 w-full">
+      {markers.length === 0 && (
+        <div className="mt-4 alert alert-info w-fit">
+          <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6"/>
+          <span>No markers found for selection. Either create some scene markers in
+          Stash or change your search criteria.</span>
+        </div>
+      )}
+      <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
         {markers.map((marker) => {
           const selectedMarker = selection[marker.id]!
           return (

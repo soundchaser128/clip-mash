@@ -27,7 +27,7 @@ export const loader: LoaderFunction = async () => {
 
 export const styles = {
   root: "min-h-screen flex flex-col justify-between transition",
-  main: "flex flex-col container ml-auto mr-auto",
+  main: "flex flex-col container ml-auto mr-auto px-1",
 }
 
 export const Footer = () => {
@@ -116,7 +116,7 @@ export default function Root() {
               Reset
             </button>
           </div>
-          <ul className="steps mb-4">
+          <ul className="steps steps-vertical lg:steps-horizontal self-center mb-4">
             <Step
               currentStage={stage}
               activeStage={FormStage.SelectMode}

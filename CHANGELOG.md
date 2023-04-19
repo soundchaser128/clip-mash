@@ -8,3 +8,4 @@
 - Fixed the "test credentials" button not showing an error when credentials were invalid
 - Added links to the steps in the UI
 - Use `color_eyre` for error handling in Rust
+- Improved UI for small screens (in particular, phones)

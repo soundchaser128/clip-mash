@@ -24,7 +24,7 @@ function SelectMode() {
           tags or by scenes.
         </p>
 
-        <div className="self-center grid grid-cols-3 gap-2">
+        <div className="self-center grid grid-cols-1 md:grid-cols-3 gap-2">
           <button
             onClick={() => onNextStage("performers")}
             className="btn btn-lg btn-secondary"

@@ -62,7 +62,7 @@ function Scenes({
   onCheckboxChange: (id: string, checked: boolean, name: string) => void
 }) {
   return (
-    <section className="grid grid-cols-4 gap-2 w-full">
+    <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
       {scenes.map((scene) => (
         <article
           key={scene.id}
@@ -150,7 +150,7 @@ function Tags({
   onCheckboxChange: (id: string, checked: boolean, name: string) => void
 }) {
   return (
-    <section className="grid grid-cols-6 gap-2 w-full">
+    <section className="grid grid-cols-1 lg:grid-cols-6 gap-2 w-full">
       {tags.map((tag) => (
         <article key={tag.id} className="card bg-base-100 shadow-xl">
           <div className="card-body">
@@ -190,7 +190,7 @@ function Performers({
   onCheckboxChange: (id: string, checked: boolean, name: string) => void
 }) {
   return (
-    <section className="grid grid-cols-4 gap-2 w-full">
+    <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
       {performers.map((performer) => (
         <article
           key={performer.id}

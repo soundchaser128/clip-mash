@@ -9,17 +9,14 @@ import {
   HiStar,
 } from "react-icons/hi2"
 import Rating from "../../components/Rating"
+import {useOutletContext} from "react-router-dom"
+import {Context} from "./root"
 import {Scene} from "../../types/types"
 
-function Scenes({
-  scenes,
-  selection,
-  onCheckboxChange,
-}: {
-  scenes: Scene[]
-  selection: string[]
-  onCheckboxChange: (id: string, checked: boolean, name: string) => void
-}) {
+function Scenes() {
+  const {onCheckboxChange, selection, results} = useOutletContext<Context>()
+  const scenes = results as Scene[]
+
   return (
     <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
       {scenes.map((scene) => (

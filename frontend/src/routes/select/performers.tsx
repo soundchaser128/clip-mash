@@ -1,17 +1,14 @@
 import clsx from "clsx"
 import {HiOutlineHeart, HiVideoCamera, HiStar, HiTag} from "react-icons/hi2"
 import Rating from "../../components/Rating"
+import {Context} from "./root"
+import {useOutletContext} from "react-router-dom"
 import {Performer} from "../../types/types"
 
-function Performers({
-  performers,
-  selection,
-  onCheckboxChange,
-}: {
-  performers: Performer[]
-  selection: string[]
-  onCheckboxChange: (id: string, checked: boolean, name: string) => void
-}) {
+function Performers() {
+  const {onCheckboxChange, selection, results} = useOutletContext<Context>()
+  const performers = results as Performer[]
+
   return (
     <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
       {performers.map((performer) => (

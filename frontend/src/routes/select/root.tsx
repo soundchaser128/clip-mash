@@ -6,17 +6,22 @@ import useFuse from "../../hooks/useFuse"
 import {FormStage, Performer, Scene, SelectMode, Tag} from "../../types/types"
 import {updateForm} from "../actions"
 
-interface Data {
+export interface Data {
   performers: Performer[]
   tags: Tag[]
   scenes: Scene[]
 }
 
+export interface Context {
+  onCheckboxChange: (id: string, checked: boolean, name: string) => void
+  selection: string[]
+  results: Performer[] | Scene[] | Tag[]
+}
+
 interface SearchItem {
-    id: string
-    tokens: string[]
-  }
-  
+  id: string
+  tokens: string[]
+}
 
 async function fetchTags(): Promise<Tag[]> {
   const response = await fetch("/api/tags")
@@ -48,43 +53,52 @@ export async function loader(): Promise<Data> {
 }
 
 function getSearchItems(data: Data, mode: SelectMode): SearchItem[] {
-    switch (mode) {
-      case "performers":
-        return data.performers.map((p) => ({
-          id: p.id,
-          tokens: [p.name, ...p.tags],
-        }))
-      case "scenes":
-        return data.scenes.map((s) => ({
-          id: s.id,
-          tokens: [
-            s.title,
-            ...s.tags,
-            ...s.performers,
-            s.interactive ? "interactive" : "non-interactive",
-          ],
-        }))
-      case "tags":
-        return data.tags.map((t) => ({id: t.id, tokens: [t.name]}))
-    }
+  switch (mode) {
+    case "performers":
+      return data.performers.map((p) => ({
+        id: p.id,
+        tokens: [p.name, ...p.tags],
+      }))
+    case "scenes":
+      return data.scenes.map((s) => ({
+        id: s.id,
+        tokens: [
+          s.title,
+          ...s.tags,
+          ...s.performers,
+          s.interactive ? "interactive" : "non-interactive",
+        ],
+      }))
+    case "tags":
+      return data.tags.map((t) => ({id: t.id, tokens: [t.name]}))
   }
-  
-  function getResults(
-    data: Data,
-    mode: SelectMode,
-    ids: string[]
-  ): Performer[] | Tag[] | Scene[] {
-    switch (mode) {
-      case "performers":
-        return ids.map((id) => data.performers.find((p) => p.id === id)!)
-      case "scenes":
-        return ids.map((id) => data.scenes.find((p) => p.id === id)!)
-      case "tags":
-        return ids.map((id) => data.tags.find((p) => p.id === id)!)
-    }
+}
+
+function getResults(
+  data: Data,
+  mode: SelectMode,
+  ids: string[]
+): Performer[] | Tag[] | Scene[] {
+  switch (mode) {
+    case "performers":
+      return ids.map((id) => data.performers.find((p) => p.id === id)!)
+    case "scenes":
+      return ids.map((id) => data.scenes.find((p) => p.id === id)!)
+    case "tags":
+      return ids.map((id) => data.tags.find((p) => p.id === id)!)
   }
-  
-  
+}
+
+export function getUrl(mode: SelectMode): string {
+  switch (mode) {
+    case "performers":
+      return "/select/performers"
+    case "scenes":
+      return "/select/scenes"
+    case "tags":
+      return "/select/tags"
+  }
+}
 
 function SelectCriteria() {
   const data = useLoaderData() as Data
@@ -152,7 +166,15 @@ function SelectCriteria() {
         </div>
       )}
 
-      <Outlet />
+      <Outlet
+        context={
+          {
+            onCheckboxChange,
+            selection,
+            results,
+          } satisfies Context
+        }
+      />
     </div>
   )
 }

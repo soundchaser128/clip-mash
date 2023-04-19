@@ -10,9 +10,7 @@ import {
 import "./index.css"
 import SelectMode from "./routes/select-mode"
 import Root, {Footer, styles} from "./routes/root"
-import SelectCriteria, {
-  loader as criteriaLoader,
-} from "./routes/select/root"
+import SelectCriteria, {loader as criteriaLoader} from "./routes/select/root"
 import {FormStage} from "./types/types"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
@@ -92,26 +90,22 @@ const router = createBrowserRouter([
         path: "select",
         element: <SelectCriteria />,
         loader: criteriaLoader,
+        id: "select-root",
         children: [
           {
             path: "performers",
-            element: <Performers />
+            element: <Performers />,
           },
           {
             path: "tags",
-            element: <Tags />
+            element: <Tags />,
           },
           {
             path: "scenes",
-            element: <Scenes />
-          }
-        ]
+            element: <Scenes />,
+          },
+        ],
       },
-      // {
-      //   path: "/select-criteria",
-      //   element: <SelectCriteria />,
-      //   loader: criteriaLoader,
-      // },
       {
         path: "/select-markers",
         element: <SelectMarkers />,

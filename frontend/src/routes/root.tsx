@@ -13,6 +13,7 @@ import {
 import {HiXMark} from "react-icons/hi2"
 import {FormStage} from "../types/types"
 import {resetForm} from "./actions"
+import {getUrl} from "./select/root"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/config")
@@ -103,6 +104,11 @@ export default function Root() {
     }
   }
 
+  let criteria = "criteria"
+  if (state.data.selectMode) {
+    criteria = state.data.selectMode
+  }
+
   return (
     <div className={clsx(styles.root, isLoading && "opacity-25")}>
       <main className={styles.main}>
@@ -127,9 +133,9 @@ export default function Root() {
             <Step
               currentStage={stage}
               activeStage={FormStage.SelectCriteria}
-              link="/select-criteria"
+              link={state.data.selectMode ? getUrl(state.data.selectMode) : ""}
             >
-              Select criteria
+              Select {criteria}
             </Step>
             <Step
               currentStage={stage}

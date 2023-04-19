@@ -1,14 +1,11 @@
+import {useOutletContext} from "react-router-dom"
+import {Context} from "./root"
 import {Tag} from "../../types/types"
 
-function Tags({
-  tags,
-  selection,
-  onCheckboxChange,
-}: {
-  tags: Tag[]
-  selection: string[]
-  onCheckboxChange: (id: string, checked: boolean, name: string) => void
-}) {
+function Tags() {
+  const {onCheckboxChange, selection, results} = useOutletContext<Context>()
+  const tags = results as Tag[]
+
   return (
     <section className="grid grid-cols-1 lg:grid-cols-6 gap-2 w-full">
       {tags.map((tag) => (

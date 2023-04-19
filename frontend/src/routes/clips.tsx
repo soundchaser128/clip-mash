@@ -8,8 +8,9 @@ import {
 } from "react-router-dom"
 import {Clip, FormStage, FormState, Scene} from "../types/types"
 import {updateForm} from "./actions"
-import {HiChevronRight} from "react-icons/hi2"
+import {HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import clsx from "clsx"
+import { useRef } from "react"
 
 interface ClipsResponse {
   clips: Clip[]
@@ -68,11 +69,13 @@ const segmentColors = [
 function PreviewClips() {
   const data = useLoaderData() as Data
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
+  const [autoPlay, setAutoPlay] = useState(false)
   const currentClip = data.clips[currentClipIndex]
   const streamUrl = data.streams[currentClip.sceneId]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
   const {actions} = useStateMachine({updateForm})
   const navigate = useNavigate()
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const onNextStage = () => {
     actions.updateForm({
@@ -97,6 +100,24 @@ function PreviewClips() {
     return [segments, sceneColors]
   }, [data])
 
+  const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (event) => {
+    const endTimestamp = currentClip.range[1]
+    const currentTime = event.currentTarget.currentTime
+    if (Math.abs(endTimestamp - currentTime) <= 0.5 && autoPlay) {
+      setCurrentClipIndex((c) => c + 1)
+    }
+  }
+
+  const toggleAutoPlay = () => {
+    if (autoPlay) {
+      videoRef.current?.pause()
+    } else {
+      videoRef.current?.play()
+    }
+
+    setAutoPlay(!autoPlay)
+  }
+
   return (
     <>
       <div className="mb-4 grid grid-cols-3 items-center">
@@ -118,7 +139,14 @@ function PreviewClips() {
         </button>
       </div>
 
-      <video className="max-h-screen" src={clipUrl} muted controls autoPlay />
+      <video
+        className="max-h-[75vh]"
+        src={clipUrl}
+        muted
+        autoPlay={autoPlay}
+        onTimeUpdate={onTimeUpdate}
+        ref={videoRef}
+      />
 
       <div className="w-full h-8 flex mt-2 gap-0.5">
         {segments.map((width, index) => {
@@ -148,6 +176,17 @@ function PreviewClips() {
           disabled={currentClipIndex === 0}
         >
           Previous clip
+        </button>
+        <button
+          className={clsx("btn", autoPlay ? "btn-warning" : "btn-success")}
+          onClick={toggleAutoPlay}
+        >
+          {autoPlay ? (
+            <HiPause className="mr-2" />
+          ) : (
+            <HiPlay className="mr-2" />
+          )}
+          {autoPlay ? "Pause" : "Play"}
         </button>
         <button
           className="btn"

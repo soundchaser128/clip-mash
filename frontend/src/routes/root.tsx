@@ -67,7 +67,7 @@ const Step: React.FC<StepProps> = ({
 }) => {
   const isActive = currentStage >= activeStage
   const items = isActive ? (
-    <Link className="link" to={link}>
+    <Link className="link-primary underline" to={link}>
       {children}
     </Link>
   ) : (
@@ -117,7 +117,6 @@ export default function Root() {
             </button>
           </div>
           <ul className="steps mb-4">
-            {/* <li className="step step-primary">Choose mode</li> */}
             <Step
               currentStage={stage}
               activeStage={FormStage.SelectMode}

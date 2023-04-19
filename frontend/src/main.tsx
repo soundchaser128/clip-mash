@@ -12,7 +12,7 @@ import SelectMode from "./routes/select-mode"
 import Root, {Footer, styles} from "./routes/root"
 import SelectCriteria, {
   loader as criteriaLoader,
-} from "./routes/select-criteria"
+} from "./routes/select/root"
 import {FormStage} from "./types/types"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
@@ -21,6 +21,9 @@ import {nanoid} from "nanoid"
 import {loader as rootLoader} from "./routes/root"
 import ConfigPage from "./routes/config"
 import PreviewClips, {loader as clipLoader} from "./routes/clips"
+import Performers from "./routes/select/performers"
+import Tags from "./routes/select/tags"
+import Scenes from "./routes/select/scenes"
 
 const Layout: React.FC<PropsWithChildren> = ({children}) => {
   return (
@@ -86,10 +89,29 @@ const router = createBrowserRouter([
         element: <SelectMode />,
       },
       {
-        path: "/select-criteria",
+        path: "select",
         element: <SelectCriteria />,
         loader: criteriaLoader,
+        children: [
+          {
+            path: "performers",
+            element: <Performers />
+          },
+          {
+            path: "tags",
+            element: <Tags />
+          },
+          {
+            path: "scenes",
+            element: <Scenes />
+          }
+        ]
       },
+      // {
+      //   path: "/select-criteria",
+      //   element: <SelectCriteria />,
+      //   loader: criteriaLoader,
+      // },
       {
         path: "/select-markers",
         element: <SelectMarkers />,

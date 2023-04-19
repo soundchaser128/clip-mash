@@ -2,12 +2,21 @@ import clsx from "clsx"
 import {HiOutlineHeart, HiVideoCamera, HiStar, HiTag} from "react-icons/hi2"
 import Rating from "../../components/Rating"
 import {Context} from "./root"
-import {useOutletContext} from "react-router-dom"
+import {LoaderFunction, useLoaderData, useOutletContext} from "react-router-dom"
 import {Performer} from "../../types/types"
+import useFilteredData from "../../hooks/useFilteredData"
+
+export const loader: LoaderFunction = async () => {
+  const response = await fetch("/api/performers")
+  return await response.json()
+}
 
 function Performers() {
-  const {onCheckboxChange, selection, results} = useOutletContext<Context>()
-  const performers = results as Performer[]
+  const {onCheckboxChange, selection, query} = useOutletContext<Context>()
+  const performers = useFilteredData<Performer>({
+    query,
+    keys: ["name", "tags"],
+  })
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">

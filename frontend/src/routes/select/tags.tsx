@@ -1,10 +1,19 @@
-import {useOutletContext} from "react-router-dom"
+import {LoaderFunction, useOutletContext} from "react-router-dom"
 import {Context} from "./root"
 import {Tag} from "../../types/types"
+import useFilteredData from "../../hooks/useFilteredData"
+
+export const loader: LoaderFunction = async () => {
+  const response = await fetch("/api/tags")
+  return await response.json()
+}
 
 function Tags() {
-  const {onCheckboxChange, selection, results} = useOutletContext<Context>()
-  const tags = results as Tag[]
+  const {onCheckboxChange, selection, query} = useOutletContext<Context>()
+  const tags = useFilteredData<Tag>({
+    query,
+    keys: ["name"],
+  })
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-6 gap-2 w-full">

@@ -9,13 +9,22 @@ import {
   HiStar,
 } from "react-icons/hi2"
 import Rating from "../../components/Rating"
-import {useOutletContext} from "react-router-dom"
+import {LoaderFunction, useOutletContext} from "react-router-dom"
 import {Context} from "./root"
 import {Scene} from "../../types/types"
+import useFilteredData from "../../hooks/useFilteredData"
+
+export const loader: LoaderFunction = async () => {
+  const response = await fetch("/api/scenes")
+  return await response.json()
+}
 
 function Scenes() {
-  const {onCheckboxChange, selection, results} = useOutletContext<Context>()
-  const scenes = results as Scene[]
+  const {onCheckboxChange, selection, query} = useOutletContext<Context>()
+  const scenes = useFilteredData<Scene>({
+    query,
+    keys: ["interactive", "performers", "tags", "title"],
+  })
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">

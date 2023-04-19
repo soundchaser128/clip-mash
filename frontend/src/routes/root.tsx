@@ -13,7 +13,7 @@ import {
 import {HiXMark} from "react-icons/hi2"
 import {FormStage} from "../types/types"
 import {resetForm} from "./actions"
-import {getUrl} from "./select/root"
+import {getUrl} from "./filter/root"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/config")
@@ -140,7 +140,7 @@ export default function Root() {
             <Step
               currentStage={stage}
               activeStage={FormStage.SelectMarkers}
-              link="/select-markers"
+              link="/markers"
             >
               Select markers
             </Step>

@@ -10,7 +10,7 @@ import {
 import "./index.css"
 import SelectMode from "./routes/select-mode"
 import Root, {Footer, styles} from "./routes/root"
-import SelectCriteria from "./routes/select/root"
+import SelectCriteria from "./routes/filter/root"
 import {FormStage} from "./types/types"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
@@ -19,9 +19,9 @@ import {nanoid} from "nanoid"
 import {loader as rootLoader} from "./routes/root"
 import ConfigPage from "./routes/config"
 import PreviewClips, {loader as clipLoader} from "./routes/clips"
-import Performers, {loader as performerLoader} from "./routes/select/performers"
-import Tags, {loader as tagsLoader} from "./routes/select/tags"
-import Scenes, {loader as scenesLoader} from "./routes/select/scenes"
+import Performers, {loader as performerLoader} from "./routes/filter/performers"
+import Tags, {loader as tagsLoader} from "./routes/filter/tags"
+import Scenes, {loader as scenesLoader} from "./routes/filter/scenes"
 
 const Layout: React.FC<PropsWithChildren> = ({children}) => {
   return (
@@ -108,7 +108,7 @@ const router = createBrowserRouter([
         element: <SelectMode />,
       },
       {
-        path: "select",
+        path: "filter",
         element: <SelectCriteria />,
         id: "select-root",
         children: [
@@ -130,7 +130,7 @@ const router = createBrowserRouter([
         ],
       },
       {
-        path: "/select-markers",
+        path: "/markers",
         element: <SelectMarkers />,
         loader: markerLoader,
       },

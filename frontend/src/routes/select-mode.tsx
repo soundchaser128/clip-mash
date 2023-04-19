@@ -3,7 +3,7 @@ import {useNavigate} from "react-router-dom"
 import {FormStage} from "../types/types"
 import {updateForm} from "./actions"
 import {HiFilm, HiTag, HiUser} from "react-icons/hi2"
-import {getUrl} from "./select/root"
+import {getUrl} from "./filter/root"
 
 function SelectMode() {
   const {actions} = useStateMachine({updateForm})

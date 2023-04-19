@@ -20,11 +20,11 @@ export interface Context {
 export function getUrl(mode: SelectMode): string {
   switch (mode) {
     case "performers":
-      return "/select/performers"
+      return "/filter/performers"
     case "scenes":
-      return "/select/scenes"
+      return "/filter/scenes"
     case "tags":
-      return "/select/tags"
+      return "/filter/tags"
   }
 }
 
@@ -56,7 +56,7 @@ function SelectCriteria() {
       selectedMarkers: undefined,
       fileName: `${fileName} [${state.data.id}].mp4`,
     })
-    navigate("/select-markers")
+    navigate("/markers")
   }
 
   return (

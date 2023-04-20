@@ -10,9 +10,7 @@ import {
 import "./index.css"
 import SelectMode from "./routes/select-mode"
 import Root, {Footer, styles} from "./routes/root"
-import SelectCriteria, {
-  loader as criteriaLoader,
-} from "./routes/select-criteria"
+import SelectCriteria from "./routes/filter/root"
 import {FormStage} from "./types/types"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
@@ -21,6 +19,9 @@ import {nanoid} from "nanoid"
 import {loader as rootLoader} from "./routes/root"
 import ConfigPage from "./routes/config"
 import PreviewClips, {loader as clipLoader} from "./routes/clips"
+import Performers, {loader as performerLoader} from "./routes/filter/performers"
+import Tags, {loader as tagsLoader} from "./routes/filter/tags"
+import Scenes, {loader as scenesLoader} from "./routes/filter/scenes"
 
 const Layout: React.FC<PropsWithChildren> = ({children}) => {
   return (
@@ -31,17 +32,52 @@ const Layout: React.FC<PropsWithChildren> = ({children}) => {
   )
 }
 
+const TroubleshootingInfo = () => {
+  return (
+    <div className="p-2">
+      <p>Try refreshing the page.</p>
+      <p>
+        If that doesn't help, please open an issue{" "}
+        <a
+          className="link link-primary"
+          href="https://github.com/soundchaser128/stash-compilation-maker/issues"
+        >
+          here
+        </a>
+        , describing what you did leading up to the error.
+      </p>
+    </div>
+  )
+}
+
 const ErrorBoundary = () => {
   const error = useRouteError()
+  console.error(error)
+
   if (isRouteErrorResponse(error)) {
+    const is404 = error.status === 404
+
     return (
       <Layout>
-        <div className="self-center shrink mt-8">
-          <h1 className="font-bold text-3xl mb-4">
-            Sorry, something went wrong.
+        <div className="mt-8">
+          <h1 className="font-bold text-3xl mb-4 w-fit">
+            {is404 ? "404 - Page not found" : "Sorry, something went wrong."}
           </h1>
-          Details: <code>{error.data.error}</code>
+          {!is404 && (
+            <div className="bg-red-200 p-2 rounded-lg text-black">
+              <p>
+                Status code <strong>{error.status}</strong>
+              </p>
+              {error.data.error && <p>{error.data.error}</p>}
+              {error.data.request && (
+                <p>
+                  Request to <code>{error.data.request}</code> failed.
+                </p>
+              )}
+            </div>
+          )}
         </div>
+        <TroubleshootingInfo />
       </Layout>
     )
   }
@@ -52,6 +88,9 @@ const ErrorBoundary = () => {
         <h1 className="font-bold text-3xl mb-4">
           Sorry, something went wrong.
         </h1>
+        <div>
+          <pre>{JSON.stringify(error, null, 2)}</pre>
+        </div>
       </div>
     </Layout>
   )
@@ -69,12 +108,29 @@ const router = createBrowserRouter([
         element: <SelectMode />,
       },
       {
-        path: "/select-criteria",
+        path: "filter",
         element: <SelectCriteria />,
-        loader: criteriaLoader,
+        id: "select-root",
+        children: [
+          {
+            path: "performers",
+            element: <Performers />,
+            loader: performerLoader,
+          },
+          {
+            path: "tags",
+            element: <Tags />,
+            loader: tagsLoader,
+          },
+          {
+            path: "scenes",
+            element: <Scenes />,
+            loader: scenesLoader,
+          },
+        ],
       },
       {
-        path: "/select-markers",
+        path: "/markers",
         element: <SelectMarkers />,
         loader: markerLoader,
       },
@@ -96,6 +152,7 @@ const router = createBrowserRouter([
   {
     path: "/config",
     element: <ConfigPage />,
+    loader: rootLoader,
   },
 ])
 

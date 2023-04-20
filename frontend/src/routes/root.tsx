@@ -1,9 +1,11 @@
 import clsx from "clsx"
 import {useStateMachine} from "little-state-machine"
-import {useEffect} from "react"
+import React, {useEffect} from "react"
 import {
+  Link,
   LoaderFunction,
   Outlet,
+  json,
   useLoaderData,
   useNavigate,
   useNavigation,
@@ -11,16 +13,22 @@ import {
 import {HiXMark} from "react-icons/hi2"
 import {FormStage} from "../types/types"
 import {resetForm} from "./actions"
+import {getUrl} from "./filter/root"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/config")
-  const config = await response.json()
-  return config
+  if (response.ok) {
+    const config = await response.json()
+    return config
+  } else {
+    const error = await response.text()
+    throw json({error, request: "/api/config"}, {status: 500})
+  }
 }
 
 export const styles = {
   root: "min-h-screen flex flex-col justify-between transition",
-  main: "flex flex-col container ml-auto mr-auto",
+  main: "flex flex-col container ml-auto mr-auto px-1",
 }
 
 export const Footer = () => {
@@ -43,6 +51,31 @@ export const Footer = () => {
       </p>
     </footer>
   )
+}
+
+interface StepProps {
+  children: React.ReactNode
+  currentStage: FormStage
+  activeStage: FormStage
+  link: string
+}
+
+const Step: React.FC<StepProps> = ({
+  children,
+  currentStage,
+  activeStage,
+  link,
+}) => {
+  const isActive = currentStage >= activeStage
+  const items = isActive ? (
+    <Link className="link-primary underline" to={link}>
+      {children}
+    </Link>
+  ) : (
+    children
+  )
+
+  return <li className={clsx("step", isActive && "step-primary")}>{items}</li>
 }
 
 export default function Root() {
@@ -71,6 +104,11 @@ export default function Root() {
     }
   }
 
+  let criteria = "criteria"
+  if (state.data.selectMode) {
+    criteria = state.data.selectMode
+  }
+
   return (
     <div className={clsx(styles.root, isLoading && "opacity-25")}>
       <main className={styles.main}>
@@ -84,48 +122,49 @@ export default function Root() {
               Reset
             </button>
           </div>
-          <ul className="steps mb-4">
-            <li className="step step-primary">Choose mode</li>
-            <li
-              className={clsx(
-                "step",
-                stage >= FormStage.SelectCriteria && "step-primary"
-              )}
+          <ul className="steps steps-vertical lg:steps-horizontal self-center mb-4">
+            <Step
+              currentStage={stage}
+              activeStage={FormStage.SelectMode}
+              link="/"
             >
-              Select criteria
-            </li>
-            <li
-              className={clsx(
-                "step",
-                stage >= FormStage.SelectMarkers && "step-primary"
-              )}
+              Choose mode
+            </Step>
+            <Step
+              currentStage={stage}
+              activeStage={FormStage.SelectCriteria}
+              link={state.data.selectMode ? getUrl(state.data.selectMode) : ""}
+            >
+              Select {criteria}
+            </Step>
+            <Step
+              currentStage={stage}
+              activeStage={FormStage.SelectMarkers}
+              link="/markers"
             >
               Select markers
-            </li>
-            <li
-              className={clsx(
-                "step",
-                stage >= FormStage.VideoOptions && "step-primary"
-              )}
+            </Step>
+            <Step
+              currentStage={stage}
+              activeStage={FormStage.VideoOptions}
+              link="/video-options"
             >
               Select video options
-            </li>
-            <li
-              className={clsx(
-                "step",
-                stage >= FormStage.PreviewClips && "step-primary"
-              )}
+            </Step>
+            <Step
+              currentStage={stage}
+              activeStage={FormStage.PreviewClips}
+              link="/clips"
             >
               Preview clips
-            </li>
-            <li
-              className={clsx(
-                "step",
-                stage >= FormStage.Wait && "step-primary"
-              )}
+            </Step>
+            <Step
+              currentStage={stage}
+              activeStage={FormStage.Wait}
+              link="/progress"
             >
               Wait for video
-            </li>
+            </Step>
           </ul>
           <Outlet />
         </section>

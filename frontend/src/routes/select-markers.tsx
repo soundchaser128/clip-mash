@@ -6,7 +6,16 @@ import {updateForm} from "./actions"
 import {formatDuration} from "date-fns"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
-import {HiCheck, HiChevronRight, HiXMark} from "react-icons/hi2"
+import {
+  HiCheck,
+  HiChevronRight,
+  HiClock,
+  HiInformationCircle,
+  HiUser,
+  HiVideoCamera,
+  HiXMark,
+} from "react-icons/hi2"
+import useFuse from "../hooks/useFuse"
 
 interface Marker {
   id: string
@@ -18,6 +27,8 @@ interface Marker {
   sceneTitle?: string
   performers: string[]
   fileName: string
+  sceneInteractive: boolean
+  tags: string[]
 }
 
 interface Data {
@@ -33,6 +44,7 @@ export const loader: LoaderFunction = async () => {
     const params = new URLSearchParams()
     params.set("selectedIds", state.data.selectedIds!.join(","))
     params.set("mode", state.data.selectMode!)
+    params.set("includeAll", state.data.includeAll ? "true" : "false")
     const url = `/api/markers?${params.toString()}`
     const response = await fetch(url)
     const markers = await response.json()
@@ -65,20 +77,6 @@ export function formatSeconds(s: number): string {
   )
 }
 
-function filterMarkers(markers: Marker[], filter?: string) {
-  if (!filter || filter.trim().length === 0) {
-    return markers
-  } else {
-    const regex = new RegExp(filter, "i")
-    return markers.filter(
-      (m) =>
-        regex.test(m.fileName) ||
-        regex.test(m.primaryTag) ||
-        regex.test(m.performers.join(" "))
-    )
-  }
-}
-
 function SelectMarkers() {
   const {actions, state} = useStateMachine({updateForm})
   const data = useLoaderData() as Data
@@ -97,7 +95,12 @@ function SelectMarkers() {
   const [filter, setFilter] = useState("")
   const [videoPreview, setVideoPreview] = useState<string>()
   const navigate = useNavigate()
-  const markers = filterMarkers(data.markers.dtos, filter)
+  const markers = useFuse({
+    items: data.markers.dtos,
+    query: filter,
+    keys: ["performers", "primaryTag", "sceneTitle", "tags"],
+  })
+
   const [maxMarkerLength, setMaxMarkerLength] = useState<number>()
   const allDisabled = Object.values(selection).every((m) => !m.selected)
 
@@ -139,11 +142,15 @@ function SelectMarkers() {
 
   const onNextStage = () => {
     const selectedMarkers = Object.values(selection).filter((m) => m.selected)
+    const hasInteractiveScenes = data.markers.dtos
+      .filter((m) => !!selection[m.id])
+      .some((m) => m.sceneInteractive)
 
     actions.updateForm({
       stage: FormStage.VideoOptions,
       selectedMarkers,
       markers: data.markers.dtos,
+      interactive: hasInteractiveScenes,
     })
     navigate("/video-options")
   }
@@ -164,7 +171,7 @@ function SelectMarkers() {
     <div>
       <div className="w-full flex justify-between items-center">
         <div className="text-center">
-          Estimated total duration: <strong>{totalDuration}</strong>
+          Estimated total duration of video: <strong>{totalDuration}</strong>
         </div>
         <button
           type="button"
@@ -176,19 +183,19 @@ function SelectMarkers() {
           <HiChevronRight className="ml-1" />
         </button>
       </div>
-      <div className="w-full flex justify-between my-4">
-        <div className="flex gap-2">
+      <div className="w-full flex flex-col lg:flex-row justify-between gap-4 my-4">
+        <div className="flex flex-col lg:flex-row gap-2">
           <input
             type="text"
             placeholder="Filter..."
-            className="input input-bordered w-80"
+            className="input input-bordered w-full lg:w-96"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
 
           <input
             type="number"
-            className="input input-bordered w-80"
+            className="input input-bordered w-full lg:w-96"
             placeholder="Limit maximum marker length (in seconds)"
             value={maxMarkerLength || ""}
             onChange={(e) => {
@@ -199,7 +206,7 @@ function SelectMarkers() {
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-center">
           <button onClick={onDeselectAll} className="btn btn-error">
             <HiXMark className="mr-1" />
             Deselect all
@@ -210,8 +217,17 @@ function SelectMarkers() {
           </button>
         </div>
       </div>
-      <section className="grid grid-cols-4 gap-2 w-full">
-        {markers.map((marker, index) => {
+      {markers.length === 0 && (
+        <div className="mt-4 alert alert-info w-fit">
+          <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />
+          <span>
+            No markers found for selection. Either create some scene markers in
+            Stash or change your search criteria.
+          </span>
+        </div>
+      )}
+      <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
+        {markers.map((marker) => {
           const selectedMarker = selection[marker.id]!
           return (
             <article
@@ -233,17 +249,28 @@ function SelectMarkers() {
                 )}
               </figure>
               <div className="card-body">
-                <h2 className="card-title">{marker.primaryTag}</h2>
+                <h2 className="card-title">
+                  {[marker.primaryTag, ...marker.tags].join(", ")}
+                </h2>
                 <p>
-                  <strong>Scene: </strong>
+                  <strong>
+                    <HiVideoCamera className="mr-2 inline" />
+                    Scene:{" "}
+                  </strong>
                   {marker.sceneTitle || marker.fileName}
                 </p>
                 <p>
-                  <strong>Performers: </strong>
+                  <strong>
+                    <HiUser className="mr-2 inline" />
+                    Performers:{" "}
+                  </strong>
                   {marker.performers.join(", ") || "No performers found"}
                 </p>
                 <p>
-                  <strong>Selected duration: </strong>
+                  <strong>
+                    <HiClock className="mr-2 inline" />
+                    Selected duration:{" "}
+                  </strong>
                   {formatSeconds(selectedMarker.duration)}
                 </p>
                 <div className="">

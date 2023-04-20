@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 axum = { version = "0.6.15", features = ["macros"] }
 camino = "1.1.4"
+color-eyre = "0.6.2"
 directories = "5.0.0"
 futures = "0.3.28"
 graphql_client = "0.12.0"

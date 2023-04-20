@@ -12,9 +12,13 @@ query FindMarkersQuery(
       primary_tag {
         name
       }
+      tags {
+        name
+      }
       scene {
         id
         title
+        interactive
         performers {
           name
           gender

@@ -1,7 +1,7 @@
 query FindPerformersQuery {
   findPerformers(
     filter: {per_page: -1}
-    performer_filter: {scene_count: {value: 0, modifier: GREATER_THAN}, gender: {value: FEMALE, modifier: EQUALS}}
+    performer_filter: {scene_count: {value: 0, modifier: GREATER_THAN}}
   ) {
     count
     performers {
@@ -9,6 +9,11 @@ query FindPerformersQuery {
       name
       scene_count
       image_path
+      tags {
+        name
+      }
+      favorite
+			rating100
     }
   }
 }

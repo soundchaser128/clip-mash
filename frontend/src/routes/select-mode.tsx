@@ -3,6 +3,7 @@ import {useNavigate} from "react-router-dom"
 import {FormStage} from "../types/types"
 import {updateForm} from "./actions"
 import {HiFilm, HiTag, HiUser} from "react-icons/hi2"
+import {getUrl} from "./filter/root"
 
 function SelectMode() {
   const {actions} = useStateMachine({updateForm})
@@ -13,7 +14,8 @@ function SelectMode() {
       stage: FormStage.SelectCriteria,
       selectMode: mode,
     })
-    navigate("/select-criteria")
+    const url = getUrl(mode)
+    navigate(url)
   }
 
   return (
@@ -24,7 +26,7 @@ function SelectMode() {
           tags or by scenes.
         </p>
 
-        <div className="self-center grid grid-cols-3 gap-2">
+        <div className="self-center grid grid-cols-1 md:grid-cols-3 gap-2">
           <button
             onClick={() => onNextStage("performers")}
             className="btn btn-lg btn-secondary"

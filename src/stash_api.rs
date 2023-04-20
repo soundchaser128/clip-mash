@@ -10,6 +10,7 @@ use self::{
 };
 use crate::{
     config::Config,
+    funscript::FunScript,
     http::{add_api_key, FilterMode},
     Result,
 };
@@ -62,6 +63,7 @@ pub struct HealtCheckQuery;
 pub struct Marker {
     pub id: String,
     pub primary_tag: String,
+    pub tags: Vec<String>,
     pub stream_url: String,
     pub screenshot_url: String,
     pub start: u32,
@@ -71,6 +73,7 @@ pub struct Marker {
     pub file_name: String,
     pub scene: Scene,
     pub index_in_scene: usize,
+    pub scene_interactive: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -114,6 +117,7 @@ impl Marker {
             id: value.id,
             start: value.seconds as u32,
             end,
+            tags: value.tags.into_iter().map(|t| t.name).collect(),
             file_name: value.scene.files[0].basename.clone(),
             performers: value.scene.performers.into_iter().map(|p| p.name).collect(),
             primary_tag: value.primary_tag.name,
@@ -121,6 +125,7 @@ impl Marker {
             screenshot_url: add_api_key(&value.screenshot, api_key),
             stream_url: add_api_key(&value.stream, api_key),
             index_in_scene,
+            scene_interactive: value.scene.interactive,
             scene: Scene {
                 id: value.scene.id,
                 scene_markers: value
@@ -160,10 +165,12 @@ impl Marker {
                 screenshot_url: add_api_key(&marker.screenshot, api_key),
                 start: marker.seconds as u32,
                 end,
+                tags: marker.tags.iter().map(|t| t.name.clone()).collect(),
                 index_in_scene,
                 file_name: scene.files[0].basename.clone(),
                 scene_title: scene.title.clone(),
                 performers: scene.performers.iter().map(|p| p.name.clone()).collect(),
+                scene_interactive: scene.interactive,
                 scene: Scene {
                     id: scene.id.clone(),
                     scene_markers: scene
@@ -248,9 +255,11 @@ impl Api {
             .await?
             .error_for_status()?;
         let response: Response<find_scenes_query::ResponseData> = response.json().await?;
-        let scenes = response.data.unwrap().find_scenes.scenes;
 
-        Ok(scenes)
+        match response.data {
+            Some(scenes) => Ok(scenes.find_scenes.scenes),
+            None => Ok(vec![]),
+        }
     }
 
     pub async fn find_tags(&self) -> Result<Vec<Tag>> {
@@ -273,7 +282,12 @@ impl Api {
         Ok(tags)
     }
 
-    pub async fn find_markers(&self, ids: Vec<String>, mode: FilterMode) -> Result<Vec<Marker>> {
+    pub async fn find_markers(
+        &self,
+        ids: Vec<String>,
+        mode: FilterMode,
+        include_all: bool,
+    ) -> Result<Vec<Marker>> {
         let mut scene_filter = SceneMarkerFilterType {
             created_at: None,
             scene_created_at: None,
@@ -289,21 +303,29 @@ impl Api {
         match mode {
             FilterMode::Performers => {
                 scene_filter.performers = Some(MultiCriterionInput {
-                    modifier: CriterionModifier::INCLUDES,
+                    modifier: if include_all {
+                        CriterionModifier::INCLUDES_ALL
+                    } else {
+                        CriterionModifier::INCLUDES
+                    },
                     value: Some(ids),
                 });
             }
             FilterMode::Tags => {
                 scene_filter.tags = Some(HierarchicalMultiCriterionInput {
                     depth: None,
-                    modifier: CriterionModifier::INCLUDES,
+                    modifier: if include_all {
+                        CriterionModifier::INCLUDES_ALL
+                    } else {
+                        CriterionModifier::INCLUDES
+                    },
                     value: Some(ids),
                 });
             }
             FilterMode::Scenes => {
                 let ids = ids
                     .into_iter()
-                    .map(|s| s.parse().expect("not number id"))
+                    .map(|s| s.parse().expect("id must be a valid integer"))
                     .collect();
                 let scenes = self.find_scenes_by_ids(ids).await?;
 
@@ -377,5 +399,20 @@ impl Api {
         let response: Response<healt_check_query::ResponseData> = response.json().await?;
         let status = response.data.unwrap().system_status.status;
         Ok(status)
+    }
+
+    pub async fn get_funscript(&self, scene_id: &str) -> Result<FunScript> {
+        let url = format!("{}/scene/{}/funscript", self.api_url, scene_id);
+        let response = self
+            .client
+            .get(url)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+
+        Ok(response)
     }
 }

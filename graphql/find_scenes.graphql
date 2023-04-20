@@ -7,6 +7,8 @@ query FindScenesQuery($scene_ids: [Int!]) {
     scenes {
       id
       title
+      rating100
+      interactive
       files {
         basename
       }
@@ -22,6 +24,9 @@ query FindScenesQuery($scene_ids: [Int!]) {
         seconds
         stream
         screenshot
+        tags {
+          name
+        }
         primary_tag {
           name
         }
@@ -32,6 +37,9 @@ query FindScenesQuery($scene_ids: [Int!]) {
         sprite
       }
       tags {
+        name
+      }
+      studio {
         name
       }
     }

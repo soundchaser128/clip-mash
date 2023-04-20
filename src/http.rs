@@ -28,7 +28,11 @@ use crate::{
     config::{self, Config},
     error::AppError,
     ffmpeg::{self, find_stream_url},
-    stash_api::{healt_check_query::SystemStatusEnum, Api, Marker},
+    funscript::{FunScript, ScriptBuilder},
+    stash_api::{
+        find_scenes_query::FindScenesQueryFindScenesScenes, healt_check_query::SystemStatusEnum,
+        Api, Marker,
+    },
     AppState,
 };
 
@@ -46,6 +50,9 @@ pub struct Performer {
     pub id: String,
     pub scene_count: i64,
     pub image_url: Option<String>,
+    pub tags: Vec<String>,
+    pub rating: Option<i64>,
+    pub favorite: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -57,6 +64,25 @@ pub struct Scene {
     pub performers: Vec<String>,
     pub marker_count: usize,
     pub tags: BTreeSet<String>,
+    pub interactive: bool,
+    pub studio: Option<String>,
+    pub rating: Option<i64>,
+}
+
+impl From<FindScenesQueryFindScenesScenes> for Scene {
+    fn from(scene: FindScenesQueryFindScenesScenes) -> Self {
+        Scene {
+            id: scene.id,
+            title: scene.title.unwrap_or(scene.files[0].basename.clone()),
+            image_url: "TODO".into(),
+            performers: scene.performers.into_iter().map(|p| p.name).collect(),
+            marker_count: scene.scene_markers.len(),
+            tags: scene.tags.into_iter().map(|t| t.name).collect(),
+            interactive: scene.interactive,
+            studio: scene.studio.map(|s| s.name),
+            rating: scene.rating100,
+        }
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -78,6 +104,7 @@ pub enum FilterMode {
 pub struct MarkerOptions {
     pub selected_ids: String,
     pub mode: FilterMode,
+    pub include_all: bool,
 }
 
 #[derive(Deserialize, Debug, Clone, Copy)]
@@ -131,6 +158,7 @@ pub struct CreateClipsBody {
     pub selected_markers: Vec<SelectedMarker>,
     pub markers: Vec<Marker>,
     pub select_mode: FilterMode,
+    pub split_clips: bool,
 }
 
 pub fn add_api_key(url: &str, api_key: &str) -> String {
@@ -171,6 +199,9 @@ pub async fn fetch_performers() -> Result<Json<Vec<Performer>>, AppError> {
             scene_count: p.scene_count.unwrap_or_default(),
             name: p.name,
             image_url: p.image_path.map(|url| add_api_key(&url, &config.api_key)),
+            tags: p.tags.into_iter().map(|t| t.name).collect(),
+            rating: p.rating100,
+            favorite: p.favorite,
         })
         .filter(|p| p.scene_count > 0)
         .collect();
@@ -190,7 +221,7 @@ pub async fn fetch_markers(
     tracing::info!("fetching markers for query {query:?}");
     let ids: Vec<_> = query.selected_ids.split(',').map(From::from).collect();
 
-    let markers = api.find_markers(ids, query.mode).await?;
+    let markers = api.find_markers(ids, query.mode, query.include_all).await?;
     Ok(Json(MarkerResult { dtos: markers }))
 }
 
@@ -210,6 +241,8 @@ pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
                 .chain(s.scene_markers.iter().map(|m| m.primary_tag.name.clone()))
                 .collect();
             Scene {
+                interactive: s.interactive,
+                rating: s.rating100,
                 id: s.id,
                 title: s
                     .title
@@ -219,6 +252,7 @@ pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
                 performers: s.performers.into_iter().map(|p| p.name).collect(),
                 marker_count: s.scene_markers.len(),
                 tags,
+                studio: s.studio.map(|s| s.name),
                 image_url: s
                     .paths
                     .screenshot
@@ -259,6 +293,15 @@ pub async fn create_video(
     });
 
     file_name
+}
+
+#[axum::debug_handler]
+pub async fn get_funscript(Json(body): Json<CreateVideoBody>) -> Result<Json<FunScript>, AppError> {
+    let api = Api::load_config().await?;
+    let script_builder = ScriptBuilder::new(&api);
+    let script = script_builder.combine_scripts(body.clips).await?;
+
+    Ok(Json(script))
 }
 
 #[axum::debug_handler]
@@ -321,19 +364,44 @@ pub async fn set_config(Json(config): Json<Config>) -> Result<StatusCode, AppErr
 pub struct ClipsResponse {
     pub clips: Vec<Clip>,
     pub streams: HashMap<String, String>,
+    pub scenes: Vec<Scene>,
 }
 
 #[axum::debug_handler]
-pub async fn fetch_clips(Json(body): Json<CreateClipsBody>) -> Json<ClipsResponse> {
+pub async fn fetch_clips(
+    Json(body): Json<CreateClipsBody>,
+) -> Result<Json<ClipsResponse>, AppError> {
+    let api = Api::load_config().await?;
+
     let clips = clip::get_all_clips(&body);
     let clips = clip::compile_clips(clips, body.clip_order, body.select_mode);
-    tracing::info!("compiled clips {clips:#?}");
+    tracing::debug!("compiled clips {clips:#?}");
     let streams: HashMap<String, String> = body
         .markers
         .iter()
         .map(|m| (m.scene.id.clone(), find_stream_url(m).to_string()))
         .collect();
-    Json(ClipsResponse { clips, streams })
+
+    let mut scene_ids: Vec<_> = clips
+        .iter()
+        .filter_map(|c| c.scene_id.parse().ok())
+        .collect();
+    scene_ids.sort();
+    scene_ids.dedup();
+
+    tracing::debug!("scene IDs: {:?}", scene_ids);
+    let scenes = api
+        .find_scenes_by_ids(scene_ids)
+        .await?
+        .into_iter()
+        .map(Scene::from)
+        .collect();
+
+    Ok(Json(ClipsResponse {
+        clips,
+        streams,
+        scenes,
+    }))
 }
 
 #[derive(Deserialize)]

@@ -104,6 +104,7 @@ pub enum FilterMode {
 pub struct MarkerOptions {
     pub selected_ids: String,
     pub mode: FilterMode,
+    pub include_all: bool,
 }
 
 #[derive(Deserialize, Debug, Clone, Copy)]
@@ -219,7 +220,7 @@ pub async fn fetch_markers(
     tracing::info!("fetching markers for query {query:?}");
     let ids: Vec<_> = query.selected_ids.split(',').map(From::from).collect();
 
-    let markers = api.find_markers(ids, query.mode).await?;
+    let markers = api.find_markers(ids, query.mode, query.include_all).await?;
     Ok(Json(MarkerResult { dtos: markers }))
 }
 

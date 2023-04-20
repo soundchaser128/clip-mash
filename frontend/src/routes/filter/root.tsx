@@ -15,6 +15,7 @@ export interface Context {
   onCheckboxChange: (id: string, checked: boolean, name: string) => void
   selection: string[]
   query: string
+  includeAll: boolean
 }
 
 export function getUrl(mode: SelectMode): string {
@@ -37,6 +38,7 @@ function SelectCriteria() {
   const queryType = state.data.selectMode
   const navigate = useNavigate()
   const [fileNameComponents, setFileNameComponents] = useState<string[]>([])
+  const [includeAll, setIncludeAll] = useState(false)
 
   const onCheckboxChange = (id: string, checked: boolean, name: string) => {
     if (checked) {
@@ -55,6 +57,7 @@ function SelectCriteria() {
       selectedIds: selection,
       selectedMarkers: undefined,
       fileName: `${fileName} [${state.data.id}].mp4`,
+      includeAll,
     })
     navigate("/markers")
   }
@@ -62,18 +65,36 @@ function SelectCriteria() {
   return (
     <div>
       {queryType && (
-        <div className="w-full flex justify-between mb-4">
+        <div className="w-full grid grid-cols-3 mb-4">
           <input
             type="text"
             placeholder="Filter..."
-            className="input input-bordered w-96"
+            className="input input-bordered w-96 justify-self-start"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
+          {state.data.selectMode !== "scenes" && (
+            <div
+              className="form-control justify-self-center tooltip"
+              data-tip="Whether to include every marker that matches any of the criteria, or only markers that match all of them at once."
+            >
+              <label className="label cursor-pointer gap-4">
+                <span className="label-text">Include any</span>
+                <input
+                  type="checkbox"
+                  className="toggle"
+                  checked={includeAll}
+                  onChange={(e) => setIncludeAll(e.target.checked)}
+                />
+                <span className="label-text">Include all</span>
+              </label>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={onNextStage}
-            className="btn btn-success"
+            className="btn btn-success justify-self-end"
             disabled={selection.length === 0}
           >
             Next
@@ -88,6 +109,7 @@ function SelectCriteria() {
             onCheckboxChange,
             selection,
             query: filter,
+            includeAll,
           } satisfies Context
         }
       />

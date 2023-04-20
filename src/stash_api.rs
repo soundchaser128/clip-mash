@@ -276,7 +276,12 @@ impl Api {
         Ok(tags)
     }
 
-    pub async fn find_markers(&self, ids: Vec<String>, mode: FilterMode) -> Result<Vec<Marker>> {
+    pub async fn find_markers(
+        &self,
+        ids: Vec<String>,
+        mode: FilterMode,
+        include_all: bool,
+    ) -> Result<Vec<Marker>> {
         let mut scene_filter = SceneMarkerFilterType {
             created_at: None,
             scene_created_at: None,
@@ -292,21 +297,29 @@ impl Api {
         match mode {
             FilterMode::Performers => {
                 scene_filter.performers = Some(MultiCriterionInput {
-                    modifier: CriterionModifier::INCLUDES,
+                    modifier: if include_all {
+                        CriterionModifier::INCLUDES_ALL
+                    } else {
+                        CriterionModifier::INCLUDES
+                    },
                     value: Some(ids),
                 });
             }
             FilterMode::Tags => {
                 scene_filter.tags = Some(HierarchicalMultiCriterionInput {
                     depth: None,
-                    modifier: CriterionModifier::INCLUDES,
+                    modifier: if include_all {
+                        CriterionModifier::INCLUDES_ALL
+                    } else {
+                        CriterionModifier::INCLUDES
+                    },
                     value: Some(ids),
                 });
             }
             FilterMode::Scenes => {
                 let ids = ids
                     .into_iter()
-                    .map(|s| s.parse().expect("not number id"))
+                    .map(|s| s.parse().expect("id must be a valid integer"))
                     .collect();
                 let scenes = self.find_scenes_by_ids(ids).await?;
 

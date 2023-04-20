@@ -41,6 +41,7 @@ export const loader: LoaderFunction = async () => {
     const params = new URLSearchParams()
     params.set("selectedIds", state.data.selectedIds!.join(","))
     params.set("mode", state.data.selectMode!)
+    params.set("includeAll", state.data.includeAll ? "true" : "false")
     const url = `/api/markers?${params.toString()}`
     const response = await fetch(url)
     const markers = await response.json()

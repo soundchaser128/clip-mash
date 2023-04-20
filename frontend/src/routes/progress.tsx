@@ -124,19 +124,23 @@ function Progress() {
             Download
           </a>
 
-          <p className="font-light self-start mb-1">
-            Download the generated .funscript file
-          </p>
-          <button
-            onClick={onDownloadFunscript}
-            className="btn btn-success btn-lg"
-            disabled={creatingScript}
-          >
-            <HiCodeBracket className="w-6 h-6 mr-2" />
-            Funscript
-          </button>
+          {state.data.interactive && (
+            <>
+              <p className="font-light self-start mb-1">
+                Download the generated .funscript file
+              </p>
+              <button
+                onClick={onDownloadFunscript}
+                className="btn btn-success btn-lg"
+                disabled={creatingScript}
+              >
+                <HiCodeBracket className="w-6 h-6 mr-2" />
+                Funscript
+              </button>
 
-          <a className="hidden" ref={downloadLink} />
+              <a className="hidden" ref={downloadLink} />
+            </>
+          )}
         </div>
       )}
     </div>

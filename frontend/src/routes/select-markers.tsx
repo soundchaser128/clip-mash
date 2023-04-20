@@ -26,6 +26,7 @@ interface Marker {
   sceneTitle?: string
   performers: string[]
   fileName: string
+  sceneInteractive: boolean
 }
 
 interface Data {
@@ -148,11 +149,15 @@ function SelectMarkers() {
 
   const onNextStage = () => {
     const selectedMarkers = Object.values(selection).filter((m) => m.selected)
+    const hasInteractiveScenes = data.markers.dtos
+      .filter((m) => !!selection[m.id])
+      .some((m) => m.sceneInteractive)
 
     actions.updateForm({
       stage: FormStage.VideoOptions,
       selectedMarkers,
       markers: data.markers.dtos,
+      interactive: hasInteractiveScenes,
     })
     navigate("/video-options")
   }

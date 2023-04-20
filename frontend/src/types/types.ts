@@ -43,6 +43,7 @@ export interface FormState {
   fileName?: string
   clips?: Clip[]
   includeAll?: boolean
+  interactive?: boolean
   stage: FormStage
   id: string
 }

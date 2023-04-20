@@ -90,6 +90,7 @@ function SelectCriteria() {
               </label>
             </div>
           )}
+          {state.data.selectMode === "scenes" && <div />}
 
           <button
             type="button"

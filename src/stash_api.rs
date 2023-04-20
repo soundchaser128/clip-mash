@@ -72,6 +72,7 @@ pub struct Marker {
     pub file_name: String,
     pub scene: Scene,
     pub index_in_scene: usize,
+    pub scene_interactive: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -122,6 +123,7 @@ impl Marker {
             screenshot_url: add_api_key(&value.screenshot, api_key),
             stream_url: add_api_key(&value.stream, api_key),
             index_in_scene,
+            scene_interactive: value.scene.interactive,
             scene: Scene {
                 id: value.scene.id,
                 scene_markers: value
@@ -165,6 +167,7 @@ impl Marker {
                 file_name: scene.files[0].basename.clone(),
                 scene_title: scene.title.clone(),
                 performers: scene.performers.iter().map(|p| p.name.clone()).collect(),
+                scene_interactive: scene.interactive,
                 scene: Scene {
                     id: scene.id.clone(),
                     scene_markers: scene

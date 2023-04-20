@@ -15,6 +15,7 @@ import {
   HiVideoCamera,
   HiXMark,
 } from "react-icons/hi2"
+import useFuse from "../hooks/useFuse"
 
 interface Marker {
   id: string
@@ -27,6 +28,7 @@ interface Marker {
   performers: string[]
   fileName: string
   sceneInteractive: boolean
+  tags: string[]
 }
 
 interface Data {
@@ -75,20 +77,6 @@ export function formatSeconds(s: number): string {
   )
 }
 
-function filterMarkers(markers: Marker[], filter?: string) {
-  if (!filter || filter.trim().length === 0) {
-    return markers
-  } else {
-    const regex = new RegExp(filter, "i")
-    return markers.filter(
-      (m) =>
-        regex.test(m.fileName) ||
-        regex.test(m.primaryTag) ||
-        regex.test(m.performers.join(" "))
-    )
-  }
-}
-
 function SelectMarkers() {
   const {actions, state} = useStateMachine({updateForm})
   const data = useLoaderData() as Data
@@ -107,7 +95,12 @@ function SelectMarkers() {
   const [filter, setFilter] = useState("")
   const [videoPreview, setVideoPreview] = useState<string>()
   const navigate = useNavigate()
-  const markers = filterMarkers(data.markers.dtos, filter)
+  const markers = useFuse({
+    items: data.markers.dtos,
+    query: filter,
+    keys: ["performers", "primaryTag", "sceneTitle", "tags"],
+  })
+
   const [maxMarkerLength, setMaxMarkerLength] = useState<number>()
   const allDisabled = Object.values(selection).every((m) => !m.selected)
 
@@ -256,7 +249,9 @@ function SelectMarkers() {
                 )}
               </figure>
               <div className="card-body">
-                <h2 className="card-title">{marker.primaryTag}</h2>
+                <h2 className="card-title">
+                  {[marker.primaryTag, ...marker.tags].join(", ")}
+                </h2>
                 <p>
                   <strong>
                     <HiVideoCamera className="mr-2 inline" />

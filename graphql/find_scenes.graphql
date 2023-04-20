@@ -24,6 +24,9 @@ query FindScenesQuery($scene_ids: [Int!]) {
         seconds
         stream
         screenshot
+        tags {
+          name
+        }
         primary_tag {
           name
         }

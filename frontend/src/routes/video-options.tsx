@@ -7,7 +7,7 @@ import {HiChevronRight} from "react-icons/hi2"
 
 type Inputs = Pick<
   FormState,
-  "clipDuration" | "clipOrder" | "outputFps" | "outputResolution"
+  "clipDuration" | "clipOrder" | "outputFps" | "outputResolution" | "splitClips"
 >
 
 const defaultOptions: Inputs = {
@@ -15,14 +15,17 @@ const defaultOptions: Inputs = {
   clipOrder: "scene-order",
   outputFps: 30,
   outputResolution: "720",
+  splitClips: true,
 }
 
 function VideoOptions() {
   const {actions, state} = useStateMachine({updateForm})
   const navigate = useNavigate()
-  const {register, handleSubmit} = useForm<Inputs>({
+  const {register, handleSubmit, watch} = useForm<Inputs>({
     defaultValues: {...defaultOptions, ...state.data},
   })
+
+  const doSplitClips = watch("splitClips")
 
   const onSubmit = (values: Inputs) => {
     actions.updateForm({...values, stage: FormStage.PreviewClips})
@@ -41,6 +44,18 @@ function VideoOptions() {
         </div>
         <div className="flex flex-col gap-4 max-w-sm w-full">
           <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text mr-2">
+                Split up marker videos into clips
+              </span>
+              <input
+                type="checkbox"
+                className="toggle"
+                {...register("splitClips")}
+              />
+            </label>
+          </div>
+          <div className="form-control">
             <label className="label">
               <span className="label-text">
                 Maximum duration per clip (in seconds):
@@ -48,8 +63,8 @@ function VideoOptions() {
             </label>
             <input
               type="number"
-              placeholder="Type here"
               className="input input-bordered"
+              disabled={!doSplitClips}
               {...register("clipDuration", {valueAsNumber: true})}
             />
           </div>

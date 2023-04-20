@@ -11,6 +11,7 @@ import {updateForm} from "./actions"
 import {HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
+import {useImmer} from "use-immer"
 
 interface ClipsResponse {
   clips: Clip[]
@@ -35,6 +36,7 @@ export const loader: LoaderFunction = async () => {
       selectedMarkers: state.data.selectedMarkers,
       markers: state.data.markers,
       selectMode: state.data.selectMode,
+      splitClips: state.data.splitClips,
     }),
     headers: {"content-type": "application/json"},
   })
@@ -66,12 +68,22 @@ const segmentColors = [
   "bg-rose-400",
 ]
 
+interface ClipState {
+  clip: Clip
+  included: boolean
+}
+
 function PreviewClips() {
-  const data = useLoaderData() as Data
+  const loaderData = useLoaderData() as Data
+  const streams = loaderData.streams
+  const [clips, setClips] = useImmer<ClipState[]>(
+    loaderData.clips.map((clip) => ({clip, included: true}))
+  )
+
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
-  const currentClip = data.clips[currentClipIndex]
-  const streamUrl = data.streams[currentClip.sceneId]
+  const currentClip = clips[currentClipIndex].clip
+  const streamUrl = streams[currentClip.sceneId]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
   const {actions} = useStateMachine({updateForm})
   const navigate = useNavigate()
@@ -80,17 +92,17 @@ function PreviewClips() {
   const onNextStage = () => {
     actions.updateForm({
       stage: FormStage.Wait,
-      clips: data.clips,
+      clips: clips.filter((c) => c.included).map((c) => c.clip),
     })
     navigate("/progress")
   }
 
   const [segments, sceneColors] = useMemo(() => {
-    const clipLengths = data.clips.map((clip) => clip.range[1] - clip.range[0])
+    const clipLengths = clips.map(({clip}) => clip.range[1] - clip.range[0])
     const total = clipLengths.reduce((total, len) => total + len, 0)
     const segments = clipLengths.map((len) => `${(len / total) * 100}%`)
 
-    const sceneIds = Array.from(new Set(data.clips.map((c) => c.sceneId)))
+    const sceneIds = Array.from(new Set(clips.map((c) => c.clip.sceneId)))
     sceneIds.sort()
     const sceneColors = new Map()
     sceneIds.forEach((id, index) => {
@@ -98,7 +110,7 @@ function PreviewClips() {
     })
 
     return [segments, sceneColors]
-  }, [data])
+  }, [clips])
 
   const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (event) => {
     const endTimestamp = currentClip.range[1]
@@ -125,7 +137,7 @@ function PreviewClips() {
         <p className=" text-center text-xl">
           Showing clip{" "}
           <strong>
-            {currentClipIndex + 1} / {data.clips.length}
+            {currentClipIndex + 1} / {clips.length}
           </strong>
         </p>
 
@@ -150,8 +162,8 @@ function PreviewClips() {
 
       <div className="w-full h-8 flex mt-2 gap-0.5">
         {segments.map((width, index) => {
-          const clip = data.clips[index]
-          const scene = data.scenes[clip.sceneId]
+          const clip = clips[index].clip
+          const scene = loaderData.scenes[clip.sceneId]
           return (
             <div
               key={index}
@@ -177,21 +189,38 @@ function PreviewClips() {
         >
           Previous clip
         </button>
-        <button
-          className={clsx("btn", autoPlay ? "btn-warning" : "btn-success")}
-          onClick={toggleAutoPlay}
-        >
-          {autoPlay ? (
-            <HiPause className="mr-2" />
-          ) : (
-            <HiPlay className="mr-2" />
-          )}
-          {autoPlay ? "Pause" : "Play"}
-        </button>
+        <div className="flex gap-4 items-center">
+          <button
+            className={clsx("btn", autoPlay ? "btn-warning" : "btn-success")}
+            onClick={toggleAutoPlay}
+          >
+            {autoPlay ? (
+              <HiPause className="mr-2" />
+            ) : (
+              <HiPlay className="mr-2" />
+            )}
+            {autoPlay ? "Pause" : "Play"}
+          </button>
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text mr-2">Included in compilation</span>
+              <input
+                type="checkbox"
+                className="toggle"
+                checked={clips[currentClipIndex].included}
+                onChange={(e) =>
+                  setClips((draft) => {
+                    draft[currentClipIndex].included = e.target.checked
+                  })
+                }
+              />
+            </label>
+          </div>
+        </div>
         <button
           className="btn"
           onClick={() => setCurrentClipIndex((i) => i + 1)}
-          disabled={currentClipIndex >= data.clips.length - 1}
+          disabled={currentClipIndex >= clips.length - 1}
         >
           Next clip
         </button>

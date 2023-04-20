@@ -63,6 +63,7 @@ pub struct HealtCheckQuery;
 pub struct Marker {
     pub id: String,
     pub primary_tag: String,
+    pub tags: Vec<String>,
     pub stream_url: String,
     pub screenshot_url: String,
     pub start: u32,
@@ -116,6 +117,7 @@ impl Marker {
             id: value.id,
             start: value.seconds as u32,
             end,
+            tags: value.tags.into_iter().map(|t| t.name).collect(),
             file_name: value.scene.files[0].basename.clone(),
             performers: value.scene.performers.into_iter().map(|p| p.name).collect(),
             primary_tag: value.primary_tag.name,
@@ -163,6 +165,7 @@ impl Marker {
                 screenshot_url: add_api_key(&marker.screenshot, api_key),
                 start: marker.seconds as u32,
                 end,
+                tags: marker.tags.iter().map(|t| t.name.clone()).collect(),
                 index_in_scene,
                 file_name: scene.files[0].basename.clone(),
                 scene_title: scene.title.clone(),

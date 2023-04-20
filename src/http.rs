@@ -158,6 +158,7 @@ pub struct CreateClipsBody {
     pub selected_markers: Vec<SelectedMarker>,
     pub markers: Vec<Marker>,
     pub select_mode: FilterMode,
+    pub split_clips: bool,
 }
 
 pub fn add_api_key(url: &str, api_key: &str) -> String {

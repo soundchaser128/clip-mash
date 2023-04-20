@@ -101,6 +101,7 @@ pub fn get_all_clips(output: &CreateClipsBody) -> Vec<MarkerWithClips> {
         max_clip_length: output.clip_duration,
         order: output.clip_order,
     };
+    tracing::debug!("creating clips for options {output:?}");
     output
         .markers
         .iter()
@@ -111,7 +112,23 @@ pub fn get_all_clips(output: &CreateClipsBody) -> Vec<MarkerWithClips> {
                 .iter()
                 .find(|c| c.id == marker.id)
                 .unwrap();
-            get_clips(marker, &settings, selected_marker.duration, &mut rng)
+            if output.split_clips {
+                get_clips(marker, &settings, selected_marker.duration, &mut rng)
+            } else {
+                MarkerWithClips {
+                    marker: marker.clone(),
+                    clips: vec![Clip {
+                        marker_id: marker.id.clone(),
+                        scene_id: marker.scene.id.clone(),
+                        marker_index: marker.index_in_scene,
+                        scene_index: 0,
+                        range: (
+                            marker.start,
+                            marker.start + selected_marker.duration.or(marker.end).unwrap_or(15),
+                        ),
+                    }],
+                }
+            }
         })
         .collect()
 }

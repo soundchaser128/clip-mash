@@ -12,6 +12,9 @@ query FindMarkersQuery(
       primary_tag {
         name
       }
+      tags {
+        name
+      }
       scene {
         id
         title

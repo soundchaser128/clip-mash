@@ -10,3 +10,5 @@
 - chore: Use `color_eyre` for error handling in Rust
 - fix: Improved UI for small screens (in particular, phones)
 - feat: Added toggle for filter page to allow including any or all of the tags or performers selected.
+- feat: Added toggle in video options to control whether to include the entire selected marker duration in one go, or split it up
+  into shorter clips.

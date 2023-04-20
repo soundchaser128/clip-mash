@@ -1,4 +1,6 @@
-# Unreleased
+# Changelog
+
+## 0.5.0
 - feat: Added a `.funscript` file generator.
 - feat: Show more details about the scenes and performers used for selecting markers.
 - fix: Improved frontend error handling (404s are handled differently from other errors, show more details)

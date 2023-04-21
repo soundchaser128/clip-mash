@@ -200,7 +200,7 @@ impl Ffmpeg {
             .collect();
         let file_content = lines.join("\n");
         tokio::fs::write(self.video_dir.join("clips.txt"), file_content).await?;
-        let destination = self.video_dir.join(&file_name);
+        let destination = self.video_dir.join(file_name);
 
         let args = vec![
             "-hide_banner",
@@ -213,7 +213,7 @@ impl Ffmpeg {
             "clips.txt",
             "-c",
             "copy",
-            &file_name,
+            file_name,
         ];
 
         let output = Command::new(self.path.as_str())

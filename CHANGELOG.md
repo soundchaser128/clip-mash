@@ -1,5 +1,9 @@
 # Changelog
 
+## Unrelease
+- docs: Added updated screenshots
+- chore: Fixed clippy warnings
+
 ## 0.5.0
 - feat: Added a `.funscript` file generator.
 - feat: Show more details about the scenes and performers used for selecting markers.

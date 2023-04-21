@@ -137,12 +137,16 @@ impl<'a> ScriptBuilder<'a> {
             }
         }
 
-        let mut script = FunScript::default();
+        let version = env!("CARGO_PKG_VERSION");
 
-        script.actions = resulting_actions;
-        let mut metadata = OFSMetadata::default();
-        metadata.creator = "stash-compilation-maker".into();
-        script.metadata = Some(metadata);
+        let script = FunScript {
+            actions: resulting_actions,
+            metadata: Some(OFSMetadata {
+                creator: format!("stash-compilation-maker v{}", version),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
 
         tracing::info!("generated funscript with {} actions", script.actions.len());
 

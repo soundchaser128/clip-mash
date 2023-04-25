@@ -7,7 +7,7 @@ use std::{
 
 use axum::{
     body::StreamBody,
-    extract::{Query, State},
+    extract::{Multipart, Query, State},
     response::{
         sse::{Event, KeepAlive},
         IntoResponse, Sse,
@@ -418,4 +418,13 @@ pub async fn get_health(
     let api = Api::new(&url, &api_key);
     let result = api.health().await?;
     Ok(Json(result))
+}
+
+#[axum::debug_handler]
+pub async fn upload_videos(mut form: Multipart) -> Result<(), AppError> {
+    while let Some(field) = form.next_field().await? {
+        
+    }
+
+    Ok(())
 }

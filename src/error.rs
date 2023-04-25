@@ -2,7 +2,7 @@ use std::io;
 
 use axum::{
     response::{IntoResponse, Response},
-    Json,
+    Json, extract::multipart::MultipartError,
 };
 use reqwest::StatusCode;
 use serde_json::json;
@@ -14,6 +14,7 @@ pub enum AppError {
     Generic(StdError),
     Io(io::Error),
     Report(color_eyre::Report),
+    Multipart(MultipartError),
 }
 
 impl From<StdError> for AppError {
@@ -34,6 +35,12 @@ impl From<color_eyre::Report> for AppError {
     }
 }
 
+impl From<MultipartError> for AppError {
+    fn from(value: MultipartError) -> Self {
+        AppError::Multipart(value)
+    }
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         tracing::error!("request failed: {:?}", self);
@@ -41,6 +48,7 @@ impl IntoResponse for AppError {
             AppError::Generic(e) => e.to_string(),
             AppError::Io(e) => format!("io error: {e}"),
             AppError::Report(e) => e.to_string(),
+            AppError::Multipart(e) => format!("mulitpart error: {e}"),
         };
 
         let body = Json(json!({

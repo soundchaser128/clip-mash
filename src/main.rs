@@ -57,6 +57,7 @@ async fn main() -> Result<()> {
         .route("/api/funscript", post(http::get_funscript))
         .route("/api/config", get(http::get_config))
         .route("/api/config", post(http::set_config))
+        .route("/api/upload", post(http::upload_videos))
         .fallback_service(static_files::service())
         .with_state(state);
 

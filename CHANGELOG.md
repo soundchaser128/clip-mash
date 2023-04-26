@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+# 0.5.1
 - docs: Added updated screenshots
 - chore: Fixed clippy warnings
 - fix: crash when reaching the end of the list of clips

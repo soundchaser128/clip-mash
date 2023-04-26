@@ -116,7 +116,7 @@ function PreviewClips() {
     const endTimestamp = currentClip.range[1]
     const currentTime = event.currentTarget.currentTime
     if (Math.abs(endTimestamp - currentTime) <= 0.5 && autoPlay) {
-      setCurrentClipIndex((c) => c + 1)
+      setCurrentClipIndex((c) => (c + 1) % clips.length)
     }
   }
 

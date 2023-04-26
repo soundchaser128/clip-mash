@@ -1,8 +1,9 @@
 # Changelog
 
-## Unrelease
+## Unreleased
 - docs: Added updated screenshots
 - chore: Fixed clippy warnings
+- fix: crash when reaching the end of the list of clips
 
 ## 0.5.0
 - feat: Added a `.funscript` file generator.

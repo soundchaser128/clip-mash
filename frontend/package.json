@@ -11,6 +11,7 @@
     "type-check": "tsc"
   },
   "dependencies": {
+    "@types/wicg-file-system-access": "^2020.9.6",
     "clsx": "^1.2.1",
     "date-fns": "^2.29.3",
     "fuse.js": "^6.6.2",

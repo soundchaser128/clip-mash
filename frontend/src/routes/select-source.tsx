@@ -1,5 +1,12 @@
 import {useState} from "react"
-import {HiAdjustmentsVertical, HiCheck, HiPlus, HiXMark} from "react-icons/hi2"
+import {
+  HiAdjustmentsVertical,
+  HiCheck,
+  HiFolder,
+  HiFolderPlus,
+  HiPlus,
+  HiXMark,
+} from "react-icons/hi2"
 
 interface VideoFile {
   name: string
@@ -22,15 +29,36 @@ function funscriptPath(entry: FileSystemFileHandle) {
 export default function SelectSource() {
   const [files, setFiles] = useState<VideoFile[]>([])
 
-  const onClick = async () => {
+  const onAddFiles = async () => {
+    const files = await window.showOpenFilePicker({
+      multiple: true,
+      types: [
+        {
+          description: "Video files",
+          accept: {
+            "video/mp4": [".mp4"],
+            "application/json": [".funscript"],
+          },
+        },
+      ],
+    })
+
+    await addVideos(files)
+  }
+
+  const onAddFolder = async () => {
     const result = await window.showDirectoryPicker()
-    const entries = []
+    const entries: FileSystemFileHandle[] = []
     for await (const entry of result.values()) {
       if (entry.kind === "file") {
         entries.push(entry)
       }
     }
 
+    await addVideos(entries)
+  }
+
+  const addVideos = async (entries: FileSystemFileHandle[]) => {
     const videos: VideoFile[] = []
     for (const entry of entries) {
       if (entry.name.endsWith(".mp4")) {
@@ -48,15 +76,25 @@ export default function SelectSource() {
     setFiles((v) => [...v, ...videos])
   }
 
+  const onRemoveFile = (file: VideoFile) => {
+    setFiles((files) => files.filter((f) => f !== file))
+  }
+
   return (
     <>
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Select videos</h1>
+        <div className="flex gap-2">
+          <button onClick={onAddFolder} className="btn btn-success self-start">
+            <HiFolderPlus className="w-6 h-6 mr-2" />
+            Add folder
+          </button>
 
-        <button onClick={onClick} className="btn btn-success self-start">
-          <HiPlus className="w-6 h-6 mr-2" />
-          Add folder
-        </button>
+          <button onClick={onAddFiles} className="btn btn-success self-start">
+            <HiPlus className="w-6 h-6 mr-2" />
+            Add files
+          </button>
+        </div>
       </div>
 
       {files && (
@@ -87,6 +125,15 @@ export default function SelectSource() {
                     </strong>
                   </li>
                 </ul>
+              </div>
+
+              <div className="card-actions justify-end">
+                <button
+                  onClick={() => onRemoveFile(file)}
+                  className="btn btn-error btn-sm btn-square self-end"
+                >
+                  <HiXMark className="w-4 h-4" />
+                </button>
               </div>
             </article>
           ))}

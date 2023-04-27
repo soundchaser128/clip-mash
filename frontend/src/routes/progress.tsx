@@ -1,10 +1,9 @@
 import {useStateMachine} from "little-state-machine"
-import {useEffect, useRef, useState} from "react"
+import {useRef, useState} from "react"
 import {
   HiArrowDown,
   HiCheckBadge,
   HiCodeBracket,
-  HiOutlineArrowDownOnSquare,
 } from "react-icons/hi2"
 import {formatSeconds} from "./select-markers"
 
@@ -31,7 +30,7 @@ function Progress() {
     })
 
     if (response.ok) {
-      let fileName = await response.text()
+      const fileName = await response.text()
       setFileName(fileName)
       const es = new EventSource("/api/progress")
       es.onmessage = (event) => {

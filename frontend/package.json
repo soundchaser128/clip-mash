@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "format": "prettier --write src",
-    "type-check": "tsc"
+    "type-check": "tsc",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@types/wicg-file-system-access": "^2020.9.6",

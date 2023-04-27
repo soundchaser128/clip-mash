@@ -2,7 +2,7 @@ import clsx from "clsx"
 import {HiOutlineHeart, HiVideoCamera, HiStar, HiTag} from "react-icons/hi2"
 import Rating from "../../components/Rating"
 import {Context} from "./root"
-import {LoaderFunction, useLoaderData, useOutletContext} from "react-router-dom"
+import {LoaderFunction, useOutletContext} from "react-router-dom"
 import {Performer} from "../../types/types"
 import useFilteredData from "../../hooks/useFilteredData"
 

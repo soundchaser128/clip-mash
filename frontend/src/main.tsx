@@ -22,7 +22,7 @@ import PreviewClips, {loader as clipLoader} from "./routes/clips"
 import Performers, {loader as performerLoader} from "./routes/filter/performers"
 import Tags, {loader as tagsLoader} from "./routes/filter/tags"
 import Scenes, {loader as scenesLoader} from "./routes/filter/scenes"
-import SelectSource from "./routes/select-source"
+import SelectVideos from "./routes/select-videos"
 
 const Layout: React.FC<PropsWithChildren> = ({children}) => {
   return (
@@ -106,7 +106,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <SelectSource />,
+        element: <SelectVideos />,
       },
       {
         path: "mode",

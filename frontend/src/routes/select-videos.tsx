@@ -2,7 +2,6 @@ import {useState} from "react"
 import {
   HiAdjustmentsVertical,
   HiCheck,
-  HiFolder,
   HiFolderPlus,
   HiPlus,
   HiXMark,
@@ -26,7 +25,7 @@ function funscriptPath(entry: FileSystemFileHandle) {
   }
 }
 
-export default function SelectSource() {
+export default function SelectVideos() {
   const [files, setFiles] = useState<VideoFile[]>([])
 
   const onAddFiles = async () => {

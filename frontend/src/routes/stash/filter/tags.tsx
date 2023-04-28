@@ -1,7 +1,7 @@
 import {LoaderFunction, useOutletContext} from "react-router-dom"
 import {Context} from "./root"
-import {Tag} from "../../types/types"
-import useFilteredData from "../../hooks/useFilteredData"
+import {Tag} from "../../../types/types"
+import useFilteredData from "../../../hooks/useFilteredData"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/tags")

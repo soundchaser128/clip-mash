@@ -2,8 +2,16 @@ import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {HiChevronRight} from "react-icons/hi2"
 import {useNavigate, Outlet} from "react-router-dom"
-import {FormStage, Performer, Scene, SelectMode, Tag} from "../../types/types"
-import {updateForm} from "../actions"
+import {
+  FormStage,
+  Performer,
+  Scene,
+  SelectMode,
+  StateHelpers,
+  Tag,
+} from "../../../types/types"
+import {updateForm} from "../../actions"
+import invariant from "tiny-invariant"
 
 export interface Data {
   performers: Performer[]
@@ -32,6 +40,7 @@ export function getUrl(mode: SelectMode): string {
 function SelectCriteria() {
   const [filter, setFilter] = useState("")
   const {state, actions} = useStateMachine({updateForm})
+  invariant(StateHelpers.isStash(state.data))
   const [selection, setSelection] = useState<string[]>(
     state.data.selectedIds || []
   )

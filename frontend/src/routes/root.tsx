@@ -11,12 +11,9 @@ import {
   useNavigation,
 } from "react-router-dom"
 import {HiXMark} from "react-icons/hi2"
-import {
-  FormStage,
-  StateHelpers,
-} from "../types/types"
+import {FormStage, StateHelpers} from "../types/types"
 import {resetForm} from "./actions"
-import {getUrl} from "./filter/root"
+import {getUrl} from "./stash/filter/root"
 import invariant from "tiny-invariant"
 import Layout from "../components/Layout"
 
@@ -179,16 +176,3 @@ export const StashRoot: React.FC = () => {
     </Layout>
   )
 }
-
-// export default function Root() {
-
-//   if (StateHelpers.isStash(state.data)) {
-//     return <StashRoot state={state.data} onReset={onReset} />
-//   } else if (StateHelpers.isLocalFiles(state.data)) {
-//     return <LocalFilesRoot state={state.data} onReset={onReset} />
-//   } else if (StateHelpers.isInitial(state.data)) {
-//     return <Layout><Outlet /></Layout>
-//   } else {
-//     throw new Error("invalid form state")
-//   }
-// }

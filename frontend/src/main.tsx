@@ -9,18 +9,21 @@ import {
 } from "react-router-dom"
 import "./index.css"
 import {Footer, LocalFilesRoot, StashRoot} from "./routes/root"
-import SelectCriteria from "./routes/filter/root"
+import SelectCriteria from "./routes/stash/filter/root"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
 import Progress from "./routes/progress"
 import PreviewClips, {loader as clipLoader} from "./routes/clips"
-import Performers, {loader as performerLoader} from "./routes/filter/performers"
-import Tags, {loader as tagsLoader} from "./routes/filter/tags"
-import Scenes, {loader as scenesLoader} from "./routes/filter/scenes"
-import SelectVideos from "./routes/select-videos"
+import Performers, {
+  loader as performerLoader,
+} from "./routes/stash/filter/performers"
+import Tags, {loader as tagsLoader} from "./routes/stash/filter/tags"
+import Scenes, {loader as scenesLoader} from "./routes/stash/filter/scenes"
+import SelectVideos from "./routes/local-files/select-videos"
 import SelectSource from "./routes/select-source"
 import {styles} from "./components/Layout"
 import SelectMode from "./routes/select-mode"
+import {nanoid} from "nanoid"
 
 const Layout: React.FC<PropsWithChildren> = ({children}) => {
   return (
@@ -171,6 +174,7 @@ createStore(
   {
     data: {
       source: undefined,
+      id: nanoid(8),
     },
   },
   {

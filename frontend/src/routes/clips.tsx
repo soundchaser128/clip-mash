@@ -6,12 +6,13 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom"
-import {Clip, FormStage, FormState, Scene} from "../types/types"
+import {Clip, FormStage, FormState, Scene, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
 import {useImmer} from "use-immer"
+import invariant from "tiny-invariant"
 
 interface ClipsResponse {
   clips: Clip[]
@@ -28,6 +29,7 @@ interface Data {
 export const loader: LoaderFunction = async () => {
   const formJson = sessionStorage.getItem("form-state")
   const state: {data: FormState} = JSON.parse(formJson!)
+  invariant(StateHelpers.isStash(state.data))
   const response = await fetch("/api/clips", {
     method: "POST",
     body: JSON.stringify({

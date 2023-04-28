@@ -37,6 +37,7 @@ export type FormState = LocalVideosFormState | StashFormState | InitialFormState
 
 export interface InitialFormState {
   source: undefined
+  id: string
 }
 export interface LocalVideosFormState {
   source: "local-files"

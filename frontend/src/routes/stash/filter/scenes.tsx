@@ -8,11 +8,11 @@ import {
   HiXMark,
   HiStar,
 } from "react-icons/hi2"
-import Rating from "../../components/Rating"
+import Rating from "../../../components/Rating"
 import {LoaderFunction, useOutletContext} from "react-router-dom"
 import {Context} from "./root"
-import {Scene} from "../../types/types"
-import useFilteredData from "../../hooks/useFilteredData"
+import {Scene} from "../../../types/types"
+import useFilteredData from "../../../hooks/useFilteredData"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/scenes")

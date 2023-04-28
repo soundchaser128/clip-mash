@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, FormState, SelectedMarker} from "../types/types"
+import {FormStage, FormState, SelectedMarker, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
 import {formatDuration} from "date-fns"
 import clsx from "clsx"
@@ -16,6 +16,7 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
+import invariant from "tiny-invariant"
 
 interface Marker {
   id: string
@@ -41,6 +42,7 @@ export const loader: LoaderFunction = async () => {
   const json = sessionStorage.getItem("form-state")
   if (json) {
     const state: {data: FormState} = JSON.parse(json)
+    invariant(StateHelpers.isStash(state.data))
     const params = new URLSearchParams()
     params.set("selectedIds", state.data.selectedIds!.join(","))
     params.set("mode", state.data.selectMode!)
@@ -79,10 +81,12 @@ export function formatSeconds(s: number): string {
 
 function SelectMarkers() {
   const {actions, state} = useStateMachine({updateForm})
+  invariant(StateHelpers.isStash(state.data))
   const data = useLoaderData() as Data
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
+      invariant(StateHelpers.isStash(state.data))
       const entries =
         state.data.selectedMarkers?.map((m) => [m.id, m]) ||
         data.markers.dtos.map((m) => [

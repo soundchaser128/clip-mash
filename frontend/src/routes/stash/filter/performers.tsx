@@ -1,10 +1,10 @@
 import clsx from "clsx"
 import {HiOutlineHeart, HiVideoCamera, HiStar, HiTag} from "react-icons/hi2"
-import Rating from "../../components/Rating"
+import Rating from "../../../components/Rating"
 import {Context} from "./root"
 import {LoaderFunction, useOutletContext} from "react-router-dom"
-import {Performer} from "../../types/types"
-import useFilteredData from "../../hooks/useFilteredData"
+import {Performer} from "../../../types/types"
+import useFilteredData from "../../../hooks/useFilteredData"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/performers")

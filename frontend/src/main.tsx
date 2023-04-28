@@ -8,21 +8,19 @@ import {
   useRouteError,
 } from "react-router-dom"
 import "./index.css"
-import SelectMode from "./routes/select-mode"
-import Root, {Footer, styles} from "./routes/root"
+import {Footer, LocalFilesRoot, StashRoot} from "./routes/root"
 import SelectCriteria from "./routes/filter/root"
-import {FormStage} from "./types/types"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
 import Progress from "./routes/progress"
-import {nanoid} from "nanoid"
-import {loader as rootLoader} from "./routes/root"
-import ConfigPage from "./routes/config"
 import PreviewClips, {loader as clipLoader} from "./routes/clips"
 import Performers, {loader as performerLoader} from "./routes/filter/performers"
 import Tags, {loader as tagsLoader} from "./routes/filter/tags"
 import Scenes, {loader as scenesLoader} from "./routes/filter/scenes"
 import SelectVideos from "./routes/select-videos"
+import SelectSource from "./routes/select-source"
+import {styles} from "./components/Layout"
+import SelectMode from "./routes/select-mode"
 
 const Layout: React.FC<PropsWithChildren> = ({children}) => {
   return (
@@ -100,72 +98,79 @@ const ErrorBoundary = () => {
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Root />,
-    loader: rootLoader,
     errorElement: <ErrorBoundary />,
     children: [
       {
         index: true,
-        element: <SelectVideos />,
+        element: <SelectSource />,
       },
       {
-        path: "mode",
-        element: <SelectMode />,
-      },
-      {
-        path: "filter",
-        element: <SelectCriteria />,
-        id: "select-root",
+        path: "local",
+        element: <LocalFilesRoot />,
         children: [
           {
-            path: "performers",
-            element: <Performers />,
-            loader: performerLoader,
-          },
-          {
-            path: "tags",
-            element: <Tags />,
-            loader: tagsLoader,
-          },
-          {
-            path: "scenes",
-            element: <Scenes />,
-            loader: scenesLoader,
+            path: "videos",
+            element: <SelectVideos />,
           },
         ],
       },
       {
-        path: "/markers",
-        element: <SelectMarkers />,
-        loader: markerLoader,
-      },
-      {
-        path: "/clips",
-        element: <PreviewClips />,
-        loader: clipLoader,
-      },
-      {
-        path: "/video-options",
-        element: <VideoOptions />,
-      },
-      {
-        path: "/progress",
-        element: <Progress />,
+        path: "stash",
+        element: <StashRoot />,
+        children: [
+          {
+            path: "mode",
+            element: <SelectMode />,
+          },
+          {
+            path: "filter",
+            element: <SelectCriteria />,
+            id: "select-root",
+            children: [
+              {
+                path: "performers",
+                element: <Performers />,
+                loader: performerLoader,
+              },
+              {
+                path: "tags",
+                element: <Tags />,
+                loader: tagsLoader,
+              },
+              {
+                path: "scenes",
+                element: <Scenes />,
+                loader: scenesLoader,
+              },
+            ],
+          },
+          {
+            path: "markers",
+            element: <SelectMarkers />,
+            loader: markerLoader,
+          },
+          {
+            path: "clips",
+            element: <PreviewClips />,
+            loader: clipLoader,
+          },
+          {
+            path: "video-options",
+            element: <VideoOptions />,
+          },
+          {
+            path: "progress",
+            element: <Progress />,
+          },
+        ],
       },
     ],
   },
-  {
-    path: "/config",
-    element: <ConfigPage />,
-    loader: rootLoader,
-  },
 ])
-
 createStore(
   {
     data: {
-      stage: FormStage.SelectMode,
-      id: nanoid(8),
+      source: undefined,
     },
   },
   {

@@ -81,19 +81,16 @@ export default function SelectVideos() {
 
   return (
     <>
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Select videos</h1>
-        <div className="flex gap-2">
-          <button onClick={onAddFolder} className="btn btn-success self-start">
-            <HiFolderPlus className="w-6 h-6 mr-2" />
-            Add folder
-          </button>
+      <div className="flex gap-2">
+        <button onClick={onAddFolder} className="btn btn-success self-start">
+          <HiFolderPlus className="w-6 h-6 mr-2" />
+          Add folder
+        </button>
 
-          <button onClick={onAddFiles} className="btn btn-success self-start">
-            <HiPlus className="w-6 h-6 mr-2" />
-            Add files
-          </button>
-        </div>
+        <button onClick={onAddFiles} className="btn btn-success self-start">
+          <HiPlus className="w-6 h-6 mr-2" />
+          Add files
+        </button>
       </div>
 
       {files && (
@@ -107,7 +104,9 @@ export default function SelectVideos() {
                 <video className="w-full" muted src={file.blobUrl} />
               </figure>
               <div className="card-body">
-                <h2 className="card-title">{file.name}</h2>
+                <h2 className="card-title">
+                  <span className="truncate">{file.name}</span>
+                </h2>
                 <ul>
                   <li
                     className="tooltip"

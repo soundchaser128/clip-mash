@@ -1,10 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useRef, useState} from "react"
-import {
-  HiArrowDown,
-  HiCheckBadge,
-  HiCodeBracket,
-} from "react-icons/hi2"
+import {HiArrowDown, HiCheckBadge, HiCodeBracket} from "react-icons/hi2"
 import {formatSeconds} from "./select-markers"
 
 interface Progress {

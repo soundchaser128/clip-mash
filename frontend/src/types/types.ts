@@ -31,7 +31,21 @@ export interface SelectedMarker {
 
 export type SelectMode = "tags" | "performers" | "scenes"
 
-export interface FormState {
+export type VideoSource = "stash" | "local-files" | undefined
+
+export type FormState = LocalVideosFormState | StashFormState | InitialFormState
+
+export interface InitialFormState {
+  source: undefined
+}
+export interface LocalVideosFormState {
+  source: "local-files"
+  id: string
+  stage: FormStage
+}
+
+export interface StashFormState {
+  source: "stash"
   selectMode?: SelectMode
   selectedIds?: string[]
   clipOrder?: "random" | "scene-order"
@@ -47,6 +61,20 @@ export interface FormState {
   interactive?: boolean
   stage: FormStage
   id: string
+}
+
+export const StateHelpers = {
+  isStash(state: FormState): state is StashFormState {
+    return state.source === "stash"
+  },
+
+  isLocalFiles(state: FormState): state is LocalVideosFormState {
+    return state.source === "local-files"
+  },
+
+  isInitial(state: FormState): state is InitialFormState {
+    return state.source === undefined
+  },
 }
 
 export interface Clip {

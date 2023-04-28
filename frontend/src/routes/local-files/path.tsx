@@ -4,7 +4,7 @@ import {LocalVideo, StateHelpers} from "../../types/types"
 import {useStateMachine} from "little-state-machine"
 import {updateForm} from "../actions"
 import invariant from "tiny-invariant"
-import { useNavigate } from "react-router-dom"
+import {useNavigate} from "react-router-dom"
 
 export default function SelectVideos() {
   const {state, actions} = useStateMachine({updateForm})
@@ -14,16 +14,19 @@ export default function SelectVideos() {
 
   const onSubmit: React.FormEventHandler = async (e) => {
     e.preventDefault()
+
     const response = await fetch(
-      `/api/list-videos?path=${encodeURIComponent(path)}`
+      `/api/video?path=${encodeURIComponent(path)}`,
+      {method: "POST"}
     )
+
     const json = (await response.json()) as LocalVideo[]
     actions.updateForm({
       source: "local-files",
       videos: json,
       localVideoPath: path,
     })
-    navigate("/local/markers")
+    navigate("/local/list")
   }
 
   return (

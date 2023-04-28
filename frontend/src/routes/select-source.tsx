@@ -13,7 +13,7 @@ export default function InitialRoot() {
       source: mode,
       id: nanoid(8),
     })
-    navigate(mode === "local-files" ? "/local/videos" : "/stash/mode")
+    navigate(mode === "local-files" ? "/local/path" : "/stash/mode")
   }
 
   return (

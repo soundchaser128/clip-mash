@@ -47,8 +47,6 @@ async fn main() -> Result<()> {
 
     let ffmpeg = Ffmpeg::new().await?;
     let database = Database::new().await?;
-    database.init().await?;
-
     let state = Arc::new(AppState { ffmpeg, database });
 
     let app = Router::new()
@@ -64,8 +62,8 @@ async fn main() -> Result<()> {
         .route("/api/funscript", post(http::get_funscript))
         .route("/api/config", get(http::get_config))
         .route("/api/config", post(http::set_config))
-        .route("/api/list-videos", get(http::list_videos))
-        // .route("/api/video/:id", get(http::get_video))
+        .route("/api/video", post(http::list_videos))
+        .route("/api/video/:id", get(http::get_video))
         .fallback_service(static_files::service())
         .with_state(state);
 

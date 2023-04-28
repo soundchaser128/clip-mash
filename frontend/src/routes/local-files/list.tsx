@@ -3,7 +3,7 @@ import invariant from "tiny-invariant"
 import {LocalVideo, StateHelpers} from "../../types/types"
 import {HiAdjustmentsVertical, HiCheck, HiXMark} from "react-icons/hi2"
 
-export default function AddMarkers() {
+export default function ListVideosv() {
   const {state} = useStateMachine()
   invariant(StateHelpers.isLocalFiles(state.data))
   const videos = state.data.videos!
@@ -21,7 +21,7 @@ export default function AddMarkers() {
             key={file.fileName}
           >
             <figure className="">
-              <video className="w-full" muted />
+              <video className="w-full" muted src={`/api/video/${file.id}`} />
             </figure>
             <div className="card-body">
               <h2 className="card-title">

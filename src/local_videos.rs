@@ -3,7 +3,7 @@ use nanoid::nanoid;
 use serde::Serialize;
 use tokio::fs;
 
-use crate::Result;
+use crate::{db::LocalVideo, Result};
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -13,7 +13,20 @@ pub struct LocalVideoDto {
     pub interactive: bool,
 }
 
-pub async fn list_videos(path: impl AsRef<Utf8Path>) -> Result<Vec<LocalVideoDto>> {
+impl From<LocalVideo> for LocalVideoDto {
+    fn from(video: LocalVideo) -> Self {
+        LocalVideoDto {
+            id: video.id,
+            file_name: Utf8PathBuf::from(video.file_path)
+                .file_name()
+                .expect("video must have a file name")
+                .into(),
+            interactive: video.interactive,
+        }
+    }
+}
+
+pub async fn list_videos(path: impl AsRef<Utf8Path>) -> Result<Vec<LocalVideo>> {
     let mut files = fs::read_dir(path.as_ref()).await?;
     let mut entries = vec![];
     while let Some(entry) = files.next_entry().await? {
@@ -25,8 +38,8 @@ pub async fn list_videos(path: impl AsRef<Utf8Path>) -> Result<Vec<LocalVideoDto
         if path.extension() == Some("mp4") {
             let interactive = path.with_extension("funscript").is_file();
             let id = nanoid!(8);
-            videos.push(LocalVideoDto {
-                file_name: path.file_name().unwrap().to_string(),
+            videos.push(LocalVideo {
+                file_path: path.to_string(),
                 interactive,
                 id,
             })

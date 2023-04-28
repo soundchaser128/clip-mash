@@ -19,12 +19,12 @@ import Performers, {
 } from "./routes/stash/filter/performers"
 import Tags, {loader as tagsLoader} from "./routes/stash/filter/tags"
 import Scenes, {loader as scenesLoader} from "./routes/stash/filter/scenes"
-import SelectVideos from "./routes/local-files/select-videos"
+import SelectVideoPath from "./routes/local-files/path"
 import SelectSource from "./routes/select-source"
 import {styles} from "./components/Layout"
 import SelectMode from "./routes/select-mode"
 import {nanoid} from "nanoid"
-import AddMarkers from "./routes/local-files/add-markers"
+import ListVideos from "./routes/local-files/list"
 
 const Layout: React.FC<PropsWithChildren> = ({children}) => {
   return (
@@ -113,12 +113,12 @@ const router = createBrowserRouter([
         element: <LocalFilesRoot />,
         children: [
           {
-            path: "videos",
-            element: <SelectVideos />,
+            path: "path",
+            element: <SelectVideoPath />,
           },
           {
-            path: "markers",
-            element: <AddMarkers />,
+            path: "list",
+            element: <ListVideos />,
           },
         ],
       },

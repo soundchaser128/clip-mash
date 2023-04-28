@@ -6,7 +6,7 @@ use std::{
 };
 
 use axum::{
-    body::StreamBody,
+    body::{Body, StreamBody},
     extract::{Path, Query, State},
     response::{
         sse::{Event, KeepAlive},
@@ -23,6 +23,7 @@ use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
+use tower::ServiceExt;
 
 use crate::{
     clip::{self, Clip, ClipOrder},
@@ -431,10 +432,23 @@ pub struct ListVideoQuery {
 #[axum::debug_handler]
 pub async fn list_videos(
     Query(ListVideoQuery { path }): Query<ListVideoQuery>,
+    state: State<Arc<AppState>>,
 ) -> Result<Json<Vec<LocalVideoDto>>, AppError> {
-    let videos = local_videos::list_videos(Utf8PathBuf::from(path)).await?;
-    Ok(Json(videos))
+    let mut videos = local_videos::list_videos(Utf8PathBuf::from(path)).await?;
+    state.database.persist_videos(&mut videos).await?;
+    let dtos = videos.into_iter().map(LocalVideoDto::from).collect();
+    Ok(Json(dtos))
 }
 
 #[axum::debug_handler]
-pub async fn get_video(Path(id): Path<String>) {}
+pub async fn get_video(
+    Path(id): Path<String>,
+    state: State<Arc<AppState>>,
+    request: axum::http::Request<Body>,
+) -> Result<impl IntoResponse, AppError> {
+    use tower_http::services::ServeFile;
+
+    let video = state.database.get_video(&id).await?;
+    let result = ServeFile::new(video.file_path).oneshot(request).await;
+    Ok(result)
+}

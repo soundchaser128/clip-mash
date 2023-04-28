@@ -1,12 +1,12 @@
 import {useStateMachine} from "little-state-machine"
 import {useForm} from "react-hook-form"
 import {useNavigate} from "react-router-dom"
-import {FormStage, FormState} from "../types/types"
+import {FormStage, StashFormState} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight} from "react-icons/hi2"
 
 type Inputs = Pick<
-  FormState,
+  StashFormState,
   "clipDuration" | "clipOrder" | "outputFps" | "outputResolution" | "splitClips"
 >
 

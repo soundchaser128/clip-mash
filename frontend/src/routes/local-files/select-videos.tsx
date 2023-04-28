@@ -27,72 +27,40 @@ function funscriptPath(entry: FileSystemFileHandle) {
 
 export default function SelectVideos() {
   const [files, setFiles] = useState<VideoFile[]>([])
-
-  const onAddFiles = async () => {
-    const files = await window.showOpenFilePicker({
-      multiple: true,
-      types: [
-        {
-          description: "Video files",
-          accept: {
-            "video/mp4": [".mp4"],
-            "application/json": [".funscript"],
-          },
-        },
-      ],
-    })
-
-    await addVideos(files)
-  }
-
-  const onAddFolder = async () => {
-    const result = await window.showDirectoryPicker()
-    const entries: FileSystemFileHandle[] = []
-    for await (const entry of result.values()) {
-      if (entry.kind === "file") {
-        entries.push(entry)
-      }
-    }
-
-    await addVideos(entries)
-  }
-
-  const addVideos = async (entries: FileSystemFileHandle[]) => {
-    const videos: VideoFile[] = []
-    for (const entry of entries) {
-      if (entry.name.endsWith(".mp4")) {
-        const funscript = entries.find((e) => e.name === funscriptPath(e))?.name
-        const file = await entry.getFile()
-        videos.push({
-          name: entry.name,
-          funscript,
-          file,
-          handle: entry,
-          blobUrl: URL.createObjectURL(file),
-        } satisfies VideoFile)
-      }
-    }
-    setFiles((v) => [...v, ...videos])
-  }
+  const [path, setPath] = useState("")
 
   const onRemoveFile = (file: VideoFile) => {
     setFiles((files) => files.filter((f) => f !== file))
   }
 
+  const onSubmit: React.FormEventHandler = async (e) => {
+    e.preventDefault()
+    const response = await fetch(
+      `/api/list-videos?path=${encodeURIComponent(path)}`
+    )
+    const json = await response.json()
+    console.log(json)
+  }
+
   return (
     <>
-      <div className="flex gap-2">
-        <button onClick={onAddFolder} className="btn btn-success self-start">
-          <HiFolderPlus className="w-6 h-6 mr-2" />
-          Add folder
+      <form onSubmit={onSubmit} className="flex gap-4 items-start flex-col">
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Local path for your videos</span>
+          </label>
+          <input
+            type="text"
+            className="input input-bordered w-96"
+            value={path}
+            onChange={(e) => setPath(e.target.value)}
+            placeholder="C:\Users\CoolUser\Videos\DefinitelyNotPorn"
+          />
+        </div>
+        <button type="submit" className="btn btn-success">
+          Submit
         </button>
-
-        <button onClick={onAddFiles} className="btn btn-success self-start">
-          <HiPlus className="w-6 h-6 mr-2" />
-          Add files
-        </button>
-      </div>
-
+      </form>
       {files && (
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-2 w-full mt-4">
           {files.map((file) => (

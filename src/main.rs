@@ -13,6 +13,7 @@ mod error;
 mod ffmpeg;
 mod funscript;
 mod http;
+mod local_videos;
 mod stash_api;
 mod static_files;
 mod util;
@@ -57,6 +58,7 @@ async fn main() -> Result<()> {
         .route("/api/funscript", post(http::get_funscript))
         .route("/api/config", get(http::get_config))
         .route("/api/config", post(http::set_config))
+        .route("/api/list-videos", get(http::list_videos))
         .fallback_service(static_files::service())
         .with_state(state);
 

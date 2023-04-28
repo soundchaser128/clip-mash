@@ -14,6 +14,7 @@ use axum::{
     },
     Json,
 };
+use camino::Utf8PathBuf;
 use futures::{
     stream::{self, Stream},
     FutureExt,
@@ -29,6 +30,7 @@ use crate::{
     error::AppError,
     ffmpeg::{self, find_stream_url},
     funscript::{FunScript, ScriptBuilder},
+    local_videos::{self, LocalVideo},
     stash_api::{
         find_scenes_query::FindScenesQueryFindScenesScenes, healt_check_query::SystemStatusEnum,
         Api, Marker,
@@ -418,4 +420,18 @@ pub async fn get_health(
     let api = Api::new(&url, &api_key);
     let result = api.health().await?;
     Ok(Json(result))
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListVideoQuery {
+    path: String,
+}
+
+#[axum::debug_handler]
+pub async fn list_videos(
+    Query(ListVideoQuery { path }): Query<ListVideoQuery>,
+) -> Result<Json<Vec<LocalVideo>>, AppError> {
+    let videos = local_videos::list_videos(Utf8PathBuf::from(path)).await?;
+    Ok(Json(videos))
 }

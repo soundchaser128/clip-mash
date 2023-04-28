@@ -37,9 +37,12 @@ function parseSeconds(string: string): number {
   return getMilliseconds(parse(string, "mm:ss", new Date())) / 1000.0
 }
 
-const MarkerModalContent: React.FC<{video: LocalVideo}> = ({video}) => {
+const MarkerModalContent: React.FC<{
+  video: Video
+  onFinished: (markers: Marker[]) => void
+}> = ({video: {video, markers: initialMarkers}, onFinished}) => {
   const {register, setValue, handleSubmit, control} = useForm<Inputs>({})
-  const [markers, setMarkers] = useImmer<Marker[]>([])
+  const [markers, setMarkers] = useImmer<Marker[]>(initialMarkers)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [formVisible, setFormVisible] = useState(false)
 
@@ -81,6 +84,10 @@ const MarkerModalContent: React.FC<{video: LocalVideo}> = ({video}) => {
       return []
     }
   }, [markers, videoRef.current?.duration])
+
+  const onDone = () => {
+    onFinished(markers)
+  }
 
   return (
     <>
@@ -201,7 +208,7 @@ const MarkerModalContent: React.FC<{video: LocalVideo}> = ({video}) => {
         </button>
       )}
 
-      <button className="btn btn-success self-end mt-4">
+      <button onClick={onDone} className="btn btn-success self-end mt-4">
         <HiCheck className="mr-2" />
         Done
       </button>
@@ -209,73 +216,96 @@ const MarkerModalContent: React.FC<{video: LocalVideo}> = ({video}) => {
   )
 }
 
+interface Video {
+  video: LocalVideo
+  markers: Marker[]
+}
+
 export default function ListVideos() {
   const {state} = useStateMachine()
   invariant(StateHelpers.isLocalFiles(state.data))
-  const videos = state.data.videos!
-  const [modalVideo, setModalVideo] = useState<LocalVideo>()
+  const [videos, setVideos] = useImmer<Video[]>(
+    state.data.videos!.map((v) => ({video: v, markers: []}))
+  )
+  const [modalVideo, setModalVideo] = useState<Video>()
   const modalOpen = typeof modalVideo !== "undefined"
 
   const onRemoveFile = (video: LocalVideo) => {
     // TODO
   }
 
+  const onMarkersAdded = (markers: Marker[]) => {
+    const id = modalVideo?.video?.id
+    setVideos((draft) => {
+      const idx = draft.findIndex((v) => v.video.id === id)
+      if (idx !== -1) {
+        draft[idx].markers = markers
+      }
+    })
+    setModalVideo(undefined)
+  }
+
   return (
     <>
       <Modal isOpen={modalOpen} onClose={() => setModalVideo(undefined)}>
-        {modalVideo && <MarkerModalContent video={modalVideo} />}
+        {modalVideo && (
+          <MarkerModalContent video={modalVideo} onFinished={onMarkersAdded} />
+        )}
       </Modal>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-2 w-full mt-4">
-        {videos.map((file) => (
+        {videos.map(({video, markers}) => (
           <article
             className="card card-compact bg-base-100 shadow-xl"
-            key={file.fileName}
+            key={video.fileName}
           >
             <figure className="">
               <video
                 className="w-full aspect-video"
                 muted
-                src={`/api/video/${file.id}`}
+                src={`/api/video/${video.id}`}
               />
             </figure>
             <div className="card-body">
               <h2 className="card-title">
-                <span className="truncate">{file.fileName}</span>
+                <span className="truncate">{video.fileName}</span>
               </h2>
-              <ul>
-                <li
-                  className="tooltip"
-                  data-tip="Whether the scene has an associated .funscript file."
-                >
+              <ul className="flex flex-col gap-2 self-start">
+                <li>
                   <HiAdjustmentsVertical className="inline mr-2" />
                   Interactive:{" "}
                   <strong>
-                    {file.interactive ? (
+                    {video.interactive ? (
                       <HiCheck className="text-green-600 inline" />
                     ) : (
                       <HiXMark className="text-red-600 inline" />
                     )}
                   </strong>
                 </li>
+                <li>
+                  <HiTag className="inline mr-2" />
+                  Markers: <strong>{markers.length}</strong>
+                </li>
               </ul>
             </div>
 
             <div className="card-actions justify-end">
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => setModalVideo(file)}
-              >
-                <HiPlus className="w-4 h-4 mr-2" />
-                Add markers
-              </button>
-              <button
-                onClick={() => onRemoveFile(file)}
-                className="btn btn-error btn-sm"
-              >
-                <HiXMark className="w-4 h-4 mr-2" />
-                Remove
-              </button>
+              <div className="btn-group">
+                <button
+                  className="btn btn-secondary btn-sm btn-outline"
+                  onClick={() => setModalVideo({video, markers})}
+                >
+                  <HiPlus className="w-4 h-4 mr-2" />
+                  Add markers
+                </button>
+                <button
+                  onClick={() => onRemoveFile(video)}
+                  className="btn btn-error btn-sm"
+                >
+                  <HiXMark className="w-4 h-4 mr-2" />
+                  Remove
+                </button>
+              </div>
             </div>
           </article>
         ))}

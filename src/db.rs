@@ -12,6 +12,15 @@ pub struct LocalVideo {
     pub interactive: bool,
 }
 
+#[derive(Debug)]
+pub struct DbMarker {
+    pub rowid: i64,
+    pub marker_id: String,
+    pub start_time: i32,
+    pub end_time: i32,
+    pub title: String,
+}
+
 pub struct Database {
     pool: SqlitePool,
 }
@@ -77,5 +86,9 @@ impl Database {
             }
         }
         Ok(())
+    }
+
+    pub async fn get_markers_for_video(&self, video_id: &str) -> Result<Vec<DbMarker>> {
+        
     }
 }

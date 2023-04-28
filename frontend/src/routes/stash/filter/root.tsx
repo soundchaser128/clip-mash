@@ -29,11 +29,11 @@ export interface Context {
 export function getUrl(mode: SelectMode): string {
   switch (mode) {
     case "performers":
-      return "/filter/performers"
+      return "/stash/filter/performers"
     case "scenes":
-      return "/filter/scenes"
+      return "/stash/filter/scenes"
     case "tags":
-      return "/filter/tags"
+      return "/stash/filter/tags"
   }
 }
 
@@ -68,7 +68,7 @@ function SelectCriteria() {
       fileName: `${fileName} [${state.data.id}].mp4`,
       includeAll,
     })
-    navigate("/markers")
+    navigate("/stash/markers")
   }
 
   return (

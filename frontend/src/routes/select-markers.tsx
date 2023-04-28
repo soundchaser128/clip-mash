@@ -161,7 +161,7 @@ function SelectMarkers() {
       markers: data.markers.dtos,
       interactive: hasInteractiveScenes,
     })
-    navigate("/video-options")
+    navigate("/stash/video-options")
   }
 
   const onDurationBlur = () => {

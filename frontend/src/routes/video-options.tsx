@@ -29,7 +29,7 @@ function VideoOptions() {
 
   const onSubmit = (values: Inputs) => {
     actions.updateForm({...values, stage: FormStage.PreviewClips})
-    navigate("/clips")
+    navigate("/stash/clips")
   }
 
   return (

@@ -96,7 +96,7 @@ function PreviewClips() {
       stage: FormStage.Wait,
       clips: clips.filter((c) => c.included).map((c) => c.clip),
     })
-    navigate("/progress")
+    navigate("/stash/progress")
   }
 
   const [segments, sceneColors] = useMemo(() => {

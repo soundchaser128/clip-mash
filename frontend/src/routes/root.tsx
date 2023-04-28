@@ -131,7 +131,7 @@ export const StashRoot: React.FC = () => {
           <Step
             currentStage={stage}
             activeStage={FormStage.SelectMode}
-            link="/"
+            link="/stash/mode"
           >
             Choose mode
           </Step>
@@ -145,28 +145,28 @@ export const StashRoot: React.FC = () => {
           <Step
             currentStage={stage}
             activeStage={FormStage.SelectMarkers}
-            link="/markers"
+            link="/stash/markers"
           >
             Select markers
           </Step>
           <Step
             currentStage={stage}
             activeStage={FormStage.VideoOptions}
-            link="/video-options"
+            link="/stash/video-options"
           >
             Select video options
           </Step>
           <Step
             currentStage={stage}
             activeStage={FormStage.PreviewClips}
-            link="/clips"
+            link="/stash/clips"
           >
             Preview clips
           </Step>
           <Step
             currentStage={stage}
             activeStage={FormStage.Wait}
-            link="/progress"
+            link="/stash/progress"
           >
             Wait for video
           </Step>

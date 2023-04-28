@@ -10,7 +10,7 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import Modal from "../../components/Modal"
-import React, {useRef, useState} from "react"
+import React, {useMemo, useRef, useState} from "react"
 import {useForm, Controller} from "react-hook-form"
 import {useImmer} from "use-immer"
 import {format} from "date-fns"
@@ -20,12 +20,21 @@ import {getMilliseconds} from "date-fns"
 interface Marker {
   title: string
   start: number
-  // end: number
+  end: number
 }
 
 interface Inputs {
   title: string
   start: number
+  end: number
+}
+
+function formatSeconds(seconds?: number): string {
+  return seconds ? format(seconds * 1000, "mm:ss") : ""
+}
+
+function parseSeconds(string: string): number {
+  return getMilliseconds(parse(string, "mm:ss", new Date())) / 1000.0
 }
 
 const MarkerModalContent: React.FC<{video: LocalVideo}> = ({video}) => {
@@ -43,22 +52,63 @@ const MarkerModalContent: React.FC<{video: LocalVideo}> = ({video}) => {
 
   const onShowForm = () => {
     setFormVisible(true)
-    setValue("start", videoRef.current!.currentTime)
+    const start = videoRef.current!.currentTime
+    setValue("start", start)
+    setValue("end", start + 15)
+    setValue("title", "")
   }
 
-  const onSetCurrentTime = () => {
-    setValue("start", videoRef.current!.currentTime)
+  const onSetCurrentTime = (field: "start" | "end") => {
+    setValue(field, videoRef.current!.currentTime)
   }
+
+  const segments = useMemo(() => {
+    if (videoRef.current) {
+      const totalDuration = videoRef.current.duration
+      const result = []
+      for (const marker of markers) {
+        const offset = (marker.start / totalDuration) * 100
+        const seconds = marker.end - marker.start
+        const width = (seconds / totalDuration) * 100
+        result.push({
+          offset,
+          width,
+        })
+      }
+
+      return result
+    } else {
+      return []
+    }
+  }, [markers, videoRef.current?.duration])
 
   return (
     <>
       <video
-        className="w-full mb-4 max-h-[1024px]"
+        className="w-full max-h-[800px]"
         muted
         controls
         src={`/api/video/${video.id}`}
         ref={videoRef}
       />
+      <div className="w-full h-8 flex my-4 gap-0.5 bg-gray-100 relative">
+        {segments.map(({width, offset}, index) => {
+          const marker = markers[index]
+          return (
+            <div
+              key={index}
+              className="absolute h-full tooltip transition-opacity bg-gray-400 flex items-center justify-center"
+              style={{
+                width: `${width}%`,
+                left: `${offset}%`,
+              }}
+            >
+              <span className="truncate">{marker.title}</span>
+            </div>
+          )
+        })}
+      </div>
+
       {formVisible && (
         <form
           className="max-w-lg flex flex-col gap-2"
@@ -73,7 +123,7 @@ const MarkerModalContent: React.FC<{video: LocalVideo}> = ({video}) => {
               type="text"
               placeholder="Type here..."
               className="input input-bordered"
-              {...register("title")}
+              {...register("title", {required: true})}
             />
           </div>
           <div className="form-control">
@@ -90,18 +140,49 @@ const MarkerModalContent: React.FC<{video: LocalVideo}> = ({video}) => {
                       type="text"
                       className="input grow input-bordered"
                       {...field}
-                      value={format(field.value * 1000, "mm:ss")}
-                      onChange={(e) =>
-                        getMilliseconds(
-                          parse(e.target.value, "mm:ss", new Date())
-                        ) / 1000.0
-                      }
+                      required
+                      value={formatSeconds(field.value)}
+                      onChange={(e) => parseSeconds(e.target.value)}
                     />
                   )
                 }}
               />
 
-              <button onClick={onSetCurrentTime} className="btn btn-square">
+              <button
+                onClick={() => onSetCurrentTime("start")}
+                className="btn btn-square"
+              >
+                <HiClock />
+              </button>
+            </div>
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">End time</span>
+            </label>
+            <div className="input-group w-full">
+              <Controller
+                control={control}
+                name="end"
+                render={({field}) => {
+                  return (
+                    <input
+                      type="text"
+                      className="input grow input-bordered"
+                      {...field}
+                      required
+                      value={formatSeconds(field.value)}
+                      onChange={(e) => parseSeconds(e.target.value)}
+                    />
+                  )
+                }}
+              />
+
+              <button
+                onClick={() => onSetCurrentTime("end")}
+                className="btn btn-square"
+              >
                 <HiClock />
               </button>
             </div>
@@ -152,7 +233,11 @@ export default function ListVideos() {
             key={file.fileName}
           >
             <figure className="">
-              <video className="w-full" muted src={`/api/video/${file.id}`} />
+              <video
+                className="w-full aspect-video"
+                muted
+                src={`/api/video/${file.id}`}
+              />
             </figure>
             <div className="card-body">
               <h2 className="card-title">

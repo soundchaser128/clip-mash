@@ -7,6 +7,7 @@ export function updateForm(
   newState: Partial<FormState>
 ): GlobalState {
   return {
+    // @ts-expect-error broken, fixme
     data: {
       ...state.data,
       ...newState,

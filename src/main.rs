@@ -4,10 +4,12 @@ use axum::{
     Router,
 };
 use color_eyre::Report;
+use db::Database;
 use std::{sync::Arc, time::Duration};
 
 mod clip;
 mod config;
+mod db;
 mod download_ffmpeg;
 mod error;
 mod ffmpeg;
@@ -22,6 +24,7 @@ pub type Result<T> = std::result::Result<T, Report>;
 
 pub struct AppState {
     pub ffmpeg: Ffmpeg,
+    pub database: Database,
 }
 
 #[tokio::main]
@@ -43,7 +46,10 @@ async fn main() -> Result<()> {
     config::init().await;
 
     let ffmpeg = Ffmpeg::new().await?;
-    let state = Arc::new(AppState { ffmpeg });
+    let database = Database::new().await?;
+    database.init().await?;
+
+    let state = Arc::new(AppState { ffmpeg, database });
 
     let app = Router::new()
         .route("/api/health", get(http::get_health))
@@ -59,6 +65,7 @@ async fn main() -> Result<()> {
         .route("/api/config", get(http::get_config))
         .route("/api/config", post(http::set_config))
         .route("/api/list-videos", get(http::list_videos))
+        // .route("/api/video/:id", get(http::get_video))
         .fallback_service(static_files::service())
         .with_state(state);
 

@@ -6,13 +6,14 @@ use tokio::fs;
 use crate::Result;
 
 #[derive(Serialize, Debug)]
-pub struct LocalVideo {
+#[serde(rename_all = "camelCase")]
+pub struct LocalVideoDto {
     pub id: String,
-    pub path: Utf8PathBuf,
+    pub file_name: String,
     pub interactive: bool,
 }
 
-pub async fn list_videos(path: impl AsRef<Utf8Path>) -> Result<Vec<LocalVideo>> {
+pub async fn list_videos(path: impl AsRef<Utf8Path>) -> Result<Vec<LocalVideoDto>> {
     let mut files = fs::read_dir(path.as_ref()).await?;
     let mut entries = vec![];
     while let Some(entry) = files.next_entry().await? {
@@ -24,8 +25,8 @@ pub async fn list_videos(path: impl AsRef<Utf8Path>) -> Result<Vec<LocalVideo>> 
         if path.extension() == Some("mp4") {
             let interactive = path.with_extension("funscript").is_file();
             let id = nanoid!(8);
-            videos.push(LocalVideo {
-                path,
+            videos.push(LocalVideoDto {
+                file_name: path.file_name().unwrap().to_string(),
                 interactive,
                 id,
             })

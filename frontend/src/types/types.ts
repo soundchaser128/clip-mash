@@ -42,7 +42,8 @@ export interface InitialFormState {
 export interface LocalVideosFormState {
   source: "local-files"
   id: string
-  stage: FormStage
+  videos?: LocalVideo[]
+  localVideoPath?: string
 }
 
 export interface StashFormState {
@@ -95,4 +96,10 @@ export interface Scene {
   markerCount: number
   interactive: boolean
   rating?: number
+}
+
+export interface LocalVideo {
+  id: string
+  fileName: string
+  interactive: boolean
 }

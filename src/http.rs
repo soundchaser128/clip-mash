@@ -7,7 +7,7 @@ use std::{
 
 use axum::{
     body::StreamBody,
-    extract::{Query, State},
+    extract::{Path, Query, State},
     response::{
         sse::{Event, KeepAlive},
         IntoResponse, Sse,
@@ -30,7 +30,7 @@ use crate::{
     error::AppError,
     ffmpeg::{self, find_stream_url},
     funscript::{FunScript, ScriptBuilder},
-    local_videos::{self, LocalVideo},
+    local_videos::{self, LocalVideoDto},
     stash_api::{
         find_scenes_query::FindScenesQueryFindScenesScenes, healt_check_query::SystemStatusEnum,
         Api, Marker,
@@ -431,7 +431,10 @@ pub struct ListVideoQuery {
 #[axum::debug_handler]
 pub async fn list_videos(
     Query(ListVideoQuery { path }): Query<ListVideoQuery>,
-) -> Result<Json<Vec<LocalVideo>>, AppError> {
+) -> Result<Json<Vec<LocalVideoDto>>, AppError> {
     let videos = local_videos::list_videos(Utf8PathBuf::from(path)).await?;
     Ok(Json(videos))
 }
+
+#[axum::debug_handler]
+pub async fn get_video(Path(id): Path<String>) {}

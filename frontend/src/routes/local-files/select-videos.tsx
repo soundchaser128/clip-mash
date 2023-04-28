@@ -1,45 +1,29 @@
 import {useState} from "react"
-import {
-  HiAdjustmentsVertical,
-  HiCheck,
-  HiFolderPlus,
-  HiPlus,
-  HiXMark,
-} from "react-icons/hi2"
-
-interface VideoFile {
-  name: string
-  funscript?: string
-  handle: FileSystemHandle
-  file: File
-  blobUrl: string
-}
-
-function funscriptPath(entry: FileSystemFileHandle) {
-  const {name} = entry
-  const idx = name.lastIndexOf(".")
-  if (idx !== -1) {
-    const baseName = name.substring(0, idx)
-    const funscriptName = `${baseName}.funscript`
-    return funscriptName
-  }
-}
+import {HiCheck} from "react-icons/hi2"
+import {LocalVideo, StateHelpers} from "../../types/types"
+import {useStateMachine} from "little-state-machine"
+import {updateForm} from "../actions"
+import invariant from "tiny-invariant"
+import { useNavigate } from "react-router-dom"
 
 export default function SelectVideos() {
-  const [files, setFiles] = useState<VideoFile[]>([])
-  const [path, setPath] = useState("")
-
-  const onRemoveFile = (file: VideoFile) => {
-    setFiles((files) => files.filter((f) => f !== file))
-  }
+  const {state, actions} = useStateMachine({updateForm})
+  invariant(StateHelpers.isLocalFiles(state.data))
+  const [path, setPath] = useState(state.data.localVideoPath || "")
+  const navigate = useNavigate()
 
   const onSubmit: React.FormEventHandler = async (e) => {
     e.preventDefault()
     const response = await fetch(
       `/api/list-videos?path=${encodeURIComponent(path)}`
     )
-    const json = await response.json()
-    console.log(json)
+    const json = (await response.json()) as LocalVideo[]
+    actions.updateForm({
+      source: "local-files",
+      videos: json,
+      localVideoPath: path,
+    })
+    navigate("/local/markers")
   }
 
   return (
@@ -58,53 +42,10 @@ export default function SelectVideos() {
           />
         </div>
         <button type="submit" className="btn btn-success">
+          <HiCheck className="w-6 h-6 mr-2" />
           Submit
         </button>
       </form>
-      {files && (
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-2 w-full mt-4">
-          {files.map((file) => (
-            <article
-              className="card card-compact bg-base-100 shadow-xl"
-              key={file.name}
-            >
-              <figure className="">
-                <video className="w-full" muted src={file.blobUrl} />
-              </figure>
-              <div className="card-body">
-                <h2 className="card-title">
-                  <span className="truncate">{file.name}</span>
-                </h2>
-                <ul>
-                  <li
-                    className="tooltip"
-                    data-tip="Whether the scene has an associated .funscript file."
-                  >
-                    <HiAdjustmentsVertical className="inline mr-2" />
-                    Interactive:{" "}
-                    <strong>
-                      {file.funscript ? (
-                        <HiCheck className="text-green-600 inline" />
-                      ) : (
-                        <HiXMark className="text-red-600 inline" />
-                      )}
-                    </strong>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="card-actions justify-end">
-                <button
-                  onClick={() => onRemoveFile(file)}
-                  className="btn btn-error btn-sm btn-square self-end"
-                >
-                  <HiXMark className="w-4 h-4" />
-                </button>
-              </div>
-            </article>
-          ))}
-        </section>
-      )}
     </>
   )
 }

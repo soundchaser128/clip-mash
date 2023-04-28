@@ -24,6 +24,7 @@ import SelectSource from "./routes/select-source"
 import {styles} from "./components/Layout"
 import SelectMode from "./routes/select-mode"
 import {nanoid} from "nanoid"
+import AddMarkers from "./routes/local-files/add-markers"
 
 const Layout: React.FC<PropsWithChildren> = ({children}) => {
   return (
@@ -114,6 +115,10 @@ const router = createBrowserRouter([
           {
             path: "videos",
             element: <SelectVideos />,
+          },
+          {
+            path: "markers",
+            element: <AddMarkers />,
           },
         ],
       },

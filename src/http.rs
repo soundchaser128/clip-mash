@@ -28,6 +28,7 @@ use tower::ServiceExt;
 use crate::{
     clip::{self, Clip, ClipOrder},
     config::{self, Config},
+    db::DbMarker,
     error::AppError,
     ffmpeg::{self, find_stream_url},
     funscript::{FunScript, ScriptBuilder},
@@ -434,10 +435,8 @@ pub async fn list_videos(
     Query(ListVideoQuery { path }): Query<ListVideoQuery>,
     state: State<Arc<AppState>>,
 ) -> Result<Json<Vec<LocalVideoDto>>, AppError> {
-    let mut videos = local_videos::list_videos(Utf8PathBuf::from(path)).await?;
-    state.database.persist_videos(&mut videos).await?;
-    let dtos = videos.into_iter().map(LocalVideoDto::from).collect();
-    Ok(Json(dtos))
+    let videos = local_videos::list_videos(Utf8PathBuf::from(path), &state.database).await?;
+    Ok(Json(videos))
 }
 
 #[axum::debug_handler]
@@ -449,6 +448,21 @@ pub async fn get_video(
     use tower_http::services::ServeFile;
 
     let video = state.database.get_video(&id).await?;
-    let result = ServeFile::new(video.file_path).oneshot(request).await;
-    Ok(result)
+    if let Some(video) = video {
+        let result = ServeFile::new(video.file_path).oneshot(request).await;
+        Ok(result)
+    } else {
+        Err(AppError::StatusCode(StatusCode::NOT_FOUND))
+    }
+}
+
+#[axum::debug_handler]
+pub async fn persist_markers(
+    state: State<Arc<AppState>>,
+    Json(markers): Json<Vec<DbMarker>>,
+) -> Result<(), AppError> {
+    tracing::info!("saving {} markers to the database", markers.len());
+    state.database.persist_markers(&markers).await?;
+
+    Ok(())
 }

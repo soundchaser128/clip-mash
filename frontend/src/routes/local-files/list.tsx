@@ -16,21 +16,22 @@ import {useImmer} from "use-immer"
 import {format} from "date-fns"
 import {parse} from "date-fns"
 import {getMilliseconds} from "date-fns"
+import {updateForm} from "../actions"
 
 interface Marker {
   title: string
-  start: number
-  end: number
+  startTime: number
+  endTime: number
 }
 
 interface Inputs {
   title: string
-  start: number
-  end: number
+  startTime: number
+  endTime: number
 }
 
 function formatSeconds(seconds?: number): string {
-  return seconds ? format(seconds * 1000, "mm:ss") : ""
+  return typeof seconds !== "undefined" ? format(seconds * 1000, "mm:ss") : ""
 }
 
 function parseSeconds(string: string): number {
@@ -55,14 +56,14 @@ const MarkerModalContent: React.FC<{
 
   const onShowForm = () => {
     setFormVisible(true)
-    const start = videoRef.current!.currentTime
-    setValue("start", start)
-    setValue("end", start + 15)
+    const start = videoRef.current?.currentTime || 0
+    setValue("startTime", start)
+    setValue("endTime", start + 15)
     setValue("title", "")
   }
 
-  const onSetCurrentTime = (field: "start" | "end") => {
-    setValue(field, videoRef.current!.currentTime)
+  const onSetCurrentTime = (field: "startTime" | "endTime") => {
+    setValue(field, videoRef.current?.currentTime || 0)
   }
 
   const segments = useMemo(() => {
@@ -70,8 +71,8 @@ const MarkerModalContent: React.FC<{
       const totalDuration = videoRef.current.duration
       const result = []
       for (const marker of markers) {
-        const offset = (marker.start / totalDuration) * 100
-        const seconds = marker.end - marker.start
+        const offset = (marker.startTime / totalDuration) * 100
+        const seconds = marker.endTime - marker.startTime
         const width = (seconds / totalDuration) * 100
         result.push({
           offset,
@@ -140,7 +141,7 @@ const MarkerModalContent: React.FC<{
             <div className="input-group w-full">
               <Controller
                 control={control}
-                name="start"
+                name="startTime"
                 render={({field}) => {
                   return (
                     <input
@@ -156,8 +157,9 @@ const MarkerModalContent: React.FC<{
               />
 
               <button
-                onClick={() => onSetCurrentTime("start")}
+                onClick={() => onSetCurrentTime("startTime")}
                 className="btn btn-square"
+                type="button"
               >
                 <HiClock />
               </button>
@@ -171,7 +173,7 @@ const MarkerModalContent: React.FC<{
             <div className="input-group w-full">
               <Controller
                 control={control}
-                name="end"
+                name="endTime"
                 render={({field}) => {
                   return (
                     <input
@@ -187,8 +189,9 @@ const MarkerModalContent: React.FC<{
               />
 
               <button
-                onClick={() => onSetCurrentTime("end")}
+                onClick={() => onSetCurrentTime("endTime")}
                 className="btn btn-square"
+                type="button"
               >
                 <HiClock />
               </button>
@@ -221,8 +224,21 @@ interface Video {
   markers: Marker[]
 }
 
+async function persistMarkers(videoId: string, markers: Marker[]) {
+  const payload = markers.map((m) => ({
+    ...m,
+    videoId,
+  }))
+
+  await fetch("/api/video/markers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: {"Content-Type": "application/json"},
+  })
+}
+
 export default function ListVideos() {
-  const {state} = useStateMachine()
+  const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
   const [videos, setVideos] = useImmer<Video[]>(
     state.data.videos!.map((v) => ({video: v, markers: []}))
@@ -234,8 +250,13 @@ export default function ListVideos() {
     // TODO
   }
 
-  const onMarkersAdded = (markers: Marker[]) => {
+  const onMarkersAdded = async (markers: Marker[]) => {
+    console.log("markers added", markers)
     const id = modalVideo?.video?.id
+    if (id) {
+      await persistMarkers(id, markers)
+    }
+
     setVideos((draft) => {
       const idx = draft.findIndex((v) => v.video.id === id)
       if (idx !== -1) {

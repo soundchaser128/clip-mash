@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.file_path = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "file_path",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "interactive",
+        "ordinal": 2,
+        "type_info": "Bool"
+      },
+      {
+        "name": "video_id",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "start_time",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "end_time",
+        "ordinal": 5,
+        "type_info": "Float"
+      },
+      {
+        "name": "title",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "308d69ec63115e821f56d27675bf466fc4b13b605da1abe087133565196bbcf9"
+}

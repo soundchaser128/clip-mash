@@ -1,6 +1,6 @@
 import {useState} from "react"
 import {HiCheck} from "react-icons/hi2"
-import {LocalVideo, StateHelpers} from "../../types/types"
+import {LocalVideoDto, StateHelpers} from "../../types/types"
 import {useStateMachine} from "little-state-machine"
 import {updateForm} from "../actions"
 import invariant from "tiny-invariant"
@@ -20,7 +20,7 @@ export default function SelectVideos() {
       {method: "POST"}
     )
 
-    const json = (await response.json()) as LocalVideo[]
+    const json = (await response.json()) as LocalVideoDto[]
     actions.updateForm({
       source: "local-files",
       videos: json,

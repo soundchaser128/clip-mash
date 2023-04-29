@@ -11,17 +11,23 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import Modal from "../../components/Modal"
-import React, {useRef, useState} from "react"
+import React, {useEffect, useRef, useState} from "react"
 import {useForm, Controller} from "react-hook-form"
 import {useImmer} from "use-immer"
 import {format} from "date-fns"
 import {parse} from "date-fns"
 import {getMilliseconds} from "date-fns"
 import {updateForm} from "../actions"
-import {LoaderFunction, json, useLoaderData} from "react-router-dom"
+import {
+  LoaderFunction,
+
+  json,
+  useLoaderData,
+  useNavigate,
+  useRevalidator,
+} from "react-router-dom"
 import {getFormState, getSegmentColor} from "../../helpers"
 import clsx from "clsx"
-import {produce} from "immer"
 
 interface Inputs {
   title: string
@@ -83,11 +89,24 @@ function getSegments(
 
 type FormMode = "hidden" | "create" | "edit"
 
+interface CreateMarker {
+  videoId: string
+  startTime: number
+  endTime: number
+  title: string
+}
+
 async function persistMarker(
   videoId: string,
-  marker: Inputs
+  marker: Inputs,
+  duration: number
 ): Promise<MarkerDto> {
-  const payload = {...marker, videoId}
+  const payload = {
+    startTime: Math.max(marker.startTime, 0),
+    endTime: Math.min(marker.endTime, duration),
+    title: marker.title.trim(),
+    videoId,
+  } satisfies CreateMarker
 
   const response = await fetch("/api/video/marker", {
     method: "POST",
@@ -103,9 +122,6 @@ const MarkerModalContent: React.FC<{
   video: LocalVideoDto
   onClose: () => void
 }> = ({video, onClose}) => {
-  const {state, actions} = useStateMachine({updateForm})
-  invariant(StateHelpers.isLocalFiles(state.data))
-
   const {register, setValue, handleSubmit, control, watch} = useForm<Inputs>({})
   const [markers, setMarkers] = useImmer<MarkerDto[]>(video.markers!)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -116,25 +132,14 @@ const MarkerModalContent: React.FC<{
   const markerEnd = watch("endTime")
 
   const onSubmit = async (values: Inputs) => {
-    const newMarker = await persistMarker(video.id, values)
+    const newMarker = await persistMarker(video.id, values, videoDuration!)
     setMarkers((draft) => {
-      invariant(StateHelpers.isLocalFiles(state.data))
-
       if (formMode === "create") {
         draft.push(newMarker)
       } else if (formMode === "edit") {
         const idx = draft.findIndex((m) => m.id === newMarker.id)
         draft[idx] = newMarker
       }
-
-      actions.updateForm({
-        videos: produce(state.data.videos!, (videoDraft) => {
-          const index = videoDraft.findIndex((v) => v.id === video.id)
-          if (index) {
-            videoDraft[index].markers = draft
-          }
-        }),
-      })
     })
     setFormMode("hidden")
   }
@@ -354,11 +359,10 @@ export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
   const initialVideos = useLoaderData() as LocalVideoDto[]
-  const [videos, setVideos] = useImmer<LocalVideoDto[]>(
-    state.data.videos || initialVideos
-  )
+  const [videos, setVideos] = useImmer<LocalVideoDto[]>(initialVideos)
   const [modalVideo, setModalVideo] = useState<LocalVideoDto>()
   const modalOpen = typeof modalVideo !== "undefined"
+  const revalidator = useRevalidator()
 
   const onRemoveFile = (video: LocalVideoDto) => {
     setVideos((draft) => {
@@ -374,7 +378,12 @@ export default function ListVideos() {
 
   const onMarkersAdded = async () => {
     setModalVideo(undefined)
+    revalidator.revalidate()
   }
+
+  useEffect(() => {
+    setVideos(initialVideos)
+  }, [initialVideos])
 
   return (
     <>
@@ -426,15 +435,15 @@ export default function ListVideos() {
                   className="btn btn-secondary btn-sm btn-outline"
                   onClick={() => setModalVideo(video)}
                 >
-                  <HiPlus className="w-4 h-4 mr-2" />
-                  Add markers
+                  <HiTag className="w-4 h-4 mr-2" />
+                  Markers
                 </button>
                 <button
                   onClick={() => onRemoveFile(video)}
                   className="btn btn-error btn-sm"
                 >
                   <HiXMark className="w-4 h-4 mr-2" />
-                  Remove
+                  Remove video
                 </button>
               </div>
             </div>

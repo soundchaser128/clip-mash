@@ -1,4 +1,4 @@
-# stash-compilation-maker
+# clip-mash
 
 Connects to your [Stash](https://github.com/stashapp/stash) instance and creates simple 
 compilation videos from scene markers. You select one or more tags, or one or more performers

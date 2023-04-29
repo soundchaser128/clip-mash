@@ -264,6 +264,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "clip-mash"
+version = "0.5.0"
+dependencies = [
+ "axum",
+ "camino",
+ "color-eyre",
+ "directories",
+ "futures",
+ "graphql_client",
+ "include_dir",
+ "itertools",
+ "lazy_static",
+ "nanoid",
+ "rand",
+ "regex",
+ "reqwest",
+ "sanitise-file-name",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tar",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "walkdir",
+ "webbrowser",
+ "xz2",
+ "zip",
+]
+
+[[package]]
 name = "color-eyre"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2117,41 +2152,6 @@ dependencies = [
  "sqlx-core",
  "tracing",
  "url",
-]
-
-[[package]]
-name = "stash-compilation-maker"
-version = "0.5.0"
-dependencies = [
- "axum",
- "camino",
- "color-eyre",
- "directories",
- "futures",
- "graphql_client",
- "include_dir",
- "itertools",
- "lazy_static",
- "nanoid",
- "rand",
- "regex",
- "reqwest",
- "sanitise-file-name",
- "serde",
- "serde_json",
- "sqlx",
- "tar",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "walkdir",
- "webbrowser",
- "xz2",
- "zip",
 ]
 
 [[package]]

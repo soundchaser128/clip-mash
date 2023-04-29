@@ -28,11 +28,11 @@ use tower::ServiceExt;
 use crate::{
     clip::{self, Clip, ClipOrder},
     config::{self, Config},
-    db::DbMarker,
+    db::CreateMarker,
     error::AppError,
     ffmpeg::{self, find_stream_url},
     funscript::{FunScript, ScriptBuilder},
-    local_videos::{self, LocalVideoDto},
+    local_videos::{self, LocalVideoDto, MarkerDto},
     stash_api::{
         find_scenes_query::FindScenesQueryFindScenesScenes, healt_check_query::SystemStatusEnum,
         Api, Marker,
@@ -459,12 +459,23 @@ pub async fn get_video(
 }
 
 #[axum::debug_handler]
-pub async fn persist_markers(
+pub async fn persist_marker(
     state: State<Arc<AppState>>,
-    Json(markers): Json<Vec<DbMarker>>,
+    Json(marker): Json<CreateMarker>,
+) -> Result<Json<MarkerDto>, AppError> {
+    tracing::info!("saving marker {marker:?} to the database");
+    let marker = state.database.persist_marker(marker).await?;
+
+    Ok(Json(marker))
+}
+
+#[axum::debug_handler]
+pub async fn delete_marker(
+    Path(id): Path<i64>,
+    state: State<Arc<AppState>>,
 ) -> Result<(), AppError> {
-    tracing::info!("saving {} markers to the database", markers.len());
-    state.database.persist_markers(&markers).await?;
+    tracing::info!("deleting marker {id}");
+    state.database.delete_marker(id).await?;
 
     Ok(())
 }

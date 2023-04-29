@@ -1,6 +1,6 @@
 use crate::ffmpeg::Ffmpeg;
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
 use color_eyre::Report;
@@ -64,7 +64,8 @@ async fn main() -> Result<()> {
         .route("/api/config", post(http::set_config))
         .route("/api/video", post(http::list_videos))
         .route("/api/video/:id", get(http::get_video))
-        .route("/api/video/markers", post(http::persist_markers))
+        .route("/api/video/marker", post(http::persist_marker))
+        .route("/api/video/marker/:id", delete(http::delete_marker))
         .fallback_service(static_files::service())
         .with_state(state);
 

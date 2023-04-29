@@ -35,7 +35,7 @@ jobs:
 
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
-          bin: stash-compilation-maker
+          bin: clip-mash
           tar: unix
           zip: windows
         env:

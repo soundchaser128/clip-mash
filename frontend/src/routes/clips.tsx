@@ -13,7 +13,7 @@ import clsx from "clsx"
 import {useRef} from "react"
 import {useImmer} from "use-immer"
 import invariant from "tiny-invariant"
-import {getFormState} from "../helpers"
+import {getFormState, getSegmentColor} from "../helpers"
 
 interface ClipsResponse {
   clips: Clip[]
@@ -60,16 +60,6 @@ export const loader: LoaderFunction = async () => {
   }
 }
 
-const segmentColors = [
-  "bg-purple-400",
-  "bg-green-400",
-  "bg-yellow-400",
-  "bg-red-400",
-  "bg-teal-400",
-  "bg-orange-600",
-  "bg-rose-400",
-]
-
 interface ClipState {
   clip: Clip
   included: boolean
@@ -108,7 +98,7 @@ function PreviewClips() {
     sceneIds.sort()
     const sceneColors = new Map()
     sceneIds.forEach((id, index) => {
-      sceneColors.set(id, segmentColors[index % segmentColors.length])
+      sceneColors.set(id, getSegmentColor(index))
     })
 
     return [segments, sceneColors]

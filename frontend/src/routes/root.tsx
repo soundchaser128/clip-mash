@@ -78,6 +78,7 @@ const Step: React.FC<StepProps> = ({
 export const LocalFilesRoot: React.FC = () => {
   return (
     <Layout>
+      <h1 className="text-4xl font-bold my-4 text-center">ClipMash</h1>
       <Outlet />
     </Layout>
   )
@@ -118,9 +119,7 @@ export const StashRoot: React.FC = () => {
   return (
     <Layout isLoading={isLoading}>
       <section className="py-4 flex flex-col">
-        <h1 className="text-4xl font-bold mb-4 text-center">
-          Stash Compilation Generator
-        </h1>
+        <h1 className="text-4xl font-bold mb-4 text-center">ClipMash</h1>
         <div className="self-center flex gap-2 mb-4">
           <button onClick={onReset} className="btn btn-sm btn-error">
             <HiXMark className="w-5 h-5 mr-2" />

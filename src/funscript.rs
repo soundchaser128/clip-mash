@@ -142,7 +142,7 @@ impl<'a> ScriptBuilder<'a> {
         let script = FunScript {
             actions: resulting_actions,
             metadata: Some(OFSMetadata {
-                creator: format!("stash-compilation-maker v{}", version),
+                creator: format!("clip-mash v{}", version),
                 ..Default::default()
             }),
             ..Default::default()

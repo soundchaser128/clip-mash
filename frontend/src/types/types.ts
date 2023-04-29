@@ -107,6 +107,7 @@ export interface LocalVideoDto {
 }
 
 export interface MarkerDto {
+  id: number
   startTime: number
   endTime: number
   title: string

@@ -18,7 +18,8 @@ export default function InitialRoot() {
 
   return (
     <Layout>
-      <section className="py-4 flex flex-col">
+      <h1 className="text-4xl font-bold my-4 text-center">ClipMash</h1>
+      <section className="flex flex-col">
         <div className="flex flex-col items-start gap-4">
           <p className="text-center w-full">
             Choose from where to get videos. You can either use local files or

@@ -1,10 +1,11 @@
-use crate::Result;
+use crate::{local_videos::MarkerDto, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode},
     SqlitePool,
 };
 use std::str::FromStr;
+use tracing::info;
 
 #[derive(Debug, Clone)]
 pub struct LocalVideo {
@@ -16,6 +17,16 @@ pub struct LocalVideo {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DbMarker {
+    pub rowid: Option<i64>,
+    pub video_id: String,
+    pub start_time: f64,
+    pub end_time: f64,
+    pub title: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateMarker {
     pub video_id: String,
     pub start_time: f64,
     pub end_time: f64,
@@ -53,7 +64,7 @@ impl Database {
 
     pub async fn get_video_by_path(&self, path: &str) -> Result<Option<LocalVideoWithMarkers>> {
         let records = sqlx::query!(
-            "SELECT * FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.file_path = $1",
+            "SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.file_path = $1",
             path,
         )
         .fetch_all(&self.pool)
@@ -69,17 +80,20 @@ impl Database {
             };
             let markers = records
                 .into_iter()
-                .filter_map(|r| match (r.video_id, r.start_time, r.end_time, r.title) {
-                    (Some(video_id), Some(start_time), Some(end_time), Some(title)) => {
-                        Some(DbMarker {
-                            title,
-                            video_id,
-                            start_time,
-                            end_time,
-                        })
-                    }
-                    _ => None,
-                })
+                .filter_map(
+                    |r| match (r.video_id, r.start_time, r.end_time, r.title, r.rowid) {
+                        (Some(video_id), Some(start_time), Some(end_time), Some(title), rowid) => {
+                            Some(DbMarker {
+                                rowid,
+                                title,
+                                video_id,
+                                start_time,
+                                end_time,
+                            })
+                        }
+                        _ => None,
+                    },
+                )
                 .collect();
             Ok(Some(LocalVideoWithMarkers { video, markers }))
         }
@@ -111,7 +125,7 @@ impl Database {
     pub async fn get_markers_for_video(&self, video_id: &str) -> Result<Vec<DbMarker>> {
         sqlx::query_as!(
             DbMarker,
-            "SELECT * FROM markers WHERE video_id = $1",
+            "SELECT rowid, video_id, start_time, end_time, title FROM markers WHERE video_id = $1",
             video_id
         )
         .fetch_all(&self.pool)
@@ -119,18 +133,36 @@ impl Database {
         .map_err(From::from)
     }
 
-    pub async fn persist_markers(&self, markers: &[DbMarker]) -> Result<()> {
-        for marker in markers {
-            sqlx::query!(
-                "INSERT INTO markers (video_id, start_time, end_time, title) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
-                 marker.video_id,
-                 marker.start_time,
-                 marker.end_time,
-                 marker.title
-            )
+    pub async fn persist_marker(&self, marker: CreateMarker) -> Result<MarkerDto> {
+        let new_id = sqlx::query_scalar!(
+            "INSERT INTO markers (video_id, start_time, end_time, title) 
+                VALUES ($1, $2, $3, $4) 
+                ON CONFLICT DO UPDATE SET start_time = excluded.start_time, end_time = excluded.end_time, title = excluded.title
+                RETURNING rowid",
+                marker.video_id,
+                marker.start_time,
+                marker.end_time,
+                marker.title
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        let dto = MarkerDto {
+            rowid: Some(new_id),
+            start_time: marker.start_time,
+            end_time: marker.end_time,
+            title: marker.title,
+        };
+
+        info!("newly updated marker: {dto:?}");
+
+        Ok(dto)
+    }
+
+    pub async fn delete_marker(&self, id: i64) -> Result<()> {
+        sqlx::query!("DELETE FROM markers WHERE rowid = $1", id)
             .execute(&self.pool)
             .await?;
-        }
         Ok(())
     }
 }

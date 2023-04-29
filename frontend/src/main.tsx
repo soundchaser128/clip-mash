@@ -40,7 +40,7 @@ const TroubleshootingInfo = () => {
     <div className="p-2">
       <p>Try refreshing the page.</p>
       <p>
-        If that doesn't help, please open an issue{" "}
+        If that doesn&apos;t help, please open an issue{" "}
         <a
           className="link link-primary"
           href="https://github.com/soundchaser128/stash-compilation-maker/issues"

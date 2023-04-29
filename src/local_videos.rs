@@ -20,6 +20,7 @@ pub struct LocalVideoDto {
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkerDto {
+    pub rowid: Option<i64>,
     pub start_time: f64,
     pub end_time: f64,
     pub title: String,
@@ -52,6 +53,7 @@ impl From<LocalVideoWithMarkers> for LocalVideoDto {
                 .markers
                 .into_iter()
                 .map(|m| MarkerDto {
+                    rowid: m.rowid,
                     start_time: m.start_time,
                     end_time: m.end_time,
                     title: m.title,
@@ -82,12 +84,12 @@ pub async fn list_videos(
     database: &Database,
 ) -> Result<Vec<LocalVideoDto>> {
     let entries = gather_files(path.as_ref().to_owned(), recurse).await?;
-    tracing::info!("found files {entries:?} (recurse = {recurse})");
+    tracing::debug!("found files {entries:?} (recurse = {recurse})");
     let mut videos = vec![];
     for path in entries {
         if path.extension() == Some("mp4") {
             if let Some(video) = database.get_video_by_path(path.as_str()).await? {
-                tracing::info!("found existing video {video:#?}");
+                tracing::debug!("found existing video {video:#?}");
                 videos.push(video.into());
             } else {
                 let interactive = path.with_extension("funscript").is_file();

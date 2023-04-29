@@ -25,6 +25,7 @@ import {styles} from "./components/Layout"
 import SelectMode from "./routes/select-mode"
 import {nanoid} from "nanoid"
 import ListVideos, {loader as listVideosLoader} from "./routes/local-files/list"
+import EditVideoModal from "./routes/local-files/edit"
 
 const Layout: React.FC<PropsWithChildren> = ({children}) => {
   return (
@@ -117,9 +118,15 @@ const router = createBrowserRouter([
             element: <SelectVideoPath />,
           },
           {
-            path: "list",
+            path: "videos",
             element: <ListVideos />,
             loader: listVideosLoader,
+            children: [
+              {
+                path: ":id",
+                element: <EditVideoModal />
+              }
+            ]
           },
         ],
       },

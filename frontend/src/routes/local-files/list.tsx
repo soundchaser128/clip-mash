@@ -176,15 +176,163 @@ const MarkerModalContent: React.FC<{
 
   return (
     <>
-      <video
-        className="w-full max-h-[50vh]"
-        muted
-        controls
-        src={`/api/video/${video.id}`}
-        ref={videoRef}
-        onLoadedMetadata={onMetadataLoaded}
-      />
-      <div className="w-full h-8 flex my-4 gap-0.5 bg-gray-100 relative">
+      <div className="flex gap-2">
+        <video
+          className="w-2/3"
+          muted
+          controls
+          src={`/api/video/${video.id}`}
+          ref={videoRef}
+          onLoadedMetadata={onMetadataLoaded}
+        />
+        <div className="flex flex-col w-full justify-between">
+          {formMode !== "hidden" && (
+            <form
+              className="max-w-lg flex flex-col gap-2"
+              onSubmit={handleSubmit(onSubmit)}
+            >
+              <h2 className="text-xl font-bold">
+                {formMode === "create" ? "Add new" : "Edit"} marker
+              </h2>
+              <div className="btn-group">
+                <button
+                  type="button"
+                  onClick={() => setVideoPosition(markerStart)}
+                  className="btn"
+                >
+                  Go to start
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVideoPosition(markerEnd)}
+                  className="btn"
+                >
+                  Go to end
+                </button>
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Marker title</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Type here..."
+                  className="input input-bordered"
+                  {...register("title", {required: true})}
+                />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Start time</span>
+                </label>
+                <div className="input-group w-full">
+                  <Controller
+                    control={control}
+                    name="startTime"
+                    render={({field}) => {
+                      return (
+                        <input
+                          type="text"
+                          className="input grow input-bordered"
+                          {...field}
+                          required
+                          value={formatSeconds(field.value)}
+                          onChange={(e) => parseSeconds(e.target.value)}
+                        />
+                      )
+                    }}
+                  />
+
+                  <button
+                    onClick={() => onSetCurrentTime("startTime")}
+                    className="btn btn-square"
+                    type="button"
+                  >
+                    <HiClock />
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">End time</span>
+                </label>
+                <div className="input-group w-full">
+                  <Controller
+                    control={control}
+                    name="endTime"
+                    render={({field}) => {
+                      return (
+                        <input
+                          type="text"
+                          className="input grow input-bordered"
+                          {...field}
+                          required
+                          value={formatSeconds(field.value)}
+                          onChange={(e) => parseSeconds(e.target.value)}
+                        />
+                      )
+                    }}
+                  />
+
+                  <button
+                    onClick={() => onSetCurrentTime("endTime")}
+                    className="btn btn-square"
+                    type="button"
+                  >
+                    <HiClock />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                {formMode === "edit" ? (
+                  <button
+                    onClick={onRemoveMarker}
+                    className="btn btn-error"
+                    type="button"
+                  >
+                    <HiTrash className="mr-2" />
+                    Remove marker
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <div className="btn-group">
+                  <button
+                    onClick={() => setFormMode("hidden")}
+                    className="btn btn-secondary"
+                    type="button"
+                  >
+                    <HiXMark className="mr-2" />
+                    Cancel
+                  </button>
+                  <button className="btn btn-primary" type="submit">
+                    <HiPlus className="mr-2" />{" "}
+                    {formMode === "create" ? "Add" : "Save"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {formMode === "hidden" && (
+            <button
+              onClick={() => onShowForm()}
+              className="btn btn-primary self-center"
+            >
+              <HiTag className="w-4 h-4 mr-2" />
+              Add new marker
+            </button>
+          )}
+
+          <button onClick={onDone} className="btn btn-success self-end mt-4">
+            <HiCheck className="mr-2" />
+            Done
+          </button>
+        </div>
+      </div>
+      <div className="w-full h-8 flex mt-2 gap-0.5 bg-gray-100 relative">
         {segments.map(({width, offset}, index) => {
           const marker = markers[index]
           return (
@@ -205,151 +353,6 @@ const MarkerModalContent: React.FC<{
           )
         })}
       </div>
-
-      {formMode !== "hidden" && (
-        <form
-          className="max-w-lg flex flex-col gap-2"
-          onSubmit={handleSubmit(onSubmit)}
-        >
-          <h2 className="text-xl font-bold">
-            {formMode === "create" ? "Add new" : "Edit"} marker
-          </h2>
-          <div className="btn-group">
-            <button
-              type="button"
-              onClick={() => setVideoPosition(markerStart)}
-              className="btn"
-            >
-              Go to start
-            </button>
-            <button
-              type="button"
-              onClick={() => setVideoPosition(markerEnd)}
-              className="btn"
-            >
-              Go to end
-            </button>
-          </div>
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Marker title</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Type here..."
-              className="input input-bordered"
-              {...register("title", {required: true})}
-            />
-          </div>
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Start time</span>
-            </label>
-            <div className="input-group w-full">
-              <Controller
-                control={control}
-                name="startTime"
-                render={({field}) => {
-                  return (
-                    <input
-                      type="text"
-                      className="input grow input-bordered"
-                      {...field}
-                      required
-                      value={formatSeconds(field.value)}
-                      onChange={(e) => parseSeconds(e.target.value)}
-                    />
-                  )
-                }}
-              />
-
-              <button
-                onClick={() => onSetCurrentTime("startTime")}
-                className="btn btn-square"
-                type="button"
-              >
-                <HiClock />
-              </button>
-            </div>
-          </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">End time</span>
-            </label>
-            <div className="input-group w-full">
-              <Controller
-                control={control}
-                name="endTime"
-                render={({field}) => {
-                  return (
-                    <input
-                      type="text"
-                      className="input grow input-bordered"
-                      {...field}
-                      required
-                      value={formatSeconds(field.value)}
-                      onChange={(e) => parseSeconds(e.target.value)}
-                    />
-                  )
-                }}
-              />
-
-              <button
-                onClick={() => onSetCurrentTime("endTime")}
-                className="btn btn-square"
-                type="button"
-              >
-                <HiClock />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex justify-between">
-            {formMode === "edit" ? (
-              <button
-                onClick={onRemoveMarker}
-                className="btn btn-error"
-                type="button"
-              >
-                <HiTrash className="mr-2" />
-                Remove marker
-              </button>
-            ) : (
-              <div />
-            )}
-            <div className="btn-group">
-              <button
-                onClick={() => setFormMode("hidden")}
-                className="btn btn-secondary"
-                type="button"
-              >
-                <HiXMark className="mr-2" />
-                Cancel
-              </button>
-              <button className="btn btn-primary" type="submit">
-                <HiPlus className="mr-2" />{" "}
-                {formMode === "create" ? "Add" : "Save"}
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {formMode === "hidden" && (
-        <button
-          onClick={() => onShowForm()}
-          className="btn btn-primary self-start"
-        >
-          <HiTag className="w-4 h-4 mr-2" />
-          Add new marker
-        </button>
-      )}
-
-      <button onClick={onDone} className="btn btn-success self-end mt-4">
-        <HiCheck className="mr-2" />
-        Done
-      </button>
     </>
   )
 }

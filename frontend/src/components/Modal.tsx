@@ -1,5 +1,4 @@
 import clsx from "clsx"
-import React, {useState} from "react"
 import {HiXMark} from "react-icons/hi2"
 
 interface Props {

@@ -11,7 +11,7 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import Modal from "../../components/Modal"
-import React, {useEffect, useRef, useState} from "react"
+import React, {useRef, useState} from "react"
 import {useForm, Controller} from "react-hook-form"
 import {useImmer} from "use-immer"
 import {format} from "date-fns"
@@ -21,6 +21,7 @@ import {updateForm} from "../actions"
 import {LoaderFunction, json, useLoaderData} from "react-router-dom"
 import {getFormState, getSegmentColor} from "../../helpers"
 import clsx from "clsx"
+import {produce} from "immer"
 
 interface Inputs {
   title: string
@@ -63,7 +64,6 @@ function getSegments(
 ): Segment[] {
   if (typeof duration !== "undefined" && !isNaN(duration)) {
     const totalDuration = duration
-    console.log({totalDuration})
     const result = []
     for (const marker of markers) {
       const offset = (marker.startTime / totalDuration) * 100
@@ -101,24 +101,40 @@ async function persistMarker(
 
 const MarkerModalContent: React.FC<{
   video: LocalVideoDto
-  onFinished: (markers: MarkerDto[]) => void
-}> = ({video, onFinished}) => {
-  const {register, setValue, handleSubmit, control} = useForm<Inputs>({})
+  onClose: () => void
+}> = ({video, onClose}) => {
+  const {state, actions} = useStateMachine({updateForm})
+  invariant(StateHelpers.isLocalFiles(state.data))
+
+  const {register, setValue, handleSubmit, control, watch} = useForm<Inputs>({})
   const [markers, setMarkers] = useImmer<MarkerDto[]>(video.markers!)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [formMode, setFormMode] = useState<FormMode>("hidden")
   const [videoDuration, setVideoDuration] = useState<number>()
   const segments = getSegments(videoDuration, markers)
+  const markerStart = watch("startTime")
+  const markerEnd = watch("endTime")
 
   const onSubmit = async (values: Inputs) => {
     const newMarker = await persistMarker(video.id, values)
     setMarkers((draft) => {
+      invariant(StateHelpers.isLocalFiles(state.data))
+
       if (formMode === "create") {
         draft.push(newMarker)
       } else if (formMode === "edit") {
         const idx = draft.findIndex((m) => m.id === newMarker.id)
         draft[idx] = newMarker
       }
+
+      actions.updateForm({
+        videos: produce(state.data.videos!, (videoDraft) => {
+          const index = videoDraft.findIndex((v) => v.id === video.id)
+          if (index) {
+            videoDraft[index].markers = draft
+          }
+        }),
+      })
     })
     setFormMode("hidden")
   }
@@ -140,12 +156,18 @@ const MarkerModalContent: React.FC<{
   }
 
   const onDone = () => {
-    onFinished(markers)
+    onClose()
   }
 
   const onMetadataLoaded: React.ReactEventHandler<HTMLVideoElement> = (e) => {
     const duration = e.currentTarget.duration
     setVideoDuration(duration)
+  }
+
+  const setVideoPosition = (position: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = position
+    }
   }
 
   return (
@@ -188,6 +210,22 @@ const MarkerModalContent: React.FC<{
           <h2 className="text-xl font-bold">
             {formMode === "create" ? "Add new" : "Edit"} marker
           </h2>
+          <div className="btn-group">
+            <button
+              type="button"
+              onClick={() => setVideoPosition(markerStart)}
+              className="btn"
+            >
+              Go to start
+            </button>
+            <button
+              type="button"
+              onClick={() => setVideoPosition(markerEnd)}
+              className="btn"
+            >
+              Go to end
+            </button>
+          </div>
           <div className="form-control">
             <label className="label">
               <span className="label-text">Marker title</span>
@@ -316,30 +354,25 @@ export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
   const initialVideos = useLoaderData() as LocalVideoDto[]
-  const [videos, setVideos] = useImmer<LocalVideoDto[]>(initialVideos || [])
+  const [videos, setVideos] = useImmer<LocalVideoDto[]>(
+    state.data.videos || initialVideos
+  )
   const [modalVideo, setModalVideo] = useState<LocalVideoDto>()
   const modalOpen = typeof modalVideo !== "undefined"
 
   const onRemoveFile = (video: LocalVideoDto) => {
-    // TODO
-  }
-
-  const onMarkersAdded = async (markers: MarkerDto[]) => {
-    // console.log("markers added", markers)
-    // const id = modalVideo?.id
-    // if (id) {
-    //   await persistMarker(id, markers)
-    // }
-
     setVideos((draft) => {
-      const idx = draft.findIndex((v) => v.id === modalVideo?.id)
-      if (idx !== -1) {
-        draft[idx].markers = markers
+      const idx = draft.findIndex((v) => v.id === video.id)
+      if (idx) {
+        draft.splice(idx, 1)
         actions.updateForm({
           videos: draft,
         })
       }
     })
+  }
+
+  const onMarkersAdded = async () => {
     setModalVideo(undefined)
   }
 
@@ -347,7 +380,7 @@ export default function ListVideos() {
     <>
       <Modal isOpen={modalOpen} onClose={() => setModalVideo(undefined)}>
         {modalVideo && (
-          <MarkerModalContent video={modalVideo} onFinished={onMarkersAdded} />
+          <MarkerModalContent video={modalVideo} onClose={onMarkersAdded} />
         )}
       </Modal>
 

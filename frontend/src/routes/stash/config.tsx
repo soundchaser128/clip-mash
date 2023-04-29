@@ -98,7 +98,12 @@ function ConfigPage() {
             <label className="label">
               <span className="label-text-alt">
                 Navigate to{" "}
-                <a className="link" href={settingsPage} target="_blank">
+                <a
+                  className="link"
+                  href={settingsPage}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   {settingsPage}
                 </a>{" "}
                 to retrieve your API key.

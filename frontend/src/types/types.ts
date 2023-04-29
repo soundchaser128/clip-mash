@@ -44,6 +44,7 @@ export interface LocalVideosFormState {
   id: string
   videos?: LocalVideoDto[]
   localVideoPath?: string
+  recurse?: boolean
 }
 
 export interface StashFormState {

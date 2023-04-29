@@ -17,6 +17,8 @@ import {format} from "date-fns"
 import {parse} from "date-fns"
 import {getMilliseconds} from "date-fns"
 import {updateForm} from "../actions"
+import {LoaderFunction, json, useLoaderData} from "react-router-dom"
+import {getFormState} from "../../helpers"
 
 interface Marker {
   title: string
@@ -28,6 +30,22 @@ interface Inputs {
   title: string
   startTime: number
   endTime: number
+}
+
+export const loader: LoaderFunction = async () => {
+  const formState = getFormState()
+  invariant(StateHelpers.isLocalFiles(formState!))
+
+  const params = new URLSearchParams({
+    path: formState.localVideoPath!,
+    recurse: formState.recurse ? "true" : "false",
+  })
+
+  const response = await fetch(`/api/video?${params.toString()}`, {
+    method: "POST",
+  })
+  const data = await response.json()
+  return json(data)
 }
 
 function formatSeconds(seconds?: number): string {
@@ -235,7 +253,8 @@ async function persistMarkers(videoId: string, markers: Marker[]) {
 export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
-  const [videos, setVideos] = useImmer<LocalVideoDto[]>(state.data.videos || [])
+  const initialVideos = useLoaderData() as LocalVideoDto[]
+  const [videos, setVideos] = useImmer<LocalVideoDto[]>(initialVideos || [])
   const [modalVideo, setModalVideo] = useState<LocalVideoDto>()
   const modalOpen = typeof modalVideo !== "undefined"
 

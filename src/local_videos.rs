@@ -1,7 +1,8 @@
 use camino::{Utf8Path, Utf8PathBuf};
 use nanoid::nanoid;
 use serde::Serialize;
-use tokio::fs;
+use tokio::task::spawn_blocking;
+use walkdir::WalkDir;
 
 use crate::{
     db::{Database, LocalVideo, LocalVideoWithMarkers},
@@ -60,16 +61,28 @@ impl From<LocalVideoWithMarkers> for LocalVideoDto {
     }
 }
 
+async fn gather_files(path: Utf8PathBuf, recurse: bool) -> Result<Vec<Utf8PathBuf>> {
+    spawn_blocking(move || {
+        let files = WalkDir::new(path)
+            .max_depth(if recurse { usize::MAX } else { 1 })
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .filter(|e| e.file_type().is_file())
+            .map(|e| Utf8PathBuf::from_path_buf(e.into_path()).expect("not a utf8 path"))
+            .collect();
+
+        Ok(files)
+    })
+    .await?
+}
+
 pub async fn list_videos(
     path: impl AsRef<Utf8Path>,
+    recurse: bool,
     database: &Database,
 ) -> Result<Vec<LocalVideoDto>> {
-    let mut files = fs::read_dir(path.as_ref()).await?;
-    let mut entries = vec![];
-    while let Some(entry) = files.next_entry().await? {
-        let path = Utf8PathBuf::from_path_buf(entry.path()).unwrap();
-        entries.push(path);
-    }
+    let entries = gather_files(path.as_ref().to_owned(), recurse).await?;
+    tracing::info!("found files {entries:?} (recurse = {recurse})");
     let mut videos = vec![];
     for path in entries {
         if path.extension() == Some("mp4") {

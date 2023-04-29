@@ -428,14 +428,16 @@ pub async fn get_health(
 #[serde(rename_all = "camelCase")]
 pub struct ListVideoQuery {
     path: String,
+    recurse: bool,
 }
 
 #[axum::debug_handler]
 pub async fn list_videos(
-    Query(ListVideoQuery { path }): Query<ListVideoQuery>,
+    Query(ListVideoQuery { path, recurse }): Query<ListVideoQuery>,
     state: State<Arc<AppState>>,
 ) -> Result<Json<Vec<LocalVideoDto>>, AppError> {
-    let videos = local_videos::list_videos(Utf8PathBuf::from(path), &state.database).await?;
+    let videos =
+        local_videos::list_videos(Utf8PathBuf::from(path), recurse, &state.database).await?;
     Ok(Json(videos))
 }
 

@@ -18,8 +18,11 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: "18.x"
-    - run: cd frontend && npm ci && npm run format-check && npm run lint && npm run build
-    - name: Build
+    - name: Build Node
+      run: cd frontend && npm ci && npm run format-check && npm run lint && npm run build
+    - name: Build Rust
+      env:
+        SQLX_OFFLINE: "true"
       run: cargo fmt --check && cargo check --verbose
     - name: Run tests
       run: cargo test --verbose

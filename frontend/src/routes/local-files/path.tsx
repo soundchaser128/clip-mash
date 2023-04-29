@@ -1,6 +1,6 @@
 import {useState} from "react"
 import {HiCheck} from "react-icons/hi2"
-import {LocalVideoDto, StateHelpers} from "../../types/types"
+import {StateHelpers} from "../../types/types"
 import {useStateMachine} from "little-state-machine"
 import {updateForm} from "../actions"
 import invariant from "tiny-invariant"
@@ -10,21 +10,15 @@ export default function SelectVideos() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
   const [path, setPath] = useState(state.data.localVideoPath || "")
+  const [recurse, setRecurse] = useState(state.data.recurse || false)
   const navigate = useNavigate()
 
   const onSubmit: React.FormEventHandler = async (e) => {
     e.preventDefault()
-
-    const response = await fetch(
-      `/api/video?path=${encodeURIComponent(path)}`,
-      {method: "POST"}
-    )
-
-    const json = (await response.json()) as LocalVideoDto[]
     actions.updateForm({
       source: "local-files",
-      videos: json,
       localVideoPath: path,
+      recurse,
     })
     navigate("/local/list")
   }
@@ -43,6 +37,19 @@ export default function SelectVideos() {
             onChange={(e) => setPath(e.target.value)}
             placeholder="C:\Users\CoolUser\Videos\DefinitelyNotPorn"
           />
+        </div>
+        <div className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text mr-2">
+              Look at all the subdirectories as well
+            </span>
+            <input
+              type="checkbox"
+              className="toggle"
+              checked={recurse}
+              onChange={(e) => setRecurse(e.target.checked)}
+            />
+          </label>
         </div>
         <button type="submit" className="btn btn-success">
           <HiCheck className="w-6 h-6 mr-2" />

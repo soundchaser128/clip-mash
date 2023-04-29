@@ -6,13 +6,14 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom"
-import {Clip, FormStage, FormState, Scene, StateHelpers} from "../types/types"
+import {Clip, FormStage, Scene, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
 import {useImmer} from "use-immer"
 import invariant from "tiny-invariant"
+import {getFormState} from "../helpers"
 
 interface ClipsResponse {
   clips: Clip[]
@@ -27,18 +28,17 @@ interface Data {
 }
 
 export const loader: LoaderFunction = async () => {
-  const formJson = sessionStorage.getItem("form-state")
-  const state: {data: FormState} = JSON.parse(formJson!)
-  invariant(StateHelpers.isStash(state.data))
+  const state = getFormState()
+  invariant(StateHelpers.isStash(state!))
   const response = await fetch("/api/clips", {
     method: "POST",
     body: JSON.stringify({
-      clipOrder: state.data.clipOrder,
-      clipDuration: state.data.clipDuration,
-      selectedMarkers: state.data.selectedMarkers,
-      markers: state.data.markers,
-      selectMode: state.data.selectMode,
-      splitClips: state.data.splitClips,
+      clipOrder: state.clipOrder,
+      clipDuration: state.clipDuration,
+      selectedMarkers: state.selectedMarkers,
+      markers: state.markers,
+      selectMode: state.selectMode,
+      splitClips: state.splitClips,
     }),
     headers: {"content-type": "application/json"},
   })

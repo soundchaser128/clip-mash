@@ -1,12 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {
-  FormStage,
-  FormState,
-  SelectedMarker,
-  StateHelpers,
-} from "../types/types"
+import {FormStage, SelectedMarker, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
 import {formatDuration} from "date-fns"
 import clsx from "clsx"
@@ -22,6 +17,7 @@ import {
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
 import invariant from "tiny-invariant"
+import {getFormState} from "../helpers"
 
 interface Marker {
   id: string
@@ -44,14 +40,13 @@ interface Data {
 }
 
 export const loader: LoaderFunction = async () => {
-  const json = sessionStorage.getItem("form-state")
-  if (json) {
-    const state: {data: FormState} = JSON.parse(json)
-    invariant(StateHelpers.isStash(state.data))
+  const state = getFormState()
+  if (state) {
+    invariant(StateHelpers.isStash(state))
     const params = new URLSearchParams()
-    params.set("selectedIds", state.data.selectedIds!.join(","))
-    params.set("mode", state.data.selectMode!)
-    params.set("includeAll", state.data.includeAll ? "true" : "false")
+    params.set("selectedIds", state.selectedIds!.join(","))
+    params.set("mode", state.selectMode!)
+    params.set("includeAll", state.includeAll ? "true" : "false")
     const url = `/api/markers?${params.toString()}`
     const response = await fetch(url)
     const markers = await response.json()

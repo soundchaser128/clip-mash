@@ -11,13 +11,13 @@ export function getFormState(): FormState | null {
 }
 
 export const segmentColors = [
-  "bg-purple-400",
-  "bg-green-400",
-  "bg-yellow-400",
-  "bg-red-400",
-  "bg-teal-400",
-  "bg-orange-600",
-  "bg-rose-400",
+  "bg-purple-400 hover:bg-purple-500 text-white",
+  "bg-green-400 hover:bg-green-500 text-white",
+  "bg-yellow-400 hover:bg-yellow-500 text-white",
+  "bg-red-400 hover:bg-red-500 text-white",
+  "bg-teal-400 hover:bg-teal-500 text-white",
+  "bg-orange-600 hover:bg-orange-500 text-white",
+  "bg-rose-400 hover:bg-rose-500 text-white",
 ]
 
 export function getSegmentColor(index: number): string {

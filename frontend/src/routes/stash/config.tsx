@@ -41,6 +41,9 @@ function ConfigPage() {
 
   const onSubmit = async (inputs: Inputs) => {
     const health = await testCredentials(inputs)
+    inputs.apiKey = inputs.apiKey.trim()
+    inputs.stashUrl = inputs.stashUrl.trim()
+
     if (health.success) {
       const response = await fetch("/api/config", {
         method: "POST",

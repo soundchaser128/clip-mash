@@ -5,6 +5,7 @@ import {
   HiAdjustmentsVertical,
   HiCheck,
   HiClock,
+  HiInformationCircle,
   HiPlus,
   HiTag,
   HiTrash,
@@ -20,10 +21,8 @@ import {getMilliseconds} from "date-fns"
 import {updateForm} from "../actions"
 import {
   LoaderFunction,
-
   json,
   useLoaderData,
-  useNavigate,
   useRevalidator,
 } from "react-router-dom"
 import {getFormState, getSegmentColor} from "../../helpers"
@@ -392,8 +391,18 @@ export default function ListVideos() {
           <MarkerModalContent video={modalVideo} onClose={onMarkersAdded} />
         )}
       </Modal>
+      {videos.length === 0 && (
+        <div className="mt-4 alert alert-info w-fit self-center">
+          <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />
+          <span>
+            No videos found at location &apos;{state.data.localVideoPath}&apos;.
+            Currently only <code>.mp4</code>
+            files are supported.
+          </span>
+        </div>
+      )}
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-2 w-full mt-4">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-2 w-full my-4">
         {videos.map((video) => (
           <article
             className="card card-compact bg-base-100 shadow-xl"
@@ -427,24 +436,23 @@ export default function ListVideos() {
                   Markers: <strong>{video.markers.length}</strong>
                 </li>
               </ul>
-            </div>
-
-            <div className="card-actions justify-end">
-              <div className="btn-group">
-                <button
-                  className="btn btn-secondary btn-sm btn-outline"
-                  onClick={() => setModalVideo(video)}
-                >
-                  <HiTag className="w-4 h-4 mr-2" />
-                  Markers
-                </button>
-                <button
-                  onClick={() => onRemoveFile(video)}
-                  className="btn btn-error btn-sm"
-                >
-                  <HiXMark className="w-4 h-4 mr-2" />
-                  Remove video
-                </button>
+              <div className="card-actions justify-end">
+                <div className="btn-group">
+                  <button
+                    className="btn btn-secondary btn"
+                    onClick={() => setModalVideo(video)}
+                  >
+                    <HiTag className="w-4 h-4 mr-2" />
+                    Markers
+                  </button>
+                  <button
+                    onClick={() => onRemoveFile(video)}
+                    className="btn btn-error btn-outline "
+                  >
+                    <HiXMark className="w-4 h-4 mr-2" />
+                    Remove video
+                  </button>
+                </div>
               </div>
             </div>
           </article>

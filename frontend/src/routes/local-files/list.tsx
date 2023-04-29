@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import invariant from "tiny-invariant"
-import {LocalVideo, StateHelpers} from "../../types/types"
+import {LocalVideoDto, StateHelpers} from "../../types/types"
 import {
   HiAdjustmentsVertical,
   HiCheck,
@@ -39,11 +39,11 @@ function parseSeconds(string: string): number {
 }
 
 const MarkerModalContent: React.FC<{
-  video: Video
+  video: LocalVideoDto
   onFinished: (markers: Marker[]) => void
-}> = ({video: {video, markers: initialMarkers}, onFinished}) => {
+}> = ({video, onFinished}) => {
   const {register, setValue, handleSubmit, control} = useForm<Inputs>({})
-  const [markers, setMarkers] = useImmer<Marker[]>(initialMarkers)
+  const [markers, setMarkers] = useImmer<Marker[]>(video.markers)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [formVisible, setFormVisible] = useState(false)
 
@@ -219,11 +219,6 @@ const MarkerModalContent: React.FC<{
   )
 }
 
-interface Video {
-  video: LocalVideo
-  markers: Marker[]
-}
-
 async function persistMarkers(videoId: string, markers: Marker[]) {
   const payload = markers.map((m) => ({
     ...m,
@@ -240,27 +235,28 @@ async function persistMarkers(videoId: string, markers: Marker[]) {
 export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
-  const [videos, setVideos] = useImmer<Video[]>(
-    state.data.videos!.map((v) => ({video: v, markers: []}))
-  )
-  const [modalVideo, setModalVideo] = useState<Video>()
+  const [videos, setVideos] = useImmer<LocalVideoDto[]>(state.data.videos || [])
+  const [modalVideo, setModalVideo] = useState<LocalVideoDto>()
   const modalOpen = typeof modalVideo !== "undefined"
 
-  const onRemoveFile = (video: LocalVideo) => {
+  const onRemoveFile = (video: LocalVideoDto) => {
     // TODO
   }
 
   const onMarkersAdded = async (markers: Marker[]) => {
     console.log("markers added", markers)
-    const id = modalVideo?.video?.id
+    const id = modalVideo?.id
     if (id) {
       await persistMarkers(id, markers)
     }
 
     setVideos((draft) => {
-      const idx = draft.findIndex((v) => v.video.id === id)
+      const idx = draft.findIndex((v) => v.id === id)
       if (idx !== -1) {
         draft[idx].markers = markers
+        actions.updateForm({
+          videos: draft,
+        })
       }
     })
     setModalVideo(undefined)
@@ -275,7 +271,7 @@ export default function ListVideos() {
       </Modal>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-2 w-full mt-4">
-        {videos.map(({video, markers}) => (
+        {videos.map((video) => (
           <article
             className="card card-compact bg-base-100 shadow-xl"
             key={video.fileName}
@@ -305,7 +301,7 @@ export default function ListVideos() {
                 </li>
                 <li>
                   <HiTag className="inline mr-2" />
-                  Markers: <strong>{markers.length}</strong>
+                  Markers: <strong>{video.markers.length}</strong>
                 </li>
               </ul>
             </div>
@@ -314,7 +310,7 @@ export default function ListVideos() {
               <div className="btn-group">
                 <button
                   className="btn btn-secondary btn-sm btn-outline"
-                  onClick={() => setModalVideo({video, markers})}
+                  onClick={() => setModalVideo(video)}
                 >
                   <HiPlus className="w-4 h-4 mr-2" />
                   Add markers

@@ -42,7 +42,7 @@ export interface InitialFormState {
 export interface LocalVideosFormState {
   source: "local-files"
   id: string
-  videos?: LocalVideo[]
+  videos?: LocalVideoDto[]
   localVideoPath?: string
 }
 
@@ -98,8 +98,15 @@ export interface Scene {
   rating?: number
 }
 
-export interface LocalVideo {
+export interface LocalVideoDto {
   id: string
   fileName: string
   interactive: boolean
+  markers: MarkerDto[]
+}
+
+export interface MarkerDto {
+  startTime: number
+  endTime: number
+  title: string
 }

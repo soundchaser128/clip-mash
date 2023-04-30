@@ -8,7 +8,7 @@ import {
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
-import {useEffect, useState} from "react"
+import {useEffect} from "react"
 import {useImmer} from "use-immer"
 import {updateForm} from "../actions"
 import {
@@ -19,10 +19,6 @@ import {
   useNavigate,
 } from "react-router-dom"
 import {getFormState} from "../../helpers"
-
-export interface Context {
-  onClose: () => void
-}
 
 export const loader: LoaderFunction = async () => {
   const formState = getFormState()
@@ -57,15 +53,7 @@ export default function ListVideos() {
 
   return (
     <>
-      <Outlet
-        context={
-          {
-            onClose: () => {
-              // TODO
-            },
-          } satisfies Context
-        }
-      />
+      <Outlet />
       {videos.length === 0 && (
         <div className="mt-4 alert alert-info w-fit self-center">
           <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />

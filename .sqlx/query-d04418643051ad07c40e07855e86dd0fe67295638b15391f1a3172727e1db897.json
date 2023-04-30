@@ -1,26 +1,31 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM markers WHERE video_id = $1",
+  "query": "SELECT rowid, video_id, start_time, end_time, title FROM markers WHERE video_id = $1",
   "describe": {
     "columns": [
       {
-        "name": "video_id",
+        "name": "rowid",
         "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "video_id",
+        "ordinal": 1,
         "type_info": "Text"
       },
       {
         "name": "start_time",
-        "ordinal": 1,
-        "type_info": "Float"
-      },
-      {
-        "name": "end_time",
         "ordinal": 2,
         "type_info": "Float"
       },
       {
-        "name": "title",
+        "name": "end_time",
         "ordinal": 3,
+        "type_info": "Float"
+      },
+      {
+        "name": "title",
+        "ordinal": 4,
         "type_info": "Text"
       }
     ],
@@ -28,11 +33,12 @@
       "Right": 1
     },
     "nullable": [
+      true,
       false,
       false,
       false,
       false
     ]
   },
-  "hash": "442106a42d320391038c3a89af2be37f263843fcd3820f0facc9719279541609"
+  "hash": "d04418643051ad07c40e07855e86dd0fe67295638b15391f1a3172727e1db897"
 }

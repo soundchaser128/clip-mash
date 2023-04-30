@@ -4,6 +4,7 @@ import {LocalVideoDto, StateHelpers} from "../../types/types"
 import {
   HiAdjustmentsVertical,
   HiCheck,
+  HiChevronRight,
   HiInformationCircle,
   HiTag,
   HiXMark,
@@ -37,7 +38,7 @@ export const loader: LoaderFunction = async () => {
 }
 
 export default function ListVideos() {
-  const {state} = useStateMachine({updateForm})
+  const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
   const initialVideos = useLoaderData() as LocalVideoDto[]
   const [videos, setVideos] = useImmer<LocalVideoDto[]>(initialVideos)
@@ -51,9 +52,36 @@ export default function ListVideos() {
     navigate(`/local/videos/${video.id}`)
   }
 
+  const onNextStage = () => {
+    actions.updateForm({
+      videos: videos.filter((v) => v.markers.length > 0),
+    })
+    navigate("/local/options")
+  }
+
   return (
     <>
       <Outlet />
+      {videos.length > 0 && (
+        <div className="w-full flex justify-between">
+          <div>
+            <p>
+              Found <strong>{videos.length}</strong> videos in folder{" "}
+              <code>{state.data.localVideoPath}</code>.
+            </p>
+            <p>
+              <strong>Note:</strong> Only videos with markers will be added to
+              the compilation. Others will be ignored.
+            </p>
+          </div>
+
+          <button className="btn btn-success" onClick={onNextStage}>
+            Next
+            <HiChevronRight className="ml-1" />
+          </button>
+        </div>
+      )}
+
       {videos.length === 0 && (
         <div className="mt-4 alert alert-info w-fit self-center">
           <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />

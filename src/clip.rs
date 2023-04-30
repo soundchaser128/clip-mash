@@ -1,5 +1,5 @@
 use crate::{
-    http::{CreateClipsBody, FilterMode},
+    http::{CreateClipsBody, CreateLocalClipsBody, FilterMode},
     stash_api::Marker,
     util,
 };
@@ -165,4 +165,13 @@ pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder, mode: Filter
             clips
         }
     }
+}
+
+pub fn compile_local_clips(options: &CreateLocalClipsBody) {
+    let mut rng = util::create_seeded_rng();
+    let settings = ClipSettings {
+        max_clip_length: options.clip_duration,
+        order: options.clip_order,
+    };
+    tracing::debug!("creating clips for options {options:?}");
 }

@@ -1,6 +1,6 @@
 use camino::{Utf8Path, Utf8PathBuf};
 use nanoid::nanoid;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::task::spawn_blocking;
 use walkdir::WalkDir;
 
@@ -9,7 +9,7 @@ use crate::{
     Result,
 };
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct LocalVideoDto {
     pub id: String,
@@ -17,7 +17,8 @@ pub struct LocalVideoDto {
     pub interactive: bool,
     pub markers: Vec<MarkerDto>,
 }
-#[derive(Serialize, Debug)]
+
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkerDto {
     pub rowid: Option<i64>,

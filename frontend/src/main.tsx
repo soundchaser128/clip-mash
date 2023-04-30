@@ -121,6 +121,10 @@ const router = createBrowserRouter([
               },
             ],
           },
+          {
+            path: "options",
+            element: <VideoOptions />,
+          },
         ],
       },
       {

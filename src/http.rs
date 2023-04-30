@@ -165,6 +165,15 @@ pub struct CreateClipsBody {
     pub split_clips: bool,
 }
 
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateLocalClipsBody {
+    pub clip_order: ClipOrder,
+    pub clip_duration: u32,
+    pub split_clips: bool,
+    pub videos: Vec<LocalVideoDto>,
+}
+
 pub fn add_api_key(url: &str, api_key: &str) -> String {
     let mut url = Url::parse(url).expect("invalid url");
     url.query_pairs_mut().append_pair("apikey", api_key);

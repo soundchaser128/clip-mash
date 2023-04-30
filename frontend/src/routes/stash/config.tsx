@@ -69,7 +69,7 @@ function ConfigPage() {
   return (
     <main className="container ml-auto mr-auto">
       <section className="py-4 flex flex-col">
-        <h1 className="text-4xl font-bold mb-4 text-center">
+        <h1 className="text-5xl font-bold mb-4 text-center">
           Configuration setup
         </h1>
         <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg w-full">

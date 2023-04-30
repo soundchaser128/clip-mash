@@ -109,7 +109,7 @@ function Progress() {
 
       {finished && (
         <div className="flex flex-col">
-          <h1 className="text-2xl font-bold mb-6">Success!</h1>
+          <h1 className="text-5xl font-bold mb-6">Success!</h1>
           <p className="font-light self-start mb-1">
             Download the finished compilation
           </p>

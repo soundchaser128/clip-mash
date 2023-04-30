@@ -1,5 +1,5 @@
 import {createStore, StateMachineProvider} from "little-state-machine"
-import React, {PropsWithChildren} from "react"
+import React from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
@@ -8,7 +8,6 @@ import {
   useRouteError,
 } from "react-router-dom"
 import "./index.css"
-import {Footer, LocalFilesRoot, StashRoot} from "./routes/root"
 import SelectCriteria from "./routes/stash/filter/root"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
@@ -19,22 +18,15 @@ import Performers, {
 } from "./routes/stash/filter/performers"
 import Tags, {loader as tagsLoader} from "./routes/stash/filter/tags"
 import Scenes, {loader as scenesLoader} from "./routes/stash/filter/scenes"
-import SelectVideoPath from "./routes/local-files/path"
-import SelectSource from "./routes/select-source"
-import {styles} from "./components/Layout"
+import SelectVideoPath from "./routes/local/path"
+import SelectSource from "./routes"
 import SelectMode from "./routes/select-mode"
 import {nanoid} from "nanoid"
-import ListVideos, {loader as listVideosLoader} from "./routes/local-files/list"
-import EditVideoModal from "./routes/local-files/edit"
-
-const Layout: React.FC<PropsWithChildren> = ({children}) => {
-  return (
-    <div className={styles.root}>
-      <main className={styles.main}>{children}</main>
-      <Footer />
-    </div>
-  )
-}
+import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
+import EditVideoModal from "./routes/local/videos.$id"
+import LocalFilesRoot from "./routes/local/root"
+import StashRoot from "./routes/stash/root"
+import Layout from "./components/Layout"
 
 const TroubleshootingInfo = () => {
   return (
@@ -64,7 +56,7 @@ const ErrorBoundary = () => {
     return (
       <Layout>
         <div className="mt-8">
-          <h1 className="font-bold text-3xl mb-4 w-fit">
+          <h1 className="font-bold text-5xl mb-4 w-fit">
             {is404 ? "404 - Page not found" : "Sorry, something went wrong."}
           </h1>
           {!is404 && (
@@ -89,7 +81,7 @@ const ErrorBoundary = () => {
   return (
     <Layout>
       <div className="self-center shrink mt-8">
-        <h1 className="font-bold text-3xl mb-4">
+        <h1 className="font-bold text-5xl mb-4">
           Sorry, something went wrong.
         </h1>
         <div>

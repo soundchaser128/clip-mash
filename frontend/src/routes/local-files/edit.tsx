@@ -93,15 +93,18 @@ async function persistMarker(
   return await response.json()
 }
 
-const MarkerModalContent: React.FC<{
-  video: LocalVideoDto
-  onClose: () => void
-}> = ({video, onClose}) => {
+export default function EditVideoModal() {
+  const {id} = useParams()
+  const navigate = useNavigate()
+  const videos = useRouteLoaderData("video-list") as LocalVideoDto[]
+  const video = videos.find((v) => v.id === id)!
+  const revalidator = useRevalidator()
   const {register, setValue, handleSubmit, control, watch} = useForm<Inputs>({})
   const [markers, setMarkers] = useImmer<MarkerDto[]>(video.markers!)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [formMode, setFormMode] = useState<FormMode>("hidden")
   const [videoDuration, setVideoDuration] = useState<number>()
+
   const segments = getSegments(videoDuration, markers)
   const markerStart = watch("startTime")
   const markerEnd = watch("endTime")
@@ -150,8 +153,13 @@ const MarkerModalContent: React.FC<{
     }
   }
 
+  const onClose = () => {
+    revalidator.revalidate()
+    navigate("/local/videos")
+  }
+
   return (
-    <>
+    <Modal isOpen onClose={onClose}>
       <div className="flex gap-2">
         <video
           className="w-2/3 max-h-[90vh]"
@@ -340,25 +348,6 @@ const MarkerModalContent: React.FC<{
           )
         })}
       </div>
-    </>
-  )
-}
-
-export default function EditVideoModal() {
-  const {id} = useParams()
-  const navigate = useNavigate()
-  const videos = useRouteLoaderData("video-list") as LocalVideoDto[]
-  const video = videos.find((v) => v.id === id)!
-  const revalidator = useRevalidator()
-
-  const onClose = () => {
-    revalidator.revalidate()
-    navigate("/local/videos")
-  }
-
-  return (
-    <Modal isOpen onClose={onClose}>
-      <MarkerModalContent video={video} onClose={onClose} />
     </Modal>
   )
 }

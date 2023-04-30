@@ -14,9 +14,12 @@ import {
 import {useImmer} from "use-immer"
 import {getSegmentColor} from "../../helpers"
 import Modal from "../../components/Modal"
-import { useNavigate, useOutletContext } from "react-router-dom"
-import { Context } from "./list"
-
+import {
+  useNavigate,
+  useParams,
+  useRevalidator,
+  useRouteLoaderData,
+} from "react-router-dom"
 interface Inputs {
   title: string
   startTime: number
@@ -290,13 +293,24 @@ const MarkerModalContent: React.FC<{
           )}
 
           {formMode === "hidden" && (
-            <button
-              onClick={() => onShowForm()}
-              className="btn btn-primary self-center"
-            >
-              <HiTag className="w-4 h-4 mr-2" />
-              Add new marker
-            </button>
+            <div>
+              <ul>
+                {markers.map((m) => (
+                  <li key={m.id}>
+                    &apos;{m.title}&apos; from {formatSeconds(m.startTime)} -{" "}
+                    {formatSeconds(m.endTime)}
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => onShowForm()}
+                className="btn btn-primary self-center"
+              >
+                <HiTag className="w-4 h-4 mr-2" />
+                Add new marker
+              </button>
+            </div>
           )}
 
           <button onClick={onDone} className="btn btn-success self-end mt-4">
@@ -331,12 +345,20 @@ const MarkerModalContent: React.FC<{
 }
 
 export default function EditVideoModal() {
+  const {id} = useParams()
   const navigate = useNavigate()
-  const context = useOutletContext() as Context
+  const videos = useRouteLoaderData("video-list") as LocalVideoDto[]
+  const video = videos.find((v) => v.id === id)!
+  const revalidator = useRevalidator()
+
+  const onClose = () => {
+    revalidator.revalidate()
+    navigate("/local/videos")
+  }
 
   return (
-    <Modal isOpen onClose={() => navigate("/local/videos")}>
-      <MarkerModalContent video={context.video} onClose={context.onClose} />
+    <Modal isOpen onClose={onClose}>
+      <MarkerModalContent video={video} onClose={onClose} />
     </Modal>
   )
 }

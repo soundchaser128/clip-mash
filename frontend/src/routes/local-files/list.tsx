@@ -8,7 +8,7 @@ import {
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
-import {useEffect} from "react"
+import {useEffect, useState} from "react"
 import {useImmer} from "use-immer"
 import {updateForm} from "../actions"
 import {
@@ -21,7 +21,7 @@ import {
 import {getFormState} from "../../helpers"
 
 export interface Context {
-  video: LocalVideoDto
+  onClose: () => void
 }
 
 export const loader: LoaderFunction = async () => {
@@ -51,9 +51,21 @@ export default function ListVideos() {
     setVideos(initialVideos)
   }, [initialVideos])
 
+  const onOpenModal = (video: LocalVideoDto) => {
+    navigate(`/local/videos/${video.id}`)
+  }
+
   return (
     <>
-      <Outlet />
+      <Outlet
+        context={
+          {
+            onClose: () => {
+              // TODO
+            },
+          } satisfies Context
+        }
+      />
       {videos.length === 0 && (
         <div className="mt-4 alert alert-info w-fit self-center">
           <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />
@@ -102,7 +114,7 @@ export default function ListVideos() {
               <div className="card-actions justify-end">
                 <button
                   className="btn btn-sm btn-primary"
-                  onClick={() => navigate(`/`)}
+                  onClick={() => onOpenModal(video)}
                 >
                   <HiTag className="w-4 h-4 mr-2" />
                   Markers

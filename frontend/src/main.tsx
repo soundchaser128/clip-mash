@@ -121,12 +121,13 @@ const router = createBrowserRouter([
             path: "videos",
             element: <ListVideos />,
             loader: listVideosLoader,
+            id: "video-list",
             children: [
               {
                 path: ":id",
-                element: <EditVideoModal />
-              }
-            ]
+                element: <EditVideoModal />,
+              },
+            ],
           },
         ],
       },

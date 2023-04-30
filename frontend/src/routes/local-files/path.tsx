@@ -29,7 +29,7 @@ export default function SelectVideos() {
       localVideoPath: values.path,
       recurse: values.recurse,
     })
-    navigate("/local/list")
+    navigate("/local/videos")
   }
 
   return (

@@ -5,7 +5,7 @@ use tokio::task::spawn_blocking;
 use walkdir::WalkDir;
 
 use crate::{
-    db::{Database, LocalVideo, LocalVideoWithMarkers},
+    local::db::{Database, LocalVideo, LocalVideoWithMarkers},
     Result,
 };
 

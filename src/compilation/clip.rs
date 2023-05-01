@@ -1,6 +1,6 @@
 use crate::{
-    http::{CreateClipsBody, CreateLocalClipsBody, FilterMode},
-    stash_api::Marker,
+    server::handlers::{CreateClipsBody, FilterMode},
+    stash::api::Marker,
     util,
 };
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
@@ -165,13 +165,4 @@ pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder, mode: Filter
             clips
         }
     }
-}
-
-pub fn compile_local_clips(options: &CreateLocalClipsBody) {
-    let mut rng = util::create_seeded_rng();
-    let settings = ClipSettings {
-        max_clip_length: options.clip_duration,
-        order: options.clip_order,
-    };
-    tracing::debug!("creating clips for options {options:?}");
 }

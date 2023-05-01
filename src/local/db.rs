@@ -1,4 +1,4 @@
-use crate::{local_videos::MarkerDto, Result};
+use crate::Result;
 use serde::{Deserialize, Serialize};
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode},
@@ -6,6 +6,8 @@ use sqlx::{
 };
 use std::str::FromStr;
 use tracing::info;
+
+use super::find::MarkerDto;
 
 #[derive(Debug, Clone)]
 pub struct LocalVideo {

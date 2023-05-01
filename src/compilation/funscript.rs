@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{clip::Clip, stash_api::Api, Result};
+use crate::stash::api::StashApi;
+use crate::Result;
+
+use super::clip::Clip;
 
 // Funscript structs taken from  https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
 
@@ -96,11 +99,11 @@ impl Default for FunScript {
 }
 
 pub struct ScriptBuilder<'a> {
-    api: &'a Api,
+    api: &'a StashApi,
 }
 
 impl<'a> ScriptBuilder<'a> {
-    pub fn new(api: &'a Api) -> Self {
+    pub fn new(api: &'a StashApi) -> Self {
         Self { api }
     }
 

@@ -1,12 +1,13 @@
 use std::process::Output;
 
+use crate::{server::handlers::CreateVideoBody, stash::api::Marker, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
 use serde::Serialize;
 use tokio::process::Command;
 
-use crate::{clip::Clip, download_ffmpeg, http::CreateVideoBody, stash_api::Marker, Result};
+use super::clip::Clip;
 
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct Progress {
@@ -19,7 +20,7 @@ lazy_static! {
 }
 
 #[derive(Clone)]
-pub struct Ffmpeg {
+pub struct CompilationGenerator {
     path: Utf8PathBuf,
     pub video_dir: Utf8PathBuf,
 }
@@ -63,11 +64,11 @@ pub async fn get_progress() -> Progress {
     PROGRESS.lock().await.clone()
 }
 
-impl Ffmpeg {
+impl CompilationGenerator {
     pub async fn new() -> Result<Self> {
-        let path = download_ffmpeg::download().await?;
+        let path = crate::download_ffmpeg::download().await?;
 
-        Ok(Ffmpeg {
+        Ok(CompilationGenerator {
             path,
             video_dir: Utf8PathBuf::from("./videos"),
         })

@@ -8,15 +8,16 @@ use self::{
     find_tags_query::FindTagsQueryFindTagsTags as Tag,
     healt_check_query::SystemStatusEnum,
 };
-use crate::{
-    config::Config,
-    funscript::FunScript,
-    http::{add_api_key, FilterMode},
-    Result,
-};
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+
+use super::config::Config;
+use crate::{
+    compilation::funscript::FunScript,
+    server::handlers::{add_api_key, FilterMode},
+    Result,
+};
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -195,15 +196,15 @@ impl Marker {
     }
 }
 
-pub struct Api {
+pub struct StashApi {
     api_url: String,
     api_key: String,
     client: Client,
 }
 
-impl Api {
+impl StashApi {
     pub fn new(url: &str, api_key: &str) -> Self {
-        Api {
+        StashApi {
             api_url: url.into(),
             api_key: api_key.into(),
             client: Client::new(),

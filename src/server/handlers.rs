@@ -26,17 +26,17 @@ use tokio_util::io::ReaderStream;
 use tower::ServiceExt;
 
 use crate::{
-    clip::{self, Clip, ClipOrder},
-    config::{self, Config},
-    db::CreateMarker,
+    compilation::clip::{self, Clip, ClipOrder},
+    compilation::funscript::{FunScript, ScriptBuilder},
+    compilation::generate::{self, find_stream_url},
     error::AppError,
-    ffmpeg::{self, find_stream_url},
-    funscript::{FunScript, ScriptBuilder},
-    local_videos::{self, LocalVideoDto, MarkerDto},
-    stash_api::{
+    local::db::CreateMarker,
+    local::find::{LocalVideoDto, MarkerDto},
+    stash::api::{
         find_scenes_query::FindScenesQueryFindScenesScenes, healt_check_query::SystemStatusEnum,
-        Api, Marker,
+        Marker, StashApi,
     },
+    stash::config::{self, Config},
     AppState,
 };
 
@@ -182,7 +182,7 @@ pub fn add_api_key(url: &str, api_key: &str) -> String {
 
 #[axum::debug_handler]
 pub async fn fetch_tags() -> Result<Json<Vec<Tag>>, AppError> {
-    let api = Api::load_config().await?;
+    let api = StashApi::load_config().await?;
     let tags = api.find_tags().await?;
     let mut tags: Vec<_> = tags
         .into_iter()
@@ -203,7 +203,7 @@ pub async fn fetch_tags() -> Result<Json<Vec<Tag>>, AppError> {
 #[axum::debug_handler]
 pub async fn fetch_performers() -> Result<Json<Vec<Performer>>, AppError> {
     let config = Config::get().await?;
-    let api = Api::from_config(&config);
+    let api = StashApi::from_config(&config);
     let performers = api.find_performers().await?;
     let mut performers: Vec<_> = performers
         .into_iter()
@@ -230,7 +230,7 @@ pub async fn fetch_markers(
     Query(query): Query<MarkerOptions>,
 ) -> Result<Json<MarkerResult>, AppError> {
     let config = Config::get().await?;
-    let api = Api::from_config(&config);
+    let api = StashApi::from_config(&config);
     tracing::info!("fetching markers for query {query:?}");
     let ids: Vec<_> = query.selected_ids.split(',').map(From::from).collect();
 
@@ -241,7 +241,7 @@ pub async fn fetch_markers(
 #[axum::debug_handler]
 pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
     let config = Config::get().await?;
-    let api = Api::from_config(&config);
+    let api = StashApi::from_config(&config);
     let api_key = &config.api_key;
     let scenes = api.find_scenes().await?;
     let scenes = scenes
@@ -283,8 +283,8 @@ async fn create_video_inner(
 ) -> Result<(), AppError> {
     body.markers
         .retain(|e| body.selected_markers.iter().any(|m| m.id == e.id));
-    let clips = state.ffmpeg.gather_clips(&body).await?;
-    state.ffmpeg.compile_clips(&body, clips).await?;
+    let clips = state.generator.gather_clips(&body).await?;
+    state.generator.compile_clips(&body, clips).await?;
     Ok(())
 }
 
@@ -310,7 +310,7 @@ pub async fn create_video(
 
 #[axum::debug_handler]
 pub async fn get_funscript(Json(body): Json<CreateVideoBody>) -> Result<Json<FunScript>, AppError> {
-    let api = Api::load_config().await?;
+    let api = StashApi::load_config().await?;
     let script_builder = ScriptBuilder::new(&api);
     let script = script_builder.combine_scripts(body.clips).await?;
 
@@ -319,7 +319,7 @@ pub async fn get_funscript(Json(body): Json<CreateVideoBody>) -> Result<Json<Fun
 
 #[axum::debug_handler]
 pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
-    let stream = futures::StreamExt::flat_map(stream::repeat_with(ffmpeg::get_progress), |f| {
+    let stream = futures::StreamExt::flat_map(stream::repeat_with(generate::get_progress), |f| {
         f.into_stream()
     });
     let stream = stream
@@ -343,7 +343,7 @@ pub async fn download_video(
     use axum::{http::header, response::AppendHeaders};
 
     tracing::info!("downloading video '{file_name}'");
-    let path = state.ffmpeg.video_dir.join(&file_name);
+    let path = state.generator.video_dir.join(&file_name);
     let file = tokio::fs::File::open(path).await?;
     let stream = ReaderStream::new(file);
     let content_disposition = format!("attachment; filename=\"{}\"", file_name);
@@ -384,7 +384,7 @@ pub struct ClipsResponse {
 pub async fn fetch_clips(
     Json(body): Json<CreateClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
-    let api = Api::load_config().await?;
+    let api = StashApi::load_config().await?;
 
     let clips = clip::get_all_clips(&body);
     let clips = clip::compile_clips(clips, body.clip_order, body.select_mode);
@@ -428,7 +428,7 @@ pub struct ConfigQuery {
 pub async fn get_health(
     Query(ConfigQuery { url, api_key }): Query<ConfigQuery>,
 ) -> Result<Json<SystemStatusEnum>, AppError> {
-    let api = Api::new(&url, &api_key);
+    let api = StashApi::new(&url, &api_key);
     let result = api.health().await?;
     Ok(Json(result))
 }
@@ -445,8 +445,9 @@ pub async fn list_videos(
     Query(ListVideoQuery { path, recurse }): Query<ListVideoQuery>,
     state: State<Arc<AppState>>,
 ) -> Result<Json<Vec<LocalVideoDto>>, AppError> {
-    let videos =
-        local_videos::list_videos(Utf8PathBuf::from(path), recurse, &state.database).await?;
+    use crate::local::find::list_videos;
+
+    let videos = list_videos(Utf8PathBuf::from(path), recurse, &state.database).await?;
     Ok(Json(videos))
 }
 

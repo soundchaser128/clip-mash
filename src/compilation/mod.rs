@@ -1,30 +1,49 @@
 use serde::{Deserialize, Serialize};
 
+use crate::{local::db::LocalVideo, stash::api::StashScene};
+
 pub mod clip;
 pub mod funscript;
 pub mod generate;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum VideoSource {
+    Stash,
+    LocalFile,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub enum VideoInfo {
+    Stash { scene: StashScene },
+    LocalFile { video: LocalVideo },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Video {
     pub id: i64,
     pub title: String,
     pub interactive: bool,
+    pub info: VideoInfo,
+    pub source: VideoSource,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Marker {
     pub id: i64,
     pub start_time: f64,
     pub end_time: f64,
-    pub index_within_scene: usize,
+    pub index_within_video: usize,
+    pub video_id: i64,
     pub title: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Clip {
+    pub source: VideoSource,
     pub video_id: i64,
     pub marker_id: i64,
     /// Start and endpoint inside the video in seconds.

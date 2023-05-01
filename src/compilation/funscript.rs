@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use super::{Clip, VideoSource};
 use crate::stash::api::StashApi;
 use crate::Result;
 
-use super::clip::Clip;
-
-// Funscript structs taken from  https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
+// Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -107,14 +106,22 @@ impl<'a> ScriptBuilder<'a> {
         Self { api }
     }
 
-    pub async fn combine_scripts(&self, clips: Vec<Clip>) -> Result<FunScript> {
+    pub async fn combine_scripts(
+        &self,
+        clips: Vec<Clip>,
+        source: VideoSource,
+    ) -> Result<FunScript> {
         let mut resulting_actions = vec![];
         let mut offset = 0;
 
         for clip in clips {
             let (start, end) = clip.range_millis();
             let duration = end - start;
-            let script = self.api.get_funscript(&clip.scene_id).await;
+
+            let script = match source {
+                VideoSource::Stash => self.api.get_funscript(&clip.video_id.to_string()).await,
+                VideoSource::LocalFile => todo!("fetch local funscript file"),
+            };
             match script {
                 Ok(script) => {
                     let actions: Vec<_> = script
@@ -133,7 +140,7 @@ impl<'a> ScriptBuilder<'a> {
                 Err(e) => {
                     tracing::warn!(
                         "failed to get .funscript for scene ID {}: {}",
-                        clip.scene_id,
+                        clip.video_id,
                         e
                     )
                 }

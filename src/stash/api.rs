@@ -61,7 +61,7 @@ pub struct HealtCheckQuery;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Marker {
+pub struct StashMarker {
     pub id: String,
     pub primary_tag: String,
     pub tags: Vec<String>,
@@ -72,18 +72,42 @@ pub struct Marker {
     pub scene_title: Option<String>,
     pub performers: Vec<String>,
     pub file_name: String,
-    pub scene: Scene,
+    pub scene: EmbeddedScene,
     pub index_in_scene: usize,
     pub scene_interactive: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Scene {
+pub struct EmbeddedScene {
     pub id: String,
     pub scene_markers: Vec<SceneMarker>,
     pub scene_streams: Vec<Stream>,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct StashScene {
+    pub id: String,
+    pub title: String,
+    pub rating: i32,
+    pub interactive: bool,
+    pub files: Vec<String>,
+    pub performers: Vec<String>,
+    pub streams: Vec<Stream>,
+    pub markers: Vec<StashSceneMarker>,
+    pub paths: Vec<ScenePath>,
+    pub tags: Vec<String>,
+    pub studio: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct StashSceneMarker {}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ScenePath {}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -98,7 +122,7 @@ pub struct SceneMarker {
     pub start: u32,
 }
 
-impl Marker {
+impl StashMarker {
     pub fn from_marker(value: FindMarkersQueryFindSceneMarkersSceneMarkers, api_key: &str) -> Self {
         let end = value
             .scene
@@ -114,7 +138,7 @@ impl Marker {
             .position(|m| m.id == value.id)
             .expect("marker must exist within its own scene");
 
-        Marker {
+        StashMarker {
             id: value.id,
             start: value.seconds as u32,
             end,
@@ -127,7 +151,7 @@ impl Marker {
             stream_url: add_api_key(&value.stream, api_key),
             index_in_scene,
             scene_interactive: value.scene.interactive,
-            scene: Scene {
+            scene: EmbeddedScene {
                 id: value.scene.id,
                 scene_markers: value
                     .scene
@@ -150,7 +174,7 @@ impl Marker {
         }
     }
 
-    fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Marker> {
+    fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<StashMarker> {
         let mut markers = vec![];
 
         for (index_in_scene, marker) in scene.scene_markers.iter().enumerate() {
@@ -159,7 +183,7 @@ impl Marker {
                 .iter()
                 .find(|m| m.seconds > marker.seconds)
                 .map(|m| m.seconds as u32);
-            markers.push(Marker {
+            markers.push(StashMarker {
                 id: marker.id.clone(),
                 primary_tag: marker.primary_tag.name.clone(),
                 stream_url: add_api_key(&marker.stream, api_key),
@@ -172,7 +196,7 @@ impl Marker {
                 scene_title: scene.title.clone(),
                 performers: scene.performers.iter().map(|p| p.name.clone()).collect(),
                 scene_interactive: scene.interactive,
-                scene: Scene {
+                scene: EmbeddedScene {
                     id: scene.id.clone(),
                     scene_markers: scene
                         .scene_markers
@@ -220,7 +244,7 @@ impl StashApi {
         Ok(Self::new(&config.stash_url, &config.api_key))
     }
 
-    pub async fn find_scenes(&self) -> Result<Vec<FindScenesQueryFindScenesScenes>> {
+    pub async fn find_scenes(&self) -> Result<Vec<StashScene>> {
         let variables = find_scenes_query::Variables { scene_ids: None };
         let request_body = FindScenesQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
@@ -238,10 +262,7 @@ impl StashApi {
         Ok(scenes)
     }
 
-    pub async fn find_scenes_by_ids(
-        &self,
-        ids: Vec<i64>,
-    ) -> Result<Vec<FindScenesQueryFindScenesScenes>> {
+    pub async fn find_scenes_by_ids(&self, ids: Vec<i64>) -> Result<Vec<StashScene>> {
         let variables = find_scenes_query::Variables {
             scene_ids: Some(ids),
         };
@@ -258,7 +279,12 @@ impl StashApi {
         let response: Response<find_scenes_query::ResponseData> = response.json().await?;
 
         match response.data {
-            Some(scenes) => Ok(scenes.find_scenes.scenes),
+            Some(scenes) => Ok(scenes
+                .find_scenes
+                .scenes
+                .into_iter()
+                .map(From::from)
+                .collect()),
             None => Ok(vec![]),
         }
     }
@@ -288,7 +314,7 @@ impl StashApi {
         ids: Vec<String>,
         mode: FilterMode,
         include_all: bool,
-    ) -> Result<Vec<Marker>> {
+    ) -> Result<Vec<StashMarker>> {
         let mut scene_filter = SceneMarkerFilterType {
             created_at: None,
             scene_created_at: None,
@@ -332,7 +358,7 @@ impl StashApi {
 
                 return Ok(scenes
                     .into_iter()
-                    .flat_map(|s| Marker::from_scene(s, &self.api_key))
+                    .flat_map(|s| StashMarker::from_scene(s, &self.api_key))
                     .collect());
             }
         }
@@ -363,7 +389,7 @@ impl StashApi {
         let markers = markers.find_scene_markers.scene_markers;
         Ok(markers
             .into_iter()
-            .map(|m| Marker::from_marker(m, &self.api_key))
+            .map(|m| StashMarker::from_marker(m, &self.api_key))
             .collect())
     }
 
@@ -418,7 +444,7 @@ impl StashApi {
     }
 }
 
-pub fn get_time_range(marker: &Marker, max_duration: Option<u32>) -> (u32, Option<u32>) {
+pub fn get_time_range(marker: &StashMarker, max_duration: Option<u32>) -> (u32, Option<u32>) {
     let start = marker.start;
     let next_marker = marker
         .scene

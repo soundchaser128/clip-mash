@@ -26,15 +26,21 @@ use tokio_util::io::ReaderStream;
 use tower::ServiceExt;
 
 use crate::{
-    compilation::clip::{self, Clip, ClipOrder},
-    compilation::funscript::{FunScript, ScriptBuilder},
-    compilation::generate::{self, find_stream_url},
+    compilation::clip::{self, ClipOrder},
+    compilation::{
+        funscript::{FunScript, ScriptBuilder},
+        Clip, VideoSource,
+    },
+    compilation::{
+        generate::{self, find_stream_url},
+        Marker,
+    },
     error::AppError,
     local::db::CreateMarker,
     local::find::{LocalVideoDto, MarkerDto},
     stash::api::{
         find_scenes_query::FindScenesQueryFindScenesScenes, healt_check_query::SystemStatusEnum,
-        Marker, StashApi,
+        StashApi, StashScene,
     },
     stash::config::{self, Config},
     AppState,
@@ -61,21 +67,28 @@ pub struct Performer {
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Scene {
-    pub id: String,
-    pub title: String,
-    pub image_url: String,
-    pub performers: Vec<String>,
-    pub marker_count: usize,
-    pub tags: BTreeSet<String>,
-    pub interactive: bool,
-    pub studio: Option<String>,
-    pub rating: Option<i64>,
+pub enum VideoDto {
+    Stash {
+        id: String,
+        title: String,
+        image_url: String,
+        performers: Vec<String>,
+        marker_count: usize,
+        tags: BTreeSet<String>,
+        interactive: bool,
+        studio: Option<String>,
+        rating: Option<i64>,
+    },
+    LocalFile {
+        id: String,
+        file_name: String,
+        interactive: bool,
+    },
 }
 
-impl From<FindScenesQueryFindScenesScenes> for Scene {
+impl From<FindScenesQueryFindScenesScenes> for VideoDto {
     fn from(scene: FindScenesQueryFindScenesScenes) -> Self {
-        Scene {
+        VideoDto::Stash {
             id: scene.id,
             title: scene.title.unwrap_or(scene.files[0].basename.clone()),
             image_url: "TODO".into(),
@@ -239,41 +252,11 @@ pub async fn fetch_markers(
 }
 
 #[axum::debug_handler]
-pub async fn fetch_scenes() -> Result<Json<Vec<Scene>>, AppError> {
+pub async fn fetch_scenes() -> Result<Json<Vec<StashScene>>, AppError> {
     let config = Config::get().await?;
     let api = StashApi::from_config(&config);
     let api_key = &config.api_key;
     let scenes = api.find_scenes().await?;
-    let scenes = scenes
-        .into_iter()
-        .map(|s| {
-            let tags = s
-                .tags
-                .into_iter()
-                .map(|t| t.name)
-                .chain(s.scene_markers.iter().map(|m| m.primary_tag.name.clone()))
-                .collect();
-            Scene {
-                interactive: s.interactive,
-                rating: s.rating100,
-                id: s.id,
-                title: s
-                    .title
-                    .filter(|s| !s.is_empty())
-                    .or_else(|| s.files.get(0).map(|f| f.basename.clone()))
-                    .unwrap_or_default(),
-                performers: s.performers.into_iter().map(|p| p.name).collect(),
-                marker_count: s.scene_markers.len(),
-                tags,
-                studio: s.studio.map(|s| s.name),
-                image_url: s
-                    .paths
-                    .screenshot
-                    .map(|s| add_api_key(&s, api_key))
-                    .unwrap_or_default(),
-            }
-        })
-        .collect();
     Ok(Json(scenes))
 }
 
@@ -308,11 +291,21 @@ pub async fn create_video(
     file_name
 }
 
+#[derive(Deserialize)]
+pub struct CreateFunscriptBody {
+    pub clips: Vec<Clip>,
+    pub source: VideoSource,
+}
+
 #[axum::debug_handler]
-pub async fn get_funscript(Json(body): Json<CreateVideoBody>) -> Result<Json<FunScript>, AppError> {
+pub async fn get_funscript(
+    Json(body): Json<CreateFunscriptBody>,
+) -> Result<Json<FunScript>, AppError> {
     let api = StashApi::load_config().await?;
     let script_builder = ScriptBuilder::new(&api);
-    let script = script_builder.combine_scripts(body.clips).await?;
+    let script = script_builder
+        .combine_scripts(body.clips, body.source)
+        .await?;
 
     Ok(Json(script))
 }
@@ -395,10 +388,7 @@ pub async fn fetch_clips(
         .map(|m| (m.scene.id.clone(), find_stream_url(m).to_string()))
         .collect();
 
-    let mut scene_ids: Vec<_> = clips
-        .iter()
-        .filter_map(|c| c.scene_id.parse().ok())
-        .collect();
+    let mut scene_ids: Vec<_> = clips.iter().map(|c| c.video_id).collect();
     scene_ids.sort();
     scene_ids.dedup();
 

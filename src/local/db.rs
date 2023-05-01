@@ -9,7 +9,8 @@ use tracing::info;
 
 use super::find::MarkerDto;
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct LocalVideo {
     pub id: String,
     pub file_path: String,

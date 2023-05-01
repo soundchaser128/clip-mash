@@ -1,13 +1,13 @@
 use std::process::Output;
 
-use crate::{server::handlers::CreateVideoBody, stash::api::Marker, Result};
+use crate::{server::handlers::CreateVideoBody, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
 use serde::Serialize;
 use tokio::process::Command;
 
-use super::clip::Clip;
+use super::{Clip, Marker};
 
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct Progress {
@@ -28,23 +28,24 @@ pub struct CompilationGenerator {
 pub fn find_stream_url(marker: &Marker) -> &str {
     const LABEL_PRIORITIES: &[&str] = &["Direct stream", "webm", "HLS"];
 
-    let streams = &marker.scene.scene_streams;
-    for stream in streams {
-        for label in LABEL_PRIORITIES {
-            if let Some(l) = &stream.label {
-                if l == label {
-                    tracing::debug!("returning stream {stream:?}");
-                    return &stream.url;
-                }
-            }
-        }
-    }
-    // fallback to returning the first URL
-    tracing::info!(
-        "could not find any stream URL with the preferred labels, returning {:?}",
-        streams[0]
-    );
-    &streams[0].url
+    todo!()
+    // let streams = &marker.scene.scene_streams;
+    // for stream in streams {
+    //     for label in LABEL_PRIORITIES {
+    //         if let Some(l) = &stream.label {
+    //             if l == label {
+    //                 tracing::debug!("returning stream {stream:?}");
+    //                 return &stream.url;
+    //             }
+    //         }
+    //     }
+    // }
+    // // fallback to returning the first URL
+    // tracing::info!(
+    //     "could not find any stream URL with the preferred labels, returning {:?}",
+    //     streams[0]
+    // );
+    // &streams[0].url
 }
 
 fn commandline_error<T>(output: Output) -> Result<T> {
@@ -77,8 +78,8 @@ impl CompilationGenerator {
     async fn create_clip(
         &self,
         url: &str,
-        start: u32,
-        duration: u32,
+        start: f64,
+        duration: f64,
         width: u32,
         height: u32,
         fps: f64,
@@ -161,7 +162,7 @@ impl CompilationGenerator {
             let (width, height) = output.output_resolution.resolution();
             let out_file = self
                 .video_dir
-                .join(format!("{}_{}-{}.mp4", marker.scene.id, start, end));
+                .join(format!("{}_{}-{}.mp4", marker.video_id, start, end));
             if !out_file.is_file() {
                 tracing::info!("creating clip {out_file}");
                 self.create_clip(

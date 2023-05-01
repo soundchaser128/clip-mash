@@ -417,3 +417,19 @@ impl StashApi {
         Ok(response)
     }
 }
+
+pub fn get_time_range(marker: &Marker, max_duration: Option<u32>) -> (u32, Option<u32>) {
+    let start = marker.start;
+    let next_marker = marker
+        .scene
+        .scene_markers
+        .iter()
+        .find(|m| m.start > marker.start);
+    if let Some(max_duration) = max_duration {
+        (start, Some(start + max_duration))
+    } else if let Some(next) = next_marker {
+        (start, Some(next.start))
+    } else {
+        (start, None)
+    }
+}

@@ -1,10 +1,8 @@
-use crate::{
-    server::handlers::{CreateClipsBody, FilterMode},
-    stash::api::Marker,
-    util,
-};
+use crate::util;
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use serde::{Deserialize, Serialize};
+
+use super::{Marker, Clip, Video};
 
 #[derive(Clone, Copy, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -12,66 +10,24 @@ pub enum ClipOrder {
     Random,
     SceneOrder,
 }
-
-pub struct ClipSettings {
-    pub order: ClipOrder,
-    pub max_clip_length: u32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Clip {
-    pub scene_id: String,
-    pub marker_id: String,
-    /// Start and endpoint inside the video in seconds.
-    pub range: (u32, u32),
-    pub marker_index: usize,
-    pub scene_index: usize,
-}
-
-impl Clip {
-    pub fn range_millis(&self) -> (u32, u32) {
-        (self.range.0 * 1000, self.range.1 * 1000)
-    }
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct MarkerWithClips {
     pub marker: Marker,
     pub clips: Vec<Clip>,
 }
 
-pub fn get_time_range(marker: &Marker, max_duration: Option<u32>) -> (u32, Option<u32>) {
-    let start = marker.start;
-    let next_marker = marker
-        .scene
-        .scene_markers
-        .iter()
-        .find(|m| m.start > marker.start);
-    if let Some(max_duration) = max_duration {
-        (start, Some(start + max_duration))
-    } else if let Some(next) = next_marker {
-        (start, Some(next.start))
-    } else {
-        (start, None)
-    }
-}
-
 pub fn get_clips(
     marker: &Marker,
-    settings: &ClipSettings,
-    max_duration: Option<u32>,
+    options: &CreateClipsOptions,
     rng: &mut StdRng,
 ) -> MarkerWithClips {
     let clip_lengths = [
-        (settings.max_clip_length / 2).max(2),
-        (settings.max_clip_length / 3).max(2),
-        (settings.max_clip_length / 4).max(2),
+        (options.clip_duration / 2).max(2),
+        (options.clip_duration / 3).max(2),
+        (options.clip_duration / 4).max(2),
     ];
 
-    let (start, end) = get_time_range(marker, max_duration);
-    let end = end.unwrap_or(start + settings.max_clip_length);
+    let start = marker.start_time;
+    let end = marker.end_time;
 
     let mut index = 0;
     let mut offset = start;
@@ -79,41 +35,38 @@ pub fn get_clips(
     while offset < end {
         let duration = clip_lengths.choose(rng).unwrap();
         clips.push(Clip {
-            scene_id: marker.scene.id.clone(),
-            marker_id: marker.id.clone(),
+            video_id: video.id,
+            marker_id: marker.id,
             range: (offset, offset + duration),
-            marker_index: index,
-            scene_index: marker.index_in_scene,
+            index_within_marker: index,
+            index_within_video: marker.index_within_scene,
         });
         offset += duration;
         index += 1;
     }
 
-    MarkerWithClips {
-        clips,
-        marker: marker.clone(),
-    }
+    todo!()
 }
 
-pub fn get_all_clips(output: &CreateClipsBody) -> Vec<MarkerWithClips> {
+#[derive(Debug)]
+pub struct CreateClipsOptions {
+    pub clip_duration: u32,
+    pub clip_order: ClipOrder,
+    pub markers: Vec<Marker>,
+    pub video: Video,
+    pub split_clips: bool,
+    pub max_duration: Option<u32>,
+}
+
+pub fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
     let mut rng = util::create_seeded_rng();
-    let settings = ClipSettings {
-        max_clip_length: output.clip_duration,
-        order: output.clip_order,
-    };
-    tracing::debug!("creating clips for options {output:?}");
-    output
+    tracing::debug!("creating clips for options {options:?}");
+    options
         .markers
         .iter()
-        .filter(|m| output.selected_markers.iter().any(|c| c.id == m.id))
         .map(|marker| {
-            let selected_marker = output
-                .selected_markers
-                .iter()
-                .find(|c| c.id == marker.id)
-                .unwrap();
-            if output.split_clips {
-                get_clips(marker, &settings, selected_marker.duration, &mut rng)
+            if options.split_clips {
+                get_clips(marker, &options, &mut rng)
             } else {
                 MarkerWithClips {
                     marker: marker.clone(),

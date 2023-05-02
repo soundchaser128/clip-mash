@@ -410,7 +410,7 @@ pub async fn persist_marker(
     tracing::info!("saving marker {marker:?} to the database");
     let marker = state.database.persist_marker(marker).await?;
 
-    Ok(Json(marker))
+    todo!()
 }
 
 #[axum::debug_handler]

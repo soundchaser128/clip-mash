@@ -6,7 +6,6 @@ use self::{
     find_performers_query::FindPerformersQueryFindPerformersPerformers as Performer,
     find_scenes_query::FindScenesQueryFindScenesScenes,
     find_tags_query::FindTagsQueryFindTagsTags as Tag,
-    healt_check_query::SystemStatusEnum,
 };
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::Client;
@@ -57,7 +56,7 @@ struct FindScenesQuery;
     query_path = "graphql/health_check.graphql",
     response_derives = "Debug"
 )]
-struct HealtCheckQuery;
+struct HealthCheckQuery;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]

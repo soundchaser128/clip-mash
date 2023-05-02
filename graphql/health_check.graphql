@@ -1,4 +1,4 @@
-query HealtCheckQuery {
+query HealthCheckQuery {
   systemStatus {
     status
   }

@@ -63,6 +63,7 @@ pub struct CreateClipsOptions {
 pub fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
     let mut rng = util::create_seeded_rng();
     tracing::debug!("creating clips for options {options:?}");
+
     options
         .markers
         .iter()

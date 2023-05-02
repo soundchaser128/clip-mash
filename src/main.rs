@@ -61,9 +61,9 @@ async fn main() -> Result<()> {
         .route("/api/funscript", post(handlers::get_funscript))
         .route("/api/config", get(handlers::get_config))
         .route("/api/config", post(handlers::set_config))
-        .route("/api/video", post(handlers::list_videos))
+        // .route("/api/video", post(handlers::list_videos))
         .route("/api/video/:id", get(handlers::get_video))
-        .route("/api/video/marker", post(handlers::persist_marker))
+        // .route("/api/video/marker", post(handlers::persist_marker))
         .route("/api/video/marker/:id", delete(handlers::delete_marker))
         .fallback_service(static_files::service())
         .with_state(state);

@@ -25,7 +25,7 @@ use crate::{
     query_path = "graphql/find_tags.graphql",
     response_derives = "Debug"
 )]
-pub struct FindTagsQuery;
+struct FindTagsQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -33,7 +33,7 @@ pub struct FindTagsQuery;
     query_path = "graphql/find_markers.graphql",
     response_derives = "Debug, Clone, Serialize"
 )]
-pub struct FindMarkersQuery;
+struct FindMarkersQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -41,7 +41,7 @@ pub struct FindMarkersQuery;
     query_path = "graphql/find_performers.graphql",
     response_derives = "Debug"
 )]
-pub struct FindPerformersQuery;
+struct FindPerformersQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -49,7 +49,7 @@ pub struct FindPerformersQuery;
     query_path = "graphql/find_scenes.graphql",
     response_derives = "Debug"
 )]
-pub struct FindScenesQuery;
+struct FindScenesQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -57,7 +57,7 @@ pub struct FindScenesQuery;
     query_path = "graphql/health_check.graphql",
     response_derives = "Debug"
 )]
-pub struct HealtCheckQuery;
+struct HealtCheckQuery;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -90,20 +90,22 @@ pub struct EmbeddedScene {
 pub struct StashScene {
     pub id: String,
     pub title: String,
-    pub rating: i32,
+    pub rating: Option<i64>,
     pub interactive: bool,
     pub files: Vec<String>,
     pub performers: Vec<String>,
     pub streams: Vec<Stream>,
-    pub markers: Vec<StashSceneMarker>,
+    pub markers: Vec<StashMarker>,
     pub paths: Vec<ScenePath>,
     pub tags: Vec<String>,
     pub studio: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct StashSceneMarker {}
+impl From<FindScenesQueryFindScenesScenes> for StashScene {
+    fn from(value: FindScenesQueryFindScenesScenes) -> Self {
+        todo!()
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -257,7 +259,14 @@ impl StashApi {
             .await?
             .error_for_status()?;
         let response: Response<find_scenes_query::ResponseData> = response.json().await?;
-        let scenes = response.data.unwrap().find_scenes.scenes;
+        let scenes = response
+            .data
+            .unwrap()
+            .find_scenes
+            .scenes
+            .into_iter()
+            .map(From::from)
+            .collect();
 
         Ok(scenes)
     }
@@ -356,10 +365,7 @@ impl StashApi {
                     .collect();
                 let scenes = self.find_scenes_by_ids(ids).await?;
 
-                return Ok(scenes
-                    .into_iter()
-                    .flat_map(|s| StashMarker::from_scene(s, &self.api_key))
-                    .collect());
+                return Ok(scenes.into_iter().flat_map(|s| s.markers).collect());
             }
         }
         let variables = find_markers_query::Variables {
@@ -411,7 +417,7 @@ impl StashApi {
         Ok(performers.find_performers.performers)
     }
 
-    pub async fn health(&self) -> Result<SystemStatusEnum> {
+    pub async fn health(&self) -> Result<String> {
         let variables = healt_check_query::Variables {};
         let request_body = HealtCheckQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
@@ -425,7 +431,7 @@ impl StashApi {
             .error_for_status()?;
         let response: Response<healt_check_query::ResponseData> = response.json().await?;
         let status = response.data.unwrap().system_status.status;
-        Ok(status)
+        Ok(serde_json::to_string(&status)?)
     }
 
     pub async fn get_funscript(&self, scene_id: &str) -> Result<FunScript> {

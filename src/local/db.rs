@@ -7,11 +7,9 @@ use sqlx::{
 use std::str::FromStr;
 use tracing::info;
 
-use super::find::MarkerDto;
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct LocalVideo {
+pub struct DbVideo {
     pub id: String,
     pub file_path: String,
     pub interactive: bool,
@@ -36,9 +34,9 @@ pub struct CreateMarker {
     pub title: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct LocalVideoWithMarkers {
-    pub video: LocalVideo,
+    pub video: DbVideo,
     pub markers: Vec<DbMarker>,
 }
 
@@ -58,8 +56,8 @@ impl Database {
         Ok(Database { pool })
     }
 
-    pub async fn get_video(&self, id: &str) -> Result<Option<LocalVideo>> {
-        let video = sqlx::query_as!(LocalVideo, "SELECT * FROM local_videos WHERE id = $1", id)
+    pub async fn get_video(&self, id: &str) -> Result<Option<DbVideo>> {
+        let video = sqlx::query_as!(DbVideo, "SELECT * FROM local_videos WHERE id = $1", id)
             .fetch_optional(&self.pool)
             .await?;
         Ok(video)
@@ -76,7 +74,7 @@ impl Database {
         if records.is_empty() {
             Ok(None)
         } else {
-            let video = LocalVideo {
+            let video = DbVideo {
                 id: records[0].id.clone(),
                 file_path: records[0].file_path.clone(),
                 interactive: records[0].interactive,
@@ -113,7 +111,7 @@ impl Database {
         Ok(count > 0)
     }
 
-    pub async fn persist_video(&self, video: LocalVideo) -> Result<()> {
+    pub async fn persist_video(&self, video: DbVideo) -> Result<()> {
         sqlx::query!(
             "INSERT INTO local_videos (id, file_path, interactive) VALUES ($1, $2, $3)",
             video.id,
@@ -136,7 +134,7 @@ impl Database {
         .map_err(From::from)
     }
 
-    pub async fn persist_marker(&self, marker: CreateMarker) -> Result<MarkerDto> {
+    pub async fn persist_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
         let new_id = sqlx::query_scalar!(
             "INSERT INTO markers (video_id, start_time, end_time, title) 
                 VALUES ($1, $2, $3, $4) 
@@ -150,16 +148,17 @@ impl Database {
         .fetch_one(&self.pool)
         .await?;
 
-        let dto = MarkerDto {
+        let marker = DbMarker {
             rowid: Some(new_id),
             start_time: marker.start_time,
             end_time: marker.end_time,
             title: marker.title,
+            video_id: marker.video_id,
         };
 
-        info!("newly updated marker: {dto:?}");
+        info!("newly updated or inserted marker: {marker:?}");
 
-        Ok(dto)
+        Ok(marker)
     }
 
     pub async fn delete_marker(&self, id: i64) -> Result<()> {

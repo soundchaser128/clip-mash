@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{local::db::LocalVideo, stash::api::StashScene};
+use crate::{local::db::DbVideo, stash::api::StashScene};
 
 pub mod clip;
 pub mod funscript;
 pub mod generate;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum VideoSource {
     Stash,
     LocalFile,
@@ -16,7 +16,7 @@ pub enum VideoSource {
 #[serde(rename_all = "camelCase")]
 pub enum VideoInfo {
     Stash { scene: StashScene },
-    LocalFile { video: LocalVideo },
+    LocalFile { video: DbVideo },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

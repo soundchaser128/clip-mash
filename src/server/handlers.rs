@@ -29,19 +29,15 @@ use crate::{
     compilation::clip::{self, ClipOrder},
     compilation::{
         funscript::{FunScript, ScriptBuilder},
-        Clip, VideoSource,
+        Clip, Video, VideoSource,
     },
     compilation::{
         generate::{self, find_stream_url},
         Marker,
     },
     error::AppError,
-    local::db::CreateMarker,
-    local::find::{LocalVideoDto, MarkerDto},
-    stash::api::{
-        find_scenes_query::FindScenesQueryFindScenesScenes, healt_check_query::SystemStatusEnum,
-        StashApi, StashScene,
-    },
+    local::db::{CreateMarker, DbMarker, LocalVideoWithMarkers},
+    stash::api::{StashApi, StashMarker, StashScene},
     stash::config::{self, Config},
     AppState,
 };
@@ -86,18 +82,18 @@ pub enum VideoDto {
     },
 }
 
-impl From<FindScenesQueryFindScenesScenes> for VideoDto {
-    fn from(scene: FindScenesQueryFindScenesScenes) -> Self {
+impl From<StashScene> for VideoDto {
+    fn from(scene: StashScene) -> Self {
         VideoDto::Stash {
             id: scene.id,
-            title: scene.title.unwrap_or(scene.files[0].basename.clone()),
+            title: scene.title,
             image_url: "TODO".into(),
-            performers: scene.performers.into_iter().map(|p| p.name).collect(),
-            marker_count: scene.scene_markers.len(),
-            tags: scene.tags.into_iter().map(|t| t.name).collect(),
+            performers: scene.performers,
+            marker_count: scene.markers.len(),
+            tags: scene.tags.into_iter().collect(),
             interactive: scene.interactive,
-            studio: scene.studio.map(|s| s.name),
-            rating: scene.rating100,
+            studio: scene.studio,
+            rating: scene.rating,
         }
     }
 }
@@ -105,7 +101,7 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkerResult {
-    pub dtos: Vec<Marker>,
+    pub dtos: Vec<StashMarker>,
 }
 
 #[derive(Deserialize, Debug, Clone, Copy)]
@@ -184,7 +180,7 @@ pub struct CreateLocalClipsBody {
     pub clip_order: ClipOrder,
     pub clip_duration: u32,
     pub split_clips: bool,
-    pub videos: Vec<LocalVideoDto>,
+    pub videos: Vec<LocalVideoWithMarkers>,
 }
 
 pub fn add_api_key(url: &str, api_key: &str) -> String {
@@ -264,8 +260,8 @@ async fn create_video_inner(
     state: State<Arc<AppState>>,
     mut body: CreateVideoBody,
 ) -> Result<(), AppError> {
-    body.markers
-        .retain(|e| body.selected_markers.iter().any(|m| m.id == e.id));
+    // body.markers
+    //     .retain(|e| body.selected_markers.iter().any(|m| m.id == e.id));
     let clips = state.generator.gather_clips(&body).await?;
     state.generator.compile_clips(&body, clips).await?;
     Ok(())
@@ -370,41 +366,42 @@ pub async fn set_config(Json(config): Json<Config>) -> Result<StatusCode, AppErr
 pub struct ClipsResponse {
     pub clips: Vec<Clip>,
     pub streams: HashMap<String, String>,
-    pub scenes: Vec<Scene>,
+    pub scenes: Vec<Video>,
 }
 
 #[axum::debug_handler]
 pub async fn fetch_clips(
     Json(body): Json<CreateClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
-    let api = StashApi::load_config().await?;
+    // let api = StashApi::load_config().await?;
 
-    let clips = clip::get_all_clips(&body);
-    let clips = clip::compile_clips(clips, body.clip_order, body.select_mode);
-    tracing::debug!("compiled clips {clips:#?}");
-    let streams: HashMap<String, String> = body
-        .markers
-        .iter()
-        .map(|m| (m.scene.id.clone(), find_stream_url(m).to_string()))
-        .collect();
+    // let clips = clip::get_all_clips(&body);
+    // let clips = clip::compile_clips(clips, body.clip_order, body.select_mode);
+    // tracing::debug!("compiled clips {clips:#?}");
+    // let streams: HashMap<String, String> = body
+    //     .markers
+    //     .iter()
+    //     .map(|m| (m.scene.id.clone(), find_stream_url(m).to_string()))
+    //     .collect();
 
-    let mut scene_ids: Vec<_> = clips.iter().map(|c| c.video_id).collect();
-    scene_ids.sort();
-    scene_ids.dedup();
+    // let mut scene_ids: Vec<_> = clips.iter().map(|c| c.video_id).collect();
+    // scene_ids.sort();
+    // scene_ids.dedup();
 
-    tracing::debug!("scene IDs: {:?}", scene_ids);
-    let scenes = api
-        .find_scenes_by_ids(scene_ids)
-        .await?
-        .into_iter()
-        .map(Scene::from)
-        .collect();
+    // tracing::debug!("scene IDs: {:?}", scene_ids);
+    // let scenes = api
+    //     .find_scenes_by_ids(scene_ids)
+    //     .await?
+    //     .into_iter()
+    //     .map(Scene::from)
+    //     .collect();
 
-    Ok(Json(ClipsResponse {
-        clips,
-        streams,
-        scenes,
-    }))
+    // Ok(Json(ClipsResponse {
+    //     clips,
+    //     streams,
+    //     scenes,
+    // }))
+    todo!()
 }
 
 #[derive(Deserialize)]
@@ -417,7 +414,7 @@ pub struct ConfigQuery {
 #[axum::debug_handler]
 pub async fn get_health(
     Query(ConfigQuery { url, api_key }): Query<ConfigQuery>,
-) -> Result<Json<SystemStatusEnum>, AppError> {
+) -> Result<Json<String>, AppError> {
     let api = StashApi::new(&url, &api_key);
     let result = api.health().await?;
     Ok(Json(result))
@@ -434,7 +431,7 @@ pub struct ListVideoQuery {
 pub async fn list_videos(
     Query(ListVideoQuery { path, recurse }): Query<ListVideoQuery>,
     state: State<Arc<AppState>>,
-) -> Result<Json<Vec<LocalVideoDto>>, AppError> {
+) -> Result<Json<Vec<LocalVideoWithMarkers>>, AppError> {
     use crate::local::find::list_videos;
 
     let videos = list_videos(Utf8PathBuf::from(path), recurse, &state.database).await?;
@@ -462,7 +459,7 @@ pub async fn get_video(
 pub async fn persist_marker(
     state: State<Arc<AppState>>,
     Json(marker): Json<CreateMarker>,
-) -> Result<Json<MarkerDto>, AppError> {
+) -> Result<Json<DbMarker>, AppError> {
     tracing::info!("saving marker {marker:?} to the database");
     let marker = state.database.persist_marker(marker).await?;
 

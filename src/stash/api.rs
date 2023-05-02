@@ -417,8 +417,8 @@ impl StashApi {
     }
 
     pub async fn health(&self) -> Result<String> {
-        let variables = healt_check_query::Variables {};
-        let request_body = HealtCheckQuery::build_query(variables);
+        let variables = health_check_query::Variables {};
+        let request_body = HealthCheckQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
         let response = self
             .client
@@ -428,7 +428,7 @@ impl StashApi {
             .send()
             .await?
             .error_for_status()?;
-        let response: Response<healt_check_query::ResponseData> = response.json().await?;
+        let response: Response<health_check_query::ResponseData> = response.json().await?;
         let status = response.data.unwrap().system_status.status;
         Ok(serde_json::to_string(&status)?)
     }

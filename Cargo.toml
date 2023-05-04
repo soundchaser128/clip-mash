@@ -40,3 +40,6 @@ zip = "0.6"
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
+
+[dev-dependencies]
+fake = "2.6.0"

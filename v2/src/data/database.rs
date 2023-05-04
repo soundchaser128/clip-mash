@@ -20,6 +20,7 @@ pub struct DbMarker {
     pub start_time: f64,
     pub end_time: f64,
     pub title: String,
+    pub file_path: String,
 }
 
 #[derive(Debug, Clone)]
@@ -77,20 +78,33 @@ impl Database {
             };
             let markers = records
                 .into_iter()
-                .filter_map(
-                    |r| match (r.video_id, r.start_time, r.end_time, r.title, r.rowid) {
-                        (Some(video_id), Some(start_time), Some(end_time), Some(title), rowid) => {
-                            Some(DbMarker {
-                                rowid,
-                                title,
-                                video_id,
-                                start_time,
-                                end_time,
-                            })
-                        }
+                .filter_map(|r| {
+                    match (
+                        r.video_id,
+                        r.start_time,
+                        r.end_time,
+                        r.title,
+                        r.rowid,
+                        r.file_path,
+                    ) {
+                        (
+                            Some(video_id),
+                            Some(start_time),
+                            Some(end_time),
+                            Some(title),
+                            rowid,
+                            file_path,
+                        ) => Some(DbMarker {
+                            rowid,
+                            title,
+                            video_id,
+                            start_time,
+                            end_time,
+                            file_path,
+                        }),
                         _ => None,
-                    },
-                )
+                    }
+                })
                 .collect();
             Ok(Some(LocalVideoWithMarkers { video, markers }))
         }
@@ -122,7 +136,9 @@ impl Database {
     pub async fn get_markers_for_video(&self, video_id: &str) -> Result<Vec<DbMarker>> {
         sqlx::query_as!(
             DbMarker,
-            "SELECT rowid, video_id, start_time, end_time, title FROM markers WHERE video_id = $1",
+            "SELECT m.rowid, m.video_id, m.start_time, m.end_time, m.title, v.file_path
+            FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
+            WHERE video_id = $1",
             video_id
         )
         .fetch_all(&self.pool)
@@ -150,6 +166,7 @@ impl Database {
             end_time: marker.end_time,
             title: marker.title,
             video_id: marker.video_id,
+            file_path: "not-needed".to_string(),
         };
 
         info!("newly updated or inserted marker: {marker:?}");

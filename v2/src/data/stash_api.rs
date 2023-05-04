@@ -1,4 +1,7 @@
-use crate::{service::Marker, Result};
+use crate::{
+    service::{funscript::FunScript, Marker},
+    Result,
+};
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
@@ -6,10 +9,12 @@ use serde::{Deserialize, Serialize};
 use self::{
     find_markers_query::{
         CriterionModifier, FindFilterType, FindMarkersQueryFindSceneMarkersSceneMarkers,
+        FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams,
         HierarchicalMultiCriterionInput, MultiCriterionInput, SceneMarkerFilterType,
     },
     find_scenes_query::{
         FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
+        FindScenesQueryFindScenesScenesSceneStreams,
     },
     find_tags_query::FindTagsQueryFindTagsTags,
 };
@@ -61,16 +66,64 @@ pub enum FilterMode {
     Scenes,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct StashMarker {}
+#[derive(Debug, Clone, PartialEq)]
+pub struct SceneStream {
+    pub url: String,
+    pub label: Option<String>,
+}
+
+impl From<FindScenesQueryFindScenesScenesSceneStreams> for SceneStream {
+    fn from(stream: FindScenesQueryFindScenesScenesSceneStreams) -> Self {
+        SceneStream {
+            url: stream.url,
+            label: stream.label,
+        }
+    }
+}
+
+impl From<FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams> for SceneStream {
+    fn from(stream: FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams) -> Self {
+        SceneStream {
+            url: stream.url,
+            label: stream.label,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct StashMarker {
+    pub id: String,
+    pub primary_tag: String,
+    pub start: f64,
+    pub streams: Vec<SceneStream>,
+}
 
 impl StashMarker {
-    fn from_scene(s: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Self> {
-        todo!()
+    fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Self> {
+        scene
+            .scene_markers
+            .into_iter()
+            .map(|m| StashMarker {
+                id: m.id,
+                primary_tag: m.primary_tag.name,
+                start: m.seconds,
+                streams: scene
+                    .scene_streams
+                    .clone()
+                    .into_iter()
+                    .map(From::from)
+                    .collect(),
+            })
+            .collect()
     }
 
     fn from_marker(m: FindMarkersQueryFindSceneMarkersSceneMarkers, api_key: &str) -> Self {
-        todo!()
+        StashMarker {
+            id: m.id,
+            primary_tag: m.primary_tag.name,
+            start: m.seconds,
+            streams: m.scene.scene_streams.into_iter().map(From::from).collect(),
+        }
     }
 }
 
@@ -253,6 +306,21 @@ impl StashApi {
             .map(|m| StashMarker::from_marker(m, &self.api_key))
             .collect();
         Ok(markers)
+    }
+
+    pub async fn get_funscript(&self, scene_id: &str) -> Result<FunScript> {
+        let url = format!("{}/scene/{}/funscript", self.api_url, scene_id);
+        let response = self
+            .client
+            .get(url)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+
+        Ok(response)
     }
 }
 

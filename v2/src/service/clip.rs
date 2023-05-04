@@ -59,7 +59,6 @@ pub fn get_clips(
 #[derive(Debug)]
 pub struct CreateClipsOptions {
     pub clip_duration: u32,
-    pub clip_order: ClipOrder,
     pub markers: Vec<Marker>,
     pub video: Video,
     pub split_clips: bool,
@@ -124,7 +123,7 @@ mod tests {
     use fake::faker::lorem::en::*;
     use fake::{faker::filesystem::en::FilePath, Fake, Faker};
 
-    use super::{get_all_clips, ClipOrder, CreateClipsOptions};
+    use super::{get_all_clips, ClipOrder, CreateClipsOptions, compile_clips};
 
     fn create_marker(start_time: f64, end_time: f64, index: usize) -> Marker {
         Marker {
@@ -141,6 +140,7 @@ mod tests {
                     rowid: None,
                     title: Faker.fake(),
                     video_id: Faker.fake(),
+                    file_path: FilePath().fake(),
                 },
             },
         }
@@ -165,7 +165,6 @@ mod tests {
     fn test_get_clips() {
         let options = CreateClipsOptions {
             clip_duration: 30,
-            clip_order: ClipOrder::SceneOrder,
             markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
             max_duration: None,
             split_clips: true,
@@ -186,5 +185,19 @@ mod tests {
         assert_eq!(2, clips.clips.len());
         assert_eq!(clips.clips[0].range.0, 1.0);
         assert_eq!(clips.clips[1].range.1, 17.0);
+    }
+
+    #[test]
+    fn test_compile_clips() {
+        let options = CreateClipsOptions {
+            clip_duration: 30,
+            markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
+            max_duration: None,
+            split_clips: true,
+            video: create_video(),
+        };
+        let results = get_all_clips(&options);
+        let results = compile_clips(results, ClipOrder::SceneOrder);
+        assert_eq!(4, results.len());
     }
 }

@@ -1,6 +1,8 @@
 pub mod clip;
 pub mod funscript;
-pub mod video_generator;
+pub mod generator;
+pub mod stash_config;
+pub mod download_ffmpeg;
 
 use crate::data::{
     database::{DbMarker, DbVideo},

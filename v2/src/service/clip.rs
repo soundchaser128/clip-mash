@@ -129,7 +129,16 @@ impl<'a> ClipService<'a> {
     }
 
     pub async fn fetch_marker_details(&self, id: &MarkerId) -> Result<MarkerInfo> {
-        todo!()
+        match id {
+            MarkerId::LocalFile(id) => {
+                let marker = self.db.get_marker(id).await?;
+                Ok(MarkerInfo::LocalFile { marker })
+            }
+            MarkerId::Stash(id) => {
+                let marker = self.stash_api.get_marker(id).await?;
+                Ok(MarkerInfo::Stash { marker })
+            }
+        }
     }
 
     pub async fn convert_clip_options(

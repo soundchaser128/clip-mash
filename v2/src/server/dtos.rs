@@ -33,6 +33,7 @@ pub struct PerformerDto {
 #[derive(Serialize, Debug)]
 pub struct MarkerDto {
     pub id: MarkerId,
+    // TODO
 }
 
 impl From<StashMarker> for MarkerDto {
@@ -44,11 +45,15 @@ impl From<StashMarker> for MarkerDto {
 }
 
 #[derive(Serialize, Debug)]
-pub struct VideoDto {}
+pub struct VideoDto {
+    // TODO
+}
 
 impl From<FindScenesQueryFindScenesScenes> for VideoDto {
     fn from(value: FindScenesQueryFindScenesScenes) -> Self {
-        todo!()
+        VideoDto {
+            
+        }
     }
 }
 

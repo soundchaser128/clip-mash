@@ -128,14 +128,21 @@ impl<'a> ClipService<'a> {
         ClipService { db, stash_api }
     }
 
-    pub async fn fetch_marker_details(&self, id: &MarkerId) -> Result<MarkerInfo> {
+    pub async fn fetch_marker_details(
+        &self,
+        id: &MarkerId,
+        video_id: &VideoId,
+    ) -> Result<MarkerInfo> {
         match id {
             MarkerId::LocalFile(id) => {
-                let marker = self.db.get_marker(id).await?;
+                let marker = self.db.get_marker(*id).await?;
                 Ok(MarkerInfo::LocalFile { marker })
             }
-            MarkerId::Stash(id) => {
-                let marker = self.stash_api.get_marker(id).await?;
+            MarkerId::Stash(marker_id) => {
+                let marker = self
+                    .stash_api
+                    .get_marker(video_id.as_stash_id(), marker_id)
+                    .await?;
                 Ok(MarkerInfo::Stash { marker })
             }
         }
@@ -149,7 +156,9 @@ impl<'a> ClipService<'a> {
 
         for selected_marker in body.markers {
             let (start_time, end_time) = selected_marker.selected_range;
-            let marker_details: MarkerInfo = self.fetch_marker_details(&selected_marker.id).await?;
+            let marker_details: MarkerInfo = self
+                .fetch_marker_details(&selected_marker.id, &selected_marker.video_id)
+                .await?;
             let video_id = marker_details.video_id().clone();
             let title = marker_details.title().to_string();
             markers.push(Marker {

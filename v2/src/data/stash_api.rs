@@ -2,6 +2,7 @@ use crate::{
     service::{funscript::FunScript, stash_config::Config, Marker},
     Result,
 };
+use color_eyre::eyre::bail;
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
@@ -189,6 +190,23 @@ impl StashApi {
         let scenes = response.data.unwrap().find_scenes.scenes;
 
         Ok(scenes)
+    }
+
+    pub async fn get_marker(&self, video_id: &str, marker_id: &str) -> Result<StashMarker> {
+        let mut scenes = self.find_scenes_by_ids(vec![video_id.parse()?]).await?;
+        if scenes.len() != 1 {
+            bail!("found {} scenes for ID {video_id}", scenes.len());
+        }
+        let markers = StashMarker::from_scene(scenes.remove(0), &self.api_key);
+        if markers.is_empty() {
+            bail!("no marker found for video ID {video_id} and marker ID {marker_id}")
+        } else {
+            if let Some(marker) = markers.into_iter().find(|m| m.id == marker_id) {
+                Ok(marker)
+            } else {
+                bail!("no marker with ID {marker_id} found in scene {video_id}")
+            }
+        }
     }
 
     pub async fn find_scenes_by_ids(

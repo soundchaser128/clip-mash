@@ -128,6 +128,14 @@ impl VideoId {
             VideoId::Stash(_) => VideoSource::Stash,
         }
     }
+
+    pub fn as_stash_id(&self) -> &str {
+        if let Self::Stash(id) = self {
+            &id
+        } else {
+            panic!("this is not a stash ID")
+        }
+    }
 }
 
 impl fmt::Display for VideoId {

@@ -1,6 +1,6 @@
 use std::process::Output;
 
-use crate::{Result, service::MarkerInfo};
+use crate::{service::MarkerInfo, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
@@ -73,12 +73,9 @@ pub fn find_stream_url(marker: &Marker) -> &str {
                 streams[0]
             );
             &streams[0].url
-        },
-        MarkerInfo::LocalFile { marker } => {
-            &marker.file_path
-        },
+        }
+        MarkerInfo::LocalFile { marker } => &marker.file_path,
     }
-
 }
 
 fn commandline_error<T>(output: Output) -> Result<T> {

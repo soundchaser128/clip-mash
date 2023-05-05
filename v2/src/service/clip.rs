@@ -123,7 +123,7 @@ mod tests {
     use fake::faker::lorem::en::*;
     use fake::{faker::filesystem::en::FilePath, Fake, Faker};
 
-    use super::{get_all_clips, ClipOrder, CreateClipsOptions, compile_clips};
+    use super::{compile_clips, get_all_clips, ClipOrder, CreateClipsOptions};
 
     fn create_marker(start_time: f64, end_time: f64, index: usize) -> Marker {
         Marker {

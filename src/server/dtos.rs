@@ -4,7 +4,6 @@ use serde::Serialize;
 
 use crate::stash::api::StashScene;
 
-
 #[derive(Serialize, Debug)]
 pub struct TagDto {
     pub name: String,

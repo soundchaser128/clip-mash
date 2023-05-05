@@ -1,5 +1,5 @@
 use crate::{
-    service::{funscript::FunScript, Marker},
+    service::{funscript::FunScript, stash_config::Config, Marker},
     Result,
 };
 use graphql_client::{GraphQLQuery, Response};
@@ -12,6 +12,7 @@ use self::{
         FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams,
         HierarchicalMultiCriterionInput, MultiCriterionInput, SceneMarkerFilterType,
     },
+    find_performers_query::FindPerformersQueryFindPerformersPerformers,
     find_scenes_query::{
         FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
         FindScenesQueryFindScenesScenesSceneStreams,
@@ -140,6 +141,15 @@ impl StashApi {
             api_key: api_key.into(),
             client: Client::new(),
         }
+    }
+
+    pub async fn load_config() -> Result<Self> {
+        let config = Config::get().await?;
+        Ok(StashApi::new(&config.stash_url, &config.api_key))
+    }
+
+    pub fn from_config(config: Config) -> Self {
+        StashApi::new(&config.stash_url, &config.api_key)
     }
 
     pub async fn health(&self) -> Result<String> {
@@ -321,6 +331,26 @@ impl StashApi {
             .await?;
 
         Ok(response)
+    }
+
+    pub async fn find_performers(
+        &self,
+    ) -> Result<Vec<FindPerformersQueryFindPerformersPerformers>> {
+        let variables = find_performers_query::Variables {};
+        let request_body = FindPerformersQuery::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+
+        let response: Response<find_performers_query::ResponseData> = response.json().await?;
+        let performers = response.data.unwrap();
+        Ok(performers.find_performers.performers)
     }
 }
 

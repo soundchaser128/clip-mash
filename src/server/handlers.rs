@@ -42,8 +42,7 @@ use crate::{
     AppState,
 };
 
-use super::dtos::{TagDto, PerformerDto};
-
+use super::dtos::{PerformerDto, TagDto};
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]

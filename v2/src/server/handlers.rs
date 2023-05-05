@@ -1,14 +1,25 @@
 use crate::{data::database::Database, service::generator::CompilationGenerator};
 
-use axum::Json;
-
 pub struct AppState {
     pub generator: CompilationGenerator,
     pub database: Database,
 }
 
 pub mod stash {
-    use crate::{data::stash_api::StashApi, server::dtos::TagDto};
+    use std::cmp::Reverse;
+
+    use axum::Json;
+    use sqlx::query::Query;
+
+    use crate::{
+        data::stash_api::StashApi,
+        server::{
+            dtos::{PerformerDto, TagDto},
+            error::AppError,
+        },
+        service::stash_config::Config,
+        util::add_api_key,
+    };
 
     #[axum::debug_handler]
     pub async fn fetch_tags() -> Result<Json<Vec<TagDto>>, AppError> {
@@ -21,9 +32,9 @@ pub mod stash {
                 id: t.id,
                 marker_count: t.scene_marker_count.unwrap_or_default(),
             })
-            .filter(|t| t.count > 0)
+            .filter(|t| t.marker_count > 0)
             .collect();
-        tags.sort_by_key(|t| Reverse(t.count));
+        tags.sort_by_key(|t| Reverse(t.marker_count));
 
         tracing::debug!("returning tags {:?}", tags);
 
@@ -33,7 +44,7 @@ pub mod stash {
     #[axum::debug_handler]
     pub async fn fetch_performers() -> Result<Json<Vec<PerformerDto>>, AppError> {
         let config = Config::get().await?;
-        let api = StashApi::from_config(&config);
+        let api = StashApi::from_config(config);
         let performers = api.find_performers().await?;
         let mut performers: Vec<_> = performers
             .into_iter()

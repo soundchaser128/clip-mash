@@ -1,8 +1,8 @@
 pub mod clip;
+pub mod download_ffmpeg;
 pub mod funscript;
 pub mod generator;
 pub mod stash_config;
-pub mod download_ffmpeg;
 
 use crate::data::{
     database::{DbMarker, DbVideo},
@@ -47,12 +47,8 @@ impl Video {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MarkerInfo {
-    Stash {
-        marker: StashMarker,
-    },
-    LocalFile {
-        marker: DbMarker,
-    },
+    Stash { marker: StashMarker },
+    LocalFile { marker: DbMarker },
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Marker {

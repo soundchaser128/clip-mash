@@ -1,13 +1,15 @@
 use std::{sync::Arc, time::Duration};
 
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 use color_eyre::Report;
 
-use crate::{service::generator::CompilationGenerator, data::database::Database, server::handlers::AppState};
+use crate::{
+    data::database::Database, server::handlers::AppState, service::generator::CompilationGenerator,
+};
 
-mod service;
-mod server;
 mod data;
+mod server;
+mod service;
 mod util;
 
 pub type Result<T> = std::result::Result<T, Report>;

@@ -1,10 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::util;
+use crate::{data::database::Database, util, Result};
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
+use reqwest::Url;
 use serde::Deserialize;
 
-use super::{Clip, Marker, Video, VideoId};
+use super::{stash_config::Config, Clip, Marker, VideoId};
 
 #[derive(Clone, Copy, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -41,9 +42,9 @@ pub fn get_clips(
         let start = offset;
         let end = (offset + duration).min(marker.end_time);
         clips.push(Clip {
-            source: options.video.source(),
-            video_id: options.video.id,
-            marker_id: marker.id,
+            source: options.video_id.source(),
+            video_id: options.video_id.clone(),
+            marker_id: marker.id.clone(),
             range: (start, end),
             index_within_marker: index,
             index_within_video: marker.index_within_video,
@@ -62,7 +63,7 @@ pub fn get_clips(
 pub struct CreateClipsOptions {
     pub clip_duration: u32,
     pub markers: Vec<Marker>,
-    pub video: Video,
+    pub video_id: VideoId,
     pub split_clips: bool,
     pub max_duration: Option<u32>,
 }
@@ -81,9 +82,9 @@ pub fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
                 MarkerWithClips {
                     marker: marker.clone(),
                     clips: vec![Clip {
-                        source: options.video.source(),
-                        video_id: options.video.id,
-                        marker_id: marker.id,
+                        source: options.video_id.source(),
+                        video_id: options.video_id.clone(),
+                        marker_id: marker.id.clone(),
                         range: (marker.start_time, marker.end_time),
                         index_within_marker: 0,
                         index_within_video: marker.index_within_video,
@@ -120,20 +121,22 @@ pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder) -> Vec<Clip>
 mod tests {
     use crate::{
         data::database::{DbMarker, DbVideo},
-        service::{Marker, MarkerInfo, Video, VideoInfo},
+        service::{Marker, MarkerId, MarkerInfo, Video, VideoId, VideoInfo},
     };
     use fake::faker::lorem::en::*;
     use fake::{faker::filesystem::en::FilePath, Fake, Faker};
+    use nanoid::nanoid;
 
     use super::{compile_clips, get_all_clips, ClipOrder, CreateClipsOptions};
 
     fn create_marker(start_time: f64, end_time: f64, index: usize) -> Marker {
         Marker {
-            id: Faker.fake(),
+            // id: Faker.fake(),
+            id: MarkerId::LocalFile(1),
             start_time,
             end_time,
             index_within_video: index,
-            video_id: Faker.fake(),
+            video_id: VideoId::LocalFile(nanoid!(8)),
             title: Faker.fake(),
             info: MarkerInfo::LocalFile {
                 marker: DbMarker {
@@ -170,7 +173,7 @@ mod tests {
             markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
             max_duration: None,
             split_clips: true,
-            video: create_video(),
+            video_id: VideoId::LocalFile(nanoid!(8)),
         };
         let mut results1 = get_all_clips(&options);
         assert_eq!(2, results1.len());
@@ -196,7 +199,7 @@ mod tests {
             markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
             max_duration: None,
             split_clips: true,
-            video: create_video(),
+            video_id: VideoId::LocalFile(nanoid!(8)),
         };
         let results = get_all_clips(&options);
         let results = compile_clips(results, ClipOrder::SceneOrder);
@@ -204,6 +207,26 @@ mod tests {
     }
 }
 
-pub fn get_streams(video_ids: HashSet<VideoId>) -> HashMap<VideoId, String> {
-    todo!()
+pub fn get_streams(
+    video_ids: HashSet<VideoId>,
+    config: &Config,
+) -> Result<HashMap<VideoId, String>> {
+    let mut urls = HashMap::new();
+
+    for id in video_ids {
+        match id {
+            VideoId::LocalFile(_) => {
+                let url = format!("/api/local/video/{id}");
+                urls.insert(id, url);
+            }
+            VideoId::Stash(_) => {
+                let mut url = Url::parse(&config.stash_url)?;
+                url.set_path(&format!("/scene/{id}/stream"));
+                url.query_pairs_mut().append_pair("apikey", &config.api_key);
+                urls.insert(id, url.to_string());
+            }
+        }
+    }
+
+    Ok(urls)
 }

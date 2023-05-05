@@ -4,6 +4,8 @@ pub mod funscript;
 pub mod generator;
 pub mod stash_config;
 
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 use crate::data::{
@@ -54,7 +56,7 @@ pub enum MarkerInfo {
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Marker {
-    pub id: i64,
+    pub id: MarkerId,
     pub start_time: f64,
     pub end_time: f64,
     pub index_within_video: usize,
@@ -81,15 +83,42 @@ impl Clip {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", tag = "type")]
 pub enum MarkerId {
     LocalFile(i64),
     Stash(String),
 }
 
+impl fmt::Display for MarkerId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MarkerId::LocalFile(id) => write!(f, "{}", id),
+            MarkerId::Stash(id) => write!(f, "{}", id),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", tag = "type")]
 pub enum VideoId {
     LocalFile(String),
     Stash(String),
+}
+
+impl VideoId {
+    pub fn source(&self) -> VideoSource {
+        match self {
+            VideoId::LocalFile(_) => VideoSource::LocalFile,
+            VideoId::Stash(_) => VideoSource::Stash,
+        }
+    }
+}
+
+impl fmt::Display for VideoId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VideoId::LocalFile(id) => write!(f, "{}", id),
+            VideoId::Stash(id) => write!(f, "{}", id),
+        }
+    }
 }

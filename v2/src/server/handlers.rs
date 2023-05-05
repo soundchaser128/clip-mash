@@ -16,21 +16,22 @@ pub mod common {
             dtos::{convert_clip_options, ClipsResponse, CreateClipsBody},
             error::AppError,
         },
-        service::clip,
+        service::{clip, stash_config::Config},
     };
 
     #[axum::debug_handler]
     pub async fn fetch_clips(
         Json(body): Json<CreateClipsBody>,
     ) -> Result<Json<ClipsResponse>, AppError> {
-        let api = StashApi::load_config().await?;
+        let config = Config::get().await?;
+        let api = StashApi::from_config(&config);
         let order = body.clip_order;
         let video_ids: HashSet<_> = body.markers.iter().map(|m| m.video_id.clone()).collect();
         let options = convert_clip_options(body).await?;
         let clips = clip::get_all_clips(&options);
         let clips = clip::compile_clips(clips, order);
         tracing::debug!("compiled clips {clips:#?}");
-        let streams = clip::get_streams(video_ids);
+        let streams = clip::get_streams(video_ids, &config)?;
         // let streams: HashMap<String, String> = body
         //     .markers
         //     .iter()
@@ -186,4 +187,33 @@ pub mod stash {
     }
 }
 
-pub mod local {}
+pub mod local {
+    use std::sync::Arc;
+
+    use axum::{
+        body::Body,
+        extract::{Path, State},
+        response::IntoResponse,
+    };
+    use reqwest::StatusCode;
+    use tower::ServiceExt;
+
+    use crate::server::{error::AppError, handlers::AppState};
+
+    #[axum::debug_handler]
+    pub async fn get_video(
+        Path(id): Path<String>,
+        state: State<Arc<AppState>>,
+        request: axum::http::Request<Body>,
+    ) -> Result<impl IntoResponse, AppError> {
+        use tower_http::services::ServeFile;
+
+        let video = state.database.get_video(&id).await?;
+        if let Some(video) = video {
+            let result = ServeFile::new(video.file_path).oneshot(request).await;
+            Ok(result)
+        } else {
+            Err(AppError::StatusCode(StatusCode::NOT_FOUND))
+        }
+    }
+}

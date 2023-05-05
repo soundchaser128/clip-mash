@@ -72,4 +72,11 @@ pub struct ClipsResponse {
 
 pub async fn convert_clip_options(body: CreateClipsBody) -> crate::Result<CreateClipsOptions> {
     todo!()
+    // CreateClipsOptions {
+    //     clip_duration: body.clip_duration,
+    //     // TODO
+    //     max_duration: None,
+    //     split_clips: body.split_clips,
+    //     markers
+    // }
 }

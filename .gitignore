@@ -3,6 +3,7 @@
 /videos
 .DS_Store
 /assets
+/v2/assets
 /ffmpeg
 /ffmpeg.tar.xz
 /ffmpeg.zip

@@ -1,6 +1,9 @@
 use std::{sync::Arc, time::Duration};
 
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use color_eyre::Report;
 
 use crate::{
@@ -41,18 +44,21 @@ async fn main() -> Result<()> {
     });
 
     let app = Router::new()
-        // .route("/api/stash/health", get(handlers::stash::get_health))
-        // .route("/api/stash/tags", get(handlers::fetch_tags))
-        // .route("/api/stash/performers", get(handlers::fetch_performers))
-        // .route("/api/stash/scenes", get(handlers::fetch_scenes))
-        // .route("/api/stash/markers", get(handlers::fetch_markers))
+        .route("/api/stash/health", get(handlers::stash::get_health))
+        .route("/api/stash/tags", get(handlers::stash::fetch_tags))
+        .route(
+            "/api/stash/performers",
+            get(handlers::stash::fetch_performers),
+        )
+        .route("/api/stash/scenes", get(handlers::stash::fetch_scenes))
+        .route("/api/stash/markers", get(handlers::stash::fetch_markers))
+        .route("/api/stash/config", get(handlers::stash::get_config))
+        .route("/api/stash/config", post(handlers::stash::set_config))
         // .route("/api/clips", post(handlers::fetch_clips))
         // .route("/api/create", post(handlers::create_video))
         // .route("/api/progress", get(handlers::get_progress))
         // .route("/api/download", get(handlers::download_video))
         // .route("/api/funscript", post(handlers::get_funscript))
-        // .route("/api/stash/config", get(handlers::get_config))
-        // .route("/api/stash/config", post(handlers::set_config))
         // .route("/api/local/video", post(handlers::list_videos))
         // .route("/api/local/video/:id", get(handlers::get_video))
         // .route("/api/local/video/marker", post(handlers::persist_marker))

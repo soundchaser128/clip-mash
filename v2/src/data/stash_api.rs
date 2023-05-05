@@ -60,7 +60,8 @@ pub struct FindScenesQuery;
 )]
 struct HealthCheckQuery;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum FilterMode {
     Performers,
     Tags,
@@ -148,7 +149,7 @@ impl StashApi {
         Ok(StashApi::new(&config.stash_url, &config.api_key))
     }
 
-    pub fn from_config(config: Config) -> Self {
+    pub fn from_config(config: &Config) -> Self {
         StashApi::new(&config.stash_url, &config.api_key)
     }
 

@@ -4,6 +4,8 @@ pub mod funscript;
 pub mod generator;
 pub mod stash_config;
 
+use serde::{Deserialize, Serialize};
+
 use crate::data::{
     database::{DbMarker, DbVideo},
     stash_api::{
@@ -22,7 +24,7 @@ pub enum VideoInfo {
     },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub enum VideoSource {
     Stash,
     LocalFile,
@@ -56,16 +58,16 @@ pub struct Marker {
     pub start_time: f64,
     pub end_time: f64,
     pub index_within_video: usize,
-    pub video_id: i64,
+    pub video_id: VideoId,
     pub title: String,
     pub info: MarkerInfo,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Clip {
     pub source: VideoSource,
-    pub video_id: i64,
-    pub marker_id: i64,
+    pub video_id: VideoId,
+    pub marker_id: MarkerId,
     /// Start and endpoint inside the video in seconds.
     pub range: (f64, f64),
     pub index_within_video: usize,
@@ -76,4 +78,18 @@ impl Clip {
     pub fn range_millis(&self) -> (u32, u32) {
         ((self.range.0 as u32) * 1000, (self.range.1 as u32) * 1000)
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum MarkerId {
+    LocalFile(i64),
+    Stash(String),
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[serde(rename_all = "camelCase")]
+pub enum VideoId {
+    LocalFile(String),
+    Stash(String),
 }

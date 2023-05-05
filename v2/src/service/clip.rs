@@ -1,8 +1,10 @@
+use std::collections::{HashMap, HashSet};
+
 use crate::util;
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use serde::Deserialize;
 
-use super::{Clip, Marker, Video};
+use super::{Clip, Marker, Video, VideoId};
 
 #[derive(Clone, Copy, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -200,4 +202,8 @@ mod tests {
         let results = compile_clips(results, ClipOrder::SceneOrder);
         assert_eq!(4, results.len());
     }
+}
+
+pub fn get_streams(video_ids: HashSet<VideoId>) -> HashMap<VideoId, String> {
+    todo!()
 }

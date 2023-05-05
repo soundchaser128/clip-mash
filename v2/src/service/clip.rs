@@ -1,11 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::{data::database::Database, util, Result};
+use crate::{data::stash_api::StashApi, util, Result};
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use reqwest::Url;
 use serde::Deserialize;
 
-use super::{stash_config::Config, Clip, Marker, VideoId};
+use super::{stash_config::Config, Clip, Marker, MarkerId, MarkerInfo, VideoId};
 
 #[derive(Clone, Copy, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -42,8 +42,8 @@ pub fn get_clips(
         let start = offset;
         let end = (offset + duration).min(marker.end_time);
         clips.push(Clip {
-            source: options.video_id.source(),
-            video_id: options.video_id.clone(),
+            source: marker.video_id.source(),
+            video_id: marker.video_id.clone(),
             marker_id: marker.id.clone(),
             range: (start, end),
             index_within_marker: index,
@@ -63,7 +63,6 @@ pub fn get_clips(
 pub struct CreateClipsOptions {
     pub clip_duration: u32,
     pub markers: Vec<Marker>,
-    pub video_id: VideoId,
     pub split_clips: bool,
     pub max_duration: Option<u32>,
 }
@@ -82,8 +81,8 @@ pub fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
                 MarkerWithClips {
                     marker: marker.clone(),
                     clips: vec![Clip {
-                        source: options.video_id.source(),
-                        video_id: options.video_id.clone(),
+                        source: marker.video_id.source(),
+                        video_id: marker.video_id.clone(),
                         marker_id: marker.id.clone(),
                         range: (marker.start_time, marker.end_time),
                         index_within_marker: 0,
@@ -114,6 +113,54 @@ pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder) -> Vec<Clip>
             clips.shuffle(&mut rng);
             clips
         }
+    }
+}
+
+use crate::{data::database::Database, server::dtos::CreateClipsBody};
+
+pub struct ClipService<'a> {
+    db: &'a Database,
+    stash_api: &'a StashApi,
+}
+
+impl<'a> ClipService<'a> {
+    pub fn new(db: &'a Database, stash_api: &'a StashApi) -> Self {
+        ClipService { db, stash_api }
+    }
+
+    pub async fn fetch_marker_details(&self, id: &MarkerId) -> Result<MarkerInfo> {
+        todo!()
+    }
+
+    pub async fn convert_clip_options(
+        &self,
+        body: CreateClipsBody,
+    ) -> crate::Result<CreateClipsOptions> {
+        let mut markers = vec![];
+
+        for selected_marker in body.markers {
+            let (start_time, end_time) = selected_marker.selected_range;
+            let marker_details: MarkerInfo = self.fetch_marker_details(&selected_marker.id).await?;
+            let video_id = marker_details.video_id().clone();
+            let title = marker_details.title().to_string();
+            markers.push(Marker {
+                start_time,
+                end_time,
+                id: selected_marker.id,
+                info: marker_details,
+                video_id,
+                index_within_video: selected_marker.index_within_video,
+                title,
+            })
+        }
+
+        Ok(CreateClipsOptions {
+            clip_duration: body.clip_duration,
+            // TODO
+            max_duration: None,
+            split_clips: body.split_clips,
+            markers,
+        })
     }
 }
 
@@ -173,7 +220,6 @@ mod tests {
             markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
             max_duration: None,
             split_clips: true,
-            video_id: VideoId::LocalFile(nanoid!(8)),
         };
         let mut results1 = get_all_clips(&options);
         assert_eq!(2, results1.len());
@@ -199,7 +245,6 @@ mod tests {
             markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
             max_duration: None,
             split_clips: true,
-            video_id: VideoId::LocalFile(nanoid!(8)),
         };
         let results = get_all_clips(&options);
         let results = compile_clips(results, ClipOrder::SceneOrder);

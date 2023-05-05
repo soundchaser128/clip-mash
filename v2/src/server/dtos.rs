@@ -1,3 +1,5 @@
+use std::{collections::HashMap, marker};
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -6,7 +8,7 @@ use crate::{
     },
     service::{
         clip::{ClipOrder, CreateClipsOptions},
-        Clip, MarkerId, VideoId,
+        Clip, Marker, MarkerId, MarkerInfo, VideoId,
     },
 };
 
@@ -29,11 +31,15 @@ pub struct PerformerDto {
 }
 
 #[derive(Serialize, Debug)]
-pub struct MarkerDto {}
+pub struct MarkerDto {
+    pub id: MarkerId,
+}
 
 impl From<StashMarker> for MarkerDto {
     fn from(value: StashMarker) -> Self {
-        todo!()
+        MarkerDto {
+            id: MarkerId::Stash(value.id),
+        }
     }
 }
 
@@ -52,6 +58,7 @@ pub struct SelectedMarker {
     pub id: MarkerId,
     pub video_id: VideoId,
     pub selected_range: (f64, f64),
+    pub index_within_video: usize,
 }
 
 #[derive(Deserialize, Debug)]
@@ -68,15 +75,5 @@ pub struct CreateClipsBody {
 #[serde(rename_all = "camelCase")]
 pub struct ClipsResponse {
     pub clips: Vec<Clip>,
-}
-
-pub async fn convert_clip_options(body: CreateClipsBody) -> crate::Result<CreateClipsOptions> {
-    todo!()
-    // CreateClipsOptions {
-    //     clip_duration: body.clip_duration,
-    //     // TODO
-    //     max_duration: None,
-    //     split_clips: body.split_clips,
-    //     markers
-    // }
+    pub streams: HashMap<VideoId, String>,
 }

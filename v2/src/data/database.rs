@@ -1,4 +1,5 @@
 use crate::Result;
+use serde::Deserialize;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode},
     SqlitePool,
@@ -23,7 +24,7 @@ pub struct DbMarker {
     pub file_path: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CreateMarker {
     pub video_id: String,
     pub start_time: f64,

@@ -54,6 +54,22 @@ pub enum MarkerInfo {
     Stash { marker: StashMarker },
     LocalFile { marker: DbMarker },
 }
+
+impl MarkerInfo {
+    pub fn video_id(&self) -> VideoId {
+        match self {
+            Self::Stash { marker } => VideoId::Stash(marker.scene_id.clone()),
+            Self::LocalFile { marker } => VideoId::LocalFile(marker.video_id.clone()),
+        }
+    }
+
+    pub fn title(&self) -> &str {
+        match self {
+            Self::Stash { marker } => &marker.primary_tag,
+            Self::LocalFile { marker } => &marker.title,
+        }
+    }
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct Marker {
     pub id: MarkerId,

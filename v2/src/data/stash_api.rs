@@ -98,6 +98,7 @@ pub struct StashMarker {
     pub primary_tag: String,
     pub start: f64,
     pub streams: Vec<SceneStream>,
+    pub scene_id: String,
 }
 
 impl StashMarker {
@@ -109,6 +110,7 @@ impl StashMarker {
                 id: m.id,
                 primary_tag: m.primary_tag.name,
                 start: m.seconds,
+                scene_id: scene.id.clone(),
                 streams: scene
                     .scene_streams
                     .clone()
@@ -124,6 +126,7 @@ impl StashMarker {
             id: m.id,
             primary_tag: m.primary_tag.name,
             start: m.seconds,
+            scene_id: m.scene.id,
             streams: m.scene.scene_streams.into_iter().map(From::from).collect(),
         }
     }

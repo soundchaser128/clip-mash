@@ -6,38 +6,39 @@ pub struct AppState {
 }
 
 pub mod common {
-    use std::collections::HashSet;
+    use std::{collections::HashSet, sync::Arc};
 
-    use axum::Json;
+    use axum::{extract::State, Json};
 
     use crate::{
         data::stash_api::StashApi,
         server::{
-            dtos::{convert_clip_options, ClipsResponse, CreateClipsBody},
+            dtos::{ClipsResponse, CreateClipsBody},
             error::AppError,
         },
-        service::{clip, stash_config::Config},
+        service::{
+            clip::{self, ClipService},
+            stash_config::Config,
+        },
     };
+
+    use super::AppState;
 
     #[axum::debug_handler]
     pub async fn fetch_clips(
+        State(state): State<Arc<AppState>>,
         Json(body): Json<CreateClipsBody>,
     ) -> Result<Json<ClipsResponse>, AppError> {
         let config = Config::get().await?;
         let api = StashApi::from_config(&config);
+        let service = ClipService::new(&state.database, &api);
         let order = body.clip_order;
         let video_ids: HashSet<_> = body.markers.iter().map(|m| m.video_id.clone()).collect();
-        let options = convert_clip_options(body).await?;
+        let options = service.convert_clip_options(body).await?;
         let clips = clip::get_all_clips(&options);
         let clips = clip::compile_clips(clips, order);
         tracing::debug!("compiled clips {clips:#?}");
         let streams = clip::get_streams(video_ids, &config)?;
-        // let streams: HashMap<String, String> = body
-        //     .markers
-        //     .iter()
-        //     .map(|m| (m.scene.id.clone(), find_stream_url(m).to_string()))
-        //     .collect();
-
         // let mut scene_ids: Vec<_> = clips.iter().map(|c| c.video_id).collect();
         // scene_ids.sort();
         // scene_ids.dedup();
@@ -55,7 +56,7 @@ pub mod common {
         //     streams,
         //     scenes,
         // }))
-        Ok(Json(ClipsResponse { clips }))
+        Ok(Json(ClipsResponse { clips, streams }))
     }
 }
 
@@ -192,13 +193,19 @@ pub mod local {
 
     use axum::{
         body::Body,
-        extract::{Path, State},
+        extract::{Path, Query, State},
         response::IntoResponse,
+        Json,
     };
+    use camino::Utf8PathBuf;
     use reqwest::StatusCode;
+    use serde::Deserialize;
     use tower::ServiceExt;
 
-    use crate::server::{error::AppError, handlers::AppState};
+    use crate::{
+        data::database::CreateMarker,
+        server::{error::AppError, handlers::AppState},
+    };
 
     #[axum::debug_handler]
     pub async fn get_video(
@@ -215,5 +222,45 @@ pub mod local {
         } else {
             Err(AppError::StatusCode(StatusCode::NOT_FOUND))
         }
+    }
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct ListVideoQuery {
+        path: String,
+        recurse: bool,
+    }
+
+    // #[axum::debug_handler]
+    // pub async fn list_videos(
+    //     Query(ListVideoQuery { path, recurse }): Query<ListVideoQuery>,
+    //     state: State<Arc<AppState>>,
+    // ) -> Result<Json<Vec<LocalVideoWithMarkers>>, AppError> {
+    //     use crate::local::find::list_videos;
+
+    //     let videos = list_videos(Utf8PathBuf::from(path), recurse, &state.database).await?;
+    //     Ok(Json(videos))
+    // }
+
+    // #[axum::debug_handler]
+    // pub async fn persist_marker(
+    //     state: State<Arc<AppState>>,
+    //     Json(marker): Json<CreateMarker>,
+    // ) -> Result<Json<Marker>, AppError> {
+    //     tracing::info!("saving marker {marker:?} to the database");
+    //     let marker = state.database.persist_marker(marker).await?;
+
+    //     todo!()
+    // }
+
+    #[axum::debug_handler]
+    pub async fn delete_marker(
+        Path(id): Path<i64>,
+        state: State<Arc<AppState>>,
+    ) -> Result<(), AppError> {
+        tracing::info!("deleting marker {id}");
+        state.database.delete_marker(id).await?;
+
+        Ok(())
     }
 }

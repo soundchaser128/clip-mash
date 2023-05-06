@@ -4,7 +4,7 @@ use crate::{service::MarkerInfo, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
 use super::{Clip, Marker};

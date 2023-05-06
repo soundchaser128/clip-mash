@@ -12,10 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::data::{
     database::{DbMarker, DbVideo},
-    stash_api::{
-        find_markers_query::FindMarkersQueryFindSceneMarkers,
-        find_scenes_query::FindScenesQueryFindScenesScenes, StashMarker,
-    },
+    stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, StashMarker},
 };
 
 #[derive(Debug, Clone)]

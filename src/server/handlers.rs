@@ -1,9 +1,4 @@
-use std::{
-    cmp::Reverse,
-    collections::{BTreeSet, HashMap},
-    sync::Arc,
-    time::Duration,
-};
+use std::{cmp::Reverse, collections::HashMap, sync::Arc, time::Duration};
 
 use axum::{
     body::{Body, StreamBody},
@@ -26,17 +21,17 @@ use tokio_util::io::ReaderStream;
 use tower::ServiceExt;
 
 use crate::{
-    compilation::clip::{self, ClipOrder},
+    compilation::clip::ClipOrder,
     compilation::{
         funscript::{FunScript, ScriptBuilder},
         Clip, Video, VideoSource,
     },
     compilation::{
-        generate::{self, find_stream_url},
+        generate::{self},
         Marker,
     },
     error::AppError,
-    local::db::{CreateMarker, DbMarker, LocalVideoWithMarkers},
+    local::db::{CreateMarker, LocalVideoWithMarkers},
     stash::api::{StashApi, StashMarker, StashScene},
     stash::config::{self, Config},
     AppState,
@@ -197,14 +192,14 @@ pub async fn fetch_markers(
 pub async fn fetch_scenes() -> Result<Json<Vec<StashScene>>, AppError> {
     let config = Config::get().await?;
     let api = StashApi::from_config(&config);
-    let api_key = &config.api_key;
+    let _api_key = &config.api_key;
     let scenes = api.find_scenes().await?;
     Ok(Json(scenes))
 }
 
 async fn create_video_inner(
     state: State<Arc<AppState>>,
-    mut body: CreateVideoBody,
+    body: CreateVideoBody,
 ) -> Result<(), AppError> {
     // body.markers
     //     .retain(|e| body.selected_markers.iter().any(|m| m.id == e.id));
@@ -317,7 +312,7 @@ pub struct ClipsResponse {
 
 #[axum::debug_handler]
 pub async fn fetch_clips(
-    Json(body): Json<CreateClipsBody>,
+    Json(_body): Json<CreateClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
     // let api = StashApi::load_config().await?;
 
@@ -407,7 +402,7 @@ pub async fn persist_marker(
     Json(marker): Json<CreateMarker>,
 ) -> Result<Json<Marker>, AppError> {
     tracing::info!("saving marker {marker:?} to the database");
-    let marker = state.database.persist_marker(marker).await?;
+    let _marker = state.database.persist_marker(marker).await?;
 
     todo!()
 }

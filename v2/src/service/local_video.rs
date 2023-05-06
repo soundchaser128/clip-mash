@@ -1,4 +1,7 @@
-use crate::{Result, data::database::{Database, DbVideo, LocalVideoWithMarkers}};
+use crate::{
+    data::database::{Database, DbVideo, LocalVideoWithMarkers},
+    Result,
+};
 use camino::{Utf8Path, Utf8PathBuf};
 use nanoid::nanoid;
 use tokio::task::spawn_blocking;

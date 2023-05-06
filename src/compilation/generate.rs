@@ -25,7 +25,7 @@ pub struct CompilationGenerator {
     pub video_dir: Utf8PathBuf,
 }
 
-pub fn find_stream_url(marker: &Marker) -> &str {
+pub fn find_stream_url(_marker: &Marker) -> &str {
     const LABEL_PRIORITIES: &[&str] = &["Direct stream", "webm", "HLS"];
 
     todo!()

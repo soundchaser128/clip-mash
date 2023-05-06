@@ -1,11 +1,11 @@
 use crate::{
-    service::{funscript::FunScript, stash_config::Config, Marker},
+    service::{funscript::FunScript, stash_config::Config},
     Result,
 };
 use color_eyre::eyre::bail;
 use graphql_client::{GraphQLQuery, Response};
-use reqwest::{Client, Url};
-use serde::{Deserialize, Serialize};
+use reqwest::Client;
+use serde::Deserialize;
 
 use self::{
     find_markers_query::{
@@ -15,8 +15,7 @@ use self::{
     },
     find_performers_query::FindPerformersQueryFindPerformersPerformers,
     find_scenes_query::{
-        FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
-        FindScenesQueryFindScenesScenesSceneStreams,
+        FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneStreams,
     },
     find_tags_query::FindTagsQueryFindTagsTags,
 };
@@ -103,7 +102,7 @@ pub struct StashMarker {
 }
 
 impl StashMarker {
-    fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Self> {
+    fn from_scene(scene: FindScenesQueryFindScenesScenes, _api_key: &str) -> Vec<Self> {
         scene
             .scene_markers
             .into_iter()
@@ -122,7 +121,7 @@ impl StashMarker {
             .collect()
     }
 
-    fn from_marker(m: FindMarkersQueryFindSceneMarkersSceneMarkers, api_key: &str) -> Self {
+    fn from_marker(m: FindMarkersQueryFindSceneMarkersSceneMarkers, _api_key: &str) -> Self {
         StashMarker {
             id: m.id,
             primary_tag: m.primary_tag.name,

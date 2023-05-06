@@ -63,12 +63,14 @@ impl Database {
 
     pub async fn get_marker(&self, id: i64) -> Result<DbMarker> {
         let marker = sqlx::query_as!(
-                DbMarker, 
-                "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time
+            DbMarker,
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time
                 FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
-                WHERE m.rowid = $1", id)
-            .fetch_one(&self.pool)
-            .await?;
+                WHERE m.rowid = $1",
+            id
+        )
+        .fetch_one(&self.pool)
+        .await?;
         Ok(marker)
     }
 

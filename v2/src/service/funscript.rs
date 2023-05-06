@@ -2,7 +2,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::{Clip, Video, VideoSource};
+use super::{Clip, Video};
 use crate::{data::stash_api::StashApi, service::VideoInfo, Result};
 
 // Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs

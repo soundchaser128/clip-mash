@@ -101,7 +101,7 @@ pub struct StashScene {
 }
 
 impl From<FindScenesQueryFindScenesScenes> for StashScene {
-    fn from(value: FindScenesQueryFindScenesScenes) -> Self {
+    fn from(_value: FindScenesQueryFindScenesScenes) -> Self {
         todo!()
     }
 }

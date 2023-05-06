@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use crate::{
     data::stash_api::StashApi,
     server::dtos::{CreateVideoBody, SelectedMarker},
-    util::{self, parallelize},
+    util::{self},
     Result,
 };
 use color_eyre::eyre::bail;

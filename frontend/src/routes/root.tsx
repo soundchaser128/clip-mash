@@ -7,6 +7,6 @@ export const loader: LoaderFunction = async () => {
     return config
   } else {
     const error = await response.text()
-    throw json({error, request: "/api/config"}, {status: 500})
+    throw json({error, request: "/api/stash/config"}, {status: 500})
   }
 }

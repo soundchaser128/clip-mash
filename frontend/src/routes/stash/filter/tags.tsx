@@ -4,7 +4,7 @@ import {Tag} from "../../../types/types"
 import useFilteredData from "../../../hooks/useFilteredData"
 
 export const loader: LoaderFunction = async () => {
-  const response = await fetch("/api/tags")
+  const response = await fetch("/api/stash/tags")
   return await response.json()
 }
 

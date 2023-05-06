@@ -7,10 +7,15 @@ use crate::{
         database::{DbMarker, DbVideo, LocalVideoWithMarkers},
         stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, FilterMode, StashMarker},
     },
-    service::{clip::ClipOrder, generator::VideoResolution, Clip, MarkerId, VideoId},
+    service::{
+        clip::ClipOrder,
+        generator::{find_stream_url, VideoResolution},
+        Clip, MarkerId, VideoId,
+    },
 };
 
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct TagDto {
     pub name: String,
     pub id: String,
@@ -18,6 +23,7 @@ pub struct TagDto {
 }
 
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct PerformerDto {
     pub id: String,
     pub scene_count: i64,
@@ -29,15 +35,26 @@ pub struct PerformerDto {
 }
 
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct MarkerDto {
     pub id: MarkerId,
-    // TODO
+    pub primary_tag: String,
+    pub stream_url: String,
+    pub start: f64,
+    pub end: f64,
+    pub scene_title: String,
+    pub performers: Vec<String>,
+    pub file_name: String,
+    pub scene_interactive: bool,
+    pub tags: Vec<String>,
 }
 
 impl From<StashMarker> for MarkerDto {
     fn from(value: StashMarker) -> Self {
         MarkerDto {
             id: MarkerId::Stash(value.id),
+            primary_tag: value.primary_tag,
+            stream_url: find_stream_url(&value),
         }
     }
 }

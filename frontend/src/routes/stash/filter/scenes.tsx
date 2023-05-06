@@ -15,7 +15,7 @@ import {Scene} from "../../../types/types"
 import useFilteredData from "../../../hooks/useFilteredData"
 
 export const loader: LoaderFunction = async () => {
-  const response = await fetch("/api/scenes")
+  const response = await fetch("/api/stash/scenes")
   return await response.json()
 }
 

@@ -7,7 +7,7 @@ import {Performer} from "../../../types/types"
 import useFilteredData from "../../../hooks/useFilteredData"
 
 export const loader: LoaderFunction = async () => {
-  const response = await fetch("/api/performers")
+  const response = await fetch("/api/stash/performers")
   return await response.json()
 }
 

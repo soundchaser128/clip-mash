@@ -19,8 +19,13 @@ import useFuse from "../hooks/useFuse"
 import invariant from "tiny-invariant"
 import {getFormState} from "../helpers"
 
-interface Marker {
+interface MarkerId {
+  type: "stash" | "localFile"
   id: string
+}
+
+interface Marker {
+  id: MarkerId
   primaryTag: string
   streamUrl: string
   screenshotUrl: string
@@ -34,9 +39,7 @@ interface Marker {
 }
 
 interface Data {
-  markers: {
-    dtos: Marker[]
-  }
+  markers: Marker[]
 }
 
 export const loader: LoaderFunction = async () => {
@@ -47,7 +50,7 @@ export const loader: LoaderFunction = async () => {
     params.set("selectedIds", state.selectedIds!.join(","))
     params.set("mode", state.selectMode!)
     params.set("includeAll", state.includeAll ? "true" : "false")
-    const url = `/api/markers?${params.toString()}`
+    const url = `/api/stash/markers?${params.toString()}`
     const response = await fetch(url)
     const markers = await response.json()
     return {markers} satisfies Data
@@ -89,7 +92,7 @@ function SelectMarkers() {
       invariant(StateHelpers.isStash(state.data))
       const entries =
         state.data.selectedMarkers?.map((m) => [m.id, m]) ||
-        data.markers.dtos.map((m) => [
+        data.markers.map((m) => [
           m.id,
           {...m, selected: true, duration: getDuration(m)} as SelectedMarker,
         ])
@@ -100,7 +103,7 @@ function SelectMarkers() {
   const [videoPreview, setVideoPreview] = useState<string>()
   const navigate = useNavigate()
   const markers = useFuse({
-    items: data.markers.dtos,
+    items: data.markers,
     query: filter,
     keys: ["performers", "primaryTag", "sceneTitle", "tags"],
   })
@@ -146,14 +149,14 @@ function SelectMarkers() {
 
   const onNextStage = () => {
     const selectedMarkers = Object.values(selection).filter((m) => m.selected)
-    const hasInteractiveScenes = data.markers.dtos
+    const hasInteractiveScenes = data.markers
       .filter((m) => !!selection[m.id])
       .some((m) => m.sceneInteractive)
 
     actions.updateForm({
       stage: FormStage.VideoOptions,
       selectedMarkers,
-      markers: data.markers.dtos,
+      markers: data.markers,
       interactive: hasInteractiveScenes,
     })
     navigate("/stash/video-options")

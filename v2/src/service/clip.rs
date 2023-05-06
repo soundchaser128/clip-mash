@@ -1,11 +1,20 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::{data::stash_api::StashApi, util, Result};
+use crate::{
+    data::stash_api::StashApi,
+    server::dtos::{CreateVideoBody, SelectedMarker},
+    util::{self, parallelize},
+    Result,
+};
+use color_eyre::eyre::bail;
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use reqwest::Url;
 use serde::Deserialize;
 
-use super::{stash_config::Config, Clip, Marker, MarkerId, MarkerInfo, VideoId};
+use super::{
+    generator::CompilationOptions, stash_config::Config, Clip, Marker, MarkerId, MarkerInfo, Video,
+    VideoId,
+};
 
 #[derive(Clone, Copy, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -148,20 +157,54 @@ impl<'a> ClipService<'a> {
         }
     }
 
-    pub async fn convert_clip_options(
-        &self,
-        body: CreateClipsBody,
-    ) -> crate::Result<CreateClipsOptions> {
-        let mut markers = vec![];
+    pub async fn fetch_video(&self, id: &VideoId) -> Result<Video> {
+        match id {
+            VideoId::LocalFile(id) => {
+                let video = self.db.get_video(id).await?;
+                if let Some(video) = video {
+                    Ok(video.into())
+                } else {
+                    bail!("no video found for id {id}")
+                }
+            }
+            VideoId::Stash(id) => {
+                let id = id.parse()?;
+                let mut scenes = self.stash_api.find_scenes_by_ids(vec![id]).await?;
+                if scenes.len() != 1 {
+                    bail!("found more or fewer than one result for id {id}")
+                }
+                Ok(scenes.remove(0).into())
+            }
+        }
+    }
 
-        for selected_marker in body.markers {
+    pub async fn convert_clips(&self, clips: Vec<Clip>) -> Result<Vec<(Video, Clip)>> {
+        let all_video_ids: HashSet<_> = clips.iter().map(|c| &c.video_id).collect();
+        let mut videos = HashMap::new();
+        for id in all_video_ids {
+            let video = self.fetch_video(id).await?;
+            videos.insert(id, video);
+        }
+
+        let mut results = vec![];
+        for clip in &clips {
+            let video = videos.get(&clip.video_id).unwrap().clone();
+            results.push((video, clip.clone()));
+        }
+        Ok(results)
+    }
+
+    async fn convert_selected_markers(&self, markers: Vec<SelectedMarker>) -> Result<Vec<Marker>> {
+        let mut results = vec![];
+
+        for selected_marker in markers {
             let (start_time, end_time) = selected_marker.selected_range;
             let marker_details: MarkerInfo = self
                 .fetch_marker_details(&selected_marker.id, &selected_marker.video_id)
                 .await?;
             let video_id = marker_details.video_id().clone();
             let title = marker_details.title().to_string();
-            markers.push(Marker {
+            results.push(Marker {
                 start_time,
                 end_time,
                 id: selected_marker.id,
@@ -172,12 +215,32 @@ impl<'a> ClipService<'a> {
             })
         }
 
+        Ok(results)
+    }
+
+    pub async fn convert_compilation_options(
+        &self,
+        body: CreateVideoBody,
+    ) -> crate::Result<CompilationOptions> {
+        Ok(CompilationOptions {
+            clips: body.clips,
+            markers: self.convert_selected_markers(body.markers).await?,
+            output_resolution: body.output_resolution,
+            output_fps: body.output_fps,
+            file_name: body.file_name,
+        })
+    }
+
+    pub async fn convert_clip_options(
+        &self,
+        body: CreateClipsBody,
+    ) -> crate::Result<CreateClipsOptions> {
         Ok(CreateClipsOptions {
             clip_duration: body.clip_duration,
             // TODO
             max_duration: None,
             split_clips: body.split_clips,
-            markers,
+            markers: self.convert_selected_markers(body.markers).await?,
         })
     }
 }
@@ -218,7 +281,7 @@ mod tests {
 
     fn create_video() -> Video {
         Video {
-            id: Faker.fake(),
+            id: VideoId::LocalFile(nanoid!(8)),
             title: Sentence(4..12).fake(),
             interactive: Faker.fake(),
             info: VideoInfo::LocalFile {

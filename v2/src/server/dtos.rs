@@ -3,12 +3,12 @@ use std::{collections::HashMap, marker};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::stash_api::{
+    data::{stash_api::{
         find_scenes_query::FindScenesQueryFindScenesScenes, FilterMode, StashMarker,
-    },
+    }, database::{LocalVideoWithMarkers, DbMarker}},
     service::{
         clip::{ClipOrder, CreateClipsOptions},
-        Clip, Marker, MarkerId, MarkerInfo, VideoId,
+        Clip, Marker, MarkerId, MarkerInfo, VideoId, generator::VideoResolution,
     },
 };
 
@@ -41,6 +41,12 @@ impl From<StashMarker> for MarkerDto {
         MarkerDto {
             id: MarkerId::Stash(value.id),
         }
+    }
+}
+
+impl From<DbMarker> for MarkerDto {
+    fn from(value: DbMarker) -> Self {
+        todo!()
     }
 }
 
@@ -81,4 +87,26 @@ pub struct CreateClipsBody {
 pub struct ClipsResponse {
     pub clips: Vec<Clip>,
     pub streams: HashMap<VideoId, String>,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ListVideoDto {
+
+}
+
+impl From<LocalVideoWithMarkers> for ListVideoDto {
+    fn from(value: LocalVideoWithMarkers) -> Self {
+        todo!()
+    }
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateVideoBody {
+    pub file_name: String,
+    pub clips: Vec<Clip>,
+    pub markers: Vec<SelectedMarker>,
+    pub output_resolution: VideoResolution,
+    pub output_fps: u32,
 }

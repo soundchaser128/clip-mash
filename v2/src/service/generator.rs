@@ -4,7 +4,7 @@ use crate::{service::MarkerInfo, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use tokio::process::Command;
 
 use super::{Clip, Marker};
@@ -19,7 +19,7 @@ lazy_static! {
     static ref PROGRESS: Mutex<Progress> = Default::default();
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 pub enum VideoResolution {
     SevenTwenty,
     TenEighty,

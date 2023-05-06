@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
 use color_eyre::Report;
@@ -54,15 +54,21 @@ async fn main() -> Result<()> {
         .route("/api/stash/markers", get(handlers::stash::fetch_markers))
         .route("/api/stash/config", get(handlers::stash::get_config))
         .route("/api/stash/config", post(handlers::stash::set_config))
-        .route("/api/clips", post(handlers::common::fetch_clips))
-        // .route("/api/create", post(handlers::create_video))
-        // .route("/api/progress", get(handlers::get_progress))
-        // .route("/api/download", get(handlers::download_video))
-        // .route("/api/funscript", post(handlers::get_funscript))
-        // .route("/api/local/video", post(handlers::list_videos))
+        .route("/api/local/video", post(handlers::local::list_videos))
         .route("/api/local/video/:id", get(handlers::local::get_video))
-        // .route("/api/local/video/marker", post(handlers::persist_marker))
-        // .route("/api/local/video/marker/:id", delete(handlers::delete_marker))
+        .route(
+            "/api/local/video/marker",
+            post(handlers::local::persist_marker),
+        )
+        .route(
+            "/api/local/video/marker/:id",
+            delete(handlers::local::delete_marker),
+        )
+        .route("/api/clips", post(handlers::common::fetch_clips))
+        .route("/api/create", post(handlers::common::create_video))
+        .route("/api/progress", get(handlers::common::get_progress))
+        .route("/api/download", get(handlers::common::download_video))
+        .route("/api/funscript", post(handlers::common::get_funscript))
         .fallback_service(static_files::service())
         .with_state(state);
 

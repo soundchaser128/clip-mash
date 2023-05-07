@@ -10,7 +10,7 @@ use crate::{
     },
     service::{
         clip::ClipOrder,
-        generator::{find_stash_stream_url, find_stream_url, VideoResolution},
+        generator::{find_stash_stream_url, VideoResolution},
         Clip, MarkerId, VideoId,
     },
 };
@@ -48,6 +48,7 @@ pub struct MarkerDto {
     pub file_name: Option<String>,
     pub scene_interactive: bool,
     pub tags: Vec<String>,
+    pub screenshot_url: Option<String>,
 }
 
 impl From<StashMarker> for MarkerDto {
@@ -64,6 +65,7 @@ impl From<StashMarker> for MarkerDto {
             file_name: value.file_name,
             scene_interactive: value.scene_interactive,
             tags: value.tags,
+            screenshot_url: Some(value.screenshot_url),
         }
     }
 }
@@ -83,6 +85,7 @@ impl From<DbMarker> for MarkerDto {
             scene_title: None,
             stream_url: format!("TODO"),
             tags: vec![],
+            screenshot_url: None,
         }
     }
 }

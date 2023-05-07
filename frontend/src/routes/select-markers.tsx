@@ -93,7 +93,7 @@ function SelectMarkers() {
       const entries =
         state.data.selectedMarkers?.map((m) => [m.id, m]) ||
         data.markers.map((m) => [
-          m.id,
+          m.id.id,
           {...m, selected: true, duration: getDuration(m)} as SelectedMarker,
         ])
       return Object.fromEntries(entries)
@@ -150,7 +150,7 @@ function SelectMarkers() {
   const onNextStage = () => {
     const selectedMarkers = Object.values(selection).filter((m) => m.selected)
     const hasInteractiveScenes = data.markers
-      .filter((m) => !!selection[m.id])
+      .filter((m) => !!selection[m.id.id])
       .some((m) => m.sceneInteractive)
 
     actions.updateForm({
@@ -165,7 +165,7 @@ function SelectMarkers() {
   const onDurationBlur = () => {
     setSelection((draft) => {
       Object.values(draft).forEach((selectedMarker) => {
-        const marker = markers.find((m) => m.id === selectedMarker.id)!
+        const marker = markers.find((m) => m.id.id === selectedMarker.id)!
         const defaultDuration = getDuration(marker)
         const maxLen = maxMarkerLength || defaultDuration
         selectedMarker.duration =
@@ -235,20 +235,20 @@ function SelectMarkers() {
       )}
       <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
         {markers.map((marker) => {
-          const selectedMarker = selection[marker.id]!
+          const selectedMarker = selection[marker.id.id]!
           return (
             <article
-              key={marker.id}
+              key={marker.id.id}
               className={clsx(
                 "card card-compact bg-base-100 shadow-xl",
                 !selectedMarker.selected && "opacity-50"
               )}
             >
               <figure>
-                {videoPreview === marker.id && (
+                {videoPreview === marker.id.id && (
                   <video muted autoPlay src={marker.streamUrl} />
                 )}
-                {videoPreview !== marker.id && (
+                {videoPreview !== marker.id.id && (
                   <img
                     src={marker.screenshotUrl}
                     className="aspect-[16/9] object-cover object-top w-full"

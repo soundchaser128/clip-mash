@@ -279,6 +279,7 @@ mod tests {
         }
     }
 
+    #[allow(unused)]
     fn create_video() -> Video {
         Video {
             id: VideoId::LocalFile(nanoid!(8)),

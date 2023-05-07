@@ -1,5 +1,6 @@
 use crate::{
     service::{funscript::FunScript, stash_config::Config},
+    util::add_api_key,
     Result,
 };
 use color_eyre::eyre::bail;
@@ -135,10 +136,11 @@ pub struct StashMarker {
     pub file_name: Option<String>,
     pub scene_interactive: bool,
     pub tags: Vec<String>,
+    pub screenshot_url: String,
 }
 
 impl StashMarker {
-    fn from_scene(scene: FindScenesQueryFindScenesScenes, _api_key: &str) -> Vec<Self> {
+    fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Self> {
         let duration = scene
             .files
             .iter()
@@ -173,11 +175,12 @@ impl StashMarker {
                     .into_iter()
                     .map(From::from)
                     .collect(),
+                screenshot_url: add_api_key(&m.screenshot, api_key),
             })
             .collect()
     }
 
-    fn from_marker(m: FindMarkersQueryFindSceneMarkersSceneMarkers, _api_key: &str) -> Self {
+    fn from_marker(m: FindMarkersQueryFindSceneMarkersSceneMarkers, api_key: &str) -> Self {
         let duration = m
             .scene
             .files
@@ -198,6 +201,7 @@ impl StashMarker {
             scene_interactive: m.scene.interactive,
             scene_title: m.scene.title,
             tags: m.tags.into_iter().map(|m| m.name).collect(),
+            screenshot_url: add_api_key(&m.screenshot, api_key),
         }
     }
 }

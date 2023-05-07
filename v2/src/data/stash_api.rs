@@ -4,6 +4,7 @@ use crate::{
 };
 use color_eyre::eyre::bail;
 use graphql_client::{GraphQLQuery, Response};
+use itertools::Itertools;
 use reqwest::Client;
 use serde::Deserialize;
 
@@ -97,20 +98,46 @@ pub struct StashMarker {
     pub id: String,
     pub primary_tag: String,
     pub start: f64,
+    pub end: f64,
     pub streams: Vec<SceneStream>,
     pub scene_id: String,
+    pub scene_title: Option<String>,
+    pub performers: Vec<String>,
+    pub file_name: Option<String>,
+    pub scene_interactive: bool,
+    pub tags: Vec<String>,
 }
 
 impl StashMarker {
     fn from_scene(scene: FindScenesQueryFindScenesScenes, _api_key: &str) -> Vec<Self> {
+        use ordered_float::OrderedFloat;
+
+        let duration = scene
+            .files
+            .iter()
+            .max_by_key(|f| OrderedFloat(f.duration))
+            .map(|f| f.duration)
+            .unwrap_or_default();
+
         scene
             .scene_markers
             .into_iter()
             .map(|m| StashMarker {
                 id: m.id,
                 primary_tag: m.primary_tag.name,
-                start: m.seconds,
                 scene_id: scene.id.clone(),
+                scene_interactive: scene.interactive,
+                scene_title: scene.title.clone(),
+                tags: m.tags.into_iter().map(|t| t.name).collect(),
+                performers: scene.performers.into_iter().map(|p| p.name).collect(),
+                file_name: scene.files.get(0).map(|f| f.basename),
+                start: m.seconds,
+                end: scene
+                    .scene_markers
+                    .iter()
+                    .find(|n| m.seconds > n.seconds)
+                    .map(|n| n.seconds)
+                    .unwrap_or(duration),
                 streams: scene
                     .scene_streams
                     .clone()

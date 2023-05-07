@@ -278,6 +278,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "nanoid",
+ "ordered-float",
  "rand",
  "regex",
  "reqwest",
@@ -1392,6 +1393,15 @@ name = "option-ext"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
+
+[[package]]
+name = "ordered-float"
+version = "3.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fc2dbde8f8a79f2102cc474ceb0ad68e3b80b85289ea62389b60e66777e4213"
+dependencies = [
+ "num-traits",
+]
 
 [[package]]
 name = "overload"

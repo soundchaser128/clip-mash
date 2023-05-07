@@ -1,6 +1,6 @@
 use std::process::Output;
 
-use crate::{service::MarkerInfo, Result};
+use crate::{data::stash_api::StashMarker, service::MarkerInfo, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
@@ -51,29 +51,31 @@ pub struct CompilationGenerator {
     pub video_dir: Utf8PathBuf,
 }
 
-pub fn find_stream_url(marker: &Marker) -> &str {
+pub fn find_stash_stream_url(marker: &StashMarker) -> &str {
     const LABEL_PRIORITIES: &[&str] = &["Direct stream", "webm", "HLS"];
 
-    match &marker.info {
-        MarkerInfo::Stash { marker } => {
-            let streams = &marker.streams;
-            for stream in streams {
-                for label in LABEL_PRIORITIES {
-                    if let Some(l) = &stream.label {
-                        if l == label {
-                            tracing::debug!("returning stream {stream:?}");
-                            return &stream.url;
-                        }
-                    }
+    let streams = &marker.streams;
+    for stream in streams {
+        for label in LABEL_PRIORITIES {
+            if let Some(l) = &stream.label {
+                if l == label {
+                    tracing::debug!("returning stream {stream:?}");
+                    return &stream.url;
                 }
             }
-            // fallback to returning the first URL
-            tracing::info!(
-                "could not find any stream URL with the preferred labels, returning {:?}",
-                streams[0]
-            );
-            &streams[0].url
         }
+    }
+    // fallback to returning the first URL
+    tracing::info!(
+        "could not find any stream URL with the preferred labels, returning {:?}",
+        streams[0]
+    );
+    &streams[0].url
+}
+
+pub fn find_stream_url(marker: &Marker) -> &str {
+    match &marker.info {
+        MarkerInfo::Stash { marker } => find_stash_stream_url(marker),
         MarkerInfo::LocalFile { marker } => &marker.file_path,
     }
 }

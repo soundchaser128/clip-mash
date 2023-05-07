@@ -7,7 +7,6 @@ pub mod stash_config;
 
 use std::fmt;
 
-use camino::Utf8Path;
 use serde::{Deserialize, Serialize};
 
 use crate::{

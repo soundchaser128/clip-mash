@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     data::{
         database::{DbMarker, DbVideo, LocalVideoWithMarkers},
-        stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, FilterMode, StashMarker},
+        stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, StashMarker},
     },
     service::{clip::ClipOrder, generator::VideoResolution, Clip, MarkerId, Video, VideoId},
     util::{add_api_key, expect_file_name},
@@ -162,7 +162,7 @@ pub struct SelectedMarker {
 pub struct CreateClipsBody {
     pub clip_order: ClipOrder,
     pub clip_duration: u32,
-    pub select_mode: FilterMode,
+    // pub select_mode: FilterMode,
     pub split_clips: bool,
     pub markers: Vec<SelectedMarker>,
 }

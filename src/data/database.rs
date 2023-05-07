@@ -52,7 +52,7 @@ impl Database {
             .journal_mode(SqliteJournalMode::Wal);
 
         let pool = SqlitePool::connect_with(options).await?;
-        // sqlx::migrate!().run(&pool).await?;
+        sqlx::migrate!().run(&pool).await?;
 
         Ok(Database { pool })
     }

@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import invariant from "tiny-invariant"
-import {VideoWithMarkers, StateHelpers} from "../../types/types"
+import {VideoWithMarkers, StateHelpers, FormStage} from "../../types/types"
 import {
   HiAdjustmentsVertical,
   HiCheck,
@@ -54,7 +54,18 @@ export default function ListVideos() {
 
   const onNextStage = () => {
     actions.updateForm({
+      stage: FormStage.VideoOptions,
       videos: videos.filter((v) => v.markers.length > 0),
+      selectedMarkers: videos
+        .flatMap((m) => m.markers)
+        .map((marker) => ({
+          duration: marker.end - marker.start,
+          id: marker.id,
+          indexWithinVideo: marker.indexWithinVideo,
+          selected: true,
+          selectedRange: [marker.start, marker.end],
+          videoId: marker.videoId,
+        })),
     })
     navigate("/local/options")
   }
@@ -100,11 +111,11 @@ export default function ListVideos() {
             key={video.video.id.id}
           >
             <figure className="">
-              <video
+              {/* <video
                 className="w-full aspect-video"
                 muted
                 src={`/api/local/video/${video.video.id.id}`}
-              />
+              /> */}
             </figure>
             <div className="card-body">
               <h2 className="card-title">

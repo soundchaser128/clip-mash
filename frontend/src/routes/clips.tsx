@@ -28,15 +28,14 @@ interface Data {
 }
 
 export const loader: LoaderFunction = async () => {
-  const state = getFormState()
-  invariant(StateHelpers.isStash(state!))
+  const state = getFormState()!
+  invariant(StateHelpers.isStash(state) || StateHelpers.isLocalFiles(state))
   const response = await fetch("/api/clips", {
     method: "POST",
     body: JSON.stringify({
       clipOrder: state.clipOrder,
       clipDuration: state.clipDuration,
       markers: state.selectedMarkers,
-      selectMode: state.selectMode,
       splitClips: state.splitClips,
     }),
     headers: {"content-type": "application/json"},

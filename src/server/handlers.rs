@@ -182,7 +182,7 @@ pub mod stash {
     use crate::{
         data::stash_api::{FilterMode, StashApi},
         server::{
-            dtos::{MarkerDto, PerformerDto, StashScene, TagDto, VideoDto},
+            dtos::{MarkerDto, PerformerDto, StashScene, TagDto},
             error::AppError,
         },
         service::stash_config::Config,

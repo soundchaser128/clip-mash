@@ -61,6 +61,12 @@ export interface LocalVideosFormState {
   videos?: VideoWithMarkers[]
   localVideoPath?: string
   recurse?: boolean
+  clipOrder?: "random" | "scene-order"
+  clipDuration?: number
+  outputResolution?: "720" | "1080" | "4K"
+  outputFps?: number
+  selectedMarkers?: SelectedMarker[]
+  splitClips?: boolean
 }
 
 export interface Marker {

@@ -111,12 +111,11 @@ export default function EditVideoModal() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [formMode, setFormMode] = useState<FormMode>("hidden")
   const [videoDuration, setVideoDuration] = useState<number>()
+  const [editedMarker, setEditedMarker] = useState<Marker>()
 
   const segments = getSegments(videoDuration, markers)
   const markerStart = watch("start")
   const markerEnd = watch("end")
-
-  console.log(markers)
 
   const onSubmit = async (values: Inputs) => {
     const index =
@@ -146,14 +145,24 @@ export default function EditVideoModal() {
     setValue("start", marker?.start || start)
     setValue("end", marker?.end || start + 15)
     setValue("title", marker?.primaryTag || "")
+
+    if (marker) {
+      setEditedMarker(marker)
+    }
   }
 
   const onSetCurrentTime = (field: "start" | "end") => {
     setValue(field, videoRef.current?.currentTime || 0)
   }
 
-  const onRemoveMarker = () => {
-    // TODO
+  const onRemoveMarker = async () => {
+    const toRemove = editedMarker!.id
+    setMarkers((draft) => {
+      const idx = draft.findIndex((m) => m.id.id === toRemove.id)
+      draft.splice(idx, 1)
+    })
+    await fetch(`/api/local/video/marker/${toRemove.id}`, {method: "DELETE"})
+    setFormMode("hidden")
   }
 
   const onDone = () => {
@@ -289,7 +298,7 @@ export default function EditVideoModal() {
                 </div>
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex justify-between mt-2">
                 {formMode === "edit" ? (
                   <button
                     onClick={onRemoveMarker}
@@ -302,7 +311,7 @@ export default function EditVideoModal() {
                 ) : (
                   <div />
                 )}
-                <div className="btn-group mt-4">
+                <div className="btn-group">
                   <button
                     onClick={() => setFormMode("hidden")}
                     className="btn btn-secondary"

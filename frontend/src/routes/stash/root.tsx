@@ -26,8 +26,6 @@ const StashRoot: React.FC = () => {
       navigate("/")
     }
   }
-  invariant(StateHelpers.isStash(state.data))
-
   const stage = state.data.stage
   const navigate = useNavigate()
   const navigation = useNavigation()

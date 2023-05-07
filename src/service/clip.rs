@@ -257,10 +257,10 @@ impl<'a> ClipService<'a> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        data::database::{DbMarker, DbVideo},
-        service::{Marker, MarkerId, MarkerInfo, Video, VideoId, VideoInfo},
+        data::database::DbMarker,
+        service::{Marker, MarkerId, MarkerInfo, VideoId},
     };
-    use fake::faker::lorem::en::*;
+
     use fake::{faker::filesystem::en::FilePath, Fake, Faker};
     use nanoid::nanoid;
 

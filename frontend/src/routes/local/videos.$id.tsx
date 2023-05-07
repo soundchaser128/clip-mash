@@ -1,4 +1,4 @@
-import {format, getMilliseconds, parse} from "date-fns"
+import {format, formatDuration, getMilliseconds, parse} from "date-fns"
 import {VideoWithMarkers, Marker} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
@@ -10,6 +10,7 @@ import {
   HiPlus,
   HiTag,
   HiCheck,
+  HiPencilSquare,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
 import {getSegmentColor} from "../../helpers"
@@ -115,8 +116,9 @@ export default function EditVideoModal() {
   const markerStart = watch("start")
   const markerEnd = watch("end")
 
+  console.log(markers)
+
   const onSubmit = async (values: Inputs) => {
-    // TODO
     const index =
       formMode === "create"
         ? markers.length + 1
@@ -245,10 +247,11 @@ export default function EditVideoModal() {
 
                   <button
                     onClick={() => onSetCurrentTime("start")}
-                    className="btn btn-square"
+                    className="btn"
                     type="button"
                   >
-                    <HiClock />
+                    <HiClock className="mr-2" />
+                    Set current time
                   </button>
                 </div>
               </div>
@@ -277,10 +280,11 @@ export default function EditVideoModal() {
 
                   <button
                     onClick={() => onSetCurrentTime("end")}
-                    className="btn btn-square"
+                    className="btn"
                     type="button"
                   >
-                    <HiClock />
+                    <HiClock className="mr-2" />
+                    Set current time
                   </button>
                 </div>
               </div>
@@ -298,7 +302,7 @@ export default function EditVideoModal() {
                 ) : (
                   <div />
                 )}
-                <div className="btn-group">
+                <div className="btn-group mt-4">
                   <button
                     onClick={() => setFormMode("hidden")}
                     className="btn btn-secondary"
@@ -319,16 +323,38 @@ export default function EditVideoModal() {
           {formMode === "hidden" && (
             <div>
               <h2 className="text-xl font-bold mb-2">Markers</h2>
-              <ul>
-                {markers.map((m) => (
-                  <li key={m.id.id}>
-                    <strong>
-                      {formatSeconds(m.start)} - {formatSeconds(m.end)}:
-                    </strong>{" "}
-                    {m.primaryTag}
-                  </li>
-                ))}
-              </ul>
+              <div className="overflow-x-auto">
+                <table className="table table-compact w-full">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>Tag</th>
+                      <th>Start</th>
+                      <th>End</th>
+                      <th>Edit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {markers.map((marker, idx) => (
+                      <tr key={marker.id.id}>
+                        <td>{idx + 1}</td>
+                        <td className="font-bold">{marker.primaryTag}</td>
+                        <td>{formatSeconds(marker.start)}</td>
+                        <td>{formatSeconds(marker.end)}</td>
+                        <td className="">
+                          <button
+                            onClick={() => onShowForm(marker)}
+                            type="button"
+                            className="btn btn-sm btn-square btn-primary"
+                          >
+                            <HiPencilSquare className="inline" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
           <div className="w-full flex justify-between">
@@ -344,9 +370,9 @@ export default function EditVideoModal() {
               <span />
             )}
 
-            <button onClick={onDone} className="btn btn-success">
+            <button onClick={onDone} className="btn">
               <HiCheck className="mr-2" />
-              Done
+              Close
             </button>
           </div>
         </div>

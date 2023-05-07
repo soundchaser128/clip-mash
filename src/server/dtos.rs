@@ -8,9 +8,7 @@ use crate::{
         database::{DbMarker, DbVideo, LocalVideoWithMarkers},
         stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, FilterMode, StashMarker},
     },
-    service::{
-        clip::ClipOrder, generator::VideoResolution, Clip, MarkerId, Video, VideoId, VideoInfo,
-    },
+    service::{clip::ClipOrder, generator::VideoResolution, Clip, MarkerId, Video, VideoId},
     util::{add_api_key, expect_file_name},
 };
 

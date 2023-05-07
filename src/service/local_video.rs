@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+
 use crate::{
     data::database::{Database, DbVideo, LocalVideoWithMarkers},
     Result,
@@ -52,6 +54,8 @@ pub async fn list_videos(
             }
         }
     }
+
+    videos.sort_by_key(|v| Reverse(v.markers.len()));
 
     Ok(videos)
 }

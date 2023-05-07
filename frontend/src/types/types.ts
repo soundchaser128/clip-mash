@@ -1,7 +1,7 @@
 export interface Tag {
   name: string
   id: string
-  count: number
+  markerCount: number
 }
 
 export interface Performer {
@@ -23,10 +23,25 @@ export enum FormStage {
   Wait = 6,
 }
 
-export interface SelectedMarker {
+export type IdSource = "stash" | "localFile"
+
+export interface MarkerId {
+  type: IdSource
+  id: number
+}
+
+export interface VideoId {
+  type: IdSource
   id: string
-  duration: number
+}
+
+export interface SelectedMarker {
+  id: MarkerId
+  videoId: VideoId
+  selectedRange: [number, number]
+  indexWithinVideo: number
   selected: boolean
+  duration: number
 }
 
 export type SelectMode = "tags" | "performers" | "scenes"
@@ -48,6 +63,22 @@ export interface LocalVideosFormState {
   recurse?: boolean
 }
 
+export interface Marker {
+  id: MarkerId
+  primaryTag: string
+  streamUrl: string
+  screenshotUrl: string
+  start: number
+  end: number
+  sceneTitle?: string
+  performers: string[]
+  fileName?: string
+  sceneInteractive: boolean
+  tags: string[]
+  indexWithinVideo: number
+  videoId: VideoId
+}
+
 export interface StashFormState {
   source: "stash"
   selectMode?: SelectMode
@@ -57,7 +88,7 @@ export interface StashFormState {
   outputResolution?: "720" | "1080" | "4K"
   outputFps?: number
   selectedMarkers?: SelectedMarker[]
-  markers?: unknown[]
+  markers?: Marker[]
   fileName?: string
   clips?: Clip[]
   splitClips?: boolean
@@ -82,10 +113,12 @@ export const StateHelpers = {
 }
 
 export interface Clip {
-  markerId: string
-  sceneId: string
+  source: "stash" | "localFiles"
+  videoId: VideoId
+  markerId: MarkerId
   range: [number, number]
-  markerIndex: number
+  indexWithinVideo: number
+  indexWithinMarker: number
 }
 
 export interface Scene {
@@ -104,12 +137,5 @@ export interface LocalVideoDto {
   id: string
   fileName: string
   interactive: boolean
-  markers: MarkerDto[]
-}
-
-export interface MarkerDto {
-  id: number
-  startTime: number
-  endTime: number
-  title: string
+  markers: Marker[]
 }

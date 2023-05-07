@@ -1,5 +1,5 @@
 import {format, getMilliseconds, parse} from "date-fns"
-import {LocalVideoDto, MarkerDto} from "../../types/types"
+import {LocalVideoDto, Marker} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
 import {useForm, Controller} from "react-hook-form"
@@ -21,9 +21,10 @@ import {
   useRouteLoaderData,
 } from "react-router-dom"
 interface Inputs {
+  id?: number
   title: string
-  startTime: number
-  endTime: number
+  start: number
+  end: number
 }
 
 function formatSeconds(seconds?: number): string {
@@ -41,14 +42,14 @@ interface Segment {
 
 function getSegments(
   duration: number | undefined,
-  markers: MarkerDto[]
+  markers: Marker[]
 ): Segment[] {
   if (typeof duration !== "undefined" && !isNaN(duration)) {
     const totalDuration = duration
     const result = []
     for (const marker of markers) {
-      const offset = (marker.startTime / totalDuration) * 100
-      const seconds = marker.endTime - marker.startTime
+      const offset = (marker.start / totalDuration) * 100
+      const seconds = marker.end - marker.start
       const width = (seconds / totalDuration) * 100
       result.push({
         offset,
@@ -69,18 +70,21 @@ interface CreateMarker {
   startTime: number
   endTime: number
   title: string
+  indexWithinVideo: number
 }
 
 async function persistMarker(
   videoId: string,
   marker: Inputs,
-  duration: number
-): Promise<MarkerDto> {
+  duration: number,
+  index: number
+): Promise<Marker> {
   const payload = {
-    startTime: Math.max(marker.startTime, 0),
-    endTime: Math.min(marker.endTime, duration),
+    startTime: Math.max(marker.start, 0),
+    endTime: Math.min(marker.end, duration),
     title: marker.title.trim(),
     videoId,
+    indexWithinVideo: index,
   } satisfies CreateMarker
 
   const response = await fetch("/api/video/marker", {
@@ -100,17 +104,27 @@ export default function EditVideoModal() {
   const video = videos.find((v) => v.id === id)!
   const revalidator = useRevalidator()
   const {register, setValue, handleSubmit, control, watch} = useForm<Inputs>({})
-  const [markers, setMarkers] = useImmer<MarkerDto[]>(video.markers!)
+  const [markers, setMarkers] = useImmer<Marker[]>(video.markers!)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [formMode, setFormMode] = useState<FormMode>("hidden")
   const [videoDuration, setVideoDuration] = useState<number>()
 
   const segments = getSegments(videoDuration, markers)
-  const markerStart = watch("startTime")
-  const markerEnd = watch("endTime")
+  const markerStart = watch("start")
+  const markerEnd = watch("end")
 
   const onSubmit = async (values: Inputs) => {
-    const newMarker = await persistMarker(video.id, values, videoDuration!)
+    // TODO
+    const index =
+      formMode === "create"
+        ? markers.length + 1
+        : markers.findIndex((m) => m.id.id === values.id)
+    const newMarker = await persistMarker(
+      video.id,
+      values,
+      videoDuration!,
+      index
+    )
     setMarkers((draft) => {
       if (formMode === "create") {
         draft.push(newMarker)
@@ -122,15 +136,15 @@ export default function EditVideoModal() {
     setFormMode("hidden")
   }
 
-  const onShowForm = (marker?: MarkerDto) => {
+  const onShowForm = (marker?: Marker) => {
     setFormMode(marker ? "edit" : "create")
     const start = videoRef.current?.currentTime || 0
-    setValue("startTime", marker?.startTime || start)
-    setValue("endTime", marker?.endTime || start + 15)
-    setValue("title", marker?.title || "")
+    setValue("start", marker?.start || start)
+    setValue("end", marker?.end || start + 15)
+    setValue("title", marker?.primaryTag || "")
   }
 
-  const onSetCurrentTime = (field: "startTime" | "endTime") => {
+  const onSetCurrentTime = (field: "start" | "end") => {
     setValue(field, videoRef.current?.currentTime || 0)
   }
 
@@ -212,7 +226,7 @@ export default function EditVideoModal() {
                 <div className="input-group w-full">
                   <Controller
                     control={control}
-                    name="startTime"
+                    name="start"
                     render={({field}) => {
                       return (
                         <input
@@ -228,7 +242,7 @@ export default function EditVideoModal() {
                   />
 
                   <button
-                    onClick={() => onSetCurrentTime("startTime")}
+                    onClick={() => onSetCurrentTime("start")}
                     className="btn btn-square"
                     type="button"
                   >
@@ -244,7 +258,7 @@ export default function EditVideoModal() {
                 <div className="input-group w-full">
                   <Controller
                     control={control}
-                    name="endTime"
+                    name="end"
                     render={({field}) => {
                       return (
                         <input
@@ -260,7 +274,7 @@ export default function EditVideoModal() {
                   />
 
                   <button
-                    onClick={() => onSetCurrentTime("endTime")}
+                    onClick={() => onSetCurrentTime("end")}
                     className="btn btn-square"
                     type="button"
                   >
@@ -304,9 +318,9 @@ export default function EditVideoModal() {
             <div>
               <ul>
                 {markers.map((m) => (
-                  <li key={m.id}>
-                    &apos;{m.title}&apos; from {formatSeconds(m.startTime)} -{" "}
-                    {formatSeconds(m.endTime)}
+                  <li key={m.id.id}>
+                    &apos;{m.primaryTag}&apos; from {formatSeconds(m.start)} -{" "}
+                    {formatSeconds(m.end)}
                   </li>
                 ))}
               </ul>
@@ -343,7 +357,7 @@ export default function EditVideoModal() {
                 left: `${offset}%`,
               }}
             >
-              <span className="truncate">{marker.title}</span>
+              <span className="truncate">{marker.primaryTag}</span>
             </div>
           )
         })}

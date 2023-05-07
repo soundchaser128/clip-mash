@@ -22,14 +22,16 @@ pub struct DbMarker {
     pub end_time: f64,
     pub title: String,
     pub file_path: String,
+    pub index_within_video: i64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateMarker {
     pub video_id: String,
-    pub start_time: f64,
-    pub end_time: f64,
+    pub start: f64,
+    pub end: f64,
     pub title: String,
+    pub index_within_video: i64,
 }
 
 #[derive(Debug)]
@@ -64,7 +66,7 @@ impl Database {
     pub async fn get_marker(&self, id: i64) -> Result<DbMarker> {
         let marker = sqlx::query_as!(
             DbMarker,
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video
                 FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
                 WHERE m.rowid = $1",
             id
@@ -100,6 +102,7 @@ impl Database {
                         r.title,
                         r.rowid,
                         r.file_path,
+                        r.index_within_video,
                     ) {
                         (
                             Some(video_id),
@@ -108,6 +111,7 @@ impl Database {
                             Some(title),
                             rowid,
                             file_path,
+                            Some(index),
                         ) => Some(DbMarker {
                             rowid,
                             title,
@@ -115,6 +119,7 @@ impl Database {
                             start_time,
                             end_time,
                             file_path,
+                            index_within_video: index,
                         }),
                         _ => None,
                     }
@@ -150,7 +155,7 @@ impl Database {
     pub async fn get_markers_for_video(&self, video_id: &str) -> Result<Vec<DbMarker>> {
         sqlx::query_as!(
             DbMarker,
-            "SELECT m.rowid, m.video_id, m.start_time, m.end_time, m.title, v.file_path
+            "SELECT m.rowid, m.video_id, m.start_time, m.end_time, m.title, v.file_path, m.index_within_video
             FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
             WHERE video_id = $1",
             video_id
@@ -162,25 +167,27 @@ impl Database {
 
     pub async fn persist_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
         let new_id = sqlx::query_scalar!(
-            "INSERT INTO markers (video_id, start_time, end_time, title) 
-                VALUES ($1, $2, $3, $4) 
+            "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video) 
+                VALUES ($1, $2, $3, $4, $5) 
                 ON CONFLICT DO UPDATE SET start_time = excluded.start_time, end_time = excluded.end_time, title = excluded.title
                 RETURNING rowid",
                 marker.video_id,
-                marker.start_time,
-                marker.end_time,
-                marker.title
+                marker.start,
+                marker.end,
+                marker.title,
+                marker.index_within_video,
         )
         .fetch_one(&self.pool)
         .await?;
 
         let marker = DbMarker {
             rowid: Some(new_id),
-            start_time: marker.start_time,
-            end_time: marker.end_time,
+            start_time: marker.start,
+            end_time: marker.end,
             title: marker.title,
             video_id: marker.video_id,
             file_path: "not-needed".to_string(),
+            index_within_video: marker.index_within_video,
         };
 
         info!("newly updated or inserted marker: {marker:?}");

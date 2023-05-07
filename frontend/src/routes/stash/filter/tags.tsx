@@ -22,7 +22,7 @@ function Tags() {
           <div className="card-body">
             <h2 className="card-title">{tag.name}</h2>
             <p>
-              <strong>{tag.count}</strong> markers
+              <strong>{tag.markerCount}</strong> markers
             </p>
             <div className="card-actions justify-end">
               <div className="form-control">

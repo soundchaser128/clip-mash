@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, SelectedMarker, StateHelpers} from "../types/types"
+import {FormStage, Marker, SelectedMarker, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
 import {formatDuration} from "date-fns"
 import clsx from "clsx"
@@ -18,25 +18,6 @@ import {
 import useFuse from "../hooks/useFuse"
 import invariant from "tiny-invariant"
 import {getFormState} from "../helpers"
-
-interface MarkerId {
-  type: "stash" | "localFile"
-  id: string
-}
-
-interface Marker {
-  id: MarkerId
-  primaryTag: string
-  streamUrl: string
-  screenshotUrl: string
-  start: number
-  end?: number
-  sceneTitle?: string
-  performers: string[]
-  fileName: string
-  sceneInteractive: boolean
-  tags: string[]
-}
 
 interface Data {
   markers: Marker[]
@@ -94,13 +75,20 @@ function SelectMarkers() {
         state.data.selectedMarkers?.map((m) => [m.id, m]) ||
         data.markers.map((m) => [
           m.id.id,
-          {...m, selected: true, duration: getDuration(m)} as SelectedMarker,
+          {
+            id: m.id,
+            indexWithinVideo: m.indexWithinVideo,
+            videoId: m.videoId,
+            selected: true,
+            duration: getDuration(m),
+            selectedRange: [m.start, m.end],
+          } satisfies SelectedMarker,
         ])
       return Object.fromEntries(entries)
     }
   )
   const [filter, setFilter] = useState("")
-  const [videoPreview, setVideoPreview] = useState<string>()
+  const [videoPreview, setVideoPreview] = useState<number>()
   const navigate = useNavigate()
   const markers = useFuse({
     items: data.markers,
@@ -111,7 +99,7 @@ function SelectMarkers() {
   const [maxMarkerLength, setMaxMarkerLength] = useState<number>()
   const allDisabled = Object.values(selection).every((m) => !m.selected)
 
-  const onVideoPreviewChange = (id: string, checked: boolean) => {
+  const onVideoPreviewChange = (id: number, checked: boolean) => {
     if (checked) {
       setVideoPreview(id)
     } else {
@@ -125,7 +113,7 @@ function SelectMarkers() {
       .reduce((sum, next) => sum + (next.duration || 0), 0)
   )
 
-  const onCheckboxChange = (id: string, checked: boolean) => {
+  const onCheckboxChange = (id: number, checked: boolean) => {
     setSelection((draft) => {
       draft[id].selected = checked
     })
@@ -152,11 +140,12 @@ function SelectMarkers() {
     const hasInteractiveScenes = data.markers
       .filter((m) => !!selection[m.id.id])
       .some((m) => m.sceneInteractive)
+    console.log({selectedMarkers})
 
     actions.updateForm({
       stage: FormStage.VideoOptions,
       selectedMarkers,
-      markers: data.markers,
+      markers: markers,
       interactive: hasInteractiveScenes,
     })
     navigate("/stash/video-options")
@@ -165,7 +154,7 @@ function SelectMarkers() {
   const onDurationBlur = () => {
     setSelection((draft) => {
       Object.values(draft).forEach((selectedMarker) => {
-        const marker = markers.find((m) => m.id.id === selectedMarker.id)!
+        const marker = markers.find((m) => m.id.id === selectedMarker.id.id)!
         const defaultDuration = getDuration(marker)
         const maxLen = maxMarkerLength || defaultDuration
         selectedMarker.duration =
@@ -286,7 +275,7 @@ function SelectMarkers() {
                       value={selectedMarker.duration}
                       onChange={(e) =>
                         setSelection((draft) => {
-                          draft[marker.id].duration = e.target.valueAsNumber
+                          draft[marker.id.id].duration = e.target.valueAsNumber
                         })
                       }
                       disabled={!selectedMarker.selected}
@@ -303,9 +292,9 @@ function SelectMarkers() {
                         <span className="label-text">Video preview</span>
                         <input
                           onChange={(e) =>
-                            onVideoPreviewChange(marker.id, e.target.checked)
+                            onVideoPreviewChange(marker.id.id, e.target.checked)
                           }
-                          checked={videoPreview === marker.id}
+                          checked={videoPreview === marker.id.id}
                           disabled={!selectedMarker.selected}
                           type="checkbox"
                           className="toggle ml-2"
@@ -320,7 +309,7 @@ function SelectMarkers() {
                           className="checkbox checkbox-primary ml-2"
                           checked={selectedMarker.selected}
                           onChange={(e) =>
-                            onCheckboxChange(marker.id, e.target.checked)
+                            onCheckboxChange(marker.id.id, e.target.checked)
                           }
                         />
                       </label>

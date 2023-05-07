@@ -35,8 +35,7 @@ export const loader: LoaderFunction = async () => {
     body: JSON.stringify({
       clipOrder: state.clipOrder,
       clipDuration: state.clipDuration,
-      selectedMarkers: state.selectedMarkers,
-      markers: state.markers,
+      markers: state.selectedMarkers,
       selectMode: state.selectMode,
       splitClips: state.splitClips,
     }),
@@ -75,7 +74,7 @@ function PreviewClips() {
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
   const currentClip = clips[currentClipIndex].clip
-  const streamUrl = streams[currentClip.sceneId]
+  const streamUrl = streams[currentClip.videoId.id]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
   const {actions} = useStateMachine({updateForm})
   const navigate = useNavigate()
@@ -94,7 +93,7 @@ function PreviewClips() {
     const total = clipLengths.reduce((total, len) => total + len, 0)
     const segments = clipLengths.map((len) => `${(len / total) * 100}%`)
 
-    const sceneIds = Array.from(new Set(clips.map((c) => c.clip.sceneId)))
+    const sceneIds = Array.from(new Set(clips.map((c) => c.clip.videoId.id)))
     sceneIds.sort()
     const sceneColors = new Map()
     sceneIds.forEach((id, index) => {
@@ -155,14 +154,14 @@ function PreviewClips() {
       <div className="w-full h-8 flex mt-2 gap-0.5">
         {segments.map((width, index) => {
           const clip = clips[index].clip
-          const scene = loaderData.scenes[clip.sceneId]
+          const scene = loaderData.scenes[clip.videoId.id]
           return (
             <div
               key={index}
               data-tip={`${scene.performers.join(", ")} - ${scene.title}`}
               className={clsx(
                 "h-full tooltip transition-opacity",
-                sceneColors.get(clip.sceneId),
+                sceneColors.get(clip.videoId.id),
                 index !== currentClipIndex &&
                   "bg-opacity-25 hover:bg-opacity-50"
               )}

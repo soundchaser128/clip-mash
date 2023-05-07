@@ -8,11 +8,7 @@ use crate::{
         database::{DbMarker, DbVideo, LocalVideoWithMarkers},
         stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, FilterMode, StashMarker},
     },
-    service::{
-        clip::ClipOrder,
-        generator::{find_stash_stream_url, VideoResolution},
-        Clip, MarkerId, VideoId,
-    },
+    service::{clip::ClipOrder, generator::VideoResolution, Clip, MarkerId, VideoId},
 };
 
 #[derive(Serialize, Debug)]
@@ -39,6 +35,7 @@ pub struct PerformerDto {
 #[serde(rename_all = "camelCase")]
 pub struct MarkerDto {
     pub id: MarkerId,
+    pub video_id: VideoId,
     pub primary_tag: String,
     pub stream_url: String,
     pub start: f64,
@@ -49,14 +46,14 @@ pub struct MarkerDto {
     pub scene_interactive: bool,
     pub tags: Vec<String>,
     pub screenshot_url: Option<String>,
+    pub index_within_video: usize,
 }
 
 impl From<StashMarker> for MarkerDto {
     fn from(value: StashMarker) -> Self {
-        let stream_url = find_stash_stream_url(&value).into();
         MarkerDto {
-            id: MarkerId::Stash(value.id),
-            stream_url,
+            id: MarkerId::Stash(value.id.parse().unwrap()),
+            stream_url: value.stream_url,
             primary_tag: value.primary_tag,
             start: value.start,
             end: value.end,
@@ -66,6 +63,8 @@ impl From<StashMarker> for MarkerDto {
             scene_interactive: value.scene_interactive,
             tags: value.tags,
             screenshot_url: Some(value.screenshot_url),
+            index_within_video: value.index_within_video,
+            video_id: VideoId::Stash(value.scene_id),
         }
     }
 }
@@ -86,6 +85,8 @@ impl From<DbMarker> for MarkerDto {
             stream_url: format!("TODO"),
             tags: vec![],
             screenshot_url: None,
+            index_within_video: value.index_within_video as usize,
+            video_id: VideoId::LocalFile(value.video_id),
         }
     }
 }
@@ -130,7 +131,7 @@ pub struct CreateClipsBody {
 #[serde(rename_all = "camelCase")]
 pub struct ClipsResponse {
     pub clips: Vec<Clip>,
-    pub streams: HashMap<VideoId, String>,
+    pub streams: HashMap<String, String>,
 }
 
 #[derive(Serialize, Debug)]

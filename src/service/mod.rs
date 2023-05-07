@@ -26,6 +26,7 @@ pub enum VideoInfo {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum VideoSource {
     Stash,
     LocalFile,
@@ -110,6 +111,7 @@ pub struct Marker {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Clip {
     pub source: VideoSource,
     pub video_id: VideoId,
@@ -130,7 +132,7 @@ impl Clip {
 #[serde(rename_all = "camelCase", tag = "type", content = "id")]
 pub enum MarkerId {
     LocalFile(i64),
-    Stash(String),
+    Stash(i64),
 }
 
 impl fmt::Display for MarkerId {

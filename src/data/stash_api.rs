@@ -137,6 +137,8 @@ pub struct StashMarker {
     pub scene_interactive: bool,
     pub tags: Vec<String>,
     pub screenshot_url: String,
+    pub stream_url: String,
+    pub index_within_video: usize,
 }
 
 impl StashMarker {
@@ -153,7 +155,8 @@ impl StashMarker {
         scene
             .scene_markers
             .into_iter()
-            .map(|m| StashMarker {
+            .enumerate()
+            .map(|(idx, m)| StashMarker {
                 id: m.id,
                 primary_tag: m.primary_tag.name,
                 scene_id: scene.id.clone(),
@@ -176,6 +179,8 @@ impl StashMarker {
                     .map(From::from)
                     .collect(),
                 screenshot_url: add_api_key(&m.screenshot, api_key),
+                stream_url: add_api_key(&m.stream, api_key),
+                index_within_video: idx,
             })
             .collect()
     }
@@ -188,6 +193,12 @@ impl StashMarker {
             .max_by_key(|f| OrderedFloat(f.duration))
             .map(|f| f.duration)
             .unwrap_or_default();
+        let index = m
+            .scene
+            .scene_markers
+            .iter()
+            .position(|n| m.id == n.id)
+            .expect("marker must exist within its own scene");
 
         StashMarker {
             id: m.id,
@@ -202,6 +213,8 @@ impl StashMarker {
             scene_title: m.scene.title,
             tags: m.tags.into_iter().map(|m| m.name).collect(),
             screenshot_url: add_api_key(&m.screenshot, api_key),
+            stream_url: add_api_key(&m.stream, api_key),
+            index_within_video: index,
         }
     }
 }
@@ -265,7 +278,7 @@ impl StashApi {
         Ok(scenes)
     }
 
-    pub async fn get_marker(&self, video_id: &str, marker_id: &str) -> Result<StashMarker> {
+    pub async fn get_marker(&self, video_id: &str, marker_id: i64) -> Result<StashMarker> {
         let mut scenes = self.find_scenes_by_ids(vec![video_id.parse()?]).await?;
         if scenes.len() != 1 {
             bail!("found {} scenes for ID {video_id}", scenes.len());
@@ -274,7 +287,8 @@ impl StashApi {
         if markers.is_empty() {
             bail!("no marker found for video ID {video_id} and marker ID {marker_id}")
         } else {
-            if let Some(marker) = markers.into_iter().find(|m| m.id == marker_id) {
+            let string_id = marker_id.to_string();
+            if let Some(marker) = markers.into_iter().find(|m| m.id == string_id) {
                 Ok(marker)
             } else {
                 bail!("no marker with ID {marker_id} found in scene {video_id}")

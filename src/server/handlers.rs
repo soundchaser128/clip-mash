@@ -51,9 +51,11 @@ pub mod common {
         let service = ClipService::new(&state.database, &api);
         let order = body.clip_order;
         let video_ids: HashSet<_> = body.markers.iter().map(|m| m.video_id.clone()).collect();
+        tracing::info!("found {} video IDs", video_ids.len());
         let options = service.convert_clip_options(body).await?;
         let clips = clip::get_all_clips(&options);
         let clips = clip::compile_clips(clips, order);
+        tracing::info!("generated {} clips", clips.len());
         tracing::debug!("compiled clips {clips:#?}");
         let streams = clip::get_streams(video_ids, &config)?;
         // let mut scene_ids: Vec<_> = clips.iter().map(|c| c.video_id).collect();
@@ -68,12 +70,8 @@ pub mod common {
         //     .map(Scene::from)
         //     .collect();
 
-        // Ok(Json(ClipsResponse {
-        //     clips,
-        //     streams,
-        //     scenes,
-        // }))
-        Ok(Json(ClipsResponse { clips, streams }))
+        let response = ClipsResponse { clips, streams };
+        Ok(Json(response))
     }
 
     async fn create_video_inner(

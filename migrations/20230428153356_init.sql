@@ -9,5 +9,6 @@ CREATE TABLE markers (
     start_time DOUBLE PRECISION NOT NULL,
     end_time DOUBLE PRECISION NOT NULL,
     title VARCHAR NOT NULL,
+    index_within_video INTEGER NOT NULL,
     PRIMARY KEY (video_id, start_time, end_time)
 );

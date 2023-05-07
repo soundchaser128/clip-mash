@@ -150,7 +150,7 @@ impl<'a> ClipService<'a> {
             MarkerId::Stash(marker_id) => {
                 let marker = self
                     .stash_api
-                    .get_marker(video_id.as_stash_id(), marker_id)
+                    .get_marker(video_id.as_stash_id(), *marker_id)
                     .await?;
                 Ok(MarkerInfo::Stash { marker })
             }
@@ -274,6 +274,7 @@ mod tests {
                     title: Faker.fake(),
                     video_id: Faker.fake(),
                     file_path: FilePath().fake(),
+                    index_within_video: index as i64,
                 },
             },
         }
@@ -337,20 +338,20 @@ mod tests {
 pub fn get_streams(
     video_ids: HashSet<VideoId>,
     config: &Config,
-) -> Result<HashMap<VideoId, String>> {
+) -> Result<HashMap<String, String>> {
     let mut urls = HashMap::new();
 
     for id in video_ids {
         match id {
             VideoId::LocalFile(_) => {
                 let url = format!("/api/local/video/{id}");
-                urls.insert(id, url);
+                urls.insert(id.to_string(), url);
             }
             VideoId::Stash(_) => {
                 let mut url = Url::parse(&config.stash_url)?;
                 url.set_path(&format!("/scene/{id}/stream"));
                 url.query_pairs_mut().append_pair("apikey", &config.api_key);
-                urls.insert(id, url.to_string());
+                urls.insert(id.to_string(), url.to_string());
             }
         }
     }

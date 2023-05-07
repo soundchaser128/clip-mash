@@ -4,59 +4,61 @@ use crate::{
 };
 use color_eyre::eyre::bail;
 use graphql_client::{GraphQLQuery, Response};
-use itertools::Itertools;
+use ordered_float::OrderedFloat;
 use reqwest::Client;
 use serde::Deserialize;
 
 use self::{
     find_markers_query::{
         CriterionModifier, FindFilterType, FindMarkersQueryFindSceneMarkersSceneMarkers,
+        FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneMarkers,
         FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams,
         HierarchicalMultiCriterionInput, MultiCriterionInput, SceneMarkerFilterType,
     },
     find_performers_query::FindPerformersQueryFindPerformersPerformers,
     find_scenes_query::{
-        FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneStreams,
+        FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
+        FindScenesQueryFindScenesScenesSceneStreams,
     },
     find_tags_query::FindTagsQueryFindTagsTags,
 };
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "../graphql/schema.json",
-    query_path = "../graphql/find_tags.graphql",
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/find_tags.graphql",
     response_derives = "Debug"
 )]
 pub struct FindTagsQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "../graphql/schema.json",
-    query_path = "../graphql/find_markers.graphql",
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/find_markers.graphql",
     response_derives = "Debug, Clone"
 )]
 pub struct FindMarkersQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "../graphql/schema.json",
-    query_path = "../graphql/find_performers.graphql",
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/find_performers.graphql",
     response_derives = "Debug"
 )]
 pub struct FindPerformersQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "../graphql/schema.json",
-    query_path = "../graphql/find_scenes.graphql",
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/find_scenes.graphql",
     response_derives = "Debug, Clone"
 )]
 pub struct FindScenesQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "../graphql/schema.json",
-    query_path = "../graphql/health_check.graphql",
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/health_check.graphql",
     response_derives = "Debug"
 )]
 struct HealthCheckQuery;
@@ -93,6 +95,33 @@ impl From<FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams> for Sce
     }
 }
 
+trait MarkerInfo {
+    fn start(&self) -> f64;
+}
+
+impl MarkerInfo for &FindScenesQueryFindScenesScenesSceneMarkers {
+    fn start(&self) -> f64 {
+        self.seconds
+    }
+}
+
+impl MarkerInfo for &FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneMarkers {
+    fn start(&self) -> f64 {
+        self.seconds
+    }
+}
+
+fn compute_end<M>(start: f64, markers: impl IntoIterator<Item = M>, duration: f64) -> f64
+where
+    M: MarkerInfo,
+{
+    markers
+        .into_iter()
+        .find(|m| m.start() > start)
+        .map(|m| m.start())
+        .unwrap_or(duration)
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct StashMarker {
     pub id: String,
@@ -110,14 +139,14 @@ pub struct StashMarker {
 
 impl StashMarker {
     fn from_scene(scene: FindScenesQueryFindScenesScenes, _api_key: &str) -> Vec<Self> {
-        use ordered_float::OrderedFloat;
-
         let duration = scene
             .files
             .iter()
             .max_by_key(|f| OrderedFloat(f.duration))
             .map(|f| f.duration)
             .unwrap_or_default();
+
+        let markers = scene.scene_markers.clone();
 
         scene
             .scene_markers
@@ -129,15 +158,15 @@ impl StashMarker {
                 scene_interactive: scene.interactive,
                 scene_title: scene.title.clone(),
                 tags: m.tags.into_iter().map(|t| t.name).collect(),
-                performers: scene.performers.into_iter().map(|p| p.name).collect(),
-                file_name: scene.files.get(0).map(|f| f.basename),
+                performers: scene
+                    .performers
+                    .clone()
+                    .into_iter()
+                    .map(|p| p.name)
+                    .collect(),
+                file_name: scene.files.get(0).map(|f| f.basename.clone()),
                 start: m.seconds,
-                end: scene
-                    .scene_markers
-                    .iter()
-                    .find(|n| m.seconds > n.seconds)
-                    .map(|n| n.seconds)
-                    .unwrap_or(duration),
+                end: compute_end(m.seconds, &markers, duration),
                 streams: scene
                     .scene_streams
                     .clone()
@@ -149,12 +178,26 @@ impl StashMarker {
     }
 
     fn from_marker(m: FindMarkersQueryFindSceneMarkersSceneMarkers, _api_key: &str) -> Self {
+        let duration = m
+            .scene
+            .files
+            .iter()
+            .max_by_key(|f| OrderedFloat(f.duration))
+            .map(|f| f.duration)
+            .unwrap_or_default();
+
         StashMarker {
             id: m.id,
             primary_tag: m.primary_tag.name,
-            start: m.seconds,
             scene_id: m.scene.id,
             streams: m.scene.scene_streams.into_iter().map(From::from).collect(),
+            start: m.seconds,
+            end: compute_end(m.seconds, &m.scene.scene_markers, duration),
+            file_name: m.scene.files.into_iter().map(|f| f.basename).next(),
+            performers: m.scene.performers.into_iter().map(|p| p.name).collect(),
+            scene_interactive: m.scene.interactive,
+            scene_title: m.scene.title,
+            tags: m.tags.into_iter().map(|m| m.name).collect(),
         }
     }
 }

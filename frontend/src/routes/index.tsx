@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useNavigate} from "react-router-dom"
 import {updateForm} from "./actions"
-import {VideoSource} from "../types/types"
+import {FormStage, FormState, VideoSource} from "../types/types"
 import {nanoid} from "nanoid"
 import Layout from "../components/Layout"
 
@@ -9,10 +9,17 @@ export default function InitialRoot() {
   const navigate = useNavigate()
   const {actions} = useStateMachine({updateForm})
   const onNextStage = (mode: VideoSource) => {
-    actions.updateForm({
+    const update = {
       source: mode,
       id: nanoid(8),
-    })
+    } as Partial<FormState>
+    if (mode === "stash") {
+      // @ts-expect-error fixme
+      update.stage = FormStage.SelectMode
+    }
+
+    actions.updateForm(update)
+
     navigate(mode === "local-files" ? "/local/path" : "/stash/mode")
   }
 

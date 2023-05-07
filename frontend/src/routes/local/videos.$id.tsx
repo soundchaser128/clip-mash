@@ -1,5 +1,5 @@
 import {format, getMilliseconds, parse} from "date-fns"
-import {LocalVideoDto, Marker} from "../../types/types"
+import {VideoWithMarkers, Marker} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
 import {useForm, Controller} from "react-hook-form"
@@ -67,8 +67,8 @@ type FormMode = "hidden" | "create" | "edit"
 
 interface CreateMarker {
   videoId: string
-  startTime: number
-  endTime: number
+  start: number
+  end: number
   title: string
   indexWithinVideo: number
 }
@@ -80,14 +80,14 @@ async function persistMarker(
   index: number
 ): Promise<Marker> {
   const payload = {
-    startTime: Math.max(marker.start, 0),
-    endTime: Math.min(marker.end, duration),
+    start: Math.max(marker.start, 0),
+    end: Math.min(marker.end, duration),
     title: marker.title.trim(),
     videoId,
     indexWithinVideo: index,
   } satisfies CreateMarker
 
-  const response = await fetch("/api/video/marker", {
+  const response = await fetch("/api/local/video/marker", {
     method: "POST",
     body: JSON.stringify(payload),
     headers: {"Content-Type": "application/json"},
@@ -100,11 +100,13 @@ async function persistMarker(
 export default function EditVideoModal() {
   const {id} = useParams()
   const navigate = useNavigate()
-  const videos = useRouteLoaderData("video-list") as LocalVideoDto[]
-  const video = videos.find((v) => v.id === id)!
+  const videos = useRouteLoaderData("video-list") as VideoWithMarkers[]
+  const {video, markers: videoMarkers} = videos.find(
+    ({video}) => video.id.id === id
+  )!
   const revalidator = useRevalidator()
   const {register, setValue, handleSubmit, control, watch} = useForm<Inputs>({})
-  const [markers, setMarkers] = useImmer<Marker[]>(video.markers!)
+  const [markers, setMarkers] = useImmer<Marker[]>(videoMarkers)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [formMode, setFormMode] = useState<FormMode>("hidden")
   const [videoDuration, setVideoDuration] = useState<number>()
@@ -120,7 +122,7 @@ export default function EditVideoModal() {
         ? markers.length + 1
         : markers.findIndex((m) => m.id.id === values.id)
     const newMarker = await persistMarker(
-      video.id,
+      video.id.id,
       values,
       videoDuration!,
       index
@@ -179,7 +181,7 @@ export default function EditVideoModal() {
           className="w-2/3 max-h-[90vh]"
           muted
           controls
-          src={`/api/video/${video.id}`}
+          src={`/api/local/video/${video.id.id}`}
           ref={videoRef}
           onLoadedMetadata={onMetadataLoaded}
         />
@@ -316,15 +318,21 @@ export default function EditVideoModal() {
 
           {formMode === "hidden" && (
             <div>
+              <h2 className="text-xl font-bold mb-2">Markers</h2>
               <ul>
                 {markers.map((m) => (
                   <li key={m.id.id}>
-                    &apos;{m.primaryTag}&apos; from {formatSeconds(m.start)} -{" "}
-                    {formatSeconds(m.end)}
+                    <strong>
+                      {formatSeconds(m.start)} - {formatSeconds(m.end)}:
+                    </strong>{" "}
+                    {m.primaryTag}
                   </li>
                 ))}
               </ul>
-
+            </div>
+          )}
+          <div className="w-full flex justify-between">
+            {formMode === "hidden" ? (
               <button
                 onClick={() => onShowForm()}
                 className="btn btn-primary self-center"
@@ -332,13 +340,15 @@ export default function EditVideoModal() {
                 <HiTag className="w-4 h-4 mr-2" />
                 Add new marker
               </button>
-            </div>
-          )}
+            ) : (
+              <span />
+            )}
 
-          <button onClick={onDone} className="btn btn-success self-end mt-4">
-            <HiCheck className="mr-2" />
-            Done
-          </button>
+            <button onClick={onDone} className="btn btn-success">
+              <HiCheck className="mr-2" />
+              Done
+            </button>
+          </div>
         </div>
       </div>
       <div className="w-full h-8 flex mt-2 gap-0.5 bg-gray-100 relative">

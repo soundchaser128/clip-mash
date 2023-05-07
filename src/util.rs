@@ -1,3 +1,4 @@
+use camino::Utf8Path;
 use futures::{Future, StreamExt};
 use rand::{rngs::StdRng, SeedableRng};
 use reqwest::Url;
@@ -12,19 +13,9 @@ pub fn add_api_key(url: &str, api_key: &str) -> String {
     url.to_string()
 }
 
-pub async fn parallelize<T, I, F>(futures: I, parallelism: usize) -> Vec<T>
-where
-    F: Future<Output = T>,
-    I: IntoIterator<Item = F>,
-{
-    use futures::stream;
-
-    let mut stream = stream::iter(futures).buffer_unordered(parallelism);
-
-    let mut results = vec![];
-    while let Some(result) = stream.next().await {
-        results.push(result)
-    }
-
-    results
+pub fn expect_file_name(path: &str) -> String {
+    Utf8Path::new(path)
+        .file_name()
+        .expect("path must have a file name here")
+        .to_string()
 }

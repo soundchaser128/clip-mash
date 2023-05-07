@@ -182,7 +182,7 @@ pub mod stash {
     use crate::{
         data::stash_api::{FilterMode, StashApi},
         server::{
-            dtos::{MarkerDto, PerformerDto, TagDto, VideoDto},
+            dtos::{MarkerDto, PerformerDto, StashScene, TagDto, VideoDto},
             error::AppError,
         },
         service::stash_config::Config,
@@ -257,11 +257,14 @@ pub mod stash {
     }
 
     #[axum::debug_handler]
-    pub async fn fetch_scenes() -> Result<Json<Vec<VideoDto>>, AppError> {
+    pub async fn fetch_scenes() -> Result<Json<Vec<StashScene>>, AppError> {
         let config = Config::get().await?;
         let api = StashApi::from_config(&config);
         let videos = api.find_scenes().await?;
-        let videos = videos.into_iter().map(From::from).collect();
+        let videos = videos
+            .into_iter()
+            .map(|m| StashScene::from(m, &config.api_key))
+            .collect();
         Ok(Json(videos))
     }
 

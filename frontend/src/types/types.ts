@@ -58,7 +58,7 @@ export interface InitialFormState {
 export interface LocalVideosFormState {
   source: "local-files"
   id: string
-  videos?: LocalVideoDto[]
+  videos?: VideoWithMarkers[]
   localVideoPath?: string
   recurse?: boolean
 }
@@ -127,15 +127,26 @@ export interface VideoDto {
   // studio?: string
   // imageUrl: string
   performers: string[]
+  fileName: string
   // tags: string[]
   // markerCount: number
-  // interactive: boolean
+  interactive: boolean
   // rating?: number
 }
 
-export interface LocalVideoDto {
-  id: string
-  fileName: string
-  interactive: boolean
+export interface VideoWithMarkers {
+  video: VideoDto
   markers: Marker[]
+}
+
+export interface Scene {
+  id: string
+  performers: string[]
+  imageUrl: string
+  title: string
+  studio: string
+  tags: string[]
+  rating?: number
+  interactive: boolean
+  markerCount: number
 }

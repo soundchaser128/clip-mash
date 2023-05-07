@@ -289,22 +289,6 @@ mod tests {
         }
     }
 
-    #[allow(unused)]
-    fn create_video() -> Video {
-        Video {
-            id: VideoId::LocalFile(nanoid!(8)),
-            title: Sentence(4..12).fake(),
-            interactive: Faker.fake(),
-            info: VideoInfo::LocalFile {
-                video: DbVideo {
-                    file_path: FilePath().fake(),
-                    id: Faker.fake(),
-                    interactive: Faker.fake(),
-                },
-            },
-        }
-    }
-
     #[test]
     fn test_get_clips() {
         let options = CreateClipsOptions {

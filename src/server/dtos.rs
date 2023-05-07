@@ -11,6 +11,7 @@ use crate::{
     service::{
         clip::ClipOrder, generator::VideoResolution, Clip, MarkerId, Video, VideoId, VideoInfo,
     },
+    util::{add_api_key, expect_file_name},
 };
 
 #[derive(Serialize, Debug)]
@@ -94,10 +95,13 @@ impl From<DbMarker> for MarkerDto {
 }
 
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct VideoDto {
     pub id: VideoId,
     pub title: String,
     pub performers: Vec<String>,
+    pub file_name: String,
+    pub interactive: bool,
 }
 
 impl From<FindScenesQueryFindScenesScenes> for VideoDto {
@@ -109,6 +113,12 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
                 .or(value.files.get(0).map(|m| m.basename.clone()))
                 .unwrap_or_default(),
             performers: value.performers.into_iter().map(|p| p.name).collect(),
+            file_name: value
+                .files
+                .get(0)
+                .map(|f| f.basename.clone())
+                .unwrap_or_default(),
+            interactive: value.interactive,
         }
     }
 }
@@ -122,6 +132,8 @@ impl From<DbVideo> for VideoDto {
                 .map(From::from)
                 .unwrap_or_default(),
             performers: vec![],
+            interactive: value.interactive,
+            file_name: expect_file_name(&value.file_path),
         }
     }
 }
@@ -131,12 +143,9 @@ impl From<Video> for VideoDto {
         VideoDto {
             id: value.id,
             title: value.title,
-            performers: match value.info {
-                VideoInfo::Stash { scene } => {
-                    scene.performers.into_iter().map(|p| p.name).collect()
-                }
-                VideoInfo::LocalFile { video } => vec![],
-            },
+            performers: value.performers,
+            file_name: value.file_name,
+            interactive: value.interactive,
         }
     }
 }
@@ -192,4 +201,34 @@ pub struct CreateVideoBody {
     pub markers: Vec<SelectedMarker>,
     pub output_resolution: VideoResolution,
     pub output_fps: u32,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct StashScene {
+    pub id: String,
+    pub performers: Vec<String>,
+    pub image_url: Option<String>,
+    pub title: String,
+    pub studio: Option<String>,
+    pub tags: Vec<String>,
+    pub rating: Option<i64>,
+    pub interactive: bool,
+    pub marker_count: usize,
+}
+
+impl StashScene {
+    pub fn from(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Self {
+        StashScene {
+            id: scene.id,
+            performers: scene.performers.into_iter().map(|p| p.name).collect(),
+            image_url: scene.paths.screenshot.map(|url| add_api_key(&url, api_key)),
+            title: scene.title.unwrap_or_default(),
+            studio: scene.studio.map(|s| s.name),
+            tags: scene.tags.into_iter().map(|t| t.name).collect(),
+            rating: scene.rating100,
+            interactive: scene.interactive,
+            marker_count: scene.scene_markers.len(),
+        }
+    }
 }

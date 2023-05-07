@@ -26,6 +26,7 @@ pub struct DbMarker {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateMarker {
     pub video_id: String,
     pub start: f64,

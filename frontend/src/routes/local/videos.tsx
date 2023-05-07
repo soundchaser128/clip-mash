@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import invariant from "tiny-invariant"
-import {LocalVideoDto, StateHelpers} from "../../types/types"
+import {VideoWithMarkers, StateHelpers} from "../../types/types"
 import {
   HiAdjustmentsVertical,
   HiCheck,
@@ -30,7 +30,7 @@ export const loader: LoaderFunction = async () => {
     recurse: formState.recurse ? "true" : "false",
   })
 
-  const response = await fetch(`/api/video?${params.toString()}`, {
+  const response = await fetch(`/api/local/video?${params.toString()}`, {
     method: "POST",
   })
   const data = await response.json()
@@ -40,16 +40,16 @@ export const loader: LoaderFunction = async () => {
 export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
-  const initialVideos = useLoaderData() as LocalVideoDto[]
-  const [videos, setVideos] = useImmer<LocalVideoDto[]>(initialVideos)
+  const initialVideos = useLoaderData() as VideoWithMarkers[]
+  const [videos, setVideos] = useImmer<VideoWithMarkers[]>(initialVideos)
   const navigate = useNavigate()
 
   useEffect(() => {
     setVideos(initialVideos)
   }, [initialVideos])
 
-  const onOpenModal = (video: LocalVideoDto) => {
-    navigate(`/local/videos/${video.id}`)
+  const onOpenModal = ({video}: VideoWithMarkers) => {
+    navigate(`/local/videos/${video.id.id}`)
   }
 
   const onNextStage = () => {
@@ -97,25 +97,25 @@ export default function ListVideos() {
         {videos.map((video) => (
           <article
             className="card card-compact bg-base-100 shadow-xl"
-            key={video.fileName}
+            key={video.video.id.id}
           >
             <figure className="">
               <video
                 className="w-full aspect-video"
                 muted
-                src={`/api/video/${video.id}`}
+                src={`/api/local/video/${video.video.id.id}`}
               />
             </figure>
             <div className="card-body">
               <h2 className="card-title">
-                <span className="truncate">{video.fileName}</span>
+                <span className="truncate">{video.video.fileName}</span>
               </h2>
               <ul className="flex flex-col gap-2 self-start">
                 <li>
                   <HiAdjustmentsVertical className="inline mr-2" />
                   Interactive:{" "}
                   <strong>
-                    {video.interactive ? (
+                    {video.video.interactive ? (
                       <HiCheck className="text-green-600 inline" />
                     ) : (
                       <HiXMark className="text-red-600 inline" />

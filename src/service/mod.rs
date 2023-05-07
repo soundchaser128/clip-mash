@@ -10,9 +10,12 @@ use std::fmt;
 use camino::Utf8Path;
 use serde::{Deserialize, Serialize};
 
-use crate::data::{
-    database::{DbMarker, DbVideo},
-    stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, StashMarker},
+use crate::{
+    data::{
+        database::{DbMarker, DbVideo},
+        stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, StashMarker},
+    },
+    util::expect_file_name,
 };
 
 #[derive(Debug, Clone)]
@@ -37,19 +40,22 @@ pub struct Video {
     pub id: VideoId,
     pub title: String,
     pub interactive: bool,
+    pub file_name: String,
+    pub performers: Vec<String>,
     pub info: VideoInfo,
 }
 
 impl From<DbVideo> for Video {
     fn from(value: DbVideo) -> Self {
+        let file_name = expect_file_name(&value.file_path);
+
         Video {
             id: VideoId::LocalFile(value.id.clone()),
             interactive: value.interactive,
-            title: Utf8Path::new(&value.file_path)
-                .file_name()
-                .expect("must have a file name")
-                .to_string(),
+            title: file_name.clone(),
             info: VideoInfo::LocalFile { video: value },
+            file_name,
+            performers: vec![],
         }
     }
 }
@@ -59,6 +65,18 @@ impl From<FindScenesQueryFindScenesScenes> for Video {
         Video {
             id: VideoId::Stash(value.id.clone()),
             interactive: value.interactive,
+            file_name: value
+                .files
+                .get(0)
+                .clone()
+                .map(|f| f.basename.clone())
+                .unwrap_or_default(),
+            performers: value
+                .performers
+                .clone()
+                .into_iter()
+                .map(|p| p.name)
+                .collect(),
             title: value
                 .title
                 .clone()

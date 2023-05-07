@@ -6,7 +6,7 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom"
-import {Clip, FormStage, Scene, StateHelpers} from "../types/types"
+import {Clip, FormStage, VideoDto, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import clsx from "clsx"
@@ -18,13 +18,13 @@ import {getFormState, getSegmentColor} from "../helpers"
 interface ClipsResponse {
   clips: Clip[]
   streams: Record<string, string>
-  scenes: Scene[]
+  videos: VideoDto[]
 }
 
 interface Data {
   clips: Clip[]
   streams: Record<string, string>
-  scenes: Record<string, Scene>
+  videos: Record<string, VideoDto>
 }
 
 export const loader: LoaderFunction = async () => {
@@ -44,14 +44,14 @@ export const loader: LoaderFunction = async () => {
   if (response.ok) {
     const data: ClipsResponse = await response.json()
 
-    const scenes: Record<string, Scene> = {}
-    data.scenes.forEach((s) => {
-      scenes[s.id] = s
+    const videos: Record<string, VideoDto> = {}
+    data.videos.forEach((s) => {
+      videos[s.id.id] = s
     })
 
     return {
       ...data,
-      scenes,
+      videos,
     } satisfies Data
   } else {
     const text = await response.text()
@@ -154,11 +154,11 @@ function PreviewClips() {
       <div className="w-full h-8 flex mt-2 gap-0.5">
         {segments.map((width, index) => {
           const clip = clips[index].clip
-          const scene = loaderData.scenes[clip.videoId.id]
+          const video = loaderData.videos[clip.videoId.id]
           return (
             <div
               key={index}
-              data-tip={`${scene.performers.join(", ")} - ${scene.title}`}
+              data-tip={`${video.performers.join(", ")} - ${video.title}`}
               className={clsx(
                 "h-full tooltip transition-opacity",
                 sceneColors.get(clip.videoId.id),

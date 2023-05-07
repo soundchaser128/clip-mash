@@ -128,7 +128,7 @@ impl Clip {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", tag = "type", content = "id")]
 pub enum MarkerId {
     LocalFile(i64),
@@ -144,7 +144,7 @@ impl fmt::Display for MarkerId {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
 #[serde(rename_all = "camelCase", tag = "type", content = "id")]
 pub enum VideoId {
     LocalFile(String),

@@ -121,16 +121,16 @@ export interface Clip {
   indexWithinMarker: number
 }
 
-export interface Scene {
-  id: string
+export interface VideoDto {
+  id: VideoId
   title: string
-  studio?: string
-  imageUrl: string
+  // studio?: string
+  // imageUrl: string
   performers: string[]
-  tags: string[]
-  markerCount: number
-  interactive: boolean
-  rating?: number
+  // tags: string[]
+  // markerCount: number
+  // interactive: boolean
+  // rating?: number
 }
 
 export interface LocalVideoDto {

@@ -8,7 +8,9 @@ use crate::{
         database::{DbMarker, DbVideo, LocalVideoWithMarkers},
         stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, FilterMode, StashMarker},
     },
-    service::{clip::ClipOrder, generator::VideoResolution, Clip, MarkerId, VideoId},
+    service::{
+        clip::ClipOrder, generator::VideoResolution, Clip, MarkerId, Video, VideoId, VideoInfo,
+    },
 };
 
 #[derive(Serialize, Debug)]
@@ -93,18 +95,49 @@ impl From<DbMarker> for MarkerDto {
 
 #[derive(Serialize, Debug)]
 pub struct VideoDto {
-    // TODO
+    pub id: VideoId,
+    pub title: String,
+    pub performers: Vec<String>,
 }
 
 impl From<FindScenesQueryFindScenesScenes> for VideoDto {
-    fn from(_value: FindScenesQueryFindScenesScenes) -> Self {
-        VideoDto {}
+    fn from(value: FindScenesQueryFindScenesScenes) -> Self {
+        VideoDto {
+            id: VideoId::Stash(value.id),
+            title: value
+                .title
+                .or(value.files.get(0).map(|m| m.basename.clone()))
+                .unwrap_or_default(),
+            performers: value.performers.into_iter().map(|p| p.name).collect(),
+        }
     }
 }
 
 impl From<DbVideo> for VideoDto {
-    fn from(_value: DbVideo) -> Self {
-        VideoDto {}
+    fn from(value: DbVideo) -> Self {
+        VideoDto {
+            id: VideoId::LocalFile(value.id),
+            title: Utf8Path::new(&value.file_path)
+                .file_name()
+                .map(From::from)
+                .unwrap_or_default(),
+            performers: vec![],
+        }
+    }
+}
+
+impl From<Video> for VideoDto {
+    fn from(value: Video) -> Self {
+        VideoDto {
+            id: value.id,
+            title: value.title,
+            performers: match value.info {
+                VideoInfo::Stash { scene } => {
+                    scene.performers.into_iter().map(|p| p.name).collect()
+                }
+                VideoInfo::LocalFile { video } => vec![],
+            },
+        }
     }
 }
 
@@ -132,6 +165,7 @@ pub struct CreateClipsBody {
 pub struct ClipsResponse {
     pub clips: Vec<Clip>,
     pub streams: HashMap<String, String>,
+    pub videos: Vec<VideoDto>,
 }
 
 #[derive(Serialize, Debug)]

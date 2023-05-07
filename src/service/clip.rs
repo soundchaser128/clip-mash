@@ -178,6 +178,15 @@ impl<'a> ClipService<'a> {
         }
     }
 
+    pub async fn fetch_videos(&self, ids: &[VideoId]) -> Result<Vec<Video>> {
+        let mut videos = vec![];
+        for id in ids {
+            videos.push(self.fetch_video(id).await?);
+        }
+
+        Ok(videos)
+    }
+
     pub async fn convert_clips(&self, clips: Vec<Clip>) -> Result<Vec<(Video, Clip)>> {
         let all_video_ids: HashSet<_> = clips.iter().map(|c| &c.video_id).collect();
         let mut videos = HashMap::new();

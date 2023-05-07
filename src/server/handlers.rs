@@ -58,19 +58,22 @@ pub mod common {
         tracing::info!("generated {} clips", clips.len());
         tracing::debug!("compiled clips {clips:#?}");
         let streams = clip::get_streams(video_ids, &config)?;
-        // let mut scene_ids: Vec<_> = clips.iter().map(|c| c.video_id).collect();
-        // scene_ids.sort();
-        // scene_ids.dedup();
+        let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.clone()).collect();
+        video_ids.sort();
+        video_ids.dedup();
 
-        // tracing::debug!("scene IDs: {:?}", scene_ids);
-        // let scenes = api
-        //     .find_scenes_by_ids(scene_ids)
-        //     .await?
-        //     .into_iter()
-        //     .map(Scene::from)
-        //     .collect();
+        let videos = service
+            .fetch_videos(&video_ids)
+            .await?
+            .into_iter()
+            .map(From::from)
+            .collect();
 
-        let response = ClipsResponse { clips, streams };
+        let response = ClipsResponse {
+            clips,
+            streams,
+            videos,
+        };
         Ok(Json(response))
     }
 

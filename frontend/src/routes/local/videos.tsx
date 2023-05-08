@@ -6,7 +6,6 @@ import {
   HiCheck,
   HiChevronRight,
   HiInformationCircle,
-  HiPlay,
   HiPlayPause,
   HiTag,
   HiXMark,
@@ -146,13 +145,13 @@ export default function ListVideos() {
                   Markers: <strong>{video.markers.length}</strong>
                 </li>
               </ul>
-              <div
-                onClick={() =>
-                  setVideoPreview((id) => (id ? undefined : video.video.id.id))
-                }
-                className="card-actions justify-between"
-              >
+              <div className="card-actions justify-between">
                 <button
+                  onClick={() =>
+                    setVideoPreview((id) =>
+                      id ? undefined : video.video.id.id
+                    )
+                  }
                   className={clsx(
                     "btn btn-sm",
                     videoPreview === video.video.id.id

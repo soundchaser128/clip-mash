@@ -21,8 +21,11 @@ lazy_static! {
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 pub enum VideoResolution {
+    #[serde(rename = "720")]
     SevenTwenty,
+    #[serde(rename = "1080")]
     TenEighty,
+    #[serde(rename = "4K")]
     FourK,
 }
 

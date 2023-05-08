@@ -196,7 +196,7 @@ impl From<LocalVideoWithMarkers> for ListVideoDto {
 pub struct CreateVideoBody {
     pub file_name: String,
     pub clips: Vec<Clip>,
-    pub markers: Vec<SelectedMarker>,
+    pub selected_markers: Vec<SelectedMarker>,
     pub output_resolution: VideoResolution,
     pub output_fps: u32,
 }

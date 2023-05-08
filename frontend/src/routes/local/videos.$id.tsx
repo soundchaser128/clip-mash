@@ -1,4 +1,4 @@
-import {format, formatDuration, getMilliseconds, parse} from "date-fns"
+import {format, getMilliseconds, parse} from "date-fns"
 import {VideoWithMarkers, Marker} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
@@ -122,7 +122,7 @@ export default function EditVideoModal() {
   const onSubmit = async (values: Inputs) => {
     const index =
       formMode === "create"
-        ? markers.length + 1
+        ? markers.length
         : markers.findIndex((m) => m.id.id === editedMarker?.id.id)
 
     if (index === -1) {

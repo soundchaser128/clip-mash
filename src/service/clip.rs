@@ -233,7 +233,7 @@ impl<'a> ClipService<'a> {
     ) -> crate::Result<CompilationOptions> {
         Ok(CompilationOptions {
             clips: body.clips,
-            markers: self.convert_selected_markers(body.markers).await?,
+            markers: self.convert_selected_markers(body.selected_markers).await?,
             output_resolution: body.output_resolution,
             output_fps: body.output_fps,
             file_name: body.file_name,

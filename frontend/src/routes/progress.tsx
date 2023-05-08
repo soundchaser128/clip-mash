@@ -12,7 +12,7 @@ interface Progress {
 
 function Progress() {
   const {state} = useStateMachine()
-  invariant(StateHelpers.isStash(state.data))
+  // invariant(StateHelpers.isStash(state.data))
   const [progress, setProgress] = useState<Progress>()
   const [finished, setFinished] = useState(false)
   const [fileName, setFileName] = useState("")
@@ -21,7 +21,12 @@ function Progress() {
 
   const onSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
-    const body = JSON.stringify(state.data)
+    const data = {...state.data}
+    if (!data.fileName) {
+      data.fileName = `${data.id}.mp4`
+    }
+
+    const body = JSON.stringify(data)
     const response = await fetch("/api/create", {
       method: "POST",
       body,

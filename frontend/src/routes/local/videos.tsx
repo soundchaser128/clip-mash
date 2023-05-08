@@ -6,10 +6,12 @@ import {
   HiCheck,
   HiChevronRight,
   HiInformationCircle,
+  HiPlay,
+  HiPlayPause,
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
-import {useEffect} from "react"
+import {useEffect, useState} from "react"
 import {useImmer} from "use-immer"
 import {updateForm} from "../actions"
 import {
@@ -20,6 +22,7 @@ import {
   useNavigate,
 } from "react-router-dom"
 import {getFormState} from "../../helpers"
+import clsx from "clsx"
 
 export const loader: LoaderFunction = async () => {
   const formState = getFormState()
@@ -42,6 +45,7 @@ export default function ListVideos() {
   invariant(StateHelpers.isLocalFiles(state.data))
   const initialVideos = useLoaderData() as VideoWithMarkers[]
   const [videos, setVideos] = useImmer<VideoWithMarkers[]>(initialVideos)
+  const [videoPreview, setVideoPreview] = useState<string>()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -111,11 +115,15 @@ export default function ListVideos() {
             key={video.video.id.id}
           >
             <figure className="">
-              {/* <video
-                className="w-full aspect-video"
-                muted
-                src={`/api/local/video/${video.video.id.id}`}
-              /> */}
+              {videoPreview === video.video.id.id && (
+                <video
+                  controls
+                  autoPlay
+                  className="w-full aspect-video"
+                  muted
+                  src={`/api/local/video/${video.video.id.id}`}
+                />
+              )}
             </figure>
             <div className="card-body">
               <h2 className="card-title">
@@ -138,7 +146,24 @@ export default function ListVideos() {
                   Markers: <strong>{video.markers.length}</strong>
                 </li>
               </ul>
-              <div className="card-actions justify-end">
+              <div
+                onClick={() =>
+                  setVideoPreview((id) => (id ? undefined : video.video.id.id))
+                }
+                className="card-actions justify-between"
+              >
+                <button
+                  className={clsx(
+                    "btn btn-sm",
+                    videoPreview === video.video.id.id
+                      ? "btn-error"
+                      : "btn-success"
+                  )}
+                >
+                  <HiPlayPause className="mr-2" />
+                  {videoPreview === video.video.id.id ? "Stop" : "Preview"}
+                </button>
+
                 <button
                   className="btn btn-sm btn-primary"
                   onClick={() => onOpenModal(video)}

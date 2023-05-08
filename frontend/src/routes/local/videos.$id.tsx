@@ -11,6 +11,8 @@ import {
   HiTag,
   HiCheck,
   HiPencilSquare,
+  HiChevronLeft,
+  HiChevronRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
 import {getSegmentColor} from "../../helpers"
@@ -25,7 +27,7 @@ interface Inputs {
   id?: number
   title: string
   start: number
-  end: number
+  end?: number
 }
 
 function formatSeconds(seconds?: number): string {
@@ -82,7 +84,7 @@ async function persistMarker(
 ): Promise<Marker> {
   const payload = {
     start: Math.max(marker.start, 0),
-    end: Math.min(marker.end, duration),
+    end: Math.min(marker.end!, duration),
     title: marker.title.trim(),
     videoId,
     indexWithinVideo: index,
@@ -121,7 +123,12 @@ export default function EditVideoModal() {
     const index =
       formMode === "create"
         ? markers.length + 1
-        : markers.findIndex((m) => m.id.id === values.id)
+        : markers.findIndex((m) => m.id.id === editedMarker?.id.id)
+
+    if (index === -1) {
+      throw new Error("could not find edited marker's ID in marker array")
+    }
+
     const newMarker = await persistMarker(
       video.id.id,
       values,
@@ -143,7 +150,7 @@ export default function EditVideoModal() {
     setFormMode(marker ? "edit" : "create")
     const start = videoRef.current?.currentTime || 0
     setValue("start", marker?.start || start)
-    setValue("end", marker?.end || start + 15)
+    setValue("end", undefined)
     setValue("title", marker?.primaryTag || "")
 
     if (marker) {
@@ -205,20 +212,27 @@ export default function EditVideoModal() {
               <h2 className="text-xl font-bold">
                 {formMode === "create" ? "Add new" : "Edit"} marker
               </h2>
-              <div className="btn-group">
+              <div className="flex w-full items-baseline justify-between">
                 <button
                   type="button"
                   onClick={() => setVideoPosition(markerStart)}
                   className="btn"
                 >
+                  <HiChevronLeft className="mr-2" />
                   Go to start
                 </button>
+                Navigate
                 <button
                   type="button"
-                  onClick={() => setVideoPosition(markerEnd)}
+                  onClick={() =>
+                    typeof markerEnd !== "undefined" &&
+                    setVideoPosition(markerEnd)
+                  }
                   className="btn"
+                  disabled={typeof markerEnd === "undefined"}
                 >
                   Go to end
+                  <HiChevronRight className="ml-2" />
                 </button>
               </div>
               <div className="form-control">

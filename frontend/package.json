@@ -10,6 +10,7 @@
     "format": "prettier --write src",
     "format-check": "prettier --check src",
     "type-check": "tsc",
+    "type-check:watch": "tsc --watch",
     "lint": "eslint ."
   },
   "dependencies": {

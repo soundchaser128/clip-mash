@@ -12,7 +12,8 @@ interface Progress {
 
 function Progress() {
   const {state} = useStateMachine()
-  // invariant(StateHelpers.isStash(state.data))
+  invariant(StateHelpers.isNotInitial(state.data))
+  
   const [progress, setProgress] = useState<Progress>()
   const [finished, setFinished] = useState(false)
   const [fileName, setFileName] = useState("")
@@ -20,6 +21,8 @@ function Progress() {
   const [creatingScript, setCreatingScript] = useState(false)
 
   const onSubmit = async (e: React.MouseEvent) => {
+    invariant(StateHelpers.isNotInitial(state.data))
+
     e.preventDefault()
     const data = {...state.data}
     if (!data.fileName) {
@@ -69,7 +72,6 @@ function Progress() {
     downloadLink.current!.click()
     setCreatingScript(false)
   }
-
   const totalDuration = state.data.clips!.reduce(
     (duration, clip) => duration + (clip.range[1] - clip.range[0]),
     0

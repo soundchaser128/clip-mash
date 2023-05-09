@@ -67,6 +67,8 @@ export interface LocalVideosFormState {
   outputFps?: number
   selectedMarkers?: SelectedMarker[]
   splitClips?: boolean
+  fileName?: string
+  clips?: Clip[]
 }
 
 export interface Marker {
@@ -111,6 +113,12 @@ export const StateHelpers = {
 
   isLocalFiles(state: FormState): state is LocalVideosFormState {
     return state.source === "local-files"
+  },
+
+  isNotInitial(
+    state: FormState
+  ): state is StashFormState | LocalVideosFormState {
+    return state.source === "stash" || state.source === "local-files"
   },
 
   isInitial(state: FormState): state is InitialFormState {

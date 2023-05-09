@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, Marker, SelectedMarker, StateHelpers} from "../types/types"
+import {Marker, SelectedMarker} from "../types/types"
 import {updateForm} from "./actions"
 import {formatDuration} from "date-fns"
 import clsx from "clsx"

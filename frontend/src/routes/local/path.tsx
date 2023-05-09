@@ -1,5 +1,5 @@
 import {HiCheck} from "react-icons/hi2"
-import {StateHelpers} from "../../types/types"
+import {LocalFilesFormStage, StateHelpers} from "../../types/types"
 import {useStateMachine} from "little-state-machine"
 import {updateForm} from "../actions"
 import invariant from "tiny-invariant"
@@ -28,6 +28,7 @@ export default function SelectVideos() {
       source: "local-files",
       localVideoPath: values.path,
       recurse: values.recurse,
+      stage: LocalFilesFormStage.ListVideos,
     })
     navigate("/local/videos")
   }

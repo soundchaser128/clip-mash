@@ -35,7 +35,7 @@ export const loader: LoaderFunction = async () => {
     body: JSON.stringify({
       clipOrder: state.clipOrder,
       clipDuration: state.clipDuration,
-      markers: state.selectedMarkers,
+      markers: state.selectedMarkers!.filter((m) => m.selected),
       splitClips: state.splitClips,
     }),
     headers: {"content-type": "application/json"},

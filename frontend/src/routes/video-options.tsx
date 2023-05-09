@@ -1,7 +1,12 @@
 import {useStateMachine} from "little-state-machine"
 import {useForm} from "react-hook-form"
 import {useNavigate} from "react-router-dom"
-import {FormStage, StashFormState} from "../types/types"
+import {
+  FormStage,
+  LocalFilesFormStage,
+  StashFormState,
+  StateHelpers,
+} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight} from "react-icons/hi2"
 
@@ -28,7 +33,12 @@ function VideoOptions() {
   const doSplitClips = watch("splitClips")
 
   const onSubmit = (values: Inputs) => {
-    actions.updateForm({...values, stage: FormStage.PreviewClips})
+    actions.updateForm({
+      ...values,
+      stage: StateHelpers.isLocalFiles(state.data)
+        ? LocalFilesFormStage.PreviewClips
+        : FormStage.PreviewClips,
+    })
     navigate("/stash/clips")
   }
 

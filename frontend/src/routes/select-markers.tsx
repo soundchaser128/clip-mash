@@ -72,7 +72,7 @@ function SelectMarkers() {
     () => {
       invariant(StateHelpers.isStash(state.data))
       const entries =
-        state.data.selectedMarkers?.map((m) => [m.id, m]) ||
+        state.data.selectedMarkers?.map((m) => [m.id.id, m]) ||
         data.markers.map((m) => [
           m.id.id,
           {
@@ -87,6 +87,7 @@ function SelectMarkers() {
       return Object.fromEntries(entries)
     }
   )
+  console.log(selection)
   const [filter, setFilter] = useState("")
   const [videoPreview, setVideoPreview] = useState<number>()
   const navigate = useNavigate()
@@ -136,11 +137,10 @@ function SelectMarkers() {
   }
 
   const onNextStage = () => {
-    const selectedMarkers = Object.values(selection).filter((m) => m.selected)
+    const selectedMarkers = Object.values(selection)
     const hasInteractiveScenes = data.markers
       .filter((m) => !!selection[m.id.id])
       .some((m) => m.sceneInteractive)
-    console.log({selectedMarkers})
 
     actions.updateForm({
       stage: FormStage.VideoOptions,
@@ -224,7 +224,7 @@ function SelectMarkers() {
       )}
       <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
         {markers.map((marker) => {
-          const selectedMarker = selection[marker.id.id]!
+          const selectedMarker = selection[marker.id.id]
           return (
             <article
               key={marker.id.id}

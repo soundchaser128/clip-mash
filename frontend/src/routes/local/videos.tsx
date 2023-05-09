@@ -1,6 +1,11 @@
 import {useStateMachine} from "little-state-machine"
 import invariant from "tiny-invariant"
-import {VideoWithMarkers, StateHelpers, FormStage} from "../../types/types"
+import {
+  VideoWithMarkers,
+  StateHelpers,
+  FormStage,
+  LocalFilesFormStage,
+} from "../../types/types"
 import {
   HiAdjustmentsVertical,
   HiCheck,
@@ -57,7 +62,7 @@ export default function ListVideos() {
 
   const onNextStage = () => {
     actions.updateForm({
-      stage: FormStage.VideoOptions,
+      stage: LocalFilesFormStage.VideoOptions,
       videos: videos.filter((v) => v.markers.length > 0),
       selectedMarkers: videos
         .flatMap((m) => m.markers)

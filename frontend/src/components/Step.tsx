@@ -18,7 +18,9 @@ const Step: React.FC<StepProps> = ({children, currentStage, stage, link}) => {
     children
   )
 
-  return <li className={clsx("step", isActive && "step-primary")}>{items}</li>
+  return (
+    <li className={clsx("step w-40", isActive && "step-primary")}>{items}</li>
+  )
 }
 
 export default Step

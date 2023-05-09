@@ -14,6 +14,15 @@ export interface Performer {
   favorite: boolean
 }
 
+export enum FormStage {
+  SelectMode = 1,
+  SelectCriteria = 2,
+  SelectMarkers = 3,
+  VideoOptions = 4,
+  PreviewClips = 5,
+  Wait = 6,
+}
+
 export type IdSource = "stash" | "localFile"
 
 export interface MarkerId {
@@ -38,6 +47,8 @@ export interface SelectedMarker {
 export type SelectMode = "tags" | "performers" | "scenes"
 
 export type VideoSource = "stash" | "local-files" | undefined
+
+export type FormState = LocalVideosFormState | StashFormState | InitialFormState
 
 export interface InitialFormState {
   source: undefined
@@ -74,6 +85,39 @@ export interface Marker {
   videoId: VideoId
 }
 
+export interface StashFormState {
+  source: "stash"
+  selectMode?: SelectMode
+  selectedIds?: string[]
+  clipOrder?: "random" | "scene-order"
+  clipDuration?: number
+  outputResolution?: "720" | "1080" | "4K"
+  outputFps?: number
+  selectedMarkers?: SelectedMarker[]
+  markers?: Marker[]
+  fileName?: string
+  clips?: Clip[]
+  splitClips?: boolean
+  includeAll?: boolean
+  interactive?: boolean
+  stage: FormStage
+  id: string
+}
+
+export const StateHelpers = {
+  isStash(state: FormState): state is StashFormState {
+    return state.source === "stash"
+  },
+
+  isLocalFiles(state: FormState): state is LocalVideosFormState {
+    return state.source === "local-files"
+  },
+
+  isInitial(state: FormState): state is InitialFormState {
+    return state.source === undefined
+  },
+}
+
 export interface Clip {
   source: "stash" | "localFiles"
   videoId: VideoId
@@ -86,9 +130,14 @@ export interface Clip {
 export interface VideoDto {
   id: VideoId
   title: string
+  // studio?: string
+  // imageUrl: string
   performers: string[]
   fileName: string
+  // tags: string[]
+  // markerCount: number
   interactive: boolean
+  // rating?: number
 }
 
 export interface VideoWithMarkers {

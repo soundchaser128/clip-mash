@@ -1,8 +1,8 @@
 import "little-state-machine"
-import {State} from "./types/state"
+import {FormState} from "./types/types"
 
 declare module "little-state-machine" {
   interface GlobalState {
-    data: State
+    data: FormState
   }
 }

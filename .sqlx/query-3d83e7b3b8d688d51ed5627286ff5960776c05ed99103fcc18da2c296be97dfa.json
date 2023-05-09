@@ -1,25 +1,25 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.file_path = $1",
+  "query": "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video\n                FROM markers m INNER JOIN local_videos v ON m.video_id = v.id\n                WHERE m.rowid = $1",
   "describe": {
     "columns": [
       {
-        "name": "id",
+        "name": "rowid",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Int64"
       },
       {
-        "name": "file_path",
+        "name": "title",
         "ordinal": 1,
         "type_info": "Text"
       },
       {
-        "name": "interactive",
+        "name": "video_id",
         "ordinal": 2,
-        "type_info": "Bool"
+        "type_info": "Text"
       },
       {
-        "name": "video_id",
+        "name": "file_path",
         "ordinal": 3,
         "type_info": "Text"
       },
@@ -34,18 +34,8 @@
         "type_info": "Float"
       },
       {
-        "name": "title",
-        "ordinal": 6,
-        "type_info": "Text"
-      },
-      {
         "name": "index_within_video",
-        "ordinal": 7,
-        "type_info": "Int64"
-      },
-      {
-        "name": "rowid",
-        "ordinal": 8,
+        "ordinal": 6,
         "type_info": "Int64"
       }
     ],
@@ -56,13 +46,11 @@
       false,
       false,
       false,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true
+      false,
+      false,
+      false,
+      false
     ]
   },
-  "hash": "80088da12d49bc6455f1d9c44517c7d00668d529cb069bb84a998f52ec3d15dd"
+  "hash": "3d83e7b3b8d688d51ed5627286ff5960776c05ed99103fcc18da2c296be97dfa"
 }

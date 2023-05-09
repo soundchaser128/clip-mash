@@ -25,6 +25,6 @@ jobs:
         SQLX_OFFLINE: "true"
       run: cargo fmt --check && cargo check --verbose
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test
       env:
         SQLX_OFFLINE: "true"

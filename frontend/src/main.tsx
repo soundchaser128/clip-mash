@@ -24,7 +24,6 @@ import SelectMode from "./routes/select-mode"
 import {nanoid} from "nanoid"
 import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
 import EditVideoModal from "./routes/local/videos.$id"
-import LocalFilesRoot from "./routes/local/root"
 import StashRoot from "./routes/stash/root"
 import Layout from "./components/Layout"
 
@@ -103,7 +102,7 @@ const router = createBrowserRouter([
       },
       {
         path: "local",
-        element: <LocalFilesRoot />,
+        element: <StashRoot />,
         children: [
           {
             path: "path",

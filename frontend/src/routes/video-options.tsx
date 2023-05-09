@@ -11,7 +11,7 @@ type Inputs = Pick<
 >
 
 const defaultOptions: Inputs = {
-  clipDuration: 15,
+  clipDuration: 30,
   clipOrder: "scene-order",
   outputFps: 30,
   outputResolution: "720",

@@ -8,14 +8,94 @@ import {
 } from "react-router-dom"
 import {HiXMark} from "react-icons/hi2"
 import {resetForm} from "../actions"
-import {FormStage, StateHelpers} from "../../types/types"
-import invariant from "tiny-invariant"
+import {
+  FormStage,
+  LocalFilesFormStage,
+  LocalVideosFormState,
+  StashFormState,
+  StateHelpers,
+} from "../../types/types"
 import Layout from "../../components/Layout"
 import {getUrl} from "./filter/root"
-import Step from "../../components/Step"
+import Steps from "../../components/Steps"
+
+const StashSteps: React.FC<{state: StashFormState}> = ({state}) => {
+  return (
+    <Steps
+      currentStage={state.stage}
+      steps={[
+        {
+          stage: FormStage.SelectMode,
+          link: "/stash/mode",
+          content: "Choose mode",
+        },
+        {
+          stage: FormStage.SelectCriteria,
+          link: state.selectMode ? getUrl(state.selectMode) : "",
+          content: "Choose mode",
+        },
+        {
+          stage: FormStage.SelectMarkers,
+          link: "/stash/markers",
+          content: "Select markers",
+        },
+        {
+          stage: FormStage.VideoOptions,
+          link: "/stash/video-options",
+          content: "Video options",
+        },
+        {
+          stage: FormStage.PreviewClips,
+          link: "/stash/clips",
+          content: "Preview clips",
+        },
+        {
+          stage: FormStage.Wait,
+          link: "/stash/progress",
+          content: "Create video",
+        },
+      ]}
+    />
+  )
+}
+
+const LocalFileSteps: React.FC<{state: LocalVideosFormState}> = ({state}) => {
+  return (
+    <Steps
+      currentStage={state.stage}
+      steps={[
+        {
+          stage: LocalFilesFormStage.SelectPath,
+          link: "/local/path",
+          content: "Select file path",
+        },
+        {
+          stage: LocalFilesFormStage.ListVideos,
+          link: "/local/videos",
+          content: "Create markers",
+        },
+        {
+          stage: LocalFilesFormStage.VideoOptions,
+          link: "/stash/video-options",
+          content: "Video options",
+        },
+        {
+          stage: LocalFilesFormStage.PreviewClips,
+          link: "/stash/clips",
+          content: "Preview clips",
+        },
+        {
+          stage: LocalFilesFormStage.Wait,
+          link: "/stash/progress",
+          content: "Create video",
+        },
+      ]}
+    />
+  )
+}
 
 const StashRoot: React.FC = () => {
-  const {state, actions} = useStateMachine({resetForm})
+  const {actions, state} = useStateMachine({resetForm})
   const onReset = () => {
     if (
       confirm(
@@ -26,7 +106,6 @@ const StashRoot: React.FC = () => {
       navigate("/")
     }
   }
-  const stage = state.data.stage
   const navigate = useNavigate()
   const navigation = useNavigation()
   const isLoading = navigation.state === "loading"
@@ -39,11 +118,6 @@ const StashRoot: React.FC = () => {
     }
   }, [configExists])
 
-  let criteria = "criteria"
-  if (state.data.selectMode) {
-    criteria = state.data.selectMode
-  }
-
   return (
     <Layout isLoading={isLoading}>
       <section className="py-4 flex flex-col">
@@ -54,50 +128,10 @@ const StashRoot: React.FC = () => {
             Reset
           </button>
         </div>
-        <ul className="steps steps-vertical lg:steps-horizontal self-center mb-4">
-          <Step
-            currentStage={stage}
-            activeStage={FormStage.SelectMode}
-            link="/stash/mode"
-          >
-            Choose mode
-          </Step>
-          <Step
-            currentStage={stage}
-            activeStage={FormStage.SelectCriteria}
-            link={state.data.selectMode ? getUrl(state.data.selectMode) : ""}
-          >
-            Select {criteria}
-          </Step>
-          <Step
-            currentStage={stage}
-            activeStage={FormStage.SelectMarkers}
-            link="/stash/markers"
-          >
-            Select markers
-          </Step>
-          <Step
-            currentStage={stage}
-            activeStage={FormStage.VideoOptions}
-            link="/stash/video-options"
-          >
-            Select video options
-          </Step>
-          <Step
-            currentStage={stage}
-            activeStage={FormStage.PreviewClips}
-            link="/stash/clips"
-          >
-            Preview clips
-          </Step>
-          <Step
-            currentStage={stage}
-            activeStage={FormStage.Wait}
-            link="/stash/progress"
-          >
-            Wait for video
-          </Step>
-        </ul>
+        {StateHelpers.isStash(state.data) && <StashSteps state={state.data} />}
+        {StateHelpers.isLocalFiles(state.data) && (
+          <LocalFileSteps state={state.data} />
+        )}
         <Outlet />
       </section>
     </Layout>

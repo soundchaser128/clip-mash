@@ -1,21 +1,15 @@
 import {Link} from "react-router-dom"
-import {FormStage} from "../types/types"
 import clsx from "clsx"
 
 interface StepProps {
   children: React.ReactNode
-  currentStage: FormStage
-  activeStage: FormStage
+  stage: number
+  currentStage: number
   link: string
 }
 
-const Step: React.FC<StepProps> = ({
-  children,
-  currentStage,
-  activeStage,
-  link,
-}) => {
-  const isActive = currentStage >= activeStage
+const Step: React.FC<StepProps> = ({children, currentStage, stage, link}) => {
+  const isActive = currentStage >= stage
   const items = isActive ? (
     <Link className="link-primary underline" to={link}>
       {children}

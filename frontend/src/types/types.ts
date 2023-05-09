@@ -23,6 +23,14 @@ export enum FormStage {
   Wait = 6,
 }
 
+export enum LocalFilesFormStage {
+  SelectPath = 1,
+  ListVideos = 2,
+  VideoOptions = 3,
+  PreviewClips = 4,
+  Wait = 5,
+}
+
 export type IdSource = "stash" | "localFile"
 
 export interface MarkerId {
@@ -58,6 +66,7 @@ export interface InitialFormState {
 export interface LocalVideosFormState {
   source: "local-files"
   id: string
+  stage: LocalFilesFormStage
   videos?: VideoWithMarkers[]
   localVideoPath?: string
   recurse?: boolean
@@ -69,6 +78,7 @@ export interface LocalVideosFormState {
   splitClips?: boolean
   fileName?: string
   clips?: Clip[]
+  interactive?: boolean
 }
 
 export interface Marker {

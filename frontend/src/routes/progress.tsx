@@ -13,7 +13,7 @@ interface Progress {
 function Progress() {
   const {state} = useStateMachine()
   invariant(StateHelpers.isNotInitial(state.data))
-  
+
   const [progress, setProgress] = useState<Progress>()
   const [finished, setFinished] = useState(false)
   const [fileName, setFileName] = useState("")

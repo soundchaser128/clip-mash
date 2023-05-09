@@ -18,7 +18,6 @@ import {
 import useFuse from "../hooks/useFuse"
 import invariant from "tiny-invariant"
 import {getFormState} from "../helpers"
-import {StateHelper} from "../types/state"
 
 interface Data {
   markers: Marker[]
@@ -27,6 +26,7 @@ interface Data {
 export const loader: LoaderFunction = async () => {
   const state = getFormState()
   if (state) {
+    invariant(StateHelpers.isStash(state))
     const params = new URLSearchParams()
     params.set("selectedIds", state.selectedIds!.join(","))
     params.set("mode", state.selectMode!)
@@ -44,7 +44,6 @@ function getDuration({start, end}: Marker): number {
   if (end) {
     return end - start
   } else {
-    // TODO
     return 15
   }
 }
@@ -66,13 +65,12 @@ export function formatSeconds(s: number): string {
 
 function SelectMarkers() {
   const {actions, state} = useStateMachine({updateForm})
+  invariant(StateHelpers.isStash(state.data))
   const data = useLoaderData() as Data
-  invariant(StateHelper.isSelectStashMarkers(state.data))
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
-      invariant(StateHelper.isSelectStashMarkers(state.data))
-
+      invariant(StateHelpers.isStash(state.data))
       const entries =
         state.data.selectedMarkers?.map((m) => [m.id, m]) ||
         data.markers.map((m) => [

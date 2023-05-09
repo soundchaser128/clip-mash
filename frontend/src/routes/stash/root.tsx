@@ -24,6 +24,7 @@ const StashRoot: React.FC = () => {
       navigate("/")
     }
   }
+  const stage = state.data.stage
   const navigate = useNavigate()
   const navigation = useNavigation()
   const isLoading = navigation.state === "loading"
@@ -36,10 +37,10 @@ const StashRoot: React.FC = () => {
     }
   }, [configExists])
 
-  // let criteria = "criteria"
-  // if (state.data.selectMode) {
-  //   criteria = state.data.selectMode
-  // }
+  let criteria = "criteria"
+  if (state.data.selectMode) {
+    criteria = state.data.selectMode
+  }
 
   return (
     <Layout isLoading={isLoading}>
@@ -51,7 +52,7 @@ const StashRoot: React.FC = () => {
             Reset
           </button>
         </div>
-        {/* <ul className="steps steps-vertical lg:steps-horizontal self-center mb-4">
+        <ul className="steps steps-vertical lg:steps-horizontal self-center mb-4">
           <Step
             currentStage={stage}
             activeStage={FormStage.SelectMode}
@@ -94,7 +95,7 @@ const StashRoot: React.FC = () => {
           >
             Wait for video
           </Step>
-        </ul> */}
+        </ul>
         <Outlet />
       </section>
     </Layout>

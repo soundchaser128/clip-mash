@@ -1,3 +1,4 @@
+import {nanoid} from "nanoid"
 import {
   Clip,
   Marker,
@@ -6,7 +7,7 @@ import {
   VideoWithMarkers,
 } from "./types"
 
-type TaggedState<T extends string, U extends number> = {tag: T; index: U}
+type TaggedState<T extends string> = {tag: T}
 
 export type VideoSource = "localFiles" | "stash"
 
@@ -14,19 +15,19 @@ export interface InitialState {
   id: string
 }
 
-export type Initial = TaggedState<"Initial", 0> & InitialState
+export type Initial = TaggedState<"Initial"> & InitialState
 
 export interface SelectSourceState extends InitialState {
   source: VideoSource
 }
 
-export type SelectSource = TaggedState<"SelectSource", 1> & SelectSourceState
+export type SelectSource = TaggedState<"SelectMode"> & SelectSourceState
 
 export interface SelectStashModeState extends SelectSourceState {
   mode: SelectMode
 }
 
-export type SelectStashMode = TaggedState<"SelectStashMode", 2> &
+export type SelectStashMode = TaggedState<"SelectStashMode"> &
   SelectStashModeState
 
 export interface SelectStashCriteriaState extends SelectStashModeState {
@@ -35,7 +36,7 @@ export interface SelectStashCriteriaState extends SelectStashModeState {
   includeAll: boolean
 }
 
-export type SelectStashCriteria = TaggedState<"SelectStashCriteria", 3> &
+export type SelectStashCriteria = TaggedState<"SelectStashCriteria"> &
   SelectStashCriteriaState
 
 export interface SelectStashMarkersState extends SelectStashCriteriaState {
@@ -43,9 +44,6 @@ export interface SelectStashMarkersState extends SelectStashCriteriaState {
   markers: Marker[]
   interactive: boolean
 }
-
-export type SelectStashMarkers = TaggedState<"SelectStashMarkers", 4> &
-  SelectStashMarkersState
 
 export type ClipOrder = "random" | "scene-order"
 
@@ -58,81 +56,36 @@ export interface VideoOptionsState
   splitClips: boolean
 }
 
-export type VideoOptions = TaggedState<"VideoOptions", 5> & VideoOptionsState
+export type VideoOptions = TaggedState<"VideoOptions"> & VideoOptionsState
 
 export interface PreviewClipsState extends VideoOptions {
   clips: Clip[]
 }
 
-export type PreviewClips = TaggedState<"PreviewClips", 6> & PreviewClipsState
+export type PreviewClips = TaggedState<"PreviewClips"> & PreviewClipsState
 
-export type CreateVideo = TaggedState<"CreateVideo", 7> & PreviewClipsState
+export type CreateVideo = TaggedState<"CreateVideo"> & PreviewClipsState
 
 export interface SelectPathState extends SelectSourceState {
   localVideoPath: string
   recurse: boolean
 }
 
-export type SelectPath = TaggedState<"SelectPath", 1> & SelectPathState
+export type SelectPath = TaggedState<"SelectPath"> & SelectPathState
 
 export interface ListVideosState extends SelectPathState {
   videos: VideoWithMarkers[]
 }
 
-export type ListVideos = TaggedState<"ListVideos", 2> & ListVideosState
+export type ListVideos = TaggedState<"ListVideos"> & ListVideosState
 
 export type State =
   | Initial
   | SelectSource
   | SelectStashMode
   | SelectStashCriteria
-  | SelectStashMarkers
   | VideoOptions
   | PreviewClips
   | CreateVideo
   | SelectPath
   | ListVideos
-
-export const StateHelper = {
-  isInitial(state: State): state is Initial {
-    return state.tag == "Initial"
-  },
-
-  isSelectSource(state: State): state is SelectSource {
-    return state.tag == "SelectSource"
-  },
-
-  isSelectStashMode(state: State): state is SelectStashMode {
-    return state.tag == "SelectStashMode"
-  },
-
-  isSelectPath(state: State): state is SelectPath {
-    return state.tag == "SelectPath"
-  },
-
-  isSelectStashCriteria(state: State): state is SelectStashCriteria {
-    return state.tag == "SelectStashCriteria"
-  },
-
-  isSelectStashMarkers(state: State): state is SelectStashMarkers {
-    return state.tag === "SelectStashMarkers"
-  },
-
-  isListVideos(state: State): state is ListVideos {
-    return state.tag == "ListVideos"
-  },
-
-  isVideoOptions(state: State): state is VideoOptions {
-    return state.tag == "VideoOptions"
-  },
-
-  isPreviewClips(state: State): state is PreviewClips {
-    // @ts-expect-error not sure why this is failing
-    return state.tag === "PreviewClips"
-  },
-
-  isCreateVideo(state: State): state is CreateVideo {
-    // @ts-expect-error not sure why this is failing
-    return state.tag == "CreateVideo"
-  },
-}

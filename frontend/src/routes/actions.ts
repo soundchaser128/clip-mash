@@ -1,12 +1,13 @@
 import {GlobalState} from "little-state-machine"
+import {FormState} from "../types/types"
 import {nanoid} from "nanoid"
-import {State} from "../types/state"
 
 export function updateForm(
   state: GlobalState,
-  newState: Partial<State>
+  newState: Partial<FormState>
 ): GlobalState {
   return {
+    // @ts-expect-error broken, fixme
     data: {
       ...state.data,
       ...newState,

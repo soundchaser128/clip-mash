@@ -7,7 +7,7 @@ module.exports = {
     "plugin:react/recommended",
   ],
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint", "react-refresh"],
+  plugins: ["@typescript-eslint"],
   root: true,
   env: {
     browser: true,
@@ -15,7 +15,6 @@ module.exports = {
   },
   rules: {
     "react/react-in-jsx-scope": "off",
-    "react/prop-types": "off",
-    "react-refresh/only-export-components": "warn"
+    "react/prop-types": "off"
   },
 }

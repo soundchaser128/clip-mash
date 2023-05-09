@@ -3,7 +3,6 @@ import invariant from "tiny-invariant"
 import {
   VideoWithMarkers,
   StateHelpers,
-  FormStage,
   LocalFilesFormStage,
 } from "../../types/types"
 import {

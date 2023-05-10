@@ -20,7 +20,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub enum VideoInfo {
     Stash {
-        scene: FindScenesQueryFindScenesScenes,
+        scene: Box<FindScenesQueryFindScenesScenes>,
     },
     LocalFile {
         video: DbVideo,
@@ -67,7 +67,6 @@ impl From<FindScenesQueryFindScenesScenes> for Video {
             file_name: value
                 .files
                 .get(0)
-                .clone()
                 .map(|f| f.basename.clone())
                 .unwrap_or_default(),
             performers: value
@@ -81,7 +80,7 @@ impl From<FindScenesQueryFindScenesScenes> for Video {
                 .clone()
                 .or(value.files.iter().map(|f| f.basename.clone()).next())
                 .unwrap_or_default(),
-            info: VideoInfo::Stash { scene: value },
+            info: VideoInfo::Stash { scene: Box::new(value) },
         }
     }
 }
@@ -169,7 +168,7 @@ impl VideoId {
 
     pub fn as_stash_id(&self) -> &str {
         if let Self::Stash(id) = self {
-            &id
+            id
         } else {
             panic!("this is not a stash ID")
         }

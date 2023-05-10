@@ -1,7 +1,4 @@
-use std::{
-    cmp::Reverse,
-    collections::{HashMap, HashSet},
-};
+use std::collections::{HashMap, HashSet};
 
 use crate::{
     data::stash_api::StashApi,
@@ -61,7 +58,7 @@ pub fn get_clips(
             clips.push(Clip {
                 source: marker.video_id.source(),
                 video_id: marker.video_id.clone(),
-                marker_id: marker.id.clone(),
+                marker_id: marker.id,
                 range: (start, end),
                 index_within_marker: index,
                 index_within_video: marker.index_within_video,
@@ -94,14 +91,14 @@ pub fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
         .iter()
         .map(|marker| {
             if options.split_clips {
-                get_clips(marker, &options, &mut rng)
+                get_clips(marker, options, &mut rng)
             } else {
                 MarkerWithClips {
                     marker: marker.clone(),
                     clips: vec![Clip {
                         source: marker.video_id.source(),
                         video_id: marker.video_id.clone(),
-                        marker_id: marker.id.clone(),
+                        marker_id: marker.id,
                         range: (marker.start_time, marker.end_time),
                         index_within_marker: 0,
                         index_within_video: marker.index_within_video,

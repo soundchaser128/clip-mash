@@ -150,7 +150,7 @@ export default function EditVideoModal() {
     setFormMode(marker ? "edit" : "create")
     const start = videoRef.current?.currentTime || 0
     setValue("start", marker?.start || start)
-    setValue("end", undefined)
+    setValue("end", marker?.end || undefined)
     setValue("title", marker?.primaryTag || "")
 
     if (marker) {
@@ -263,6 +263,7 @@ export default function EditVideoModal() {
                           required
                           value={formatSeconds(field.value)}
                           onChange={(e) => parseSeconds(e.target.value)}
+                          disabled
                         />
                       )
                     }}
@@ -296,6 +297,7 @@ export default function EditVideoModal() {
                           required
                           value={formatSeconds(field.value)}
                           onChange={(e) => parseSeconds(e.target.value)}
+                          disabled
                         />
                       )
                     }}

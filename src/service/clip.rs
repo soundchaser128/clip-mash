@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    cmp::Reverse,
+    collections::{HashMap, HashSet},
+};
 
 use crate::{
     data::stash_api::StashApi,
@@ -34,10 +37,13 @@ pub fn get_clips(
     options: &CreateClipsOptions,
     rng: &mut StdRng,
 ) -> MarkerWithClips {
+    const MIN_DURATION: f64 = 2.0;
+
+    let duration = options.clip_duration as f64;
     let clip_lengths = [
-        (options.clip_duration / 2).max(2) as f64,
-        (options.clip_duration / 3).max(2) as f64,
-        (options.clip_duration / 4).max(2) as f64,
+        (duration / 2.0).max(MIN_DURATION),
+        (duration / 3.0).max(MIN_DURATION),
+        (duration / 4.0).max(MIN_DURATION),
     ];
 
     let start = marker.start_time;
@@ -50,16 +56,19 @@ pub fn get_clips(
         let duration = clip_lengths.choose(rng).unwrap();
         let start = offset;
         let end = (offset + duration).min(marker.end_time);
-        clips.push(Clip {
-            source: marker.video_id.source(),
-            video_id: marker.video_id.clone(),
-            marker_id: marker.id.clone(),
-            range: (start, end),
-            index_within_marker: index,
-            index_within_video: marker.index_within_video,
-        });
+        let duration = end - start;
+        if duration > MIN_DURATION {
+            clips.push(Clip {
+                source: marker.video_id.source(),
+                video_id: marker.video_id.clone(),
+                marker_id: marker.id.clone(),
+                range: (start, end),
+                index_within_marker: index,
+                index_within_video: marker.index_within_video,
+            });
+            index += 1;
+        }
         offset += duration;
-        index += 1;
     }
 
     MarkerWithClips {
@@ -114,7 +123,9 @@ pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder) -> Vec<Clip>
                 .map(|c| (c, rng.gen::<u32>()))
                 .collect();
             // TODO parameter to control order by
-            clips.sort_by_key(|(clip, random)| (clip.index_within_video, *random));
+            clips.sort_by_key(|(clip, random)| {
+                (clip.index_within_video, clip.index_within_marker, *random)
+            });
             clips.into_iter().map(|(clip, _)| clip).collect()
         }
         ClipOrder::Random => {
@@ -254,6 +265,30 @@ impl<'a> ClipService<'a> {
     }
 }
 
+pub fn get_streams(
+    video_ids: HashSet<VideoId>,
+    config: &Config,
+) -> Result<HashMap<String, String>> {
+    let mut urls = HashMap::new();
+
+    for id in video_ids {
+        match id {
+            VideoId::LocalFile(_) => {
+                let url = format!("/api/local/video/{id}");
+                urls.insert(id.to_string(), url);
+            }
+            VideoId::Stash(_) => {
+                let mut url = Url::parse(&config.stash_url)?;
+                url.set_path(&format!("/scene/{id}/stream"));
+                url.query_pairs_mut().append_pair("apikey", &config.api_key);
+                urls.insert(id.to_string(), url.to_string());
+            }
+        }
+    }
+
+    Ok(urls)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -326,28 +361,4 @@ mod tests {
         let results = compile_clips(results, ClipOrder::SceneOrder);
         assert_eq!(4, results.len());
     }
-}
-
-pub fn get_streams(
-    video_ids: HashSet<VideoId>,
-    config: &Config,
-) -> Result<HashMap<String, String>> {
-    let mut urls = HashMap::new();
-
-    for id in video_ids {
-        match id {
-            VideoId::LocalFile(_) => {
-                let url = format!("/api/local/video/{id}");
-                urls.insert(id.to_string(), url);
-            }
-            VideoId::Stash(_) => {
-                let mut url = Url::parse(&config.stash_url)?;
-                url.set_path(&format!("/scene/{id}/stream"));
-                url.query_pairs_mut().append_pair("apikey", &config.api_key);
-                urls.insert(id.to_string(), url.to_string());
-            }
-        }
-    }
-
-    Ok(urls)
 }

@@ -86,15 +86,6 @@ impl From<FindScenesQueryFindScenesScenes> for Video {
     }
 }
 
-impl Video {
-    pub fn source(&self) -> VideoSource {
-        match self.info {
-            VideoInfo::LocalFile { .. } => VideoSource::LocalFile,
-            VideoInfo::Stash { .. } => VideoSource::Stash,
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum MarkerInfo {
     Stash { marker: StashMarker },

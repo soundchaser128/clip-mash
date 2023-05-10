@@ -130,17 +130,6 @@ impl Database {
         }
     }
 
-    pub async fn video_exists(&self, path: &str) -> Result<bool> {
-        let count = sqlx::query_scalar!(
-            "SELECT count(*) FROM local_videos WHERE file_path = $1",
-            path
-        )
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(count > 0)
-    }
-
     pub async fn persist_video(&self, video: DbVideo) -> Result<()> {
         sqlx::query!(
             "INSERT INTO local_videos (id, file_path, interactive) VALUES ($1, $2, $3)",
@@ -151,19 +140,6 @@ impl Database {
         .execute(&self.pool)
         .await?;
         Ok(())
-    }
-
-    pub async fn get_markers_for_video(&self, video_id: &str) -> Result<Vec<DbMarker>> {
-        sqlx::query_as!(
-            DbMarker,
-            "SELECT m.rowid, m.video_id, m.start_time, m.end_time, m.title, v.file_path, m.index_within_video
-            FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
-            WHERE video_id = $1",
-            video_id
-        )
-        .fetch_all(&self.pool)
-        .await
-        .map_err(From::from)
     }
 
     pub async fn persist_marker(&self, marker: CreateMarker) -> Result<DbMarker> {

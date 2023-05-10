@@ -1,9 +1,9 @@
 # ClipMash
 
-ClipMash is a video editing app that allows you to automate creating compilations from multiple videos stitched together.
+ClipMash is a video editing app that allows you to automate creating compilations from multiple videos. 
 It's mostly made for, ahem, adult content, which is why it can connect to [Stash](https://stashapp.cc/) and fetch videos
 and scene markers from there to guide the video creation process. You can also use local files and set the markers in 
-ClipMash itself and then genrate a compilation based on that. 
+ClipMash itself and then generate a compilation based on that.
 
 ## Usage
 Download the binary for your OS from the releases page and run it. A new browser tab should open with the GUI
@@ -46,6 +46,3 @@ cargo install sqlx-cli
 sqlx migrate run
 cargo build --release
 ```
-
-## Screenshots
-TODO new screenshots

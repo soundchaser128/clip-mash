@@ -67,9 +67,11 @@ function Progress() {
     const script = await response.blob()
     const file = finalFileName.replace(".mp4", ".funscript")
     const downloadUrl = URL.createObjectURL(script)
-    downloadLink.current!.href = downloadUrl
-    downloadLink.current!.download = file
-    downloadLink.current!.click()
+    if (downloadLink.current) {
+      downloadLink.current.href = downloadUrl
+      downloadLink.current.download = file
+      downloadLink.current.click()
+    }
     setCreatingScript(false)
   }
   const totalDuration = state.data.clips!.reduce(

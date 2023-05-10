@@ -16,7 +16,7 @@ function Progress() {
 
   const [progress, setProgress] = useState<Progress>()
   const [finished, setFinished] = useState(false)
-  const [fileName, setFileName] = useState("")
+  const [finalFileName, setFinalFileName] = useState("")
   const downloadLink = useRef<HTMLAnchorElement>(null)
   const [creatingScript, setCreatingScript] = useState(false)
 
@@ -38,7 +38,7 @@ function Progress() {
 
     if (response.ok) {
       const fileName = await response.text()
-      setFileName(fileName)
+      setFinalFileName(fileName)
       const es = new EventSource("/api/progress")
       es.onmessage = (event) => {
         const data = JSON.parse(event.data) as Progress
@@ -65,7 +65,7 @@ function Progress() {
     })
 
     const script = await response.blob()
-    const file = fileName.replace(".mp4", ".funscript")
+    const file = finalFileName.replace(".mp4", ".funscript")
     const downloadUrl = URL.createObjectURL(script)
     downloadLink.current!.href = downloadUrl
     downloadLink.current!.download = file
@@ -121,7 +121,7 @@ function Progress() {
             Download the finished compilation
           </p>
           <a
-            href={`/api/download?fileName=${encodeURIComponent(fileName)}`}
+            href={`/api/download?fileName=${encodeURIComponent(finalFileName)}`}
             className="btn btn-success btn-lg mb-8"
             download
           >

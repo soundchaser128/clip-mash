@@ -9,6 +9,7 @@ import {useForm} from "react-hook-form"
 interface Inputs {
   path: string
   recurse: boolean
+  fileName: string
 }
 
 export default function SelectVideos() {
@@ -29,6 +30,9 @@ export default function SelectVideos() {
       localVideoPath: values.path,
       recurse: values.recurse,
       stage: LocalFilesFormStage.ListVideos,
+      fileName: values.fileName
+        ? `${values.fileName} [${state.data.id}].mp4`
+        : undefined,
     })
     navigate("/local/videos")
   }
@@ -37,8 +41,20 @@ export default function SelectVideos() {
     <>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex gap-4 items-start flex-col"
+        className="flex gap-4 items-start flex-col self-center"
       >
+        <h2 className="text-2xl font-bold">Options</h2>
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Compilation name</span>
+          </label>
+          <input
+            type="text"
+            className="input input-bordered w-96"
+            placeholder="Enter a name for your compilation (optional)"
+            {...register("fileName", {required: false})}
+          />
+        </div>
         <div className="form-control">
           <label className="label">
             <span className="label-text">Local path for your videos</span>
@@ -62,7 +78,7 @@ export default function SelectVideos() {
             />
           </label>
         </div>
-        <button type="submit" className="btn btn-success">
+        <button type="submit" className="btn btn-success self-end">
           <HiCheck className="w-6 h-6 mr-2" />
           Submit
         </button>

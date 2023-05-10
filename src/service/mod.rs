@@ -80,7 +80,9 @@ impl From<FindScenesQueryFindScenesScenes> for Video {
                 .clone()
                 .or(value.files.iter().map(|f| f.basename.clone()).next())
                 .unwrap_or_default(),
-            info: VideoInfo::Stash { scene: Box::new(value) },
+            info: VideoInfo::Stash {
+                scene: Box::new(value),
+            },
         }
     }
 }

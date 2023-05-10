@@ -16,7 +16,7 @@ use serde::Deserialize;
 
 use super::{
     generator::CompilationOptions, stash_config::Config, Clip, Marker, MarkerId, MarkerInfo, Video,
-    VideoId,
+    VideoId, VideoSource,
 };
 
 #[derive(Clone, Copy, Debug, Deserialize)]
@@ -123,8 +123,11 @@ pub fn compile_clips(clips: Vec<MarkerWithClips>, order: ClipOrder) -> Vec<Clip>
                 .map(|c| (c, rng.gen::<u32>()))
                 .collect();
             // TODO parameter to control order by
-            clips.sort_by_key(|(clip, random)| {
-                (clip.index_within_video, clip.index_within_marker, *random)
+            clips.sort_by_key(|(clip, random)| match clip.source {
+                VideoSource::LocalFile => {
+                    (clip.index_within_video, clip.index_within_marker, *random)
+                }
+                VideoSource::Stash => (clip.index_within_marker, *random as usize, *random),
             });
             clips.into_iter().map(|(clip, _)| clip).collect()
         }

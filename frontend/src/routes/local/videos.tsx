@@ -60,6 +60,10 @@ export default function ListVideos() {
   }
 
   const onNextStage = () => {
+    const interactive = videos
+      .filter((v) => v.markers.length > 0)
+      .some((v) => v.video.interactive)
+
     actions.updateForm({
       stage: LocalFilesFormStage.VideoOptions,
       videos: videos.filter((v) => v.markers.length > 0),
@@ -73,6 +77,7 @@ export default function ListVideos() {
           selectedRange: [marker.start, marker.end],
           videoId: marker.videoId,
         })),
+      interactive,
     })
     navigate("/local/options")
   }

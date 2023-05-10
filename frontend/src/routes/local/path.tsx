@@ -25,7 +25,7 @@ export default function SelectVideos() {
 
   const onSubmit = async (values: Inputs) => {
     actions.updateForm({
-      source: "local-files",
+      source: "localFile",
       localVideoPath: values.path,
       recurse: values.recurse,
       stage: LocalFilesFormStage.ListVideos,

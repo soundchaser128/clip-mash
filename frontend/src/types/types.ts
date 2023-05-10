@@ -54,7 +54,7 @@ export interface SelectedMarker {
 
 export type SelectMode = "tags" | "performers" | "scenes"
 
-export type VideoSource = "stash" | "local-files" | undefined
+export type VideoSource = "stash" | "localFile" | undefined
 
 export type FormState = LocalVideosFormState | StashFormState | InitialFormState
 
@@ -64,7 +64,7 @@ export interface InitialFormState {
 }
 
 export interface LocalVideosFormState {
-  source: "local-files"
+  source: "localFile"
   id: string
   stage: LocalFilesFormStage
   videos?: VideoWithMarkers[]
@@ -122,13 +122,13 @@ export const StateHelpers = {
   },
 
   isLocalFiles(state: FormState): state is LocalVideosFormState {
-    return state.source === "local-files"
+    return state.source === "localFile"
   },
 
   isNotInitial(
     state: FormState
   ): state is StashFormState | LocalVideosFormState {
-    return state.source === "stash" || state.source === "local-files"
+    return state.source === "stash" || state.source === "localFile"
   },
 
   isInitial(state: FormState): state is InitialFormState {
@@ -137,7 +137,7 @@ export const StateHelpers = {
 }
 
 export interface Clip {
-  source: "stash" | "localFiles"
+  source: "stash" | "localFile"
   videoId: VideoId
   markerId: MarkerId
   range: [number, number]

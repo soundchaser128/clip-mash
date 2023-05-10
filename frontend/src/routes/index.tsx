@@ -13,7 +13,7 @@ export default function InitialRoot() {
       source: mode,
       id: nanoid(8),
       stage:
-        mode === "local-files"
+        mode === "localFile"
           ? LocalFilesFormStage.SelectPath
           : FormStage.SelectMode,
     }
@@ -21,7 +21,7 @@ export default function InitialRoot() {
     // @ts-expect-error meh
     actions.updateForm(update)
 
-    navigate(mode === "local-files" ? "/local/path" : "/stash/mode")
+    navigate(mode === "localFile" ? "/local/path" : "/stash/mode")
   }
 
   return (
@@ -45,7 +45,7 @@ export default function InitialRoot() {
 
               <button
                 className="btn btn-lg btn-secondary w-40"
-                onClick={() => onNextStage("local-files")}
+                onClick={() => onNextStage("localFile")}
               >
                 Local
               </button>

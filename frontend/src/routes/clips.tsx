@@ -14,6 +14,9 @@ import {useRef} from "react"
 import {useImmer} from "use-immer"
 import invariant from "tiny-invariant"
 import {getFormState, getSegmentColor} from "../helpers"
+import {formatSeconds} from "./select-markers"
+
+const DEBUG = false
 
 interface ClipsResponse {
   clips: Clip[]
@@ -124,13 +127,23 @@ function PreviewClips() {
     <>
       <div className="mb-4 grid grid-cols-3 items-center">
         <div></div>
-        <p className=" text-center text-xl">
-          Showing clip{" "}
-          <strong>
-            {currentClipIndex + 1} / {clips.length}
-          </strong>
-        </p>
-
+        <div className="text-center">
+          <p className="">
+            Showing clip{" "}
+            <strong>
+              {currentClipIndex + 1} / {clips.length}
+            </strong>
+          </p>
+          <p>
+            Duration: <strong>{formatSeconds(currentClip.range)}</strong>
+          </p>
+          {DEBUG && (
+            <>
+              <p>Index within the marker: {currentClip.indexWithinMarker}</p>
+              <p>Index within its video: {currentClip.indexWithinVideo}</p>
+            </>
+          )}
+        </div>
         <button
           type="button"
           onClick={onNextStage}

@@ -48,11 +48,14 @@ function getDuration({start, end}: Marker): number {
   }
 }
 
-export function formatSeconds(s: number): string {
-  if (s === 0) {
+export function formatSeconds(input: number | [number, number]): string {
+  const duration = typeof input === "number" ? input : input[1] - input[0]
+
+  if (duration === 0) {
     return "0 seconds"
   }
-  const date = new Date(s * 1000)
+
+  const date = new Date(duration * 1000)
   return formatDuration(
     {
       hours: date.getUTCHours(),

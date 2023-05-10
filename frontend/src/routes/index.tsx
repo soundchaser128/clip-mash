@@ -27,12 +27,20 @@ export default function InitialRoot() {
   return (
     <Layout>
       <div className="hero">
-        <div className="hero-content text-center">
+        <div className="hero-content self-center">
           <div className="max-w-md">
             <h1 className="text-5xl font-bold">ClipMash</h1>
-            <p className="py-6">
-              Choose from where to get videos. You can either use local files or
-              connect to a Stash instance.
+            <p className="mt-4 text-lg">
+              ClipMash helps you create video compilations.
+            </p>
+
+            <p className="pb-6 pt-3 text-lg">
+              Choose from where to get videos: <br />
+              You can either use files on your disk or connect to a{" "}
+              <a href="https://stashapp.cc" className="link link-primary">
+                Stash
+              </a>{" "}
+              instance.
             </p>
 
             <div className="self-center btn-group">

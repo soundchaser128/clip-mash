@@ -54,7 +54,7 @@ pub mod common {
         tracing::info!("found {} video IDs", video_ids.len());
         let options = service.convert_clip_options(body).await?;
         let clips = clip::get_all_clips(&options);
-        let clips = clip::compile_clips(clips, order);
+        let clips = clip::compile_clips(clips, order, options.sort_mode);
         tracing::info!("generated {} clips", clips.len());
         tracing::debug!("compiled clips {clips:#?}");
         let streams = clip::get_streams(video_ids, &config)?;

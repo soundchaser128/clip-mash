@@ -1,9 +1,9 @@
 import {useStateMachine} from "little-state-machine"
 import {useRef, useState} from "react"
 import {HiArrowDown, HiCheckBadge, HiCodeBracket} from "react-icons/hi2"
-import {formatSeconds} from "./select-markers"
 import {StateHelpers} from "../types/types"
 import invariant from "tiny-invariant"
+import {formatSeconds} from "../helpers"
 
 interface Progress {
   finished: number

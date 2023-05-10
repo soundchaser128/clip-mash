@@ -60,6 +60,7 @@ export default function SelectVideos() {
             <span className="label-text">Local path for your videos</span>
           </label>
           <input
+            required
             type="text"
             className="input input-bordered w-96"
             placeholder="C:\Users\CoolUser\Videos\DefinitelyNotPorn"

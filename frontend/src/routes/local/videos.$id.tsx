@@ -1,4 +1,4 @@
-import {format, getMilliseconds, parse} from "date-fns"
+import {getMilliseconds, parse} from "date-fns"
 import {VideoWithMarkers, Marker} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
@@ -15,7 +15,7 @@ import {
   HiChevronRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
-import {getSegmentColor} from "../../helpers"
+import {formatSeconds, getSegmentColor} from "../../helpers"
 import Modal from "../../components/Modal"
 import {
   useNavigate,
@@ -28,10 +28,6 @@ interface Inputs {
   title: string
   start: number
   end?: number
-}
-
-function formatSeconds(seconds?: number): string {
-  return typeof seconds !== "undefined" ? format(seconds * 1000, "mm:ss") : ""
 }
 
 function parseSeconds(string: string): number {

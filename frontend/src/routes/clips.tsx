@@ -13,10 +13,9 @@ import clsx from "clsx"
 import {useRef} from "react"
 import {useImmer} from "use-immer"
 import invariant from "tiny-invariant"
-import {getFormState, getSegmentColor} from "../helpers"
-import {formatSeconds} from "./select-markers"
+import {formatSeconds, getFormState, getSegmentColor} from "../helpers"
 
-const DEBUG = false
+const DEBUG = true
 
 interface ClipsResponse {
   clips: Clip[]
@@ -30,9 +29,17 @@ interface Data {
   videos: Record<string, VideoDto>
 }
 
+type ClipSortMode = "videoIndex" | "markerIndex"
+
 export const loader: LoaderFunction = async () => {
   const state = getFormState()!
-  invariant(StateHelpers.isStash(state) || StateHelpers.isLocalFiles(state))
+  invariant(StateHelpers.isNotInitial(state))
+  let sortMode: ClipSortMode = "markerIndex"
+
+  if (StateHelpers.isStash(state) && state.selectMode === "scenes") {
+    sortMode = "videoIndex"
+  }
+
   const response = await fetch("/api/clips", {
     method: "POST",
     body: JSON.stringify({
@@ -40,6 +47,7 @@ export const loader: LoaderFunction = async () => {
       clipDuration: state.clipDuration,
       markers: state.selectedMarkers!.filter((m) => m.selected),
       splitClips: state.splitClips,
+      sortMode,
     }),
     headers: {"content-type": "application/json"},
   })

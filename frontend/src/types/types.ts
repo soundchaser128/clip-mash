@@ -49,7 +49,6 @@ export interface SelectedMarker {
   selectedRange: [number, number]
   indexWithinVideo: number
   selected: boolean
-  duration: number
 }
 
 export type SelectMode = "tags" | "performers" | "scenes"

@@ -1,3 +1,4 @@
+import {format, formatDuration} from "date-fns"
 import {FormState} from "./types/types"
 
 export function getFormState(): FormState | null {
@@ -22,4 +23,40 @@ export const segmentColors = [
 
 export function getSegmentColor(index: number): string {
   return segmentColors[index % segmentColors.length]
+}
+
+type DurationFormat = "long" | "short"
+
+export function formatSeconds(
+  input: number | [number, number] | undefined,
+  durationFormat: DurationFormat = "long"
+): string {
+  let duration = 0
+  if (typeof input === "number") {
+    duration = input
+  } else if (Array.isArray(input)) {
+    duration = input[1] - input[0]
+  }
+
+  if (duration === 0) {
+    if (durationFormat === "long") {
+      return "0 seconds"
+    } else {
+      return "00:00"
+    }
+  }
+
+  const date = new Date(duration * 1000)
+  if (durationFormat === "long") {
+    return formatDuration(
+      {
+        hours: date.getUTCHours(),
+        minutes: date.getUTCMinutes(),
+        seconds: date.getUTCSeconds(),
+      },
+      {format: ["hours", "minutes", "seconds"]}
+    )
+  } else {
+    return format(duration * 1000, "mm:ss")
+  }
 }

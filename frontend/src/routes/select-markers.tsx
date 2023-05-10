@@ -3,7 +3,6 @@ import {useState} from "react"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
 import {FormStage, Marker, SelectedMarker, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
-import {formatDuration} from "date-fns"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
 import {
@@ -17,7 +16,7 @@ import {
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
 import invariant from "tiny-invariant"
-import {getFormState} from "../helpers"
+import {formatSeconds, getFormState} from "../helpers"
 
 interface Data {
   markers: Marker[]
@@ -40,32 +39,6 @@ export const loader: LoaderFunction = async () => {
   }
 }
 
-function getDuration({start, end}: Marker): number {
-  if (end) {
-    return end - start
-  } else {
-    return 15
-  }
-}
-
-export function formatSeconds(input: number | [number, number]): string {
-  const duration = typeof input === "number" ? input : input[1] - input[0]
-
-  if (duration === 0) {
-    return "0 seconds"
-  }
-
-  const date = new Date(duration * 1000)
-  return formatDuration(
-    {
-      hours: date.getUTCHours(),
-      minutes: date.getUTCMinutes(),
-      seconds: date.getUTCSeconds(),
-    },
-    {format: ["hours", "minutes", "seconds"]}
-  )
-}
-
 function SelectMarkers() {
   const {actions, state} = useStateMachine({updateForm})
   invariant(StateHelpers.isStash(state.data))
@@ -83,7 +56,6 @@ function SelectMarkers() {
             indexWithinVideo: m.indexWithinVideo,
             videoId: m.videoId,
             selected: true,
-            duration: getDuration(m),
             selectedRange: [m.start, m.end],
           } satisfies SelectedMarker,
         ])
@@ -113,7 +85,10 @@ function SelectMarkers() {
   const totalDuration = formatSeconds(
     Object.values(selection)
       .filter((m) => m.selected)
-      .reduce((sum, next) => sum + (next.duration || 0), 0)
+      .reduce(
+        (sum, next) => sum + (next.selectedRange[1] - next.selectedRange[0]),
+        0
+      )
   )
 
   const onCheckboxChange = (id: number, checked: boolean) => {
@@ -143,6 +118,7 @@ function SelectMarkers() {
     const hasInteractiveScenes = data.markers
       .filter((m) => !!selection[m.id.id])
       .some((m) => m.sceneInteractive)
+    console.log(selectedMarkers)
 
     actions.updateForm({
       stage: FormStage.VideoOptions,
@@ -153,17 +129,20 @@ function SelectMarkers() {
     navigate("/stash/video-options")
   }
 
-  const onDurationBlur = () => {
+  const onLimitDuration = () => {
     setSelection((draft) => {
-      Object.values(draft).forEach((selectedMarker) => {
-        const marker = data.markers.find(
+      for (const selectedMarker of Object.values(draft)) {
+        const originalMarker = data.markers.find(
           (m) => m.id.id === selectedMarker.id.id
         )!
-        const defaultDuration = getDuration(marker)
-        const maxLen = maxMarkerLength || defaultDuration
-        selectedMarker.duration =
-          selectedMarker.duration >= maxLen ? maxLen : defaultDuration
-      })
+        const start = selectedMarker.selectedRange[0]
+        const maxLen =
+          maxMarkerLength || originalMarker.end - originalMarker.start
+        selectedMarker.selectedRange = [
+          start,
+          Math.min(start + maxLen, originalMarker.end),
+        ]
+      }
     })
   }
 
@@ -193,17 +172,20 @@ function SelectMarkers() {
             onChange={(e) => setFilter(e.target.value)}
           />
 
-          <input
-            type="number"
-            className="input input-bordered w-full lg:w-96"
-            placeholder="Limit maximum marker length (in seconds)"
-            value={maxMarkerLength || ""}
-            onChange={(e) => {
-              const num = e.target.valueAsNumber
-              setMaxMarkerLength(num)
-            }}
-            onBlur={onDurationBlur}
-          />
+          <div className="form-control">
+            <div className="input-group">
+              <input
+                type="number"
+                placeholder="Limit maximum marker length (in seconds)"
+                className="input input-bordered w-full lg:w-96"
+                value={maxMarkerLength || ""}
+                onChange={(e) => setMaxMarkerLength(e.target.valueAsNumber)}
+              />
+              <button className="btn" type="button" onClick={onLimitDuration}>
+                Apply
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-2 justify-center">
@@ -271,19 +253,25 @@ function SelectMarkers() {
                     <HiClock className="mr-2 inline" />
                     Selected duration:{" "}
                   </strong>
-                  {formatSeconds(selectedMarker.duration)}
+                  {formatSeconds(selectedMarker.selectedRange, "short")} /{" "}
+                  {formatSeconds(marker.end - marker.start, "short")}
                 </p>
                 <div className="">
                   <div className="w-full">
                     <input
-                      value={selectedMarker.duration}
+                      value={
+                        selectedMarker.selectedRange[1] -
+                        selectedMarker.selectedRange[0]
+                      }
                       onChange={(e) =>
                         setSelection((draft) => {
-                          draft[marker.id.id].duration = e.target.valueAsNumber
+                          const start = draft[marker.id.id].selectedRange[0]
+                          draft[marker.id.id].selectedRange[1] =
+                            start + e.target.valueAsNumber
                         })
                       }
                       disabled={!selectedMarker.selected}
-                      max={getDuration(marker)}
+                      max={marker.end - marker.start}
                       min={15}
                       type="range"
                       className="range range-primary w-full"

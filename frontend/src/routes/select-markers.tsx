@@ -87,7 +87,6 @@ function SelectMarkers() {
       return Object.fromEntries(entries)
     }
   )
-  console.log(selection)
   const [filter, setFilter] = useState("")
   const [videoPreview, setVideoPreview] = useState<number>()
   const navigate = useNavigate()
@@ -145,7 +144,7 @@ function SelectMarkers() {
     actions.updateForm({
       stage: FormStage.VideoOptions,
       selectedMarkers,
-      markers: markers,
+      markers: data.markers,
       interactive: hasInteractiveScenes,
     })
     navigate("/stash/video-options")
@@ -154,7 +153,9 @@ function SelectMarkers() {
   const onDurationBlur = () => {
     setSelection((draft) => {
       Object.values(draft).forEach((selectedMarker) => {
-        const marker = markers.find((m) => m.id.id === selectedMarker.id.id)!
+        const marker = data.markers.find(
+          (m) => m.id.id === selectedMarker.id.id
+        )!
         const defaultDuration = getDuration(marker)
         const maxLen = maxMarkerLength || defaultDuration
         selectedMarker.duration =

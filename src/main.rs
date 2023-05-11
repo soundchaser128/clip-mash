@@ -44,32 +44,32 @@ async fn main() -> Result<()> {
         database,
     });
 
+    let stash_routes = Router::new()
+        .route("/health", get(handlers::stash::get_health))
+        .route("/tags", get(handlers::stash::fetch_tags))
+        .route("/performers", get(handlers::stash::fetch_performers))
+        .route("/scenes", get(handlers::stash::fetch_scenes))
+        .route("/markers", get(handlers::stash::fetch_markers))
+        .route("/config", get(handlers::stash::get_config))
+        .route("/config", post(handlers::stash::set_config));
+
+    let local_routes = Router::new()
+        .route("/video", post(handlers::local::list_videos))
+        .route("/video/:id", get(handlers::local::get_video))
+        .route("/video/marker", post(handlers::local::persist_marker))
+        .route("/video/marker/:id", delete(handlers::local::delete_marker));
+
+    let api_routes = Router::new()
+        .route("/clips", post(handlers::common::fetch_clips))
+        .route("/create", post(handlers::common::create_video))
+        .route("/progress", get(handlers::common::get_progress))
+        .route("/download", get(handlers::common::download_video))
+        .route("/funscript", post(handlers::common::get_funscript))
+        .nest("/local", local_routes)
+        .nest("/stash", stash_routes);
+
     let app = Router::new()
-        .route("/api/stash/health", get(handlers::stash::get_health))
-        .route("/api/stash/tags", get(handlers::stash::fetch_tags))
-        .route(
-            "/api/stash/performers",
-            get(handlers::stash::fetch_performers),
-        )
-        .route("/api/stash/scenes", get(handlers::stash::fetch_scenes))
-        .route("/api/stash/markers", get(handlers::stash::fetch_markers))
-        .route("/api/stash/config", get(handlers::stash::get_config))
-        .route("/api/stash/config", post(handlers::stash::set_config))
-        .route("/api/local/video", post(handlers::local::list_videos))
-        .route("/api/local/video/:id", get(handlers::local::get_video))
-        .route(
-            "/api/local/video/marker",
-            post(handlers::local::persist_marker),
-        )
-        .route(
-            "/api/local/video/marker/:id",
-            delete(handlers::local::delete_marker),
-        )
-        .route("/api/clips", post(handlers::common::fetch_clips))
-        .route("/api/create", post(handlers::common::create_video))
-        .route("/api/progress", get(handlers::common::get_progress))
-        .route("/api/download", get(handlers::common::download_video))
-        .route("/api/funscript", post(handlers::common::get_funscript))
+        .nest("/api", api_routes)
         .fallback_service(static_files::service())
         .with_state(state);
 

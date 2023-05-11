@@ -34,3 +34,30 @@ pub fn expect_file_name(path: &str) -> String {
         .expect("path must have a file name here")
         .to_string()
 }
+
+#[cfg(test)]
+mod test {
+    use super::{add_api_key, expect_file_name};
+
+    #[test]
+    #[cfg(not(windows))]
+    fn test_expect_file_name() {
+        let path = "/Users/test/123.txt";
+        let file_name = expect_file_name(path);
+        assert_eq!("123.txt", file_name);
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn test_expect_file_name() {
+        let path = "C:\\Users\\123.txt";
+        let file_name = expect_file_name(path);
+        assert_eq!("123.txt", file_name);
+    }
+
+    #[test]
+    fn test_add_api_key() {
+        let result = add_api_key("http://localhost:3001", "super-secret-123");
+        assert_eq!(result, "http://localhost:3001/?apikey=super-secret-123");
+    }
+}

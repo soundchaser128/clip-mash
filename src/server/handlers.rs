@@ -49,12 +49,11 @@ pub mod common {
         let config = Config::get().await?;
         let api = StashApi::from_config(&config);
         let service = ClipService::new(&state.database, &api);
-        let order = body.clip_order;
         let video_ids: HashSet<_> = body.markers.iter().map(|m| m.video_id.clone()).collect();
         tracing::info!("found {} video IDs", video_ids.len());
         let options = service.convert_clip_options(body).await?;
-        let clips = clip::get_all_clips(&options);
-        let clips = clip::compile_clips(clips, order, options.sort_mode, options.seed.as_deref());
+
+        let clips = clip::arrange_clips(&options);
         tracing::info!("generated {} clips", clips.len());
         tracing::debug!("compiled clips {clips:#?}");
         let streams = clip::get_streams(video_ids, &config)?;

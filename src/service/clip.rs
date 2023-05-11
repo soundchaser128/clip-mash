@@ -30,11 +30,7 @@ pub struct MarkerWithClips {
     pub clips: Vec<Clip>,
 }
 
-pub fn get_clips(
-    marker: &Marker,
-    options: &CreateClipsOptions,
-    rng: &mut StdRng,
-) -> MarkerWithClips {
+fn get_clips(marker: &Marker, options: &CreateClipsOptions, rng: &mut StdRng) -> MarkerWithClips {
     const MIN_DURATION: f64 = 2.0;
 
     let duration = options.clip_duration as f64;
@@ -77,15 +73,16 @@ pub fn get_clips(
 
 #[derive(Debug)]
 pub struct CreateClipsOptions {
+    pub order: ClipOrder,
     pub clip_duration: u32,
     pub markers: Vec<Marker>,
     pub split_clips: bool,
-    pub max_duration: Option<u32>,
     pub sort_mode: ClipSortMode,
     pub seed: Option<String>,
+    pub max_duration: Option<f64>,
 }
 
-pub fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
+fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
     let mut rng = util::create_seeded_rng(options.seed.as_deref());
     tracing::debug!("creating clips for options {options:?}");
 
@@ -128,15 +125,10 @@ impl ClipSortMode {
     }
 }
 
-pub fn compile_clips(
-    clips: Vec<MarkerWithClips>,
-    order: ClipOrder,
-    sort_mode: ClipSortMode,
-    seed: Option<&str>,
-) -> Vec<Clip> {
-    let mut rng = util::create_seeded_rng(seed);
+fn compile_clips(clips: Vec<MarkerWithClips>, options: &CreateClipsOptions) -> Vec<Clip> {
+    let mut rng = util::create_seeded_rng(options.seed.as_deref());
 
-    match order {
+    match options.order {
         ClipOrder::SceneOrder => {
             let mut clips: Vec<_> = clips
                 .into_iter()
@@ -144,7 +136,7 @@ pub fn compile_clips(
                 .map(|c| (c, rng.gen::<usize>()))
                 .collect();
 
-            clips.sort_by_key(|(clip, random)| sort_mode.key(clip, *random));
+            clips.sort_by_key(|(clip, random)| options.sort_mode.key(clip, *random));
             clips.into_iter().map(|(clip, _)| clip).collect()
         }
         ClipOrder::Random => {
@@ -153,6 +145,11 @@ pub fn compile_clips(
             clips
         }
     }
+}
+
+pub fn arrange_clips(options: &CreateClipsOptions) -> Vec<Clip> {
+    let clips = get_all_clips(options);
+    compile_clips(clips, options)
 }
 
 pub fn get_streams(
@@ -297,13 +294,13 @@ impl<'a> ClipService<'a> {
         body: CreateClipsBody,
     ) -> crate::Result<CreateClipsOptions> {
         Ok(CreateClipsOptions {
+            order: body.clip_order,
             clip_duration: body.clip_duration,
-            // TODO
-            max_duration: None,
             split_clips: body.split_clips,
             markers: self.convert_selected_markers(body.markers).await?,
             sort_mode: body.sort_mode,
             seed: body.seed,
+            max_duration: body.max_duration,
         })
     }
 }
@@ -346,12 +343,13 @@ mod tests {
     #[test]
     fn test_get_clips() {
         let options = CreateClipsOptions {
+            order: ClipOrder::SceneOrder,
             clip_duration: 30,
             markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
-            max_duration: None,
             split_clips: true,
             sort_mode: ClipSortMode::VideoIndex,
             seed: None,
+            max_duration: None,
         };
         let mut results1 = get_all_clips(&options);
         assert_eq!(2, results1.len());
@@ -373,20 +371,16 @@ mod tests {
     #[test]
     fn test_compile_clips() {
         let options = CreateClipsOptions {
+            order: ClipOrder::SceneOrder,
             clip_duration: 30,
             markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
-            max_duration: None,
             split_clips: true,
             sort_mode: ClipSortMode::VideoIndex,
             seed: None,
+            max_duration: None,
         };
         let results = get_all_clips(&options);
-        let results = compile_clips(
-            results,
-            ClipOrder::SceneOrder,
-            ClipSortMode::VideoIndex,
-            None,
-        );
+        let results = compile_clips(results, &options);
         assert_eq!(4, results.len());
     }
 }

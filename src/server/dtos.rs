@@ -171,6 +171,7 @@ pub struct CreateClipsBody {
     pub markers: Vec<SelectedMarker>,
     pub sort_mode: ClipSortMode,
     pub seed: Option<String>,
+    pub max_duration: Option<f64>,
 }
 
 #[derive(Serialize, Debug)]

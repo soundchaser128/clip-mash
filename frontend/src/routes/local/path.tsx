@@ -43,7 +43,6 @@ export default function SelectVideos() {
         onSubmit={handleSubmit(onSubmit)}
         className="flex gap-4 items-start flex-col self-center"
       >
-        <h2 className="text-2xl font-bold">Options</h2>
         <div className="form-control">
           <label className="label">
             <span className="label-text">Compilation name</span>

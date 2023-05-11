@@ -35,7 +35,7 @@ export default function InitialRoot() {
             </p>
 
             <p className="pb-6 pt-3 text-lg">
-              Choose from where to get videos: <br />
+              <strong>Choose from where to get videos:</strong> <br />
               You can either use files on your disk or connect to a{" "}
               <a href="https://stashapp.cc" className="link link-primary">
                 Stash

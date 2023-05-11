@@ -257,7 +257,7 @@ export default function EditVideoModal() {
                           className="input grow input-bordered"
                           {...field}
                           required
-                          value={formatSeconds(field.value)}
+                          value={formatSeconds(field.value, "short")}
                           onChange={(e) => parseSeconds(e.target.value)}
                           disabled
                         />
@@ -291,7 +291,7 @@ export default function EditVideoModal() {
                           className="input grow input-bordered"
                           {...field}
                           required
-                          value={formatSeconds(field.value)}
+                          value={formatSeconds(field.value, "short")}
                           onChange={(e) => parseSeconds(e.target.value)}
                           disabled
                         />
@@ -360,8 +360,8 @@ export default function EditVideoModal() {
                       <tr key={marker.id.id}>
                         <td>{idx + 1}</td>
                         <td className="font-bold">{marker.primaryTag}</td>
-                        <td>{formatSeconds(marker.start)}</td>
-                        <td>{formatSeconds(marker.end)}</td>
+                        <td>{formatSeconds(marker.start, "short")}</td>
+                        <td>{formatSeconds(marker.end, "short")}</td>
                         <td className="">
                           <button
                             onClick={() => onShowForm(marker)}

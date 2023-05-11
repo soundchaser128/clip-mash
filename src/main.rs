@@ -60,13 +60,13 @@ async fn main() -> Result<()> {
         .route("/video/marker/:id", delete(handlers::local::delete_marker));
 
     let api_routes = Router::new()
+        .nest("/local", local_routes)
+        .nest("/stash", stash_routes)
         .route("/clips", post(handlers::common::fetch_clips))
         .route("/create", post(handlers::common::create_video))
         .route("/progress", get(handlers::common::get_progress))
         .route("/download", get(handlers::common::download_video))
-        .route("/funscript", post(handlers::common::get_funscript))
-        .nest("/local", local_routes)
-        .nest("/stash", stash_routes);
+        .route("/funscript", post(handlers::common::get_funscript));
 
     let app = Router::new()
         .nest("/api", api_routes)

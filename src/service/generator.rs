@@ -1,12 +1,13 @@
 use std::process::Output;
 
+use crate::{data::stash_api::StashMarker, service::MarkerInfo, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
-use crate::{clip::Clip, download_ffmpeg, http::CreateVideoBody, stash_api::Marker, Result};
+use super::{Clip, Marker};
 
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct Progress {
@@ -18,16 +19,45 @@ lazy_static! {
     static ref PROGRESS: Mutex<Progress> = Default::default();
 }
 
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub enum VideoResolution {
+    #[serde(rename = "720")]
+    SevenTwenty,
+    #[serde(rename = "1080")]
+    TenEighty,
+    #[serde(rename = "4K")]
+    FourK,
+}
+
+impl VideoResolution {
+    fn resolution(&self) -> (u32, u32) {
+        match self {
+            Self::SevenTwenty => (1280, 720),
+            Self::TenEighty => (1920, 1080),
+            Self::FourK => (3840, 2160),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct CompilationOptions {
+    pub clips: Vec<Clip>,
+    pub markers: Vec<Marker>,
+    pub output_resolution: VideoResolution,
+    pub output_fps: u32,
+    pub file_name: String,
+}
+
 #[derive(Clone)]
-pub struct Ffmpeg {
+pub struct CompilationGenerator {
     path: Utf8PathBuf,
     pub video_dir: Utf8PathBuf,
 }
 
-pub fn find_stream_url(marker: &Marker) -> &str {
+pub fn find_stash_stream_url(marker: &StashMarker) -> &str {
     const LABEL_PRIORITIES: &[&str] = &["Direct stream", "webm", "HLS"];
 
-    let streams = &marker.scene.scene_streams;
+    let streams = &marker.streams;
     for stream in streams {
         for label in LABEL_PRIORITIES {
             if let Some(l) = &stream.label {
@@ -44,6 +74,13 @@ pub fn find_stream_url(marker: &Marker) -> &str {
         streams[0]
     );
     &streams[0].url
+}
+
+pub fn find_stream_url(marker: &Marker) -> &str {
+    match &marker.info {
+        MarkerInfo::Stash { marker } => find_stash_stream_url(marker),
+        MarkerInfo::LocalFile { marker } => &marker.file_path,
+    }
 }
 
 fn commandline_error<T>(output: Output) -> Result<T> {
@@ -63,11 +100,13 @@ pub async fn get_progress() -> Progress {
     PROGRESS.lock().await.clone()
 }
 
-impl Ffmpeg {
+impl CompilationGenerator {
     pub async fn new() -> Result<Self> {
+        use crate::service::download_ffmpeg;
+
         let path = download_ffmpeg::download().await?;
 
-        Ok(Ffmpeg {
+        Ok(CompilationGenerator {
             path,
             video_dir: Utf8PathBuf::from("./videos"),
         })
@@ -76,8 +115,8 @@ impl Ffmpeg {
     async fn create_clip(
         &self,
         url: &str,
-        start: u32,
-        duration: u32,
+        start: f64,
+        duration: f64,
         width: u32,
         height: u32,
         fps: f64,
@@ -138,9 +177,9 @@ impl Ffmpeg {
         *progress = Default::default();
     }
 
-    pub async fn gather_clips(&self, output: &CreateVideoBody) -> Result<Vec<Utf8PathBuf>> {
+    pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
         tokio::fs::create_dir_all(&self.video_dir).await?;
-        let clips = &output.clips;
+        let clips = &options.clips;
         let total_items = clips.len();
         self.initialize_progress(total_items).await;
 
@@ -151,16 +190,16 @@ impl Ffmpeg {
             ..
         } in clips
         {
-            let marker = output
+            let marker = options
                 .markers
                 .iter()
                 .find(|m| &m.id == marker_id)
                 .expect(&format!("no marker with ID {marker_id} found"));
             let url = find_stream_url(marker);
-            let (width, height) = output.output_resolution.resolution();
+            let (width, height) = options.output_resolution.resolution();
             let out_file = self
                 .video_dir
-                .join(format!("{}_{}-{}.mp4", marker.scene.id, start, end));
+                .join(format!("{}_{}-{}.mp4", marker.video_id, start, end));
             if !out_file.is_file() {
                 tracing::info!("creating clip {out_file}");
                 self.create_clip(
@@ -169,7 +208,7 @@ impl Ffmpeg {
                     end - start,
                     width,
                     height,
-                    output.output_fps as f64,
+                    options.output_fps as f64,
                     &out_file,
                 )
                 .await?;
@@ -185,7 +224,7 @@ impl Ffmpeg {
 
     pub async fn compile_clips(
         &self,
-        options: &CreateVideoBody,
+        options: &CompilationOptions,
         clips: Vec<Utf8PathBuf>,
     ) -> Result<Utf8PathBuf> {
         let file_name = &options.file_name;

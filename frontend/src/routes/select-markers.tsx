@@ -1,9 +1,8 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, FormState, SelectedMarker} from "../types/types"
+import {FormStage, Marker, SelectedMarker, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
-import {formatDuration} from "date-fns"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
 import {
@@ -16,36 +15,22 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
-
-interface Marker {
-  id: string
-  primaryTag: string
-  streamUrl: string
-  screenshotUrl: string
-  start: number
-  end?: number
-  sceneTitle?: string
-  performers: string[]
-  fileName: string
-  sceneInteractive: boolean
-  tags: string[]
-}
+import invariant from "tiny-invariant"
+import {formatSeconds, getFormState} from "../helpers"
 
 interface Data {
-  markers: {
-    dtos: Marker[]
-  }
+  markers: Marker[]
 }
 
 export const loader: LoaderFunction = async () => {
-  const json = sessionStorage.getItem("form-state")
-  if (json) {
-    const state: {data: FormState} = JSON.parse(json)
+  const state = getFormState()
+  if (state) {
+    invariant(StateHelpers.isStash(state))
     const params = new URLSearchParams()
-    params.set("selectedIds", state.data.selectedIds!.join(","))
-    params.set("mode", state.data.selectMode!)
-    params.set("includeAll", state.data.includeAll ? "true" : "false")
-    const url = `/api/markers?${params.toString()}`
+    params.set("selectedIds", state.selectedIds!.join(","))
+    params.set("mode", state.selectMode!)
+    params.set("includeAll", state.includeAll ? "true" : "false")
+    const url = `/api/stash/markers?${params.toString()}`
     const response = await fetch(url)
     const markers = await response.json()
     return {markers} satisfies Data
@@ -54,49 +39,34 @@ export const loader: LoaderFunction = async () => {
   }
 }
 
-function getDuration({start, end}: Marker): number {
-  if (end) {
-    return end - start
-  } else {
-    return 15
-  }
-}
-
-export function formatSeconds(s: number): string {
-  if (s === 0) {
-    return "0 seconds"
-  }
-  const date = new Date(s * 1000)
-  return formatDuration(
-    {
-      hours: date.getUTCHours(),
-      minutes: date.getUTCMinutes(),
-      seconds: date.getUTCSeconds(),
-    },
-    {format: ["hours", "minutes", "seconds"]}
-  )
-}
-
 function SelectMarkers() {
   const {actions, state} = useStateMachine({updateForm})
+  invariant(StateHelpers.isStash(state.data))
   const data = useLoaderData() as Data
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
+      invariant(StateHelpers.isStash(state.data))
       const entries =
-        state.data.selectedMarkers?.map((m) => [m.id, m]) ||
-        data.markers.dtos.map((m) => [
-          m.id,
-          {...m, selected: true, duration: getDuration(m)} as SelectedMarker,
+        state.data.selectedMarkers?.map((m) => [m.id.id, m]) ||
+        data.markers.map((m) => [
+          m.id.id,
+          {
+            id: m.id,
+            indexWithinVideo: m.indexWithinVideo,
+            videoId: m.videoId,
+            selected: true,
+            selectedRange: [m.start, m.end],
+          } satisfies SelectedMarker,
         ])
       return Object.fromEntries(entries)
     }
   )
   const [filter, setFilter] = useState("")
-  const [videoPreview, setVideoPreview] = useState<string>()
+  const [videoPreview, setVideoPreview] = useState<number>()
   const navigate = useNavigate()
   const markers = useFuse({
-    items: data.markers.dtos,
+    items: data.markers,
     query: filter,
     keys: ["performers", "primaryTag", "sceneTitle", "tags"],
   })
@@ -104,7 +74,7 @@ function SelectMarkers() {
   const [maxMarkerLength, setMaxMarkerLength] = useState<number>()
   const allDisabled = Object.values(selection).every((m) => !m.selected)
 
-  const onVideoPreviewChange = (id: string, checked: boolean) => {
+  const onVideoPreviewChange = (id: number, checked: boolean) => {
     if (checked) {
       setVideoPreview(id)
     } else {
@@ -115,10 +85,13 @@ function SelectMarkers() {
   const totalDuration = formatSeconds(
     Object.values(selection)
       .filter((m) => m.selected)
-      .reduce((sum, next) => sum + (next.duration || 0), 0)
+      .reduce(
+        (sum, next) => sum + (next.selectedRange[1] - next.selectedRange[0]),
+        0
+      )
   )
 
-  const onCheckboxChange = (id: string, checked: boolean) => {
+  const onCheckboxChange = (id: number, checked: boolean) => {
     setSelection((draft) => {
       draft[id].selected = checked
     })
@@ -141,29 +114,35 @@ function SelectMarkers() {
   }
 
   const onNextStage = () => {
-    const selectedMarkers = Object.values(selection).filter((m) => m.selected)
-    const hasInteractiveScenes = data.markers.dtos
-      .filter((m) => !!selection[m.id])
+    const selectedMarkers = Object.values(selection)
+    const hasInteractiveScenes = data.markers
+      .filter((m) => !!selection[m.id.id])
       .some((m) => m.sceneInteractive)
+    console.log(selectedMarkers)
 
     actions.updateForm({
       stage: FormStage.VideoOptions,
       selectedMarkers,
-      markers: data.markers.dtos,
+      markers: data.markers,
       interactive: hasInteractiveScenes,
     })
-    navigate("/video-options")
+    navigate("/stash/video-options")
   }
 
-  const onDurationBlur = () => {
+  const onLimitDuration = () => {
     setSelection((draft) => {
-      Object.values(draft).forEach((selectedMarker) => {
-        const marker = markers.find((m) => m.id === selectedMarker.id)!
-        const defaultDuration = getDuration(marker)
-        const maxLen = maxMarkerLength || defaultDuration
-        selectedMarker.duration =
-          selectedMarker.duration >= maxLen ? maxLen : defaultDuration
-      })
+      for (const selectedMarker of Object.values(draft)) {
+        const originalMarker = data.markers.find(
+          (m) => m.id.id === selectedMarker.id.id
+        )!
+        const start = selectedMarker.selectedRange[0]
+        const maxLen =
+          maxMarkerLength || originalMarker.end - originalMarker.start
+        selectedMarker.selectedRange = [
+          start,
+          Math.min(start + maxLen, originalMarker.end),
+        ]
+      }
     })
   }
 
@@ -193,17 +172,20 @@ function SelectMarkers() {
             onChange={(e) => setFilter(e.target.value)}
           />
 
-          <input
-            type="number"
-            className="input input-bordered w-full lg:w-96"
-            placeholder="Limit maximum marker length (in seconds)"
-            value={maxMarkerLength || ""}
-            onChange={(e) => {
-              const num = e.target.valueAsNumber
-              setMaxMarkerLength(num)
-            }}
-            onBlur={onDurationBlur}
-          />
+          <div className="form-control">
+            <div className="input-group">
+              <input
+                type="number"
+                placeholder="Limit maximum marker length (in seconds)"
+                className="input input-bordered w-full lg:w-96"
+                value={maxMarkerLength || ""}
+                onChange={(e) => setMaxMarkerLength(e.target.valueAsNumber)}
+              />
+              <button className="btn" type="button" onClick={onLimitDuration}>
+                Apply
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-2 justify-center">
@@ -228,20 +210,20 @@ function SelectMarkers() {
       )}
       <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
         {markers.map((marker) => {
-          const selectedMarker = selection[marker.id]!
+          const selectedMarker = selection[marker.id.id]
           return (
             <article
-              key={marker.id}
+              key={marker.id.id}
               className={clsx(
                 "card card-compact bg-base-100 shadow-xl",
                 !selectedMarker.selected && "opacity-50"
               )}
             >
               <figure>
-                {videoPreview === marker.id && (
+                {videoPreview === marker.id.id && (
                   <video muted autoPlay src={marker.streamUrl} />
                 )}
-                {videoPreview !== marker.id && (
+                {videoPreview !== marker.id.id && (
                   <img
                     src={marker.screenshotUrl}
                     className="aspect-[16/9] object-cover object-top w-full"
@@ -271,19 +253,25 @@ function SelectMarkers() {
                     <HiClock className="mr-2 inline" />
                     Selected duration:{" "}
                   </strong>
-                  {formatSeconds(selectedMarker.duration)}
+                  {formatSeconds(selectedMarker.selectedRange, "short")} /{" "}
+                  {formatSeconds(marker.end - marker.start, "short")}
                 </p>
                 <div className="">
                   <div className="w-full">
                     <input
-                      value={selectedMarker.duration}
+                      value={
+                        selectedMarker.selectedRange[1] -
+                        selectedMarker.selectedRange[0]
+                      }
                       onChange={(e) =>
                         setSelection((draft) => {
-                          draft[marker.id].duration = e.target.valueAsNumber
+                          const start = draft[marker.id.id].selectedRange[0]
+                          draft[marker.id.id].selectedRange[1] =
+                            start + e.target.valueAsNumber
                         })
                       }
                       disabled={!selectedMarker.selected}
-                      max={getDuration(marker)}
+                      max={marker.end - marker.start}
                       min={15}
                       type="range"
                       className="range range-primary w-full"
@@ -296,9 +284,9 @@ function SelectMarkers() {
                         <span className="label-text">Video preview</span>
                         <input
                           onChange={(e) =>
-                            onVideoPreviewChange(marker.id, e.target.checked)
+                            onVideoPreviewChange(marker.id.id, e.target.checked)
                           }
-                          checked={videoPreview === marker.id}
+                          checked={videoPreview === marker.id.id}
                           disabled={!selectedMarker.selected}
                           type="checkbox"
                           className="toggle ml-2"
@@ -313,7 +301,7 @@ function SelectMarkers() {
                           className="checkbox checkbox-primary ml-2"
                           checked={selectedMarker.selected}
                           onChange={(e) =>
-                            onCheckboxChange(marker.id, e.target.checked)
+                            onCheckboxChange(marker.id.id, e.target.checked)
                           }
                         />
                       </label>

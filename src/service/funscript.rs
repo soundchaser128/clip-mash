@@ -1,9 +1,11 @@
+use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{clip::Clip, stash_api::Api, Result};
+use super::{Clip, Video};
+use crate::{data::stash_api::StashApi, service::VideoInfo, Result};
 
-// Funscript structs taken from  https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
+// Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -70,6 +72,13 @@ pub struct FunScript {
     pub metadata: Option<OFSMetadata>,
 }
 
+impl FunScript {
+    pub async fn load(path: impl AsRef<Utf8Path>) -> Result<Self> {
+        let text = tokio::fs::read_to_string(path.as_ref()).await?;
+        Ok(serde_json::from_str(&text)?)
+    }
+}
+
 impl Default for FunScript {
     fn default() -> Self {
         FunScript {
@@ -96,22 +105,29 @@ impl Default for FunScript {
 }
 
 pub struct ScriptBuilder<'a> {
-    api: &'a Api,
+    api: &'a StashApi,
 }
 
 impl<'a> ScriptBuilder<'a> {
-    pub fn new(api: &'a Api) -> Self {
+    pub fn new(api: &'a StashApi) -> Self {
         Self { api }
     }
 
-    pub async fn combine_scripts(&self, clips: Vec<Clip>) -> Result<FunScript> {
+    pub async fn combine_scripts(&self, clips: Vec<(Video, Clip)>) -> Result<FunScript> {
         let mut resulting_actions = vec![];
         let mut offset = 0;
 
-        for clip in clips {
+        for (video, clip) in clips {
             let (start, end) = clip.range_millis();
             let duration = end - start;
-            let script = self.api.get_funscript(&clip.scene_id).await;
+
+            let script = match video.info {
+                VideoInfo::Stash { .. } => self.api.get_funscript(&clip.video_id.to_string()).await,
+                VideoInfo::LocalFile { video } => {
+                    let path = Utf8PathBuf::from(video.file_path).with_extension("funscript");
+                    FunScript::load(path).await
+                }
+            };
             match script {
                 Ok(script) => {
                     let actions: Vec<_> = script
@@ -130,7 +146,7 @@ impl<'a> ScriptBuilder<'a> {
                 Err(e) => {
                     tracing::warn!(
                         "failed to get .funscript for scene ID {}: {}",
-                        clip.scene_id,
+                        clip.video_id,
                         e
                     )
                 }
@@ -142,7 +158,7 @@ impl<'a> ScriptBuilder<'a> {
         let script = FunScript {
             actions: resulting_actions,
             metadata: Some(OFSMetadata {
-                creator: format!("stash-compilation-maker v{}", version),
+                creator: format!("clip-mash v{}", version),
                 ..Default::default()
             }),
             ..Default::default()

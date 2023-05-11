@@ -14,6 +14,7 @@ pub enum AppError {
     Generic(StdError),
     Io(io::Error),
     Report(color_eyre::Report),
+    StatusCode(StatusCode),
 }
 
 impl From<StdError> for AppError {
@@ -37,16 +38,21 @@ impl From<color_eyre::Report> for AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         tracing::error!("request failed: {:?}", self);
+        let status_code = match &self {
+            AppError::StatusCode(code) => *code,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        };
         let error_message = match self {
             AppError::Generic(e) => e.to_string(),
             AppError::Io(e) => format!("io error: {e}"),
             AppError::Report(e) => e.to_string(),
+            AppError::StatusCode(s) => s.to_string(),
         };
 
         let body = Json(json!({
             "error": error_message,
         }));
 
-        (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
+        (status_code, body).into_response()
     }
 }

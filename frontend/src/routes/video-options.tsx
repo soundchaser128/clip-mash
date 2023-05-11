@@ -1,17 +1,27 @@
 import {useStateMachine} from "little-state-machine"
 import {useForm} from "react-hook-form"
 import {useNavigate} from "react-router-dom"
-import {FormStage, FormState} from "../types/types"
+import {
+  FormStage,
+  LocalFilesFormStage,
+  StashFormState,
+  StateHelpers,
+} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight} from "react-icons/hi2"
 
 type Inputs = Pick<
-  FormState,
-  "clipDuration" | "clipOrder" | "outputFps" | "outputResolution" | "splitClips"
+  StashFormState,
+  | "clipDuration"
+  | "clipOrder"
+  | "outputFps"
+  | "outputResolution"
+  | "splitClips"
+  | "seed"
 >
 
 const defaultOptions: Inputs = {
-  clipDuration: 15,
+  clipDuration: 30,
   clipOrder: "scene-order",
   outputFps: 30,
   outputResolution: "720",
@@ -28,21 +38,20 @@ function VideoOptions() {
   const doSplitClips = watch("splitClips")
 
   const onSubmit = (values: Inputs) => {
-    actions.updateForm({...values, stage: FormStage.PreviewClips})
-    navigate("/clips")
+    actions.updateForm({
+      ...values,
+      stage: StateHelpers.isLocalFiles(state.data)
+        ? LocalFilesFormStage.PreviewClips
+        : FormStage.PreviewClips,
+    })
+    navigate("/stash/clips")
   }
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="w-full flex justify-between mb-4">
-          <span />
-          <button type="submit" className="btn btn-success">
-            Next
-            <HiChevronRight className="ml-1" />
-          </button>
-        </div>
-        <div className="flex flex-col gap-4 max-w-sm w-full">
+      <form className="grid grid-cols-3" onSubmit={handleSubmit(onSubmit)}>
+        <div />
+        <div className="flex flex-col gap-4 self-center max-w-lg">
           <div className="form-control">
             <label className="label cursor-pointer">
               <span className="label-text mr-2">
@@ -115,6 +124,25 @@ function VideoOptions() {
               <option value="random">Random</option>
             </select>
           </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Random seed:</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered"
+              placeholder="Enter a value to control random number generation (optional)"
+              {...register("seed")}
+            />
+          </div>
+        </div>
+        <div className="w-full flex justify-between mb-4">
+          <span />
+          <button type="submit" className="btn btn-success">
+            Next
+            <HiChevronRight className="ml-1" />
+          </button>
         </div>
       </form>
     </>

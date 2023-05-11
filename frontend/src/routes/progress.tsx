@@ -1,12 +1,9 @@
 import {useStateMachine} from "little-state-machine"
-import {useEffect, useRef, useState} from "react"
-import {
-  HiArrowDown,
-  HiCheckBadge,
-  HiCodeBracket,
-  HiOutlineArrowDownOnSquare,
-} from "react-icons/hi2"
-import {formatSeconds} from "./select-markers"
+import {useRef, useState} from "react"
+import {HiArrowDown, HiCheckBadge, HiCodeBracket} from "react-icons/hi2"
+import {StateHelpers} from "../types/types"
+import invariant from "tiny-invariant"
+import {formatSeconds} from "../helpers"
 
 interface Progress {
   finished: number
@@ -15,15 +12,24 @@ interface Progress {
 
 function Progress() {
   const {state} = useStateMachine()
+  invariant(StateHelpers.isNotInitial(state.data))
+
   const [progress, setProgress] = useState<Progress>()
   const [finished, setFinished] = useState(false)
-  const [fileName, setFileName] = useState("")
+  const [finalFileName, setFinalFileName] = useState("")
   const downloadLink = useRef<HTMLAnchorElement>(null)
   const [creatingScript, setCreatingScript] = useState(false)
 
   const onSubmit = async (e: React.MouseEvent) => {
+    invariant(StateHelpers.isNotInitial(state.data))
+
     e.preventDefault()
-    const body = JSON.stringify(state.data)
+    const data = {...state.data}
+    if (!data.fileName) {
+      data.fileName = `${data.id}.mp4`
+    }
+
+    const body = JSON.stringify(data)
     const response = await fetch("/api/create", {
       method: "POST",
       body,
@@ -31,8 +37,8 @@ function Progress() {
     })
 
     if (response.ok) {
-      let fileName = await response.text()
-      setFileName(fileName)
+      const fileName = await response.text()
+      setFinalFileName(fileName)
       const es = new EventSource("/api/progress")
       es.onmessage = (event) => {
         const data = JSON.parse(event.data) as Progress
@@ -59,14 +65,15 @@ function Progress() {
     })
 
     const script = await response.blob()
-    const file = fileName.replace(".mp4", ".funscript")
+    const file = finalFileName.replace(".mp4", ".funscript")
     const downloadUrl = URL.createObjectURL(script)
-    downloadLink.current!.href = downloadUrl
-    downloadLink.current!.download = file
-    downloadLink.current!.click()
+    if (downloadLink.current) {
+      downloadLink.current.href = downloadUrl
+      downloadLink.current.download = file
+      downloadLink.current.click()
+    }
     setCreatingScript(false)
   }
-
   const totalDuration = state.data.clips!.reduce(
     (duration, clip) => duration + (clip.range[1] - clip.range[0]),
     0
@@ -111,12 +118,12 @@ function Progress() {
 
       {finished && (
         <div className="flex flex-col">
-          <h1 className="text-2xl font-bold mb-6">Success!</h1>
+          <h1 className="text-5xl font-bold mb-6">Success!</h1>
           <p className="font-light self-start mb-1">
             Download the finished compilation
           </p>
           <a
-            href={`/api/download?fileName=${encodeURIComponent(fileName)}`}
+            href={`/api/download?fileName=${encodeURIComponent(finalFileName)}`}
             className="btn btn-success btn-lg mb-8"
             download
           >

@@ -1,10 +1,10 @@
 import {LoaderFunction, useOutletContext} from "react-router-dom"
 import {Context} from "./root"
-import {Tag} from "../../types/types"
-import useFilteredData from "../../hooks/useFilteredData"
+import {Tag} from "../../../types/types"
+import useFilteredData from "../../../hooks/useFilteredData"
 
 export const loader: LoaderFunction = async () => {
-  const response = await fetch("/api/tags")
+  const response = await fetch("/api/stash/tags")
   return await response.json()
 }
 
@@ -22,7 +22,7 @@ function Tags() {
           <div className="card-body">
             <h2 className="card-title">{tag.name}</h2>
             <p>
-              <strong>{tag.count}</strong> markers
+              <strong>{tag.markerCount}</strong> markers
             </p>
             <div className="card-actions justify-end">
               <div className="form-control">

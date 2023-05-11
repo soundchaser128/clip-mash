@@ -25,6 +25,7 @@ query FindMarkersQuery(
         }
         files {
           basename
+          duration
         }
         sceneStreams {
           url

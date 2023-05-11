@@ -6,67 +6,72 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom"
-import {Clip, FormStage, FormState, Scene} from "../types/types"
+import {Clip, FormStage, VideoDto, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
 import {useImmer} from "use-immer"
+import invariant from "tiny-invariant"
+import {formatSeconds, getFormState, getSegmentColor} from "../helpers"
+
+const DEBUG = false
 
 interface ClipsResponse {
   clips: Clip[]
   streams: Record<string, string>
-  scenes: Scene[]
+  videos: VideoDto[]
 }
 
 interface Data {
   clips: Clip[]
   streams: Record<string, string>
-  scenes: Record<string, Scene>
+  videos: Record<string, VideoDto>
 }
 
+type ClipSortMode = "videoIndex" | "markerIndex"
+
 export const loader: LoaderFunction = async () => {
-  const formJson = sessionStorage.getItem("form-state")
-  const state: {data: FormState} = JSON.parse(formJson!)
+  const state = getFormState()!
+  invariant(StateHelpers.isNotInitial(state))
+  let sortMode: ClipSortMode = "markerIndex"
+
+  if (StateHelpers.isStash(state) && state.selectMode === "scenes") {
+    sortMode = "videoIndex"
+  }
+  if (StateHelpers.isLocalFiles(state)) {
+    sortMode = "videoIndex"
+  }
+
   const response = await fetch("/api/clips", {
     method: "POST",
     body: JSON.stringify({
-      clipOrder: state.data.clipOrder,
-      clipDuration: state.data.clipDuration,
-      selectedMarkers: state.data.selectedMarkers,
-      markers: state.data.markers,
-      selectMode: state.data.selectMode,
-      splitClips: state.data.splitClips,
+      clipOrder: state.clipOrder,
+      clipDuration: state.clipDuration,
+      markers: state.selectedMarkers!.filter((m) => m.selected),
+      splitClips: state.splitClips,
+      sortMode,
+      seed: state.seed,
     }),
     headers: {"content-type": "application/json"},
   })
   if (response.ok) {
     const data: ClipsResponse = await response.json()
 
-    const scenes: Record<string, Scene> = {}
-    data.scenes.forEach((s) => {
-      scenes[s.id] = s
+    const videos: Record<string, VideoDto> = {}
+    data.videos.forEach((s) => {
+      videos[s.id.id] = s
     })
 
     return {
       ...data,
-      scenes,
+      videos,
     } satisfies Data
   } else {
     const text = await response.text()
     throw json({error: text, request: "/api/clips"}, {status: 500})
   }
 }
-
-const segmentColors = [
-  "bg-purple-400",
-  "bg-green-400",
-  "bg-yellow-400",
-  "bg-red-400",
-  "bg-teal-400",
-  "bg-orange-600",
-  "bg-rose-400",
-]
 
 interface ClipState {
   clip: Clip
@@ -83,7 +88,7 @@ function PreviewClips() {
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
   const currentClip = clips[currentClipIndex].clip
-  const streamUrl = streams[currentClip.sceneId]
+  const streamUrl = streams[currentClip.videoId.id]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
   const {actions} = useStateMachine({updateForm})
   const navigate = useNavigate()
@@ -94,7 +99,7 @@ function PreviewClips() {
       stage: FormStage.Wait,
       clips: clips.filter((c) => c.included).map((c) => c.clip),
     })
-    navigate("/progress")
+    navigate("/stash/progress")
   }
 
   const [segments, sceneColors] = useMemo(() => {
@@ -102,11 +107,11 @@ function PreviewClips() {
     const total = clipLengths.reduce((total, len) => total + len, 0)
     const segments = clipLengths.map((len) => `${(len / total) * 100}%`)
 
-    const sceneIds = Array.from(new Set(clips.map((c) => c.clip.sceneId)))
+    const sceneIds = Array.from(new Set(clips.map((c) => c.clip.videoId.id)))
     sceneIds.sort()
     const sceneColors = new Map()
     sceneIds.forEach((id, index) => {
-      sceneColors.set(id, segmentColors[index % segmentColors.length])
+      sceneColors.set(id, getSegmentColor(index))
     })
 
     return [segments, sceneColors]
@@ -134,13 +139,23 @@ function PreviewClips() {
     <>
       <div className="mb-4 grid grid-cols-3 items-center">
         <div></div>
-        <p className=" text-center text-xl">
-          Showing clip{" "}
-          <strong>
-            {currentClipIndex + 1} / {clips.length}
-          </strong>
-        </p>
-
+        <div className="text-center">
+          <p className="">
+            Showing clip{" "}
+            <strong>
+              {currentClipIndex + 1} / {clips.length}
+            </strong>
+          </p>
+          <p>
+            Duration: <strong>{formatSeconds(currentClip.range)}</strong>
+          </p>
+          {DEBUG && (
+            <>
+              <p>Index within the marker: {currentClip.indexWithinMarker}</p>
+              <p>Index within its video: {currentClip.indexWithinVideo}</p>
+            </>
+          )}
+        </div>
         <button
           type="button"
           onClick={onNextStage}
@@ -163,14 +178,14 @@ function PreviewClips() {
       <div className="w-full h-8 flex mt-2 gap-0.5">
         {segments.map((width, index) => {
           const clip = clips[index].clip
-          const scene = loaderData.scenes[clip.sceneId]
+          const video = loaderData.videos[clip.videoId.id]
           return (
             <div
               key={index}
-              data-tip={`${scene.performers.join(", ")} - ${scene.title}`}
+              data-tip={`${video.performers.join(", ")} - ${video.title}`}
               className={clsx(
                 "h-full tooltip transition-opacity",
-                sceneColors.get(clip.sceneId),
+                sceneColors.get(clip.videoId.id),
                 index !== currentClipIndex &&
                   "bg-opacity-25 hover:bg-opacity-50"
               )}

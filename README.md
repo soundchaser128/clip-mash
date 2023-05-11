@@ -1,9 +1,9 @@
-# stash-compilation-maker
+# ClipMash
 
-Connects to your [Stash](https://github.com/stashapp/stash) instance and creates simple 
-compilation videos from scene markers. You select one or more tags, or one or more performers
-and it will take a configurable amount of time from the start of each marker, split that up into shorter clips
-of randomized length and splice them together into a longer compilation video.
+ClipMash is a video editing app that allows you to automate creating compilations from multiple videos. 
+It's mostly made for, ahem, adult content, which is why it can connect to [Stash](https://stashapp.cc/) and fetch videos
+and scene markers from there to guide the video creation process. You can also use local files and set the markers in 
+ClipMash itself and then generate a compilation based on that.
 
 ## Usage
 Download the binary for your OS from the releases page and run it. A new browser tab should open with the GUI
@@ -17,26 +17,32 @@ downloading the executable and placing it into their `$PATH` or installing it wi
 
 ## Building
 Requires `cargo`, `rustc` (see http://rustup.rs/) and `node` and `npm` (see https://nodejs.org/en). When those
-tools are installed, build and run the application like this:
+tools are installed, you should be able to build:
+
+## Building for development
 
 ```shell
-# Build the frontend first, it gets packaged with the executable:
+# Required to create the database and apply the schema
+cargo install sqlx-cli
+sqlx migrate run
+
+cd frontend
+npm install
+npm run dev
+
+# In a new shell, in the project root:
+cargo run
+```
+
+## Building for production
+```shell
 cd frontend
 npm install
 npm run build
 
-# Then build the backend, and run it:
 cd ..
-cargo run --release
+# Required to create the database and apply the schema
+cargo install sqlx-cli
+sqlx migrate run
+cargo build --release
 ```
-
-## Screenshots
-![Step 1](./screenshots/step-1.png)
-
-![Step 2](./screenshots/step-2.png)
-
-![Step 3](./screenshots/step-3.png)
-
-![Step 4](./screenshots/step-3.png)
-
-![Step 5](./screenshots/step-3.png)

@@ -41,6 +41,9 @@ function ConfigPage() {
 
   const onSubmit = async (inputs: Inputs) => {
     const health = await testCredentials(inputs)
+    inputs.apiKey = inputs.apiKey.trim()
+    inputs.stashUrl = inputs.stashUrl.trim()
+
     if (health.success) {
       const response = await fetch("/api/config", {
         method: "POST",
@@ -66,7 +69,7 @@ function ConfigPage() {
   return (
     <main className="container ml-auto mr-auto">
       <section className="py-4 flex flex-col">
-        <h1 className="text-4xl font-bold mb-4 text-center">
+        <h1 className="text-5xl font-bold mb-4 text-center">
           Configuration setup
         </h1>
         <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg w-full">
@@ -98,7 +101,12 @@ function ConfigPage() {
             <label className="label">
               <span className="label-text-alt">
                 Navigate to{" "}
-                <a className="link" href={settingsPage} target="_blank">
+                <a
+                  className="link"
+                  href={settingsPage}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   {settingsPage}
                 </a>{" "}
                 to retrieve your API key.

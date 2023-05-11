@@ -1,5 +1,7 @@
 # ClipMash
 
+[Discord](https://discord.gg/qRbDqtqmrX)
+
 ClipMash is a video editing app that allows you to automate creating compilations from multiple videos. 
 It's mostly made for, ahem, adult content, which is why it can connect to [Stash](https://stashapp.cc/) and fetch videos
 and scene markers from there to guide the video creation process. You can also use local files and set the markers in 

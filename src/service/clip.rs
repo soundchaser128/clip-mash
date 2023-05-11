@@ -11,6 +11,7 @@ use color_eyre::eyre::bail;
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use reqwest::Url;
 use serde::Deserialize;
+use tracing::{debug, info};
 
 use super::{
     generator::CompilationOptions, stash_config::Config, Clip, Marker, MarkerId, MarkerInfo, Video,
@@ -30,7 +31,12 @@ pub struct MarkerWithClips {
     pub clips: Vec<Clip>,
 }
 
-fn get_clips(marker: &Marker, options: &CreateClipsOptions, rng: &mut StdRng) -> MarkerWithClips {
+fn get_clips(
+    marker: &Marker,
+    max_marker_duration: Option<f64>,
+    options: &CreateClipsOptions,
+    rng: &mut StdRng,
+) -> MarkerWithClips {
     const MIN_DURATION: f64 = 2.0;
 
     let duration = options.clip_duration as f64;
@@ -41,7 +47,9 @@ fn get_clips(marker: &Marker, options: &CreateClipsOptions, rng: &mut StdRng) ->
     ];
 
     let start = marker.start_time;
-    let end = marker.end_time;
+    let end = max_marker_duration
+        .map(|n| marker.start_time + n)
+        .unwrap_or(marker.end_time);
 
     let mut index = 0;
     let mut offset = start;
@@ -49,7 +57,7 @@ fn get_clips(marker: &Marker, options: &CreateClipsOptions, rng: &mut StdRng) ->
     while offset < end {
         let duration = clip_lengths.choose(rng).unwrap();
         let start = offset;
-        let end = (offset + duration).min(marker.end_time);
+        let end = (offset + duration).min(end);
         let duration = end - start;
         if duration > MIN_DURATION {
             clips.push(Clip {
@@ -84,14 +92,19 @@ pub struct CreateClipsOptions {
 
 fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
     let mut rng = util::create_seeded_rng(options.seed.as_deref());
-    tracing::debug!("creating clips for options {options:?}");
+    debug!("creating clips for options {options:?}");
+
+    let max_duration_per_marker = options
+        .max_duration
+        .map(|seconds| seconds / options.markers.len() as f64);
+    info!("duration per marker {max_duration_per_marker:?}");
 
     options
         .markers
         .iter()
         .map(|marker| {
             if options.split_clips {
-                get_clips(marker, options, &mut rng)
+                get_clips(marker, max_duration_per_marker, options, &mut rng)
             } else {
                 MarkerWithClips {
                     marker: marker.clone(),
@@ -309,13 +322,16 @@ impl<'a> ClipService<'a> {
 mod tests {
     use crate::{
         data::database::DbMarker,
-        service::{clip::ClipSortMode, Marker, MarkerId, MarkerInfo, VideoId},
+        service::{
+            clip::{arrange_clips, ClipSortMode},
+            Marker, MarkerId, MarkerInfo, VideoId,
+        },
     };
 
     use fake::{faker::filesystem::en::FilePath, Fake, Faker};
     use nanoid::nanoid;
 
-    use super::{compile_clips, get_all_clips, ClipOrder, CreateClipsOptions};
+    use super::{get_all_clips, ClipOrder, CreateClipsOptions};
 
     fn create_marker(start_time: f64, end_time: f64, index: usize) -> Marker {
         Marker {
@@ -379,8 +395,29 @@ mod tests {
             seed: None,
             max_duration: None,
         };
-        let results = get_all_clips(&options);
-        let results = compile_clips(results, &options);
+        let results = arrange_clips(&options);
         assert_eq!(4, results.len());
+    }
+
+    #[test]
+    fn test_compile_clips_with_time_limit() {
+        let options = CreateClipsOptions {
+            order: ClipOrder::SceneOrder,
+            clip_duration: 15,
+            markers: vec![
+                create_marker(1.0, 15.0, 0),
+                create_marker(1.0, 17.0, 0),
+                create_marker(20.0, 34.0, 1),
+                create_marker(17.0, 40.0, 1),
+            ],
+            split_clips: true,
+            sort_mode: ClipSortMode::VideoIndex,
+            seed: None,
+            max_duration: Some(30.0),
+        };
+
+        let clips = arrange_clips(&options);
+        let total_duration: f64 = clips.iter().map(|c| c.range.1 - c.range.0).sum();
+        assert_eq!(30.0, total_duration);
     }
 }

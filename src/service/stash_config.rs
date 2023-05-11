@@ -5,6 +5,7 @@ use directories::ProjectDirs;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
+use tracing::info;
 
 lazy_static! {
     static ref CONFIG: Mutex<Option<Config>> = Default::default();
@@ -22,7 +23,7 @@ impl Config {
         use std::fs;
 
         let config_file = config_file_path().expect("no configuration file path found");
-        tracing::info!("trying to load config file from {}", config_file);
+        info!("trying to load config file from {}", config_file);
 
         let text = fs::read_to_string(&config_file)?;
         let config = serde_json::from_str(&text)?;
@@ -50,7 +51,7 @@ pub async fn init() {
             global.replace(config);
         }
         Err(e) => {
-            tracing::info!("no configuration found, or unable to load: {e}")
+            info!("no configuration found, or unable to load: {e}")
         }
     }
 }
@@ -66,7 +67,7 @@ pub async fn set_config(config: Config) -> Result<()> {
     fs::create_dir_all(file.parent().expect("config directory must have a parent")).await?;
     fs::write(&file, &file_content).await?;
 
-    tracing::info!("wrote configuration to {}", file);
+    info!("wrote configuration to {}", file);
 
     Ok(())
 }

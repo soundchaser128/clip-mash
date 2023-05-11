@@ -5,6 +5,7 @@ use axum::{
     Router,
 };
 use color_eyre::Report;
+use tracing::{info, warn};
 
 use crate::{
     data::database::Database, server::handlers::AppState, service::generator::CompilationGenerator,
@@ -74,16 +75,14 @@ async fn main() -> Result<()> {
 
     let host = env::args().nth(1).unwrap_or_else(|| "[::1]".to_string());
     let addr = format!("{host}:5174");
-    tracing::info!("running at {}", addr);
+    info!("running at {}", addr);
 
     let is_debug_build = cfg!(debug_assertions);
     if !is_debug_build {
         tokio::spawn(async move {
             tokio::time::sleep(Duration::from_millis(500)).await;
             if webbrowser::open("http://localhost:5174").is_err() {
-                tracing::warn!(
-                    "failed to open UI in browser, please navigate to http://localhost:5147"
-                );
+                warn!("failed to open UI in browser, please navigate to http://localhost:5147");
             }
         });
     }

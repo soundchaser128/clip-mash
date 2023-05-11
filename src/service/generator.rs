@@ -6,6 +6,7 @@ use futures::lock::Mutex;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
+use tracing::{debug, info};
 
 use super::{Clip, Marker};
 
@@ -62,14 +63,14 @@ pub fn find_stash_stream_url(marker: &StashMarker) -> &str {
         for label in LABEL_PRIORITIES {
             if let Some(l) = &stream.label {
                 if l == label {
-                    tracing::debug!("returning stream {stream:?}");
+                    debug!("returning stream {stream:?}");
                     return &stream.url;
                 }
             }
         }
     }
     // fallback to returning the first URL
-    tracing::info!(
+    info!(
         "could not find any stream URL with the preferred labels, returning {:?}",
         streams[0]
     );
@@ -152,7 +153,7 @@ impl CompilationGenerator {
             "48000",
             out_file.as_str(),
         ];
-        tracing::info!("executing command ffmpeg {}", args.join(" "));
+        info!("executing command ffmpeg {}", args.join(" "));
 
         let output = Command::new(self.path.as_str()).args(args).output().await?;
         if !output.status.success() {
@@ -201,7 +202,7 @@ impl CompilationGenerator {
                 .video_dir
                 .join(format!("{}_{}-{}.mp4", marker.video_id, start, end));
             if !out_file.is_file() {
-                tracing::info!("creating clip {out_file}");
+                info!("creating clip {out_file}");
                 self.create_clip(
                     url,
                     *start,
@@ -213,7 +214,7 @@ impl CompilationGenerator {
                 )
                 .await?;
             } else {
-                tracing::info!("clip {out_file} already exists, skipping");
+                info!("clip {out_file} already exists, skipping");
             }
             self.increase_progress().await;
             paths.push(out_file);
@@ -228,7 +229,7 @@ impl CompilationGenerator {
         clips: Vec<Utf8PathBuf>,
     ) -> Result<Utf8PathBuf> {
         let file_name = &options.file_name;
-        tracing::info!(
+        info!(
             "assembling {} clips into video with file name '{}'",
             options.clips.len(),
             file_name
@@ -265,7 +266,7 @@ impl CompilationGenerator {
             return commandline_error(output);
         }
 
-        tracing::info!("finished assembling video, result at {destination}");
+        info!("finished assembling video, result at {destination}");
 
         Ok(destination)
     }

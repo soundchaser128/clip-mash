@@ -3,6 +3,7 @@ use std::process::{Command, Stdio};
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
 use tokio::{fs, io::AsyncWriteExt};
+use tracing::{debug, info};
 
 use crate::Result;
 
@@ -47,13 +48,14 @@ fn unzip(
 ) -> Result<Utf8PathBuf> {
     use std::{fs::File, io::BufReader};
     use tar::Archive;
+    use tracing::info;
     use xz2::bufread::XzDecoder;
 
     let file = BufReader::new(File::open(path.as_ref())?);
     let reader = XzDecoder::new(file);
     let mut archive = Archive::new(reader);
     let dest_file = destination_folder.as_ref().join("ffmpeg");
-    tracing::info!("unzipping to {dest_file}");
+    info!("unzipping to {dest_file}");
 
     for entry in archive.entries()? {
         let mut entry = entry?;
@@ -102,14 +104,14 @@ fn unzip(
 async fn download_archive(url: &str, destination: &Utf8Path) -> Result<()> {
     let mut response = reqwest::get(url).await?.error_for_status()?;
     let mut file = fs::File::create(destination).await?;
-    tracing::info!("downloading file {} to {}", url, destination);
+    info!("downloading file {} to {}", url, destination);
     let content_length = response.content_length().unwrap_or_default();
 
     let mut bytes_written = 0;
     while let Some(chunk) = response.chunk().await? {
         file.write_all(&chunk).await?;
         bytes_written += chunk.len();
-        tracing::debug!("wrote {bytes_written} / {content_length} bytes");
+        debug!("wrote {bytes_written} / {content_length} bytes");
     }
 
     Ok(())
@@ -119,7 +121,7 @@ pub async fn download() -> Result<Utf8PathBuf> {
     let dest = Utf8Path::new("ffmpeg");
     fs::create_dir_all(dest).await?;
     if is_installed(dest) {
-        tracing::info!("ffmpeg already installed, not doing anything.");
+        info!("ffmpeg already installed, not doing anything.");
         return Ok("ffmpeg".into());
     }
 
@@ -130,7 +132,7 @@ pub async fn download() -> Result<Utf8PathBuf> {
         download_archive(url, &archive_dest).await?;
     }
 
-    tracing::info!("downloaded ffmpeg archive");
+    info!("downloaded ffmpeg archive");
     let ffmpeg_path = unzip(&archive_dest, dest)?;
     fs::remove_file(archive_dest).await?;
 

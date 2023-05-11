@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- feat: Allow using local videos (#8)
+- chore: Rename app to ClipMash
+- chore: Added eslint setup for Typescript code
 
 # 0.5.1
 - docs: Added updated screenshots

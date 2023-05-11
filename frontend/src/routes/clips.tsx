@@ -51,6 +51,7 @@ export const loader: LoaderFunction = async () => {
       markers: state.selectedMarkers!.filter((m) => m.selected),
       splitClips: state.splitClips,
       sortMode,
+      seed: state.seed,
     }),
     headers: {"content-type": "application/json"},
   })

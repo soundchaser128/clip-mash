@@ -78,6 +78,7 @@ export interface LocalVideosFormState {
   fileName?: string
   clips?: Clip[]
   interactive?: boolean
+  seed?: string
 }
 
 export interface Marker {
@@ -111,6 +112,7 @@ export interface StashFormState {
   splitClips?: boolean
   includeAll?: boolean
   interactive?: boolean
+  seed?: string
   stage: FormStage
   id: string
 }

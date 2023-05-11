@@ -170,6 +170,7 @@ pub struct CreateClipsBody {
     pub split_clips: bool,
     pub markers: Vec<SelectedMarker>,
     pub sort_mode: ClipSortMode,
+    pub seed: Option<String>,
 }
 
 #[derive(Serialize, Debug)]

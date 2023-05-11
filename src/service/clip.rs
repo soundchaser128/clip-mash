@@ -82,10 +82,11 @@ pub struct CreateClipsOptions {
     pub split_clips: bool,
     pub max_duration: Option<u32>,
     pub sort_mode: ClipSortMode,
+    pub seed: Option<String>,
 }
 
 pub fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
-    let mut rng = util::create_seeded_rng();
+    let mut rng = util::create_seeded_rng(options.seed.as_deref());
     tracing::debug!("creating clips for options {options:?}");
 
     options
@@ -131,8 +132,9 @@ pub fn compile_clips(
     clips: Vec<MarkerWithClips>,
     order: ClipOrder,
     sort_mode: ClipSortMode,
+    seed: Option<&str>,
 ) -> Vec<Clip> {
-    let mut rng = util::create_seeded_rng();
+    let mut rng = util::create_seeded_rng(seed);
 
     match order {
         ClipOrder::SceneOrder => {
@@ -301,6 +303,7 @@ impl<'a> ClipService<'a> {
             split_clips: body.split_clips,
             markers: self.convert_selected_markers(body.markers).await?,
             sort_mode: body.sort_mode,
+            seed: body.seed,
         })
     }
 }
@@ -348,6 +351,7 @@ mod tests {
             max_duration: None,
             split_clips: true,
             sort_mode: ClipSortMode::VideoIndex,
+            seed: None,
         };
         let mut results1 = get_all_clips(&options);
         assert_eq!(2, results1.len());
@@ -374,9 +378,15 @@ mod tests {
             max_duration: None,
             split_clips: true,
             sort_mode: ClipSortMode::VideoIndex,
+            seed: None,
         };
         let results = get_all_clips(&options);
-        let results = compile_clips(results, ClipOrder::SceneOrder, ClipSortMode::VideoIndex);
+        let results = compile_clips(
+            results,
+            ClipOrder::SceneOrder,
+            ClipSortMode::VideoIndex,
+            None,
+        );
         assert_eq!(4, results.len());
     }
 }

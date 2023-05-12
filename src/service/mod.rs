@@ -1,8 +1,10 @@
 pub mod clip;
 pub mod download_ffmpeg;
+pub mod ffprobe;
 pub mod funscript;
 pub mod generator;
 pub mod local_video;
+pub mod music;
 pub mod stash_config;
 
 use std::fmt;

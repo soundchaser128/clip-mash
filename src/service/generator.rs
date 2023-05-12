@@ -1,6 +1,6 @@
 use std::process::Output;
 
-use crate::{data::stash_api::StashMarker, service::MarkerInfo, Result};
+use crate::{data::stash_api::StashMarker, service::MarkerInfo, util::commandline_error, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
@@ -82,19 +82,6 @@ pub fn find_stream_url(marker: &Marker) -> &str {
         MarkerInfo::Stash { marker } => find_stash_stream_url(marker),
         MarkerInfo::LocalFile { marker } => &marker.file_path,
     }
-}
-
-fn commandline_error<T>(output: Output) -> Result<T> {
-    use color_eyre::eyre::eyre;
-
-    let stdout = std::str::from_utf8(&output.stdout).unwrap();
-    let stderr = std::str::from_utf8(&output.stderr).unwrap();
-    Err(eyre!(
-        "ffmpeg failed with exit code {}, stdout:\n{}\nstderr:\n{}",
-        output.status.code().unwrap_or(1),
-        stdout,
-        stderr
-    ))
 }
 
 pub async fn get_progress() -> Progress {

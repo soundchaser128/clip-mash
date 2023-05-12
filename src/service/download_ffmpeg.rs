@@ -48,7 +48,6 @@ fn unzip(
 ) -> Result<Utf8PathBuf> {
     use std::{fs::File, io::BufReader};
     use tar::Archive;
-    use tracing::info;
     use xz2::bufread::XzDecoder;
 
     let file = BufReader::new(File::open(path.as_ref())?);

@@ -1,4 +1,6 @@
 import {useState} from "react"
+import Field from "../components/Field"
+import Form from "../components/Form"
 
 type MusicMode = "none" | "trimVideo" | "trimMusic"
 
@@ -30,14 +32,17 @@ export default function Music() {
       </div>
 
       {mode !== "none" && (
-        <section>
-          Select music
-          {/* 
-            * Enter YouTube URL - OR - Upload music
-            * 
-          
-          */}
-        </section>
+        <>
+          <h1 className="font-bold text-3xl mb-4">Select music</h1>
+          <Form className="gap-4 self-center">
+            <Field label="Music URL">
+              <input
+                className="input input-bordered w-full"
+                placeholder="Supports YouTube, Vimeo, ..."
+              />
+            </Field>
+          </Form>
+        </>
       )}
     </>
   )

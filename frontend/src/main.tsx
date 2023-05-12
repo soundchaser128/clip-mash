@@ -26,6 +26,7 @@ import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
 import EditVideoModal from "./routes/local/videos.$id"
 import StashRoot from "./routes/stash/root"
 import Layout from "./components/Layout"
+import Music from "./routes/music"
 
 const TroubleshootingInfo = () => {
   return (
@@ -173,6 +174,10 @@ const router = createBrowserRouter([
           {
             path: "progress",
             element: <Progress />,
+          },
+          {
+            path: "music",
+            element: <Music />,
           },
         ],
       },

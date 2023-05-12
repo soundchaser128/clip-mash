@@ -40,6 +40,11 @@ const StashSteps: React.FC<{state: StashFormState}> = ({state}) => {
           content: "Select markers",
         },
         {
+          stage: FormStage.Music,
+          link: "/stage/music",
+          content: "Music options",
+        },
+        {
           stage: FormStage.VideoOptions,
           link: "/stash/video-options",
           content: "Video options",
@@ -73,6 +78,11 @@ const LocalFileSteps: React.FC<{state: LocalVideosFormState}> = ({state}) => {
           stage: LocalFilesFormStage.ListVideos,
           link: "/local/videos",
           content: "Create markers",
+        },
+        {
+          stage: FormStage.Music,
+          link: "/stage/music",
+          content: "Music options",
         },
         {
           stage: LocalFilesFormStage.VideoOptions,

@@ -19,16 +19,18 @@ export enum FormStage {
   SelectCriteria = 2,
   SelectMarkers = 3,
   VideoOptions = 4,
-  PreviewClips = 5,
-  Wait = 6,
+  Music = 5,
+  PreviewClips = 6,
+  Wait = 7,
 }
 
 export enum LocalFilesFormStage {
   SelectPath = 1,
   ListVideos = 2,
-  VideoOptions = 3,
-  PreviewClips = 4,
-  Wait = 5,
+  Music = 3,
+  VideoOptions = 4,
+  PreviewClips = 5,
+  Wait = 6,
 }
 
 export type IdSource = "stash" | "localFile"

@@ -1,4 +1,8 @@
-use crate::{service::ffprobe::ffprobe, Result};
+use crate::{
+    data::database::{CreateSong, Database, DbSong},
+    service::ffprobe::ffprobe,
+    Result,
+};
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
 use nanoid::nanoid;
@@ -20,6 +24,43 @@ pub struct SongInfo {
     pub duration: f64,
 }
 
+pub struct MusicService {
+    db: Database,
+}
+
+impl MusicService {
+    pub fn new(database: Database) -> Self {
+        Self { db: database }
+    }
+
+    pub async fn download_song(&self, url: &str) -> Result<DbSong> {
+        let existing_song = self.db.get_song_by_url(url).await?;
+        if let Some(mut song) = existing_song {
+            if Utf8Path::new(&song.file_path).is_file() {
+                Ok(song)
+            } else {
+                let downloaded_song = download_song(url).await?;
+                self.db
+                    .update_song_file_path(song.rowid, downloaded_song.path.as_str())
+                    .await?;
+                song.file_path = downloaded_song.path.to_string();
+                Ok(song)
+            }
+        } else {
+            let downloaded_song = download_song(url).await?;
+            let result = self
+                .db
+                .persist_song(CreateSong {
+                    duration: downloaded_song.duration,
+                    file_path: downloaded_song.path.to_string(),
+                    url: url.to_string(),
+                })
+                .await?;
+            Ok(result)
+        }
+    }
+}
+
 async fn ensure_yt_dlp() -> Result<Utf8PathBuf> {
     let path = Utf8PathBuf::from(YT_DLP_DIRECTORY);
     if !path.is_dir() {
@@ -33,7 +74,7 @@ async fn ensure_yt_dlp() -> Result<Utf8PathBuf> {
     Ok(executable)
 }
 
-pub async fn download_song(url: &str) -> Result<SongInfo> {
+async fn download_song(url: &str) -> Result<SongInfo> {
     let yt_dlp = ensure_yt_dlp().await?;
 
     let base_dir = Utf8Path::new(BASE_DIRECTORY);
@@ -72,9 +113,9 @@ mod test {
 
     #[tokio::test]
     async fn test_download_song() {
-        color_eyre::install();
+        let _ = color_eyre::install();
         let url = "https://www.youtube.com/watch?v=weUhBGA8mxo";
-        let info = dbg!(download_song(url).await.unwrap());
+        let info = download_song(url).await.unwrap();
         assert!(info.path.is_file());
     }
 }

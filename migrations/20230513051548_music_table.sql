@@ -1,0 +1,5 @@
+CREATE TABLE songs (
+    "url" VARCHAR NOT NULL UNIQUE,
+    file_path VARCHAR NOT NULL,
+    duration DOUBLE PRECISION NOT NULL
+);

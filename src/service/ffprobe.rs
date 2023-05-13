@@ -1,8 +1,7 @@
-use std::time::Duration;
-
 use crate::{util::commandline_error, Result};
 use camino::Utf8Path;
 use serde::Deserialize;
+use tracing::info;
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
 pub struct FfProbe {
@@ -139,18 +138,17 @@ pub async fn ffprobe(path: impl AsRef<Utf8Path>) -> Result<FfProbe> {
 
     // TODO use ffmpeg path
     let args = &[
-        "ffprobe",
         "-v",
-        "quiet",
+        "error",
         "-print_format",
         "json",
         "-show_format",
         "-show_streams",
         path.as_ref().as_str(),
     ];
-    dbg!(args.join(" "));
-    let output = Command::new("ffprobe").args(args).output().await?;
 
+    info!("running ffprobe with args {args:?}");
+    let output = Command::new("ffprobe").args(args).output().await?;
     if output.status.success() {
         let json = serde_json::from_slice(&output.stdout)?;
         Ok(json)

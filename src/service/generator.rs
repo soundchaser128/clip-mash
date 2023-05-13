@@ -1,5 +1,3 @@
-use std::process::Output;
-
 use crate::{data::stash_api::StashMarker, service::MarkerInfo, util::commandline_error, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;

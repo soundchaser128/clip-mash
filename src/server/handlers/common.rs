@@ -26,7 +26,8 @@ use crate::{
     service::{
         clip::{self, ClipService},
         funscript::{FunScript, ScriptBuilder},
-        generator, music,
+        generator,
+        music::MusicService,
         stash_config::Config,
         Clip, VideoSource,
     },
@@ -170,9 +171,11 @@ pub struct DownloadMusicQuery {
 #[axum::debug_handler]
 pub async fn download_music(
     Query(DownloadMusicQuery { url }): Query<DownloadMusicQuery>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<(), AppError> {
     info!("downloading music at url {url}");
-    music::download_song(&url).await?;
+    let music_service = MusicService::new(state.database.clone());
+    music_service.download_song(&url).await?;
 
     Ok(())
 }

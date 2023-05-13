@@ -112,13 +112,19 @@ async fn download_song(url: &str) -> Result<SongInfo> {
 
 #[cfg(test)]
 mod test {
-    use crate::service::music::download_song;
+    use camino::Utf8Path;
+    use sqlx::SqlitePool;
 
-    #[tokio::test]
-    async fn test_download_song() {
+    use crate::{data::database::Database, service::music::MusicService};
+
+    #[sqlx::test]
+    async fn test_download_song(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let service = MusicService::new(database);
         let _ = color_eyre::install();
-        let url = "https://www.youtube.com/watch?v=weUhBGA8mxo";
-        let info = download_song(url).await.unwrap();
-        assert!(info.path.is_file());
+        let url = "https://www.youtube.com/watch?v=DGaKVLFNWzs";
+        let info = service.download_song(url).await.unwrap();
+        let path = Utf8Path::new(&info.file_path);
+        assert!(path.is_file());
     }
 }

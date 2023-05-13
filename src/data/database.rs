@@ -43,7 +43,7 @@ pub struct LocalVideoWithMarkers {
 
 #[derive(Debug)]
 pub struct DbSong {
-    pub rowid: i64,
+    pub rowid: Option<i64>,
     pub url: String,
     pub file_path: String,
     pub duration: f64,
@@ -213,7 +213,7 @@ impl Database {
         .await?;
 
         Ok(DbSong {
-            rowid,
+            rowid: Some(rowid),
             url: song.url,
             file_path: song.file_path,
             duration: song.duration,

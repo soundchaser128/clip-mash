@@ -41,7 +41,7 @@ impl MusicService {
             } else {
                 let downloaded_song = download_song(url).await?;
                 self.db
-                    .update_song_file_path(song.rowid, downloaded_song.path.as_str())
+                    .update_song_file_path(song.rowid.expect("must have rowid"), downloaded_song.path.as_str())
                     .await?;
                 song.file_path = downloaded_song.path.to_string();
                 Ok(song)

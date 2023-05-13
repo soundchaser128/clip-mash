@@ -18,6 +18,8 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: "18.x"
+    - name: Install ffmpeg 
+      run: apt-get update && apt-get -y --no-install-recommends install ffmpeg
     - name: Build Node
       run: cd frontend && npm ci && npm run format-check && npm run lint && npm run build
     - name: Test Rust

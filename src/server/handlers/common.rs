@@ -174,7 +174,7 @@ pub async fn download_music(
     State(state): State<Arc<AppState>>,
 ) -> Result<(), AppError> {
     info!("downloading music at url {url}");
-    let music_service = MusicService::new(state.database.clone());
+    let music_service = MusicService::new(state.database.clone(), state.directories.clone());
     music_service.download_song(&url).await?;
 
     Ok(())

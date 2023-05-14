@@ -1,4 +1,5 @@
 pub mod clip;
+pub mod directories;
 pub mod download_ffmpeg;
 pub mod ffprobe;
 pub mod funscript;

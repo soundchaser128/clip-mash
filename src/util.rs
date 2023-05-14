@@ -48,7 +48,6 @@ pub fn commandline_error<T>(output: Output) -> crate::Result<T> {
         stderr
     ))
 }
-
 #[cfg(test)]
 mod test {
     use super::{add_api_key, expect_file_name};

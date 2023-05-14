@@ -1,6 +1,10 @@
-use std::cmp::Reverse;
+use std::{cmp::Reverse, sync::Arc};
 
-use axum::{extract::Query, response::IntoResponse, Json};
+use axum::{
+    extract::{Query, State},
+    response::IntoResponse,
+    Json,
+};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tracing::{debug, info};
@@ -10,6 +14,7 @@ use crate::{
     server::{
         dtos::{MarkerDto, PerformerDto, StashScene, TagDto},
         error::AppError,
+        handlers::AppState,
     },
     service::stash_config::Config,
     util::add_api_key,
@@ -117,11 +122,14 @@ pub async fn get_config() -> impl IntoResponse {
 }
 
 #[axum::debug_handler]
-pub async fn set_config(Json(config): Json<Config>) -> Result<StatusCode, AppError> {
+pub async fn set_config(
+    state: State<Arc<AppState>>,
+    Json(config): Json<Config>,
+) -> Result<StatusCode, AppError> {
     use crate::service::stash_config;
 
     info!("setting config with URL {}", config.stash_url);
-    stash_config::set_config(config).await?;
+    stash_config::set_config(config, &state.directories).await?;
 
     Ok(StatusCode::NO_CONTENT)
 }

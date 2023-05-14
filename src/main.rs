@@ -8,7 +8,9 @@ use color_eyre::Report;
 use tracing::{info, warn};
 
 use crate::{
-    data::database::Database, server::handlers::AppState, service::generator::CompilationGenerator,
+    data::database::Database,
+    server::handlers::AppState,
+    service::{directories::Directories, generator::CompilationGenerator},
 };
 
 mod data;
@@ -34,14 +36,16 @@ async fn main() -> Result<()> {
         .with(fmt::layer())
         .with(EnvFilter::from_default_env())
         .init();
+    let directories = Directories::new();
 
-    service::stash_config::init().await;
+    service::stash_config::init(&directories).await;
 
     let ffmpeg = CompilationGenerator::new().await?;
     let database = Database::new().await?;
     let state = Arc::new(AppState {
         generator: ffmpeg,
         database,
+        directories,
     });
 
     let stash_routes = Router::new()

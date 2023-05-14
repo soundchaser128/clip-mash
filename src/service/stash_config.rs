@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use tracing::info;
 
+use super::directories::Directories;
+
 lazy_static! {
     static ref CONFIG: Mutex<Option<Config>> = Default::default();
 }
@@ -19,10 +21,10 @@ pub struct Config {
 }
 
 impl Config {
-    fn load() -> Result<Self> {
+    fn load(directories: &Directories) -> Result<Self> {
         use std::fs;
 
-        let config_file = config_file_path().expect("no configuration file path found");
+        let config_file = directories.config_file_path();
         info!("trying to load config file from {}", config_file);
 
         let text = fs::read_to_string(&config_file)?;
@@ -39,13 +41,8 @@ impl Config {
     }
 }
 
-fn config_file_path() -> Option<Utf8PathBuf> {
-    let dirs = ProjectDirs::from("xyz", "soundchaser128", "stash-compilation-maker")?;
-    Utf8Path::from_path(dirs.config_dir()).map(|p| p.join("config.json"))
-}
-
-pub async fn init() {
-    match Config::load() {
+pub async fn init(directories: &Directories) {
+    match Config::load(directories) {
         Ok(config) => {
             let mut global = CONFIG.lock().await;
             global.replace(config);
@@ -56,14 +53,14 @@ pub async fn init() {
     }
 }
 
-pub async fn set_config(config: Config) -> Result<()> {
+pub async fn set_config(config: Config, directories: &Directories) -> Result<()> {
     use tokio::fs;
 
     let file_content = serde_json::to_string_pretty(&config)?;
     let mut global = CONFIG.lock().await;
     global.replace(config);
 
-    let file = config_file_path().expect("no configuration file path found");
+    let file = directories.config_file_path();
     fs::create_dir_all(file.parent().expect("config directory must have a parent")).await?;
     fs::write(&file, &file_content).await?;
 

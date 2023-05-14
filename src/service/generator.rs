@@ -1,4 +1,9 @@
-use crate::{data::stash_api::StashMarker, service::MarkerInfo, util::commandline_error, Result};
+use crate::{
+    data::{database::DbSong, stash_api::StashMarker},
+    service::MarkerInfo,
+    util::commandline_error,
+    Result,
+};
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
@@ -45,6 +50,7 @@ pub struct CompilationOptions {
     pub output_resolution: VideoResolution,
     pub output_fps: u32,
     pub file_name: String,
+    pub songs: Vec<DbSong>,
 }
 
 pub fn find_stash_stream_url(marker: &StashMarker) -> &str {

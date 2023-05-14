@@ -18,8 +18,8 @@ export enum FormStage {
   SelectMode = 1,
   SelectCriteria = 2,
   SelectMarkers = 3,
-  VideoOptions = 4,
-  Music = 5,
+  Music = 4,
+  VideoOptions = 5,
   PreviewClips = 6,
   Wait = 7,
 }
@@ -81,22 +81,8 @@ export interface LocalVideosFormState {
   clips?: Clip[]
   interactive?: boolean
   seed?: string
-}
-
-export interface Marker {
-  id: MarkerId
-  primaryTag: string
-  streamUrl: string
-  screenshotUrl: string
-  start: number
-  end: number
-  sceneTitle?: string
-  performers: string[]
-  fileName?: string
-  sceneInteractive: boolean
-  tags: string[]
-  indexWithinVideo: number
-  videoId: VideoId
+  songs?: SongDto[]
+  trimVideoForSongs?: boolean
 }
 
 export interface StashFormState {
@@ -115,6 +101,8 @@ export interface StashFormState {
   includeAll?: boolean
   interactive?: boolean
   seed?: string
+  songs?: SongDto[]
+  trimVideoForSongs?: boolean
   stage: FormStage
   id: string
 }
@@ -151,14 +139,25 @@ export interface Clip {
 export interface VideoDto {
   id: VideoId
   title: string
-  // studio?: string
-  // imageUrl: string
   performers: string[]
   fileName: string
-  // tags: string[]
-  // markerCount: number
   interactive: boolean
-  // rating?: number
+}
+
+export interface Marker {
+  id: MarkerId
+  primaryTag: string
+  streamUrl: string
+  screenshotUrl: string
+  start: number
+  end: number
+  sceneTitle?: string
+  performers: string[]
+  fileName?: string
+  sceneInteractive: boolean
+  tags: string[]
+  indexWithinVideo: number
+  videoId: VideoId
 }
 
 export interface VideoWithMarkers {
@@ -176,4 +175,10 @@ export interface Scene {
   rating?: number
   interactive: boolean
   markerCount: number
+}
+
+export interface SongDto {
+  songId: number
+  duration: number
+  fileName: string
 }

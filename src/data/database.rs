@@ -1,4 +1,5 @@
 use crate::Result;
+use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use serde::Deserialize;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode},
@@ -231,6 +232,17 @@ impl Database {
         .map_err(From::from)
     }
 
+    pub async fn get_song(&self, id: i64) -> Result<DbSong> {
+        sqlx::query_as!(
+            DbSong,
+            "SELECT rowid, url, file_path, duration FROM songs WHERE rowid = $1",
+            id
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(From::from)
+    }
+
     pub async fn update_song_file_path(&self, id: i64, file_path: &str) -> Result<()> {
         sqlx::query!(
             "UPDATE songs SET file_path = $1 WHERE rowid = $2",
@@ -241,6 +253,41 @@ impl Database {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn list_songs(&self) -> Result<Vec<DbSong>> {
+        use tokio::fs;
+
+        let stream = sqlx::query_as!(DbSong, "SELECT rowid, url, file_path, duration FROM songs")
+            .fetch(&self.pool);
+
+        let videos = stream
+            .try_filter(|row| fs::try_exists(row.file_path.clone()).unwrap_or_else(|_| false))
+            .filter_map(|r| future::ready(r.ok()))
+            .collect()
+            .await;
+
+        Ok(videos)
+    }
+
+    pub async fn get_songs(&self, song_ids: &[i64]) -> Result<Vec<DbSong>> {
+        let mut songs = vec![];
+        // TODO wait for SELECT ... FROM foo IN ... support in sqlx
+        for id in song_ids {
+            songs.push(self.get_song(*id).await?);
+        }
+
+        Ok(songs)
+    }
+
+    pub async fn sum_song_durations(&self, song_ids: &[i64]) -> Result<f64> {
+        let duration = self
+            .get_songs(song_ids)
+            .await?
+            .into_iter()
+            .map(|s| s.duration)
+            .sum();
+        Ok(duration)
     }
 }
 

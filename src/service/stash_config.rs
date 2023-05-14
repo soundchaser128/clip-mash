@@ -37,6 +37,18 @@ impl Config {
             eyre!("No configuration set up yet. Please enter your data in the web UI")
         })
     }
+
+    pub async fn get_or_empty() -> Config {
+        let config = CONFIG.lock().await;
+        let config = config.as_ref().cloned();
+        match config {
+            Some(c) => c,
+            None => Config {
+                api_key: Default::default(),
+                stash_url: Default::default(),
+            },
+        }
+    }
 }
 
 pub async fn init(directories: &Directories) {

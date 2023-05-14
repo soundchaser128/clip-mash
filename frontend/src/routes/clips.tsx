@@ -52,6 +52,8 @@ export const loader: LoaderFunction = async () => {
       splitClips: state.splitClips,
       sortMode,
       seed: state.seed,
+      songIds: state.songs?.map((s) => s.songId) || [],
+      trimVideoForSongs: state.trimVideoForSongs,
     }),
     headers: {"content-type": "application/json"},
   })

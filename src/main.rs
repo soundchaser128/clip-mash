@@ -37,6 +37,7 @@ async fn main() -> Result<()> {
         .with(EnvFilter::from_default_env())
         .init();
     let directories = Directories::new();
+    directories.info();
 
     service::stash_config::init(&directories).await;
 
@@ -71,6 +72,7 @@ async fn main() -> Result<()> {
         .route("/progress", get(handlers::common::get_progress))
         .route("/download", get(handlers::common::download_video))
         .route("/funscript", post(handlers::common::get_funscript))
+        .route("/music", get(handlers::common::list_songs))
         .route("/music", post(handlers::common::download_music));
 
     let app = Router::new()

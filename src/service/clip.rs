@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use crate::data::database::DbSong;
 use crate::{data::database::Database, server::dtos::CreateClipsBody};
 use crate::{
     data::stash_api::StashApi,
@@ -292,20 +293,24 @@ impl<'a> ClipService<'a> {
     pub async fn convert_compilation_options(
         &self,
         body: CreateVideoBody,
-    ) -> crate::Result<CompilationOptions> {
+    ) -> Result<CompilationOptions> {
+        let songs = self.resolve_songs(&body.songs_ids).await?;
+
         Ok(CompilationOptions {
             clips: body.clips,
             markers: self.convert_selected_markers(body.selected_markers).await?,
             output_resolution: body.output_resolution,
             output_fps: body.output_fps,
             file_name: body.file_name,
+            songs,
         })
     }
 
-    pub async fn convert_clip_options(
-        &self,
-        body: CreateClipsBody,
-    ) -> crate::Result<CreateClipsOptions> {
+    async fn resolve_songs(&self, song_ids: &[i64]) -> Result<Vec<DbSong>> {
+        self.db.get_songs(song_ids).await
+    }
+
+    pub async fn convert_clip_options(&self, body: CreateClipsBody) -> Result<CreateClipsOptions> {
         Ok(CreateClipsOptions {
             order: body.clip_order,
             clip_duration: body.clip_duration,
@@ -313,7 +318,11 @@ impl<'a> ClipService<'a> {
             markers: self.convert_selected_markers(body.markers).await?,
             sort_mode: body.sort_mode,
             seed: body.seed,
-            max_duration: body.max_duration,
+            max_duration: if body.song_ids.is_empty() || !body.trim_video_for_songs {
+                None
+            } else {
+                Some(self.db.sum_song_durations(&body.song_ids).await?)
+            },
         })
     }
 }

@@ -171,7 +171,8 @@ pub struct CreateClipsBody {
     pub markers: Vec<SelectedMarker>,
     pub sort_mode: ClipSortMode,
     pub seed: Option<String>,
-    pub max_duration: Option<f64>,
+    pub song_ids: Vec<i64>,
+    pub trim_video_for_songs: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -206,6 +207,7 @@ pub struct CreateVideoBody {
     pub selected_markers: Vec<SelectedMarker>,
     pub output_resolution: VideoResolution,
     pub output_fps: u32,
+    pub songs_ids: Vec<i64>,
 }
 
 #[derive(Serialize, Debug)]

@@ -121,12 +121,12 @@ function SelectMarkers() {
     console.log(selectedMarkers)
 
     actions.updateForm({
-      stage: FormStage.VideoOptions,
+      stage: FormStage.Music,
       selectedMarkers,
       markers: data.markers,
       interactive: hasInteractiveScenes,
     })
-    navigate("/stash/video-options")
+    navigate("/stash/music")
   }
 
   const onLimitDuration = () => {

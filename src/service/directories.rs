@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use directories::ProjectDirs;
+use tracing::info;
 
 #[derive(Clone)]
 pub struct Directories {
@@ -35,5 +36,12 @@ impl Directories {
 
     pub fn video_dir(&self) -> Utf8PathBuf {
         self.cache_dir().join("videos")
+    }
+
+    pub fn info(&self) {
+        info!("config directory: {}", self.config_dir());
+        info!("cache directory: {}", self.cache_dir());
+        info!("music directory: {}", self.music_dir());
+        info!("video directory: {}", self.video_dir());
     }
 }

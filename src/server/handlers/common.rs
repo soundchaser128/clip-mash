@@ -11,14 +11,14 @@ use futures::{
     stream::{self, Stream},
     FutureExt,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc, time::Duration};
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
 
 use crate::{
-    data::stash_api::StashApi,
+    data::{database::DbSong, stash_api::StashApi},
     server::{
         dtos::{ClipsResponse, CreateClipsBody, CreateVideoBody},
         error::AppError,
@@ -31,6 +31,7 @@ use crate::{
         stash_config::Config,
         Clip, VideoSource,
     },
+    util::expect_file_name,
 };
 
 use super::AppState;
@@ -40,7 +41,7 @@ pub async fn fetch_clips(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
-    let config = Config::get().await?;
+    let config = Config::get_or_empty().await;
     let api = StashApi::from_config(&config);
     let service = ClipService::new(&state.database, &api);
     let video_ids: HashSet<_> = body.markers.iter().map(|m| m.video_id.clone()).collect();
@@ -168,14 +169,47 @@ pub struct DownloadMusicQuery {
     pub url: String,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SongDto {
+    pub song_id: i64,
+    pub duration: f64,
+    pub file_name: String,
+}
+
+impl From<DbSong> for SongDto {
+    fn from(value: DbSong) -> Self {
+        SongDto {
+            song_id: value.rowid.expect("must have rowid set"),
+            duration: value.duration,
+            file_name: expect_file_name(&value.file_path),
+        }
+    }
+}
+
 #[axum::debug_handler]
 pub async fn download_music(
     Query(DownloadMusicQuery { url }): Query<DownloadMusicQuery>,
     State(state): State<Arc<AppState>>,
-) -> Result<(), AppError> {
+) -> Result<Json<SongDto>, AppError> {
     info!("downloading music at url {url}");
     let music_service = MusicService::new(state.database.clone(), state.directories.clone());
-    music_service.download_song(&url).await?;
+    let song = music_service.download_song(&url).await?;
 
-    Ok(())
+    Ok(Json(song.into()))
+}
+
+#[axum::debug_handler]
+pub async fn list_songs(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<SongDto>>, AppError> {
+    let songs = state
+        .database
+        .list_songs()
+        .await?
+        .into_iter()
+        .map(From::from)
+        .collect();
+
+    Ok(Json(songs))
 }

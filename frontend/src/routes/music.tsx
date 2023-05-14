@@ -5,7 +5,7 @@ import {updateForm} from "./actions"
 import invariant from "tiny-invariant"
 import {FormStage, SongDto, StateHelpers} from "../types/types"
 import {useState} from "react"
-import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
+import {LoaderFunction, useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds} from "../helpers"
 import {HiChevronRight} from "react-icons/hi2"
 import {useImmer} from "use-immer"
@@ -33,6 +33,7 @@ export default function Music() {
   const [loading, setLoading] = useState(false)
   const [selection, setSelection] = useImmer<number[]>([])
   const navigate = useNavigate()
+  const revalidator = useRevalidator()
 
   const onSubmit = async (values: Inputs) => {
     setLoading(true)
@@ -51,6 +52,7 @@ export default function Music() {
     })
     setLoading(false)
     setMode("table")
+    revalidator.revalidate()
   }
 
   const onToggleSong = (songId: number, checked: boolean) => {
@@ -107,6 +109,7 @@ export default function Music() {
               <tr>
                 <th>Name</th>
                 <th>Duration</th>
+                <th>URL</th>
                 <th>Include</th>
               </tr>
             </thead>
@@ -115,6 +118,7 @@ export default function Music() {
                 <tr key={song.songId}>
                   <td>{song.fileName}</td>
                   <td>{formatSeconds(song.duration, "short")}</td>
+                  <td>{song.url}</td>
                   <td>
                     <input
                       type="checkbox"

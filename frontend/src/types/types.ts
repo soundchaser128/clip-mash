@@ -181,4 +181,5 @@ export interface SongDto {
   songId: number
   duration: number
   fileName: string
+  url: string
 }

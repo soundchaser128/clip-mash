@@ -175,6 +175,7 @@ pub struct SongDto {
     pub song_id: i64,
     pub duration: f64,
     pub file_name: String,
+    pub url: String,
 }
 
 impl From<DbSong> for SongDto {
@@ -183,6 +184,7 @@ impl From<DbSong> for SongDto {
             song_id: value.rowid.expect("must have rowid set"),
             duration: value.duration,
             file_name: expect_file_name(&value.file_path),
+            url: value.url,
         }
     }
 }

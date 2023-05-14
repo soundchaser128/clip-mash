@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 use tracing::{debug, info};
 
-use super::{Clip, Marker};
+use super::{directories::Directories, Clip, Marker};
 
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct Progress {
@@ -47,12 +47,6 @@ pub struct CompilationOptions {
     pub file_name: String,
 }
 
-#[derive(Clone)]
-pub struct CompilationGenerator {
-    path: Utf8PathBuf,
-    pub video_dir: Utf8PathBuf,
-}
-
 pub fn find_stash_stream_url(marker: &StashMarker) -> &str {
     const LABEL_PRIORITIES: &[&str] = &["Direct stream", "webm", "HLS"];
 
@@ -86,15 +80,20 @@ pub async fn get_progress() -> Progress {
     PROGRESS.lock().await.clone()
 }
 
+#[derive(Clone)]
+pub struct CompilationGenerator {
+    directories: Directories,
+    ffmpeg_path: Utf8PathBuf,
+}
+
 impl CompilationGenerator {
-    pub async fn new() -> Result<Self> {
+    pub async fn new(directories: Directories) -> Result<Self> {
         use crate::service::download_ffmpeg;
 
-        let path = download_ffmpeg::download().await?;
-
+        let ffmpeg_path = download_ffmpeg::download(&directories).await?;
         Ok(CompilationGenerator {
-            path,
-            video_dir: Utf8PathBuf::from("./videos"),
+            directories,
+            ffmpeg_path,
         })
     }
 
@@ -140,7 +139,10 @@ impl CompilationGenerator {
         ];
         info!("executing command ffmpeg {}", args.join(" "));
 
-        let output = Command::new(self.path.as_str()).args(args).output().await?;
+        let output = Command::new(self.ffmpeg_path.as_str())
+            .args(args)
+            .output()
+            .await?;
         if !output.status.success() {
             commandline_error(output)
         } else {
@@ -164,7 +166,8 @@ impl CompilationGenerator {
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
-        tokio::fs::create_dir_all(&self.video_dir).await?;
+        let video_dir = self.directories.video_dir();
+        tokio::fs::create_dir_all(&video_dir).await?;
         let clips = &options.clips;
         let total_items = clips.len();
         self.initialize_progress(total_items).await;
@@ -183,9 +186,7 @@ impl CompilationGenerator {
                 .expect(&format!("no marker with ID {marker_id} found"));
             let url = find_stream_url(marker);
             let (width, height) = options.output_resolution.resolution();
-            let out_file = self
-                .video_dir
-                .join(format!("{}_{}-{}.mp4", marker.video_id, start, end));
+            let out_file = video_dir.join(format!("{}_{}-{}.mp4", marker.video_id, start, end));
             if !out_file.is_file() {
                 info!("creating clip {out_file}");
                 self.create_clip(
@@ -213,6 +214,7 @@ impl CompilationGenerator {
         options: &CompilationOptions,
         clips: Vec<Utf8PathBuf>,
     ) -> Result<Utf8PathBuf> {
+        let video_dir = self.directories.video_dir();
         let file_name = &options.file_name;
         info!(
             "assembling {} clips into video with file name '{}'",
@@ -224,8 +226,8 @@ impl CompilationGenerator {
             .map(|file| format!("file '{}", file.file_name().unwrap()))
             .collect();
         let file_content = lines.join("\n");
-        tokio::fs::write(self.video_dir.join("clips.txt"), file_content).await?;
-        let destination = self.video_dir.join(file_name);
+        tokio::fs::write(video_dir.join("clips.txt"), file_content).await?;
+        let destination = video_dir.join(file_name);
 
         let args = vec![
             "-hide_banner",
@@ -241,9 +243,9 @@ impl CompilationGenerator {
             file_name,
         ];
 
-        let output = Command::new(self.path.as_str())
+        let output = Command::new(self.ffmpeg_path.as_str())
             .args(args)
-            .current_dir(self.video_dir.canonicalize()?)
+            .current_dir(video_dir.canonicalize()?)
             .output()
             .await?;
 

@@ -12,8 +12,6 @@ use youtube_dl::YoutubeDl;
 
 use super::directories::Directories;
 
-// const BASE_DIRECTORY: &str = "music";
-// const YT_DLP_DIRECTORY: &str = "yt-dlp";
 const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
     "yt-dlp.exe"
 } else {
@@ -55,7 +53,7 @@ impl MusicService {
     async fn download_to_file(&self, url: &str) -> Result<SongInfo> {
         let yt_dlp = self.ensure_yt_dlp().await?;
 
-        let base_dir = self.dirs.cache_dir().join("music");
+        let base_dir = self.dirs.music_dir();
         let song_id = nanoid!(8);
         let output_dir = base_dir.join(song_id);
 

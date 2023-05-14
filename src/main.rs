@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
 
     service::stash_config::init(&directories).await;
 
-    let ffmpeg = CompilationGenerator::new().await?;
+    let ffmpeg = CompilationGenerator::new(directories.clone()).await?;
     let database = Database::new().await?;
     let state = Arc::new(AppState {
         generator: ffmpeg,

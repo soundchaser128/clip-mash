@@ -28,4 +28,12 @@ impl Directories {
     pub fn config_file_path(&self) -> Utf8PathBuf {
         self.config_dir().join("config.json")
     }
+
+    pub fn music_dir(&self) -> Utf8PathBuf {
+        self.cache_dir().join("music")
+    }
+
+    pub fn video_dir(&self) -> Utf8PathBuf {
+        self.cache_dir().join("videos")
+    }
 }

@@ -129,7 +129,7 @@ pub async fn download_video(
     use axum::{http::header, response::AppendHeaders};
 
     info!("downloading video '{file_name}'");
-    let path = state.generator.video_dir.join(&file_name);
+    let path = state.directories.video_dir().join(&file_name);
     let file = tokio::fs::File::open(path).await?;
     let stream = ReaderStream::new(file);
     let content_disposition = format!("attachment; filename=\"{}\"", file_name);

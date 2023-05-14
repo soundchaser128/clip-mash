@@ -7,6 +7,8 @@ use tracing::{debug, info};
 
 use crate::Result;
 
+use super::directories::Directories;
+
 fn download_url() -> Result<(&'static str, &'static str)> {
     if cfg!(not(target_arch = "x86_64")) {
         bail!("Downloads must be manually provided for non-x86_64 architectures")
@@ -116,10 +118,10 @@ async fn download_archive(url: &str, destination: &Utf8Path) -> Result<()> {
     Ok(())
 }
 
-pub async fn download() -> Result<Utf8PathBuf> {
-    let dest = Utf8Path::new("ffmpeg");
-    fs::create_dir_all(dest).await?;
-    if is_installed(dest) {
+pub async fn download(directories: &Directories) -> Result<Utf8PathBuf> {
+    let dest = directories.cache_dir().join("ffmpeg");
+    fs::create_dir_all(&dest).await?;
+    if is_installed(&dest) {
         info!("ffmpeg already installed, not doing anything.");
         return Ok("ffmpeg".into());
     }

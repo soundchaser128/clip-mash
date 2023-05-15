@@ -172,7 +172,7 @@ impl CompilationGenerator {
         }
         info!("bumping progress, count = {}", progress.finished);
     }
-    
+
     // FIXME
     async fn reset_progress(&self) {
         let mut progress = PROGRESS.lock().await;
@@ -225,6 +225,10 @@ impl CompilationGenerator {
         Ok(paths)
     }
 
+    async fn concat_songs(&self, songs: &[DbSong]) -> Result<Utf8PathBuf> {
+        todo!()
+    }
+
     pub async fn compile_clips(
         &self,
         options: &CompilationOptions,
@@ -248,7 +252,8 @@ impl CompilationGenerator {
         let music_volume = options.music_volume;
         let original_volume = 1.0 - options.music_volume;
         let filter = format!("[0:a:0]volume={original_volume}[a1];[1:a:0]volume={music_volume}[a2];[a1][a2]amix=inputs=2[a]");
-        let args = if options.songs.is_empty() {
+
+        let args: Vec<String> = if options.songs.is_empty() {
             vec![
                 "-hide_banner",
                 "-y",
@@ -262,8 +267,12 @@ impl CompilationGenerator {
                 "copy",
                 file_name,
             ]
+            .into_iter()
+            .map(From::from)
+            .collect()
         } else {
-            let song = &options.songs[0].file_path;
+            let audio_path = self.concat_songs(&options.songs).await?;
+
             vec![
                 "-hide_banner",
                 "-y",
@@ -274,7 +283,7 @@ impl CompilationGenerator {
                 "-i",
                 "clips.txt",
                 "-i",
-                song,
+                audio_path.as_str(),
                 "-filter_complex",
                 &filter,
                 "-map",
@@ -289,6 +298,9 @@ impl CompilationGenerator {
                 "128k",
                 file_name,
             ]
+            .into_iter()
+            .map(From::from)
+            .collect()
         };
 
         let output = Command::new(self.ffmpeg_path.as_str())

@@ -3,7 +3,12 @@ import Field from "../components/Field"
 import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
 import invariant from "tiny-invariant"
-import {FormStage, SongDto, StateHelpers} from "../types/types"
+import {
+  FormStage,
+  LocalFilesFormStage,
+  SongDto,
+  StateHelpers,
+} from "../types/types"
 import {useState} from "react"
 import {
   LoaderFunction,
@@ -76,8 +81,12 @@ export default function Music() {
   }
 
   const onNextStage = () => {
+    const nextStage = StateHelpers.isLocalFiles(state.data)
+      ? LocalFilesFormStage.VideoOptions
+      : FormStage.VideoOptions
+
     actions.updateForm({
-      stage: FormStage.VideoOptions,
+      stage: nextStage,
       songs: selection.map((id) => songs.find((s) => s.songId === id)!),
       trimVideoForSongs: trimVideo,
       musicVolume: musicVolume / 100.0,
@@ -136,6 +145,7 @@ export default function Music() {
             />
             <div className="w-full flex justify-between text-xs px-2">
               <span>0%</span>
+              <span className="font-bold">{musicVolume}%</span>
               <span>100%</span>
             </div>
           </div>

@@ -294,7 +294,7 @@ impl<'a> ClipService<'a> {
         &self,
         body: CreateVideoBody,
     ) -> Result<CompilationOptions> {
-        let songs = self.resolve_songs(&body.songs_ids).await?;
+        let songs = self.resolve_songs(&body.song_ids).await?;
 
         Ok(CompilationOptions {
             clips: body.clips,
@@ -303,6 +303,7 @@ impl<'a> ClipService<'a> {
             output_fps: body.output_fps,
             file_name: body.file_name,
             songs,
+            music_volume: body.music_volume.unwrap_or(0.0),
         })
     }
 

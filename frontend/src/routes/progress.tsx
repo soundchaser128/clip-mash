@@ -1,13 +1,21 @@
 import {useStateMachine} from "little-state-machine"
 import {useRef, useState} from "react"
 import {HiArrowDown, HiCheckBadge, HiCodeBracket} from "react-icons/hi2"
-import {StateHelpers} from "../types/types"
+import {
+  LocalVideosFormState,
+  StashFormState,
+  StateHelpers,
+} from "../types/types"
 import invariant from "tiny-invariant"
 import {formatSeconds} from "../helpers"
 
 interface Progress {
   finished: number
   total: number
+}
+
+type CreateVideoBody = Omit<LocalVideosFormState | StashFormState, "songs"> & {
+  songIds: number[]
 }
 
 function Progress() {
@@ -22,12 +30,14 @@ function Progress() {
 
   const onSubmit = async (e: React.MouseEvent) => {
     invariant(StateHelpers.isNotInitial(state.data))
-
     e.preventDefault()
-    const data = {...state.data}
-    if (!data.fileName) {
-      data.fileName = `${data.id}.mp4`
-    }
+
+    const songIds = state.data.songs?.map((s) => s.songId) || []
+    const data = {
+      ...state.data,
+      fileName: state.data.fileName || `${state.data.id}.mp4`,
+      songIds,
+    } satisfies CreateVideoBody
 
     const body = JSON.stringify(data)
     const response = await fetch("/api/create", {

@@ -51,6 +51,7 @@ pub struct CompilationOptions {
     pub output_fps: u32,
     pub file_name: String,
     pub songs: Vec<DbSong>,
+    pub music_volume: f64,
 }
 
 pub fn find_stash_stream_url(marker: &StashMarker) -> &str {
@@ -235,19 +236,51 @@ impl CompilationGenerator {
         tokio::fs::write(video_dir.join("clips.txt"), file_content).await?;
         let destination = video_dir.join(file_name);
 
-        let args = vec![
-            "-hide_banner",
-            "-y",
-            "-loglevel",
-            "warning",
-            "-f",
-            "concat",
-            "-i",
-            "clips.txt",
-            "-c",
-            "copy",
-            file_name,
-        ];
+        let music_volume = options.music_volume;
+        let original_volume = 1.0 - options.music_volume;
+        let filter = format!("[0:a:0]volume={original_volume}[a1];[1:a:0]volume={music_volume}[a2];[a1][a2]amix=inputs=2[a]");
+        let args = if options.songs.is_empty() {
+            vec![
+                "-hide_banner",
+                "-y",
+                "-loglevel",
+                "warning",
+                "-f",
+                "concat",
+                "-i",
+                "clips.txt",
+                "-c",
+                "copy",
+                file_name,
+            ]
+        } else {
+            let song = &options.songs[0].file_path;
+            vec![
+                "-hide_banner",
+                "-y",
+                "-loglevel",
+                "warning",
+                "-f",
+                "concat",
+                "-i",
+                "clips.txt",
+                "-i",
+                song,
+                "-filter_complex",
+                &filter,
+                "-map",
+                "0:v:0",
+                "-map",
+                "[a]",
+                "-c:v",
+                "copy",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "128k",
+                file_name,
+            ]
+        };
 
         let output = Command::new(self.ffmpeg_path.as_str())
             .args(args)

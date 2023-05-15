@@ -95,6 +95,10 @@ function PreviewClips() {
   const {actions} = useStateMachine({updateForm})
   const navigate = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
+  const totalLength = clips.reduce(
+    (len, {clip}) => len + (clip.range[1] - clip.range[0]),
+    0
+  )
 
   const onNextStage = () => {
     actions.updateForm({
@@ -149,7 +153,12 @@ function PreviewClips() {
             </strong>
           </p>
           <p>
-            Duration: <strong>{formatSeconds(currentClip.range)}</strong>
+            Current clip duration:{" "}
+            <strong>{formatSeconds(currentClip.range, "short")}</strong>
+          </p>
+          <p>
+            Total video duration:{" "}
+            <strong>{formatSeconds(totalLength, "short")}</strong>
           </p>
           {DEBUG && (
             <>

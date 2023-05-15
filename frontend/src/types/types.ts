@@ -82,6 +82,7 @@ export interface LocalVideosFormState {
   interactive?: boolean
   seed?: string
   songs?: SongDto[]
+  musicVolume?: number
   trimVideoForSongs?: boolean
 }
 
@@ -103,6 +104,7 @@ export interface StashFormState {
   seed?: string
   songs?: SongDto[]
   trimVideoForSongs?: boolean
+  musicVolume?: number
   stage: FormStage
   id: string
 }

@@ -63,8 +63,8 @@ pub struct Database {
 }
 
 impl Database {
-    pub async fn new() -> Result<Self> {
-        let options = SqliteConnectOptions::from_str("sqlite:videos.sqlite3")?
+    pub async fn new(path: &str) -> Result<Self> {
+        let options = SqliteConnectOptions::from_str(&format!("sqlite:{path}"))?
             .create_if_missing(true)
             .journal_mode(SqliteJournalMode::Wal);
 

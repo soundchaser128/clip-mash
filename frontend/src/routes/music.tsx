@@ -5,9 +5,14 @@ import {updateForm} from "./actions"
 import invariant from "tiny-invariant"
 import {FormStage, SongDto, StateHelpers} from "../types/types"
 import {useState} from "react"
-import {LoaderFunction, useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
+import {
+  LoaderFunction,
+  useLoaderData,
+  useNavigate,
+  useRevalidator,
+} from "react-router-dom"
 import {formatSeconds} from "../helpers"
-import {HiChevronRight} from "react-icons/hi2"
+import {HiChevronRight, HiMusicalNote} from "react-icons/hi2"
 import {useImmer} from "use-immer"
 
 type MusicMode = "none" | "trimVideo" | "trimMusic"
@@ -34,6 +39,8 @@ export default function Music() {
   const [selection, setSelection] = useImmer<number[]>([])
   const navigate = useNavigate()
   const revalidator = useRevalidator()
+  const [trimVideo, setTrimVideo] = useState(false)
+  const [musicVolume, setMusicVolume] = useState(75)
 
   const onSubmit = async (values: Inputs) => {
     setLoading(true)
@@ -72,6 +79,8 @@ export default function Music() {
     actions.updateForm({
       stage: FormStage.VideoOptions,
       songs: selection.map((id) => songs.find((s) => s.songId === id)!),
+      trimVideoForSongs: trimVideo,
+      musicVolume: musicVolume / 100.0,
     })
 
     navigate("/stash/video-options")
@@ -79,9 +88,8 @@ export default function Music() {
 
   return (
     <>
-      <div className="justify-between flex w-full">
-        <h2 className="text-2xl font-bold mb-1">Music</h2>
-
+      <div className="justify-between flex w-full mb-4">
+        <div />
         <button
           type="button"
           onClick={onNextStage}
@@ -91,19 +99,42 @@ export default function Music() {
           <HiChevronRight className="ml-1" />
         </button>
       </div>
-      <p className="mb-4">
-        Select songs to include (if any). You can also select whether the length
-        of the video should be determined by the music selected, or if the music
-        should be truncated to fit the length of the selected markers.
-      </p>
+
+      <div className="form-control self-start">
+        <label className="label cursor-pointer">
+          <span className="label-text mr-2">
+            Trim video based on music used
+          </span>
+          <input
+            type="checkbox"
+            className="toggle"
+            onChange={(e) => setTrimVideo(e.target.checked)}
+            checked={trimVideo}
+          />
+        </label>
+      </div>
+
+      <div className="form-control self-start">
+        <label className="label">
+          <span className="label-text">Music volume</span>
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          className="range range-sm w-72"
+          step="5"
+          value={musicVolume}
+          onChange={(e) => setMusicVolume(e.target.valueAsNumber)}
+        />
+        <div className="w-full flex justify-between text-xs px-2">
+          <span>0%</span>
+          <span>100%</span>
+        </div>
+      </div>
+
       {mode === "table" && (
         <div className="overflow-x-auto flex flex-col">
-          <button
-            onClick={() => setMode("form")}
-            className="btn btn-primary self-end mb-4"
-          >
-            Add music
-          </button>
           <table className="table table-compact w-full">
             <thead>
               <tr>
@@ -114,6 +145,13 @@ export default function Music() {
               </tr>
             </thead>
             <tbody>
+              {songs.length === 0 && (
+                <tr>
+                  <td className="text-center p-4" colSpan={4}>
+                    No music yet.
+                  </td>
+                </tr>
+              )}
               {songs.map((song) => (
                 <tr key={song.songId}>
                   <td>{song.fileName}</td>

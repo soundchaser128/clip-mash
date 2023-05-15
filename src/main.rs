@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
         .with(fmt::layer())
         .with(EnvFilter::from_default_env())
         .init();
-    let directories = Directories::new();
+    let directories = Directories::new()?;
     directories.info();
 
     service::stash_config::init(&directories).await;

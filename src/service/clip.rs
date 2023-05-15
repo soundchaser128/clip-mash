@@ -94,9 +94,13 @@ pub struct CreateClipsOptions {
 fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
     let mut rng = util::create_seeded_rng(options.seed.as_deref());
     debug!("creating clips for options {options:?}");
+    let marker_duration: f64 = options.markers.iter().map(|m| m.duration()).sum();
+    info!("total duration of all markers: {marker_duration} seconds");
+    info!("maximum duration: {:?}", options.max_duration);
 
     let max_duration_per_marker = options
         .max_duration
+        .map(|seconds| seconds.min(marker_duration))
         .map(|seconds| seconds / options.markers.len() as f64);
     info!("duration per marker {max_duration_per_marker:?}");
 

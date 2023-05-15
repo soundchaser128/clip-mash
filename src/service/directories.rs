@@ -1,5 +1,6 @@
-use std::sync::Arc;
+use std::{fs, sync::Arc};
 
+use crate::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use directories::ProjectDirs;
 use tracing::info;
@@ -10,12 +11,17 @@ pub struct Directories {
 }
 
 impl Directories {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self> {
         let dirs = ProjectDirs::from("xyz", "soundchaser128", "stash-compilation-maker")
             .expect("could not determine config path");
-        Directories {
-            dirs: Arc::new(dirs),
+
+        for directory in &[dirs.config_dir(), dirs.cache_dir(), dirs.data_dir()] {
+            fs::create_dir_all(&directory)?;
         }
+
+        Ok(Directories {
+            dirs: Arc::new(dirs),
+        })
     }
 
     pub fn config_dir(&self) -> &Utf8Path {

@@ -128,7 +128,7 @@ mod test {
     #[sqlx::test]
     async fn test_download_song(pool: SqlitePool) {
         let database = Database::with_pool(pool);
-        let directories = Directories::new();
+        let directories = Directories::new().unwrap();
         let service = MusicService::new(database.clone(), directories);
         let _ = color_eyre::install();
         let url = "https://www.youtube.com/watch?v=DGaKVLFNWzs";

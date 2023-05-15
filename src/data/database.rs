@@ -64,7 +64,7 @@ pub struct Database {
 
 impl Database {
     pub async fn new(path: &str) -> Result<Self> {
-        let options = SqliteConnectOptions::from_str(&format!("sqlite:{path}"))?
+        let options = SqliteConnectOptions::from_str(&format!("sqlite:{path}?mode=rwc"))?
             .create_if_missing(true)
             .journal_mode(SqliteJournalMode::Wal);
 

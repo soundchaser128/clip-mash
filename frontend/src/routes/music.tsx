@@ -89,7 +89,13 @@ export default function Music() {
   return (
     <>
       <div className="justify-between flex w-full mb-4">
-        <div />
+        <button
+          onClick={() => setMode("form")}
+          className="btn btn-primary self-end mb-2"
+        >
+          <HiMusicalNote className="mr-2" />
+          Add music
+        </button>
         <button
           type="button"
           onClick={onNextStage}
@@ -100,38 +106,41 @@ export default function Music() {
         </button>
       </div>
 
-      <div className="form-control self-start">
-        <label className="label cursor-pointer">
-          <span className="label-text mr-2">
-            Trim video based on music used
-          </span>
-          <input
-            type="checkbox"
-            className="toggle"
-            onChange={(e) => setTrimVideo(e.target.checked)}
-            checked={trimVideo}
-          />
-        </label>
-      </div>
-
-      <div className="form-control self-start">
-        <label className="label">
-          <span className="label-text">Music volume</span>
-        </label>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          className="range range-sm w-72"
-          step="5"
-          value={musicVolume}
-          onChange={(e) => setMusicVolume(e.target.valueAsNumber)}
-        />
-        <div className="w-full flex justify-between text-xs px-2">
-          <span>0%</span>
-          <span>100%</span>
+      {mode === "table" && (
+        <div className="flex flex-col gap-2 mb-6">
+          <div className="form-control self-start">
+            <label className="label cursor-pointer">
+              <span className="label-text mr-2">
+                Trim video based on music used
+              </span>
+              <input
+                type="checkbox"
+                className="toggle"
+                onChange={(e) => setTrimVideo(e.target.checked)}
+                checked={trimVideo}
+              />
+            </label>
+          </div>
+          <div className="form-control self-start">
+            <label className="label">
+              <span className="label-text">Music volume</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              className="range range-sm w-72"
+              step="5"
+              value={musicVolume}
+              onChange={(e) => setMusicVolume(e.target.valueAsNumber)}
+            />
+            <div className="w-full flex justify-between text-xs px-2">
+              <span>0%</span>
+              <span>100%</span>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {mode === "table" && (
         <div className="overflow-x-auto flex flex-col">

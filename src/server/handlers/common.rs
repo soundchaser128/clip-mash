@@ -75,7 +75,8 @@ async fn create_video_inner(
     state: State<Arc<AppState>>,
     body: CreateVideoBody,
 ) -> Result<(), AppError> {
-    let api = StashApi::load_config().await?;
+    let config = Config::get_or_empty().await;
+    let api = StashApi::from_config(&config);
     let service = ClipService::new(&state.database, &api);
     let options = service.convert_compilation_options(body).await?;
 

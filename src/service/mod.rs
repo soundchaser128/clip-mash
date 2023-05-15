@@ -121,6 +121,11 @@ pub struct Marker {
     pub title: String,
     pub info: MarkerInfo,
 }
+impl Marker {
+    fn duration(&self) -> f64 {
+        self.end_time - self.start_time
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

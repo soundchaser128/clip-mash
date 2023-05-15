@@ -17,6 +17,7 @@ use super::{directories::Directories, Clip, Marker};
 pub struct Progress {
     pub finished: usize,
     pub total: usize,
+    pub done: bool,
 }
 
 lazy_static! {
@@ -160,16 +161,23 @@ impl CompilationGenerator {
     async fn initialize_progress(&self, total_items: usize) {
         let mut progress = PROGRESS.lock().await;
         progress.total = total_items;
+        info!("setting progress total to {total_items}");
     }
 
     async fn increase_progress(&self) {
         let mut progress = PROGRESS.lock().await;
         progress.finished += 1;
+        if progress.finished == progress.total {
+            progress.done = true;
+        }
+        info!("bumping progress, count = {}", progress.finished);
     }
-
+    
+    // FIXME
     async fn reset_progress(&self) {
         let mut progress = PROGRESS.lock().await;
         *progress = Default::default();
+        info!("reset progress to default");
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
@@ -177,7 +185,8 @@ impl CompilationGenerator {
         tokio::fs::create_dir_all(&video_dir).await?;
         let clips = &options.clips;
         let total_items = clips.len();
-        self.initialize_progress(total_items).await;
+        // number of clips plus one job to create the compilation
+        self.initialize_progress(total_items + 1).await;
 
         let mut paths = vec![];
         for Clip {
@@ -212,7 +221,7 @@ impl CompilationGenerator {
             self.increase_progress().await;
             paths.push(out_file);
         }
-        self.reset_progress().await;
+
         Ok(paths)
     }
 
@@ -293,7 +302,8 @@ impl CompilationGenerator {
         }
 
         info!("finished assembling video, result at {destination}");
-
+        self.increase_progress().await;
+        self.reset_progress().await;
         Ok(destination)
     }
 }

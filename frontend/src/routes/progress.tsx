@@ -12,6 +12,7 @@ import {formatSeconds} from "../helpers"
 interface Progress {
   finished: number
   total: number
+  done: boolean
 }
 
 type CreateVideoBody = Omit<LocalVideosFormState | StashFormState, "songs"> & {
@@ -52,8 +53,7 @@ function Progress() {
       const es = new EventSource("/api/progress")
       es.onmessage = (event) => {
         const data = JSON.parse(event.data) as Progress
-        const isFinished = data.finished === data.total
-        if (isFinished) {
+        if (data.done) {
           setFinished(true)
           es.close()
         }

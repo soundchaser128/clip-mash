@@ -111,6 +111,7 @@ pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::
         f.into_stream()
     });
     let stream = stream
+        .take_while(|p| !p.done)
         .map(|p| Event::default().json_data(p))
         .throttle(Duration::from_secs(1));
 

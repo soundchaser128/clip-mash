@@ -185,9 +185,9 @@ impl CompilationGenerator {
         let video_dir = self.directories.video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
         let clips = &options.clips;
-        let total_items = clips.len();
+        let progress_items = clips.len() + if options.songs.len() >= 2 { 2 } else { 1 };
 
-        self.initialize_progress(total_items + 2).await;
+        self.initialize_progress(progress_items).await;
 
         let mut paths = vec![];
         for Clip {
@@ -309,7 +309,13 @@ impl CompilationGenerator {
             .map(From::from)
             .collect()
         } else {
-            let audio_path = self.concat_songs(&options.songs).await?;
+            let audio_path = if options.songs.len() >= 2 {
+                self.concat_songs(&options.songs).await?
+            } else {
+                options.songs[0].file_path.clone().into()
+            };
+
+            info!("using audio from {audio_path}");
 
             vec![
                 "-hide_banner",

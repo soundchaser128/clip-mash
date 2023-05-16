@@ -20,11 +20,8 @@ import {formatSeconds} from "../helpers"
 import {HiChevronRight, HiMusicalNote} from "react-icons/hi2"
 import {useImmer} from "use-immer"
 
-type MusicMode = "none" | "trimVideo" | "trimMusic"
-
 interface Inputs {
   musicUrl: string
-  mode: MusicMode
 }
 
 export const loader: LoaderFunction = async () => {
@@ -40,12 +37,19 @@ export default function Music() {
   const songs = useLoaderData() as SongDto[]
   const {handleSubmit, register} = useForm<Inputs>({})
   const {actions, state} = useStateMachine({updateForm})
+  invariant(StateHelpers.isNotInitial(state.data))
   const [loading, setLoading] = useState(false)
-  const [selection, setSelection] = useImmer<number[]>([])
+  const [selection, setSelection] = useImmer<number[]>(
+    state.data.songs?.map((song) => song.songId) || []
+  )
   const navigate = useNavigate()
   const revalidator = useRevalidator()
-  const [trimVideo, setTrimVideo] = useState(false)
-  const [musicVolume, setMusicVolume] = useState(75)
+  const [trimVideo, setTrimVideo] = useState(
+    state.data.trimVideoForSongs || false
+  )
+  const [musicVolume, setMusicVolume] = useState(
+    state.data.musicVolume ? state.data.musicVolume * 100 : 75
+  )
 
   const onSubmit = async (values: Inputs) => {
     setLoading(true)
@@ -180,6 +184,7 @@ export default function Music() {
                     <input
                       type="checkbox"
                       className="checkbox checkbox-primary"
+                      checked={selection.includes(song.songId)}
                       onChange={(e) =>
                         onToggleSong(song.songId, e.target.checked)
                       }

@@ -1,7 +1,7 @@
 use crate::{
     data::{database::DbSong, stash_api::StashMarker},
     service::MarkerInfo,
-    util::{commandline_error, expect_file_name},
+    util::commandline_error,
     Result,
 };
 use camino::{Utf8Path, Utf8PathBuf};
@@ -174,7 +174,6 @@ impl CompilationGenerator {
         info!("bumping progress, count = {}", progress.finished);
     }
 
-    // FIXME
     async fn reset_progress(&self) {
         let mut progress = PROGRESS.lock().await;
         *progress = Default::default();
@@ -182,12 +181,13 @@ impl CompilationGenerator {
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
+        self.reset_progress().await;
         let video_dir = self.directories.video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
         let clips = &options.clips;
         let total_items = clips.len();
-        // number of clips plus one job to create the compilation
-        self.initialize_progress(total_items + 1).await;
+
+        self.initialize_progress(total_items + 2).await;
 
         let mut paths = vec![];
         for Clip {
@@ -261,6 +261,8 @@ impl CompilationGenerator {
         if !output.status.success() {
             return commandline_error(output);
         }
+
+        self.increase_progress().await;
 
         Ok(destination)
     }
@@ -351,7 +353,6 @@ impl CompilationGenerator {
 
         info!("finished assembling video, result at {destination}");
         self.increase_progress().await;
-        self.reset_progress().await;
         Ok(destination)
     }
 }

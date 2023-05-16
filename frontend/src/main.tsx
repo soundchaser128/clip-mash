@@ -27,6 +27,8 @@ import EditVideoModal from "./routes/local/videos.$id"
 import StashRoot from "./routes/stash/root"
 import Layout from "./components/Layout"
 import Music, {loader as musicLoader} from "./routes/music"
+import ConfigPage from "./routes/stash/config"
+import {loader as configLoader} from "./routes/root"
 
 const TroubleshootingInfo = () => {
   return (
@@ -102,6 +104,10 @@ const router = createBrowserRouter([
         element: <SelectSource />,
       },
       {
+        path: "/stash/config",
+        element: <ConfigPage />,
+      },
+      {
         path: "local",
         element: <StashRoot />,
         children: [
@@ -130,6 +136,7 @@ const router = createBrowserRouter([
       {
         path: "stash",
         element: <StashRoot />,
+        loader: configLoader,
         children: [
           {
             path: "mode",

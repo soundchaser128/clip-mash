@@ -17,7 +17,7 @@ async function testCredentials(inputs: Inputs): Promise<HealthResult> {
   const params = new URLSearchParams()
   params.set("apiKey", inputs.apiKey)
   params.set("url", inputs.stashUrl)
-  const url = `/api/health?${params.toString()}`
+  const url = `/api/stash/health?${params.toString()}`
   const response = await fetch(url)
   if (response.ok) {
     const status = await response.json()
@@ -45,7 +45,7 @@ function ConfigPage() {
     inputs.stashUrl = inputs.stashUrl.trim()
 
     if (health.success) {
-      const response = await fetch("/api/config", {
+      const response = await fetch("/api/stash/config", {
         method: "POST",
         body: JSON.stringify(inputs),
         headers: {"content-type": "application/json"},

@@ -121,12 +121,13 @@ const StashRoot: React.FC = () => {
   const isLoading = navigation.state === "loading"
   const config = useLoaderData()
   const configExists = config !== null
+  const isStashMode = StateHelpers.isStash(state.data)
 
   useEffect(() => {
-    if (!configExists) {
-      navigate("/config")
+    if (!configExists && isStashMode) {
+      navigate("/stash/config")
     }
-  }, [configExists])
+  }, [configExists, isStashMode])
 
   return (
     <Layout isLoading={isLoading}>

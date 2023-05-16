@@ -1,12 +1,13 @@
 use crate::{
     data::{database::DbSong, stash_api::StashMarker},
     service::MarkerInfo,
-    util::commandline_error,
+    util::{commandline_error, expect_file_name},
     Result,
 };
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
 use lazy_static::lazy_static;
+use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 use tracing::{debug, info};
@@ -226,7 +227,42 @@ impl CompilationGenerator {
     }
 
     async fn concat_songs(&self, songs: &[DbSong]) -> Result<Utf8PathBuf> {
-        todo!()
+        let file_name = format!("{}.aac", nanoid!(8));
+        let music_dir = self.directories.music_dir();
+
+        let lines: Vec<_> = songs
+            .into_iter()
+            .map(|file| format!("file '{}'", file.file_path))
+            .collect();
+        let file_content = lines.join("\n");
+        tokio::fs::write(music_dir.join("songs.txt"), file_content).await?;
+        let destination = music_dir.join(file_name);
+
+        let args = vec![
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            "songs.txt",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "128k",
+            destination.as_str(),
+        ];
+
+        let output = Command::new(self.ffmpeg_path.as_str())
+            .args(args)
+            .current_dir(music_dir.canonicalize()?)
+            .output()
+            .await?;
+
+        if !output.status.success() {
+            return commandline_error(output);
+        }
+
+        Ok(destination)
     }
 
     pub async fn compile_clips(

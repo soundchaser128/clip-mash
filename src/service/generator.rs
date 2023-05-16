@@ -86,6 +86,7 @@ pub fn find_stream_url(marker: &Marker) -> &str {
 }
 
 pub async fn get_progress() -> Progress {
+    debug!("getting progress");
     PROGRESS.lock().await.clone()
 }
 
@@ -162,16 +163,22 @@ impl CompilationGenerator {
     async fn initialize_progress(&self, total_items: usize) {
         let mut progress = PROGRESS.lock().await;
         progress.total = total_items;
-        info!("setting progress total to {total_items}");
+        progress.done = false;
+        progress.finished = 0;
+        debug!("setting progress total to {total_items}");
     }
 
     async fn increase_progress(&self) {
         let mut progress = PROGRESS.lock().await;
         progress.finished += 1;
         if progress.finished == progress.total {
+            info!(
+                "finished all items, setting done = true ({} items)",
+                progress.finished
+            );
             progress.done = true;
         }
-        info!("bumping progress, count = {}", progress.finished);
+        debug!("bumping progress, count = {}", progress.finished);
     }
 
     async fn reset_progress(&self) {
@@ -181,13 +188,12 @@ impl CompilationGenerator {
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
+        let clips = &options.clips;
         self.reset_progress().await;
+        let progress_items = clips.len() + if options.songs.len() >= 2 { 2 } else { 1 };
+        self.initialize_progress(progress_items).await;
         let video_dir = self.directories.video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
-        let clips = &options.clips;
-        let progress_items = clips.len() + if options.songs.len() >= 2 { 2 } else { 1 };
-
-        self.initialize_progress(progress_items).await;
 
         let mut paths = vec![];
         for Clip {

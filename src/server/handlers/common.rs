@@ -26,7 +26,7 @@ use crate::{
     service::{
         clip::{self, ClipService},
         funscript::{FunScript, ScriptBuilder},
-        generator,
+        generator::{self, Progress},
         music::MusicService,
         stash_config::Config,
         Clip, VideoSource,
@@ -112,8 +112,15 @@ pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::
     });
     let stream = stream
         .take_while(|p| !p.done)
+        .chain(futures::stream::once(async {
+            Progress {
+                done: true,
+                finished: 0,
+                total: 0,
+            }
+        }))
         .map(|p| Event::default().json_data(p))
-        .throttle(Duration::from_secs(1));
+        .throttle(Duration::from_millis(250));
 
     Sse::new(stream).keep_alive(KeepAlive::default())
 }

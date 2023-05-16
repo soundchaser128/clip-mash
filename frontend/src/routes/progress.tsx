@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useRef, useState} from "react"
-import {HiArrowDown, HiCheckBadge, HiCodeBracket} from "react-icons/hi2"
+import {HiArrowDown, HiCheckBadge, HiCodeBracket, HiPlay} from "react-icons/hi2"
 import {
   LocalVideosFormState,
   StashFormState,
@@ -107,7 +107,7 @@ function Progress() {
             </p>
           </div>
           <a onClick={onSubmit} className="btn btn-lg btn-success">
-            <HiCheckBadge className="mr-2 w-6 h-6" />
+            <HiPlay className="mr-2 w-6 h-6" />
             Create video
           </a>
         </>
@@ -128,7 +128,7 @@ function Progress() {
 
       {finished && (
         <div className="flex flex-col">
-          <h1 className="text-5xl font-bold mb-6">Success!</h1>
+          <h1 className="text-5xl font-bold mb-6">🎉 Success!</h1>
           <p className="font-light self-start mb-1">
             Download the finished compilation
           </p>

@@ -118,7 +118,6 @@ function SelectMarkers() {
     const hasInteractiveScenes = data.markers
       .filter((m) => !!selection[m.id.id])
       .some((m) => m.sceneInteractive)
-    console.log(selectedMarkers)
 
     actions.updateForm({
       stage: FormStage.Music,

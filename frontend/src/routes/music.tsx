@@ -9,16 +9,18 @@ import {
   SongDto,
   StateHelpers,
 } from "../types/types"
-import {useState} from "react"
-import {
-  LoaderFunction,
-  useLoaderData,
-  useNavigate,
-  useRevalidator,
-} from "react-router-dom"
+import {useCallback, useRef, useState} from "react"
+import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds} from "../helpers"
-import {HiBarsArrowDown, HiChevronRight, HiMusicalNote} from "react-icons/hi2"
-import {useImmer} from "use-immer"
+import {
+  HiBarsArrowDown,
+  HiCheck,
+  HiChevronRight,
+  HiMusicalNote,
+} from "react-icons/hi2"
+import {Updater, useImmer} from "use-immer"
+import {useDrag, useDrop} from "react-dnd"
+import type {Identifier, XYCoord} from "dnd-core"
 
 interface Inputs {
   musicUrl: string
@@ -26,28 +28,142 @@ interface Inputs {
 
 type Mode = "table" | "form" | "order"
 
-const ReorderSongs: React.FC<{selection: number[]; songs: SongDto[]}> = ({
-  selection,
-  songs,
-}) => {
+interface CardProps {
+  id: number
+  text: string
+  index: number
+  moveCard: (dragIndex: number, hoverIndex: number) => void
+  className?: string
+}
+
+interface DragItem {
+  index: number
+  id: string
+  type: string
+}
+
+const Card: React.FC<CardProps> = ({id, text, index, moveCard, className}) => {
+  const ref = useRef<HTMLDivElement>(null)
+  const [{handlerId}, drop] = useDrop<
+    DragItem,
+    void,
+    {handlerId: Identifier | null}
+  >({
+    accept: "CARD",
+    collect(monitor) {
+      return {
+        handlerId: monitor.getHandlerId(),
+      }
+    },
+    hover(item: DragItem, monitor) {
+      if (!ref.current) {
+        return
+      }
+      const dragIndex = item.index
+      const hoverIndex = index
+
+      // Don't replace items with themselves
+      if (dragIndex === hoverIndex) {
+        return
+      }
+
+      // Determine rectangle on screen
+      const hoverBoundingRect = ref.current?.getBoundingClientRect()
+
+      // Get vertical middle
+      const hoverMiddleY =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
+
+      // Determine mouse position
+      const clientOffset = monitor.getClientOffset()
+
+      // Get pixels to the top
+      const hoverClientY = (clientOffset as XYCoord).y - hoverBoundingRect.top
+
+      // Only perform the move when the mouse has crossed half of the items height
+      // When dragging downwards, only move when the cursor is below 50%
+      // When dragging upwards, only move when the cursor is above 50%
+
+      // Dragging downwards
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        return
+      }
+
+      // Dragging upwards
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        return
+      }
+
+      // Time to actually perform the action
+      moveCard(dragIndex, hoverIndex)
+
+      // Note: we're mutating the monitor item here!
+      // Generally it's better to avoid mutations,
+      // but it's good here for the sake of performance
+      // to avoid expensive index searches.
+      item.index = hoverIndex
+    },
+  })
+
+  const [{isDragging}, drag] = useDrag({
+    type: "CARD",
+    item: () => {
+      return {id, index}
+    },
+    collect: (monitor: any) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  })
+
+  const opacity = isDragging ? 0 : 1
+  drag(drop(ref))
+
+  return (
+    <div
+      ref={ref}
+      style={{opacity}}
+      data-handler-id={handlerId}
+      className={className}
+    >
+      {text}
+    </div>
+  )
+}
+
+const ReorderSongs: React.FC<{
+  selection: number[]
+  songs: SongDto[]
+  setSelection: Updater<number[]>
+}> = ({selection, songs, setSelection}) => {
+  const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {
+    setSelection((draft) => {
+      const temp = draft[dragIndex]
+      draft.splice(dragIndex, 1)
+      draft.splice(hoverIndex, 0, temp)
+    })
+  }, [])
+
   return (
     <>
       <h2 className="self-center font-bold text-xl">Change order of songs</h2>
       <p className="self-center mb-6">
         Drag and drop songs to change their order in the video.
       </p>
-      <ul className="self-center flex flex-col gap-2">
-        {songs
-          .filter((s) => selection.includes(s.songId))
-          .map((song, index) => (
-            <li
-              className="border border-primary px-2 py-1 rounded-lg"
+      <div className="self-center flex flex-col gap-2">
+        {selection.map((songId, index) => {
+          const song = songs.find((s) => s.songId === songId)!
+          return (
+            <Card
+              className="border border-dashed border-primary px-4 py-3 rounded-lg cursor-move"
               key={song.songId}
-            >
-              {index + 1}. {song.fileName}
-            </li>
-          ))}
-      </ul>
+              id={song.songId}
+              text={song.fileName}
+              index={index}
+              moveCard={moveCard}
+            />
+          )
+        })}
+      </div>
     </>
   )
 }
@@ -70,11 +186,6 @@ export default function Music() {
   const [musicVolume, setMusicVolume] = useState(
     state.data.musicVolume ? state.data.musicVolume * 100 : 75
   )
-
-  const indexOptions: number[] = []
-  for (let i = 0; i < selection.length; i++) {
-    indexOptions.push(i + 1)
-  }
 
   const onSubmit = async (values: Inputs) => {
     setLoading(true)
@@ -136,7 +247,7 @@ export default function Music() {
             <button
               disabled={selection.length < 2}
               onClick={() => setMode("order")}
-              className="btn btn-secondary"
+              className="btn btn-secondary w-48"
             >
               <HiBarsArrowDown className="mr-2" />
               Set track order
@@ -144,9 +255,10 @@ export default function Music() {
           )}
           {mode === "order" && (
             <button
-              className="btn btn-success"
+              className="btn btn-success w-48"
               onClick={() => setMode("table")}
             >
+              <HiCheck className="mr-2" />
               Done
             </button>
           )}
@@ -163,7 +275,11 @@ export default function Music() {
 
       {mode === "order" && (
         <>
-          <ReorderSongs songs={songs} selection={selection} />
+          <ReorderSongs
+            setSelection={setSelection}
+            songs={songs}
+            selection={selection}
+          />
         </>
       )}
 

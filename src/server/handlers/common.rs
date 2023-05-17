@@ -1,12 +1,13 @@
 use axum::{
     body::StreamBody,
-    extract::{Query, State},
+    extract::{Path, Query, State},
     response::{
         sse::{Event, KeepAlive},
         IntoResponse, Sse,
     },
     Json,
 };
+use color_eyre::Report;
 use futures::{
     stream::{self, Stream},
     FutureExt,
@@ -223,4 +224,40 @@ pub async fn list_songs(
         .collect();
 
     Ok(Json(songs))
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum FolderType {
+    Videos,
+    Music,
+    Database,
+    Config,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FolderTypeQuery {
+    pub folder: FolderType,
+}
+
+pub async fn open_folder(
+    Query(FolderTypeQuery { folder }): Query<FolderTypeQuery>,
+    state: State<Arc<AppState>>,
+) -> Result<(), AppError> {
+    info!("opening folder {folder:?}");
+    let path = match folder {
+        FolderType::Videos => state.directories.video_dir(),
+        FolderType::Music => state.directories.music_dir(),
+        FolderType::Database => state
+            .directories
+            .database_file()
+            .parent()
+            .expect("database must be in a folder")
+            .to_owned(),
+        FolderType::Config => state.directories.config_dir().to_owned(),
+    };
+
+    opener::open(path).map_err(Report::from)?;
+
+    Ok(())
 }

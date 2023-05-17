@@ -15,7 +15,7 @@ import {useImmer} from "use-immer"
 import invariant from "tiny-invariant"
 import {formatSeconds, getFormState, getSegmentColor} from "../helpers"
 
-const DEBUG = false
+const DEBUG = true
 
 interface ClipsResponse {
   clips: Clip[]
@@ -29,18 +29,18 @@ interface Data {
   videos: Record<string, VideoDto>
 }
 
-type ClipSortMode = "videoIndex" | "markerIndex"
+type ClipSortMode = "videoIndex" | "markerIndex" | "random"
 
 export const loader: LoaderFunction = async () => {
   const state = getFormState()!
   invariant(StateHelpers.isNotInitial(state))
-  let sortMode: ClipSortMode = "markerIndex"
+  let sortMode: ClipSortMode[] = ["videoIndex", "markerIndex", "random"]
 
   if (StateHelpers.isStash(state) && state.selectMode === "scenes") {
-    sortMode = "videoIndex"
+    sortMode = ["videoIndex", "random"]
   }
   if (StateHelpers.isLocalFiles(state)) {
-    sortMode = "videoIndex"
+    sortMode = ["videoIndex", "random"]
   }
 
   const response = await fetch("/api/clips", {

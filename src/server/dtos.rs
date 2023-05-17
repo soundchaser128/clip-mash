@@ -166,10 +166,9 @@ pub struct SelectedMarker {
 pub struct CreateClipsBody {
     pub clip_order: ClipOrder,
     pub clip_duration: u32,
-    // pub select_mode: FilterMode,
     pub split_clips: bool,
     pub markers: Vec<SelectedMarker>,
-    pub sort_mode: ClipSortMode,
+    pub sort_mode: Vec<ClipSortMode>,
     pub seed: Option<String>,
     pub song_ids: Vec<i64>,
     pub trim_video_for_songs: bool,

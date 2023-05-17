@@ -19,6 +19,8 @@ export const segmentColors = [
   "bg-teal-400 hover:bg-teal-500 text-white",
   "bg-orange-600 hover:bg-orange-500 text-white",
   "bg-rose-400 hover:bg-rose-500 text-white",
+  "bg-stone-400 hover:bg-stone-500 text-white",
+  "bg-amber-400 hover:bg-amber-500 text-white",
 ]
 
 export function getSegmentColor(index: number): string {

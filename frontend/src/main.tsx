@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
   isRouteErrorResponse,
+  LoaderFunction,
   RouterProvider,
   useRouteError,
 } from "react-router-dom"
@@ -26,9 +27,10 @@ import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
 import EditVideoModal from "./routes/local/videos.$id"
 import StashRoot from "./routes/stash/root"
 import Layout from "./components/Layout"
-import Music, {loader as musicLoader} from "./routes/music"
+import Music from "./routes/music"
 import ConfigPage from "./routes/stash/config"
 import {loader as configLoader} from "./routes/root"
+import {SongDto} from "./types/types"
 
 const TroubleshootingInfo = () => {
   return (
@@ -92,6 +94,12 @@ const ErrorBoundary = () => {
       </div>
     </Layout>
   )
+}
+
+const musicLoader: LoaderFunction = async () => {
+  const response = await fetch("/api/music")
+  const data = (await response.json()) as SongDto[]
+  return data
 }
 
 const router = createBrowserRouter([

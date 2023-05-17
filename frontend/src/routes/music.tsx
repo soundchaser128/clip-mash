@@ -17,20 +17,40 @@ import {
   useRevalidator,
 } from "react-router-dom"
 import {formatSeconds} from "../helpers"
-import {HiChevronRight, HiMusicalNote} from "react-icons/hi2"
+import {HiBarsArrowDown, HiChevronRight, HiMusicalNote} from "react-icons/hi2"
 import {useImmer} from "use-immer"
 
 interface Inputs {
   musicUrl: string
 }
 
-export const loader: LoaderFunction = async () => {
-  const response = await fetch("/api/music")
-  const data = (await response.json()) as SongDto[]
-  return data
-}
+type Mode = "table" | "form" | "order"
 
-type Mode = "table" | "form"
+const ReorderSongs: React.FC<{selection: number[]; songs: SongDto[]}> = ({
+  selection,
+  songs,
+}) => {
+  return (
+    <>
+      <h2 className="self-center font-bold text-xl">Change order of songs</h2>
+      <p className="self-center mb-6">
+        Drag and drop songs to change their order in the video.
+      </p>
+      <ul className="self-center flex flex-col gap-2">
+        {songs
+          .filter((s) => selection.includes(s.songId))
+          .map((song, index) => (
+            <li
+              className="border border-primary px-2 py-1 rounded-lg"
+              key={song.songId}
+            >
+              {index + 1}. {song.fileName}
+            </li>
+          ))}
+      </ul>
+    </>
+  )
+}
 
 export default function Music() {
   const [mode, setMode] = useState<Mode>("table")
@@ -50,6 +70,11 @@ export default function Music() {
   const [musicVolume, setMusicVolume] = useState(
     state.data.musicVolume ? state.data.musicVolume * 100 : 75
   )
+
+  const indexOptions: number[] = []
+  for (let i = 0; i < selection.length; i++) {
+    indexOptions.push(i + 1)
+  }
 
   const onSubmit = async (values: Inputs) => {
     setLoading(true)
@@ -102,13 +127,30 @@ export default function Music() {
   return (
     <>
       <div className="justify-between flex w-full mb-4">
-        <button
-          onClick={() => setMode("form")}
-          className="btn btn-primary self-end mb-2"
-        >
-          <HiMusicalNote className="mr-2" />
-          Add music
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setMode("form")} className="btn btn-primary">
+            <HiMusicalNote className="mr-2" />
+            Add music
+          </button>
+          {mode !== "order" && (
+            <button
+              disabled={selection.length < 2}
+              onClick={() => setMode("order")}
+              className="btn btn-secondary"
+            >
+              <HiBarsArrowDown className="mr-2" />
+              Set track order
+            </button>
+          )}
+          {mode === "order" && (
+            <button
+              className="btn btn-success"
+              onClick={() => setMode("table")}
+            >
+              Done
+            </button>
+          )}
+        </div>
         <button
           type="button"
           onClick={onNextStage}
@@ -118,6 +160,12 @@ export default function Music() {
           <HiChevronRight className="ml-1" />
         </button>
       </div>
+
+      {mode === "order" && (
+        <>
+          <ReorderSongs songs={songs} selection={selection} />
+        </>
+      )}
 
       {mode === "table" && (
         <div className="flex flex-col gap-2 mb-6">
@@ -170,7 +218,7 @@ export default function Music() {
             <tbody>
               {songs.length === 0 && (
                 <tr>
-                  <td className="text-center p-4" colSpan={4}>
+                  <td className="text-center p-4" colSpan={5}>
                     No music yet.
                   </td>
                 </tr>
@@ -209,14 +257,22 @@ export default function Music() {
               {...register("musicUrl")}
             />
           </Field>
-
-          <button
-            disabled={loading}
-            className="btn btn-success self-end"
-            type="submit"
-          >
-            Submit
-          </button>
+          <div className="flex gap-2 self-end">
+            <button
+              type="button"
+              onClick={() => setMode("table")}
+              className="btn btn-outline"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={loading}
+              className="btn btn-success"
+              type="submit"
+            >
+              Submit
+            </button>
+          </div>
         </form>
       )}
     </>

@@ -91,6 +91,21 @@ pub struct CreateClipsOptions {
     pub max_duration: Option<f64>,
 }
 
+impl CreateClipsOptions {
+    pub fn normalize_video_indices(&mut self) {
+        use itertools::Itertools;
+
+        self.markers.sort_by_key(|m| m.video_id.clone());
+        for (_, group) in &self.markers.iter_mut().group_by(|m| m.video_id.clone()) {
+            let mut group = group.collect_vec();
+            group.sort_by_key(|m| m.index_within_video);
+            for (index, marker) in group.iter_mut().enumerate() {
+                marker.index_within_video = index;
+            }
+        }
+    }
+}
+
 fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
     let mut rng = util::create_seeded_rng(options.seed.as_deref());
     debug!("creating clips for options {options:?}");
@@ -176,9 +191,11 @@ fn compile_clips(clips: Vec<MarkerWithClips>, options: &CreateClipsOptions) -> V
     }
 }
 
-pub fn arrange_clips(options: &CreateClipsOptions) -> Vec<Clip> {
-    let clips = get_all_clips(options);
-    compile_clips(clips, options)
+pub fn arrange_clips(mut options: CreateClipsOptions) -> Vec<Clip> {
+    options.normalize_video_indices();
+
+    let clips = get_all_clips(&options);
+    compile_clips(clips, &options)
 }
 
 pub fn get_streams(
@@ -360,7 +377,6 @@ mod tests {
 
     fn create_marker(start_time: f64, end_time: f64, index: usize) -> Marker {
         Marker {
-            // id: Faker.fake(),
             id: MarkerId::LocalFile(1),
             start_time,
             end_time,
@@ -374,6 +390,34 @@ mod tests {
                     rowid: None,
                     title: Faker.fake(),
                     video_id: Faker.fake(),
+                    file_path: FilePath().fake(),
+                    index_within_video: index as i64,
+                },
+            },
+        }
+    }
+
+    fn create_marker_video_id(
+        id: i64,
+        start_time: f64,
+        end_time: f64,
+        index: usize,
+        video_id: String,
+    ) -> Marker {
+        Marker {
+            id: MarkerId::LocalFile(id),
+            start_time,
+            end_time,
+            index_within_video: index,
+            video_id: VideoId::LocalFile(video_id.clone()),
+            title: Faker.fake(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    end_time,
+                    start_time,
+                    rowid: None,
+                    title: Faker.fake(),
+                    video_id: video_id,
                     file_path: FilePath().fake(),
                     index_within_video: index as i64,
                 },
@@ -420,7 +464,7 @@ mod tests {
             seed: None,
             max_duration: None,
         };
-        let results = arrange_clips(&options);
+        let results = arrange_clips(options);
         assert_eq!(4, results.len());
     }
 
@@ -441,8 +485,64 @@ mod tests {
             max_duration: Some(30.0),
         };
 
-        let clips = arrange_clips(&options);
+        let clips = arrange_clips(options);
         let total_duration: f64 = clips.iter().map(|c| c.range.1 - c.range.0).sum();
         assert_eq!(30.0, total_duration);
+    }
+
+    #[test]
+    fn test_normalize_video_indices() {
+        let mut options = CreateClipsOptions {
+            order: ClipOrder::SceneOrder,
+            clip_duration: 30,
+            markers: vec![
+                create_marker_video_id(1, 140.0, 190.0, 5, "v2".into()),
+                create_marker_video_id(2, 1.0, 17.0, 0, "v1".into()),
+                create_marker_video_id(3, 80.0, 120.0, 3, "v2".into()),
+                create_marker_video_id(4, 1.0, 15.0, 0, "v3".into()),
+                create_marker_video_id(5, 20.0, 60.0, 3, "v1".into()),
+            ],
+            split_clips: true,
+            sort_mode: vec![ClipSortMode::VideoIndex, ClipSortMode::Random],
+            seed: None,
+            max_duration: None,
+        };
+
+        options.normalize_video_indices();
+
+        let marker = options
+            .markers
+            .iter()
+            .find(|m| m.id == MarkerId::LocalFile(1))
+            .unwrap();
+        assert_eq!(marker.index_within_video, 1);
+
+        let marker = options
+            .markers
+            .iter()
+            .find(|m| m.id == MarkerId::LocalFile(2))
+            .unwrap();
+        assert_eq!(marker.index_within_video, 0);
+
+        let marker = options
+            .markers
+            .iter()
+            .find(|m| m.id == MarkerId::LocalFile(3))
+            .unwrap();
+        assert_eq!(marker.index_within_video, 0);
+
+        let marker = options
+            .markers
+            .iter()
+            .find(|m| m.id == MarkerId::LocalFile(4))
+            .unwrap();
+        assert_eq!(marker.index_within_video, 0);
+
+        let marker = options
+            .markers
+            .iter()
+            .find(|m| m.id == MarkerId::LocalFile(5))
+            .unwrap();
+        assert_eq!(marker.index_within_video, 1);
     }
 }

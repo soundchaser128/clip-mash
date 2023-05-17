@@ -34,14 +34,7 @@ type ClipSortMode = "videoIndex" | "markerIndex" | "random"
 export const loader: LoaderFunction = async () => {
   const state = getFormState()!
   invariant(StateHelpers.isNotInitial(state))
-  let sortMode: ClipSortMode[] = ["videoIndex", "markerIndex", "random"]
-
-  if (StateHelpers.isStash(state) && state.selectMode === "scenes") {
-    sortMode = ["videoIndex", "random"]
-  }
-  if (StateHelpers.isLocalFiles(state)) {
-    sortMode = ["videoIndex", "random"]
-  }
+  const sortMode: ClipSortMode[] = ["videoIndex", "markerIndex", "random"]
 
   const response = await fetch("/api/clips", {
     method: "POST",

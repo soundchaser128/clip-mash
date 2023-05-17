@@ -48,7 +48,7 @@ pub async fn fetch_clips(
     info!("found {} video IDs", video_ids.len());
     let options = service.convert_clip_options(body).await?;
 
-    let clips = clip::arrange_clips(&options);
+    let clips = clip::arrange_clips(options);
     info!("generated {} clips", clips.len());
     debug!("compiled clips {clips:#?}");
     let streams = clip::get_streams(video_ids, &config)?;

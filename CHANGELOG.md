@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.7.1
+- fix: assets folder was not being created
+
+## 0.7.0
 - feat: Support for adding background music (#9)
 
 ## 0.6.0

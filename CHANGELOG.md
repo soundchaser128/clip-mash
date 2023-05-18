@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- feat: Support for adding background music (#9)
 
 ## 0.6.0
 - feat: Allow using local videos (#8)

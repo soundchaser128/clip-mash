@@ -25,14 +25,15 @@ import SelectMode from "./routes/select-mode"
 import {nanoid} from "nanoid"
 import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
 import EditVideoModal from "./routes/local/videos.$id"
-import StashRoot from "./routes/stash/root"
+import StashRoot from "./routes/root"
 import Layout from "./components/Layout"
 import Music from "./routes/music"
 import ConfigPage from "./routes/stash/config"
-import {loader as configLoader} from "./routes/root"
+import {loader as configLoader} from "./routes/loaders"
 import {SongDto} from "./types/types"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
+import GlobalConfig from "./routes/config"
 
 const TroubleshootingInfo = () => {
   return (
@@ -112,6 +113,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <SelectSource />,
+      },
+      {
+        path: "/config",
+        element: <GlobalConfig />,
       },
       {
         path: "/stash/config",
@@ -202,6 +207,7 @@ const router = createBrowserRouter([
     ],
   },
 ])
+
 createStore(
   {
     data: {

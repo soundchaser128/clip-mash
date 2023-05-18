@@ -8,6 +8,10 @@ static BUILD_DIR: Dir<'_> = include_dir!("frontend/dist");
 
 pub fn service() -> MethodRouter {
     let base_dir = Path::new("assets");
+    if !base_dir.is_dir() {
+        std::fs::create_dir_all(&base_dir).expect("cannot create assets folder, cannot continue")
+    }
+
     BUILD_DIR.extract(base_dir).unwrap();
     let index_html = base_dir.join("index.html");
     get_service(

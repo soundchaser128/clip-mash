@@ -44,10 +44,11 @@ export default function SelectVideos() {
         className="flex gap-4 items-start flex-col self-center"
       >
         <div className="form-control">
-          <label className="label">
+          <label htmlFor="file-name-input" className="label">
             <span className="label-text">Compilation name</span>
           </label>
           <input
+            id="file-name-input"
             type="text"
             className="input input-bordered w-96"
             placeholder="Enter a name for your compilation (optional)"
@@ -55,10 +56,11 @@ export default function SelectVideos() {
           />
         </div>
         <div className="form-control">
-          <label className="label">
+          <label htmlFor="path-input" className="label">
             <span className="label-text">Folder containing your videos</span>
           </label>
           <input
+            id="path-input"
             required
             type="text"
             className="input input-bordered w-96"
@@ -67,13 +69,14 @@ export default function SelectVideos() {
           />
         </div>
         <div className="form-control">
-          <label className="label cursor-pointer">
+          <label htmlFor="recurse-input" className="label cursor-pointer">
             <span className="label-text mr-2">
               Look at all the subdirectories as well
             </span>
             <input
               type="checkbox"
               className="toggle"
+              id="recurse-input"
               {...register("recurse")}
             />
           </label>

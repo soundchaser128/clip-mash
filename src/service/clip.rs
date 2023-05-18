@@ -339,10 +339,7 @@ impl<'a> ClipService<'a> {
 mod tests {
     use crate::{
         data::database::DbMarker,
-        service::{
-            clip::{arrange_clips},
-            Marker, MarkerId, MarkerInfo, VideoId,
-        },
+        service::{clip::arrange_clips, Marker, MarkerId, MarkerInfo, VideoId},
     };
 
     use fake::{faker::filesystem::en::FilePath, Fake, Faker};

@@ -56,7 +56,7 @@ export default function SelectVideos() {
         </div>
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Location of your video</span>
+            <span className="label-text">Folder containing your videos</span>
           </label>
           <input
             required

@@ -11,10 +11,11 @@ import {
 } from "../types/types"
 import {useCallback, useRef, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
-import {formatSeconds} from "../helpers"
+import {formatSeconds, sumDurations} from "../helpers"
 import {
   HiArrowUpTray,
   HiBarsArrowDown,
+  HiBolt,
   HiCheck,
   HiChevronRight,
   HiMusicalNote,
@@ -22,6 +23,7 @@ import {
 import {Updater, useImmer} from "use-immer"
 import {useDrag, useDrop} from "react-dnd"
 import type {Identifier, XYCoord} from "dnd-core"
+import clsx from "clsx"
 
 interface Inputs {
   musicUrl: string
@@ -182,12 +184,16 @@ export default function Music() {
   )
   const navigate = useNavigate()
   const revalidator = useRevalidator()
-  const [trimVideo, setTrimVideo] = useState(
-    state.data.trimVideoForSongs || false
-  )
   const [musicVolume, setMusicVolume] = useState(
     state.data.musicVolume ? state.data.musicVolume * 100 : 75
   )
+
+  const totalMarkerDuration = sumDurations(state.data.selectedMarkers)
+  const totalMusicDuration = selection
+    .map((s) => songs.find((song) => song.songId === s))
+    .reduce((sum, song) => sum + song!.duration, 0)
+
+  const musicTooLong = totalMusicDuration > totalMarkerDuration
 
   const onSubmit = async (values: Inputs) => {
     setLoading(true)
@@ -251,7 +257,7 @@ export default function Music() {
     actions.updateForm({
       stage: nextStage,
       songs: selection.map((id) => songs.find((s) => s.songId === id)!),
-      trimVideoForSongs: trimVideo,
+      trimVideoForSongs: true,
       musicVolume: musicVolume / 100.0,
     })
 
@@ -297,6 +303,7 @@ export default function Music() {
           type="button"
           onClick={onNextStage}
           className="btn btn-success place-self-end"
+          disabled={musicTooLong}
         >
           Next
           <HiChevronRight className="ml-1" />
@@ -315,18 +322,33 @@ export default function Music() {
 
       {mode === "table" && (
         <div className="flex flex-col gap-2 mb-6">
-          <div className="form-control self-start">
-            <label className="label cursor-pointer">
-              <span className="label-text mr-2">
-                Trim video based on music used
+          {musicTooLong && (
+            <div className="alert alert-warning">
+              <HiBolt className="w-6 h-6 shrink" />
+              <span className="grow">
+                The music tracks you selected are longer than the videos. To fix
+                it, deselect some music or select some shorter tracks.
               </span>
-              <input
-                type="checkbox"
-                className="toggle"
-                onChange={(e) => setTrimVideo(e.target.checked)}
-                checked={trimVideo}
-              />
-            </label>
+            </div>
+          )}
+          <div className="">
+            <p className="mb-4 font-light self-center max-w-2xl">
+              You can select background music for your video compilation. (this
+              is optional). The original sound of the video and the new music
+              will be mixed together based on the music volume you selected,
+              100% music volume meaning that only the music will be heard.
+              <br />
+              The length of the video will be determined by the selected music
+              if you select any.
+            </p>
+            <p>
+              Selected marker duration:{" "}
+              <strong>{formatSeconds(totalMarkerDuration, "short")}</strong>
+            </p>
+            <p className={clsx(musicTooLong && "text-red-400")}>
+              Selected music duration:{" "}
+              <strong>{formatSeconds(totalMusicDuration, "short")}</strong>
+            </p>
           </div>
           <div className="form-control self-start">
             <label className="label">
@@ -396,7 +418,7 @@ export default function Music() {
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col self-center w-full max-w-xl gap-4"
         >
-          <p>
+          <p className="font-light">
             You can download songs from YouTube, Vimeo or any other site that
             yt-dlp supports.
           </p>
@@ -436,13 +458,22 @@ export default function Music() {
             accept="audio/*"
             onChange={(e) => setFile(e.target.files![0])}
           />
-          <button
-            onClick={onUpload}
-            disabled={loading}
-            className="btn btn-success self-end"
-          >
-            Upload
-          </button>
+          <div className="flex self-end gap-2">
+            <button
+              type="button"
+              onClick={() => setMode("table")}
+              className="btn btn-outline"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onUpload}
+              disabled={loading}
+              className="btn btn-success"
+            >
+              Upload
+            </button>
+          </div>
         </div>
       )}
     </>

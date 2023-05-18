@@ -1,5 +1,5 @@
 import {format, formatDuration} from "date-fns"
-import {FormState} from "./types/types"
+import {FormState, SelectedMarker} from "./types/types"
 
 export function getFormState(): FormState | null {
   const json = sessionStorage.getItem("form-state")
@@ -60,5 +60,15 @@ export function formatSeconds(
     )
   } else {
     return format(duration * 1000, "mm:ss")
+  }
+}
+
+export function sumDurations(markers?: SelectedMarker[]): number {
+  if (!markers) {
+    return 0
+  } else {
+    return markers
+      .filter((m) => m.selected)
+      .reduce((sum, {selectedRange: [start, end]}) => sum + (end - start), 0)
   }
 }

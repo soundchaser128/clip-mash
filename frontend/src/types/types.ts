@@ -64,10 +64,8 @@ export interface InitialFormState {
   id: string
 }
 
-export interface LocalVideosFormState {
-  source: "localFile"
+interface CommonFormState {
   id: string
-  stage: LocalFilesFormStage
   videos?: VideoWithMarkers[]
   localVideoPath?: string
   recurse?: boolean
@@ -86,27 +84,18 @@ export interface LocalVideosFormState {
   trimVideoForSongs?: boolean
 }
 
-export interface StashFormState {
+export interface LocalVideosFormState extends CommonFormState {
+  source: "localFile"
+  stage: LocalFilesFormStage
+}
+
+export interface StashFormState extends CommonFormState {
   source: "stash"
   selectMode?: SelectMode
   selectedIds?: string[]
-  clipOrder?: "random" | "scene-order"
-  clipDuration?: number
-  outputResolution?: "720" | "1080" | "4K"
-  outputFps?: number
-  selectedMarkers?: SelectedMarker[]
-  markers?: Marker[]
-  fileName?: string
-  clips?: Clip[]
-  splitClips?: boolean
   includeAll?: boolean
-  interactive?: boolean
-  seed?: string
-  songs?: SongDto[]
-  trimVideoForSongs?: boolean
-  musicVolume?: number
+  markers?: Marker[]
   stage: FormStage
-  id: string
 }
 
 export const StateHelpers = {

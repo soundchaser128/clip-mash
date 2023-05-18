@@ -86,7 +86,6 @@ pub struct CreateClipsOptions {
     pub clip_duration: u32,
     pub markers: Vec<Marker>,
     pub split_clips: bool,
-    pub sort_mode: Vec<ClipSortMode>,
     pub seed: Option<String>,
     pub max_duration: Option<f64>,
 }
@@ -142,26 +141,6 @@ fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
         .collect()
 }
 
-#[derive(Clone, Copy, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ClipSortMode {
-    VideoIndex,
-    MarkerIndex,
-    Random,
-}
-
-impl ClipSortMode {
-    pub fn key(&self, clip: &Clip, random: usize) -> impl Ord {
-        match self {
-            ClipSortMode::VideoIndex => clip.index_within_video,
-            ClipSortMode::MarkerIndex => clip.index_within_marker,
-            ClipSortMode::Random => random,
-            // ClipSortMode::VideoIndex => (clip.index_within_video, clip.index_within_marker, random)
-            // ClipSortMode::MarkerIndex => (clip.index_within_marker, random, random),
-        }
-    }
-}
-
 fn compile_clips(clips: Vec<MarkerWithClips>, options: &CreateClipsOptions) -> Vec<Clip> {
     let mut rng = util::create_seeded_rng(options.seed.as_deref());
 
@@ -173,13 +152,10 @@ fn compile_clips(clips: Vec<MarkerWithClips>, options: &CreateClipsOptions) -> V
                 .map(|c| (c, rng.gen::<usize>()))
                 .collect();
 
+            //   const sortMode: ClipSortMode[] = ["videoIndex", "markerIndex", "random"]
+
             clips.sort_by_key(|(clip, random)| {
-                options
-                    .sort_mode
-                    .clone()
-                    .into_iter()
-                    .map(|sort| sort.key(clip, *random))
-                    .collect::<Vec<_>>()
+                (clip.index_within_video, clip.index_within_marker, *random)
             });
             clips.into_iter().map(|(clip, _)| clip).collect()
         }
@@ -349,7 +325,6 @@ impl<'a> ClipService<'a> {
             clip_duration: body.clip_duration,
             split_clips: body.split_clips,
             markers: self.convert_selected_markers(body.markers).await?,
-            sort_mode: body.sort_mode,
             seed: body.seed,
             max_duration: if body.song_ids.is_empty() || !body.trim_video_for_songs {
                 None
@@ -365,7 +340,7 @@ mod tests {
     use crate::{
         data::database::DbMarker,
         service::{
-            clip::{arrange_clips, ClipSortMode},
+            clip::{arrange_clips},
             Marker, MarkerId, MarkerInfo, VideoId,
         },
     };
@@ -432,7 +407,6 @@ mod tests {
             clip_duration: 30,
             markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
             split_clips: true,
-            sort_mode: vec![ClipSortMode::VideoIndex, ClipSortMode::Random],
             seed: None,
             max_duration: None,
         };
@@ -460,7 +434,6 @@ mod tests {
             clip_duration: 30,
             markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
             split_clips: true,
-            sort_mode: vec![ClipSortMode::VideoIndex, ClipSortMode::Random],
             seed: None,
             max_duration: None,
         };
@@ -480,7 +453,6 @@ mod tests {
                 create_marker(17.0, 40.0, 1),
             ],
             split_clips: true,
-            sort_mode: vec![ClipSortMode::VideoIndex, ClipSortMode::Random],
             seed: None,
             max_duration: Some(30.0),
         };
@@ -503,7 +475,6 @@ mod tests {
                 create_marker_video_id(5, 20.0, 60.0, 3, "v1".into()),
             ],
             split_clips: true,
-            sort_mode: vec![ClipSortMode::VideoIndex, ClipSortMode::Random],
             seed: None,
             max_duration: None,
         };

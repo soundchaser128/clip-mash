@@ -1,6 +1,6 @@
 use axum::{
     body::StreamBody,
-    extract::{Path, Query, State},
+    extract::{Query, State},
     response::{
         sse::{Event, KeepAlive},
         IntoResponse, Sse,

@@ -8,11 +8,7 @@ use crate::{
         database::{DbMarker, DbVideo, LocalVideoWithMarkers},
         stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, StashMarker},
     },
-    service::{
-        clip::{ClipOrder, ClipSortMode},
-        generator::VideoResolution,
-        Clip, MarkerId, Video, VideoId,
-    },
+    service::{clip::ClipOrder, generator::VideoResolution, Clip, MarkerId, Video, VideoId},
     util::{add_api_key, expect_file_name},
 };
 
@@ -168,7 +164,6 @@ pub struct CreateClipsBody {
     pub clip_duration: u32,
     pub split_clips: bool,
     pub markers: Vec<SelectedMarker>,
-    pub sort_mode: Vec<ClipSortMode>,
     pub seed: Option<String>,
     pub song_ids: Vec<i64>,
     pub trim_video_for_songs: bool,

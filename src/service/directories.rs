@@ -60,6 +60,7 @@ impl Directories {
         info!("database file: {}", self.database_file());
     }
 
+    #[allow(unused)]
     pub async fn cleanup_videos(&self) -> Result<()> {
         use tokio::fs;
 

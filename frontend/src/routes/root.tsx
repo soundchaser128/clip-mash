@@ -1,13 +1,12 @@
 import {useStateMachine} from "little-state-machine"
 import React, {useEffect} from "react"
 import {
-  Link,
   Outlet,
   useLoaderData,
   useNavigate,
   useNavigation,
 } from "react-router-dom"
-import {HiCog, HiXMark} from "react-icons/hi2"
+import {HiXMark} from "react-icons/hi2"
 import {resetForm} from "./actions"
 import {
   FormStage,

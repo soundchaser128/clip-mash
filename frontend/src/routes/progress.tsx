@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useRef, useState} from "react"
-import {HiArrowDown, HiCheckBadge, HiCodeBracket, HiOutlineFolder, HiPlay} from "react-icons/hi2"
+import {HiArrowDown, HiCodeBracket, HiOutlineFolder, HiPlay} from "react-icons/hi2"
 import {
   LocalVideosFormState,
   StashFormState,

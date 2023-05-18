@@ -1,6 +1,7 @@
 use std::{
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
+    process::Output,
 };
 
 use camino::Utf8Path;
@@ -35,6 +36,18 @@ pub fn expect_file_name(path: &str) -> String {
         .to_string()
 }
 
+pub fn commandline_error<T>(output: Output) -> crate::Result<T> {
+    use color_eyre::eyre::eyre;
+
+    let stdout = std::str::from_utf8(&output.stdout).unwrap();
+    let stderr = std::str::from_utf8(&output.stderr).unwrap();
+    Err(eyre!(
+        "ffmpeg failed with exit code {}, stdout:\n{}\nstderr:\n{}",
+        output.status.code().unwrap_or(1),
+        stdout,
+        stderr
+    ))
+}
 #[cfg(test)]
 mod test {
     use super::{add_api_key, expect_file_name};

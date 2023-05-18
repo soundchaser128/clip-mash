@@ -8,6 +8,7 @@ use graphql_client::{GraphQLQuery, Response};
 use ordered_float::OrderedFloat;
 use reqwest::Client;
 use serde::Deserialize;
+use tracing::debug;
 
 use self::{
     find_markers_query::{
@@ -325,7 +326,7 @@ impl StashApi {
         let variables = find_tags_query::Variables {};
         let request_body = FindTagsQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
-        tracing::debug!("url = '{url}', api key = '{}'", self.api_key);
+        debug!("url = '{url}', api key = '{}'", self.api_key);
 
         let response = self
             .client

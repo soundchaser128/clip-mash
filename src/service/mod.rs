@@ -1,8 +1,11 @@
 pub mod clip;
+pub mod directories;
 pub mod download_ffmpeg;
+pub mod ffprobe;
 pub mod funscript;
 pub mod generator;
 pub mod local_video;
+pub mod music;
 pub mod stash_config;
 
 use std::fmt;
@@ -117,6 +120,11 @@ pub struct Marker {
     pub video_id: VideoId,
     pub title: String,
     pub info: MarkerInfo,
+}
+impl Marker {
+    fn duration(&self) -> f64 {
+        self.end_time - self.start_time
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -6,6 +6,7 @@ use axum::{
 };
 use reqwest::StatusCode;
 use serde_json::json;
+use tracing::error;
 
 type StdError = Box<dyn std::error::Error>;
 
@@ -37,7 +38,7 @@ impl From<color_eyre::Report> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        tracing::error!("request failed: {:?}", self);
+        error!("request failed: {:?}", self);
         let status_code = match &self {
             AppError::StatusCode(code) => *code,
             _ => StatusCode::INTERNAL_SERVER_ERROR,

@@ -7,6 +7,7 @@ use crate::{
 use camino::{Utf8Path, Utf8PathBuf};
 use nanoid::nanoid;
 use tokio::task::spawn_blocking;
+use tracing::{debug, info};
 use walkdir::WalkDir;
 
 async fn gather_files(path: Utf8PathBuf, recurse: bool) -> Result<Vec<Utf8PathBuf>> {
@@ -30,12 +31,12 @@ pub async fn list_videos(
     database: &Database,
 ) -> Result<Vec<LocalVideoWithMarkers>> {
     let entries = gather_files(path.as_ref().to_owned(), recurse).await?;
-    tracing::debug!("found files {entries:?} (recurse = {recurse})");
+    debug!("found files {entries:?} (recurse = {recurse})");
     let mut videos = vec![];
     for path in entries {
         if path.extension() == Some("mp4") {
             if let Some(video) = database.get_video_by_path(path.as_str()).await? {
-                tracing::debug!("found existing video {video:#?}");
+                debug!("found existing video {video:#?}");
                 videos.push(video);
             } else {
                 let interactive = path.with_extension("funscript").is_file();
@@ -45,7 +46,7 @@ pub async fn list_videos(
                     file_path: path.to_string(),
                     interactive,
                 };
-                tracing::info!("inserting new video {video:#?}");
+                info!("inserting new video {video:#?}");
                 database.persist_video(video.clone()).await?;
                 videos.push(LocalVideoWithMarkers {
                     video,

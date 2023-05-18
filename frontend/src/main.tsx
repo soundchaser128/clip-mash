@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
   isRouteErrorResponse,
+  LoaderFunction,
   RouterProvider,
   useRouteError,
 } from "react-router-dom"
@@ -24,8 +25,14 @@ import SelectMode from "./routes/select-mode"
 import {nanoid} from "nanoid"
 import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
 import EditVideoModal from "./routes/local/videos.$id"
-import StashRoot from "./routes/stash/root"
+import StashRoot from "./routes/root"
 import Layout from "./components/Layout"
+import Music from "./routes/music"
+import ConfigPage from "./routes/stash/config"
+import {loader as configLoader} from "./routes/loaders"
+import {SongDto} from "./types/types"
+import {DndProvider} from "react-dnd"
+import {HTML5Backend} from "react-dnd-html5-backend"
 
 const TroubleshootingInfo = () => {
   return (
@@ -91,6 +98,12 @@ const ErrorBoundary = () => {
   )
 }
 
+const musicLoader: LoaderFunction = async () => {
+  const response = await fetch("/api/music")
+  const data = (await response.json()) as SongDto[]
+  return data
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -99,6 +112,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <SelectSource />,
+      },
+      {
+        path: "/stash/config",
+        element: <ConfigPage />,
       },
       {
         path: "local",
@@ -129,6 +146,7 @@ const router = createBrowserRouter([
       {
         path: "stash",
         element: <StashRoot />,
+        loader: configLoader,
         children: [
           {
             path: "mode",
@@ -174,11 +192,17 @@ const router = createBrowserRouter([
             path: "progress",
             element: <Progress />,
           },
+          {
+            path: "music",
+            element: <Music />,
+            loader: musicLoader,
+          },
         ],
       },
     ],
   },
 ])
+
 createStore(
   {
     data: {
@@ -194,7 +218,9 @@ createStore(
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <StateMachineProvider>
-      <RouterProvider router={router} />
+      <DndProvider backend={HTML5Backend}>
+        <RouterProvider router={router} />
+      </DndProvider>
     </StateMachineProvider>
   </React.StrictMode>
 )

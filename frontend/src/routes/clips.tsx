@@ -29,19 +29,9 @@ interface Data {
   videos: Record<string, VideoDto>
 }
 
-type ClipSortMode = "videoIndex" | "markerIndex"
-
 export const loader: LoaderFunction = async () => {
   const state = getFormState()!
   invariant(StateHelpers.isNotInitial(state))
-  let sortMode: ClipSortMode = "markerIndex"
-
-  if (StateHelpers.isStash(state) && state.selectMode === "scenes") {
-    sortMode = "videoIndex"
-  }
-  if (StateHelpers.isLocalFiles(state)) {
-    sortMode = "videoIndex"
-  }
 
   const response = await fetch("/api/clips", {
     method: "POST",
@@ -50,8 +40,9 @@ export const loader: LoaderFunction = async () => {
       clipDuration: state.clipDuration,
       markers: state.selectedMarkers!.filter((m) => m.selected),
       splitClips: state.splitClips,
-      sortMode,
       seed: state.seed,
+      songIds: state.songs?.map((s) => s.songId) || [],
+      trimVideoForSongs: state.trimVideoForSongs,
     }),
     headers: {"content-type": "application/json"},
   })
@@ -93,6 +84,10 @@ function PreviewClips() {
   const {actions} = useStateMachine({updateForm})
   const navigate = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
+  const totalLength = clips.reduce(
+    (len, {clip}) => len + (clip.range[1] - clip.range[0]),
+    0
+  )
 
   const onNextStage = () => {
     actions.updateForm({
@@ -147,7 +142,12 @@ function PreviewClips() {
             </strong>
           </p>
           <p>
-            Duration: <strong>{formatSeconds(currentClip.range)}</strong>
+            Current clip duration:{" "}
+            <strong>{formatSeconds(currentClip.range, "short")}</strong>
+          </p>
+          <p>
+            Total video duration:{" "}
+            <strong>{formatSeconds(totalLength, "short")}</strong>
           </p>
           {DEBUG && (
             <>

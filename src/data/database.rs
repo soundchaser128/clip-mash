@@ -1,4 +1,5 @@
 use crate::Result;
+use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use serde::Deserialize;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode},
@@ -41,13 +42,29 @@ pub struct LocalVideoWithMarkers {
     pub markers: Vec<DbMarker>,
 }
 
+#[derive(Debug)]
+pub struct DbSong {
+    pub rowid: Option<i64>,
+    pub url: String,
+    pub file_path: String,
+    pub duration: f64,
+}
+
+#[derive(Debug)]
+pub struct CreateSong {
+    pub url: String,
+    pub file_path: String,
+    pub duration: f64,
+}
+
+#[derive(Clone)]
 pub struct Database {
     pool: SqlitePool,
 }
 
 impl Database {
-    pub async fn new() -> Result<Self> {
-        let options = SqliteConnectOptions::from_str("sqlite:videos.sqlite3")?
+    pub async fn new(path: &str) -> Result<Self> {
+        let options = SqliteConnectOptions::from_str(&format!("sqlite:{path}?mode=rwc"))?
             .create_if_missing(true)
             .journal_mode(SqliteJournalMode::Wal);
 
@@ -55,6 +72,11 @@ impl Database {
         sqlx::migrate!().run(&pool).await?;
 
         Ok(Database { pool })
+    }
+
+    #[cfg(test)]
+    pub fn with_pool(pool: SqlitePool) -> Self {
+        Database { pool }
     }
 
     pub async fn get_video(&self, id: &str) -> Result<Option<DbVideo>> {
@@ -177,5 +199,199 @@ impl Database {
             .execute(&self.pool)
             .await?;
         Ok(())
+    }
+
+    pub async fn persist_song(&self, song: CreateSong) -> Result<DbSong> {
+        let rowid = sqlx::query_scalar!(
+            "INSERT INTO songs (url, file_path, duration) 
+             VALUES ($1, $2, $3)
+             RETURNING rowid",
+            song.url,
+            song.file_path,
+            song.duration
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(DbSong {
+            rowid: Some(rowid),
+            url: song.url,
+            file_path: song.file_path,
+            duration: song.duration,
+        })
+    }
+
+    pub async fn get_song_by_url(&self, url: &str) -> Result<Option<DbSong>> {
+        sqlx::query_as!(
+            DbSong,
+            "SELECT rowid, url, file_path, duration FROM songs WHERE url = $1",
+            url
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(From::from)
+    }
+
+    pub async fn get_song(&self, id: i64) -> Result<DbSong> {
+        sqlx::query_as!(
+            DbSong,
+            "SELECT rowid, url, file_path, duration FROM songs WHERE rowid = $1",
+            id
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(From::from)
+    }
+
+    pub async fn update_song_file_path(&self, id: i64, file_path: &str) -> Result<()> {
+        sqlx::query!(
+            "UPDATE songs SET file_path = $1 WHERE rowid = $2",
+            file_path,
+            id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn list_songs(&self) -> Result<Vec<DbSong>> {
+        use tokio::fs;
+
+        let stream = sqlx::query_as!(DbSong, "SELECT rowid, url, file_path, duration FROM songs")
+            .fetch(&self.pool);
+
+        let videos = stream
+            .try_filter(|row| fs::try_exists(row.file_path.clone()).unwrap_or_else(|_| false))
+            .filter_map(|r| future::ready(r.ok()))
+            .collect()
+            .await;
+
+        Ok(videos)
+    }
+
+    pub async fn get_songs(&self, song_ids: &[i64]) -> Result<Vec<DbSong>> {
+        let mut songs = vec![];
+        // TODO wait for SELECT ... FROM foo IN ... support in sqlx
+        for id in song_ids {
+            songs.push(self.get_song(*id).await?);
+        }
+
+        Ok(songs)
+    }
+
+    pub async fn sum_song_durations(&self, song_ids: &[i64]) -> Result<f64> {
+        let duration = self
+            .get_songs(song_ids)
+            .await?
+            .into_iter()
+            .map(|s| s.duration)
+            .sum();
+        Ok(duration)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::data::database::{CreateMarker, Database, DbVideo};
+    use crate::Result;
+    use fake::{faker::filesystem::en::FilePath, Fake};
+    use nanoid::nanoid;
+    use sqlx::SqlitePool;
+
+    async fn persist_video(db: &Database) -> Result<DbVideo> {
+        let expected = DbVideo {
+            file_path: FilePath().fake(),
+            id: nanoid!(8),
+            interactive: false,
+        };
+        db.persist_video(expected.clone()).await?;
+        Ok(expected)
+    }
+
+    #[sqlx::test]
+    async fn test_get_and_persist_video(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let expected = persist_video(&database).await.unwrap();
+
+        let result = database.get_video(&expected.id).await.unwrap().unwrap();
+        assert_eq!(result.id, expected.id);
+        assert_eq!(result.file_path, expected.file_path);
+        assert_eq!(result.interactive, expected.interactive);
+    }
+
+    #[sqlx::test]
+    async fn test_persist_marker(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        let expected = CreateMarker {
+            title: "Some title".into(),
+            video_id: video.id.clone(),
+            start: 0.0,
+            end: 17.0,
+            index_within_video: 0,
+        };
+        let result = database.persist_marker(expected.clone()).await.unwrap();
+
+        assert_eq!(result.start_time, expected.start);
+        assert_eq!(result.end_time, expected.end);
+        assert_eq!(result.video_id, video.id);
+        assert_eq!(result.index_within_video, 0);
+    }
+
+    #[sqlx::test]
+    async fn test_marker_foreign_key_constraint(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video_id = nanoid!(8);
+        let expected = CreateMarker {
+            title: "Some title".into(),
+            video_id,
+            start: 0.0,
+            end: 17.0,
+            index_within_video: 0,
+        };
+        let err = database
+            .persist_marker(expected.clone())
+            .await
+            .expect_err("must fail due to a foreign key constraint");
+        let err: sqlx::Error = err.downcast().unwrap();
+        let err = err.into_database_error().unwrap();
+        assert_eq!(err.message(), "FOREIGN KEY constraint failed");
+    }
+
+    #[sqlx::test]
+    async fn test_delete_marker(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        let marker = CreateMarker {
+            title: "Some title".into(),
+            video_id: video.id,
+            start: 0.0,
+            end: 17.0,
+            index_within_video: 0,
+        };
+        let result = database.persist_marker(marker).await.unwrap();
+        let id = result.rowid.unwrap();
+
+        database.delete_marker(id).await.unwrap();
+        let _ = database
+            .get_marker(id)
+            .await
+            .expect_err("must not be in the database anymore");
+    }
+
+    #[sqlx::test]
+    async fn test_get_video_by_path(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let expected = persist_video(&database).await.unwrap();
+        let result = database
+            .get_video_by_path(&expected.file_path)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(result.video.id, expected.id);
+        assert_eq!(result.video.file_path, expected.file_path);
+        assert_eq!(result.video.interactive, expected.interactive);
+        assert_eq!(result.markers.len(), 0);
     }
 }

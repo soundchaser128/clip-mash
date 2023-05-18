@@ -1,6 +1,7 @@
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tracing::{info, warn};
 
 use super::{Clip, Video};
 use crate::{data::stash_api::StashApi, service::VideoInfo, Result};
@@ -144,10 +145,9 @@ impl<'a> ScriptBuilder<'a> {
                     offset += duration;
                 }
                 Err(e) => {
-                    tracing::warn!(
+                    warn!(
                         "failed to get .funscript for scene ID {}: {}",
-                        clip.video_id,
-                        e
+                        clip.video_id, e
                     )
                 }
             }
@@ -164,7 +164,7 @@ impl<'a> ScriptBuilder<'a> {
             ..Default::default()
         };
 
-        tracing::info!("generated funscript with {} actions", script.actions.len());
+        info!("generated funscript with {} actions", script.actions.len());
 
         Ok(script)
     }

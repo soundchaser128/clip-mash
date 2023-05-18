@@ -18,17 +18,19 @@ export enum FormStage {
   SelectMode = 1,
   SelectCriteria = 2,
   SelectMarkers = 3,
-  VideoOptions = 4,
-  PreviewClips = 5,
-  Wait = 6,
+  Music = 4,
+  VideoOptions = 5,
+  PreviewClips = 6,
+  Wait = 7,
 }
 
 export enum LocalFilesFormStage {
   SelectPath = 1,
   ListVideos = 2,
-  VideoOptions = 3,
-  PreviewClips = 4,
-  Wait = 5,
+  Music = 3,
+  VideoOptions = 4,
+  PreviewClips = 5,
+  Wait = 6,
 }
 
 export type IdSource = "stash" | "localFile"
@@ -62,10 +64,8 @@ export interface InitialFormState {
   id: string
 }
 
-export interface LocalVideosFormState {
-  source: "localFile"
+interface CommonFormState {
   id: string
-  stage: LocalFilesFormStage
   videos?: VideoWithMarkers[]
   localVideoPath?: string
   recurse?: boolean
@@ -79,42 +79,23 @@ export interface LocalVideosFormState {
   clips?: Clip[]
   interactive?: boolean
   seed?: string
+  songs?: SongDto[]
+  musicVolume?: number
+  trimVideoForSongs?: boolean
 }
 
-export interface Marker {
-  id: MarkerId
-  primaryTag: string
-  streamUrl: string
-  screenshotUrl: string
-  start: number
-  end: number
-  sceneTitle?: string
-  performers: string[]
-  fileName?: string
-  sceneInteractive: boolean
-  tags: string[]
-  indexWithinVideo: number
-  videoId: VideoId
+export interface LocalVideosFormState extends CommonFormState {
+  source: "localFile"
+  stage: LocalFilesFormStage
 }
 
-export interface StashFormState {
+export interface StashFormState extends CommonFormState {
   source: "stash"
   selectMode?: SelectMode
   selectedIds?: string[]
-  clipOrder?: "random" | "scene-order"
-  clipDuration?: number
-  outputResolution?: "720" | "1080" | "4K"
-  outputFps?: number
-  selectedMarkers?: SelectedMarker[]
-  markers?: Marker[]
-  fileName?: string
-  clips?: Clip[]
-  splitClips?: boolean
   includeAll?: boolean
-  interactive?: boolean
-  seed?: string
+  markers?: Marker[]
   stage: FormStage
-  id: string
 }
 
 export const StateHelpers = {
@@ -149,14 +130,25 @@ export interface Clip {
 export interface VideoDto {
   id: VideoId
   title: string
-  // studio?: string
-  // imageUrl: string
   performers: string[]
   fileName: string
-  // tags: string[]
-  // markerCount: number
   interactive: boolean
-  // rating?: number
+}
+
+export interface Marker {
+  id: MarkerId
+  primaryTag: string
+  streamUrl: string
+  screenshotUrl: string
+  start: number
+  end: number
+  sceneTitle?: string
+  performers: string[]
+  fileName?: string
+  sceneInteractive: boolean
+  tags: string[]
+  indexWithinVideo: number
+  videoId: VideoId
 }
 
 export interface VideoWithMarkers {
@@ -174,4 +166,11 @@ export interface Scene {
   rating?: number
   interactive: boolean
   markerCount: number
+}
+
+export interface SongDto {
+  songId: number
+  duration: number
+  fileName: string
+  url: string
 }

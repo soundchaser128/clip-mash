@@ -10,3 +10,5 @@
 *.sqlite3-shm
 *.sqlite3-wal
 .env
+/music
+/yt-dlp

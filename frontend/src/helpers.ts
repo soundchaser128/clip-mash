@@ -1,5 +1,5 @@
 import {format, formatDuration} from "date-fns"
-import {FormState} from "./types/types"
+import {FormState, SelectedMarker} from "./types/types"
 
 export function getFormState(): FormState | null {
   const json = sessionStorage.getItem("form-state")
@@ -19,6 +19,8 @@ export const segmentColors = [
   "bg-teal-400 hover:bg-teal-500 text-white",
   "bg-orange-600 hover:bg-orange-500 text-white",
   "bg-rose-400 hover:bg-rose-500 text-white",
+  "bg-stone-400 hover:bg-stone-500 text-white",
+  "bg-amber-400 hover:bg-amber-500 text-white",
 ]
 
 export function getSegmentColor(index: number): string {
@@ -58,5 +60,15 @@ export function formatSeconds(
     )
   } else {
     return format(duration * 1000, "mm:ss")
+  }
+}
+
+export function sumDurations(markers?: SelectedMarker[]): number {
+  if (!markers) {
+    return 0
+  } else {
+    return markers
+      .filter((m) => m.selected)
+      .reduce((sum, {selectedRange: [start, end]}) => sum + (end - start), 0)
   }
 }

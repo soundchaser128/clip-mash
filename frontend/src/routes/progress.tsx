@@ -1,13 +1,27 @@
 import {useStateMachine} from "little-state-machine"
 import {useRef, useState} from "react"
-import {HiArrowDown, HiCheckBadge, HiCodeBracket} from "react-icons/hi2"
-import {StateHelpers} from "../types/types"
+import {
+  HiArrowDown,
+  HiCodeBracket,
+  HiOutlineFolder,
+  HiPlay,
+} from "react-icons/hi2"
+import {
+  LocalVideosFormState,
+  StashFormState,
+  StateHelpers,
+} from "../types/types"
 import invariant from "tiny-invariant"
 import {formatSeconds} from "../helpers"
 
 interface Progress {
   finished: number
   total: number
+  done: boolean
+}
+
+type CreateVideoBody = Omit<LocalVideosFormState | StashFormState, "songs"> & {
+  songIds: number[]
 }
 
 function Progress() {
@@ -22,12 +36,14 @@ function Progress() {
 
   const onSubmit = async (e: React.MouseEvent) => {
     invariant(StateHelpers.isNotInitial(state.data))
-
     e.preventDefault()
-    const data = {...state.data}
-    if (!data.fileName) {
-      data.fileName = `${data.id}.mp4`
-    }
+
+    const songIds = state.data.songs?.map((s) => s.songId) || []
+    const data = {
+      ...state.data,
+      fileName: state.data.fileName || `${state.data.id}.mp4`,
+      songIds,
+    } satisfies CreateVideoBody
 
     const body = JSON.stringify(data)
     const response = await fetch("/api/create", {
@@ -42,8 +58,7 @@ function Progress() {
       const es = new EventSource("/api/progress")
       es.onmessage = (event) => {
         const data = JSON.parse(event.data) as Progress
-        const isFinished = data.finished === data.total
-        if (isFinished) {
+        if (data.done) {
           setFinished(true)
           es.close()
         }
@@ -74,6 +89,11 @@ function Progress() {
     }
     setCreatingScript(false)
   }
+
+  const onOpenVideosFolder = async () => {
+    await fetch("/api/open-directory?folder=videos")
+  }
+
   const totalDuration = state.data.clips!.reduce(
     (duration, clip) => duration + (clip.range[1] - clip.range[0]),
     0
@@ -97,7 +117,7 @@ function Progress() {
             </p>
           </div>
           <a onClick={onSubmit} className="btn btn-lg btn-success">
-            <HiCheckBadge className="mr-2 w-6 h-6" />
+            <HiPlay className="mr-2 w-6 h-6" />
             Create video
           </a>
         </>
@@ -117,22 +137,26 @@ function Progress() {
       )}
 
       {finished && (
-        <div className="flex flex-col">
-          <h1 className="text-5xl font-bold mb-6">Success!</h1>
-          <p className="font-light self-start mb-1">
-            Download the finished compilation
-          </p>
-          <a
-            href={`/api/download?fileName=${encodeURIComponent(finalFileName)}`}
-            className="btn btn-success btn-lg mb-8"
-            download
-          >
-            <HiArrowDown className="w-6 h-6 mr-2" />
-            Download
-          </a>
+        <div className="flex flex-col gap-6">
+          <h1 className="text-5xl font-bold">🎉 Success!</h1>
+          <div className="flex flex-col">
+            <p className="font-light self-start mb-1">
+              Download the finished compilation
+            </p>
+            <a
+              href={`/api/download?fileName=${encodeURIComponent(
+                finalFileName
+              )}`}
+              className="btn btn-success btn-lg"
+              download
+            >
+              <HiArrowDown className="w-6 h-6 mr-2" />
+              Download
+            </a>
+          </div>
 
           {state.data.interactive && (
-            <>
+            <div className="flex flex-col">
               <p className="font-light self-start mb-1">
                 Download the generated .funscript file
               </p>
@@ -146,8 +170,19 @@ function Progress() {
               </button>
 
               <a className="hidden" ref={downloadLink} />
-            </>
+            </div>
           )}
+
+          <div className="flex flex-col">
+            <p className="font-light self-start mb-1">Open the videos folder</p>
+            <button
+              className="btn btn-success btn-lg"
+              onClick={onOpenVideosFolder}
+            >
+              <HiOutlineFolder className="w-6 h-6 mr-2" />
+              Open
+            </button>
+          </div>
         </div>
       )}
     </div>

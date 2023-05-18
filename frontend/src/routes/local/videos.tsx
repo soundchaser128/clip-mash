@@ -65,7 +65,7 @@ export default function ListVideos() {
       .some((v) => v.video.interactive)
 
     actions.updateForm({
-      stage: LocalFilesFormStage.VideoOptions,
+      stage: LocalFilesFormStage.Music,
       videos: videos.filter((v) => v.markers.length > 0),
       selectedMarkers: videos
         .flatMap((m) => m.markers)
@@ -79,7 +79,7 @@ export default function ListVideos() {
         })),
       interactive,
     })
-    navigate("/local/options")
+    navigate("/stash/music")
   }
 
   return (

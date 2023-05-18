@@ -15,7 +15,6 @@ const Layout: React.FC<Props> = ({children, isLoading}) => {
   return (
     <div className={clsx(styles.root, isLoading && "opacity-25")}>
       <main className={styles.main}>{children}</main>
-
       <Footer />
     </div>
   )

@@ -33,7 +33,6 @@ import {loader as configLoader} from "./routes/loaders"
 import {SongDto} from "./types/types"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
-import GlobalConfig from "./routes/config"
 
 const TroubleshootingInfo = () => {
   return (
@@ -113,10 +112,6 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <SelectSource />,
-      },
-      {
-        path: "/config",
-        element: <GlobalConfig />,
       },
       {
         path: "/stash/config",

@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useRef, useState} from "react"
-import {HiArrowDown, HiCheckBadge, HiCodeBracket, HiPlay} from "react-icons/hi2"
+import {HiArrowDown, HiCheckBadge, HiCodeBracket, HiOutlineFolder, HiPlay} from "react-icons/hi2"
 import {
   LocalVideosFormState,
   StashFormState,
@@ -84,6 +84,11 @@ function Progress() {
     }
     setCreatingScript(false)
   }
+
+  const onOpenVideosFolder = async () => {
+    await fetch("/api/open-directory?folder=videos")
+  }
+
   const totalDuration = state.data.clips!.reduce(
     (duration, clip) => duration + (clip.range[1] - clip.range[0]),
     0
@@ -127,22 +132,26 @@ function Progress() {
       )}
 
       {finished && (
-        <div className="flex flex-col">
-          <h1 className="text-5xl font-bold mb-6">🎉 Success!</h1>
-          <p className="font-light self-start mb-1">
-            Download the finished compilation
-          </p>
-          <a
-            href={`/api/download?fileName=${encodeURIComponent(finalFileName)}`}
-            className="btn btn-success btn-lg mb-8"
-            download
-          >
-            <HiArrowDown className="w-6 h-6 mr-2" />
-            Download
-          </a>
+        <div className="flex flex-col gap-6">
+          <h1 className="text-5xl font-bold">🎉 Success!</h1>
+          <div className="flex flex-col">
+            <p className="font-light self-start mb-1">
+              Download the finished compilation
+            </p>
+            <a
+              href={`/api/download?fileName=${encodeURIComponent(
+                finalFileName
+              )}`}
+              className="btn btn-success btn-lg"
+              download
+            >
+              <HiArrowDown className="w-6 h-6 mr-2" />
+              Download
+            </a>
+          </div>
 
           {state.data.interactive && (
-            <>
+            <div className="flex flex-col">
               <p className="font-light self-start mb-1">
                 Download the generated .funscript file
               </p>
@@ -156,8 +165,19 @@ function Progress() {
               </button>
 
               <a className="hidden" ref={downloadLink} />
-            </>
+            </div>
           )}
+
+          <div className="flex flex-col">
+            <p className="font-light self-start mb-1">Open the videos folder</p>
+            <button
+              className="btn btn-success btn-lg"
+              onClick={onOpenVideosFolder}
+            >
+              <HiOutlineFolder className="w-6 h-6 mr-2" />
+              Open
+            </button>
+          </div>
         </div>
       )}
     </div>

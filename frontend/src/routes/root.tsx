@@ -139,11 +139,6 @@ const RootLayout: React.FC = () => {
             <HiXMark className="w-5 h-5 mr-2" />
             Reset
           </button>
-
-          <Link to="/config" className="btn btn-sm btn-info">
-            <HiCog  className="w-5 h-5 mr-2 "/>
-            Settings
-          </Link>
         </div>
         {StateHelpers.isStash(state.data) && <StashSteps state={state.data} />}
         {StateHelpers.isLocalFiles(state.data) && (

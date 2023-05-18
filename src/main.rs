@@ -1,6 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use axum::{
+    extract::DefaultBodyLimit,
     routing::{delete, get, post},
     Router,
 };
@@ -19,6 +20,9 @@ mod service;
 mod util;
 
 pub type Result<T> = std::result::Result<T, Report>;
+
+// 100 MB
+const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -74,12 +78,14 @@ async fn main() -> Result<()> {
         .route("/download", get(handlers::common::download_video))
         .route("/funscript", post(handlers::common::get_funscript))
         .route("/music", get(handlers::common::list_songs))
-        .route("/music", post(handlers::common::download_music))
+        .route("/music/download", post(handlers::common::download_music))
+        .route("/music/upload", post(handlers::common::upload_music))
         .route("/open-directory", get(handlers::common::open_folder));
 
     let app = Router::new()
         .nest("/api", api_routes)
         .fallback_service(static_files::service())
+        .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
         .with_state(state);
 
     let host = env::args().nth(1).unwrap_or_else(|| "[::1]".to_string());

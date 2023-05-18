@@ -1,13 +1,13 @@
 use axum::{
     body::StreamBody,
-    extract::{Query, State},
+    extract::{Multipart, Query, State},
     response::{
         sse::{Event, KeepAlive},
         IntoResponse, Sse,
     },
     Json,
 };
-use color_eyre::Report;
+use color_eyre::{eyre::eyre, Report};
 use futures::{
     stream::{self, Stream},
     FutureExt,
@@ -209,6 +209,23 @@ pub async fn download_music(
     let song = music_service.download_song(&url).await?;
 
     Ok(Json(song.into()))
+}
+
+#[axum::debug_handler]
+pub async fn upload_music(
+    State(state): State<Arc<AppState>>,
+    mut multipart: Multipart,
+) -> Result<Json<SongDto>, AppError> {
+    let music_service = MusicService::new(state.database.clone(), state.directories.clone());
+
+    while let Some(field) = multipart.next_field().await.map_err(Report::from)? {
+        if field.name() == Some("file") {
+            let song = music_service.upload_song(field).await?;
+            return Ok(Json(song.into()));
+        }
+    }
+
+    Err(eyre!("missing form field `file`").into())
 }
 
 #[axum::debug_handler]

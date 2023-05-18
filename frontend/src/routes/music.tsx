@@ -13,6 +13,7 @@ import {useCallback, useRef, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds} from "../helpers"
 import {
+  HiArrowUpTray,
   HiBarsArrowDown,
   HiCheck,
   HiChevronRight,
@@ -26,7 +27,7 @@ interface Inputs {
   musicUrl: string
 }
 
-type Mode = "table" | "form" | "order"
+type Mode = "table" | "download" | "order" | "upload"
 
 interface CardProps {
   id: number
@@ -170,6 +171,7 @@ const ReorderSongs: React.FC<{
 
 export default function Music() {
   const [mode, setMode] = useState<Mode>("table")
+  const [file, setFile] = useState<File>()
   const songs = useLoaderData() as SongDto[]
   const {handleSubmit, register} = useForm<Inputs>({})
   const {actions, state} = useStateMachine({updateForm})
@@ -192,7 +194,7 @@ export default function Music() {
     invariant(StateHelpers.isNotInitial(state.data))
 
     const response = await fetch(
-      `/api/music?url=${encodeURIComponent(values.musicUrl)}`,
+      `/api/music/download?url=${encodeURIComponent(values.musicUrl)}`,
       {
         method: "POST",
       }
@@ -220,6 +222,27 @@ export default function Music() {
     })
   }
 
+  const onUpload = async () => {
+    invariant(StateHelpers.isNotInitial(state.data))
+    if (file) {
+      setLoading(true)
+      const formData = new FormData()
+      formData.set("file", file)
+      const response = await fetch(`/api/music/upload`, {
+        method: "POST",
+        body: formData,
+      })
+      const data: SongDto = await response.json()
+
+      actions.updateForm({
+        songs: [...(state.data.songs || []), data],
+      })
+      setLoading(false)
+      setMode("table")
+      revalidator.revalidate()
+    }
+  }
+
   const onNextStage = () => {
     const nextStage = StateHelpers.isLocalFiles(state.data)
       ? LocalFilesFormStage.VideoOptions
@@ -239,9 +262,16 @@ export default function Music() {
     <>
       <div className="justify-between flex w-full mb-4">
         <div className="flex gap-2">
-          <button onClick={() => setMode("form")} className="btn btn-primary">
+          <button
+            onClick={() => setMode("download")}
+            className="btn btn-primary"
+          >
             <HiMusicalNote className="mr-2" />
-            Add music
+            Download music
+          </button>
+          <button onClick={() => setMode("upload")} className="btn btn-primary">
+            <HiArrowUpTray className="mr-2" />
+            Upload music
           </button>
           {mode !== "order" && (
             <button
@@ -361,11 +391,15 @@ export default function Music() {
         </div>
       )}
 
-      {mode === "form" && (
+      {mode === "download" && (
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col self-center w-full max-w-xl gap-4"
         >
+          <p>
+            You can download songs from YouTube, Vimeo or any other site that
+            yt-dlp supports.
+          </p>
           <Field label="Music URL">
             <input
               className="input input-bordered w-full"
@@ -390,6 +424,26 @@ export default function Music() {
             </button>
           </div>
         </form>
+      )}
+
+      {mode === "upload" && (
+        <div className="flex flex-col self-center w-full max-w-xl gap-4">
+          <p>Select a song to upload:</p>
+          <input
+            type="file"
+            className="file-input file-input-primary"
+            name="upload"
+            accept="audio/*"
+            onChange={(e) => setFile(e.target.files![0])}
+          />
+          <button
+            onClick={onUpload}
+            disabled={loading}
+            className="btn btn-success self-end"
+          >
+            Upload
+          </button>
+        </div>
       )}
     </>
   )

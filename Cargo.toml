@@ -4,7 +4,7 @@ version = "0.6.0"
 edition = "2021"
 
 [dependencies]
-axum = { version = "0.6.18", features = ["macros"] }
+axum = { version = "0.6.18", features = ["macros", "multipart"] }
 camino = { version =  "1.1.4", features = ["serde1"] }
 color-eyre = "0.6.2"
 directories = "5.0.1"

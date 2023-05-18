@@ -3,10 +3,11 @@ use crate::{
     service::ffprobe::ffprobe,
     Result,
 };
+use axum::extract::multipart::Field;
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
 use nanoid::nanoid;
-use tokio::fs;
+use tokio::{fs, io::AsyncWriteExt};
 use tracing::info;
 use youtube_dl::YoutubeDl;
 
@@ -50,16 +51,21 @@ impl MusicService {
         Ok(executable)
     }
 
-    async fn download_to_file(&self, url: &str) -> Result<SongInfo> {
-        let yt_dlp = self.ensure_yt_dlp().await?;
-
+    async fn get_download_directory(&self) -> Result<Utf8PathBuf> {
         let base_dir = self.dirs.music_dir();
         let song_id = nanoid!(8);
         let output_dir = base_dir.join(song_id);
 
         if !output_dir.is_dir() {
-            fs::create_dir_all(base_dir).await?;
+            fs::create_dir_all(&output_dir).await?;
         }
+
+        Ok(output_dir)
+    }
+
+    async fn download_to_file(&self, url: &str) -> Result<SongInfo> {
+        let yt_dlp = self.ensure_yt_dlp().await?;
+        let output_dir = self.get_download_directory().await?;
 
         YoutubeDl::new(url)
             .youtube_dl_path(yt_dlp)
@@ -111,6 +117,30 @@ impl MusicService {
                 .await?;
             Ok(result)
         }
+    }
+
+    pub async fn upload_song(&self, mut field: Field<'_>) -> Result<DbSong> {
+        let file_name = field.file_name().expect("field must have a file name");
+        let output_dir = self.get_download_directory().await?;
+        let path = output_dir.join(file_name);
+        info!("uploading song to {path}");
+        let mut writer = fs::File::create(&path).await?;
+
+        while let Some(chunk) = field.chunk().await? {
+            writer.write_all(&chunk).await?;
+        }
+
+        let ffprobe_result = ffprobe(&path).await?;
+
+        let result = self
+            .db
+            .persist_song(CreateSong {
+                duration: ffprobe_result.format.duration().unwrap_or_default(),
+                file_path: path.to_string(),
+                url: format!("file:{path}"),
+            })
+            .await?;
+        Ok(result)
     }
 }
 

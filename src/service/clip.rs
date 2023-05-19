@@ -1,20 +1,11 @@
-use std::collections::{HashMap, HashSet};
-
-use crate::data::database::DbSong;
-use crate::{data::database::Database, server::dtos::CreateClipsBody};
-use crate::{
-    data::stash_api::StashApi,
-    server::dtos::{CreateVideoBody, SelectedMarker},
-    Result,
-};
-use color_eyre::eyre::bail;
-use reqwest::Url;
+use super::{Clip, Marker};
+use crate::util::create_seeded_rng;
+use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use serde::Deserialize;
+use std::collections::HashMap;
+use tracing::{debug, info};
 
-use super::{
-    generator::CompilationOptions, stash_config::Config, Clip, Marker, MarkerId, MarkerInfo, Video,
-    VideoId,
-};
+const MIN_DURATION: f64 = 2.0;
 
 #[derive(Clone, Copy, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -48,177 +39,219 @@ impl CreateClipsOptions {
     }
 }
 
-pub fn get_streams(
-    video_ids: HashSet<VideoId>,
-    config: &Config,
-) -> Result<HashMap<String, String>> {
-    let mut urls = HashMap::new();
+pub fn arrange_clips(mut options: CreateClipsOptions) -> Vec<Clip> {
+    options.normalize_video_indices();
+    let mut rng = create_seeded_rng(options.seed.as_deref());
 
-    for id in video_ids {
-        match id {
-            VideoId::LocalFile(_) => {
-                let url = format!("/api/local/video/{id}");
-                urls.insert(id.to_string(), url);
-            }
-            VideoId::Stash(_) => {
-                let mut url = Url::parse(&config.stash_url)?;
-                url.set_path(&format!("/scene/{id}/stream"));
-                url.query_pairs_mut().append_pair("apikey", &config.api_key);
-                urls.insert(id.to_string(), url.to_string());
-            }
+    let clips = match options.max_duration {
+        Some(duration) => {
+            let creator = PmvClipCreator {};
+            creator.create_clips(
+                options.markers,
+                PmvClipOptions {
+                    clip_duration: options.clip_duration,
+                    seed: options.seed,
+                    video_duration: duration,
+                },
+                &mut rng,
+            )
         }
-    }
+        None => {
+            let creator = DefaultClipCreator {};
+            creator.create_clips(
+                options.markers,
+                DefaultClipOptions {
+                    clip_duration: options.clip_duration,
+                    seed: options.seed,
+                },
+                &mut rng,
+            )
+        }
+    };
 
-    Ok(urls)
+    match options.order {
+        ClipOrder::Random => RandomClipSorter::sort_clips(clips, &mut rng),
+        ClipOrder::SceneOrder => SceneOrderClipSorter::sort_clips(clips, &mut rng),
+    }
 }
 
-pub struct ClipService<'a> {
-    db: &'a Database,
-    stash_api: &'a StashApi,
+pub trait ClipCreator {
+    type Options;
+
+    fn create_clips(
+        &self,
+        markers: Vec<Marker>,
+        options: Self::Options,
+        rng: &mut StdRng,
+    ) -> Vec<Clip>;
 }
 
-impl<'a> ClipService<'a> {
-    pub fn new(db: &'a Database, stash_api: &'a StashApi) -> Self {
-        ClipService { db, stash_api }
-    }
+#[derive(Debug)]
+pub struct PmvClipOptions {
+    pub seed: Option<String>,
+    pub clip_duration: u32,
+    pub video_duration: f64,
+}
 
-    pub async fn fetch_marker_details(
+pub struct PmvClipCreator;
+
+impl ClipCreator for PmvClipCreator {
+    type Options = PmvClipOptions;
+
+    fn create_clips(
         &self,
-        id: &MarkerId,
-        video_id: &VideoId,
-    ) -> Result<MarkerInfo> {
-        match id {
-            MarkerId::LocalFile(id) => {
-                let marker = self.db.get_marker(*id).await?;
-                Ok(MarkerInfo::LocalFile { marker })
+        markers: Vec<Marker>,
+        options: Self::Options,
+        rng: &mut StdRng,
+    ) -> Vec<Clip> {
+        let duration = options.clip_duration as f64;
+        let clip_lengths = [
+            (duration / 1.5).max(MIN_DURATION),
+            (duration / 2.0).max(MIN_DURATION),
+            (duration / 3.0).max(MIN_DURATION),
+            (duration / 4.0).max(MIN_DURATION),
+        ];
+
+        let max_duration = options.video_duration;
+        let mut total_duration = 0.0;
+        let mut clips = vec![];
+        let mut marker_idx = 0;
+
+        let mut start_times: HashMap<i64, (f64, usize)> =
+            markers.iter().map(|m| (m.id.inner(), (0.0, 0))).collect();
+
+        while total_duration <= max_duration {
+            let marker = &markers[marker_idx % markers.len()];
+            let clip_duration = clip_lengths.choose(rng).expect("must find one element");
+
+            let (start, index) = start_times[&marker.id.inner()];
+            let end = (start + clip_duration).min(marker.end_time);
+            let duration = end - start;
+            if duration >= MIN_DURATION {
+                info!("adding clip ({start}, {end})");
+                clips.push(Clip {
+                    index_within_marker: index,
+                    index_within_video: marker.index_within_video,
+                    marker_id: marker.id,
+                    range: (start, end),
+                    source: marker.video_id.source(),
+                    video_id: marker.video_id.clone(),
+                });
             }
-            MarkerId::Stash(marker_id) => {
-                let marker = self
-                    .stash_api
-                    .get_marker(video_id.as_stash_id(), *marker_id)
-                    .await?;
-                Ok(MarkerInfo::Stash { marker })
+
+            total_duration += duration;
+            marker_idx += 1;
+            start_times.insert(marker.id.inner(), (end, index + 1));
+        }
+
+        let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
+        if clips_duration > max_duration {
+            let slack = (clips_duration - max_duration) / clips.len() as f64;
+            for clip in &mut clips {
+                clip.range.1 = clip.range.1 - slack;
             }
         }
+
+        clips
     }
+}
 
-    pub async fn fetch_video(&self, id: &VideoId) -> Result<Video> {
-        match id {
-            VideoId::LocalFile(id) => {
-                let video = self.db.get_video(id).await?;
-                if let Some(video) = video {
-                    Ok(video.into())
-                } else {
-                    bail!("no video found for id {id}")
-                }
-            }
-            VideoId::Stash(id) => {
-                let id = id.parse()?;
-                let mut scenes = self.stash_api.find_scenes_by_ids(vec![id]).await?;
-                if scenes.len() != 1 {
-                    bail!("found more or fewer than one result for id {id}")
-                }
-                Ok(scenes.remove(0).into())
-            }
-        }
-    }
+pub struct DefaultClipOptions {
+    pub clip_duration: u32,
+    pub seed: Option<String>,
+}
 
-    pub async fn fetch_videos(&self, ids: &[VideoId]) -> Result<Vec<Video>> {
-        let mut videos = vec![];
-        for id in ids {
-            videos.push(self.fetch_video(id).await?);
-        }
+pub struct DefaultClipCreator;
 
-        Ok(videos)
-    }
+impl ClipCreator for DefaultClipCreator {
+    type Options = DefaultClipOptions;
 
-    pub async fn convert_clips(&self, clips: Vec<Clip>) -> Result<Vec<(Video, Clip)>> {
-        let all_video_ids: HashSet<_> = clips.iter().map(|c| &c.video_id).collect();
-        let mut videos = HashMap::new();
-        for id in all_video_ids {
-            let video = self.fetch_video(id).await?;
-            videos.insert(id, video);
-        }
-
-        let mut results = vec![];
-        for clip in &clips {
-            let video = videos.get(&clip.video_id).unwrap().clone();
-            results.push((video, clip.clone()));
-        }
-        Ok(results)
-    }
-
-    async fn convert_selected_markers(&self, markers: Vec<SelectedMarker>) -> Result<Vec<Marker>> {
-        let mut results = vec![];
-
-        for selected_marker in markers {
-            let (start_time, end_time) = selected_marker.selected_range;
-            let marker_details: MarkerInfo = self
-                .fetch_marker_details(&selected_marker.id, &selected_marker.video_id)
-                .await?;
-            let video_id = marker_details.video_id().clone();
-            let title = marker_details.title().to_string();
-            results.push(Marker {
-                start_time,
-                end_time,
-                id: selected_marker.id,
-                info: marker_details,
-                video_id,
-                index_within_video: selected_marker.index_within_video,
-                title,
-            })
-        }
-
-        Ok(results)
-    }
-
-    pub async fn convert_compilation_options(
+    fn create_clips(
         &self,
-        body: CreateVideoBody,
-    ) -> Result<CompilationOptions> {
-        let songs = self.resolve_songs(&body.song_ids).await?;
+        markers: Vec<Marker>,
+        options: Self::Options,
+        rng: &mut StdRng,
+    ) -> Vec<Clip> {
+        let duration = options.clip_duration as f64;
+        let clip_lengths = [
+            (duration / 2.0).max(MIN_DURATION),
+            (duration / 3.0).max(MIN_DURATION),
+            (duration / 4.0).max(MIN_DURATION),
+        ];
+        let mut clips = vec![];
+        for marker in markers {
+            let start = marker.start_time;
+            let end = marker.end_time;
 
-        Ok(CompilationOptions {
-            clips: body.clips,
-            markers: self.convert_selected_markers(body.selected_markers).await?,
-            output_resolution: body.output_resolution,
-            output_fps: body.output_fps,
-            file_name: body.file_name,
-            songs,
-            music_volume: body.music_volume.unwrap_or(0.0),
-        })
+            debug!("clip start = {start}, end = {end}");
+
+            let mut index = 0;
+            let mut offset = start;
+            while offset < end {
+                let duration = clip_lengths.choose(rng).unwrap();
+                let start = offset;
+                let end = (offset + duration).min(end);
+                let duration = end - start;
+                if duration > MIN_DURATION {
+                    info!("adding clip {} - {}", start, end);
+                    clips.push(Clip {
+                        source: marker.video_id.source(),
+                        video_id: marker.video_id.clone(),
+                        marker_id: marker.id,
+                        range: (start, end),
+                        index_within_marker: index,
+                        index_within_video: marker.index_within_video,
+                    });
+                    index += 1;
+                }
+                offset += duration;
+            }
+        }
+
+        clips
     }
+}
 
-    async fn resolve_songs(&self, song_ids: &[i64]) -> Result<Vec<DbSong>> {
-        self.db.get_songs(song_ids).await
+pub trait ClipSorter {
+    fn sort_clips(clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip>;
+}
+
+pub struct RandomClipSorter;
+
+impl ClipSorter for RandomClipSorter {
+    fn sort_clips(mut clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip> {
+        clips.shuffle(rng);
+        clips
     }
+}
 
-    pub async fn convert_clip_options(&self, body: CreateClipsBody) -> Result<CreateClipsOptions> {
-        Ok(CreateClipsOptions {
-            order: body.clip_order,
-            clip_duration: body.clip_duration,
-            split_clips: body.split_clips,
-            markers: self.convert_selected_markers(body.markers).await?,
-            seed: body.seed,
-            max_duration: if body.song_ids.is_empty() || !body.trim_video_for_songs {
-                None
-            } else {
-                Some(self.db.sum_song_durations(&body.song_ids).await?)
-            },
-        })
+pub struct SceneOrderClipSorter;
+
+impl ClipSorter for SceneOrderClipSorter {
+    fn sort_clips(clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip> {
+        let mut clips: Vec<_> = clips.into_iter().map(|c| (c, rng.gen::<usize>())).collect();
+
+        clips.sort_by_key(|(clip, random)| {
+            (clip.index_within_video, clip.index_within_marker, *random)
+        });
+        clips.into_iter().map(|(clip, _)| clip).collect()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::service::{
-        clip2::arrange_clips,
-        fixtures::{self, create_marker, create_marker_video_id},
-        MarkerId,
-    };
+    use assert_approx_eq::assert_approx_eq;
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
+    use crate::{
+        service::{
+            clip::{arrange_clips, ClipCreator, PmvClipCreator, PmvClipOptions},
+            fixtures::{self, create_marker, create_marker_video_id},
+            MarkerId,
+        },
+        util::create_seeded_rng,
+    };
 
     #[test]
     fn test_compile_clips() {
@@ -291,18 +324,17 @@ mod tests {
 
     #[traced_test]
     #[test]
-    fn test_bug() {
-        let max_duration = 673.515;
-        let options = CreateClipsOptions {
-            order: ClipOrder::SceneOrder,
+    fn test_bug_clips2() {
+        let video_duration = 673.515;
+        let markers = fixtures::markers();
+        let options = PmvClipOptions {
             clip_duration: 30,
-            markers: fixtures::markers(),
-            split_clips: true,
             seed: None,
-            max_duration: Some(max_duration),
+            video_duration,
         };
-        let marker_duration: f64 = options.markers.iter().map(|m| m.duration()).sum();
-        let clips = arrange_clips(options);
+        let clip_creator = PmvClipCreator;
+        let mut rng = create_seeded_rng(None);
+        let clips = clip_creator.create_clips(markers, options, &mut rng);
         let clip_duration: f64 = clips
             .iter()
             .map(|c| {
@@ -310,7 +342,6 @@ mod tests {
                 end - start
             })
             .sum();
-
-        println!("marker duration = {marker_duration}, clip_duration = {clip_duration}, max_duration = {max_duration}");
+        assert_approx_eq!(clip_duration, video_duration)
     }
 }

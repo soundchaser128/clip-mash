@@ -236,7 +236,7 @@ impl StashApi {
     }
 
     pub async fn load_config() -> Result<Self> {
-        let config = Config::get().await?;
+        let config = Config::get_or_empty().await;
         Ok(StashApi::new(&config.stash_url, &config.api_key))
     }
 

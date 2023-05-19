@@ -8,6 +8,9 @@ pub mod local_video;
 pub mod music;
 pub mod stash_config;
 
+#[cfg(test)]
+pub mod fixtures;
+
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
@@ -121,7 +124,9 @@ pub struct Marker {
     pub title: String,
     pub info: MarkerInfo,
 }
+
 impl Marker {
+    #[allow(unused)]
     fn duration(&self) -> f64 {
         self.end_time - self.start_time
     }
@@ -143,6 +148,11 @@ impl Clip {
     pub fn range_millis(&self) -> (u32, u32) {
         ((self.range.0 as u32) * 1000, (self.range.1 as u32) * 1000)
     }
+
+    pub fn duration(&self) -> f64 {
+        let (start, end) = self.range;
+        end - start
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
@@ -150,6 +160,15 @@ impl Clip {
 pub enum MarkerId {
     LocalFile(i64),
     Stash(i64),
+}
+
+impl MarkerId {
+    pub fn inner(&self) -> i64 {
+        match self {
+            MarkerId::LocalFile(id) => *id,
+            MarkerId::Stash(id) => *id,
+        }
+    }
 }
 
 impl fmt::Display for MarkerId {

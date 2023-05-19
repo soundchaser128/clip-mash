@@ -8,6 +8,7 @@ use camino::Utf8Path;
 
 use rand::{rngs::StdRng, SeedableRng};
 use reqwest::Url;
+use tracing::{debug, Level};
 
 const DEFAULT_SEED: u64 = 123456789;
 
@@ -48,6 +49,17 @@ pub fn commandline_error<T>(output: Output) -> crate::Result<T> {
         stderr
     ))
 }
+
+pub fn debug_output(output: Output) {
+    if tracing::enabled!(Level::DEBUG) {
+        let stdout = std::str::from_utf8(&output.stdout).unwrap();
+        let stderr = std::str::from_utf8(&output.stderr).unwrap();
+
+        debug!("stdout = '{}'", stdout);
+        debug!("stderr = '{}'", stderr);
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::{add_api_key, expect_file_name};

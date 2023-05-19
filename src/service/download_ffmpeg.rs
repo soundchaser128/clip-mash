@@ -62,7 +62,7 @@ fn unzip(
         let mut entry = entry?;
         let path = entry.path()?;
         let path = Utf8Path::from_path(path.as_ref()).unwrap();
-        if let Some("ffmpeg") = path.file_name() {
+        if let Some("ffmpeg") | Some("ffprobe") = path.file_name() {
             entry.unpack(&dest_file)?;
         }
     }

@@ -7,6 +7,7 @@ pub mod generator;
 pub mod local_video;
 pub mod music;
 pub mod stash_config;
+pub mod updater;
 
 use std::fmt;
 

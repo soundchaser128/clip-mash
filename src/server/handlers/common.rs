@@ -48,10 +48,11 @@ pub async fn fetch_clips(
     let video_ids: HashSet<_> = body.markers.iter().map(|m| m.video_id.clone()).collect();
     info!("found {} video IDs", video_ids.len());
     let options = service.convert_clip_options(body).await?;
+    debug!("clip options: {options:?}");
 
     let clips = clip::arrange_clips(options);
     info!("generated {} clips", clips.len());
-    debug!("compiled clips {clips:#?}");
+    //     debug!("compiled clips {clips:#?}");
     let streams = clip::get_streams(video_ids, &config)?;
     let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.clone()).collect();
     video_ids.sort();

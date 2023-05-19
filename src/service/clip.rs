@@ -5,14 +5,11 @@ use crate::{data::database::Database, server::dtos::CreateClipsBody};
 use crate::{
     data::stash_api::StashApi,
     server::dtos::{CreateVideoBody, SelectedMarker},
-    util::{self},
     Result,
 };
 use color_eyre::eyre::bail;
-use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use reqwest::Url;
 use serde::Deserialize;
-use tracing::{debug, info};
 
 use super::{
     generator::CompilationOptions, stash_config::Config, Clip, Marker, MarkerId, MarkerInfo, Video,
@@ -24,62 +21,6 @@ use super::{
 pub enum ClipOrder {
     Random,
     SceneOrder,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct MarkerWithClips {
-    pub marker: Marker,
-    pub clips: Vec<Clip>,
-}
-
-fn get_clips(
-    marker: &Marker,
-    max_marker_duration: Option<f64>,
-    options: &CreateClipsOptions,
-    rng: &mut StdRng,
-) -> MarkerWithClips {
-    const MIN_DURATION: f64 = 2.0;
-
-    let duration = options.clip_duration as f64;
-    let clip_lengths = [
-        (duration / 2.0).max(MIN_DURATION),
-        (duration / 3.0).max(MIN_DURATION),
-        (duration / 4.0).max(MIN_DURATION),
-    ];
-
-    let start = marker.start_time;
-    let end = max_marker_duration
-        .map(|n| (marker.start_time + n).min(marker.end_time))
-        .unwrap_or(marker.end_time);
-    debug!("clip start = {start}, end = {end}");
-
-    let mut index = 0;
-    let mut offset = start;
-    let mut clips = vec![];
-    while offset < end {
-        let duration = clip_lengths.choose(rng).unwrap();
-        let start = offset;
-        let end = (offset + duration).min(end);
-        let duration = end - start;
-        if duration > MIN_DURATION {
-            info!("adding clip {} - {}", start, end);
-            clips.push(Clip {
-                source: marker.video_id.source(),
-                video_id: marker.video_id.clone(),
-                marker_id: marker.id,
-                range: (start, end),
-                index_within_marker: index,
-                index_within_video: marker.index_within_video,
-            });
-            index += 1;
-        }
-        offset += duration;
-    }
-
-    MarkerWithClips {
-        marker: marker.clone(),
-        clips,
-    }
 }
 
 #[derive(Debug)]
@@ -103,69 +44,6 @@ impl CreateClipsOptions {
             for (index, marker) in group.iter_mut().enumerate() {
                 marker.index_within_video = index;
             }
-        }
-    }
-}
-
-fn get_all_clips(options: &CreateClipsOptions) -> Vec<MarkerWithClips> {
-    let mut rng = util::create_seeded_rng(options.seed.as_deref());
-    debug!("creating clips for options {options:?}");
-    let marker_duration: f64 = options.markers.iter().map(|m| m.duration()).sum();
-    info!(
-        "total duration of all markers: {marker_duration} seconds, {} markers",
-        options.markers.len()
-    );
-    info!("maximum duration: {:?}", options.max_duration);
-
-    let max_duration_per_marker = options
-        .max_duration
-        .map(|seconds| seconds.min(marker_duration))
-        .map(|seconds| seconds / options.markers.len() as f64);
-    info!("duration per marker {max_duration_per_marker:?}");
-
-    options
-        .markers
-        .iter()
-        .map(|marker| {
-            if options.split_clips {
-                get_clips(marker, max_duration_per_marker, options, &mut rng)
-            } else {
-                MarkerWithClips {
-                    marker: marker.clone(),
-                    clips: vec![Clip {
-                        source: marker.video_id.source(),
-                        video_id: marker.video_id.clone(),
-                        marker_id: marker.id,
-                        range: (marker.start_time, marker.end_time),
-                        index_within_marker: 0,
-                        index_within_video: marker.index_within_video,
-                    }],
-                }
-            }
-        })
-        .collect()
-}
-
-fn compile_clips(clips: Vec<MarkerWithClips>, options: &CreateClipsOptions) -> Vec<Clip> {
-    let mut rng = util::create_seeded_rng(options.seed.as_deref());
-
-    match options.order {
-        ClipOrder::SceneOrder => {
-            let mut clips: Vec<_> = clips
-                .into_iter()
-                .flat_map(|m| m.clips)
-                .map(|c| (c, rng.gen::<usize>()))
-                .collect();
-
-            clips.sort_by_key(|(clip, random)| {
-                (clip.index_within_video, clip.index_within_marker, *random)
-            });
-            clips.into_iter().map(|(clip, _)| clip).collect()
-        }
-        ClipOrder::Random => {
-            let mut clips: Vec<_> = clips.into_iter().flat_map(|c| c.clips).collect();
-            clips.shuffle(&mut rng);
-            clips
         }
     }
 }
@@ -333,94 +211,14 @@ impl<'a> ClipService<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        data::database::DbMarker,
-        service::{clip2::arrange_clips, fixtures, Marker, MarkerId, MarkerInfo, VideoId},
+    use crate::service::{
+        clip2::arrange_clips,
+        fixtures::{self, create_marker, create_marker_video_id},
+        MarkerId,
     };
-
-    use assert_approx_eq::assert_approx_eq;
-    use fake::{faker::filesystem::en::FilePath, Fake, Faker};
-    use nanoid::nanoid;
     use tracing_test::traced_test;
 
-    use super::{get_all_clips, ClipOrder, CreateClipsOptions};
-
-    fn create_marker(start_time: f64, end_time: f64, index: usize) -> Marker {
-        Marker {
-            id: MarkerId::LocalFile(1),
-            start_time,
-            end_time,
-            index_within_video: index,
-            video_id: VideoId::LocalFile(nanoid!(8)),
-            title: Faker.fake(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarker {
-                    end_time,
-                    start_time,
-                    rowid: None,
-                    title: Faker.fake(),
-                    video_id: Faker.fake(),
-                    file_path: FilePath().fake(),
-                    index_within_video: index as i64,
-                },
-            },
-        }
-    }
-
-    fn create_marker_video_id(
-        id: i64,
-        start_time: f64,
-        end_time: f64,
-        index: usize,
-        video_id: String,
-    ) -> Marker {
-        Marker {
-            id: MarkerId::LocalFile(id),
-            start_time,
-            end_time,
-            index_within_video: index,
-            video_id: VideoId::LocalFile(video_id.clone()),
-            title: Faker.fake(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarker {
-                    end_time,
-                    start_time,
-                    rowid: None,
-                    title: Faker.fake(),
-                    video_id: video_id,
-                    file_path: FilePath().fake(),
-                    index_within_video: index as i64,
-                },
-            },
-        }
-    }
-
-    #[test]
-    fn test_get_clips() {
-        let options = CreateClipsOptions {
-            order: ClipOrder::SceneOrder,
-            clip_duration: 30,
-            markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
-            split_clips: true,
-            seed: None,
-            max_duration: None,
-        };
-        let mut results1 = get_all_clips(&options);
-        assert_eq!(2, results1.len());
-
-        let results2 = get_all_clips(&options);
-        assert_eq!(results1, results2);
-
-        let clips = results1.remove(0);
-        assert_eq!(2, clips.clips.len());
-        assert_eq!(clips.clips[0].range.0, 1.0);
-        assert_eq!(clips.clips[1].range.1, 15.0);
-
-        let clips = results1.remove(0);
-        assert_eq!(2, clips.clips.len());
-        assert_eq!(clips.clips[0].range.0, 1.0);
-        assert_eq!(clips.clips[1].range.1, 17.0);
-    }
+    use super::{ClipOrder, CreateClipsOptions};
 
     #[test]
     fn test_compile_clips() {
@@ -434,27 +232,6 @@ mod tests {
         };
         let results = arrange_clips(options);
         assert_eq!(4, results.len());
-    }
-
-    // #[test]
-    fn test_compile_clips_with_time_limit() {
-        let options = CreateClipsOptions {
-            order: ClipOrder::SceneOrder,
-            clip_duration: 15,
-            markers: vec![
-                create_marker(1.0, 15.0, 0),
-                create_marker(1.0, 17.0, 0),
-                create_marker(20.0, 34.0, 1),
-                create_marker(17.0, 40.0, 1),
-            ],
-            split_clips: true,
-            seed: None,
-            max_duration: Some(30.0),
-        };
-
-        let clips = arrange_clips(options);
-        let total_duration: f64 = clips.iter().map(|c| c.range.1 - c.range.0).sum();
-        assert_approx_eq!(30.0, total_duration);
     }
 
     #[test]

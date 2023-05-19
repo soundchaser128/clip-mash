@@ -1,9 +1,10 @@
+use super::Marker;
 use crate::{
     data::database::DbMarker,
     service::{MarkerId, MarkerInfo, VideoId},
 };
-
-use super::Marker;
+use fake::{faker::filesystem::en::FilePath, Fake, Faker};
+use nanoid::nanoid;
 
 pub fn markers() -> Vec<Marker> {
     vec![
@@ -199,4 +200,54 @@ pub fn markers() -> Vec<Marker> {
             },
         },
     ]
+}
+
+pub fn create_marker(start_time: f64, end_time: f64, index: usize) -> Marker {
+    Marker {
+        id: MarkerId::LocalFile(1),
+        start_time,
+        end_time,
+        index_within_video: index,
+        video_id: VideoId::LocalFile(nanoid!(8)),
+        title: Faker.fake(),
+        info: MarkerInfo::LocalFile {
+            marker: DbMarker {
+                end_time,
+                start_time,
+                rowid: None,
+                title: Faker.fake(),
+                video_id: Faker.fake(),
+                file_path: FilePath().fake(),
+                index_within_video: index as i64,
+            },
+        },
+    }
+}
+
+pub fn create_marker_video_id(
+    id: i64,
+    start_time: f64,
+    end_time: f64,
+    index: usize,
+    video_id: String,
+) -> Marker {
+    Marker {
+        id: MarkerId::LocalFile(id),
+        start_time,
+        end_time,
+        index_within_video: index,
+        video_id: VideoId::LocalFile(video_id.clone()),
+        title: Faker.fake(),
+        info: MarkerInfo::LocalFile {
+            marker: DbMarker {
+                end_time,
+                start_time,
+                rowid: None,
+                title: Faker.fake(),
+                video_id: video_id,
+                file_path: FilePath().fake(),
+                index_within_video: index as i64,
+            },
+        },
+    }
 }

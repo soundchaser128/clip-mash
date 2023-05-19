@@ -39,8 +39,10 @@ impl ClipCreator for PmvClipCreator {
         let mut clips = vec![];
         let mut marker_idx = 0;
 
-        let mut start_times: HashMap<i64, (f64, usize)> =
-            markers.iter().map(|m| (m.id.inner(), (0.0, 0))).collect();
+        let mut start_times: HashMap<i64, (f64, usize)> = markers
+            .iter()
+            .map(|m| (m.id.inner(), (m.start_time, 0)))
+            .collect();
 
         while total_duration <= max_duration {
             let marker = &markers[marker_idx % markers.len()];
@@ -50,7 +52,10 @@ impl ClipCreator for PmvClipCreator {
             let end = (start + clip_duration).min(marker.end_time);
             let duration = end - start;
             if duration >= MIN_DURATION {
-                debug!("adding clip {start} - {end}");
+                debug!(
+                    "adding clip for video {} from {start} - {end}",
+                    marker.video_id
+                );
                 clips.push(Clip {
                     index_within_marker: index,
                     index_within_video: marker.index_within_video,

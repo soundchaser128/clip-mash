@@ -106,7 +106,7 @@ function PreviewClips() {
     sceneIds.sort()
     const sceneColors = new Map()
     sceneIds.forEach((id, index) => {
-      sceneColors.set(id, getSegmentColor(index))
+      sceneColors.set(id, [getSegmentColor(index), index])
     })
 
     return [segments, sceneColors]
@@ -179,19 +179,26 @@ function PreviewClips() {
         {segments.map((width, index) => {
           const clip = clips[index].clip
           const video = loaderData.videos[clip.videoId.id]
+          const [color, sceneId] = sceneColors.get(clip.videoId.id)
+          let tooltip = video.title
+          if (video.performers.length > 0) {
+            tooltip = `${video.performers.join(", ")} - ${video.title}`
+          }
           return (
             <div
               key={index}
-              data-tip={`${video.performers.join(", ")} - ${video.title}`}
+              data-tip={tooltip}
               className={clsx(
-                "h-full tooltip transition-opacity",
-                sceneColors.get(clip.videoId.id),
+                "h-full tooltip transition-opacity flex items-center justify-center",
+                color,
                 index !== currentClipIndex &&
                   "bg-opacity-25 hover:bg-opacity-50"
               )}
               style={{width}}
               onClick={() => setCurrentClipIndex(index)}
-            />
+            >
+              {sceneId + 1}
+            </div>
           )
         })}
       </div>

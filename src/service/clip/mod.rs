@@ -50,55 +50,55 @@ impl CreateClipsOptions {
     }
 }
 
+fn markers_to_clips(markers: Vec<Marker>) -> Vec<Clip> {
+    markers
+        .into_iter()
+        .map(|marker| Clip {
+            source: marker.video_id.source(),
+            video_id: marker.video_id.clone(),
+            marker_id: marker.id,
+            range: (marker.start_time, marker.end_time),
+            index_within_marker: 0,
+            index_within_video: marker.index_within_video,
+        })
+        .collect()
+}
+
+fn marrkers_to_clips_default(options: CreateClipsOptions, rng: &mut StdRng) -> Vec<Clip> {
+    let creator = DefaultClipCreator {};
+    let clip_options = DefaultClipOptions {
+        clip_duration: options.clip_duration,
+        seed: options.seed,
+    };
+
+    creator.create_clips(options.markers, clip_options, rng)
+}
+
+fn markers_to_clips_pmv(options: CreateClipsOptions, duration: f64, rng: &mut StdRng) -> Vec<Clip> {
+    let creator = PmvClipCreator {};
+    let clip_options = PmvClipOptions {
+        clip_duration: options.clip_duration,
+        seed: options.seed,
+        video_duration: duration,
+    };
+
+    creator.create_clips(options.markers, clip_options, rng)
+}
+
 pub fn arrange_clips(mut options: CreateClipsOptions) -> Vec<Clip> {
     options.normalize_video_indices();
     let mut rng = create_seeded_rng(options.seed.as_deref());
+    let order = options.order;
 
-    let clips = if options.split_clips {
-        info!("splitting markers into clips");
-        match options.max_duration {
-            Some(duration) => {
-                let creator = PmvClipCreator {};
-                creator.create_clips(
-                    options.markers,
-                    PmvClipOptions {
-                        clip_duration: options.clip_duration,
-                        seed: options.seed,
-                        video_duration: duration,
-                    },
-                    &mut rng,
-                )
-            }
-            None => {
-                let creator = DefaultClipCreator {};
-                creator.create_clips(
-                    options.markers,
-                    DefaultClipOptions {
-                        clip_duration: options.clip_duration,
-                        seed: options.seed,
-                    },
-                    &mut rng,
-                )
-            }
-        }
-    } else {
-        info!("not splitting markers into clips, generating a single clip for each marker");
-        options
-            .markers
-            .into_iter()
-            .map(|marker| Clip {
-                source: marker.video_id.source(),
-                video_id: marker.video_id.clone(),
-                marker_id: marker.id,
-                range: (marker.start_time, marker.end_time),
-                index_within_marker: 0,
-                index_within_video: marker.index_within_video,
-            })
-            .collect()
+    let clips = match (options.split_clips, options.max_duration) {
+        (true, None) => marrkers_to_clips_default(options, &mut rng),
+        (true, Some(duration)) => markers_to_clips_pmv(options, duration, &mut rng),
+        (false, _) => markers_to_clips(options.markers),
     };
+
     info!("generated {} clips", clips.len());
 
-    match options.order {
+    match order {
         ClipOrder::Random => {
             let sorter = RandomClipSorter;
             sorter.sort_clips(clips, &mut rng)
@@ -257,7 +257,7 @@ mod tests {
                 end - start
             })
             .sum();
-        assert_approx_eq!(clip_duration, video_duration)
+        assert_approx_eq!(clip_duration, video_duration);
     }
 
     #[traced_test]

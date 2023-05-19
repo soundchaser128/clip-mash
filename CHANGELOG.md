@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.7.2
 - fix: mismatch between length of generated clips and music
 - feat: add logging to file, not just terminal
 

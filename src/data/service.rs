@@ -2,14 +2,18 @@ use std::collections::{HashMap, HashSet};
 
 use color_eyre::eyre::bail;
 
-use super::database::DbSong;
-use super::{database::Database, stash_api::StashApi};
-use crate::server::dtos::{CreateClipsBody, CreateVideoBody, SelectedMarker};
-use crate::service::clip::CreateClipsOptions;
-use crate::service::generator::CompilationOptions;
-use crate::service::{stash_config::Config, MarkerId, MarkerInfo, VideoId};
-use crate::service::{Clip, Marker, Video};
-use crate::Result;
+use super::{
+    database::{Database, DbSong},
+    stash_api::StashApi,
+};
+use crate::{
+    server::dtos::{CreateClipsBody, CreateVideoBody, SelectedMarker},
+    service::{
+        clip::CreateClipsOptions, generator::CompilationOptions, stash_config::Config, Clip,
+        Marker, MarkerId, MarkerInfo, Video, VideoId,
+    },
+    Result,
+};
 
 pub struct DataService {
     db: Database,

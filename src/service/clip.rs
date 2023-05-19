@@ -2,7 +2,7 @@ use super::{Clip, Marker};
 use crate::util::create_seeded_rng;
 use rand::{rngs::StdRng, seq::SliceRandom, Rng};
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 use tracing::{debug, info};
 
 const MIN_DURATION: f64 = 2.0;
@@ -68,11 +68,14 @@ pub fn arrange_clips(mut options: CreateClipsOptions) -> Vec<Clip> {
             )
         }
     };
+    info!("generated {} clips", clips.len());
 
-    match options.order {
-        ClipOrder::Random => RandomClipSorter::sort_clips(clips, &mut rng),
-        ClipOrder::SceneOrder => SceneOrderClipSorter::sort_clips(clips, &mut rng),
-    }
+    let sorter: Box<dyn ClipSorter> = match options.order {
+        ClipOrder::Random => Box::new(RandomClipSorter),
+        ClipOrder::SceneOrder => Box::new(SceneOrderClipSorter),
+    };
+
+    sorter.sort_clips(clips, &mut rng)
 }
 
 pub trait ClipCreator {
@@ -104,6 +107,10 @@ impl ClipCreator for PmvClipCreator {
         options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
+        info!(
+            "using PmvClipCreator to create clips, options: {:?}",
+            options
+        );
         let duration = options.clip_duration as f64;
         let clip_lengths = [
             (duration / 1.5).max(MIN_DURATION),
@@ -128,7 +135,7 @@ impl ClipCreator for PmvClipCreator {
             let end = (start + clip_duration).min(marker.end_time);
             let duration = end - start;
             if duration >= MIN_DURATION {
-                info!("adding clip ({start}, {end})");
+                debug!("adding clip {start} - {end}");
                 clips.push(Clip {
                     index_within_marker: index,
                     index_within_video: marker.index_within_video,
@@ -156,6 +163,7 @@ impl ClipCreator for PmvClipCreator {
     }
 }
 
+#[derive(Debug)]
 pub struct DefaultClipOptions {
     pub clip_duration: u32,
     pub seed: Option<String>,
@@ -172,8 +180,13 @@ impl ClipCreator for DefaultClipCreator {
         options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
+        info!(
+            "using DefaultClipCreator to create clips, options: {:?}",
+            options
+        );
         let duration = options.clip_duration as f64;
         let clip_lengths = [
+            (duration / 1.5).max(MIN_DURATION),
             (duration / 2.0).max(MIN_DURATION),
             (duration / 3.0).max(MIN_DURATION),
             (duration / 4.0).max(MIN_DURATION),
@@ -193,7 +206,7 @@ impl ClipCreator for DefaultClipCreator {
                 let end = (offset + duration).min(end);
                 let duration = end - start;
                 if duration > MIN_DURATION {
-                    info!("adding clip {} - {}", start, end);
+                    debug!("adding clip {} - {}", start, end);
                     clips.push(Clip {
                         source: marker.video_id.source(),
                         video_id: marker.video_id.clone(),
@@ -213,22 +226,26 @@ impl ClipCreator for DefaultClipCreator {
 }
 
 pub trait ClipSorter {
-    fn sort_clips(clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip>;
+    fn sort_clips(&self, clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip>;
 }
 
+#[derive(Debug)]
 pub struct RandomClipSorter;
 
 impl ClipSorter for RandomClipSorter {
-    fn sort_clips(mut clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip> {
+    fn sort_clips(&self, mut clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip> {
+        info!("sorting clips with RandomClipSorter");
         clips.shuffle(rng);
         clips
     }
 }
 
+#[derive(Debug)]
 pub struct SceneOrderClipSorter;
 
 impl ClipSorter for SceneOrderClipSorter {
-    fn sort_clips(clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip> {
+    fn sort_clips(&self, clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip> {
+        info!("sorting clips with SceneOrderClipSorter");
         let mut clips: Vec<_> = clips.into_iter().map(|c| (c, rng.gen::<usize>())).collect();
 
         clips.sort_by_key(|(clip, random)| {

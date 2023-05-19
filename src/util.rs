@@ -60,15 +60,8 @@ pub fn debug_output(output: Output) {
     }
 }
 
-pub fn round(n: f64, digits: i32) -> f64 {
-    let factor = 10.0_f64.powi(digits);
-    (n * factor).round() / factor
-}
-
 #[cfg(test)]
 mod test {
-    use crate::util::round;
-
     use super::{add_api_key, expect_file_name};
 
     #[test]
@@ -92,23 +85,4 @@ mod test {
         let result = add_api_key("http://localhost:3001", "super-secret-123");
         assert_eq!(result, "http://localhost:3001/?apikey=super-secret-123");
     }
-
-    #[test]
-    fn test_round() {
-        let n = 68.33333333333333;
-        assert_eq!(round(n, 0), 68.0);
-        assert_eq!(round(n, 1), 68.3);
-        assert_eq!(round(n, 2), 68.33);
-    }
-}
-
-#[cfg(test)]
-pub fn read_json<T: serde::de::DeserializeOwned>(
-    path: impl AsRef<std::path::Path>,
-) -> crate::Result<T> {
-    use std::fs;
-
-    let bytes = fs::read(path)?;
-    let json = serde_json::from_slice(&bytes)?;
-    Ok(json)
 }

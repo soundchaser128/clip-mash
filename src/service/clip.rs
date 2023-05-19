@@ -43,39 +43,60 @@ pub fn arrange_clips(mut options: CreateClipsOptions) -> Vec<Clip> {
     options.normalize_video_indices();
     let mut rng = create_seeded_rng(options.seed.as_deref());
 
-    let clips = match options.max_duration {
-        Some(duration) => {
-            let creator = PmvClipCreator {};
-            creator.create_clips(
-                options.markers,
-                PmvClipOptions {
-                    clip_duration: options.clip_duration,
-                    seed: options.seed,
-                    video_duration: duration,
-                },
-                &mut rng,
-            )
+    let clips = if options.split_clips {
+        info!("splitting markers into clips");
+        match options.max_duration {
+            Some(duration) => {
+                let creator = PmvClipCreator {};
+                creator.create_clips(
+                    options.markers,
+                    PmvClipOptions {
+                        clip_duration: options.clip_duration,
+                        seed: options.seed,
+                        video_duration: duration,
+                    },
+                    &mut rng,
+                )
+            }
+            None => {
+                let creator = DefaultClipCreator {};
+                creator.create_clips(
+                    options.markers,
+                    DefaultClipOptions {
+                        clip_duration: options.clip_duration,
+                        seed: options.seed,
+                    },
+                    &mut rng,
+                )
+            }
         }
-        None => {
-            let creator = DefaultClipCreator {};
-            creator.create_clips(
-                options.markers,
-                DefaultClipOptions {
-                    clip_duration: options.clip_duration,
-                    seed: options.seed,
-                },
-                &mut rng,
-            )
-        }
+    } else {
+        info!("not splitting markers into clips, generating a single clip for each marker");
+        options
+            .markers
+            .into_iter()
+            .map(|marker| Clip {
+                source: marker.video_id.source(),
+                video_id: marker.video_id.clone(),
+                marker_id: marker.id,
+                range: (marker.start_time, marker.end_time),
+                index_within_marker: 0,
+                index_within_video: marker.index_within_video,
+            })
+            .collect()
     };
     info!("generated {} clips", clips.len());
 
-    let sorter: Box<dyn ClipSorter> = match options.order {
-        ClipOrder::Random => Box::new(RandomClipSorter),
-        ClipOrder::SceneOrder => Box::new(SceneOrderClipSorter),
-    };
-
-    sorter.sort_clips(clips, &mut rng)
+    match options.order {
+        ClipOrder::Random => {
+            let sorter = RandomClipSorter;
+            sorter.sort_clips(clips, &mut rng)
+        }
+        ClipOrder::SceneOrder => {
+            let sorter = SceneOrderClipSorter;
+            sorter.sort_clips(clips, &mut rng)
+        }
+    }
 }
 
 pub trait ClipCreator {
@@ -113,7 +134,6 @@ impl ClipCreator for PmvClipCreator {
         );
         let duration = options.clip_duration as f64;
         let clip_lengths = [
-            (duration / 1.5).max(MIN_DURATION),
             (duration / 2.0).max(MIN_DURATION),
             (duration / 3.0).max(MIN_DURATION),
             (duration / 4.0).max(MIN_DURATION),
@@ -180,13 +200,9 @@ impl ClipCreator for DefaultClipCreator {
         options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
-        info!(
-            "using DefaultClipCreator to create clips, options: {:?}",
-            options
-        );
+        info!("using DefaultClipCreator to create clips, options: {options:#?}",);
         let duration = options.clip_duration as f64;
         let clip_lengths = [
-            (duration / 1.5).max(MIN_DURATION),
             (duration / 2.0).max(MIN_DURATION),
             (duration / 3.0).max(MIN_DURATION),
             (duration / 4.0).max(MIN_DURATION),
@@ -247,7 +263,6 @@ impl ClipSorter for SceneOrderClipSorter {
     fn sort_clips(&self, clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip> {
         info!("sorting clips with SceneOrderClipSorter");
         let mut clips: Vec<_> = clips.into_iter().map(|c| (c, rng.gen::<usize>())).collect();
-
         clips.sort_by_key(|(clip, random)| {
             (clip.index_within_video, clip.index_within_marker, *random)
         });
@@ -263,27 +278,59 @@ mod tests {
     use super::{ClipOrder, CreateClipsOptions};
     use crate::{
         service::{
-            clip::{arrange_clips, ClipCreator, PmvClipCreator, PmvClipOptions},
-            fixtures::{self, create_marker, create_marker_video_id},
-            MarkerId,
+            clip::{
+                arrange_clips, ClipCreator, ClipSorter, PmvClipCreator, PmvClipOptions,
+                SceneOrderClipSorter,
+            },
+            fixtures::{self, create_marker_video_id},
+            Clip, MarkerId, VideoId, VideoSource,
         },
         util::create_seeded_rng,
     };
 
+    #[traced_test]
     #[test]
-    fn test_compile_clips() {
+    fn test_arrange_clips_basic() {
         let options = CreateClipsOptions {
             order: ClipOrder::SceneOrder,
             clip_duration: 30,
-            markers: vec![create_marker(1.0, 15.0, 0), create_marker(1.0, 17.0, 0)],
+            markers: vec![
+                create_marker_video_id(1, 1.0, 15.0, 0, "v2"),
+                create_marker_video_id(2, 1.0, 17.0, 0, "v1"),
+            ],
             split_clips: true,
             seed: None,
             max_duration: None,
         };
         let results = arrange_clips(options);
         assert_eq!(4, results.len());
+        assert_eq!((1.0, 11.0), results[0].range);
+        assert_eq!((1.0, 8.5), results[1].range);
+        assert_eq!((11.0, 17.0), results[2].range);
+        assert_eq!((8.5, 15.0), results[3].range);
     }
 
+    #[traced_test]
+    #[test]
+    fn test_arrange_clips_dont_split() {
+        let options = CreateClipsOptions {
+            order: ClipOrder::SceneOrder,
+            clip_duration: 30,
+            markers: vec![
+                create_marker_video_id(1, 1.0, 15.0, 0, "v1"),
+                create_marker_video_id(2, 1.0, 17.0, 0, "v2"),
+            ],
+            split_clips: false,
+            seed: None,
+            max_duration: None,
+        };
+        let results = arrange_clips(options);
+        assert_eq!(2, results.len());
+        assert_eq!((1.0, 17.0), results[0].range);
+        assert_eq!((1.0, 15.0), results[1].range);
+    }
+
+    #[traced_test]
     #[test]
     fn test_normalize_video_indices() {
         let mut options = CreateClipsOptions {
@@ -341,7 +388,7 @@ mod tests {
 
     #[traced_test]
     #[test]
-    fn test_bug_clips2() {
+    fn test_arrange_clips_bug() {
         let video_duration = 673.515;
         let markers = fixtures::markers();
         let options = PmvClipOptions {
@@ -360,5 +407,34 @@ mod tests {
             })
             .sum();
         assert_approx_eq!(clip_duration, video_duration)
+    }
+
+    #[traced_test]
+    #[test]
+    fn sort_clips_scene_order() {
+        let clips = vec![
+            Clip {
+                index_within_marker: 0,
+                index_within_video: 0,
+                marker_id: MarkerId::LocalFile(1),
+                range: (0.0, 9.0),
+                source: VideoSource::LocalFile,
+                video_id: VideoId::LocalFile("video".into()),
+            },
+            Clip {
+                index_within_marker: 0,
+                index_within_video: 0,
+                marker_id: MarkerId::LocalFile(2),
+                range: (1.0, 12.0),
+                source: VideoSource::LocalFile,
+                video_id: VideoId::LocalFile("video".into()),
+            },
+        ];
+        let mut rng = create_seeded_rng(None);
+        let sorter = SceneOrderClipSorter;
+        let sorted = sorter.sort_clips(clips, &mut rng);
+
+        assert_eq!(sorted[0].range, (1.0, 12.0));
+        assert_eq!(sorted[1].range, (0.0, 9.0));
     }
 }

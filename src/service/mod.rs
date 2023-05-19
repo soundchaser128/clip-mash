@@ -126,6 +126,7 @@ pub struct Marker {
 }
 
 impl Marker {
+    #[allow(unused)]
     fn duration(&self) -> f64 {
         self.end_time - self.start_time
     }

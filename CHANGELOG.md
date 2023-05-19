@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- fix: mismatch between length of generated clips and music
+
 ## 0.7.1
 - fix: assets folder was not being created
 

@@ -14,7 +14,6 @@ use reqwest::Url;
 use serde::Deserialize;
 use tracing::{debug, info};
 
-use super::clip2::{ClipCreator, PmvClipCreator, PmvClipOptions};
 use super::{
     generator::CompilationOptions, stash_config::Config, Clip, Marker, MarkerId, MarkerInfo, Video,
     VideoId,
@@ -167,28 +166,6 @@ fn compile_clips(clips: Vec<MarkerWithClips>, options: &CreateClipsOptions) -> V
             let mut clips: Vec<_> = clips.into_iter().flat_map(|c| c.clips).collect();
             clips.shuffle(&mut rng);
             clips
-        }
-    }
-}
-
-pub fn arrange_clips(mut options: CreateClipsOptions) -> Vec<Clip> {
-    options.normalize_video_indices();
-
-    match options.max_duration {
-        Some(duration) => {
-            let creator = PmvClipCreator {};
-            creator.create_clips(
-                options.markers,
-                PmvClipOptions {
-                    clip_duration: options.clip_duration,
-                    seed: options.seed,
-                    video_duration: duration,
-                },
-            )
-        }
-        None => {
-            let clips = get_all_clips(&options);
-            compile_clips(clips, &options)
         }
     }
 }
@@ -358,7 +335,7 @@ impl<'a> ClipService<'a> {
 mod tests {
     use crate::{
         data::database::DbMarker,
-        service::{clip::arrange_clips, fixtures, Marker, MarkerId, MarkerInfo, VideoId},
+        service::{clip2::arrange_clips, fixtures, Marker, MarkerId, MarkerInfo, VideoId},
     };
 
     use assert_approx_eq::assert_approx_eq;

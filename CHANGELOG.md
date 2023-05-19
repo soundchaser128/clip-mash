@@ -2,6 +2,7 @@
 
 ## Unreleased
 - fix: mismatch between length of generated clips and music
+- feat: add logging to file, not just terminal
 
 ## 0.7.1
 - fix: assets folder was not being created

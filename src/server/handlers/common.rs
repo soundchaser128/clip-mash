@@ -1,6 +1,6 @@
 use axum::{
     body::StreamBody,
-    extract::{Multipart, Query, State},
+    extract::{Multipart, Path, Query, State},
     response::{
         sse::{Event, KeepAlive},
         IntoResponse, Sse,
@@ -27,7 +27,7 @@ use crate::{
         handlers::get_streams,
     },
     service::{
-        clip,
+        beats, clip,
         funscript::{FunScript, ScriptBuilder},
         generator::{self, Progress},
         music::MusicService,
@@ -276,4 +276,14 @@ pub async fn open_folder(
     opener::open(path).map_err(Report::from)?;
 
     Ok(())
+}
+
+#[axum::debug_handler]
+pub async fn get_beats(
+    Path(song_id): Path<i64>,
+    state: State<Arc<AppState>>,
+) -> Result<Json<Vec<f32>>, AppError> {
+    let song = state.database.get_song(song_id).await?;
+    let beats = beats::detect_beats(&song.file_path, &state.directories)?;
+    Ok(Json(beats))
 }

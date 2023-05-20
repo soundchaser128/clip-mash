@@ -1,3 +1,4 @@
+pub mod beats;
 pub mod clip;
 pub mod directories;
 pub mod download_ffmpeg;

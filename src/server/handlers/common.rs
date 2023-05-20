@@ -281,7 +281,7 @@ pub async fn open_folder(
 
 pub async fn self_update() -> impl IntoResponse {
     if let Err(e) = updater::self_update(None).await {
-        error!("failed to self-update: {e}");
+        error!("failed to self-update: {e:?}");
         StatusCode::INTERNAL_SERVER_ERROR
     } else {
         StatusCode::OK

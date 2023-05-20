@@ -1,9 +1,19 @@
 use std::env::consts::{ARCH, EXE_EXTENSION, OS};
+use axum::body::Bytes;
+use std::path::Path;
 use crate::Result;
 
 const GITHUB_REPO: &str = "https://github.com/soundchaser128/clip-mash";
 
-async fn download_url(url: &str) -> Result<Vec<u8>> {
+async fn download_url(url: &str) -> Result<Bytes> {
+    let response = reqwest::get(url).await?;
+    let bytes = response.bytes().await?;
+    Ok(bytes)
+}
+
+#[cfg(unix)]
+fn unzip_file(bytes: Bytes, path: &Path) -> Result<()> {
+
     todo!()
 }
 
@@ -19,21 +29,7 @@ pub async fn self_update() -> Result<()> {
     };
     let bytes = download_url(&url).await?;
     let tmp = tempfile::NamedTempFile::new()?;
-
-    // unix currently comes compressed, windows comes uncompressed
-    #[cfg(unix)]
-    {
-        use tokio::fs;
-        
-        // let mut decoder = flate2::bufread::GzDecoder::new(&bytes[..]);
-        let mut rv = Vec::new();
-        decoder.read_to_end(&mut rv)?;
-        fs::write(tmp.path(), rv)?;
-    }
-    #[cfg(windows)]
-    {
-        fs::write(tmp.path(), bytes)?;
-    }
+    unzip_file(bytes, tmp.path())?;
 
     self_replace::self_replace(tmp.path())?;
     Ok(())

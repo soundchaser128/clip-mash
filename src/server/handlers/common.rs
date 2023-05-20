@@ -12,6 +12,7 @@ use futures::{
     stream::{self, Stream},
     FutureExt,
 };
+
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc, time::Duration};
 use tokio_stream::StreamExt;
@@ -19,13 +20,14 @@ use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
 
 use crate::{
-    data::{database::DbSong, stash_api::StashApi},
+    data::{database::DbSong, service::DataService, stash_api::StashApi},
     server::{
         dtos::{ClipsResponse, CreateClipsBody, CreateVideoBody},
         error::AppError,
+        handlers::get_streams,
     },
     service::{
-        clip::{self, ClipService},
+        clip,
         funscript::{FunScript, ScriptBuilder},
         generator::{self, Progress},
         music::MusicService,
@@ -43,16 +45,15 @@ pub async fn fetch_clips(
     Json(body): Json<CreateClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
     let config = Config::get_or_empty().await;
-    let api = StashApi::from_config(&config);
-    let service = ClipService::new(&state.database, &api);
+    let service = DataService::new(state.database.clone()).await;
     let video_ids: HashSet<_> = body.markers.iter().map(|m| m.video_id.clone()).collect();
     info!("found {} video IDs", video_ids.len());
     let options = service.convert_clip_options(body).await?;
+    debug!("clip options: {options:?}");
 
     let clips = clip::arrange_clips(options);
     info!("generated {} clips", clips.len());
-    debug!("compiled clips {clips:#?}");
-    let streams = clip::get_streams(video_ids, &config)?;
+    let streams = get_streams(video_ids, &config)?;
     let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.clone()).collect();
     video_ids.sort();
     video_ids.dedup();
@@ -76,9 +77,7 @@ async fn create_video_inner(
     state: State<Arc<AppState>>,
     body: CreateVideoBody,
 ) -> Result<(), AppError> {
-    let config = Config::get_or_empty().await;
-    let api = StashApi::from_config(&config);
-    let service = ClipService::new(&state.database, &api);
+    let service = DataService::new(state.database.clone()).await;
     let options = service.convert_compilation_options(body).await?;
 
     let clips = state.generator.gather_clips(&options).await?;
@@ -167,7 +166,7 @@ pub async fn get_funscript(
 ) -> Result<Json<FunScript>, AppError> {
     let api = StashApi::load_config().await?;
     let script_builder = ScriptBuilder::new(&api);
-    let service = ClipService::new(&state.database, &api);
+    let service = DataService::new(state.database.clone()).await;
     let clips = service.convert_clips(body.clips).await?;
     let script = script_builder.combine_scripts(clips).await?;
 

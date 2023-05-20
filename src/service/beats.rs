@@ -5,7 +5,7 @@ use aubio::{OnsetMode, Smpl, Tempo};
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::eyre;
 use hound::WavReader;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use super::directories::Directories;
@@ -54,6 +54,7 @@ pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: &Directories) -> Ap
     let wav_file = convert_to_wav(file, directories)?;
     let mut reader = WavReader::open(wav_file)?;
     let format = reader.spec();
+    info!("wav spec: {:?}, duration: {}", format, reader.duration());
 
     let mut samples = reader.samples();
     let mut tempo = Tempo::new(OnsetMode::SpecFlux, BUF_SIZE, HOP_SIZE, format.sample_rate)?;
@@ -78,7 +79,7 @@ pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: &Directories) -> Ap
     }
     let elapsed = start.elapsed();
     info!("detected {} beats in {:?}", offsets.len(), elapsed);
-    
+
     Ok(Beats {
         offsets,
         length: reader.duration() as f32 / format.sample_rate as f32,

@@ -13,6 +13,7 @@ use futures::{
     FutureExt,
 };
 
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc, time::Duration};
 use tokio_stream::StreamExt;
@@ -32,7 +33,7 @@ use crate::{
         generator::{self, Progress},
         music::MusicService,
         stash_config::Config,
-        Clip, VideoSource,
+        updater, Clip, VideoSource,
     },
     util::expect_file_name,
 };
@@ -276,4 +277,13 @@ pub async fn open_folder(
     opener::open(path).map_err(Report::from)?;
 
     Ok(())
+}
+
+pub async fn self_update() -> impl IntoResponse {
+    if let Err(e) = updater::self_update(None).await {
+        error!("failed to self-update: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    } else {
+        StatusCode::OK
+    }
 }

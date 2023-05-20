@@ -1,15 +1,59 @@
 use super::{Clip, ClipCreator, Marker};
-use crate::service::clip::MIN_DURATION;
-use rand::{rngs::StdRng, seq::SliceRandom};
+use crate::{data::database::DbSong, service::clip::MIN_DURATION};
+use rand::{
+    rngs::StdRng,
+    seq::{IteratorRandom, SliceRandom},
+};
 
 use std::{collections::HashMap, fmt::Debug};
 use tracing::{debug, info};
 
 #[derive(Debug)]
+pub enum MeasureCount {
+    Fixed(usize),
+    Randomized { min: usize, max: usize },
+}
+
+#[derive(Debug)]
+pub enum PmvClipLengths {
+    Randomized {
+        base_duration: f64,
+        divisors: Vec<f64>,
+    },
+    Songs {
+        songs: Vec<DbSong>,
+        beats_per_measure: usize,
+        cut_after_measure_count: MeasureCount,
+    },
+}
+
+impl PmvClipLengths {
+    pub fn pick_duration(&self, rng: &mut StdRng) -> f64 {
+        match self {
+            PmvClipLengths::Randomized {
+                base_duration,
+                divisors,
+            } => divisors
+                .iter()
+                .map(|d| base_duration / d)
+                .choose(rng)
+                .expect("list must not be empty"),
+            PmvClipLengths::Songs {
+                songs,
+                beats_per_measure,
+                cut_after_measure_count,
+            } => {
+                todo!()
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct PmvClipOptions {
     pub seed: Option<String>,
-    pub clip_duration: u32,
     pub video_duration: f64,
+    pub clip_lengths: PmvClipLengths,
 }
 
 pub struct PmvClipCreator;
@@ -27,12 +71,11 @@ impl ClipCreator for PmvClipCreator {
             "using PmvClipCreator to create clips, options: {:?}",
             options
         );
-        let duration = options.clip_duration as f64;
-        let clip_lengths = [
-            (duration / 2.0).max(MIN_DURATION),
-            (duration / 3.0).max(MIN_DURATION),
-            (duration / 4.0).max(MIN_DURATION),
-        ];
+        // let clip_lengths = [
+        //     (duration / 2.0).max(MIN_DURATION),
+        //     (duration / 3.0).max(MIN_DURATION),
+        //     (duration / 4.0).max(MIN_DURATION),
+        // ];
 
         let max_duration = options.video_duration;
         let mut total_duration = 0.0;
@@ -46,7 +89,7 @@ impl ClipCreator for PmvClipCreator {
 
         while total_duration <= max_duration {
             let marker = &markers[marker_idx % markers.len()];
-            let clip_duration = clip_lengths.choose(rng).expect("must find one element");
+            let clip_duration = options.clip_lengths.pick_duration(rng);
 
             let (start, index) = start_times[&marker.id.inner()];
             let end = (start + clip_duration).min(marker.end_time);

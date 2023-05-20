@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.7.2
+- fix: mismatch between length of generated clips and music
+- feat: add logging to file, not just terminal
+
+## 0.7.1
+- fix: assets folder was not being created
+
+## 0.7.0
+- feat: Support for adding background music (#9)
+
 ## 0.6.0
 - feat: Allow using local videos (#8)
 - chore: Rename app to ClipMash

@@ -1,6 +1,6 @@
 [package]
 name = "clip-mash"
-version = "0.6.0"
+version = "0.7.2"
 edition = "2021"
 
 [dependencies]
@@ -29,6 +29,7 @@ tokio-util = { version = "0.7.8", features = ["io"] }
 tower = "0.4.13"
 tower-http = { version = "0.4.0", features = ["fs"] }
 tracing = "0.1.37"
+tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 walkdir = "2.3.3"
 webbrowser = "0.8.9"
@@ -45,4 +46,6 @@ zip = "0.6"
 opt-level = 3
 
 [dev-dependencies]
+assert_approx_eq = "1.1.0"
 fake = "2.6.1"
+tracing-test = "0.2.4"

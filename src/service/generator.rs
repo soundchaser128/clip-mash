@@ -1,16 +1,19 @@
+use std::ffi::OsStr;
+
 use crate::{
     data::{database::DbSong, stash_api::StashMarker},
     service::MarkerInfo,
-    util::commandline_error,
+    util::{commandline_error, debug_output},
     Result,
 };
 use camino::{Utf8Path, Utf8PathBuf};
 use futures::lock::Mutex;
+use itertools::Itertools;
 use lazy_static::lazy_static;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
-use tracing::{debug, info};
+use tracing::{debug, enabled, info, Level};
 
 use super::{directories::Directories, Clip, Marker};
 
@@ -86,7 +89,6 @@ pub fn find_stream_url(marker: &Marker) -> &str {
 }
 
 pub async fn get_progress() -> Progress {
-    debug!("getting progress");
     PROGRESS.lock().await.clone()
 }
 
@@ -105,6 +107,25 @@ impl CompilationGenerator {
             directories,
             ffmpeg_path,
         })
+    }
+
+    async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {
+        if enabled!(Level::DEBUG) {
+            let string = args.iter().map(|s| s.as_ref().to_string_lossy()).join(" ");
+            debug!("running command 'ffmpeg {}'", string);
+        }
+
+        let output = Command::new(self.ffmpeg_path.as_str())
+            .args(args)
+            .current_dir(self.directories.video_dir())
+            .output()
+            .await?;
+        if !output.status.success() {
+            commandline_error(output)
+        } else {
+            debug_output(output);
+            Ok(())
+        }
     }
 
     async fn create_clip(
@@ -147,17 +168,7 @@ impl CompilationGenerator {
             "48000",
             out_file.as_str(),
         ];
-        info!("executing command ffmpeg {}", args.join(" "));
-
-        let output = Command::new(self.ffmpeg_path.as_str())
-            .args(args)
-            .output()
-            .await?;
-        if !output.status.success() {
-            commandline_error(output)
-        } else {
-            Ok(())
-        }
+        self.ffmpeg(args).await
     }
 
     async fn initialize_progress(&self, total_items: usize) {
@@ -353,15 +364,7 @@ impl CompilationGenerator {
             .collect()
         };
 
-        let output = Command::new(self.ffmpeg_path.as_str())
-            .args(args)
-            .current_dir(video_dir.canonicalize()?)
-            .output()
-            .await?;
-
-        if !output.status.success() {
-            return commandline_error(output);
-        }
+        self.ffmpeg(args).await?;
 
         info!("finished assembling video, result at {destination}");
         self.increase_progress().await;

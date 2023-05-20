@@ -6,6 +6,7 @@ use axum::{
     Router,
 };
 use color_eyre::Report;
+use std::env;
 use tracing::{info, warn};
 
 use crate::{
@@ -24,22 +25,29 @@ pub type Result<T> = std::result::Result<T, Report>;
 // 100 MB
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    use server::{handlers, static_files};
-    use std::env;
-    use tracing_subscriber::{fmt, prelude::*, EnvFilter};
-
-    color_eyre::install()?;
+fn setup_logger() {
+    use tracing_subscriber::{prelude::*, EnvFilter};
 
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "info");
     }
+    let file_appender = tracing_appender::rolling::daily("./logs", "clip-mash.log");
 
-    tracing_subscriber::registry()
-        .with(fmt::layer())
-        .with(EnvFilter::from_default_env())
+    tracing_subscriber::fmt()
+        .with_writer(file_appender.and(std::io::stdout))
+        .with_ansi(true)
+        .with_env_filter(EnvFilter::from_default_env())
+        .compact()
         .init();
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    use server::{handlers, static_files};
+
+    color_eyre::install()?;
+    setup_logger();
+
     let directories = Directories::new()?;
     directories.info();
 

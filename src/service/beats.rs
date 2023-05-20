@@ -5,6 +5,7 @@ use aubio::{OnsetMode, Smpl, Tempo};
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::eyre;
 use hound::WavReader;
+use serde::{Serialize, Deserialize};
 use tracing::info;
 
 use super::directories::Directories;
@@ -12,6 +13,12 @@ use super::directories::Directories;
 const BUF_SIZE: usize = 512;
 const HOP_SIZE: usize = 256;
 const I16_TO_SMPL: Smpl = 1.0 / (1 << 16) as Smpl;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Beats {
+    pub offsets: Vec<f32>,
+    pub length: f32,
+}
 
 fn convert_to_wav(
     source: impl AsRef<Utf8Path>,
@@ -41,7 +48,7 @@ fn convert_to_wav(
     }
 }
 
-pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: &Directories) -> AppResult<Vec<f32>> {
+pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: &Directories) -> AppResult<Beats> {
     let start = Instant::now();
     let file = file.as_ref();
     let wav_file = convert_to_wav(file, directories)?;
@@ -71,5 +78,9 @@ pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: &Directories) -> Ap
     }
     let elapsed = start.elapsed();
     info!("detected {} beats in {:?}", offsets.len(), elapsed);
-    Ok(offsets)
+    
+    Ok(Beats {
+        offsets,
+        length: reader.duration() as f32 / format.sample_rate as f32,
+    })
 }

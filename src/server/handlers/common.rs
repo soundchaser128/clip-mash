@@ -27,7 +27,8 @@ use crate::{
         handlers::get_streams,
     },
     service::{
-        beats, clip,
+        beats::{self, Beats},
+        clip,
         funscript::{FunScript, ScriptBuilder},
         generator::{self, Progress},
         music::MusicService,
@@ -282,8 +283,18 @@ pub async fn open_folder(
 pub async fn get_beats(
     Path(song_id): Path<i64>,
     state: State<Arc<AppState>>,
-) -> Result<Json<Vec<f32>>, AppError> {
-    let song = state.database.get_song(song_id).await?;
-    let beats = beats::detect_beats(&song.file_path, &state.directories)?;
+) -> Result<Json<Beats>, AppError> {
+    let beats = match state.database.fetch_beats(song_id).await? {
+        Some(beats) => beats,
+        None => {
+            let song = state.database.get_song(song_id).await?;
+            let beats = beats::detect_beats(&song.file_path, &state.directories)?;
+            state
+                .database
+                .persist_beats(song.rowid.unwrap(), &beats)
+                .await?;
+            beats
+        }
+    };
     Ok(Json(beats))
 }

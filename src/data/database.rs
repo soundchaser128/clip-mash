@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{service::beats::Beats, Result};
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use serde::Deserialize;
 use sqlx::{
@@ -48,6 +48,7 @@ pub struct DbSong {
     pub url: String,
     pub file_path: String,
     pub duration: f64,
+    pub beats: Option<String>,
 }
 
 #[derive(Debug)]
@@ -218,13 +219,14 @@ impl Database {
             url: song.url,
             file_path: song.file_path,
             duration: song.duration,
+            beats: None,
         })
     }
 
     pub async fn get_song_by_url(&self, url: &str) -> Result<Option<DbSong>> {
         sqlx::query_as!(
             DbSong,
-            "SELECT rowid, url, file_path, duration FROM songs WHERE url = $1",
+            "SELECT rowid, url, file_path, duration, beats FROM songs WHERE url = $1",
             url
         )
         .fetch_optional(&self.pool)
@@ -235,7 +237,7 @@ impl Database {
     pub async fn get_song(&self, id: i64) -> Result<DbSong> {
         sqlx::query_as!(
             DbSong,
-            "SELECT rowid, url, file_path, duration FROM songs WHERE rowid = $1",
+            "SELECT rowid, url, file_path, duration, beats FROM songs WHERE rowid = $1",
             id
         )
         .fetch_one(&self.pool)
@@ -258,8 +260,11 @@ impl Database {
     pub async fn list_songs(&self) -> Result<Vec<DbSong>> {
         use tokio::fs;
 
-        let stream = sqlx::query_as!(DbSong, "SELECT rowid, url, file_path, duration FROM songs")
-            .fetch(&self.pool);
+        let stream = sqlx::query_as!(
+            DbSong,
+            "SELECT rowid, url, file_path, duration, beats FROM songs"
+        )
+        .fetch(&self.pool);
 
         let videos = stream
             .try_filter(|row| fs::try_exists(row.file_path.clone()).unwrap_or_else(|_| false))
@@ -288,6 +293,28 @@ impl Database {
             .map(|s| s.duration)
             .sum();
         Ok(duration)
+    }
+
+    pub async fn fetch_beats(&self, song_id: i64) -> Result<Option<Beats>> {
+        let result = sqlx::query!("SELECT beats FROM songs WHERE rowid = $1", song_id)
+            .fetch_one(&self.pool)
+            .await?;
+        match result.beats {
+            Some(json) => Ok(serde_json::from_str(&json)?),
+            None => Ok(None),
+        }
+    }
+
+    pub async fn persist_beats(&self, song_id: i64, beats: &Beats) -> Result<()> {
+        let json = serde_json::to_string(&beats)?;
+        sqlx::query!(
+            "UPDATE songs SET beats = $1 WHERE rowid = $2",
+            json,
+            song_id
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
     }
 }
 

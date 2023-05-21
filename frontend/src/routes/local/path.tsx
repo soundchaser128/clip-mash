@@ -1,4 +1,4 @@
-import {HiCheck} from "react-icons/hi2"
+import {HiChevronRight} from "react-icons/hi2"
 import {LocalFilesFormStage, StateHelpers} from "../../types/types"
 import {useStateMachine} from "little-state-machine"
 import {updateForm} from "../actions"
@@ -79,8 +79,8 @@ export default function SelectVideos() {
           </label>
         </div>
         <button type="submit" className="btn btn-success self-end">
-          <HiCheck className="w-6 h-6 mr-2" />
-          Submit
+          Next
+          <HiChevronRight className="w-6 h-6 ml-1" />
         </button>
       </form>
     </>

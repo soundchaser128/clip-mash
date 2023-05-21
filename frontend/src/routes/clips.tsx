@@ -110,7 +110,7 @@ const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
   return (
     <div
       className={clsx(
-        "w-12 h-12 rounded-full self-center my-2",
+        "w-12 h-12 self-center rounded-full my-2",
         showBeat ? "bg-red-500" : "bg-white"
       )}
     />

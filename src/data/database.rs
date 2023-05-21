@@ -304,10 +304,13 @@ impl Database {
 
     pub async fn fetch_beats(&self, song_id: i64) -> Result<Option<Beats>> {
         let result = sqlx::query!("SELECT beats FROM songs WHERE rowid = $1", song_id)
-            .fetch_one(&self.pool)
+            .fetch_optional(&self.pool)
             .await?;
-        match result.beats {
-            Some(json) => Ok(serde_json::from_str(&json)?),
+        match result {
+            Some(row) => match row.beats {
+                Some(json) => Ok(serde_json::from_str(&json)?),
+                None => Ok(None),
+            },
             None => Ok(None),
         }
     }

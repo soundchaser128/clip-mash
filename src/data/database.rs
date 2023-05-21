@@ -1,4 +1,10 @@
-use crate::{service::beats::Beats, Result};
+use crate::{
+    service::{
+        beats::{self, Beats},
+        directories::Directories,
+    },
+    Result,
+};
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use serde::Deserialize;
 use sqlx::{
@@ -6,6 +12,7 @@ use sqlx::{
     SqlitePool,
 };
 use std::str::FromStr;
+use tokio::task::spawn_blocking;
 use tracing::info;
 
 #[derive(Debug, Clone)]
@@ -314,6 +321,27 @@ impl Database {
         )
         .execute(&self.pool)
         .await?;
+        Ok(())
+    }
+
+    pub async fn generate_all_beats(&self, dirs: Directories) -> Result<()> {
+        let rows = sqlx::query!("SELECT rowid, file_path FROM songs WHERE beats IS NULL")
+            .fetch_all(&self.pool)
+            .await?;
+        info!("generating beats for {} songs", rows.len());
+        let mut handles = vec![];
+        for row in rows {
+            let dirs = dirs.clone();
+            handles.push(spawn_blocking(move || {
+                (beats::detect_beats(row.file_path, &dirs), row.rowid)
+            }));
+        }
+
+        for handle in handles {
+            let (beats, song_id) = handle.await?;
+            self.persist_beats(song_id, &beats?).await?;
+        }
+
         Ok(())
     }
 }

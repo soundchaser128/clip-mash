@@ -56,6 +56,7 @@ async fn main() -> Result<()> {
     let ffmpeg = CompilationGenerator::new(directories.clone()).await?;
     let database_file = directories.database_file();
     let database = Database::new(database_file.as_str()).await?;
+    database.generate_all_beats(directories.clone()).await?;
     let state = Arc::new(AppState {
         generator: ffmpeg,
         database,

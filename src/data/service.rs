@@ -150,6 +150,7 @@ impl DataService {
             } else {
                 Some(self.db.sum_song_durations(&body.song_ids).await?)
             },
+            songs: self.db.get_songs(&body.song_ids).await?,
         })
     }
 }

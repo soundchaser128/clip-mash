@@ -207,6 +207,8 @@ export default function Music() {
     )
     const data: SongDto = await response.json()
 
+    await fetch(`/api/music/${data.songId}/beats`)
+
     actions.updateForm({
       songs: [...(state.data.songs || []), data],
     })

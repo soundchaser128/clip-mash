@@ -39,7 +39,13 @@ fn convert_to_wav(
     }
 
     let output = Command::new("ffmpeg")
-        .args(vec!["-i", source.as_str(), destination.as_str()])
+        .args(vec![
+            "-i",
+            source.as_str(),
+            "-ac",
+            "1",
+            destination.as_str(),
+        ])
         .output()?;
     if !output.status.success() {
         commandline_error(output)
@@ -52,36 +58,56 @@ pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: &Directories) -> Ap
     let start = Instant::now();
     let file = file.as_ref();
     let wav_file = convert_to_wav(file, directories)?;
-    let mut reader = WavReader::open(wav_file)?;
+    let reader = WavReader::open(wav_file)?;
     let format = reader.spec();
+    let duration = reader.duration();
+    let period = 1.0 / format.sample_rate as Smpl;
     info!("wav spec: {:?}, duration: {}", format, reader.duration());
 
-    let mut samples = reader.samples();
-    let mut tempo = Tempo::new(OnsetMode::SpecFlux, BUF_SIZE, HOP_SIZE, format.sample_rate)?;
+    let mut tempo = Tempo::new(OnsetMode::SpecDiff, BUF_SIZE, HOP_SIZE, format.sample_rate)?;
     let mut offsets = vec![];
-    loop {
-        let block = samples
-            .by_ref()
-            .map(|sample| sample.map(|sample: i16| sample as Smpl * I16_TO_SMPL))
-            .take(HOP_SIZE)
-            .collect::<Result<Vec<Smpl>, _>>()?;
+    let mut time = 0.0;
+    let mut offset = 0;
 
+    let samples = reader
+        .into_samples()
+        .map(|sample| sample.map(|sample: i16| sample as Smpl * I16_TO_SMPL))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    for block in samples.chunks(HOP_SIZE) {
         if block.len() == HOP_SIZE {
-            let result = tempo.do_result(block.as_slice().as_ref())?;
+            let result = tempo.do_result(block)?;
             if result > 0.0 {
-                offsets.push(tempo.get_last_s());
+                offsets.push(time);
             }
         }
-
-        if block.len() < HOP_SIZE {
-            break;
-        }
+        offset += block.len();
+        time = offset as Smpl * period;
     }
+
     let elapsed = start.elapsed();
     info!("detected {} beats in {:?}", offsets.len(), elapsed);
 
     Ok(Beats {
         offsets,
-        length: reader.duration() as f32 / format.sample_rate as f32,
+        length: duration as f32 / format.sample_rate as f32,
     })
+}
+
+#[cfg(test)]
+mod test {
+    use tracing_test::traced_test;
+
+    use crate::service::{beats::detect_beats, directories::Directories};
+
+    #[traced_test]
+    #[test]
+    fn test_detect_beats() {
+        let file = "./samples/xtal.opus";
+        let dirs = Directories::new().unwrap();
+        let beats = detect_beats(file, &dirs).unwrap();
+        beats.offsets.iter().for_each(|offset| {
+            assert!(*offset <= beats.length);
+        })
+    }
 }

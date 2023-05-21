@@ -1,7 +1,9 @@
-use self::pmv::PmvClipLengths;
+use self::pmv::{PmvClipLengths, PmvSongs};
 
 use super::{Clip, Marker};
 use crate::{
+    data::database::DbSong,
+    server::handlers::common::SongDto,
     service::clip::{
         default::{DefaultClipCreator, DefaultClipOptions},
         pmv::{PmvClipCreator, PmvClipOptions},
@@ -35,6 +37,7 @@ pub struct CreateClipsOptions {
     pub split_clips: bool,
     pub seed: Option<String>,
     pub max_duration: Option<f64>,
+    pub songs: Vec<DbSong>,
 }
 
 impl CreateClipsOptions {
@@ -78,12 +81,26 @@ fn marrkers_to_clips_default(options: CreateClipsOptions, rng: &mut StdRng) -> V
 
 fn markers_to_clips_pmv(options: CreateClipsOptions, duration: f64, rng: &mut StdRng) -> Vec<Clip> {
     let creator = PmvClipCreator {};
-    let clip_options = PmvClipOptions {
-        // TODO
-        clip_lengths: PmvClipLengths::Randomized {
+    let lengths = if options.songs.is_empty() {
+        PmvClipLengths::Randomized {
             base_duration: options.clip_duration as f64,
             divisors: vec![2.0, 3.0, 4.0],
-        },
+        }
+    } else {
+        PmvClipLengths::Songs(PmvSongs::new(
+            options
+                .songs
+                .iter()
+                .map(|s| {
+                    serde_json::from_str(s.beats.as_deref().expect("must have beats set")).unwrap()
+                })
+                .collect(),
+            4,
+            pmv::MeasureCount::Randomized { min: 1, max: 3 },
+        ))
+    };
+    let clip_options = PmvClipOptions {
+        clip_lengths: lengths,
         seed: options.seed,
         video_duration: duration,
     };
@@ -158,6 +175,7 @@ mod tests {
             split_clips: true,
             seed: None,
             max_duration: None,
+            songs: vec![],
         };
         let results = arrange_clips(options);
         assert_eq!(4, results.len());
@@ -180,6 +198,7 @@ mod tests {
             split_clips: false,
             seed: None,
             max_duration: None,
+            songs: vec![],
         };
         let results = arrange_clips(options);
         assert_eq!(2, results.len());
@@ -203,6 +222,7 @@ mod tests {
             split_clips: true,
             seed: None,
             max_duration: None,
+            songs: vec![],
         };
 
         options.normalize_video_indices();

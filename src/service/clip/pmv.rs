@@ -85,7 +85,7 @@ impl PmvClipLengths {
                 divisors,
             } => divisors
                 .iter()
-                .map(|d| (*base_duration / *d).min(MIN_DURATION))
+                .map(|d| (*base_duration / *d).max(MIN_DURATION))
                 .choose(rng),
             PmvClipLengths::Songs(songs) => songs.next_duration(rng),
         }
@@ -174,7 +174,7 @@ mod test {
 
     use crate::{service::beats::Beats, util::create_seeded_rng};
 
-    use super::{MeasureCount, PmvClipLengths, PmvClipOptions, PmvSongs};
+    use super::{MeasureCount, PmvSongs};
 
     #[traced_test]
     #[test]

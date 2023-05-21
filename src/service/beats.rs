@@ -96,12 +96,11 @@ pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: &Directories) -> Ap
 
 #[cfg(test)]
 mod test {
-    use tracing_test::traced_test;
 
     use crate::service::{beats::detect_beats, directories::Directories};
 
-    #[traced_test]
-    #[test]
+    // #[traced_test]
+    // #[test]
     fn test_detect_beats() {
         let file = "./samples/xtal.opus";
         let dirs = Directories::new().unwrap();

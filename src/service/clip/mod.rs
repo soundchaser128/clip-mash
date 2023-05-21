@@ -1,6 +1,6 @@
 use self::pmv::{PmvClipLengths, PmvSongs};
 
-use super::{Clip, Marker};
+use super::{beats::Beats, Clip, Marker};
 use crate::{
     data::database::DbSong,
     service::clip::{
@@ -95,7 +95,7 @@ fn markers_to_clips_pmv(options: CreateClipsOptions, duration: f64, rng: &mut St
                 })
                 .collect(),
             4,
-            pmv::MeasureCount::Fixed(2),
+            pmv::MeasureCount::Fixed(4),
         ))
     };
     let clip_options = PmvClipOptions {
@@ -107,10 +107,33 @@ fn markers_to_clips_pmv(options: CreateClipsOptions, duration: f64, rng: &mut St
     creator.create_clips(options.markers, clip_options, rng)
 }
 
-pub fn arrange_clips(mut options: CreateClipsOptions) -> Vec<Clip> {
+fn normalize_beat_offsets(songs: &[DbSong]) -> Vec<f32> {
+    let mut offsets = vec![];
+    let mut current = 0.0;
+    for song in songs {
+        let beats: Beats =
+            serde_json::from_str(song.beats.as_deref().expect("song must have beats"))
+                .expect("must be valid json");
+
+        for offset in beats.offsets {
+            offsets.push(current + offset);
+        }
+        current += beats.length;
+    }
+
+    offsets
+}
+
+pub fn arrange_clips(mut options: CreateClipsOptions) -> (Vec<Clip>, Option<Vec<f32>>) {
     options.normalize_video_indices();
     let mut rng = create_seeded_rng(options.seed.as_deref());
     let order = options.order;
+
+    let beat_offsets = if options.songs.is_empty() {
+        None
+    } else {
+        Some(normalize_beat_offsets(&options.songs))
+    };
 
     let clips = match (options.split_clips, options.max_duration) {
         (true, None) => marrkers_to_clips_default(options, &mut rng),
@@ -120,16 +143,17 @@ pub fn arrange_clips(mut options: CreateClipsOptions) -> Vec<Clip> {
 
     info!("generated {} clips", clips.len());
 
-    match order {
-        ClipOrder::Random => {
-            let sorter = RandomClipSorter;
-            sorter.sort_clips(clips, &mut rng)
-        }
-        ClipOrder::SceneOrder => {
-            let sorter = SceneOrderClipSorter;
-            sorter.sort_clips(clips, &mut rng)
-        }
-    }
+    (clips, beat_offsets)
+    // match order {
+    //     ClipOrder::Random => {
+    //         let sorter = RandomClipSorter;
+    //         sorter.sort_clips(clips, &mut rng)
+    //     }
+    //     ClipOrder::SceneOrder => {
+    //         let sorter = SceneOrderClipSorter;
+    //         sorter.sort_clips(clips, &mut rng)
+    //     }
+    // }
 }
 
 pub trait ClipCreator {
@@ -176,7 +200,7 @@ mod tests {
             max_duration: None,
             songs: vec![],
         };
-        let results = arrange_clips(options);
+        let (results, _) = arrange_clips(options);
         assert_eq!(4, results.len());
         assert_eq!((1.0, 11.0), results[0].range);
         assert_eq!((1.0, 8.5), results[1].range);
@@ -199,7 +223,7 @@ mod tests {
             max_duration: None,
             songs: vec![],
         };
-        let results = arrange_clips(options);
+        let (results, _) = arrange_clips(options);
         assert_eq!(2, results.len());
         assert_eq!((1.0, 17.0), results[0].range);
         assert_eq!((1.0, 15.0), results[1].range);

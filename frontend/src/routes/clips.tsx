@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import {useMemo, useState} from "react"
+import {useEffect, useMemo, useState} from "react"
 import {
   LoaderFunction,
   json,
@@ -21,12 +21,14 @@ interface ClipsResponse {
   clips: Clip[]
   streams: Record<string, string>
   videos: VideoDto[]
+  beatOffsets?: number[]
 }
 
 interface Data {
   clips: Clip[]
   streams: Record<string, string>
   videos: Record<string, VideoDto>
+  beatOffsets?: number[]
 }
 
 export const loader: LoaderFunction = async () => {
@@ -76,6 +78,11 @@ function PreviewClips() {
     loaderData.clips.map((clip) => ({clip, included: true}))
   )
 
+  const lastTime = useRef(0)
+  const totalTime = useRef(0)
+  const requestRef = useRef<number>()
+  const [beatOffsets, setBeatOffsets] = useImmer(loaderData.beatOffsets)
+  const [showBeat, setShowBeat] = useState(false)
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
   const currentClip = clips[currentClipIndex].clip
@@ -95,6 +102,25 @@ function PreviewClips() {
       clips: clips.filter((c) => c.included).map((c) => c.clip),
     })
     navigate("/stash/progress")
+  }
+
+  const onAnimationFrame = () => {
+    if (beatOffsets && autoPlay && !showBeat) {
+      const nextBeat = beatOffsets[0]
+
+      const diff = Math.abs(nextBeat - totalTime.current)
+      if (diff <= 0.05) {
+        console.log("found a beat at", totalTime)
+        setShowBeat(true)
+        window.setTimeout(() => setShowBeat(false), 250)
+
+        setBeatOffsets((draft) => {
+          draft!.splice(0, 1)
+        })
+      }
+
+      requestRef.current = requestAnimationFrame(onAnimationFrame)
+    }
   }
 
   const [segments, sceneColors] = useMemo(() => {
@@ -129,6 +155,13 @@ function PreviewClips() {
 
     setAutoPlay(!autoPlay)
   }
+
+  useEffect(() => {
+    if (autoPlay) {
+      requestRef.current = requestAnimationFrame(onAnimationFrame)
+      return () => cancelAnimationFrame(requestRef.current!)
+    }
+  }, [autoPlay])
 
   return (
     <>
@@ -201,6 +234,15 @@ function PreviewClips() {
             </div>
           )
         })}
+      </div>
+
+      <div
+        className={clsx(
+          "w-full text-center text-3xl p-8",
+          showBeat ? "bg-red-500" : "bg-white"
+        )}
+      >
+        {showBeat ? "BEAT" : "NO BEAT"}
       </div>
 
       <div className="flex justify-between mt-4">

@@ -175,6 +175,7 @@ pub struct ClipsResponse {
     pub clips: Vec<Clip>,
     pub streams: HashMap<String, String>,
     pub videos: Vec<VideoDto>,
+    pub beat_offsets: Option<Vec<f32>>,
 }
 
 #[derive(Serialize, Debug)]

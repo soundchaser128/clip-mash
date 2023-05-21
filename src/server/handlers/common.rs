@@ -52,7 +52,7 @@ pub async fn fetch_clips(
     let options = service.convert_clip_options(body).await?;
     debug!("clip options: {options:?}");
 
-    let clips = clip::arrange_clips(options);
+    let (clips, beat_offsets) = clip::arrange_clips(options);
     info!("generated {} clips", clips.len());
     let streams = get_streams(video_ids, &config)?;
     let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.clone()).collect();
@@ -70,6 +70,7 @@ pub async fn fetch_clips(
         clips,
         streams,
         videos,
+        beat_offsets,
     };
     Ok(Json(response))
 }

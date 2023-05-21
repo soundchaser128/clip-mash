@@ -187,15 +187,19 @@ pub struct SongDto {
     pub duration: f64,
     pub file_name: String,
     pub url: String,
+    pub beats: Vec<f32>,
 }
 
 impl From<DbSong> for SongDto {
     fn from(value: DbSong) -> Self {
+        let beats: Option<Beats> = value.beats.and_then(|str| serde_json::from_str(&str).ok());
+
         SongDto {
             song_id: value.rowid.expect("must have rowid set"),
             duration: value.duration,
             file_name: expect_file_name(&value.file_path),
             url: value.url,
+            beats: beats.map(|b| b.offsets).unwrap_or_default(),
         }
     }
 }

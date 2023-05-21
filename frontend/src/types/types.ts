@@ -173,4 +173,5 @@ export interface SongDto {
   duration: number
   fileName: string
   url: string
+  beats: number[]
 }

@@ -45,6 +45,10 @@ interface DragItem {
   type: string
 }
 
+function calcBPM(song: SongDto): string {
+  return ((song.beats.length / song.duration) * 60.0).toFixed(0)
+}
+
 const Card: React.FC<CardProps> = ({id, text, index, moveCard, className}) => {
   const ref = useRef<HTMLDivElement>(null)
   const [{handlerId}, drop] = useDrop<
@@ -382,6 +386,7 @@ export default function Music() {
                 <th>Name</th>
                 <th>Duration</th>
                 <th>URL</th>
+                <th>Beats per minute</th>
                 <th>Include</th>
               </tr>
             </thead>
@@ -398,6 +403,7 @@ export default function Music() {
                   <td>{song.fileName}</td>
                   <td>{formatSeconds(song.duration, "short")}</td>
                   <td>{song.url}</td>
+                  <td>{calcBPM(song)}</td>
                   <td>
                     <input
                       type="checkbox"

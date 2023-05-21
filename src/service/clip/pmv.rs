@@ -1,12 +1,66 @@
 use super::{Clip, ClipCreator, Marker};
-use crate::{data::database::DbSong, service::clip::MIN_DURATION};
-use rand::{
-    rngs::StdRng,
-    seq::{IteratorRandom, SliceRandom},
-};
+use crate::service::{beats::Beats, clip::MIN_DURATION};
+use rand::{rngs::StdRng, seq::IteratorRandom, Rng};
 
 use std::{collections::HashMap, fmt::Debug};
 use tracing::{debug, info};
+
+#[derive(Debug)]
+pub struct PmvSongs {
+    pub songs: Vec<Beats>,
+    pub beats_per_measure: usize,
+    pub cut_after_measure_count: MeasureCount,
+
+    song_index: usize,
+    beat_index: usize,
+}
+
+impl PmvSongs {
+    pub fn new(
+        songs: Vec<Beats>,
+        beats_per_measure: usize,
+        cut_after_measure_count: MeasureCount,
+    ) -> Self {
+        Self {
+            songs,
+            beats_per_measure,
+            cut_after_measure_count,
+            song_index: 0,
+            beat_index: 0,
+        }
+    }
+
+    pub fn next_duration(&mut self, rng: &mut StdRng) -> Option<f64> {
+        info!(
+            "state: song_index = {}, beat_index = {}",
+            self.song_index, self.beat_index
+        );
+        if self.song_index >= self.songs.len() {
+            return None;
+        }
+
+        let beats = &self.songs[self.song_index].offsets;
+        let num_measures = match self.cut_after_measure_count {
+            MeasureCount::Fixed(n) => n,
+            MeasureCount::Randomized { min, max } => rng.gen_range(min..max),
+        };
+        let num_beats_to_advance = self.beats_per_measure * num_measures;
+        let next_beat_index = (self.beat_index + num_beats_to_advance).min(beats.len() - 1);
+        let start = beats[self.beat_index];
+        let end = beats[next_beat_index];
+
+        info!("start = {}, end = {}", self.beat_index, next_beat_index);
+
+        if next_beat_index == beats.len() - 1 {
+            self.song_index += 1;
+            self.beat_index = 0;
+        } else {
+            self.beat_index = next_beat_index;
+        }
+
+        Some((end - start) as f64)
+    }
+}
 
 #[derive(Debug)]
 pub enum MeasureCount {
@@ -20,31 +74,23 @@ pub enum PmvClipLengths {
         base_duration: f64,
         divisors: Vec<f64>,
     },
-    Songs {
-        songs: Vec<DbSong>,
-        beats_per_measure: usize,
-        cut_after_measure_count: MeasureCount,
-    },
+    Songs(PmvSongs),
 }
 
 impl PmvClipLengths {
-    pub fn pick_duration(&self, rng: &mut StdRng) -> f64 {
+    pub fn pick_duration(&mut self, rng: &mut StdRng) -> f64 {
         match self {
             PmvClipLengths::Randomized {
                 base_duration,
                 divisors,
             } => divisors
                 .iter()
-                .map(|d| base_duration / d)
+                .map(|d| (*base_duration / *d).min(MIN_DURATION))
                 .choose(rng)
                 .expect("list must not be empty"),
-            PmvClipLengths::Songs {
-                songs,
-                beats_per_measure,
-                cut_after_measure_count,
-            } => {
-                todo!()
-            }
+            PmvClipLengths::Songs(songs) => songs
+                .next_duration(rng)
+                .expect("songs must match the duration"),
         }
     }
 }
@@ -64,18 +110,13 @@ impl ClipCreator for PmvClipCreator {
     fn create_clips(
         &self,
         markers: Vec<Marker>,
-        options: Self::Options,
+        mut options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
         info!(
             "using PmvClipCreator to create clips, options: {:?}",
             options
         );
-        // let clip_lengths = [
-        //     (duration / 2.0).max(MIN_DURATION),
-        //     (duration / 3.0).max(MIN_DURATION),
-        //     (duration / 4.0).max(MIN_DURATION),
-        // ];
 
         let max_duration = options.video_duration;
         let mut total_duration = 0.0;
@@ -123,5 +164,60 @@ impl ClipCreator for PmvClipCreator {
         }
 
         clips
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use tracing_test::traced_test;
+
+    use crate::{service::beats::Beats, util::create_seeded_rng};
+
+    use super::{MeasureCount, PmvClipLengths, PmvClipOptions, PmvSongs};
+
+    #[traced_test]
+    #[test]
+    fn clip_lengths_beats() {
+        let mut rng = create_seeded_rng(None);
+        let beats = vec![
+            Beats {
+                length: 250.0,
+                offsets: (0..250).into_iter().map(|n| n as f32).collect(),
+            },
+            Beats {
+                length: 250.0,
+                offsets: (0..250).into_iter().map(|n| n as f32).collect(),
+            },
+        ];
+        let mut songs = PmvSongs::new(beats, 4, MeasureCount::Fixed(1));
+        let mut durations = vec![];
+        while let Some(duration) = songs.next_duration(&mut rng) {
+            durations.push(duration);
+        }
+
+        assert_eq!(126, durations.len());
+    }
+
+    #[traced_test]
+    #[test]
+    fn clip_lengths_beats_randomized() {
+        let mut rng = create_seeded_rng(None);
+        let beats = vec![
+            Beats {
+                length: 250.0,
+                offsets: (0..250).into_iter().map(|n| n as f32).collect(),
+            },
+            Beats {
+                length: 250.0,
+                offsets: (0..250).into_iter().map(|n| n as f32).collect(),
+            },
+        ];
+        let mut songs = PmvSongs::new(beats, 4, MeasureCount::Randomized { min: 1, max: 3   });
+        let mut durations = vec![];
+        while let Some(duration) = songs.next_duration(&mut rng) {
+            durations.push(duration);
+        }
+
+        assert_eq!(79, durations.len());
     }
 }

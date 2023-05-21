@@ -1,3 +1,5 @@
+use self::pmv::PmvClipLengths;
+
 use super::{Clip, Marker};
 use crate::{
     service::clip::{
@@ -77,7 +79,11 @@ fn marrkers_to_clips_default(options: CreateClipsOptions, rng: &mut StdRng) -> V
 fn markers_to_clips_pmv(options: CreateClipsOptions, duration: f64, rng: &mut StdRng) -> Vec<Clip> {
     let creator = PmvClipCreator {};
     let clip_options = PmvClipOptions {
-        clip_duration: options.clip_duration,
+        // TODO
+        clip_lengths: PmvClipLengths::Randomized {
+            base_duration: options.clip_duration as f64,
+            divisors: vec![2.0, 3.0, 4.0],
+        },
         seed: options.seed,
         video_duration: duration,
     };
@@ -130,8 +136,8 @@ mod tests {
     use crate::{
         service::{
             clip::{
-                arrange_clips, sort::ClipSorter, ClipCreator, PmvClipCreator, PmvClipOptions,
-                SceneOrderClipSorter,
+                arrange_clips, pmv::PmvClipLengths, sort::ClipSorter, ClipCreator, PmvClipCreator,
+                PmvClipOptions, SceneOrderClipSorter,
             },
             fixtures::{self, create_marker_video_id},
             Clip, MarkerId, VideoId, VideoSource,
@@ -243,9 +249,12 @@ mod tests {
         let video_duration = 673.515;
         let markers = fixtures::markers();
         let options = PmvClipOptions {
-            clip_duration: 30,
             seed: None,
             video_duration,
+            clip_lengths: PmvClipLengths::Randomized {
+                base_duration: 30.,
+                divisors: vec![2.0, 3.0, 4.0],
+            },
         };
         let clip_creator = PmvClipCreator;
         let mut rng = create_seeded_rng(None);

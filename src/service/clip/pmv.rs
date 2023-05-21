@@ -212,7 +212,7 @@ mod test {
                 offsets: (0..250).into_iter().map(|n| n as f32).collect(),
             },
         ];
-        let mut songs = PmvSongs::new(beats, 4, MeasureCount::Randomized { min: 1, max: 3   });
+        let mut songs = PmvSongs::new(beats, 4, MeasureCount::Randomized { min: 1, max: 3 });
         let mut durations = vec![];
         while let Some(duration) = songs.next_duration(&mut rng) {
             durations.push(duration);

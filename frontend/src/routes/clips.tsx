@@ -71,6 +71,52 @@ interface ClipState {
   included: boolean
 }
 
+const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
+  offsets,
+  autoPlay,
+}) => {
+  const lastTime = useRef(0)
+  const totalTime = useRef(0)
+  const requestRef = useRef<number>()
+  const offsetIndex = useRef(0)
+  const [showBeat, setShowBeat] = useState(false)
+
+  const onAnimationFrame = (time: number) => {
+    time -= performance.timeOrigin / 1e9
+    time /= 1000.0
+
+    if (offsets && autoPlay && !showBeat) {
+      const nextBeat = offsets[offsetIndex.current]
+      const diff = Math.abs(nextBeat - totalTime.current)
+      if (diff <= 0.05) {
+        setShowBeat(true)
+        window.setTimeout(() => setShowBeat(false), 250)
+        offsetIndex.current += 1
+      }
+      const delta = time - lastTime.current
+      totalTime.current += delta
+      lastTime.current = time
+      requestRef.current = requestAnimationFrame(onAnimationFrame)
+    }
+  }
+
+  useEffect(() => {
+    if (autoPlay) {
+      requestRef.current = requestAnimationFrame(onAnimationFrame)
+      return () => cancelAnimationFrame(requestRef.current!)
+    }
+  }, [autoPlay])
+
+  return (
+    <div
+      className={clsx(
+        "w-12 h-12 rounded-full self-center my-2",
+        showBeat ? "bg-red-500" : "bg-white"
+      )}
+    />
+  )
+}
+
 function PreviewClips() {
   const loaderData = useLoaderData() as Data
   const streams = loaderData.streams
@@ -78,11 +124,6 @@ function PreviewClips() {
     loaderData.clips.map((clip) => ({clip, included: true}))
   )
 
-  const lastTime = useRef(0)
-  const totalTime = useRef(0)
-  const requestRef = useRef<number>()
-  const [beatOffsets, setBeatOffsets] = useImmer(loaderData.beatOffsets)
-  const [showBeat, setShowBeat] = useState(false)
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
   const currentClip = clips[currentClipIndex].clip
@@ -102,25 +143,6 @@ function PreviewClips() {
       clips: clips.filter((c) => c.included).map((c) => c.clip),
     })
     navigate("/stash/progress")
-  }
-
-  const onAnimationFrame = () => {
-    if (beatOffsets && autoPlay && !showBeat) {
-      const nextBeat = beatOffsets[0]
-
-      const diff = Math.abs(nextBeat - totalTime.current)
-      if (diff <= 0.05) {
-        console.log("found a beat at", totalTime)
-        setShowBeat(true)
-        window.setTimeout(() => setShowBeat(false), 250)
-
-        setBeatOffsets((draft) => {
-          draft!.splice(0, 1)
-        })
-      }
-
-      requestRef.current = requestAnimationFrame(onAnimationFrame)
-    }
   }
 
   const [segments, sceneColors] = useMemo(() => {
@@ -155,13 +177,6 @@ function PreviewClips() {
 
     setAutoPlay(!autoPlay)
   }
-
-  useEffect(() => {
-    if (autoPlay) {
-      requestRef.current = requestAnimationFrame(onAnimationFrame)
-      return () => cancelAnimationFrame(requestRef.current!)
-    }
-  }, [autoPlay])
 
   return (
     <>
@@ -236,14 +251,9 @@ function PreviewClips() {
         })}
       </div>
 
-      <div
-        className={clsx(
-          "w-full text-center text-3xl p-8",
-          showBeat ? "bg-red-500" : "bg-white"
-        )}
-      >
-        {showBeat ? "BEAT" : "NO BEAT"}
-      </div>
+      {loaderData.beatOffsets && (
+        <BeatIndicator autoPlay={autoPlay} offsets={loaderData.beatOffsets} />
+      )}
 
       <div className="flex justify-between mt-4">
         <button

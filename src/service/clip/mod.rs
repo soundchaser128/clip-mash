@@ -26,6 +26,7 @@ const MIN_DURATION: f64 = 2.0;
 pub enum ClipOrder {
     Random,
     SceneOrder,
+    Pmv,
 }
 
 #[derive(Debug)]
@@ -127,7 +128,7 @@ fn normalize_beat_offsets(songs: &[DbSong]) -> Vec<f32> {
 pub fn arrange_clips(mut options: CreateClipsOptions) -> (Vec<Clip>, Option<Vec<f32>>) {
     options.normalize_video_indices();
     let mut rng = create_seeded_rng(options.seed.as_deref());
-    let order = options.order;
+    let mut order = options.order;
 
     let beat_offsets = if options.songs.is_empty() {
         None
@@ -137,23 +138,27 @@ pub fn arrange_clips(mut options: CreateClipsOptions) -> (Vec<Clip>, Option<Vec<
 
     let clips = match (options.split_clips, options.max_duration) {
         (true, None) => marrkers_to_clips_default(options, &mut rng),
-        (true, Some(duration)) => markers_to_clips_pmv(options, duration, &mut rng),
+        (true, Some(duration)) => {
+            order = ClipOrder::Pmv;
+            markers_to_clips_pmv(options, duration, &mut rng)
+        }
         (false, _) => markers_to_clips(options.markers),
     };
 
     info!("generated {} clips", clips.len());
+    let clips = match order {
+        ClipOrder::Random => {
+            let sorter = RandomClipSorter;
+            sorter.sort_clips(clips, &mut rng)
+        }
+        ClipOrder::SceneOrder => {
+            let sorter = SceneOrderClipSorter;
+            sorter.sort_clips(clips, &mut rng)
+        }
+        ClipOrder::Pmv => clips,
+    };
 
     (clips, beat_offsets)
-    // match order {
-    //     ClipOrder::Random => {
-    //         let sorter = RandomClipSorter;
-    //         sorter.sort_clips(clips, &mut rng)
-    //     }
-    //     ClipOrder::SceneOrder => {
-    //         let sorter = SceneOrderClipSorter;
-    //         sorter.sort_clips(clips, &mut rng)
-    //     }
-    // }
 }
 
 pub trait ClipCreator {

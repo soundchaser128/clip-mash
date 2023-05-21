@@ -96,7 +96,7 @@ fn markers_to_clips_pmv(options: CreateClipsOptions, duration: f64, rng: &mut St
                 })
                 .collect(),
             4,
-            pmv::MeasureCount::Randomized { min: 1, max: 3 },
+            pmv::MeasureCount::Fixed(2),
         ))
     };
     let clip_options = PmvClipOptions {

@@ -78,7 +78,7 @@ pub enum PmvClipLengths {
 }
 
 impl PmvClipLengths {
-    pub fn pick_duration(&mut self, rng: &mut StdRng) -> f64 {
+    pub fn pick_duration(&mut self, rng: &mut StdRng) -> Option<f64> {
         match self {
             PmvClipLengths::Randomized {
                 base_duration,
@@ -86,11 +86,8 @@ impl PmvClipLengths {
             } => divisors
                 .iter()
                 .map(|d| (*base_duration / *d).min(MIN_DURATION))
-                .choose(rng)
-                .expect("list must not be empty"),
-            PmvClipLengths::Songs(songs) => songs
-                .next_duration(rng)
-                .expect("songs must match the duration"),
+                .choose(rng),
+            PmvClipLengths::Songs(songs) => songs.next_duration(rng),
         }
     }
 }
@@ -131,6 +128,10 @@ impl ClipCreator for PmvClipCreator {
         while total_duration <= max_duration {
             let marker = &markers[marker_idx % markers.len()];
             let clip_duration = options.clip_lengths.pick_duration(rng);
+            if clip_duration.is_none() {
+                break;
+            }
+            let clip_duration = clip_duration.unwrap();
 
             let (start, index) = start_times[&marker.id.inner()];
             let end = (start + clip_duration).min(marker.end_time);

@@ -3,6 +3,7 @@ use self::pmv::{PmvClipLengths, PmvSongs};
 use super::{beats::Beats, Clip, Marker};
 use crate::{
     data::database::DbSong,
+    server::dtos::ClipOptions,
     service::clip::{
         default::{DefaultClipCreator, DefaultClipOptions},
         pmv::{PmvClipCreator, PmvClipOptions},
@@ -32,12 +33,10 @@ pub enum ClipOrder {
 #[derive(Debug)]
 pub struct CreateClipsOptions {
     pub order: ClipOrder,
-    pub clip_duration: u32,
     pub markers: Vec<Marker>,
     pub split_clips: bool,
     pub seed: Option<String>,
-    pub max_duration: Option<f64>,
-    pub songs: Vec<DbSong>,
+    pub clip_options: ClipOptions,
 }
 
 impl CreateClipsOptions {
@@ -69,45 +68,6 @@ fn markers_to_clips(markers: Vec<Marker>) -> Vec<Clip> {
         .collect()
 }
 
-fn marrkers_to_clips_default(options: CreateClipsOptions, rng: &mut StdRng) -> Vec<Clip> {
-    let creator = DefaultClipCreator {};
-    let clip_options = DefaultClipOptions {
-        clip_duration: options.clip_duration,
-        seed: options.seed,
-    };
-
-    creator.create_clips(options.markers, clip_options, rng)
-}
-
-fn markers_to_clips_pmv(options: CreateClipsOptions, duration: f64, rng: &mut StdRng) -> Vec<Clip> {
-    let creator = PmvClipCreator {};
-    let lengths = if options.songs.is_empty() {
-        PmvClipLengths::Randomized {
-            base_duration: options.clip_duration as f64,
-            divisors: vec![2.0, 3.0, 4.0],
-        }
-    } else {
-        PmvClipLengths::Songs(PmvSongs::new(
-            options
-                .songs
-                .iter()
-                .map(|s| {
-                    serde_json::from_str(s.beats.as_deref().expect("must have beats set")).unwrap()
-                })
-                .collect(),
-            4,
-            pmv::MeasureCount::Fixed(4),
-        ))
-    };
-    let clip_options = PmvClipOptions {
-        clip_lengths: lengths,
-        seed: options.seed,
-        video_duration: duration,
-    };
-
-    creator.create_clips(options.markers, clip_options, rng)
-}
-
 fn normalize_beat_offsets(songs: &[DbSong]) -> Vec<f32> {
     let mut offsets = vec![];
     let mut current = 0.0;
@@ -130,19 +90,40 @@ pub fn arrange_clips(mut options: CreateClipsOptions) -> (Vec<Clip>, Option<Vec<
     let mut rng = create_seeded_rng(options.seed.as_deref());
     let mut order = options.order;
 
-    let beat_offsets = if options.songs.is_empty() {
-        None
-    } else {
-        Some(normalize_beat_offsets(&options.songs))
-    };
+    // let beat_offsets = if options.songs.is_empty() {
+    //     None
+    // } else {
+    //     Some(normalize_beat_offsets(&options.songs))
+    // };
 
-    let clips = match (options.split_clips, options.max_duration) {
-        (true, None) => marrkers_to_clips_default(options, &mut rng),
-        (true, Some(duration)) => {
-            order = ClipOrder::Pmv;
-            markers_to_clips_pmv(options, duration, &mut rng)
-        }
-        (false, _) => markers_to_clips(options.markers),
+    // let clips = match (options.split_clips, options.max_duration) {
+    //     (true, None) => marrkers_to_clips_default(options, &mut rng),
+    //     (true, Some(duration)) => {
+    //         order = ClipOrder::Pmv;
+    //         markers_to_clips_pmv(options, duration, &mut rng)
+    //     }
+    //     (false, _) => markers_to_clips(options.markers),
+    // };
+
+    let clips = match options.clip_options {
+        ClipOptions::Pmv { song_ids, clips } => {
+            let songs = todo!();
+            let options = PmvClipOptions {
+                seed: options.seed,
+                video_duration,
+                clip_lengths: match clips {
+                    PmvClipOptions::Randomized(_) => todo!(),
+                    PmvClipOptions::Songs { beats_per_measure, cut_after_measure_count } => todo!(),
+                }
+            };
+            let creator = PmvClipCreator;
+            creator.create_clips(options.markers, options, &mut rng)
+        },
+        ClipOptions::Default(options) => {
+            let options = DefaultClipOptions::from(options);
+            let creator = DefaultClipCreator;
+            creator.create_clips(options.markers, options, &mut rng)
+        },
     };
 
     info!("generated {} clips", clips.len());

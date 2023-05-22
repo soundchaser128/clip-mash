@@ -158,15 +158,41 @@ pub struct SelectedMarker {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase", tag = "type")]
+pub struct RandomizedClipOptions {
+    pub base_duration: f64,
+    pub divisors: Vec<f64>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase", tag = "type")]
+pub enum PmvClipOptions {
+    Randomized(RandomizedClipOptions),
+    Songs {
+        beats_per_measure: usize,
+        // TODO allow randomizing
+        cut_after_measure_count: usize,
+    },
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase", tag = "type")]
+pub enum ClipOptions {
+    Pmv {
+        song_ids: Vec<i64>,
+        clips: PmvClipOptions,
+    },
+    Default(RandomizedClipOptions),
+}
+
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateClipsBody {
     pub clip_order: ClipOrder,
-    pub clip_duration: u32,
     pub split_clips: bool,
     pub markers: Vec<SelectedMarker>,
     pub seed: Option<String>,
-    pub song_ids: Vec<i64>,
-    pub trim_video_for_songs: bool,
+    pub clips: ClipOptions,
 }
 
 #[derive(Serialize, Debug)]

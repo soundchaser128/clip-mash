@@ -141,16 +141,10 @@ impl DataService {
     pub async fn convert_clip_options(&self, body: CreateClipsBody) -> Result<CreateClipsOptions> {
         Ok(CreateClipsOptions {
             order: body.clip_order,
-            clip_duration: body.clip_duration,
             split_clips: body.split_clips,
             markers: self.convert_selected_markers(body.markers).await?,
             seed: body.seed,
-            max_duration: if body.song_ids.is_empty() || !body.trim_video_for_songs {
-                None
-            } else {
-                Some(self.db.sum_song_durations(&body.song_ids).await?)
-            },
-            songs: self.db.get_songs(&body.song_ids).await?,
+            clip_options: body.clips,
         })
     }
 }

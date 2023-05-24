@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use crate::{util::commandline_error, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use tokio::process::Command;

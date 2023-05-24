@@ -93,7 +93,7 @@ impl PmvClipLengths {
 }
 
 #[derive(Debug)]
-pub struct PmvClipOptions {
+pub struct PmvClipCreatorOptions {
     pub seed: Option<String>,
     pub video_duration: f64,
     pub clip_lengths: PmvClipLengths,
@@ -102,7 +102,7 @@ pub struct PmvClipOptions {
 pub struct PmvClipCreator;
 
 impl ClipCreator for PmvClipCreator {
-    type Options = PmvClipOptions;
+    type Options = PmvClipCreatorOptions;
 
     fn create_clips(
         &self,

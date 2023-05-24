@@ -11,7 +11,7 @@ use tokio::{fs, io::AsyncWriteExt};
 use tracing::info;
 use youtube_dl::YoutubeDl;
 
-use super::directories::Directories;
+use super::{beats::Beats, directories::Directories};
 
 const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
     "yt-dlp.exe"
@@ -142,6 +142,17 @@ impl MusicService {
             .await?;
         Ok(result)
     }
+}
+
+pub fn parse_beats(songs: &[DbSong]) -> Vec<Beats> {
+    songs
+        .iter()
+        .filter_map(|s| {
+            s.beats
+                .as_deref()
+                .and_then(|json| serde_json::from_str(&json).ok())
+        })
+        .collect()
 }
 
 #[cfg(test)]

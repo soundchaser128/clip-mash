@@ -7,6 +7,7 @@ use axum::{
     },
     Json,
 };
+use clip_mash_types::*;
 use color_eyre::{eyre::eyre, Report};
 use futures::{
     stream::{self, Stream},
@@ -21,11 +22,7 @@ use tracing::{debug, error, info};
 
 use crate::{
     data::{database::DbSong, service::DataService, stash_api::StashApi},
-    server::{
-        dtos::{ClipsResponse, CreateClipsBody, CreateVideoBody},
-        error::AppError,
-        handlers::get_streams,
-    },
+    server::{error::AppError, handlers::get_streams},
     service::{
         beats::{self, Beats},
         clip::ClipService,
@@ -33,7 +30,7 @@ use crate::{
         generator::{self, Progress},
         music::MusicService,
         stash_config::Config,
-        Clip, VideoSource,
+        VideoSource,
     },
     util::expect_file_name,
 };

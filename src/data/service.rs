@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use clip_mash_types::*;
 use color_eyre::eyre::bail;
 
 use super::{
@@ -7,10 +8,9 @@ use super::{
     stash_api::StashApi,
 };
 use crate::{
-    server::dtos::{CreateClipsBody, CreateVideoBody, SelectedMarker},
     service::{
-        clip::CreateClipsOptions, generator::CompilationOptions, stash_config::Config, Clip,
-        Marker, MarkerId, MarkerInfo, Video, VideoId,
+        clip::CreateClipsOptions, generator::CompilationOptions, stash_config::Config, Marker,
+        MarkerInfo, Video,
     },
     Result,
 };

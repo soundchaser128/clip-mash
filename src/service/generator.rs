@@ -7,6 +7,7 @@ use crate::{
     Result,
 };
 use camino::{Utf8Path, Utf8PathBuf};
+use clip_mash_types::Clip;
 use futures::lock::Mutex;
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -15,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
 
-use super::{directories::Directories, Clip, Marker};
+use super::{directories::Directories, Marker};
 
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct Progress {
@@ -26,16 +27,6 @@ pub struct Progress {
 
 lazy_static! {
     static ref PROGRESS: Mutex<Progress> = Default::default();
-}
-
-#[derive(Debug, Clone, Copy, Deserialize)]
-pub enum VideoResolution {
-    #[serde(rename = "720")]
-    SevenTwenty,
-    #[serde(rename = "1080")]
-    TenEighty,
-    #[serde(rename = "4K")]
-    FourK,
 }
 
 impl VideoResolution {

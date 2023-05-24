@@ -27,14 +27,6 @@ mod sort;
 
 const MIN_DURATION: f64 = 2.0;
 
-#[derive(Clone, Copy, Debug, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum ClipOrder {
-    Random,
-    SceneOrder,
-    Pmv,
-}
-
 #[derive(Debug)]
 pub struct CreateClipsOptions {
     pub order: ClipOrder,

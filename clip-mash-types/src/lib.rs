@@ -1,7 +1,102 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt;
 
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ClipOrder {
+    Random,
+    SceneOrder,
+    Pmv,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum VideoSource {
+    Stash,
+    LocalFile,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Clip {
+    pub source: VideoSource,
+    pub video_id: VideoId,
+    pub marker_id: MarkerId,
+    /// Start and endpoint inside the video in seconds.
+    pub range: (f64, f64),
+    pub index_within_video: usize,
+    pub index_within_marker: usize,
+}
+
+impl Clip {
+    pub fn range_millis(&self) -> (u32, u32) {
+        ((self.range.0 as u32) * 1000, (self.range.1 as u32) * 1000)
+    }
+
+    pub fn duration(&self) -> f64 {
+        let (start, end) = self.range;
+        end - start
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", tag = "type", content = "id")]
+pub enum MarkerId {
+    LocalFile(i64),
+    Stash(i64),
+}
+
+impl MarkerId {
+    pub fn inner(&self) -> i64 {
+        match self {
+            MarkerId::LocalFile(id) => *id,
+            MarkerId::Stash(id) => *id,
+        }
+    }
+}
+
+impl fmt::Display for MarkerId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MarkerId::LocalFile(id) => write!(f, "{}", id),
+            MarkerId::Stash(id) => write!(f, "{}", id),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
+#[serde(rename_all = "camelCase", tag = "type", content = "id")]
+pub enum VideoId {
+    LocalFile(String),
+    Stash(String),
+}
+
+impl VideoId {
+    pub fn source(&self) -> VideoSource {
+        match self {
+            VideoId::LocalFile(_) => VideoSource::LocalFile,
+            VideoId::Stash(_) => VideoSource::Stash,
+        }
+    }
+
+    pub fn as_stash_id(&self) -> &str {
+        if let Self::Stash(id) = self {
+            id
+        } else {
+            panic!("this is not a stash ID")
+        }
+    }
+}
+
+impl fmt::Display for VideoId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VideoId::LocalFile(id) => write!(f, "{}", id),
+            VideoId::Stash(id) => write!(f, "{}", id),
+        }
+    }
+}
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -50,7 +145,6 @@ pub struct VideoDto {
     pub file_name: String,
     pub interactive: bool,
 }
-
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -115,6 +209,16 @@ pub struct ListVideoDto {
     pub markers: Vec<MarkerDto>,
 }
 
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub enum VideoResolution {
+    #[serde(rename = "720")]
+    SevenTwenty,
+    #[serde(rename = "1080")]
+    TenEighty,
+    #[serde(rename = "4K")]
+    FourK,
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateVideoBody {
@@ -139,22 +243,6 @@ pub struct StashScene {
     pub rating: Option<i64>,
     pub interactive: bool,
     pub marker_count: usize,
-}
-
-impl StashScene {
-    pub fn from(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Self {
-        StashScene {
-            id: scene.id,
-            performers: scene.performers.into_iter().map(|p| p.name).collect(),
-            image_url: scene.paths.screenshot.map(|url| add_api_key(&url, api_key)),
-            title: scene.title.unwrap_or_default(),
-            studio: scene.studio.map(|s| s.name),
-            tags: scene.tags.into_iter().map(|t| t.name).collect(),
-            rating: scene.rating100,
-            interactive: scene.interactive,
-            marker_count: scene.scene_markers.len(),
-        }
-    }
 }
 
 pub type Api = (

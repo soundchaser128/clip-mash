@@ -398,6 +398,7 @@ dependencies = [
  "aubio",
  "axum",
  "camino",
+ "clip-mash-types",
  "color-eyre",
  "directories",
  "fake",
@@ -433,6 +434,13 @@ dependencies = [
  "xz2",
  "youtube_dl",
  "zip",
+]
+
+[[package]]
+name = "clip-mash-types"
+version = "0.1.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

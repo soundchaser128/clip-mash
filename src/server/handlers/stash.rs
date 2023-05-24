@@ -5,17 +5,14 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use clip_mash_types::*;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tracing::{debug, info};
 
 use crate::{
     data::stash_api::{FilterMode, StashApi},
-    server::{
-        dtos::{MarkerDto, PerformerDto, StashScene, TagDto},
-        error::AppError,
-        handlers::AppState,
-    },
+    server::{error::AppError, handlers::AppState},
     service::stash_config::Config,
     util::add_api_key,
 };

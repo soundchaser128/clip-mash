@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{info, warn};
 
-use super::{Clip, Video};
+use super::Video;
 use crate::{data::stash_api::StashApi, service::VideoInfo, Result};
 
 // Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs

@@ -7,6 +7,7 @@ use axum::{
     Json,
 };
 use camino::Utf8PathBuf;
+use clip_mash_types::{ListVideoDto, MarkerDto};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tower::ServiceExt;
@@ -14,11 +15,7 @@ use tracing::info;
 
 use crate::{
     data::database::CreateMarker,
-    server::{
-        dtos::{ListVideoDto, MarkerDto},
-        error::AppError,
-        handlers::AppState,
-    },
+    server::{error::AppError, handlers::AppState},
 };
 
 #[axum::debug_handler]

@@ -1,4 +1,5 @@
 use camino::{Utf8Path, Utf8PathBuf};
+use clip_mash_types::Clip;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{info, warn};

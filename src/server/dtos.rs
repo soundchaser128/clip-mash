@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-
 use camino::Utf8Path;
 use clip_mash_types::*;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     data::{
@@ -106,6 +103,28 @@ impl From<LocalVideoWithMarkers> for ListVideoDto {
         ListVideoDto {
             video: value.video.into(),
             markers: value.markers.into_iter().map(From::from).collect(),
+        }
+    }
+}
+
+pub struct StashSceneWrapper<'a> {
+    pub scene: FindScenesQueryFindScenesScenes,
+    pub api_key: &'a str,
+}
+
+impl<'a> From<StashSceneWrapper<'a>> for StashScene {
+    fn from(value: StashSceneWrapper<'a>) -> Self {
+        let StashSceneWrapper { scene, api_key } = value;
+        StashScene {
+            id: scene.id,
+            performers: scene.performers.into_iter().map(|p| p.name).collect(),
+            image_url: scene.paths.screenshot.map(|url| add_api_key(&url, api_key)),
+            title: scene.title.unwrap_or_default(),
+            studio: scene.studio.map(|s| s.name),
+            tags: scene.tags.into_iter().map(|t| t.name).collect(),
+            rating: scene.rating100,
+            interactive: scene.interactive,
+            marker_count: scene.scene_markers.len(),
         }
     }
 }

@@ -1,14 +1,9 @@
 use self::pmv::{PmvClipLengths, PmvSongs};
-use crate::{
-    server::dtos::{PmvClipOptions, RandomizedClipOptions},
-    service::music::parse_beats,
-    Result,
-};
+use crate::{service::music::parse_beats, Result};
 
-use super::{Clip, Marker};
+use super::Marker;
 use crate::{
     data::database::{Database, DbSong},
-    server::dtos::ClipOptions,
     service::clip::{
         default::{DefaultClipCreator, DefaultClipOptions},
         pmv::{PmvClipCreator, PmvClipCreatorOptions},
@@ -16,8 +11,9 @@ use crate::{
     },
     util::create_seeded_rng,
 };
+use clip_mash_types::{Clip, ClipOptions, ClipOrder, PmvClipOptions, RandomizedClipOptions};
 use rand::rngs::StdRng;
-use serde::Deserialize;
+
 use std::fmt::Debug;
 use tracing::info;
 
@@ -170,11 +166,11 @@ pub trait ClipCreator {
 #[cfg(test)]
 mod tests {
     use assert_approx_eq::assert_approx_eq;
+    use clip_mash_types::{Clip, ClipOptions, MarkerId, RandomizedClipOptions, VideoSource};
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
     use crate::{
-        server::dtos::{ClipOptions, RandomizedClipOptions},
         service::{
             clip::{
                 pmv::{PmvClipCreatorOptions, PmvClipLengths},
@@ -182,7 +178,7 @@ mod tests {
                 ClipCreator, PmvClipCreator, SceneOrderClipSorter,
             },
             fixtures::{self, create_marker_video_id},
-            Clip, MarkerId, VideoId, VideoSource,
+            VideoId,
         },
         util::create_seeded_rng,
     };

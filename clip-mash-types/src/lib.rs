@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
+use typescript_type_def::TypeDef;
 use std::collections::HashMap;
 use std::fmt;
 
-#[derive(Clone, Copy, Debug, Deserialize)]
+#[derive(Clone, Copy, Debug, Deserialize, TypeDef)]
 #[serde(rename_all = "kebab-case")]
 pub enum ClipOrder {
     Random,
@@ -10,14 +11,14 @@ pub enum ClipOrder {
     Pmv,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub enum VideoSource {
     Stash,
     LocalFile,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct Clip {
     pub source: VideoSource,
@@ -40,7 +41,7 @@ impl Clip {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, TypeDef)]
 #[serde(rename_all = "camelCase", tag = "type", content = "id")]
 pub enum MarkerId {
     LocalFile(i64),
@@ -65,7 +66,7 @@ impl fmt::Display for MarkerId {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord, TypeDef)]
 #[serde(rename_all = "camelCase", tag = "type", content = "id")]
 pub enum VideoId {
     LocalFile(String),
@@ -98,7 +99,7 @@ impl fmt::Display for VideoId {
     }
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct TagDto {
     pub name: String,
@@ -106,7 +107,7 @@ pub struct TagDto {
     pub marker_count: i64,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct PerformerDto {
     pub id: String,
@@ -118,7 +119,7 @@ pub struct PerformerDto {
     pub favorite: bool,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkerDto {
     pub id: MarkerId,
@@ -136,7 +137,7 @@ pub struct MarkerDto {
     pub index_within_video: usize,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct VideoDto {
     pub id: VideoId,
@@ -146,7 +147,7 @@ pub struct VideoDto {
     pub interactive: bool,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct SelectedMarker {
     pub id: MarkerId,
@@ -155,14 +156,14 @@ pub struct SelectedMarker {
     pub index_within_video: usize,
 }
 
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase", tag = "type")]
+#[derive(Deserialize, Debug, TypeDef)]
+#[serde(rename_all = "camelCase")]
 pub struct RandomizedClipOptions {
     pub base_duration: f64,
     pub divisors: Vec<f64>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum PmvClipOptions {
     Randomized(RandomizedClipOptions),
@@ -173,7 +174,7 @@ pub enum PmvClipOptions {
     },
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum ClipOptions {
     Pmv {
@@ -183,7 +184,7 @@ pub enum ClipOptions {
     Default(RandomizedClipOptions),
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateClipsBody {
     pub clip_order: ClipOrder,
@@ -193,7 +194,7 @@ pub struct CreateClipsBody {
     pub clips: ClipOptions,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct ClipsResponse {
     pub clips: Vec<Clip>,
@@ -202,14 +203,14 @@ pub struct ClipsResponse {
     pub beat_offsets: Option<Vec<f32>>,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct ListVideoDto {
     pub video: VideoDto,
     pub markers: Vec<MarkerDto>,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize, TypeDef)]
 pub enum VideoResolution {
     #[serde(rename = "720")]
     SevenTwenty,
@@ -219,7 +220,17 @@ pub enum VideoResolution {
     FourK,
 }
 
-#[derive(Deserialize, Debug)]
+impl VideoResolution {
+    pub fn resolution(&self) -> (u32, u32) {
+        match self {
+            Self::SevenTwenty => (1280, 720),
+            Self::TenEighty => (1920, 1080),
+            Self::FourK => (3840, 2160),
+        }
+    }
+}
+
+#[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateVideoBody {
     pub file_name: String,
@@ -231,7 +242,7 @@ pub struct CreateVideoBody {
     pub music_volume: Option<f64>,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct StashScene {
     pub id: String,

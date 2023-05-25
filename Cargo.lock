@@ -441,6 +441,7 @@ name = "clip-mash-types"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "typescript-type-def",
 ]
 
 [[package]]

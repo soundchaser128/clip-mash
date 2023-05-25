@@ -7,12 +7,12 @@ use crate::{
     Result,
 };
 use camino::{Utf8Path, Utf8PathBuf};
-use clip_mash_types::Clip;
+use clip_mash_types::{Clip, VideoResolution};
 use futures::lock::Mutex;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use nanoid::nanoid;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
 
@@ -27,16 +27,6 @@ pub struct Progress {
 
 lazy_static! {
     static ref PROGRESS: Mutex<Progress> = Default::default();
-}
-
-impl VideoResolution {
-    fn resolution(&self) -> (u32, u32) {
-        match self {
-            Self::SevenTwenty => (1280, 720),
-            Self::TenEighty => (1920, 1080),
-            Self::FourK => (3840, 2160),
-        }
-    }
 }
 
 #[derive(Debug)]

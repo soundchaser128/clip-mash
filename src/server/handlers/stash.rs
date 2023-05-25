@@ -12,7 +12,7 @@ use tracing::{debug, info};
 
 use crate::{
     data::stash_api::{FilterMode, StashApi},
-    server::{error::AppError, handlers::AppState},
+    server::{dtos::StashSceneWrapper, error::AppError, handlers::AppState},
     service::stash_config::Config,
     util::add_api_key,
 };
@@ -89,7 +89,12 @@ pub async fn fetch_scenes() -> Result<Json<Vec<StashScene>>, AppError> {
     let videos = api.find_scenes().await?;
     let videos = videos
         .into_iter()
-        .map(|m| StashScene::from(m, &config.api_key))
+        .map(|scene| {
+            StashScene::from(StashSceneWrapper {
+                scene,
+                api_key: &config.api_key,
+            })
+        })
         .collect();
     Ok(Json(videos))
 }

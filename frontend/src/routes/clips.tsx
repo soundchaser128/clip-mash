@@ -6,7 +6,12 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom"
-import {FormStage, StateHelpers} from "../types/types"
+import {
+  FormStage,
+  LocalVideosFormState,
+  StashFormState,
+  StateHelpers,
+} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import clsx from "clsx"
@@ -14,7 +19,7 @@ import {useRef} from "react"
 import {useImmer} from "use-immer"
 import invariant from "tiny-invariant"
 import {formatSeconds, getFormState, getSegmentColor} from "../helpers"
-import {Clip, VideoDto} from "../types.generated"
+import {Clip, ClipOptions, CreateClipsBody, VideoDto} from "../types.generated"
 
 const DEBUG = false
 
@@ -32,21 +37,45 @@ interface Data {
   beatOffsets?: number[]
 }
 
+const getClipSettings = (
+  state: LocalVideosFormState | StashFormState
+): ClipOptions => {
+  if (state.songs && state.songs.length > 0) {
+    return {
+      type: "pmv",
+      song_ids: state.songs.map(({songId}) => songId),
+      clips: {
+        type: "songs",
+        beatsPerMeasure: 4,
+        cutAfterMeasures: {
+          random: [2, 4],
+        },
+      },
+    }
+  } else {
+    return {
+      type: "default",
+      baseDuration: state.clipDuration || 30,
+      divisors: [2.0, 3.0, 4.0],
+    }
+  }
+}
+
 export const loader: LoaderFunction = async () => {
   const state = getFormState()!
   invariant(StateHelpers.isNotInitial(state))
 
+  const body = {
+    clipOrder: state.clipOrder || "scene-order",
+    markers: state.selectedMarkers!.filter((m) => m.selected),
+    splitClips: state.splitClips || true,
+    seed: state.seed || null,
+    clips: getClipSettings(state),
+  } satisfies CreateClipsBody
+
   const response = await fetch("/api/clips", {
     method: "POST",
-    body: JSON.stringify({
-      clipOrder: state.clipOrder,
-      clipDuration: state.clipDuration,
-      markers: state.selectedMarkers!.filter((m) => m.selected),
-      splitClips: state.splitClips,
-      seed: state.seed,
-      songIds: state.songs?.map((s) => s.songId) || [],
-      trimVideoForSongs: state.trimVideoForSongs,
-    }),
+    body: JSON.stringify(body),
     headers: {"content-type": "application/json"},
   })
   if (response.ok) {

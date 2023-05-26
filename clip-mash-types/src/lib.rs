@@ -165,14 +165,24 @@ pub struct RandomizedClipOptions {
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub enum MeasureCount {
+    Fixed(usize),
+    Random(usize, usize),
+}
+
+#[derive(Deserialize, Debug, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct SongClipOptions {
+    pub beats_per_measure: usize,
+    pub cut_after_measures: MeasureCount,
+}
+
+#[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum PmvClipOptions {
     Randomized(RandomizedClipOptions),
-    Songs {
-        beats_per_measure: usize,
-        // TODO allow randomizing
-        cut_after_measure_count: usize,
-    },
+    Songs(SongClipOptions),
 }
 
 #[derive(Deserialize, Debug, TypeDef)]

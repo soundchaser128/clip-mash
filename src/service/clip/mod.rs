@@ -11,7 +11,9 @@ use crate::{
     },
     util::create_seeded_rng,
 };
-use clip_mash_types::{Clip, ClipOptions, ClipOrder, PmvClipOptions, RandomizedClipOptions};
+use clip_mash_types::{
+    Clip, ClipOptions, ClipOrder, PmvClipOptions, RandomizedClipOptions, SongClipOptions,
+};
 use rand::rngs::StdRng;
 
 use std::fmt::Debug;
@@ -109,15 +111,22 @@ impl ClipService {
                             base_duration,
                             divisors,
                         },
-                        PmvClipOptions::Songs {
+                        PmvClipOptions::Songs(SongClipOptions {
                             beats_per_measure,
-                            cut_after_measure_count,
-                        } => {
+                            cut_after_measures,
+                        }) => {
                             let beats = parse_beats(&songs);
                             PmvClipLengths::Songs(PmvSongs::new(
                                 beats,
                                 beats_per_measure,
-                                pmv::MeasureCount::Fixed(cut_after_measure_count),
+                                match cut_after_measures {
+                                    clip_mash_types::MeasureCount::Fixed(count) => {
+                                        pmv::MeasureCount::Fixed(count)
+                                    }
+                                    clip_mash_types::MeasureCount::Random(min, max) => {
+                                        pmv::MeasureCount::Randomized { min, max }
+                                    }
+                                },
                             ))
                         }
                     },

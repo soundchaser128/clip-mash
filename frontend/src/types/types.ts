@@ -6,6 +6,7 @@ import {
   VideoDto,
   SongDto,
   SelectedMarker,
+  ClipOrder,
 } from "../types.generated"
 
 export type Tag = TagDto
@@ -59,7 +60,7 @@ interface CommonFormState {
   videos?: VideoWithMarkers[]
   localVideoPath?: string
   recurse?: boolean
-  clipOrder?: "random" | "scene-order"
+  clipOrder?: ClipOrder
   clipDuration?: number
   outputResolution?: "720" | "1080" | "4K"
   outputFps?: number

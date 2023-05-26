@@ -1,8 +1,11 @@
 use clip_mash_types::Api;
-use std::{fs::File, process::{Command, Output}};
+use std::{
+    fs::File,
+    process::{Command, Output},
+};
 use typescript_type_def::{write_definition_file, DefinitionFileOptions};
 
-type Error=  Box<dyn std::error::Error>;
+type Error = Box<dyn std::error::Error>;
 
 const TYPE_DEFINITIONS: &str = "./frontend/src/types.generated.ts";
 
@@ -14,9 +17,9 @@ pub fn commandline_error<T>(output: Output) -> Result<T, Error> {
         output.status.code().unwrap_or(1),
         stdout,
         stderr
-    ).into())
+    )
+    .into())
 }
-
 
 fn format_file() -> Result<(), Error> {
     let output = Command::new("prettier")

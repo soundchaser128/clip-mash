@@ -257,7 +257,6 @@ pub struct StashScene {
     pub marker_count: usize,
 }
 
-
 #[derive(Serialize, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct SongDto {

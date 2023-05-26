@@ -1,5 +1,6 @@
 import {format, formatDuration} from "date-fns"
-import {FormState, SelectedMarker} from "./types/types"
+import {SelectedMarker} from "./types.generated"
+import {FormState} from "./types/types"
 
 export function getFormState(): FormState | null {
   const json = sessionStorage.getItem("form-state")

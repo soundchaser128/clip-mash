@@ -33,7 +33,7 @@ function Performers() {
               )}
             />
             <img
-              src={performer.imageUrl}
+              src={performer.imageUrl || undefined}
               alt={performer.name}
               className="aspect-[2/3] object-cover object-top w-full"
             />

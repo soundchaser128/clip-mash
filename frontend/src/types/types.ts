@@ -1,18 +1,16 @@
-export interface Tag {
-  name: string
-  id: string
-  markerCount: number
-}
+import {
+  TagDto,
+  PerformerDto,
+  Clip,
+  MarkerDto,
+  VideoDto,
+  SongDto,
+  SelectedMarker,
+} from "../types.generated"
 
-export interface Performer {
-  name: string
-  id: string
-  sceneCount: number
-  imageUrl?: string
-  tags: string[]
-  rating?: number
-  favorite: boolean
-}
+export type Tag = TagDto
+
+export type Performer = PerformerDto
 
 export enum FormStage {
   SelectMode = 1,
@@ -43,14 +41,6 @@ export interface MarkerId {
 export interface VideoId {
   type: IdSource
   id: string
-}
-
-export interface SelectedMarker {
-  id: MarkerId
-  videoId: VideoId
-  selectedRange: [number, number]
-  indexWithinVideo: number
-  selected: boolean
 }
 
 export type SelectMode = "tags" | "performers" | "scenes"
@@ -94,7 +84,7 @@ export interface StashFormState extends CommonFormState {
   selectMode?: SelectMode
   selectedIds?: string[]
   includeAll?: boolean
-  markers?: Marker[]
+  markers?: MarkerDto[]
   stage: FormStage
 }
 
@@ -117,61 +107,7 @@ export const StateHelpers = {
     return state.source === undefined
   },
 }
-
-export interface Clip {
-  source: "stash" | "localFile"
-  videoId: VideoId
-  markerId: MarkerId
-  range: [number, number]
-  indexWithinVideo: number
-  indexWithinMarker: number
-}
-
-export interface VideoDto {
-  id: VideoId
-  title: string
-  performers: string[]
-  fileName: string
-  interactive: boolean
-}
-
-export interface Marker {
-  id: MarkerId
-  primaryTag: string
-  streamUrl: string
-  screenshotUrl: string
-  start: number
-  end: number
-  sceneTitle?: string
-  performers: string[]
-  fileName?: string
-  sceneInteractive: boolean
-  tags: string[]
-  indexWithinVideo: number
-  videoId: VideoId
-}
-
 export interface VideoWithMarkers {
   video: VideoDto
-  markers: Marker[]
-}
-
-export interface Scene {
-  id: string
-  performers: string[]
-  imageUrl: string
-  title: string
-  studio: string
-  tags: string[]
-  rating?: number
-  interactive: boolean
-  markerCount: number
-}
-
-export interface SongDto {
-  songId: number
-  duration: number
-  fileName: string
-  url: string
-  beats: number[]
+  markers: MarkerDto[]
 }

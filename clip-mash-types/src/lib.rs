@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use typescript_type_def::TypeDef;
 use std::collections::HashMap;
 use std::fmt;
+use typescript_type_def::TypeDef;
 
 #[derive(Clone, Copy, Debug, Deserialize, TypeDef)]
 #[serde(rename_all = "kebab-case")]
@@ -154,6 +154,7 @@ pub struct SelectedMarker {
     pub video_id: VideoId,
     pub selected_range: (f64, f64),
     pub index_within_video: usize,
+    pub selected: Option<bool>,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
@@ -256,6 +257,17 @@ pub struct StashScene {
     pub marker_count: usize,
 }
 
+
+#[derive(Serialize, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct SongDto {
+    pub song_id: i64,
+    pub duration: f64,
+    pub file_name: String,
+    pub url: String,
+    pub beats: Vec<f32>,
+}
+
 pub type Api = (
     StashScene,
     CreateVideoBody,
@@ -266,4 +278,5 @@ pub type Api = (
     MarkerDto,
     PerformerDto,
     TagDto,
+    SongDto,
 );

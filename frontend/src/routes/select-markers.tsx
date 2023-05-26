@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, Marker, SelectedMarker, StateHelpers} from "../types/types"
+import {FormStage, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
@@ -17,9 +17,10 @@ import {
 import useFuse from "../hooks/useFuse"
 import invariant from "tiny-invariant"
 import {formatSeconds, getFormState} from "../helpers"
+import {MarkerDto, SelectedMarker} from "../types.generated"
 
 interface Data {
-  markers: Marker[]
+  markers: MarkerDto[]
 }
 
 export const loader: LoaderFunction = async () => {
@@ -224,7 +225,7 @@ function SelectMarkers() {
                 )}
                 {videoPreview !== marker.id.id && (
                   <img
-                    src={marker.screenshotUrl}
+                    src={marker.screenshotUrl || undefined}
                     className="aspect-[16/9] object-cover object-top w-full"
                   />
                 )}
@@ -298,7 +299,7 @@ function SelectMarkers() {
                         <input
                           type="checkbox"
                           className="checkbox checkbox-primary ml-2"
-                          checked={selectedMarker.selected}
+                          checked={selectedMarker.selected || undefined}
                           onChange={(e) =>
                             onCheckboxChange(marker.id.id, e.target.checked)
                           }

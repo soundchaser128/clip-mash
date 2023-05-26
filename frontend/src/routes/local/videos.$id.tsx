@@ -1,5 +1,5 @@
 import {getMilliseconds, parse} from "date-fns"
-import {VideoWithMarkers, Marker} from "../../types/types"
+import {VideoWithMarkers} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
 import {useForm, Controller} from "react-hook-form"
@@ -23,6 +23,7 @@ import {
   useRevalidator,
   useRouteLoaderData,
 } from "react-router-dom"
+import {MarkerDto} from "../../types.generated"
 interface Inputs {
   id?: number
   title: string
@@ -41,7 +42,7 @@ interface Segment {
 
 function getSegments(
   duration: number | undefined,
-  markers: Marker[]
+  markers: MarkerDto[]
 ): Segment[] {
   if (typeof duration !== "undefined" && !isNaN(duration)) {
     const totalDuration = duration
@@ -77,7 +78,7 @@ async function persistMarker(
   marker: Inputs,
   duration: number,
   index: number
-): Promise<Marker> {
+): Promise<MarkerDto> {
   const payload = {
     start: Math.max(marker.start, 0),
     end: Math.min(marker.end!, duration),
@@ -105,11 +106,11 @@ export default function EditVideoModal() {
   )!
   const revalidator = useRevalidator()
   const {register, setValue, handleSubmit, control, watch} = useForm<Inputs>({})
-  const [markers, setMarkers] = useImmer<Marker[]>(videoMarkers)
+  const [markers, setMarkers] = useImmer<MarkerDto[]>(videoMarkers)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [formMode, setFormMode] = useState<FormMode>("hidden")
   const [videoDuration, setVideoDuration] = useState<number>()
-  const [editedMarker, setEditedMarker] = useState<Marker>()
+  const [editedMarker, setEditedMarker] = useState<MarkerDto>()
 
   const segments = getSegments(videoDuration, markers)
   const markerStart = watch("start")
@@ -142,7 +143,7 @@ export default function EditVideoModal() {
     setFormMode("hidden")
   }
 
-  const onShowForm = (marker?: Marker) => {
+  const onShowForm = (marker?: MarkerDto) => {
     setFormMode(marker ? "edit" : "create")
     const start = videoRef.current?.currentTime || 0
     setValue("start", marker?.start || start)

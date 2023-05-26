@@ -30,9 +30,9 @@ import Layout from "./components/Layout"
 import Music from "./routes/music"
 import ConfigPage from "./routes/stash/config"
 import {loader as configLoader} from "./routes/loaders"
-import {SongDto} from "./types/types"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
+import {SongDto} from "./types.generated"
 
 const TroubleshootingInfo = () => {
   return (

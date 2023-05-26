@@ -6,7 +6,7 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom"
-import {Clip, FormStage, VideoDto, StateHelpers} from "../types/types"
+import {FormStage, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import clsx from "clsx"
@@ -14,6 +14,7 @@ import {useRef} from "react"
 import {useImmer} from "use-immer"
 import invariant from "tiny-invariant"
 import {formatSeconds, getFormState, getSegmentColor} from "../helpers"
+import {Clip, VideoDto} from "../types.generated"
 
 const DEBUG = false
 

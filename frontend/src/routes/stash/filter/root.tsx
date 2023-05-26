@@ -5,18 +5,18 @@ import {useNavigate, Outlet} from "react-router-dom"
 import {
   FormStage,
   Performer,
-  Scene,
   SelectMode,
   StateHelpers,
   Tag,
 } from "../../../types/types"
 import {updateForm} from "../../actions"
 import invariant from "tiny-invariant"
+import {StashScene} from "../../../types.generated"
 
 export interface Data {
   performers: Performer[]
   tags: Tag[]
-  scenes: Scene[]
+  scenes: StashScene[]
 }
 
 export interface Context {

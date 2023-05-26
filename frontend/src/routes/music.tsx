@@ -3,12 +3,7 @@ import Field from "../components/Field"
 import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
 import invariant from "tiny-invariant"
-import {
-  FormStage,
-  LocalFilesFormStage,
-  SongDto,
-  StateHelpers,
-} from "../types/types"
+import {FormStage, LocalFilesFormStage, StateHelpers} from "../types/types"
 import {useCallback, useRef, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds, sumDurations} from "../helpers"
@@ -24,6 +19,7 @@ import {Updater, useImmer} from "use-immer"
 import {useDrag, useDrop} from "react-dnd"
 import type {Identifier, XYCoord} from "dnd-core"
 import clsx from "clsx"
+import {SongDto} from "../types.generated"
 
 interface Inputs {
   musicUrl: string

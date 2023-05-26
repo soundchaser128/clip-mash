@@ -76,7 +76,7 @@ impl Ffmpeg {
         if output.status.success() {
             Ok(())
         } else {
-            commandline_error(output)
+            commandline_error(self.executable_path.as_str(), output)
         }
     }
 }

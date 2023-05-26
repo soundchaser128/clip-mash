@@ -153,6 +153,6 @@ pub async fn ffprobe(path: impl AsRef<Utf8Path>) -> Result<FfProbe> {
         let json = serde_json::from_slice(&output.stdout)?;
         Ok(json)
     } else {
-        commandline_error(output)
+        commandline_error("ffprobe", output)
     }
 }

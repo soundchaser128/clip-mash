@@ -9,11 +9,12 @@ type Error = Box<dyn std::error::Error>;
 
 const TYPE_DEFINITIONS: &str = "./frontend/src/types.generated.ts";
 
-pub fn commandline_error<T>(output: Output) -> Result<T, Error> {
+pub fn commandline_error<T>(command_name: &str, output: Output) -> Result<T, Error> {
     let stdout = std::str::from_utf8(&output.stdout).unwrap();
     let stderr = std::str::from_utf8(&output.stderr).unwrap();
     Err(format!(
-        "ffmpeg failed with exit code {}, stdout:\n{}\nstderr:\n{}",
+        "command {} failed with exit code {}, stdout:\n'{}'\nstderr:\n'{}'",
+        command_name,
         output.status.code().unwrap_or(1),
         stdout,
         stderr
@@ -28,7 +29,7 @@ fn format_file() -> Result<(), Error> {
     if output.status.success() {
         Ok(())
     } else {
-        commandline_error(output)
+        commandline_error("prettier", output)
     }
 }
 

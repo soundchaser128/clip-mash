@@ -37,13 +37,14 @@ pub fn expect_file_name(path: &str) -> String {
         .to_string()
 }
 
-pub fn commandline_error<T>(output: Output) -> crate::Result<T> {
+pub fn commandline_error<T>(command_name: &str, output: Output) -> crate::Result<T> {
     use color_eyre::eyre::eyre;
 
     let stdout = std::str::from_utf8(&output.stdout).unwrap();
     let stderr = std::str::from_utf8(&output.stderr).unwrap();
     Err(eyre!(
-        "ffmpeg failed with exit code {}, stdout:\n{}\nstderr:\n{}",
+        "command {} failed with exit code {}, stdout:\n'{}'\nstderr:\n'{}'",
+        command_name,
         output.status.code().unwrap_or(1),
         stdout,
         stderr

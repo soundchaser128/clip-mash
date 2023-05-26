@@ -200,14 +200,14 @@ export default function Music() {
     invariant(StateHelpers.isNotInitial(state.data))
 
     const response = await fetch(
-      `/api/music/download?url=${encodeURIComponent(values.musicUrl)}`,
+      `/api/song/download?url=${encodeURIComponent(values.musicUrl)}`,
       {
         method: "POST",
       }
     )
     const data: SongDto = await response.json()
 
-    await fetch(`/api/music/${data.songId}/beats`)
+    await fetch(`/api/song/${data.songId}/beats`)
 
     actions.updateForm({
       songs: [...(state.data.songs || []), data],
@@ -236,7 +236,7 @@ export default function Music() {
       setLoading(true)
       const formData = new FormData()
       formData.set("file", file)
-      const response = await fetch(`/api/music/upload`, {
+      const response = await fetch(`/api/song/upload`, {
         method: "POST",
         body: formData,
       })

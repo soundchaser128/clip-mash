@@ -1,10 +1,11 @@
 import {useStateMachine} from "little-state-machine"
-import {useEffect, useMemo, useState} from "react"
+import React, {useEffect, useMemo, useState} from "react"
 import {
   LoaderFunction,
   json,
   useLoaderData,
   useNavigate,
+  useRevalidator,
 } from "react-router-dom"
 import {
   FormStage,
@@ -19,7 +20,14 @@ import {useRef} from "react"
 import {useImmer} from "use-immer"
 import invariant from "tiny-invariant"
 import {formatSeconds, getFormState, getSegmentColor} from "../helpers"
-import {Clip, ClipOptions, CreateClipsBody, VideoDto} from "../types.generated"
+import {
+  Clip,
+  ClipOptions,
+  ClipOrder,
+  CreateClipsBody,
+  VideoDto,
+} from "../types.generated"
+import {useForm} from "react-hook-form"
 
 const DEBUG = false
 
@@ -40,7 +48,11 @@ interface Data {
 const getClipSettings = (
   state: LocalVideosFormState | StashFormState
 ): ClipOptions => {
-  if (state.songs && state.songs.length > 0) {
+  if (!state.splitClips) {
+    return {
+      type: "noSplit",
+    }
+  } else if (state.songs && state.songs.length > 0) {
     return {
       type: "pmv",
       song_ids: state.songs.map(({songId}) => songId),
@@ -68,7 +80,6 @@ export const loader: LoaderFunction = async () => {
   const body = {
     clipOrder: state.clipOrder || "scene-order",
     markers: state.selectedMarkers!.filter((m) => m.selected),
-    splitClips: state.splitClips || true,
     seed: state.seed || null,
     clips: getClipSettings(state),
   } satisfies CreateClipsBody
@@ -147,19 +158,105 @@ const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
   )
 }
 
+interface Inputs {
+  clipOrder: ClipOrder
+  seed?: string
+  splitClips: boolean
+  clipDuration: number
+}
+
+const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
+  initialValues,
+}) => {
+  const {register, handleSubmit, watch} = useForm<Inputs>({
+    defaultValues: initialValues,
+  })
+  const doSplitClips = watch("splitClips")
+  const revalidator = useRevalidator()
+  const {actions} = useStateMachine({updateForm})
+
+  const onSubmit = (values: Inputs) => {
+    actions.updateForm({
+      clipDuration: values.clipDuration,
+      clipOrder: values.clipOrder,
+      splitClips: values.splitClips,
+      seed: values.seed,
+    })
+
+    revalidator.revalidate()
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+      <div className="form-control">
+        <label className="label cursor-pointer">
+          <span className="label-text mr-2">
+            Split up marker videos into clips
+          </span>
+          <input
+            type="checkbox"
+            className="toggle"
+            {...register("splitClips")}
+          />
+        </label>
+      </div>
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text">
+            Maximum duration per clip (in seconds):
+          </span>
+        </label>
+        <input
+          type="number"
+          className="input input-bordered"
+          disabled={!doSplitClips}
+          {...register("clipDuration", {valueAsNumber: true})}
+        />
+      </div>
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text">Clip order:</span>
+        </label>
+        <select className="select select-bordered" {...register("clipOrder")}>
+          <option disabled value="none">
+            Select clip ordering
+          </option>
+          <option value="scene-order">Scene order</option>
+          <option value="random">Random</option>
+        </select>
+      </div>
+
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text">Random seed:</span>
+        </label>
+        <input
+          type="text"
+          className="input input-bordered"
+          placeholder="Enter a value to control random number generation (optional)"
+          {...register("seed")}
+        />
+      </div>
+      <button className="btn btn-success self-end mt-4">Apply</button>
+    </form>
+  )
+}
+
 function PreviewClips() {
   const loaderData = useLoaderData() as Data
   const streams = loaderData.streams
-  const [clips, setClips] = useImmer<ClipState[]>(
-    loaderData.clips.map((clip) => ({clip, included: true}))
-  )
+  // const [clips, setClips] = useImmer<ClipState[]>(
+  //   loaderData.clips.map((clip) => ({clip, included: true}))
+  // )
+  const clips = loaderData.clips.map((clip) => ({clip, included: true}))
 
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
   const currentClip = clips[currentClipIndex].clip
   const streamUrl = streams[currentClip.videoId.id]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
-  const {actions} = useStateMachine({updateForm})
+  const {actions, state} = useStateMachine({updateForm})
+  invariant(StateHelpers.isNotInitial(state.data))
   const navigate = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const totalLength = clips.reduce(
@@ -244,14 +341,65 @@ function PreviewClips() {
         </button>
       </div>
 
-      <video
-        className="max-h-[75vh]"
-        src={clipUrl}
-        muted
-        autoPlay={autoPlay}
-        onTimeUpdate={onTimeUpdate}
-        ref={videoRef}
-      />
+      <div className="flex">
+        <video
+          className="w-3/4"
+          src={clipUrl}
+          muted
+          autoPlay={autoPlay}
+          onTimeUpdate={onTimeUpdate}
+          ref={videoRef}
+        />
+        <div className="flex flex-col pl-4 w-1/4">
+          <h2 className="text-xl font-bold">Settings</h2>
+          <ClipSettingsForm
+            initialValues={{
+              clipDuration: state.data.clipDuration || 30,
+              clipOrder: state.data.clipOrder || "scene-order",
+              splitClips: state.data.splitClips || true,
+              seed: state.data.seed,
+            }}
+          />
+
+          <div className="flex gap-4 items-center">
+            <button
+              className={clsx("btn", autoPlay ? "btn-warning" : "btn-success")}
+              onClick={toggleAutoPlay}
+            >
+              {autoPlay ? (
+                <HiPause className="mr-2" />
+              ) : (
+                <HiPlay className="mr-2" />
+              )}
+              {autoPlay ? "Pause" : "Play"}
+            </button>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              className="btn"
+              onClick={() => setCurrentClipIndex((i) => i - 1)}
+              disabled={currentClipIndex === 0}
+            >
+              Previous
+            </button>
+            <button
+              className="btn"
+              onClick={() => setCurrentClipIndex((i) => i + 1)}
+              disabled={currentClipIndex >= clips.length - 1}
+            >
+              Next
+            </button>
+          </div>
+
+          {loaderData.beatOffsets && (
+            <BeatIndicator
+              autoPlay={autoPlay}
+              offsets={loaderData.beatOffsets}
+            />
+          )}
+        </div>
+      </div>
 
       <div className="w-full h-8 flex mt-2 gap-0.5">
         {segments.map((width, index) => {
@@ -279,55 +427,6 @@ function PreviewClips() {
             </div>
           )
         })}
-      </div>
-
-      {loaderData.beatOffsets && (
-        <BeatIndicator autoPlay={autoPlay} offsets={loaderData.beatOffsets} />
-      )}
-
-      <div className="flex justify-between mt-4">
-        <button
-          className="btn"
-          onClick={() => setCurrentClipIndex((i) => i - 1)}
-          disabled={currentClipIndex === 0}
-        >
-          Previous clip
-        </button>
-        <div className="flex gap-4 items-center">
-          <button
-            className={clsx("btn", autoPlay ? "btn-warning" : "btn-success")}
-            onClick={toggleAutoPlay}
-          >
-            {autoPlay ? (
-              <HiPause className="mr-2" />
-            ) : (
-              <HiPlay className="mr-2" />
-            )}
-            {autoPlay ? "Pause" : "Play"}
-          </button>
-          <div className="form-control">
-            <label className="label cursor-pointer">
-              <span className="label-text mr-2">Included in compilation</span>
-              <input
-                type="checkbox"
-                className="toggle"
-                checked={clips[currentClipIndex].included}
-                onChange={(e) =>
-                  setClips((draft) => {
-                    draft[currentClipIndex].included = e.target.checked
-                  })
-                }
-              />
-            </label>
-          </div>
-        </div>
-        <button
-          className="btn"
-          onClick={() => setCurrentClipIndex((i) => i + 1)}
-          disabled={currentClipIndex >= clips.length - 1}
-        >
-          Next clip
-        </button>
       </div>
     </>
   )

@@ -48,7 +48,7 @@ fn convert_to_wav(
         ])
         .output()?;
     if !output.status.success() {
-        commandline_error(output)
+        commandline_error("ffmpeg", output)
     } else {
         Ok(destination)
     }

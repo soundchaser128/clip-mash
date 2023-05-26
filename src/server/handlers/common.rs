@@ -1,5 +1,5 @@
 use axum::{
-    body::StreamBody,
+    body::{Body, StreamBody},
     extract::{Multipart, Path, Query, State},
     response::{
         sse::{Event, KeepAlive},
@@ -212,6 +212,20 @@ pub async fn download_music(
     let song = music_service.download_song(&url).await?;
 
     Ok(Json(song.into()))
+}
+
+#[axum::debug_handler]
+pub async fn stream_song(
+    Path(song_id): Path<i64>,
+    State(state): State<Arc<AppState>>,
+    request: axum::http::Request<Body>,
+) -> Result<impl IntoResponse, AppError> {
+    use tower::ServiceExt;
+    use tower_http::services::ServeFile;
+
+    let song = state.database.get_song(song_id).await?;
+    let result = ServeFile::new(song.file_path).oneshot(request).await;
+    Ok(result)
 }
 
 #[axum::debug_handler]

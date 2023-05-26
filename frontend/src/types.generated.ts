@@ -61,9 +61,9 @@ export type PmvClipOptions =
 export type ClipOptions =
   | ({type: "pmv"} & {song_ids: I64[]; clips: PmvClipOptions})
   | ({type: "default"} & RandomizedClipOptions)
+  | {type: "noSplit"}
 export type CreateClipsBody = {
   clipOrder: ClipOrder
-  splitClips: boolean
   markers: SelectedMarker[]
   seed: string | null
   clips: ClipOptions

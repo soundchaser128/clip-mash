@@ -86,11 +86,12 @@ async fn main() -> Result<()> {
         .route("/progress", get(handlers::common::get_progress))
         .route("/download", get(handlers::common::download_video))
         .route("/funscript", post(handlers::common::get_funscript))
-        .route("/music", get(handlers::common::list_songs))
-        .route("/music/download", post(handlers::common::download_music))
-        .route("/music/upload", post(handlers::common::upload_music))
-        .route("/music/:id/beats", get(handlers::common::get_beats))
-        .route("/open-directory", get(handlers::common::open_folder));
+        .route("/song", get(handlers::common::list_songs))
+        .route("/song/audio", get(handlers::common::stream_song))
+        .route("/song/:id/download", post(handlers::common::download_music))
+        .route("/song/upload", post(handlers::common::upload_music))
+        .route("/song/:id/beats", get(handlers::common::get_beats))
+        .route("/directory/open", get(handlers::common::open_folder));
 
     let app = Router::new()
         .nest("/api", api_routes)

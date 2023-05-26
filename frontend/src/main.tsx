@@ -99,7 +99,7 @@ const ErrorBoundary = () => {
 }
 
 const musicLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/music")
+  const response = await fetch("/api/song")
   const data = (await response.json()) as SongDto[]
   return data
 }

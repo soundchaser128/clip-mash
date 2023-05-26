@@ -193,13 +193,13 @@ pub enum ClipOptions {
         clips: PmvClipOptions,
     },
     Default(RandomizedClipOptions),
+    NoSplit,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateClipsBody {
     pub clip_order: ClipOrder,
-    pub split_clips: bool,
     pub markers: Vec<SelectedMarker>,
     pub seed: Option<String>,
     pub clips: ClipOptions,

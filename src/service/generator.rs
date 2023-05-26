@@ -102,7 +102,7 @@ impl CompilationGenerator {
             .output()
             .await?;
         if !output.status.success() {
-            commandline_error(output)
+            commandline_error(self.ffmpeg_path.as_str(), output)
         } else {
             debug_output(output);
             Ok(())
@@ -257,7 +257,7 @@ impl CompilationGenerator {
             .await?;
 
         if !output.status.success() {
-            return commandline_error(output);
+            return commandline_error(self.ffmpeg_path.as_str(), output);
         }
 
         self.increase_progress().await;

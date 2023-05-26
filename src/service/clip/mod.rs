@@ -29,7 +29,6 @@ const MIN_DURATION: f64 = 2.0;
 pub struct CreateClipsOptions {
     pub order: ClipOrder,
     pub markers: Vec<Marker>,
-    pub split_clips: bool,
     pub seed: Option<String>,
     pub clip_options: ClipOptions,
 }
@@ -142,6 +141,7 @@ impl ClipService {
                 let creator = DefaultClipCreator;
                 creator.create_clips(options.markers, default_options, &mut rng)
             }
+            ClipOptions::NoSplit => markers_to_clips(options.markers),
         };
 
         info!("generated {} clips", clips.len());
@@ -201,7 +201,6 @@ mod tests {
                 create_marker_video_id(1, 1.0, 15.0, 0, "v2"),
                 create_marker_video_id(2, 1.0, 17.0, 0, "v1"),
             ],
-            split_clips: true,
             seed: None,
             clip_options: ClipOptions::Default(RandomizedClipOptions {
                 base_duration: 30.0,
@@ -225,7 +224,6 @@ mod tests {
                 create_marker_video_id(1, 1.0, 15.0, 0, "v1"),
                 create_marker_video_id(2, 1.0, 17.0, 0, "v2"),
             ],
-            split_clips: false,
             seed: None,
             clip_options: ClipOptions::Default(RandomizedClipOptions {
                 base_duration: 30.0,
@@ -250,7 +248,6 @@ mod tests {
                 create_marker_video_id(4, 1.0, 15.0, 0, "v3".into()),
                 create_marker_video_id(5, 20.0, 60.0, 3, "v1".into()),
             ],
-            split_clips: true,
             seed: None,
             clip_options: ClipOptions::Default(RandomizedClipOptions {
                 base_duration: 30.0,

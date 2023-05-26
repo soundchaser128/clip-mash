@@ -37,7 +37,7 @@ fn main() -> Result<(), Error> {
     let mut options = DefinitionFileOptions::default();
     options.root_namespace = None;
     write_definition_file::<_, Api>(&mut file, options)?;
-    format_file()?;
+    let _ = format_file();
 
     Ok(())
 }

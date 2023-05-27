@@ -13,7 +13,7 @@ import SelectCriteria from "./routes/stash/filter/root"
 import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
 import VideoOptions from "./routes/video-options"
 import Progress from "./routes/progress"
-import PreviewClips, {loader as clipLoader} from "./routes/clips"
+import PreviewClips from "./routes/clips"
 import Performers, {
   loader as performerLoader,
 } from "./routes/stash/filter/performers"
@@ -29,7 +29,7 @@ import StashRoot from "./routes/root"
 import Layout from "./components/Layout"
 import Music from "./routes/music"
 import ConfigPage from "./routes/stash/config"
-import {loader as configLoader} from "./routes/loaders"
+import {configLoader, clipsLoader} from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import {SongDto} from "./types.generated"
@@ -182,7 +182,7 @@ const router = createBrowserRouter([
           {
             path: "clips",
             element: <PreviewClips />,
-            loader: clipLoader,
+            loader: clipsLoader,
           },
           {
             path: "video-options",

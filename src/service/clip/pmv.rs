@@ -36,7 +36,7 @@ impl PmvSongs {
     }
 
     pub fn next_duration(&mut self, rng: &mut StdRng) -> Option<f64> {
-        info!(
+        debug!(
             "state: song_index = {}, beat_index = {}",
             self.song_index, self.beat_index
         );
@@ -54,7 +54,7 @@ impl PmvSongs {
         let start = beats[self.beat_index];
         let end = beats[next_beat_index];
 
-        info!("start = {}, end = {}", self.beat_index, next_beat_index);
+        info!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds");
 
         if next_beat_index == beats.len() - 1 {
             self.song_index += 1;

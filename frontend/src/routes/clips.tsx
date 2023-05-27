@@ -1,116 +1,25 @@
 import {useStateMachine} from "little-state-machine"
 import React, {useEffect, useMemo, useState} from "react"
-import {
-  LoaderFunction,
-  json,
-  useLoaderData,
-  useNavigate,
-  useRevalidator,
-} from "react-router-dom"
-import {
-  FormStage,
-  LocalVideosFormState,
-  StashFormState,
-  StateHelpers,
-} from "../types/types"
+import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
+import {FormStage, StateHelpers} from "../types/types"
 import {updateForm} from "./actions"
-import {HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
+import {
+  HiBackward,
+  HiCheck,
+  HiChevronRight,
+  HiForward,
+  HiPause,
+  HiPlay,
+} from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
-import {useImmer} from "use-immer"
 import invariant from "tiny-invariant"
-import {formatSeconds, getFormState, getSegmentColor} from "../helpers"
-import {
-  Clip,
-  ClipOptions,
-  ClipOrder,
-  CreateClipsBody,
-  VideoDto,
-} from "../types.generated"
+import {formatSeconds, getSegmentColor} from "../helpers"
+import {Clip, ClipOrder, VideoDto} from "../types.generated"
 import {useForm} from "react-hook-form"
+import {ClipsLoaderData} from "./loaders"
 
 const DEBUG = false
-
-interface ClipsResponse {
-  clips: Clip[]
-  streams: Record<string, string>
-  videos: VideoDto[]
-  beatOffsets?: number[]
-}
-
-interface Data {
-  clips: Clip[]
-  streams: Record<string, string>
-  videos: Record<string, VideoDto>
-  beatOffsets?: number[]
-}
-
-const getClipSettings = (
-  state: LocalVideosFormState | StashFormState
-): ClipOptions => {
-  if (!state.splitClips) {
-    return {
-      type: "noSplit",
-    }
-  } else if (state.songs && state.songs.length > 0) {
-    return {
-      type: "pmv",
-      song_ids: state.songs.map(({songId}) => songId),
-      clips: {
-        type: "songs",
-        beatsPerMeasure: 4,
-        cutAfterMeasures: {
-          random: [2, 4],
-        },
-      },
-    }
-  } else {
-    return {
-      type: "default",
-      baseDuration: state.clipDuration || 30,
-      divisors: [2.0, 3.0, 4.0],
-    }
-  }
-}
-
-export const loader: LoaderFunction = async () => {
-  const state = getFormState()!
-  invariant(StateHelpers.isNotInitial(state))
-
-  const body = {
-    clipOrder: state.clipOrder || "scene-order",
-    markers: state.selectedMarkers!.filter((m) => m.selected),
-    seed: state.seed || null,
-    clips: getClipSettings(state),
-  } satisfies CreateClipsBody
-
-  const response = await fetch("/api/clips", {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: {"content-type": "application/json"},
-  })
-  if (response.ok) {
-    const data: ClipsResponse = await response.json()
-
-    const videos: Record<string, VideoDto> = {}
-    data.videos.forEach((s) => {
-      videos[s.id.id] = s
-    })
-
-    return {
-      ...data,
-      videos,
-    } satisfies Data
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/clips"}, {status: 500})
-  }
-}
-
-interface ClipState {
-  clip: Clip
-  included: boolean
-}
 
 const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
   offsets,
@@ -158,6 +67,69 @@ const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
   )
 }
 
+interface ClipState {
+  included: boolean
+  clip: Clip
+}
+
+interface TimelineProps {
+  clips: ClipState[]
+  videos: Record<string, VideoDto>
+  currentClipIndex: number
+  setCurrentClipIndex: (n: number) => void
+}
+
+const Timeline: React.FC<TimelineProps> = ({
+  clips,
+  videos,
+  currentClipIndex,
+  setCurrentClipIndex,
+}) => {
+  const [segments, sceneColors] = useMemo(() => {
+    const clipLengths = clips.map(({clip}) => clip.range[1] - clip.range[0])
+    const total = clipLengths.reduce((total, len) => total + len, 0)
+    const segments = clipLengths.map((len) => `${(len / total) * 100}%`)
+
+    const sceneIds = Array.from(new Set(clips.map((c) => c.clip.videoId.id)))
+    sceneIds.sort()
+    const sceneColors = new Map()
+    sceneIds.forEach((id, index) => {
+      sceneColors.set(id, [getSegmentColor(index), index])
+    })
+
+    return [segments, sceneColors]
+  }, [clips])
+
+  return (
+    <div className="w-full h-8 flex mt-2 gap-0.5">
+      {segments.map((width, index) => {
+        const clip = clips[index].clip
+        const video = videos[clip.videoId.id]
+        const [color, sceneId] = sceneColors.get(clip.videoId.id)
+        let tooltip = video.title
+        if (video.performers.length > 0) {
+          tooltip = `${video.performers.join(", ")} - ${video.title}`
+        }
+        return (
+          <div
+            key={index}
+            data-tip={tooltip}
+            className={clsx(
+              "h-full tooltip transition-opacity flex items-center justify-center",
+              color,
+              index !== currentClipIndex && "bg-opacity-25 hover:bg-opacity-50"
+            )}
+            style={{width}}
+            onClick={() => setCurrentClipIndex(index)}
+          >
+            {sceneId + 1}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 interface Inputs {
   clipOrder: ClipOrder
   seed?: string
@@ -187,7 +159,8 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
+      <h2 className="text-xl font-bold">Settings</h2>
       <div className="form-control">
         <label className="label cursor-pointer">
           <span className="label-text mr-2">
@@ -237,13 +210,16 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
           {...register("seed")}
         />
       </div>
-      <button className="btn btn-success self-end mt-4">Apply</button>
+      <button className="btn btn-success self-end mt-4">
+        <HiCheck className="mr-2" />
+        Apply
+      </button>
     </form>
   )
 }
 
 function PreviewClips() {
-  const loaderData = useLoaderData() as Data
+  const loaderData = useLoaderData() as ClipsLoaderData
   const streams = loaderData.streams
   // const [clips, setClips] = useImmer<ClipState[]>(
   //   loaderData.clips.map((clip) => ({clip, included: true}))
@@ -259,6 +235,7 @@ function PreviewClips() {
   invariant(StateHelpers.isNotInitial(state.data))
   const navigate = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
   const totalLength = clips.reduce(
     (len, {clip}) => len + (clip.range[1] - clip.range[0]),
     0
@@ -272,21 +249,6 @@ function PreviewClips() {
     navigate("/stash/progress")
   }
 
-  const [segments, sceneColors] = useMemo(() => {
-    const clipLengths = clips.map(({clip}) => clip.range[1] - clip.range[0])
-    const total = clipLengths.reduce((total, len) => total + len, 0)
-    const segments = clipLengths.map((len) => `${(len / total) * 100}%`)
-
-    const sceneIds = Array.from(new Set(clips.map((c) => c.clip.videoId.id)))
-    sceneIds.sort()
-    const sceneColors = new Map()
-    sceneIds.forEach((id, index) => {
-      sceneColors.set(id, [getSegmentColor(index), index])
-    })
-
-    return [segments, sceneColors]
-  }, [clips])
-
   const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (event) => {
     const endTimestamp = currentClip.range[1]
     const currentTime = event.currentTarget.currentTime
@@ -298,8 +260,10 @@ function PreviewClips() {
   const toggleAutoPlay = () => {
     if (autoPlay) {
       videoRef.current?.pause()
+      audioRef.current?.pause()
     } else {
       videoRef.current?.play()
+      audioRef.current?.play()
     }
 
     setAutoPlay(!autoPlay)
@@ -341,6 +305,12 @@ function PreviewClips() {
         </button>
       </div>
 
+      <audio
+        ref={audioRef}
+        src={`/api/song/${state.data.songs![0].songId}/stream`}
+        autoPlay={autoPlay}
+      />
+
       <div className="flex">
         <video
           className="w-3/4"
@@ -350,8 +320,7 @@ function PreviewClips() {
           onTimeUpdate={onTimeUpdate}
           ref={videoRef}
         />
-        <div className="flex flex-col pl-4 w-1/4">
-          <h2 className="text-xl font-bold">Settings</h2>
+        <div className="flex flex-col px-4 py-2 w-1/4 bg-slate-100 justify-between">
           <ClipSettingsForm
             initialValues={{
               clipDuration: state.data.clipDuration || 30,
@@ -361,73 +330,47 @@ function PreviewClips() {
             }}
           />
 
-          <div className="flex gap-4 items-center">
+          <div className="btn-group justify-center">
             <button
-              className={clsx("btn", autoPlay ? "btn-warning" : "btn-success")}
-              onClick={toggleAutoPlay}
-            >
-              {autoPlay ? (
-                <HiPause className="mr-2" />
-              ) : (
-                <HiPlay className="mr-2" />
-              )}
-              {autoPlay ? "Pause" : "Play"}
-            </button>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              className="btn"
+              className="btn btn-square btn-lg"
               onClick={() => setCurrentClipIndex((i) => i - 1)}
               disabled={currentClipIndex === 0}
             >
-              Previous
+              <HiBackward />
             </button>
             <button
-              className="btn"
+              className={clsx(
+                "btn btn-square btn-lg",
+                autoPlay ? "btn-warning" : "btn-success"
+              )}
+              onClick={toggleAutoPlay}
+            >
+              {autoPlay ? <HiPause /> : <HiPlay />}
+            </button>
+            <button
+              className="btn btn-square btn-lg"
               onClick={() => setCurrentClipIndex((i) => i + 1)}
               disabled={currentClipIndex >= clips.length - 1}
             >
-              Next
+              <HiForward />
             </button>
           </div>
 
-          {loaderData.beatOffsets && (
+          {/* {loaderData.beatOffsets && (
             <BeatIndicator
               autoPlay={autoPlay}
               offsets={loaderData.beatOffsets}
             />
-          )}
+          )} */}
         </div>
       </div>
 
-      <div className="w-full h-8 flex mt-2 gap-0.5">
-        {segments.map((width, index) => {
-          const clip = clips[index].clip
-          const video = loaderData.videos[clip.videoId.id]
-          const [color, sceneId] = sceneColors.get(clip.videoId.id)
-          let tooltip = video.title
-          if (video.performers.length > 0) {
-            tooltip = `${video.performers.join(", ")} - ${video.title}`
-          }
-          return (
-            <div
-              key={index}
-              data-tip={tooltip}
-              className={clsx(
-                "h-full tooltip transition-opacity flex items-center justify-center",
-                color,
-                index !== currentClipIndex &&
-                  "bg-opacity-25 hover:bg-opacity-50"
-              )}
-              style={{width}}
-              onClick={() => setCurrentClipIndex(index)}
-            >
-              {sceneId + 1}
-            </div>
-          )
-        })}
-      </div>
+      <Timeline
+        clips={clips}
+        videos={loaderData.videos}
+        currentClipIndex={currentClipIndex}
+        setCurrentClipIndex={setCurrentClipIndex}
+      />
     </>
   )
 }

@@ -91,7 +91,7 @@ function Progress() {
   }
 
   const onOpenVideosFolder = async () => {
-    await fetch("/api/open-directory?folder=videos")
+    await fetch("/api/directory/open?folder=videos")
   }
 
   const totalDuration = state.data.clips!.reduce(

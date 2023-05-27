@@ -9,7 +9,7 @@ members = ["clip-mash-types"]
 [dependencies]
 aubio = { version = "0.2.1", features = ["bindgen"] }
 axum = { version = "0.6.18", features = ["macros", "multipart"] }
-camino = { version =  "1.1.4", features = ["serde1"] }
+camino = { version = "1.1.4", features = ["serde1"] }
 color-eyre = "0.6.2"
 clip-mash-types = { path = "clip-mash-types" }
 directories = "5.0.1"
@@ -23,13 +23,13 @@ nanoid = "0.4.0"
 opener = "0.6.1"
 ordered-float = "3.7.0"
 rand = "0.8.5"
-regex = "1.8.1"
-reqwest = { version = "0.11.17", default-features = false, features = ["json", "rustls-tls"] }
+regex = "1.8.3"
+reqwest = { version = "0.11.18", features = ["json"] }
 sanitise-file-name = "1.0.0"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
-sqlx = { version = "0.7.0-alpha.3", features = ["runtime-tokio", "tls-rustls", "sqlite"] }
-tokio = { version = "1.28.1", features = ["full"] }
+sqlx = { version = "0.7.0-alpha.3", features = ["runtime-tokio",  "sqlite"] }
+tokio = { version = "1.28.2", features = ["full"] }
 tokio-stream = "0.1.14"
 tokio-util = { version = "0.7.8", features = ["io"] }
 tower = "0.4.13"
@@ -38,15 +38,15 @@ tracing = "0.1.37"
 tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 walkdir = "2.3.3"
-webbrowser = "0.8.9"
-youtube_dl = { version = "0.8.0", features = ["tokio", "downloader"] }
+webbrowser = "0.8.10"
+youtube_dl = { version = "0.8.1", features = ["tokio", "downloader"] }
 
 [target.'cfg(unix)'.dependencies]
-tar = "0.4"
-xz2 = "0.1"
+tar = "0.4.38"
+xz2 = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]
-zip = "0.6"
+zip = "0.6.6"
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

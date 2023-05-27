@@ -1,6 +1,6 @@
-use std::{process::Command, time::Instant};
+use std::process::Command;
+use std::time::Instant;
 
-use crate::{util::commandline_error, Result as AppResult};
 use aubio::{OnsetMode, Smpl, Tempo};
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::eyre;
@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use super::directories::Directories;
+use crate::util::commandline_error;
+use crate::Result as AppResult;
 
 const BUF_SIZE: usize = 512;
 const HOP_SIZE: usize = 256;
@@ -97,7 +99,8 @@ pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: &Directories) -> Ap
 #[cfg(test)]
 mod test {
 
-    use crate::service::{beats::detect_beats, directories::Directories};
+    use crate::service::beats::detect_beats;
+    use crate::service::directories::Directories;
 
     // #[traced_test]
     // #[test]

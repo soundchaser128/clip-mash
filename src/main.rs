@@ -1,19 +1,17 @@
-use std::{sync::Arc, time::Duration};
-
-use axum::{
-    extract::DefaultBodyLimit,
-    routing::{delete, get, post},
-    Router,
-};
-use color_eyre::Report;
 use std::env;
+use std::sync::Arc;
+use std::time::Duration;
+
+use axum::extract::DefaultBodyLimit;
+use axum::routing::{delete, get, post};
+use axum::Router;
+use color_eyre::Report;
 use tracing::{info, warn};
 
-use crate::{
-    data::database::Database,
-    server::handlers::AppState,
-    service::{directories::Directories, generator::CompilationGenerator},
-};
+use crate::data::database::Database;
+use crate::server::handlers::AppState;
+use crate::service::directories::Directories;
+use crate::service::generator::CompilationGenerator;
 
 mod data;
 mod server;
@@ -26,7 +24,8 @@ pub type Result<T> = std::result::Result<T, Report>;
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
 fn setup_logger() {
-    use tracing_subscriber::{prelude::*, EnvFilter};
+    use tracing_subscriber::prelude::*;
+    use tracing_subscriber::EnvFilter;
 
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "info");

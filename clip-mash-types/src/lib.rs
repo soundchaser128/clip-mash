@@ -1,6 +1,7 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 use typescript_type_def::TypeDef;
 
 #[derive(Clone, Copy, Debug, Deserialize, TypeDef)]

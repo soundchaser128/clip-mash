@@ -1,9 +1,14 @@
-use super::{Clip, ClipCreator, Marker};
-use crate::service::{beats::Beats, clip::MIN_DURATION};
-use rand::{rngs::StdRng, seq::IteratorRandom, Rng};
+use std::collections::HashMap;
+use std::fmt::Debug;
 
-use std::{collections::HashMap, fmt::Debug};
+use rand::rngs::StdRng;
+use rand::seq::IteratorRandom;
+use rand::Rng;
 use tracing::{debug, info};
+
+use super::{Clip, ClipCreator, Marker};
+use crate::service::beats::Beats;
+use crate::service::clip::MIN_DURATION;
 
 #[derive(Debug)]
 pub struct PmvSongs {
@@ -172,9 +177,9 @@ impl ClipCreator for PmvClipCreator {
 mod test {
     use tracing_test::traced_test;
 
-    use crate::{service::beats::Beats, util::create_seeded_rng};
-
     use super::{MeasureCount, PmvSongs};
+    use crate::service::beats::Beats;
+    use crate::util::create_seeded_rng;
 
     #[traced_test]
     #[test]

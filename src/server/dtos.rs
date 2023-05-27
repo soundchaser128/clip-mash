@@ -1,14 +1,11 @@
 use camino::Utf8Path;
 use clip_mash_types::*;
 
-use crate::{
-    data::{
-        database::{DbMarker, DbVideo, LocalVideoWithMarkers},
-        stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, StashMarker},
-    },
-    service::Video,
-    util::{add_api_key, expect_file_name},
-};
+use crate::data::database::{DbMarker, DbVideo, LocalVideoWithMarkers};
+use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
+use crate::data::stash_api::StashMarker;
+use crate::service::Video;
+use crate::util::{add_api_key, expect_file_name};
 
 impl From<StashMarker> for MarkerDto {
     fn from(value: StashMarker) -> Self {

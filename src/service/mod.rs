@@ -16,13 +16,10 @@ pub mod fixtures;
 use clip_mash_types::{MarkerId, VideoId};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    data::{
-        database::{DbMarker, DbVideo},
-        stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, StashMarker},
-    },
-    util::expect_file_name,
-};
+use crate::data::database::{DbMarker, DbVideo};
+use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
+use crate::data::stash_api::StashMarker;
+use crate::util::expect_file_name;
 
 #[derive(Debug, Clone)]
 pub enum VideoInfo {

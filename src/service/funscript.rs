@@ -5,7 +5,9 @@ use serde_json::Value;
 use tracing::{info, warn};
 
 use super::Video;
-use crate::{data::stash_api::StashApi, service::VideoInfo, Result};
+use crate::data::stash_api::StashApi;
+use crate::service::VideoInfo;
+use crate::Result;
 
 // Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
 

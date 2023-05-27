@@ -1,9 +1,11 @@
-use super::Clip;
-
-use rand::{rngs::StdRng, seq::SliceRandom, Rng};
-
 use std::fmt::Debug;
+
+use rand::rngs::StdRng;
+use rand::seq::SliceRandom;
+use rand::Rng;
 use tracing::info;
+
+use super::Clip;
 
 pub trait ClipSorter {
     fn sort_clips(&self, clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip>;

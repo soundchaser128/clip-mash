@@ -1,9 +1,7 @@
 use std::io;
 
-use axum::{
-    response::{IntoResponse, Response},
-    Json,
-};
+use axum::response::{IntoResponse, Response};
+use axum::Json;
 use reqwest::StatusCode;
 use serde_json::json;
 use tracing::error;

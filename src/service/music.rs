@@ -1,17 +1,17 @@
-use crate::{
-    data::database::{CreateSong, Database, DbSong},
-    service::ffprobe::ffprobe,
-    Result,
-};
 use axum::extract::multipart::Field;
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
 use nanoid::nanoid;
-use tokio::{fs, io::AsyncWriteExt};
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use tracing::info;
 use youtube_dl::YoutubeDl;
 
-use super::{beats::Beats, directories::Directories};
+use super::beats::Beats;
+use super::directories::Directories;
+use crate::data::database::{CreateSong, Database, DbSong};
+use crate::service::ffprobe::ffprobe;
+use crate::Result;
 
 const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
     "yt-dlp.exe"
@@ -157,14 +157,14 @@ pub fn parse_beats(songs: &[DbSong]) -> Vec<Beats> {
 
 #[cfg(test)]
 mod test {
-    use camino::Utf8Path;
-    use sqlx::SqlitePool;
     use std::fs;
 
-    use crate::{
-        data::database::Database,
-        service::{directories::Directories, music::MusicService},
-    };
+    use camino::Utf8Path;
+    use sqlx::SqlitePool;
+
+    use crate::data::database::Database;
+    use crate::service::directories::Directories;
+    use crate::service::music::MusicService;
 
     #[sqlx::test]
     async fn test_download_song(pool: SqlitePool) {

@@ -1,11 +1,5 @@
 use std::ffi::OsStr;
 
-use crate::{
-    data::{database::DbSong, stash_api::StashMarker},
-    service::MarkerInfo,
-    util::{commandline_error, debug_output},
-    Result,
-};
 use camino::{Utf8Path, Utf8PathBuf};
 use clip_mash_types::{Clip, VideoResolution};
 use futures::lock::Mutex;
@@ -16,7 +10,13 @@ use serde::Serialize;
 use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
 
-use super::{directories::Directories, Marker};
+use super::directories::Directories;
+use super::Marker;
+use crate::data::database::DbSong;
+use crate::data::stash_api::StashMarker;
+use crate::service::MarkerInfo;
+use crate::util::{commandline_error, debug_output};
+use crate::Result;
 
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct Progress {

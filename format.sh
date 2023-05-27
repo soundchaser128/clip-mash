@@ -1,6 +1,6 @@
 #!/bin/sh
 cargo fix --allow-staged
-cargo fmt
+cargo +nightly fmt
 cd frontend
 npm run format
 cd ..

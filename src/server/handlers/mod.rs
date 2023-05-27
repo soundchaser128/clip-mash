@@ -3,10 +3,10 @@ use std::collections::{HashMap, HashSet};
 use clip_mash_types::VideoId;
 use reqwest::Url;
 
-use crate::{
-    data::database::Database,
-    service::{directories::Directories, generator::CompilationGenerator, stash_config::Config},
-};
+use crate::data::database::Database;
+use crate::service::directories::Directories;
+use crate::service::generator::CompilationGenerator;
+use crate::service::stash_config::Config;
 
 pub mod common;
 pub mod local;

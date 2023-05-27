@@ -1,11 +1,9 @@
 use std::sync::Arc;
 
-use axum::{
-    body::Body,
-    extract::{Path, Query, State},
-    response::IntoResponse,
-    Json,
-};
+use axum::body::Body;
+use axum::extract::{Path, Query, State};
+use axum::response::IntoResponse;
+use axum::Json;
 use camino::Utf8PathBuf;
 use clip_mash_types::{ListVideoDto, MarkerDto};
 use reqwest::StatusCode;
@@ -13,10 +11,9 @@ use serde::Deserialize;
 use tower::ServiceExt;
 use tracing::info;
 
-use crate::{
-    data::database::CreateMarker,
-    server::{error::AppError, handlers::AppState},
-};
+use crate::data::database::CreateMarker;
+use crate::server::error::AppError;
+use crate::server::handlers::AppState;
 
 #[axum::debug_handler]
 pub async fn get_video(

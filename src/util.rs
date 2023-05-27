@@ -1,12 +1,10 @@
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-    process::Output,
-};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use std::process::Output;
 
 use camino::Utf8Path;
-
-use rand::{rngs::StdRng, SeedableRng};
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use reqwest::Url;
 use tracing::{debug, Level};
 

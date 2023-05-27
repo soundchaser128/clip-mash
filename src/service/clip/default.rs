@@ -1,9 +1,11 @@
+use std::fmt::Debug;
+
+use rand::rngs::StdRng;
+use rand::seq::SliceRandom;
+use tracing::{debug, info};
+
 use super::{Clip, ClipCreator, Marker};
 use crate::service::clip::MIN_DURATION;
-use rand::{rngs::StdRng, seq::SliceRandom};
-
-use std::fmt::Debug;
-use tracing::{debug, info};
 
 #[derive(Debug)]
 pub struct DefaultClipOptions {

@@ -1,19 +1,15 @@
-use crate::{
-    service::{
-        beats::{self, Beats},
-        directories::Directories,
-    },
-    Result,
-};
+use std::str::FromStr;
+
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use serde::Deserialize;
-use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode},
-    SqlitePool,
-};
-use std::str::FromStr;
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
+use sqlx::SqlitePool;
 use tokio::task::spawn_blocking;
 use tracing::info;
+
+use crate::service::beats::{self, Beats};
+use crate::service::directories::Directories;
+use crate::Result;
 
 #[derive(Debug, Clone)]
 pub struct DbVideo {
@@ -351,11 +347,13 @@ impl Database {
 
 #[cfg(test)]
 mod test {
-    use crate::data::database::{CreateMarker, Database, DbVideo};
-    use crate::Result;
-    use fake::{faker::filesystem::en::FilePath, Fake};
+    use fake::faker::filesystem::en::FilePath;
+    use fake::Fake;
     use nanoid::nanoid;
     use sqlx::SqlitePool;
+
+    use crate::data::database::{CreateMarker, Database, DbVideo};
+    use crate::Result;
 
     async fn persist_video(db: &Database) -> Result<DbVideo> {
         let expected = DbVideo {

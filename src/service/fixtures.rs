@@ -1,10 +1,10 @@
-use super::Marker;
-use crate::{
-    data::database::DbMarker,
-    service::{MarkerId, MarkerInfo, VideoId},
-};
-use fake::{faker::filesystem::en::FilePath, Fake, Faker};
+use fake::faker::filesystem::en::FilePath;
+use fake::{Fake, Faker};
 use nanoid::nanoid;
+
+use super::Marker;
+use crate::data::database::DbMarker;
+use crate::service::{MarkerId, MarkerInfo, VideoId};
 
 pub fn markers() -> Vec<Marker> {
     vec![

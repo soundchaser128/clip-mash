@@ -1,7 +1,9 @@
-use crate::{util::commandline_error, Result};
 use camino::Utf8Path;
 use serde::Deserialize;
 use tracing::info;
+
+use crate::util::commandline_error;
+use crate::Result;
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
 pub struct FfProbe {

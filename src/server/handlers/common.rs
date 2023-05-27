@@ -1,41 +1,36 @@
-use axum::{
-    body::{Body, StreamBody},
-    extract::{Multipart, Path, Query, State},
-    response::{
-        sse::{Event, KeepAlive},
-        IntoResponse, Sse,
-    },
-    Json,
-};
-use clip_mash_types::*;
-use color_eyre::{eyre::eyre, Report};
-use futures::{
-    stream::{self, Stream},
-    FutureExt,
-};
+use std::collections::HashSet;
+use std::sync::Arc;
+use std::time::Duration;
 
+use axum::body::{Body, StreamBody};
+use axum::extract::{Multipart, Path, Query, State};
+use axum::response::sse::{Event, KeepAlive};
+use axum::response::{IntoResponse, Sse};
+use axum::Json;
+use clip_mash_types::*;
+use color_eyre::eyre::eyre;
+use color_eyre::Report;
+use futures::stream::{self, Stream};
+use futures::FutureExt;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, sync::Arc, time::Duration};
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
 
-use crate::{
-    data::{database::DbSong, service::DataService, stash_api::StashApi},
-    server::{error::AppError, handlers::get_streams},
-    service::{
-        beats::{self, Beats},
-        clip::ClipService,
-        funscript::{FunScript, ScriptBuilder},
-        generator::{self, Progress},
-        music::MusicService,
-        stash_config::Config,
-        VideoSource,
-    },
-    util::expect_file_name,
-};
-
 use super::AppState;
+use crate::data::database::DbSong;
+use crate::data::service::DataService;
+use crate::data::stash_api::StashApi;
+use crate::server::error::AppError;
+use crate::server::handlers::get_streams;
+use crate::service::beats::{self, Beats};
+use crate::service::clip::ClipService;
+use crate::service::funscript::{FunScript, ScriptBuilder};
+use crate::service::generator::{self, Progress};
+use crate::service::music::MusicService;
+use crate::service::stash_config::Config;
+use crate::service::VideoSource;
+use crate::util::expect_file_name;
 
 #[axum::debug_handler]
 pub async fn fetch_clips(
@@ -136,7 +131,8 @@ pub async fn download_video(
     state: State<Arc<AppState>>,
     Query(FilenameQuery { file_name }): Query<FilenameQuery>,
 ) -> Result<impl IntoResponse, AppError> {
-    use axum::{http::header, response::AppendHeaders};
+    use axum::http::header;
+    use axum::response::AppendHeaders;
 
     info!("downloading video '{file_name}'");
     let path = state.directories.video_dir().join(&file_name);

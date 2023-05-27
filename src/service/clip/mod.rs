@@ -1,23 +1,20 @@
-use self::pmv::{PmvClipLengths, PmvSongs};
-use crate::{service::music::parse_beats, Result};
+use std::fmt::Debug;
 
-use super::Marker;
-use crate::{
-    data::database::{Database, DbSong},
-    service::clip::{
-        default::{DefaultClipCreator, DefaultClipOptions},
-        pmv::{PmvClipCreator, PmvClipCreatorOptions},
-        sort::{ClipSorter, RandomClipSorter, SceneOrderClipSorter},
-    },
-    util::create_seeded_rng,
-};
 use clip_mash_types::{
     Clip, ClipOptions, ClipOrder, PmvClipOptions, RandomizedClipOptions, SongClipOptions,
 };
 use rand::rngs::StdRng;
-
-use std::fmt::Debug;
 use tracing::info;
+
+use self::pmv::{PmvClipLengths, PmvSongs};
+use super::Marker;
+use crate::data::database::{Database, DbSong};
+use crate::service::clip::default::{DefaultClipCreator, DefaultClipOptions};
+use crate::service::clip::pmv::{PmvClipCreator, PmvClipCreatorOptions};
+use crate::service::clip::sort::{ClipSorter, RandomClipSorter, SceneOrderClipSorter};
+use crate::service::music::parse_beats;
+use crate::util::create_seeded_rng;
+use crate::Result;
 
 mod default;
 mod pmv;
@@ -179,18 +176,12 @@ mod tests {
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
-    use crate::{
-        service::{
-            clip::{
-                pmv::{PmvClipCreatorOptions, PmvClipLengths},
-                sort::ClipSorter,
-                ClipCreator, PmvClipCreator, SceneOrderClipSorter,
-            },
-            fixtures::{self, create_marker_video_id},
-            VideoId,
-        },
-        util::create_seeded_rng,
-    };
+    use crate::service::clip::pmv::{PmvClipCreatorOptions, PmvClipLengths};
+    use crate::service::clip::sort::ClipSorter;
+    use crate::service::clip::{ClipCreator, PmvClipCreator, SceneOrderClipSorter};
+    use crate::service::fixtures::{self, create_marker_video_id};
+    use crate::service::VideoId;
+    use crate::util::create_seeded_rng;
 
     #[traced_test]
     #[test]

@@ -1,8 +1,7 @@
+use std::fs::File;
+use std::process::{Command, Output};
+
 use clip_mash_types::Api;
-use std::{
-    fs::File,
-    process::{Command, Output},
-};
 use typescript_type_def::{write_definition_file, DefinitionFileOptions};
 
 type Error = Box<dyn std::error::Error>;

@@ -31,6 +31,7 @@ const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
   const requestRef = useRef<number>()
   const offsetIndex = useRef(0)
   const [showBeat, setShowBeat] = useState(false)
+  const [measureCount, setMeasureCount] = useState(0)
 
   const onAnimationFrame = (time: number) => {
     time -= performance.timeOrigin / 1e9
@@ -43,6 +44,7 @@ const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
         setShowBeat(true)
         window.setTimeout(() => setShowBeat(false), 250)
         offsetIndex.current += 1
+        setMeasureCount(n => n + 1)
       }
       const delta = time - lastTime.current
       totalTime.current += delta
@@ -61,10 +63,12 @@ const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
   return (
     <div
       className={clsx(
-        "w-12 h-12 self-center rounded-full my-2",
+        "w-12 h-12 self-center rounded-full my-2 flex items-center justify-center",
         showBeat ? "bg-red-500" : "bg-white"
       )}
-    />
+    >
+      {measureCount}
+    </div>
   )
 }
 
@@ -85,15 +89,11 @@ const Timeline: React.FC<TimelineProps> = ({
   setCurrentClipIndex,
 }) => {
   const [segments, sceneColors] = useMemo(() => {
-    const totalWidth = 2560
-
     const clipLengths = clips.map(({clip}) => clip.range[1] - clip.range[0])
     const total = clipLengths.reduce((total, len) => total + len, 0)
     const segments = clipLengths.map((len) => {
-      const percent = len / total
-      const px = totalWidth * percent
-
-      return `${px}px`
+      const percent = (len / total) * 100
+      return `${percent}%`
     })
 
     const sceneIds = Array.from(new Set(clips.map((c) => c.clip.videoId.id)))
@@ -244,11 +244,40 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
                 <span className="label-text">Cut after how many measures?</span>
               </label>
               <input
-                type="text"
+                type="number"
                 className="input input-bordered"
                 {...register("measureCountFixed", {valueAsNumber: true})}
               />
             </div>
+          )}
+
+          {measureCountType === "random" && (
+            <>
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">
+                    Minimum
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  className="input input-bordered"
+                  {...register("measureCountRandomStart", {valueAsNumber: true})}
+                />
+              </div>
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">
+                    Maximum
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  className="input input-bordered"
+                  {...register("measureCountRandomEnd", {valueAsNumber: true})}
+                />
+              </div>
+            </>
           )}
         </>
       )}

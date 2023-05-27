@@ -288,16 +288,6 @@ impl Database {
         Ok(songs)
     }
 
-    pub async fn sum_song_durations(&self, song_ids: &[i64]) -> Result<f64> {
-        let duration = self
-            .get_songs(song_ids)
-            .await?
-            .into_iter()
-            .map(|s| s.duration)
-            .sum();
-        Ok(duration)
-    }
-
     pub async fn fetch_beats(&self, song_id: i64) -> Result<Option<Beats>> {
         let result = sqlx::query!("SELECT beats FROM songs WHERE rowid = $1", song_id)
             .fetch_optional(&self.pool)

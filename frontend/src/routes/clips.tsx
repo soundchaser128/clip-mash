@@ -15,7 +15,7 @@ import clsx from "clsx"
 import {useRef} from "react"
 import invariant from "tiny-invariant"
 import {formatSeconds, getSegmentColor} from "../helpers"
-import {Clip, ClipOrder, VideoDto} from "../types.generated"
+import {Clip, ClipOrder} from "../types.generated"
 import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
 import styles from "./clips.module.css"
@@ -31,7 +31,6 @@ const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
   const requestRef = useRef<number>()
   const offsetIndex = useRef(0)
   const [showBeat, setShowBeat] = useState(false)
-  console.log(showBeat)
 
   const onAnimationFrame = (time: number) => {
     time -= performance.timeOrigin / 1e9

@@ -18,6 +18,7 @@ import {formatSeconds, getSegmentColor} from "../helpers"
 import {Clip, ClipOrder, VideoDto} from "../types.generated"
 import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
+import styles from "./clips.module.css"
 
 const DEBUG = false
 
@@ -30,6 +31,7 @@ const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
   const requestRef = useRef<number>()
   const offsetIndex = useRef(0)
   const [showBeat, setShowBeat] = useState(false)
+  console.log(showBeat)
 
   const onAnimationFrame = (time: number) => {
     time -= performance.timeOrigin / 1e9
@@ -74,21 +76,26 @@ interface ClipState {
 
 interface TimelineProps {
   clips: ClipState[]
-  videos: Record<string, VideoDto>
   currentClipIndex: number
   setCurrentClipIndex: (n: number) => void
 }
 
 const Timeline: React.FC<TimelineProps> = ({
   clips,
-  videos,
   currentClipIndex,
   setCurrentClipIndex,
 }) => {
   const [segments, sceneColors] = useMemo(() => {
+    const totalWidth = 2560
+
     const clipLengths = clips.map(({clip}) => clip.range[1] - clip.range[0])
     const total = clipLengths.reduce((total, len) => total + len, 0)
-    const segments = clipLengths.map((len) => `${(len / total) * 100}%`)
+    const segments = clipLengths.map((len) => {
+      const percent = len / total
+      const px = totalWidth * percent
+
+      return `${px}px`
+    })
 
     const sceneIds = Array.from(new Set(clips.map((c) => c.clip.videoId.id)))
     sceneIds.sort()
@@ -101,23 +108,17 @@ const Timeline: React.FC<TimelineProps> = ({
   }, [clips])
 
   return (
-    <div className="w-full h-8 flex mt-2 gap-0.5">
+    <div className="flex overflow-x-auto h-14 mt-2 gap-0.5">
       {segments.map((width, index) => {
         const clip = clips[index].clip
-        const video = videos[clip.videoId.id]
         const [color, sceneId] = sceneColors.get(clip.videoId.id)
-        let tooltip = video.title
-        if (video.performers.length > 0) {
-          tooltip = `${video.performers.join(", ")} - ${video.title}`
-        }
         return (
           <div
             key={index}
-            data-tip={tooltip}
             className={clsx(
-              "h-full tooltip transition-opacity flex items-center justify-center",
+              styles.timelineSegment,
               color,
-              index !== currentClipIndex && "bg-opacity-25 hover:bg-opacity-50"
+              index !== currentClipIndex && styles.inactive
             )}
             style={{width}}
             onClick={() => setCurrentClipIndex(index)}
@@ -307,6 +308,8 @@ function PreviewClips() {
     (len, {clip}) => len + (clip.range[1] - clip.range[0]),
     0
   )
+  const [withMusic, setWithMusic] = useState(true)
+  const isPmv = state.data.songs && state.data.songs.length >= 1
 
   const onNextStage = () => {
     actions.updateForm({
@@ -339,7 +342,12 @@ function PreviewClips() {
   return (
     <>
       <div className="mb-4 grid grid-cols-3 items-center">
-        <div></div>
+        <div>
+          Preview the clips included in the final compilation. You can change
+          the settings for clip generation and apply to see changes instantly.
+          The number and color of the timeline segment identify the video it
+          comes from.
+        </div>
         <div className="text-center">
           <p className="">
             Showing clip{" "}
@@ -372,11 +380,14 @@ function PreviewClips() {
         </button>
       </div>
 
-      <audio
-        ref={audioRef}
-        src={`/api/song/${state.data.songs![0].songId}/stream`}
-        autoPlay={autoPlay}
-      />
+      {isPmv && (
+        <audio
+          ref={audioRef}
+          src={`/api/song/${state.data.songs![0].songId}/stream`}
+          autoPlay={autoPlay}
+          muted={!withMusic}
+        />
+      )}
 
       <div className="flex">
         <video
@@ -437,18 +448,30 @@ function PreviewClips() {
             </button>
           </div>
 
-          {/* {loaderData.beatOffsets && (
+          {isPmv && (
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text mr-2">Enable music</span>
+                <input
+                  type="checkbox"
+                  className="toggle"
+                  checked={withMusic}
+                  onChange={(e) => setWithMusic(e.target.checked)}
+                />
+              </label>
+            </div>
+          )}
+          {loaderData.beatOffsets && (
             <BeatIndicator
               autoPlay={autoPlay}
               offsets={loaderData.beatOffsets}
             />
-          )} */}
+          )}
         </div>
       </div>
 
       <Timeline
         clips={clips}
-        videos={loaderData.videos}
         currentClipIndex={currentClipIndex}
         setCurrentClipIndex={setCurrentClipIndex}
       />

@@ -164,6 +164,7 @@ impl ClipCreator for PmvClipCreator {
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
         if clips_duration > max_duration {
             let slack = (clips_duration - max_duration) / clips.len() as f64;
+            info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");
             for clip in &mut clips {
                 clip.range.1 = clip.range.1 - slack;
             }

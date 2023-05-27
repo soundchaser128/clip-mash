@@ -212,6 +212,7 @@ createStore(
   },
   {
     name: "form-state",
+    storageType: localStorage,
   }
 )
 

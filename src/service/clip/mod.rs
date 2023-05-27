@@ -116,10 +116,10 @@ impl ClipService {
                                 beats,
                                 beats_per_measure,
                                 match cut_after_measures {
-                                    clip_mash_types::MeasureCount::Fixed(count) => {
+                                    clip_mash_types::MeasureCount::Fixed { count } => {
                                         pmv::MeasureCount::Fixed(count)
                                     }
-                                    clip_mash_types::MeasureCount::Random(min, max) => {
+                                    clip_mash_types::MeasureCount::Random { min, max } => {
                                         pmv::MeasureCount::Randomized { min, max }
                                     }
                                 },

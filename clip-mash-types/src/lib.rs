@@ -166,10 +166,10 @@ pub struct RandomizedClipOptions {
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", tag = "type")]
 pub enum MeasureCount {
-    Fixed(usize),
-    Random(usize, usize),
+    Fixed { count: usize },
+    Random { min: usize, max: usize },
 }
 
 #[derive(Deserialize, Debug, TypeDef)]

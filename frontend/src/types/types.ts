@@ -7,6 +7,7 @@ import {
   SongDto,
   SelectedMarker,
   ClipOrder,
+  MeasureCount,
 } from "../types.generated"
 
 export type Tag = TagDto
@@ -73,6 +74,8 @@ interface CommonFormState {
   songs?: SongDto[]
   musicVolume?: number
   trimVideoForSongs?: boolean
+  beatsPerMeasure?: number
+  cutAfterMeasures?: MeasureCount
 }
 
 export interface LocalVideosFormState extends CommonFormState {

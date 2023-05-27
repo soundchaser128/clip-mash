@@ -135,6 +135,11 @@ interface Inputs {
   seed?: string
   splitClips: boolean
   clipDuration: number
+  beatsPerMeasure: number
+  measureCountType: "fixed" | "random"
+  measureCountFixed: number
+  measureCountRandomStart: number
+  measureCountRandomEnd: number
 }
 
 const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
@@ -144,8 +149,12 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
     defaultValues: initialValues,
   })
   const doSplitClips = watch("splitClips")
+  const measureCountType = watch("measureCountType")
+
   const revalidator = useRevalidator()
-  const {actions} = useStateMachine({updateForm})
+  const {actions, state} = useStateMachine({updateForm})
+  invariant(StateHelpers.isNotInitial(state.data))
+  const isPmv = state.data.songs?.length !== 0
 
   const onSubmit = (values: Inputs) => {
     actions.updateForm({
@@ -153,6 +162,15 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
       clipOrder: values.clipOrder,
       splitClips: values.splitClips,
       seed: values.seed,
+      beatsPerMeasure: values.beatsPerMeasure,
+      cutAfterMeasures:
+        values.measureCountType === "fixed"
+          ? {type: "fixed", count: values.measureCountFixed}
+          : {
+              type: "random",
+              min: values.measureCountRandomStart,
+              max: values.measureCountRandomEnd,
+            },
     })
 
     revalidator.revalidate()
@@ -161,31 +179,80 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
       <h2 className="text-xl font-bold">Settings</h2>
-      <div className="form-control">
-        <label className="label cursor-pointer">
-          <span className="label-text mr-2">
-            Split up marker videos into clips
-          </span>
-          <input
-            type="checkbox"
-            className="toggle"
-            {...register("splitClips")}
-          />
-        </label>
-      </div>
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">
-            Maximum duration per clip (in seconds):
-          </span>
-        </label>
-        <input
-          type="number"
-          className="input input-bordered"
-          disabled={!doSplitClips}
-          {...register("clipDuration", {valueAsNumber: true})}
-        />
-      </div>
+      {!isPmv && (
+        <>
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text mr-2">
+                Split up marker videos into clips
+              </span>
+              <input
+                type="checkbox"
+                className="toggle"
+                {...register("splitClips")}
+              />
+            </label>
+          </div>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">
+                Maximum duration per clip (in seconds):
+              </span>
+            </label>
+            <input
+              type="number"
+              className="input input-bordered"
+              disabled={!doSplitClips}
+              {...register("clipDuration", {valueAsNumber: true})}
+            />
+          </div>
+        </>
+      )}
+
+      {isPmv && (
+        <>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Beats per measure</span>
+            </label>
+            <input
+              type="number"
+              className="input input-bordered"
+              disabled={!doSplitClips}
+              {...register("beatsPerMeasure", {valueAsNumber: true})}
+            />
+          </div>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Cut after ... measures</span>
+            </label>
+            <select
+              className="select select-bordered"
+              {...register("measureCountType")}
+            >
+              <option disabled value="none">
+                Select how to cut...
+              </option>
+              <option value="random">Randomized</option>
+              <option value="fixed">Fixed</option>
+            </select>
+          </div>
+
+          {measureCountType === "fixed" && (
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Cut after how many measures?</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered"
+                {...register("measureCountFixed", {valueAsNumber: true})}
+              />
+            </div>
+          )}
+        </>
+      )}
+
       <div className="form-control">
         <label className="label">
           <span className="label-text">Clip order:</span>
@@ -327,6 +394,20 @@ function PreviewClips() {
               clipOrder: state.data.clipOrder || "scene-order",
               splitClips: state.data.splitClips || true,
               seed: state.data.seed,
+              beatsPerMeasure: state.data.beatsPerMeasure || 4,
+              measureCountFixed:
+                state.data.cutAfterMeasures?.type === "fixed"
+                  ? state.data.cutAfterMeasures.count
+                  : 4,
+              measureCountRandomStart:
+                state.data.cutAfterMeasures?.type === "random"
+                  ? state.data.cutAfterMeasures.min
+                  : 2,
+              measureCountRandomEnd:
+                state.data.cutAfterMeasures?.type === "random"
+                  ? state.data.cutAfterMeasures.max
+                  : 4,
+              measureCountType: state.data.cutAfterMeasures?.type || "fixed",
             }}
           />
 

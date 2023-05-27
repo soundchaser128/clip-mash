@@ -28,27 +28,27 @@ export const configLoader: LoaderFunction = async () => {
 const getClipSettings = (
   state: LocalVideosFormState | StashFormState
 ): ClipOptions => {
-  if (!state.splitClips) {
-    return {
-      type: "noSplit",
-    }
-  } else if (state.songs && state.songs.length > 0) {
+  if (state.songs && state.songs.length > 0) {
     return {
       type: "pmv",
       song_ids: state.songs.map(({songId}) => songId),
       clips: {
         type: "songs",
-        beatsPerMeasure: 4,
-        cutAfterMeasures: {
-          random: [2, 4],
-        },
+        beatsPerMeasure: state.beatsPerMeasure || 4,
+        cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
       },
     }
   } else {
-    return {
-      type: "default",
-      baseDuration: state.clipDuration || 30,
-      divisors: [2.0, 3.0, 4.0],
+    if (!state.splitClips) {
+      return {
+        type: "noSplit",
+      }
+    } else {
+      return {
+        type: "default",
+        baseDuration: state.clipDuration || 30,
+        divisors: [2.0, 3.0, 4.0],
+      }
     }
   }
 }

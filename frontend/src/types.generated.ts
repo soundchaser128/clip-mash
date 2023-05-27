@@ -50,7 +50,9 @@ export type CreateVideoBody = {
 }
 export type ClipOrder = "random" | "scene-order" | "pmv"
 export type RandomizedClipOptions = {baseDuration: F64; divisors: F64[]}
-export type MeasureCount = {fixed: Usize} | {random: [Usize, Usize]}
+export type MeasureCount =
+  | ({type: "fixed"} & {count: Usize})
+  | ({type: "random"} & {min: Usize; max: Usize})
 export type SongClipOptions = {
   beatsPerMeasure: Usize
   cutAfterMeasures: MeasureCount

@@ -299,7 +299,7 @@ function SelectMarkers() {
                         <input
                           type="checkbox"
                           className="checkbox checkbox-primary ml-2"
-                          checked={selectedMarker.selected || undefined}
+                          checked={!!selectedMarker.selected}
                           onChange={(e) =>
                             onCheckboxChange(marker.id.id, e.target.checked)
                           }

@@ -66,9 +66,9 @@ export default function SelectVideos() {
             {...register("path", {required: true, minLength: 3})}
           />
         </div>
-        <div className="form-control">
+        <div className="form-control justify-between w-full">
           <label className="label cursor-pointer">
-            <span className="label-text mr-2">
+            <span className="label-text">
               Look at all the subdirectories as well
             </span>
             <input

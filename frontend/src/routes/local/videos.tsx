@@ -65,7 +65,7 @@ export default function ListVideos() {
       .some((v) => v.video.interactive)
 
     actions.updateForm({
-      stage: LocalFilesFormStage.Music,
+      stage: LocalFilesFormStage.SelectMarkers,
       videos: videos.filter((v) => v.markers.length > 0),
       selectedMarkers: videos
         .flatMap((m) => m.markers)

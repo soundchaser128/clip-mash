@@ -79,7 +79,7 @@ export default function ListVideos() {
         })),
       interactive,
     })
-    navigate("/stash/music")
+    navigate("/local/markers")
   }
 
   return (

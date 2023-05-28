@@ -29,10 +29,11 @@ import StashRoot from "./routes/root"
 import Layout from "./components/Layout"
 import Music from "./routes/music"
 import ConfigPage from "./routes/stash/config"
-import {configLoader, clipsLoader} from "./routes/loaders"
+import {configLoader, clipsLoader, localMarkerLoader} from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import {SongDto} from "./types.generated"
+import MarkersPage from "./routes/local/markers"
 
 const TroubleshootingInfo = () => {
   return (
@@ -136,6 +137,11 @@ const router = createBrowserRouter([
                 element: <EditVideoModal />,
               },
             ],
+          },
+          {
+            path: "markers",
+            element: <MarkersPage />,
+            loader: localMarkerLoader,
           },
           {
             path: "options",

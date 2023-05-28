@@ -51,6 +51,19 @@ pub async fn list_videos(
     Ok(Json(videos.into_iter().map(From::from).collect()))
 }
 
+#[derive(Deserialize)]
+pub struct ListMarkersQuery {
+    pub ids: Vec<String>,
+}
+
+#[axum::debug_handler]
+pub async fn list_markers(
+    Query(ListMarkersQuery { ids: _ }): Query<ListMarkersQuery>,
+    _state: State<Arc<AppState>>,
+) -> Result<Json<Vec<MarkerDto>>, AppError> {
+    todo!()
+}
+
 #[axum::debug_handler]
 pub async fn persist_marker(
     state: State<Arc<AppState>>,

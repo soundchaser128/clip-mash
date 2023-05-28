@@ -3,7 +3,7 @@ use std::str::FromStr;
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use serde::Deserialize;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
-use sqlx::SqlitePool;
+use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::info;
 
@@ -18,7 +18,7 @@ pub struct DbVideo {
     pub interactive: bool,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, FromRow)]
 pub struct DbMarker {
     pub rowid: Option<i64>,
     pub video_id: String,
@@ -101,6 +101,29 @@ impl Database {
         .fetch_one(&self.pool)
         .await?;
         Ok(marker)
+    }
+
+    pub async fn get_markers_for_video_ids(&self, ids: &[String]) -> Result<Vec<DbMarker>> {
+        info!("getting markers for videos {ids:?}");
+        let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video
+            FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
+            WHERE m.video_id IN ("
+        );
+        let mut separated = query_builder.separated(", ");
+        for id in ids {
+            separated.push_bind(id);
+        }
+        separated.push_unseparated(") ");
+
+        let query = query_builder.build();
+        let rows: Vec<_> = query.fetch_all(&self.pool).await?;
+        let mut markers = vec![];
+        for row in rows {
+            markers.push(DbMarker::from_row(&row)?);
+        }
+
+        Ok(markers)
     }
 
     pub async fn get_video_by_path(&self, path: &str) -> Result<Option<LocalVideoWithMarkers>> {
@@ -338,10 +361,13 @@ impl Database {
 #[cfg(test)]
 mod test {
     use fake::faker::filesystem::en::FilePath;
+    use fake::faker::lorem::en::Sentence;
     use fake::Fake;
     use nanoid::nanoid;
     use sqlx::SqlitePool;
+    use tracing_test::traced_test;
 
+    use super::DbMarker;
     use crate::data::database::{CreateMarker, Database, DbVideo};
     use crate::Result;
 
@@ -353,6 +379,17 @@ mod test {
         };
         db.persist_video(expected.clone()).await?;
         Ok(expected)
+    }
+
+    async fn persist_marker(db: &Database, video_id: &str, index: i64) -> Result<DbMarker> {
+        let marker = CreateMarker {
+            video_id: video_id.to_string(),
+            start: 1.0,
+            end: 17.0,
+            index_within_video: index,
+            title: Sentence(5..8).fake(),
+        };
+        db.persist_marker(marker).await
     }
 
     #[sqlx::test]
@@ -439,5 +476,27 @@ mod test {
         assert_eq!(result.video.file_path, expected.file_path);
         assert_eq!(result.video.interactive, expected.interactive);
         assert_eq!(result.markers.len(), 0);
+    }
+
+    #[traced_test]
+    #[sqlx::test]
+    async fn test_get_markers_for_video(pool: SqlitePool) {
+        let db = Database::with_pool(pool);
+        let video1 = persist_video(&db).await.unwrap();
+        for i in 0..5 {
+            persist_marker(&db, &video1.id, i).await.unwrap();
+        }
+
+        let video2 = persist_video(&db).await.unwrap();
+        for i in 0..2 {
+            persist_marker(&db, &video2.id, i).await.unwrap();
+        }
+
+        let marker_results = db
+            .get_markers_for_video_ids(&[video1.id, video2.id])
+            .await
+            .unwrap();
+        dbg!(&marker_results);
+        assert_eq!(7, marker_results.len());
     }
 }

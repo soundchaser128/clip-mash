@@ -80,6 +80,11 @@ const LocalFileSteps: React.FC<{state: LocalVideosFormState}> = ({state}) => {
           content: "Create markers",
         },
         {
+          stage: FormStage.SelectMarkers,
+          link: "/local/markers",
+          content: "Select markers",
+        },
+        {
           stage: LocalFilesFormStage.Music,
           link: "/stash/music",
           content: "Music options",

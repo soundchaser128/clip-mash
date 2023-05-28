@@ -93,3 +93,8 @@ export const clipsLoader: LoaderFunction = async () => {
     throw json({error: text, request: "/api/clips"}, {status: 500})
   }
 }
+
+export const localMarkerLoader: LoaderFunction = async () => {
+  // todo
+  return []
+}

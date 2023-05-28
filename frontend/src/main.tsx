@@ -10,7 +10,9 @@ import {
 } from "react-router-dom"
 import "./index.css"
 import SelectCriteria from "./routes/stash/filter/root"
-import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
+import SelectMarkers, {
+  loader as markerLoader,
+} from "./routes/stash/select-markers"
 import VideoOptions from "./routes/video-options"
 import Progress from "./routes/progress"
 import PreviewClips from "./routes/clips"

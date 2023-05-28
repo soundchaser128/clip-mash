@@ -24,9 +24,10 @@ interface Props {
     markers: MarkerDto[]
   }
   withImages?: boolean
+  withPerformers?: boolean
 }
 
-const SelectMarkers: React.FC<Props> = ({data, withImages}) => {
+const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
   const {actions, state} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
 
@@ -229,13 +230,15 @@ const SelectMarkers: React.FC<Props> = ({data, withImages}) => {
                   </strong>
                   {marker.sceneTitle || marker.fileName}
                 </p>
-                <p>
-                  <strong>
-                    <HiUser className="mr-2 inline" />
-                    Performers:{" "}
-                  </strong>
-                  {marker.performers.join(", ") || "No performers found"}
-                </p>
+                {withPerformers && (
+                  <p>
+                    <strong>
+                      <HiUser className="mr-2 inline" />
+                      Performers:{" "}
+                    </strong>
+                    {marker.performers.join(", ") || "No performers found"}
+                  </p>
+                )}
                 <p>
                   <strong>
                     <HiClock className="mr-2 inline" />

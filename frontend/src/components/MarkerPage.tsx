@@ -23,11 +23,12 @@ interface Props {
   data: {
     markers: MarkerDto[]
   }
+  withImages?: boolean
 }
 
-const SelectMarkers: React.FC<Props> = ({data}) => {
+const SelectMarkers: React.FC<Props> = ({data, withImages}) => {
   const {actions, state} = useStateMachine({updateForm})
-  invariant(StateHelpers.isStash(state.data))
+  invariant(StateHelpers.isNotInitial(state.data))
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
@@ -203,17 +204,20 @@ const SelectMarkers: React.FC<Props> = ({data}) => {
                 !selectedMarker.selected && "opacity-50"
               )}
             >
-              <figure>
-                {videoPreview === marker.id.id && (
-                  <video muted autoPlay src={marker.streamUrl} />
-                )}
-                {videoPreview !== marker.id.id && (
-                  <img
-                    src={marker.screenshotUrl || undefined}
-                    className="aspect-[16/9] object-cover object-top w-full"
-                  />
-                )}
-              </figure>
+              {withImages && (
+                <figure>
+                  {videoPreview === marker.id.id && (
+                    <video muted autoPlay src={marker.streamUrl} />
+                  )}
+                  {videoPreview !== marker.id.id && (
+                    <img
+                      src={marker.screenshotUrl || undefined}
+                      className="aspect-[16/9] object-cover object-top w-full"
+                    />
+                  )}
+                </figure>
+              )}
+
               <div className="card-body">
                 <h2 className="card-title">
                   {[marker.primaryTag, ...marker.tags].join(", ")}
@@ -263,20 +267,26 @@ const SelectMarkers: React.FC<Props> = ({data}) => {
                   </div>
 
                   <div className="card-actions justify-between">
-                    <div className="form-control">
-                      <label className="label cursor-pointer">
-                        <span className="label-text">Video preview</span>
-                        <input
-                          onChange={(e) =>
-                            onVideoPreviewChange(marker.id.id, e.target.checked)
-                          }
-                          checked={videoPreview === marker.id.id}
-                          disabled={!selectedMarker.selected}
-                          type="checkbox"
-                          className="toggle ml-2"
-                        />
-                      </label>
-                    </div>
+                    {withImages && (
+                      <div className="form-control">
+                        <label className="label cursor-pointer">
+                          <span className="label-text">Video preview</span>
+                          <input
+                            onChange={(e) =>
+                              onVideoPreviewChange(
+                                marker.id.id,
+                                e.target.checked
+                              )
+                            }
+                            checked={videoPreview === marker.id.id}
+                            disabled={!selectedMarker.selected}
+                            type="checkbox"
+                            className="toggle ml-2"
+                          />
+                        </label>
+                      </div>
+                    )}
+                    {!withImages && <div />}
                     <div className="form-control">
                       <label className="label cursor-pointer">
                         <span className="label-text">Include</span>

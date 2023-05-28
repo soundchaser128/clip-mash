@@ -103,8 +103,10 @@ impl Database {
         Ok(marker)
     }
 
-    pub async fn get_markers_for_video_ids(&self, ids: &[String]) -> Result<Vec<DbMarker>> {
-        info!("getting markers for videos {ids:?}");
+    pub async fn get_markers_for_video_ids(
+        &self,
+        ids: &[impl AsRef<str>],
+    ) -> Result<Vec<DbMarker>> {
         let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
             "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video
             FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
@@ -112,7 +114,7 @@ impl Database {
         );
         let mut separated = query_builder.separated(", ");
         for id in ids {
-            separated.push_bind(id);
+            separated.push_bind(id.as_ref());
         }
         separated.push_unseparated(") ");
 
@@ -381,11 +383,17 @@ mod test {
         Ok(expected)
     }
 
-    async fn persist_marker(db: &Database, video_id: &str, index: i64) -> Result<DbMarker> {
+    async fn persist_marker(
+        db: &Database,
+        video_id: &str,
+        index: i64,
+        start: f64,
+        end: f64,
+    ) -> Result<DbMarker> {
         let marker = CreateMarker {
             video_id: video_id.to_string(),
-            start: 1.0,
-            end: 17.0,
+            start,
+            end,
             index_within_video: index,
             title: Sentence(5..8).fake(),
         };
@@ -484,19 +492,27 @@ mod test {
         let db = Database::with_pool(pool);
         let video1 = persist_video(&db).await.unwrap();
         for i in 0..5 {
-            persist_marker(&db, &video1.id, i).await.unwrap();
+            let start = i as f64 + 2.0;
+            let end = i as f64 * 2.0 + 2.0;
+            persist_marker(&db, &video1.id, i, start, end)
+                .await
+                .unwrap();
         }
 
         let video2 = persist_video(&db).await.unwrap();
         for i in 0..2 {
-            persist_marker(&db, &video2.id, i).await.unwrap();
+            let start = i as f64 + 2.0;
+            let end = i as f64 * 2.0 + 2.0;
+            persist_marker(&db, &video2.id, i, start, end)
+                .await
+                .unwrap();
         }
 
         let marker_results = db
             .get_markers_for_video_ids(&[video1.id, video2.id])
             .await
             .unwrap();
-        dbg!(&marker_results);
+
         assert_eq!(7, marker_results.len());
     }
 }

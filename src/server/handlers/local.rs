@@ -53,15 +53,18 @@ pub async fn list_videos(
 
 #[derive(Deserialize)]
 pub struct ListMarkersQuery {
-    pub ids: Vec<String>,
+    pub ids: String,
 }
 
 #[axum::debug_handler]
 pub async fn list_markers(
-    Query(ListMarkersQuery { ids: _ }): Query<ListMarkersQuery>,
-    _state: State<Arc<AppState>>,
+    Query(ListMarkersQuery { ids }): Query<ListMarkersQuery>,
+    state: State<Arc<AppState>>,
 ) -> Result<Json<Vec<MarkerDto>>, AppError> {
-    todo!()
+    let ids: Vec<_> = ids.split(',').map(|s| s.trim()).collect();
+    let markers = state.database.get_markers_for_video_ids(&ids).await?;
+    let markers = markers.into_iter().map(From::from).collect();
+    Ok(Json(markers))
 }
 
 #[axum::debug_handler]

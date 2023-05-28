@@ -95,6 +95,17 @@ export const clipsLoader: LoaderFunction = async () => {
 }
 
 export const localMarkerLoader: LoaderFunction = async () => {
-  // todo
-  return []
+  const formState = getFormState()!
+  invariant(StateHelpers.isLocalFiles(formState))
+  const videoIds = formState.videos?.map((v) => v.video.id.id).join(",") || ""
+  const params = new URLSearchParams({ids: videoIds})
+
+  const response = await fetch(`/api/local/video/marker?${params.toString()}`)
+  if (response.ok) {
+    const json = await response.json()
+    return json
+  } else {
+    const text = await response.text()
+    throw json({error: text, request: "/api/local/video/marker"}, {status: 500})
+  }
 }

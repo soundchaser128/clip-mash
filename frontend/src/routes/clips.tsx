@@ -433,7 +433,7 @@ function PreviewClips() {
 
       <div className="flex">
         <video
-          className="w-3/4"
+          className="w-3/4 h-[650px]"
           src={clipUrl}
           muted
           autoPlay={autoPlay}

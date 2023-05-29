@@ -39,7 +39,7 @@ const getClipSettings = (
       },
     }
   } else {
-    if (!state.splitClips) {
+    if (state.splitClips === false) {
       return {
         type: "noSplit",
       }

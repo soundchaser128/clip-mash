@@ -8,7 +8,6 @@ use tokio::task::spawn_blocking;
 use tracing::info;
 
 use crate::service::beats::{self, Beats};
-use crate::service::directories::Directories;
 use crate::Result;
 
 #[derive(Debug, Clone)]
@@ -338,16 +337,15 @@ impl Database {
         Ok(())
     }
 
-    pub async fn generate_all_beats(&self, dirs: Directories) -> Result<()> {
+    pub async fn generate_all_beats(&self) -> Result<()> {
         let rows = sqlx::query!("SELECT rowid, file_path FROM songs WHERE beats IS NULL")
             .fetch_all(&self.pool)
             .await?;
         info!("generating beats for {} songs", rows.len());
         let mut handles = vec![];
         for row in rows {
-            let dirs = dirs.clone();
             handles.push(spawn_blocking(move || {
-                (beats::detect_beats(row.file_path, &dirs), row.rowid)
+                (beats::detect_beats(row.file_path), row.rowid)
             }));
         }
 

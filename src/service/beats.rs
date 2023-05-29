@@ -8,7 +8,6 @@ use hound::WavReader;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use super::directories::Directories;
 use crate::util::commandline_error;
 use crate::Result as AppResult;
 
@@ -22,15 +21,12 @@ pub struct Beats {
     pub length: f32,
 }
 
-fn convert_to_wav(
-    source: impl AsRef<Utf8Path>,
-    directories: &Directories,
-) -> AppResult<Utf8PathBuf> {
+fn convert_to_wav(source: impl AsRef<Utf8Path>) -> AppResult<Utf8PathBuf> {
     let source = source.as_ref();
     let file_stem = source
         .file_stem()
         .ok_or(eyre!("input file must have a filename"))?;
-    let destination = directories.music_dir().join(format!("{file_stem}.wav"));
+    let destination = source.parent().unwrap().join(format!("{file_stem}.wav"));
     info!(
         "converting file at {} to WAV, destination = {}",
         source, destination
@@ -56,10 +52,10 @@ fn convert_to_wav(
     }
 }
 
-pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: &Directories) -> AppResult<Beats> {
+pub fn detect_beats(file: impl AsRef<Utf8Path>) -> AppResult<Beats> {
     let start = Instant::now();
     let file = file.as_ref();
-    let wav_file = convert_to_wav(file, directories)?;
+    let wav_file = convert_to_wav(file)?;
     let reader = WavReader::open(wav_file)?;
     let format = reader.spec();
     let duration = reader.duration();
@@ -94,22 +90,4 @@ pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: &Directories) -> Ap
         offsets,
         length: duration as f32 / format.sample_rate as f32,
     })
-}
-
-#[cfg(test)]
-mod test {
-
-    use crate::service::beats::detect_beats;
-    use crate::service::directories::Directories;
-
-    // #[traced_test]
-    // #[test]
-    fn test_detect_beats() {
-        let file = "./samples/xtal.opus";
-        let dirs = Directories::new().unwrap();
-        let beats = detect_beats(file, &dirs).unwrap();
-        beats.offsets.iter().for_each(|offset| {
-            assert!(*offset <= beats.length);
-        })
-    }
 }

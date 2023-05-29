@@ -301,7 +301,7 @@ pub async fn get_beats(
         Some(beats) => beats,
         None => {
             let song = state.database.get_song(song_id).await?;
-            let beats = beats::detect_beats(&song.file_path, &state.directories)?;
+            let beats = beats::detect_beats(&song.file_path)?;
             state
                 .database
                 .persist_beats(song.rowid.unwrap(), &beats)

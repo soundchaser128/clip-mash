@@ -318,9 +318,9 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
 function PreviewClips() {
   const loaderData = useLoaderData() as ClipsLoaderData
   const streams = loaderData.streams
-  // const [clips, setClips] = useImmer<ClipState[]>(
-  //   loaderData.clips.map((clip) => ({clip, included: true}))
-  // )
+  const {actions, state} = useStateMachine({updateForm})
+  invariant(StateHelpers.isNotInitial(state.data))
+  const songs = state.data.songs ?? []
   const clips = loaderData.clips.map((clip) => ({clip, included: true}))
 
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
@@ -328,8 +328,6 @@ function PreviewClips() {
   const currentClip = clips[currentClipIndex].clip
   const streamUrl = streams[currentClip.videoId.id]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
-  const {actions, state} = useStateMachine({updateForm})
-  invariant(StateHelpers.isNotInitial(state.data))
   const navigate = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -337,8 +335,9 @@ function PreviewClips() {
     (len, {clip}) => len + (clip.range[1] - clip.range[0]),
     0
   )
-  const [withMusic, setWithMusic] = useState(true)
+  const [withMusic, setWithMusic] = useState(false)
   const isPmv = state.data.songs && state.data.songs.length >= 1
+  const [songIndex, setSongIndex] = useState(0)
 
   const onNextStage = () => {
     actions.updateForm({
@@ -348,11 +347,24 @@ function PreviewClips() {
     navigate("/stash/progress")
   }
 
-  const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (event) => {
+  const onVideoTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (
+    event
+  ) => {
     const endTimestamp = currentClip.range[1]
     const currentTime = event.currentTarget.currentTime
     if (Math.abs(endTimestamp - currentTime) <= 0.5 && autoPlay) {
       setCurrentClipIndex((c) => (c + 1) % clips.length)
+    }
+  }
+
+  const onAudioTimeUpdate: React.ReactEventHandler<HTMLAudioElement> = (
+    event
+  ) => {
+    const duration = event.currentTarget.duration
+    const position = event.currentTarget.currentTime
+    if (Math.abs(duration - position) <= 0.1 && autoPlay) {
+      console.log("switching song")
+      setSongIndex((idx) => Math.min(songs.length - 1, idx + 1))
     }
   }
 
@@ -370,8 +382,8 @@ function PreviewClips() {
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-3 items-center">
-        <div>
+      <div className="mb-4 grid grid-cols-3">
+        <div className="text-sm text-gray-600">
           Preview the clips included in the final compilation. You can change
           the settings for clip generation and apply to see changes instantly.
           The number and color of the timeline segment identify the video it
@@ -412,9 +424,10 @@ function PreviewClips() {
       {isPmv && (
         <audio
           ref={audioRef}
-          src={`/api/song/${state.data.songs![0].songId}/stream`}
+          src={`/api/song/${songs[songIndex]?.songId}/stream`}
           autoPlay={autoPlay}
           muted={!withMusic}
+          onTimeUpdate={onAudioTimeUpdate}
         />
       )}
 
@@ -424,7 +437,7 @@ function PreviewClips() {
           src={clipUrl}
           muted
           autoPlay={autoPlay}
-          onTimeUpdate={onTimeUpdate}
+          onTimeUpdate={onVideoTimeUpdate}
           ref={videoRef}
         />
         <div className="flex flex-col px-4 py-2 w-1/4 bg-slate-100 justify-between">

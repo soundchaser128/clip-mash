@@ -20,8 +20,6 @@ mod default;
 mod pmv;
 mod sort;
 
-const MIN_DURATION: f64 = 2.0;
-
 #[derive(Debug)]
 pub struct CreateClipsOptions {
     pub order: ClipOrder,

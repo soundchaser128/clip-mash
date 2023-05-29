@@ -8,7 +8,8 @@ use tracing::{debug, info};
 
 use super::{Clip, ClipCreator, Marker};
 use crate::service::beats::Beats;
-use crate::service::clip::MIN_DURATION;
+
+const MIN_DURATION: f64 = 1.5;
 
 #[derive(Debug)]
 pub struct PmvSongs {
@@ -54,7 +55,7 @@ impl PmvSongs {
         let start = beats[self.beat_index];
         let end = beats[next_beat_index];
 
-        info!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds");
+        debug!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds");
 
         if next_beat_index == beats.len() - 1 {
             self.song_index += 1;
@@ -124,6 +125,7 @@ impl ClipCreator for PmvClipCreator {
         let mut total_duration = 0.0;
         let mut clips = vec![];
         let mut marker_idx = 0;
+        let has_music = matches!(options.clip_lengths, PmvClipLengths::Songs(_));
 
         let mut start_times: HashMap<i64, (f64, usize)> = markers
             .iter()
@@ -141,8 +143,8 @@ impl ClipCreator for PmvClipCreator {
             let (start, index) = start_times[&marker.id.inner()];
             let end = (start + clip_duration).min(marker.end_time);
             let duration = end - start;
-            if duration >= MIN_DURATION {
-                debug!(
+            if has_music || duration >= MIN_DURATION {
+                info!(
                     "adding clip for video {} from {start} - {end}",
                     marker.video_id
                 );

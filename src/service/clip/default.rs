@@ -5,7 +5,9 @@ use rand::seq::SliceRandom;
 use tracing::{debug, info};
 
 use super::{Clip, ClipCreator, Marker};
-use crate::service::clip::MIN_DURATION;
+
+// Specifc minimum duration for default clip generation
+const MIN_DURATION: f64 = 1.5;
 
 #[derive(Debug)]
 pub struct DefaultClipOptions {

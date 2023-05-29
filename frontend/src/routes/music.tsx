@@ -334,15 +334,20 @@ export default function Music() {
             </div>
           )}
           <div className="">
-            <p className="mb-4 font-light self-center max-w-2xl">
-              You can select background music for your video compilation. (this
-              is optional). The original sound of the video and the new music
-              will be mixed together based on the music volume you selected,
-              100% music volume meaning that only the music will be heard.
-              <br />
-              The length of the video will be determined by the selected music
-              if you select any.
-            </p>
+            <div className="mb-4 text-sm text-gray-600 self-center max-w-2xl">
+              <p className="mb-2">
+                You can select background music for your video compilation.
+                (this is optional). The original sound of the video and the new
+                music will be mixed together based on the music volume you
+                selected, 100% music volume meaning that only the music will be
+                heard.
+              </p>
+              <p>
+                The length of the video will be determined by the selected music
+                if you select any, and this will also influence how the clips
+                are generated.
+              </p>
+            </div>
             <p>
               Selected marker duration:{" "}
               <strong>{formatSeconds(totalMarkerDuration, "short")}</strong>

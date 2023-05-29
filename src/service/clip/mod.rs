@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::time::Instant;
 
 use clip_mash_types::{
     Clip, ClipOptions, ClipOrder, PmvClipOptions, RandomizedClipOptions, SongClipOptions,
@@ -83,6 +84,7 @@ impl ClipService {
         &self,
         mut options: CreateClipsOptions,
     ) -> Result<(Vec<Clip>, Option<Vec<f32>>)> {
+        let start = Instant::now();
         options.normalize_video_indices();
         let mut rng = create_seeded_rng(options.seed.as_deref());
         let order = options.order;
@@ -139,7 +141,6 @@ impl ClipService {
             ClipOptions::NoSplit => markers_to_clips(options.markers),
         };
 
-        info!("generated {} clips", clips.len());
         let clips = match order {
             ClipOrder::Random => {
                 let sorter = RandomClipSorter;
@@ -151,6 +152,9 @@ impl ClipService {
             }
             ClipOrder::Pmv => clips,
         };
+
+        let elapsed = start.elapsed();
+        info!("generated {} clips in {:?}", clips.len(), elapsed);
 
         Ok((clips, beat_offsets))
     }

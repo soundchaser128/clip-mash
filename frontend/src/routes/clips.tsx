@@ -110,7 +110,7 @@ const Timeline: React.FC<TimelineProps> = ({
   }, [clips])
 
   return (
-    <div className="flex overflow-x-auto h-14 mt-2 gap-0.5">
+    <div className="flex overflow-x-auto h-10 mt-2 gap-0.5">
       {segments.map((width, index) => {
         const clip = clips[index].clip
         const [color, sceneId] = sceneColors.get(clip.videoId.id)
@@ -389,8 +389,8 @@ function PreviewClips() {
           The number and color of the timeline segment identify the video it
           comes from.
         </div>
-        <div className="text-center">
-          <p className="">
+        <div className="text-center text-sm">
+          <p>
             Showing clip{" "}
             <strong>
               {currentClipIndex + 1} / {clips.length}
@@ -398,11 +398,15 @@ function PreviewClips() {
           </p>
           <p>
             Current clip duration:{" "}
-            <strong>{formatSeconds(currentClip.range, "short")}</strong>
+            <span className="font-semibold">
+              {formatSeconds(currentClip.range, "short")}
+            </span>
           </p>
           <p>
             Total video duration:{" "}
-            <strong>{formatSeconds(totalLength, "short")}</strong>
+            <span className="font-semibold">
+              {formatSeconds(totalLength, "short")}
+            </span>
           </p>
           {DEBUG && (
             <>

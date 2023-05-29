@@ -116,10 +116,7 @@ impl ClipCreator for PmvClipCreator {
         mut options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
-        info!(
-            "using PmvClipCreator to create clips, options: {:?}",
-            options
-        );
+        info!("using PmvClipCreator to create clips, options: {options:#?}",);
 
         let max_duration = options.video_duration;
         let mut total_duration = 0.0;

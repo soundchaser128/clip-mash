@@ -4,6 +4,7 @@ import {updateForm} from "./actions"
 import {FormStage, LocalFilesFormStage, VideoSource} from "../types/types"
 import {nanoid} from "nanoid"
 import Layout from "../components/Layout"
+import {HiArchiveBox, HiComputerDesktop} from "react-icons/hi2"
 
 export default function InitialRoot() {
   const navigate = useNavigate()
@@ -28,8 +29,8 @@ export default function InitialRoot() {
     <Layout>
       <div className="hero">
         <div className="hero-content self-center">
-          <div className="max-w-md">
-            <h1 className="text-5xl font-bold">ClipMash</h1>
+          <div className="max-w-md flex flex-col">
+            <img src="/logo.png" />
             <p className="mt-4 text-lg">
               ClipMash helps you create video compilations.
             </p>
@@ -48,6 +49,7 @@ export default function InitialRoot() {
                 onClick={() => onNextStage("stash")}
                 className="btn btn-lg btn-primary w-40"
               >
+                <HiArchiveBox className="mr-2 w-6 h-6" />
                 Stash
               </button>
 
@@ -55,6 +57,7 @@ export default function InitialRoot() {
                 className="btn btn-lg btn-secondary w-40"
                 onClick={() => onNextStage("localFile")}
               >
+                <HiComputerDesktop className="mr-2 w-6 h-6" />
                 Local
               </button>
             </div>

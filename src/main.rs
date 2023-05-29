@@ -108,7 +108,7 @@ async fn main() -> Result<()> {
         tokio::spawn(async move {
             tokio::time::sleep(Duration::from_millis(500)).await;
             if webbrowser::open("http://localhost:5174").is_err() {
-                warn!("failed to open UI in browser, please navigate to http://localhost:5147");
+                warn!("failed to open UI in browser, please navigate to http://localhost:5174");
             }
         });
     }

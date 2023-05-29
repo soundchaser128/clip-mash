@@ -39,5 +39,6 @@ fn main() -> Result<(), Error> {
     write_definition_file::<_, Api>(&mut file, options)?;
     let _ = format_file();
 
+    println!("cargo:rerun-if-changed=clip-mash-types");
     Ok(())
 }

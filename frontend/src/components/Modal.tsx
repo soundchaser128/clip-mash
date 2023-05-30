@@ -6,9 +6,16 @@ interface Props {
   onClose?: () => void
   children?: React.ReactNode
   className?: string
+  size?: "full-screen" | "fluid"
 }
 
-const Modal: React.FC<Props> = ({isOpen, onClose, children, className}) => {
+const Modal: React.FC<Props> = ({
+  isOpen,
+  onClose,
+  children,
+  className,
+  size = "full-screen",
+}) => {
   function handleClose() {
     onClose && onClose()
   }
@@ -21,7 +28,13 @@ const Modal: React.FC<Props> = ({isOpen, onClose, children, className}) => {
       )}
     >
       <div className="fixed inset-0 bg-black opacity-50"></div>
-      <div className="w-[95vw] fixed top-4 left-1/2 transform -translate-x-1/2">
+      <div
+        className={clsx(
+          "fixed left-1/2 transform -translate-x-1/2",
+          size === "full-screen" && "w-[95vw] top-4",
+          size !== "full-screen" && "top-32"
+        )}
+      >
         <div
           className={clsx("bg-white rounded-lg p-4 flex flex-col", className)}
         >

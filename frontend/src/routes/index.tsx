@@ -31,34 +31,36 @@ export default function InitialRoot() {
         <div className="hero-content self-center">
           <div className="max-w-md flex flex-col">
             <img src="/logo.png" className="w-40 self-center" />
-            <p className="mt-4 text-lg">
+            <p className="mt-2 text-lg text-center text-gray-500">
               ClipMash helps you create video compilations.
             </p>
 
-            <p className="pb-6 pt-3 text-lg">
-              <strong>Choose from where to get videos:</strong> <br />
-              You can either use files on your disk or connect to a{" "}
-              <a href="https://stashapp.cc" className="link link-primary">
-                Stash
-              </a>{" "}
-              instance.
-            </p>
+            <div className="text-lg mb-4">
+              <h2 className="font-bold mt-4">Choose video source</h2>
+              <p className="text-gray-500">
+                You can either use files on your disk or connect to a{" "}
+                <a href="https://stashapp.cc" className="link link-primary">
+                  Stash
+                </a>{" "}
+                instance.
+              </p>
+            </div>
 
             <div className="self-center btn-group">
               <button
                 onClick={() => onNextStage("stash")}
-                className="btn btn-lg btn-primary w-40"
+                className="btn btn-lg btn-primary w-48"
               >
                 <HiArchiveBox className="mr-2 w-6 h-6" />
                 Stash
               </button>
 
               <button
-                className="btn btn-lg btn-secondary w-40"
+                className="btn btn-lg btn-secondary w-48"
                 onClick={() => onNextStage("localFile")}
               >
                 <HiComputerDesktop className="mr-2 w-6 h-6" />
-                Local
+                Local files
               </button>
             </div>
           </div>

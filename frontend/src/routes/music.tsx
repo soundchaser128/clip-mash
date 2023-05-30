@@ -20,6 +20,7 @@ import {useDrag, useDrop} from "react-dnd"
 import type {Identifier, XYCoord} from "dnd-core"
 import clsx from "clsx"
 import {SongDto} from "../types.generated"
+import HelpModal from "../components/HelpModal"
 
 interface Inputs {
   musicUrl: string
@@ -480,15 +481,34 @@ export default function Music() {
             </button>
           )}
         </div>
-        <button
-          type="button"
-          onClick={onNextStage}
-          className="btn btn-success place-self-end"
-          disabled={musicTooLong}
-        >
-          Next
-          <HiChevronRight className="ml-1" />
-        </button>
+        <div className="flex gap-2">
+          <HelpModal>
+            <h1 className="mb-4 font-bold text-2xl">Music options</h1>
+            <p className="mb-2">
+              You can select background music for your video compilation. (this
+              is optional). The original sound of the video and the new music
+              will be mixed together based on the music volume you selected,
+              100% music volume meaning that only the music will be heard.
+            </p>
+            <p>
+              The length of the video will be determined by the selected music
+              if you select any. You can also choose how the clips will be
+              generated: Either by selecting a base duration for the clips (the
+              generated clips will then have some fraction of the length of that
+              base duration) or by using the detected BPM to direct the cuts
+              (cuts will only happen on the beat)
+            </p>
+          </HelpModal>
+          <button
+            type="button"
+            onClick={onNextStage}
+            className="btn btn-success place-self-end"
+            disabled={musicTooLong}
+          >
+            Next
+            <HiChevronRight className="ml-1" />
+          </button>
+        </div>
       </div>
 
       {mode === "order" && (
@@ -510,29 +530,7 @@ export default function Music() {
               </span>
             </div>
           )}
-          <div className="">
-            <div
-              className={clsx(
-                "text-sm text-gray-600 self-center max-w-2xl",
-                anySongsSelected && "mb-4"
-              )}
-            >
-              <p className="mb-2">
-                You can select background music for your video compilation.
-                (this is optional). The original sound of the video and the new
-                music will be mixed together based on the music volume you
-                selected, 100% music volume meaning that only the music will be
-                heard.
-              </p>
-              <p>
-                The length of the video will be determined by the selected music
-                if you select any. You can also choose how the clips will be
-                generated: Either by selecting a base duration for the clips
-                (the generated clips will then have some fraction of the length
-                of that base duration) or by using the detected BPM to direct
-                the cuts (cuts will only happen on the beat)
-              </p>
-            </div>
+          <div>
             {anySongsSelected && (
               <>
                 <p>

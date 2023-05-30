@@ -57,7 +57,7 @@ const Timeline: React.FC<TimelineProps> = ({
   }, [clips])
 
   return (
-    <div className="flex overflow-x-auto h-10 mt-2 gap-0.5">
+    <div className="flex h-10 mt-2 gap-0.5">
       {segments.map((width, index) => {
         const clip = clips[index].clip
         const [color, sceneId] = sceneColors.get(clip.videoId.id)

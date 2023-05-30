@@ -39,8 +39,13 @@ export const loader: LoaderFunction = async () => {
   const response = await fetch(`/api/local/video?${params.toString()}`, {
     method: "POST",
   })
-  const data = await response.json()
-  return json(data)
+  if (response.ok) {
+    const data = await response.json()
+    return json(data)
+  } else {
+    const text = await response.text()
+    throw json({error: text, request: "/api/local/video"}, {status: 500})
+  }
 }
 
 export default function ListVideos() {

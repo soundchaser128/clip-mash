@@ -1,4 +1,8 @@
-import {createStore, StateMachineProvider} from "little-state-machine"
+import {
+  createStore,
+  StateMachineProvider,
+  useStateMachine,
+} from "little-state-machine"
 import React from "react"
 import ReactDOM from "react-dom/client"
 import {
@@ -6,6 +10,7 @@ import {
   isRouteErrorResponse,
   LoaderFunction,
   RouterProvider,
+  useNavigate,
   useRouteError,
 } from "react-router-dom"
 import "./index.css"
@@ -36,21 +41,38 @@ import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import {SongDto} from "./types.generated"
 import MarkersPage from "./routes/local/markers"
+import {resetForm} from "./routes/actions"
 
 const TroubleshootingInfo = () => {
+  const {actions} = useStateMachine({resetForm})
+  const navigate = useNavigate()
+
+  const onReset = () => {
+    actions.resetForm()
+    navigate("/")
+  }
+
   return (
-    <div className="p-2">
-      <p>Try refreshing the page.</p>
-      <p>
-        If that doesn&apos;t help, please open an issue{" "}
-        <a
-          className="link link-primary"
-          href="https://github.com/soundchaser128/stash-compilation-maker/issues"
-        >
-          here
-        </a>
-        , describing what you did leading up to the error.
-      </p>
+    <div>
+      <h2 className="text-xl mb-2 font-bold">What you can do</h2>
+      <ul className="list-disc list-inside">
+        <li>Refresh the page.</li>
+        <li>
+          <span className="link link-primary" onClick={onReset}>
+            Reset the page state.
+          </span>
+        </li>
+        <li>
+          Open an issue{" "}
+          <a
+            className="link link-primary"
+            href="https://github.com/soundchaser128/stash-compilation-maker/issues"
+          >
+            here
+          </a>
+          , describing what you did leading up to the error.
+        </li>
+      </ul>
     </div>
   )
 }
@@ -64,12 +86,12 @@ const ErrorBoundary = () => {
 
     return (
       <Layout>
-        <div className="mt-8">
+        <div className="mt-8 flex flex-col">
           <h1 className="font-bold text-5xl mb-4 w-fit">
             {is404 ? "404 - Page not found" : "Sorry, something went wrong."}
           </h1>
           {!is404 && (
-            <div className="bg-red-200 p-2 rounded-lg text-black">
+            <div className="bg-error text-error-content p-2 rounded-lg self-start mb-4">
               <p>
                 Status code <strong>{error.status}</strong>
               </p>
@@ -87,15 +109,29 @@ const ErrorBoundary = () => {
     )
   }
 
+  const errorJson = JSON.stringify(error, null, 2)
+  const isUsefulJson = errorJson && errorJson !== "{}"
+  const err = error as Error
   return (
     <Layout>
-      <div className="self-center shrink mt-8">
+      <div className="mt-8 flex flex-col">
         <h1 className="font-bold text-5xl mb-4">
           Sorry, something went wrong.
         </h1>
-        <div>
-          <pre>{JSON.stringify(error, null, 2)}</pre>
+        <div className="bg-error text-error-content p-2 rounded-lg self-start mb-4">
+          <h2 className="font-bold">Error details:</h2>
+          <div>
+            {isUsefulJson && <pre>{errorJson}</pre>}
+            {!isUsefulJson && (
+              <p>
+                <code>
+                  {err.name}: {err.message}
+                </code>
+              </p>
+            )}
+          </div>
         </div>
+        <TroubleshootingInfo />
       </div>
     </Layout>
   )

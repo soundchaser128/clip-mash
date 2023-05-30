@@ -29,6 +29,7 @@ impl ClipCreator for DefaultClipCreator {
         info!("using DefaultClipCreator to create clips, options: {options:#?}",);
         let duration = options.clip_duration as f64;
         let clip_lengths = [
+            (duration / 1.0).max(MIN_DURATION),
             (duration / 2.0).max(MIN_DURATION),
             (duration / 3.0).max(MIN_DURATION),
             (duration / 4.0).max(MIN_DURATION),

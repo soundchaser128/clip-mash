@@ -171,11 +171,165 @@ const ReorderSongs: React.FC<{
   )
 }
 
+interface SongsTableProps {
+  songs: SongDto[]
+  selection: number[]
+  onToggleSong: (songId: number, checked: boolean) => void
+}
+
+const SongsTable: React.FC<SongsTableProps> = ({
+  songs,
+  selection,
+  onToggleSong,
+}) => {
+  return (
+    <div className="overflow-x-auto flex flex-col">
+      <table className="table table-compact w-full">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Duration</th>
+            <th>URL</th>
+            <th>Beats per minute</th>
+            <th>Include</th>
+          </tr>
+        </thead>
+        <tbody>
+          {songs.length === 0 && (
+            <tr>
+              <td className="text-center p-4" colSpan={5}>
+                No music yet.
+              </td>
+            </tr>
+          )}
+          {songs.map((song) => (
+            <tr key={song.songId}>
+              <td>{song.fileName}</td>
+              <td>{formatSeconds(song.duration, "short")}</td>
+              <td>{song.url}</td>
+              <td>{calcBPM(song)}</td>
+              <td>
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-primary"
+                  checked={selection.includes(song.songId)}
+                  onChange={(e) => onToggleSong(song.songId, e.target.checked)}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+interface UploadMusicProps {
+  onCancel: () => void
+  onSuccess: (song: SongDto) => void
+}
+
+const UploadMusic: React.FC<UploadMusicProps> = ({onCancel, onSuccess}) => {
+  const [file, setFile] = useState<File>()
+  const [loading, setLoading] = useState(false)
+
+  const onUpload = async () => {
+    if (file) {
+      setLoading(true)
+      const formData = new FormData()
+      formData.set("file", file)
+      const response = await fetch(`/api/song/upload`, {
+        method: "POST",
+        body: formData,
+      })
+      const data: SongDto = await response.json()
+      onSuccess(data)
+    }
+  }
+
+  return (
+    <div className="flex flex-col self-center w-full max-w-xl gap-4">
+      <p>Select a song to upload:</p>
+      <input
+        type="file"
+        className="file-input file-input-primary"
+        name="upload"
+        accept="audio/*"
+        onChange={(e) => setFile(e.target.files![0])}
+      />
+      <div className="flex self-end gap-2">
+        <button type="button" onClick={onCancel} className="btn btn-outline">
+          Cancel
+        </button>
+        <button
+          onClick={onUpload}
+          disabled={loading}
+          className="btn btn-success"
+        >
+          Upload
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
+  const [loading, setLoading] = useState(false)
+  const {handleSubmit, register, reset} = useForm<Inputs>({})
+
+  const onSubmit = async (values: Inputs) => {
+    setLoading(true)
+
+    const response = await fetch(
+      `/api/song/download?url=${encodeURIComponent(values.musicUrl)}`,
+      {
+        method: "POST",
+      }
+    )
+    const data: SongDto = await response.json()
+    await fetch(`/api/song/${data.songId}/beats`)
+
+    // actions.updateForm({
+    //   songs: [...(state.data.songs || []), data],
+    // })
+    // setMode("table")
+    // revalidator.revalidate()
+    setLoading(false)
+    onSuccess(data)
+    reset()
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col self-center w-full max-w-xl gap-4"
+    >
+      <p className="font-light">
+        You can download songs from YouTube, Vimeo or any other site that yt-dlp
+        supports.
+      </p>
+      <Field label="Music URL">
+        <input
+          className="input input-bordered w-full"
+          placeholder="Supports YouTube, Vimeo, ..."
+          {...register("musicUrl")}
+        />
+      </Field>
+      <div className="flex gap-2 self-end">
+        <button type="button" onClick={onCancel} className="btn btn-outline">
+          Cancel
+        </button>
+        <button disabled={loading} className="btn btn-success" type="submit">
+          Submit
+        </button>
+      </div>
+    </form>
+  )
+}
+
 export default function Music() {
   const [mode, setMode] = useState<Mode>("table")
-  const [file, setFile] = useState<File>()
   const songs = useLoaderData() as SongDto[]
-  const {handleSubmit, register, reset} = useForm<Inputs>({})
   const {actions, state} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
   const [loading, setLoading] = useState(false)
@@ -194,28 +348,7 @@ export default function Music() {
     .reduce((sum, song) => sum + song!.duration, 0)
 
   const musicTooLong = totalMusicDuration > totalMarkerDuration
-
-  const onSubmit = async (values: Inputs) => {
-    setLoading(true)
-    invariant(StateHelpers.isNotInitial(state.data))
-
-    const response = await fetch(
-      `/api/song/download?url=${encodeURIComponent(values.musicUrl)}`,
-      {
-        method: "POST",
-      }
-    )
-    const data: SongDto = await response.json()
-    await fetch(`/api/song/${data.songId}/beats`)
-
-    actions.updateForm({
-      songs: [...(state.data.songs || []), data],
-    })
-    setLoading(false)
-    setMode("table")
-    revalidator.revalidate()
-    reset()
-  }
+  const anySongsSelected = selection.length > 0
 
   const onToggleSong = (songId: number, checked: boolean) => {
     setSelection((draft) => {
@@ -230,25 +363,13 @@ export default function Music() {
     })
   }
 
-  const onUpload = async () => {
+  const onUploadSuccess = async (song: SongDto) => {
     invariant(StateHelpers.isNotInitial(state.data))
-    if (file) {
-      setLoading(true)
-      const formData = new FormData()
-      formData.set("file", file)
-      const response = await fetch(`/api/song/upload`, {
-        method: "POST",
-        body: formData,
-      })
-      const data: SongDto = await response.json()
-
-      actions.updateForm({
-        songs: [...(state.data.songs || []), data],
-      })
-      setLoading(false)
-      setMode("table")
-      revalidator.revalidate()
-    }
+    actions.updateForm({
+      songs: [...(state.data.songs || []), song],
+    })
+    setMode("table")
+    revalidator.revalidate()
   }
 
   const onNextStage = () => {
@@ -334,7 +455,12 @@ export default function Music() {
             </div>
           )}
           <div className="">
-            <div className="mb-4 text-sm text-gray-600 self-center max-w-2xl">
+            <div
+              className={clsx(
+                "text-sm text-gray-600 self-center max-w-2xl",
+                anySongsSelected && "mb-4"
+              )}
+            >
               <p className="mb-2">
                 You can select background music for your video compilation.
                 (this is optional). The original sound of the video and the new
@@ -344,147 +470,82 @@ export default function Music() {
               </p>
               <p>
                 The length of the video will be determined by the selected music
-                if you select any, and this will also influence how the clips
-                are generated.
+                if you select any. You can also choose how the clips will be
+                generated: Either by selecting a base duration for the clips
+                (the generated clips will then have some fraction of the length
+                of that base duration) or by using the detected BPM to direct
+                the cuts (cuts will only happen on the beat)
               </p>
             </div>
-            <p>
-              Selected marker duration:{" "}
-              <strong>{formatSeconds(totalMarkerDuration, "short")}</strong>
-            </p>
-            <p className={clsx(musicTooLong && "text-red-400")}>
-              Selected music duration:{" "}
-              <strong>{formatSeconds(totalMusicDuration, "short")}</strong>
-            </p>
+            {anySongsSelected && (
+              <>
+                <p>
+                  Selected marker duration:{" "}
+                  <strong>{formatSeconds(totalMarkerDuration, "short")}</strong>
+                </p>
+                <p className={clsx(musicTooLong && "text-red-400")}>
+                  Selected music duration:{" "}
+                  <strong>{formatSeconds(totalMusicDuration, "short")}</strong>
+                </p>
+              </>
+            )}
           </div>
-          <div className="form-control self-start">
-            <label className="label">
-              <span className="label-text">Music volume</span>
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              className="range range-sm w-72"
-              step="5"
-              value={musicVolume}
-              onChange={(e) => setMusicVolume(e.target.valueAsNumber)}
-              disabled={loading}
-            />
-            <div className="w-full flex justify-between text-xs px-2">
-              <span>0%</span>
-              <span className="font-bold">{musicVolume}%</span>
-              <span>100%</span>
-            </div>
-          </div>
+          {anySongsSelected && (
+            <>
+              <div className="form-control self-start">
+                <label className="label">
+                  <span className="label-text">Music volume</span>
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  className="range range-sm w-72"
+                  step="5"
+                  value={musicVolume}
+                  onChange={(e) => setMusicVolume(e.target.valueAsNumber)}
+                  disabled={loading}
+                />
+                <div className="w-full flex justify-between text-xs px-2">
+                  <span>0%</span>
+                  <span className="font-bold">{musicVolume}%</span>
+                  <span>100%</span>
+                </div>
+              </div>
+              <div className="form-control self-start">
+                <label className="label">
+                  <span className="label-text">Clip generation strategy</span>
+                </label>
+                <select className="select select-bordered">
+                  <option value="pmv">Music-based (cut on the beat)</option>
+                  <option value="default">Random lengths (default)</option>
+                </select>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {mode === "table" && (
-        <div className="overflow-x-auto flex flex-col">
-          <table className="table table-compact w-full">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Duration</th>
-                <th>URL</th>
-                <th>Beats per minute</th>
-                <th>Include</th>
-              </tr>
-            </thead>
-            <tbody>
-              {songs.length === 0 && (
-                <tr>
-                  <td className="text-center p-4" colSpan={5}>
-                    No music yet.
-                  </td>
-                </tr>
-              )}
-              {songs.map((song) => (
-                <tr key={song.songId}>
-                  <td>{song.fileName}</td>
-                  <td>{formatSeconds(song.duration, "short")}</td>
-                  <td>{song.url}</td>
-                  <td>{calcBPM(song)}</td>
-                  <td>
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary"
-                      checked={selection.includes(song.songId)}
-                      onChange={(e) =>
-                        onToggleSong(song.songId, e.target.checked)
-                      }
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <SongsTable
+          songs={songs}
+          selection={selection}
+          onToggleSong={onToggleSong}
+        />
       )}
 
       {mode === "download" && (
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col self-center w-full max-w-xl gap-4"
-        >
-          <p className="font-light">
-            You can download songs from YouTube, Vimeo or any other site that
-            yt-dlp supports.
-          </p>
-          <Field label="Music URL">
-            <input
-              className="input input-bordered w-full"
-              placeholder="Supports YouTube, Vimeo, ..."
-              {...register("musicUrl")}
-            />
-          </Field>
-          <div className="flex gap-2 self-end">
-            <button
-              type="button"
-              onClick={() => setMode("table")}
-              className="btn btn-outline"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={loading}
-              className="btn btn-success"
-              type="submit"
-            >
-              Submit
-            </button>
-          </div>
-        </form>
+        <DownloadMusic
+          onCancel={() => setMode("table")}
+          onSuccess={onUploadSuccess}
+        />
       )}
 
       {mode === "upload" && (
-        <div className="flex flex-col self-center w-full max-w-xl gap-4">
-          <p>Select a song to upload:</p>
-          <input
-            type="file"
-            className="file-input file-input-primary"
-            name="upload"
-            accept="audio/*"
-            onChange={(e) => setFile(e.target.files![0])}
-          />
-          <div className="flex self-end gap-2">
-            <button
-              type="button"
-              onClick={() => setMode("table")}
-              className="btn btn-outline"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onUpload}
-              disabled={loading}
-              className="btn btn-success"
-            >
-              Upload
-            </button>
-          </div>
-        </div>
+        <UploadMusic
+          onCancel={() => setMode("table")}
+          onSuccess={onUploadSuccess}
+        />
       )}
     </>
   )

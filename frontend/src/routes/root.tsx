@@ -137,7 +137,9 @@ const RootLayout: React.FC = () => {
   return (
     <Layout isLoading={isLoading}>
       <section className="py-4 flex flex-col">
-        <h1 className="text-5xl font-bold mb-4 text-center">ClipMash</h1>
+        <h1 className="text-5xl text-brand font-bold mb-4 text-center">
+          ClipMash
+        </h1>
         <div className="self-center flex gap-2 mb-4">
           <button onClick={onReset} className="btn btn-sm btn-error">
             <HiXMark className="w-5 h-5 mr-2" />

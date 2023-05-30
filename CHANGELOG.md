@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- feat: Generate clips based on a song's beats
 
 ## 0.7.2
 - fix: mismatch between length of generated clips and music

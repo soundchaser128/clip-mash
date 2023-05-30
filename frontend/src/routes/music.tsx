@@ -4,7 +4,7 @@ import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
 import invariant from "tiny-invariant"
 import {FormStage, LocalFilesFormStage, StateHelpers} from "../types/types"
-import {useCallback, useRef, useState} from "react"
+import React, {useCallback, useRef, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds, sumDurations} from "../helpers"
 import {
@@ -288,12 +288,6 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
     )
     const data: SongDto = await response.json()
     await fetch(`/api/song/${data.songId}/beats`)
-
-    // actions.updateForm({
-    //   songs: [...(state.data.songs || []), data],
-    // })
-    // setMode("table")
-    // revalidator.revalidate()
     setLoading(false)
     onSuccess(data)
     reset()
@@ -327,20 +321,79 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
   )
 }
 
+interface MusicSettingsInputs {
+  musicVolume: number
+  clipStrategy: "pmv" | "default"
+}
+
+interface MusicSettingsFormProps {
+  defaultValues: MusicSettingsInputs
+  onChange: (settings: MusicSettingsInputs) => void
+}
+
+const MusicSettingsForm: React.FC<MusicSettingsFormProps> = ({
+  defaultValues,
+  onChange,
+}) => {
+  const {register, handleSubmit, watch} = useForm<MusicSettingsInputs>({
+    defaultValues,
+  })
+  const musicVolume = watch("musicVolume")
+
+  const onSubmit = (values: MusicSettingsInputs) => {
+    onChange(values)
+  }
+
+  return (
+    <form onChange={handleSubmit(onSubmit)} className="self-start">
+      <div className="form-control self-start">
+        <label className="label">
+          <span className="label-text">Music volume</span>
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          className="range range-sm w-72"
+          step="5"
+          {...register("musicVolume", {valueAsNumber: true})}
+        />
+        <div className="w-full flex justify-between text-xs px-2">
+          <span>0%</span>
+          <span className="font-bold">{musicVolume}%</span>
+          <span>100%</span>
+        </div>
+      </div>
+      <div className="form-control self-start">
+        <label className="label">
+          <span className="label-text">Clip generation strategy</span>
+        </label>
+        <select
+          className="select select-bordered"
+          {...register("clipStrategy")}
+        >
+          <option value="pmv">Music-based (cut on the beat)</option>
+          <option value="default">Random lengths (default)</option>
+        </select>
+      </div>
+    </form>
+  )
+}
+
 export default function Music() {
   const [mode, setMode] = useState<Mode>("table")
   const songs = useLoaderData() as SongDto[]
   const {actions, state} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
-  const [loading, setLoading] = useState(false)
   const [selection, setSelection] = useImmer<number[]>(
     state.data.songs?.map((song) => song.songId) || []
   )
+  const [formValues, setFormValues] = useState<MusicSettingsInputs>({
+    clipStrategy: state.data.clipStrategy || "default",
+    musicVolume: state.data.musicVolume ? state.data.musicVolume * 100 : 75,
+  })
   const navigate = useNavigate()
   const revalidator = useRevalidator()
-  const [musicVolume, setMusicVolume] = useState(
-    state.data.musicVolume ? state.data.musicVolume * 100 : 75
-  )
 
   const totalMarkerDuration = sumDurations(state.data.selectedMarkers)
   const totalMusicDuration = selection
@@ -372,6 +425,10 @@ export default function Music() {
     revalidator.revalidate()
   }
 
+  const onFormChange = (values: MusicSettingsInputs) => {
+    setFormValues(values)
+  }
+
   const onNextStage = () => {
     const nextStage = StateHelpers.isLocalFiles(state.data)
       ? LocalFilesFormStage.VideoOptions
@@ -381,7 +438,8 @@ export default function Music() {
       stage: nextStage,
       songs: selection.map((id) => songs.find((s) => s.songId === id)!),
       trimVideoForSongs: true,
-      musicVolume: musicVolume / 100.0,
+      musicVolume: formValues.musicVolume / 100.0,
+      clipStrategy: formValues.clipStrategy,
     })
 
     navigate("/stash/video-options")
@@ -434,13 +492,11 @@ export default function Music() {
       </div>
 
       {mode === "order" && (
-        <>
-          <ReorderSongs
-            setSelection={setSelection}
-            songs={songs}
-            selection={selection}
-          />
-        </>
+        <ReorderSongs
+          setSelection={setSelection}
+          songs={songs}
+          selection={selection}
+        />
       )}
 
       {mode === "table" && (
@@ -491,37 +547,10 @@ export default function Music() {
             )}
           </div>
           {anySongsSelected && (
-            <>
-              <div className="form-control self-start">
-                <label className="label">
-                  <span className="label-text">Music volume</span>
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  className="range range-sm w-72"
-                  step="5"
-                  value={musicVolume}
-                  onChange={(e) => setMusicVolume(e.target.valueAsNumber)}
-                  disabled={loading}
-                />
-                <div className="w-full flex justify-between text-xs px-2">
-                  <span>0%</span>
-                  <span className="font-bold">{musicVolume}%</span>
-                  <span>100%</span>
-                </div>
-              </div>
-              <div className="form-control self-start">
-                <label className="label">
-                  <span className="label-text">Clip generation strategy</span>
-                </label>
-                <select className="select select-bordered">
-                  <option value="pmv">Music-based (cut on the beat)</option>
-                  <option value="default">Random lengths (default)</option>
-                </select>
-              </div>
-            </>
+            <MusicSettingsForm
+              defaultValues={formValues}
+              onChange={onFormChange}
+            />
           )}
         </div>
       )}

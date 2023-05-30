@@ -29,14 +29,26 @@ const getClipSettings = (
   state: LocalVideosFormState | StashFormState
 ): ClipOptions => {
   if (state.songs && state.songs.length > 0) {
-    return {
-      type: "pmv",
-      song_ids: state.songs.map(({songId}) => songId),
-      clips: {
-        type: "songs",
-        beatsPerMeasure: state.beatsPerMeasure || 4,
-        cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
-      },
+    if (state.clipStrategy === "pmv") {
+      return {
+        type: "pmv",
+        song_ids: state.songs.map(({songId}) => songId),
+        clips: {
+          type: "songs",
+          beatsPerMeasure: state.beatsPerMeasure || 4,
+          cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
+        },
+      }
+    } else {
+      return {
+        type: "pmv",
+        song_ids: state.songs.map(({songId}) => songId),
+        clips: {
+          type: "randomized",
+          divisors: [2.0, 3.0, 4.0],
+          baseDuration: state.clipDuration || 30,
+        },
+      }
     }
   } else {
     if (state.splitClips === false) {

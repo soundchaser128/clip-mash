@@ -104,7 +104,8 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
   const revalidator = useRevalidator()
   const {actions, state} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
-  const isPmv = state.data.songs?.length !== 0
+  const isPmv =
+    state.data.songs?.length !== 0 && state.data.clipStrategy === "pmv"
 
   const onSubmit = (values: Inputs) => {
     actions.updateForm({

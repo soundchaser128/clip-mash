@@ -57,6 +57,8 @@ export interface InitialFormState {
   id: string
 }
 
+type ClipStrategy = "pmv" | "default"
+
 interface CommonFormState {
   id: string
   videos?: VideoWithMarkers[]
@@ -77,6 +79,7 @@ interface CommonFormState {
   trimVideoForSongs?: boolean
   beatsPerMeasure?: number
   cutAfterMeasures?: MeasureCount
+  clipStrategy: ClipStrategy
 }
 
 export interface LocalVideosFormState extends CommonFormState {

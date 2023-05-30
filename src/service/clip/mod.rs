@@ -134,6 +134,7 @@ impl ClipService {
                 let default_options = DefaultClipOptions {
                     clip_duration: o.base_duration as u32,
                     seed: options.seed,
+                    divisors: o.divisors,
                 };
                 let creator = DefaultClipCreator;
                 creator.create_clips(options.markers, default_options, &mut rng)
@@ -175,20 +176,22 @@ pub trait ClipCreator {
 mod tests {
     use assert_approx_eq::assert_approx_eq;
     use clip_mash_types::{Clip, ClipOptions, MarkerId, RandomizedClipOptions, VideoSource};
+    use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
+    use crate::data::database::Database;
     use crate::service::clip::pmv::{PmvClipCreatorOptions, PmvClipLengths};
     use crate::service::clip::sort::ClipSorter;
-    use crate::service::clip::{ClipCreator, PmvClipCreator, SceneOrderClipSorter};
+    use crate::service::clip::{ClipCreator, ClipService, PmvClipCreator, SceneOrderClipSorter};
     use crate::service::fixtures::{self, create_marker_video_id};
     use crate::service::VideoId;
     use crate::util::create_seeded_rng;
 
     #[traced_test]
-    #[test]
-    fn test_arrange_clips_basic() {
-        let _options = CreateClipsOptions {
+    #[sqlx::test]
+    fn test_arrange_clips_basic(pool: SqlitePool) {
+        let options = CreateClipsOptions {
             order: ClipOrder::SceneOrder,
             markers: vec![
                 create_marker_video_id(1, 1.0, 15.0, 0, "v2"),
@@ -200,33 +203,32 @@ mod tests {
                 divisors: vec![2.0, 3.0, 4.0],
             }),
         };
-        // let (results, _) = arrange_clips(options);
-        // assert_eq!(4, results.len());
-        // assert_eq!((1.0, 11.0), results[0].range);
-        // assert_eq!((1.0, 8.5), results[1].range);
-        // assert_eq!((11.0, 17.0), results[2].range);
-        // assert_eq!((8.5, 15.0), results[3].range);
+        let service = ClipService::new(Database::with_pool(pool));
+        let (results, _) = service.arrange_clips(options).await.unwrap();
+        assert_eq!(4, results.len());
+        assert_eq!((1.0, 11.0), results[0].range);
+        assert_eq!((1.0, 8.5), results[1].range);
+        assert_eq!((11.0, 17.0), results[2].range);
+        assert_eq!((8.5, 15.0), results[3].range);
     }
 
     #[traced_test]
-    #[test]
-    fn test_arrange_clips_dont_split() {
-        let _options = CreateClipsOptions {
+    #[sqlx::test]
+    fn test_arrange_clips_dont_split(pool: SqlitePool) {
+        let options = CreateClipsOptions {
             order: ClipOrder::SceneOrder,
             markers: vec![
                 create_marker_video_id(1, 1.0, 15.0, 0, "v1"),
                 create_marker_video_id(2, 1.0, 17.0, 0, "v2"),
             ],
             seed: None,
-            clip_options: ClipOptions::Default(RandomizedClipOptions {
-                base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
-            }),
+            clip_options: ClipOptions::NoSplit,
         };
-        // let (results, _) = arrange_clips(options);
-        // assert_eq!(2, results.len());
-        // assert_eq!((1.0, 17.0), results[0].range);
-        // assert_eq!((1.0, 15.0), results[1].range);
+        let service = ClipService::new(Database::with_pool(pool));
+        let (results, _) = service.arrange_clips(options).await.unwrap();
+        assert_eq!(2, results.len());
+        assert_eq!((1.0, 17.0), results[0].range);
+        assert_eq!((1.0, 15.0), results[1].range);
     }
 
     #[traced_test]

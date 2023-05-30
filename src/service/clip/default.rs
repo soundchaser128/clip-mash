@@ -13,6 +13,7 @@ const MIN_DURATION: f64 = 1.5;
 pub struct DefaultClipOptions {
     pub clip_duration: u32,
     pub seed: Option<String>,
+    pub divisors: Vec<f64>,
 }
 
 pub struct DefaultClipCreator;
@@ -28,12 +29,11 @@ impl ClipCreator for DefaultClipCreator {
     ) -> Vec<Clip> {
         info!("using DefaultClipCreator to create clips, options: {options:#?}",);
         let duration = options.clip_duration as f64;
-        let clip_lengths = [
-            (duration / 1.0).max(MIN_DURATION),
-            (duration / 2.0).max(MIN_DURATION),
-            (duration / 3.0).max(MIN_DURATION),
-            (duration / 4.0).max(MIN_DURATION),
-        ];
+        let clip_lengths: Vec<f64> = options
+            .divisors
+            .into_iter()
+            .map(|d| (duration / d).max(MIN_DURATION))
+            .collect();
         let mut clips = vec![];
         for marker in markers {
             let start = marker.start_time;

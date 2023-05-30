@@ -1,6 +1,6 @@
 import {useRef, useState} from "react"
 import useAnimationFrame from "../hooks/useAnimationFrame"
-import clsx from "clsx";
+import clsx from "clsx"
 
 const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
   offsets,

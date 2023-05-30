@@ -30,7 +30,7 @@ export default function InitialRoot() {
       <div className="hero">
         <div className="hero-content self-center">
           <div className="max-w-md flex flex-col">
-            <img src="/logo.png" />
+            <img src="/logo.png" className="w-40 self-center" />
             <p className="mt-4 text-lg">
               ClipMash helps you create video compilations.
             </p>

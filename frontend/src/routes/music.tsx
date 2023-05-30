@@ -175,7 +175,7 @@ export default function Music() {
   const [mode, setMode] = useState<Mode>("table")
   const [file, setFile] = useState<File>()
   const songs = useLoaderData() as SongDto[]
-  const {handleSubmit, register} = useForm<Inputs>({})
+  const {handleSubmit, register, reset} = useForm<Inputs>({})
   const {actions, state} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
   const [loading, setLoading] = useState(false)
@@ -206,7 +206,6 @@ export default function Music() {
       }
     )
     const data: SongDto = await response.json()
-
     await fetch(`/api/song/${data.songId}/beats`)
 
     actions.updateForm({
@@ -215,6 +214,7 @@ export default function Music() {
     setLoading(false)
     setMode("table")
     revalidator.revalidate()
+    reset()
   }
 
   const onToggleSong = (songId: number, checked: boolean) => {
@@ -369,6 +369,7 @@ export default function Music() {
               step="5"
               value={musicVolume}
               onChange={(e) => setMusicVolume(e.target.valueAsNumber)}
+              disabled={loading}
             />
             <div className="w-full flex justify-between text-xs px-2">
               <span>0%</span>

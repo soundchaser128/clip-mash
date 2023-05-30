@@ -22,59 +22,6 @@ import styles from "./clips.module.css"
 
 const DEBUG = false
 
-const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
-  offsets,
-  autoPlay,
-}) => {
-  const lastTime = useRef(0)
-  const totalTime = useRef(0)
-  const requestRef = useRef<number>()
-  const offsetIndex = useRef(0)
-  const [showBeat, setShowBeat] = useState(false)
-  const [measureCount, setMeasureCount] = useState(0)
-
-  const onAnimationFrame = (time: number) => {
-    time -= performance.timeOrigin / 1e9
-    time /= 1000.0
-
-    if (offsets && autoPlay && !showBeat) {
-      const nextBeat = offsets[offsetIndex.current]
-      const diff = Math.abs(nextBeat - totalTime.current)
-      if (diff <= 0.05) {
-        setShowBeat(true)
-        window.setTimeout(() => setShowBeat(false), 250)
-        offsetIndex.current += 1
-        setMeasureCount((n) => n + 1)
-      }
-      const delta = time - lastTime.current
-      totalTime.current += delta
-      lastTime.current = time
-      requestRef.current = requestAnimationFrame(onAnimationFrame)
-    }
-  }
-
-  useEffect(() => {
-    if (autoPlay) {
-      requestRef.current = requestAnimationFrame(onAnimationFrame)
-      return () => cancelAnimationFrame(requestRef.current!)
-    }
-  }, [autoPlay])
-
-  return (
-    <div className="flex items-center justify-between pl-1">
-      <span className="label-text">Beat indicator</span>
-      <div
-        className={clsx(
-          "w-12 h-12 self-center rounded-full my-2 flex items-center justify-center",
-          showBeat ? "bg-red-500" : "bg-white"
-        )}
-      >
-        {measureCount}
-      </div>
-    </div>
-  )
-}
-
 interface ClipState {
   included: boolean
   clip: Clip
@@ -506,12 +453,6 @@ function PreviewClips() {
                 />
               </label>
             </div>
-          )}
-          {loaderData.beatOffsets && (
-            <BeatIndicator
-              autoPlay={autoPlay}
-              offsets={loaderData.beatOffsets}
-            />
           )}
         </div>
       </div>

@@ -179,7 +179,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
             <HiXMark className="mr-1" />
             Deselect all
           </button>
-          <button onClick={onSelectAll} className="btn btn-primary">
+          <button onClick={onSelectAll} className="btn btn-secondary">
             <HiCheck className="mr-1" />
             Select all
           </button>
@@ -220,7 +220,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
               )}
 
               <div className="card-body">
-                <h2 className="card-title">
+                <h2 className="card-title text-primary">
                   {[marker.primaryTag, ...marker.tags].join(", ")}
                 </h2>
                 <p>
@@ -265,7 +265,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
                       max={marker.end - marker.start}
                       min={15}
                       type="range"
-                      className="range range-primary w-full"
+                      className="range w-full"
                     />
                   </div>
 

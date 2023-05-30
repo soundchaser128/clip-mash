@@ -11,4 +11,16 @@ module.exports = {
     },
   },
   plugins: [require("daisyui")],
+  daisyui: {
+    themes: [
+      {
+        clipmash: {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          ...require("daisyui/src/colors/themes")["[data-theme=light]"],
+          primary: "#471AA0",
+          secondary: "#ffb349"
+        },
+      },
+    ],
+  },
 }

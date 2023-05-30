@@ -170,7 +170,7 @@ export default function ListVideos() {
                     "btn btn-sm",
                     videoPreview === video.video.id.id
                       ? "btn-error"
-                      : "btn-success"
+                      : "btn-secondary"
                   )}
                 >
                   <HiPlayPause className="mr-2" />

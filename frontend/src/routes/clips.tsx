@@ -255,7 +255,7 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
           {...register("seed")}
         />
       </div>
-      <button className="btn btn-success self-end mt-4">
+      <button className="btn btn-primary self-end mt-4">
         <HiCheck className="mr-2" />
         Apply
       </button>

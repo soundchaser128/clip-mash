@@ -33,6 +33,7 @@ function Progress() {
   const [finalFileName, setFinalFileName] = useState("")
   const downloadLink = useRef<HTMLAnchorElement>(null)
   const [creatingScript, setCreatingScript] = useState(false)
+  const fileName = state.data.fileName || `Compilation [${state.data.id}].mp4`
 
   const onSubmit = async (e: React.MouseEvent) => {
     invariant(StateHelpers.isNotInitial(state.data))
@@ -41,7 +42,7 @@ function Progress() {
     const songIds = state.data.songs?.map((s) => s.songId) || []
     const data = {
       ...state.data,
-      fileName: state.data.fileName || `${state.data.id}.mp4`,
+      fileName,
       songIds,
     } satisfies CreateVideoBody
 
@@ -113,7 +114,7 @@ function Progress() {
               <strong>{formatSeconds(totalDuration)}</strong>.
             </p>
             <p>
-              File name: <strong>{state.data.fileName}</strong>
+              File name: <strong>{fileName}</strong>
             </p>
           </div>
           <a onClick={onSubmit} className="btn btn-lg btn-success">

@@ -32,7 +32,7 @@ export default function SelectVideos() {
       stage: LocalFilesFormStage.ListVideos,
       fileName: values.fileName
         ? `${values.fileName} [${state.data.id}].mp4`
-        : undefined,
+        : `${state.data.id}.mp4`,
     })
     navigate("/local/videos")
   }

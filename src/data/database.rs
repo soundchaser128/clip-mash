@@ -341,6 +341,9 @@ impl Database {
         let rows = sqlx::query!("SELECT rowid, file_path FROM songs WHERE beats IS NULL")
             .fetch_all(&self.pool)
             .await?;
+        if rows.is_empty() {
+            return Ok(());
+        }
         info!("generating beats for {} songs", rows.len());
         let mut handles = vec![];
         for row in rows {

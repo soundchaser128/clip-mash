@@ -32,7 +32,9 @@ const StashSteps: React.FC<{state: StashFormState}> = ({state}) => {
         {
           stage: FormStage.SelectCriteria,
           link: state.selectMode ? getUrl(state.selectMode) : "",
-          content: "Choose mode",
+          content: state.selectMode
+            ? `Select ${state.selectMode}`
+            : "Select criteria",
         },
         {
           stage: FormStage.SelectMarkers,

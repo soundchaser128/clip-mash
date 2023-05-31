@@ -4,7 +4,7 @@ import {
   HiArrowDown,
   HiCodeBracket,
   HiOutlineFolder,
-  HiPlay,
+  HiRocketLaunch,
 } from "react-icons/hi2"
 import {
   LocalVideosFormState,
@@ -118,7 +118,7 @@ function Progress() {
             </p>
           </div>
           <a onClick={onSubmit} className="btn btn-lg btn-success">
-            <HiPlay className="mr-2 w-6 h-6" />
+            <HiRocketLaunch className="mr-2 w-6 h-6" />
             Create video
           </a>
         </>

@@ -207,7 +207,16 @@ const SongsTable: React.FC<SongsTableProps> = ({
             <tr key={song.songId}>
               <td>{song.fileName}</td>
               <td>{formatSeconds(song.duration, "short")}</td>
-              <td>{song.url}</td>
+              <td>
+                <a
+                  href={song.url}
+                  target="_blank"
+                  className="link"
+                  rel="noreferrer"
+                >
+                  {song.url}
+                </a>
+              </td>
               <td>{calcBPM(song)}</td>
               <td>
                 <input

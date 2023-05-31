@@ -18,7 +18,7 @@ module.exports = {
           // eslint-disable-next-line @typescript-eslint/no-var-requires
           ...require("daisyui/src/colors/themes")["[data-theme=light]"],
           primary: "#471AA0",
-          secondary: "#ffb349"
+          secondary: "#dd77d0"
         },
       },
     ],

@@ -220,7 +220,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
               )}
 
               <div className="card-body">
-                <h2 className="card-title text-primary">
+                <h2 className="card-title">
                   {[marker.primaryTag, ...marker.tags].join(", ")}
                 </h2>
                 <p>

@@ -1,9 +1,10 @@
 pub mod beats;
 pub mod clip;
 pub mod directories;
-pub mod download_ffmpeg;
-pub mod ffmpeg;
-pub mod ffprobe;
+// pub mod download_ffmpeg;
+// pub mod ffmpeg;
+// pub mod ffprobe;
+pub mod commands;
 pub mod funscript;
 pub mod generator;
 pub mod local_video;

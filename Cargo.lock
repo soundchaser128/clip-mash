@@ -429,6 +429,7 @@ dependencies = [
  "tracing-subscriber",
  "tracing-test",
  "typescript-type-def",
+ "url",
  "walkdir",
  "webbrowser",
  "xz2",
@@ -3092,6 +3093,7 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

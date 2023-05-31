@@ -7,7 +7,7 @@ use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::info;
 
-use crate::service::beats::{self, Beats};
+use crate::service::music::{self, Beats};
 use crate::Result;
 
 #[derive(Debug, Clone)]
@@ -348,7 +348,7 @@ impl Database {
         let mut handles = vec![];
         for row in rows {
             handles.push(spawn_blocking(move || {
-                (beats::detect_beats(row.file_path), row.rowid)
+                (music::detect_beats(row.file_path), row.rowid)
             }));
         }
 

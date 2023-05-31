@@ -23,11 +23,10 @@ use crate::data::service::DataService;
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::get_streams;
-use crate::service::beats::{self, Beats};
 use crate::service::clip::ClipService;
 use crate::service::funscript::{FunScript, ScriptBuilder};
 use crate::service::generator::{self, Progress};
-use crate::service::music::MusicService;
+use crate::service::music::{self, Beats, MusicDownloadService};
 use crate::service::stash_config::Config;
 use crate::service::VideoSource;
 use crate::util::expect_file_name;
@@ -203,7 +202,7 @@ pub async fn download_music(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<SongDto>, AppError> {
     info!("downloading music at url {url}");
-    let music_service = MusicService::new(state.database.clone(), state.directories.clone());
+    let music_service = MusicDownloadService::from(state);
     let song = music_service.download_song(&url).await?;
 
     Ok(Json(song.into()))
@@ -228,7 +227,7 @@ pub async fn upload_music(
     State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
 ) -> Result<Json<SongDto>, AppError> {
-    let music_service = MusicService::new(state.database.clone(), state.directories.clone());
+    let music_service = MusicDownloadService::from(state);
 
     while let Some(field) = multipart.next_field().await.map_err(Report::from)? {
         if field.name() == Some("file") {
@@ -300,7 +299,7 @@ pub async fn get_beats(
         Some(beats) => beats,
         None => {
             let song = state.database.get_song(song_id).await?;
-            let beats = beats::detect_beats(&song.file_path)?;
+            let beats = music::detect_beats(&song.file_path)?;
             state
                 .database
                 .persist_beats(song.rowid.unwrap(), &beats)

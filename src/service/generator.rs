@@ -81,9 +81,9 @@ pub struct CompilationGenerator {
 
 impl CompilationGenerator {
     pub async fn new(directories: Directories) -> Result<Self> {
-        use crate::service::download_ffmpeg;
+        use crate::service::commands::ffmpeg::download_ffmpeg;
 
-        let ffmpeg_path = download_ffmpeg::download(&directories).await?;
+        let ffmpeg_path = download_ffmpeg(&directories).await?;
         Ok(CompilationGenerator {
             directories,
             ffmpeg_path,

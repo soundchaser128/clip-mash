@@ -7,7 +7,7 @@ use rand::Rng;
 use tracing::{debug, info};
 
 use super::{Clip, ClipCreator, Marker};
-use crate::service::beats::Beats;
+use crate::service::music::Beats;
 
 const MIN_DURATION: f64 = 1.5;
 
@@ -181,7 +181,7 @@ mod test {
     use tracing_test::traced_test;
 
     use super::{MeasureCount, PmvSongs};
-    use crate::service::beats::Beats;
+    use crate::service::music::Beats;
     use crate::util::create_seeded_rng;
 
     #[traced_test]

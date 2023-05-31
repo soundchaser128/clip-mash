@@ -5,15 +5,17 @@ use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
 use camino::Utf8PathBuf;
-use clip_mash_types::{ListVideoDto, MarkerDto};
+use clip_mash_types::{ListVideoDto, MarkerDto, VideoDto};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tower::ServiceExt;
 use tracing::info;
+use url::Url;
 
 use crate::data::database::CreateMarker;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
+use crate::service::local_video::VideoService;
 
 #[axum::debug_handler]
 pub async fn get_video(
@@ -44,10 +46,10 @@ pub async fn list_videos(
     Query(ListVideoQuery { path, recurse }): Query<ListVideoQuery>,
     state: State<Arc<AppState>>,
 ) -> Result<Json<Vec<ListVideoDto>>, AppError> {
-    use crate::service::local_video;
+    let service = VideoService::from(state.0);
+    let path = Utf8PathBuf::from(path);
 
-    let videos =
-        local_video::list_videos(Utf8PathBuf::from(path), recurse, &state.database).await?;
+    let videos = service.list_videos(path, recurse).await?;
     Ok(Json(videos.into_iter().map(From::from).collect()))
 }
 
@@ -87,4 +89,20 @@ pub async fn delete_marker(
     state.database.delete_marker(id).await?;
 
     Ok(())
+}
+
+#[derive(Deserialize)]
+pub struct DownloadVideoQuery {
+    pub url: Url,
+}
+
+#[axum::debug_handler]
+pub async fn download_video(
+    Query(DownloadVideoQuery { url }): Query<DownloadVideoQuery>,
+    state: State<Arc<AppState>>,
+) -> Result<Json<VideoDto>, AppError> {
+    let service = VideoService::from(state.0);
+    let (video_id, path) = service.download_video(url).await?;
+    let db_video = service.persist_video(video_id, path).await?;
+    Ok(Json(db_video.into()))
 }

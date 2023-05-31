@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::extract::multipart::Field;
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
@@ -7,10 +9,10 @@ use tokio::io::AsyncWriteExt;
 use tracing::info;
 use youtube_dl::YoutubeDl;
 
-use super::beats::Beats;
-use super::directories::Directories;
 use crate::data::database::{CreateSong, Database, DbSong};
-use crate::service::ffprobe::ffprobe;
+use crate::server::handlers::AppState;
+use crate::service::commands::ffprobe;
+use crate::service::directories::Directories;
 use crate::Result;
 
 const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
@@ -25,12 +27,22 @@ pub struct SongInfo {
     pub duration: f64,
 }
 
-pub struct MusicService {
+pub struct MusicDownloadService {
     db: Database,
     dirs: Directories,
 }
 
-impl MusicService {
+impl From<Arc<AppState>> for MusicDownloadService {
+    fn from(value: Arc<AppState>) -> Self {
+        Self {
+            db: value.database.clone(),
+            dirs: value.directories.clone(),
+        }
+    }
+}
+
+impl MusicDownloadService {
+    #[cfg(test)]
     pub fn new(database: Database, directories: Directories) -> Self {
         Self {
             db: database,
@@ -144,17 +156,6 @@ impl MusicService {
     }
 }
 
-pub fn parse_beats(songs: &[DbSong]) -> Vec<Beats> {
-    songs
-        .iter()
-        .filter_map(|s| {
-            s.beats
-                .as_deref()
-                .and_then(|json| serde_json::from_str(&json).ok())
-        })
-        .collect()
-}
-
 #[cfg(test)]
 mod test {
     use std::fs;
@@ -164,13 +165,13 @@ mod test {
 
     use crate::data::database::Database;
     use crate::service::directories::Directories;
-    use crate::service::music::MusicService;
+    use crate::service::music::download::MusicDownloadService;
 
     #[sqlx::test]
     async fn test_download_song(pool: SqlitePool) {
         let database = Database::with_pool(pool);
         let directories = Directories::new().unwrap();
-        let service = MusicService::new(database.clone(), directories);
+        let service = MusicDownloadService::new(database.clone(), directories);
         let _ = color_eyre::install();
         let url = "https://www.youtube.com/watch?v=DGaKVLFNWzs";
         let info = service.download_song(url).await.unwrap();

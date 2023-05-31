@@ -76,7 +76,8 @@ async fn main() -> Result<()> {
         .route("/video/:id", get(handlers::local::get_video))
         .route("/video/marker", get(handlers::local::list_markers))
         .route("/video/marker", post(handlers::local::persist_marker))
-        .route("/video/marker/:id", delete(handlers::local::delete_marker));
+        .route("/video/marker/:id", delete(handlers::local::delete_marker))
+        .route("/video/download", post(handlers::local::download_video));
 
     let api_routes = Router::new()
         .nest("/local", local_routes)

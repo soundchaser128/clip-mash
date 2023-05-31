@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.8.0
 - feat: Generate clips based on a song's beats
 - feat: Add dedicated page for selecting markers for local videos
 - feat: Add clip options to clip preview page

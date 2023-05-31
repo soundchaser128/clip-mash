@@ -1,24 +1,20 @@
-use std::{cmp::Reverse, sync::Arc};
+use std::cmp::Reverse;
+use std::sync::Arc;
 
-use axum::{
-    extract::{Query, State},
-    response::IntoResponse,
-    Json,
-};
+use axum::extract::{Query, State};
+use axum::response::IntoResponse;
+use axum::Json;
+use clip_mash_types::*;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tracing::{debug, info};
 
-use crate::{
-    data::stash_api::{FilterMode, StashApi},
-    server::{
-        dtos::{MarkerDto, PerformerDto, StashScene, TagDto},
-        error::AppError,
-        handlers::AppState,
-    },
-    service::stash_config::Config,
-    util::add_api_key,
-};
+use crate::data::stash_api::{FilterMode, StashApi};
+use crate::server::dtos::StashSceneWrapper;
+use crate::server::error::AppError;
+use crate::server::handlers::AppState;
+use crate::service::stash_config::Config;
+use crate::util::add_api_key;
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -92,7 +88,12 @@ pub async fn fetch_scenes() -> Result<Json<Vec<StashScene>>, AppError> {
     let videos = api.find_scenes().await?;
     let videos = videos
         .into_iter()
-        .map(|m| StashScene::from(m, &config.api_key))
+        .map(|scene| {
+            StashScene::from(StashSceneWrapper {
+                scene,
+                api_key: &config.api_key,
+            })
+        })
         .collect();
     Ok(Json(videos))
 }

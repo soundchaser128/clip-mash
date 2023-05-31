@@ -39,8 +39,13 @@ export const loader: LoaderFunction = async () => {
   const response = await fetch(`/api/local/video?${params.toString()}`, {
     method: "POST",
   })
-  const data = await response.json()
-  return json(data)
+  if (response.ok) {
+    const data = await response.json()
+    return json(data)
+  } else {
+    const text = await response.text()
+    throw json({error: text, request: "/api/local/video"}, {status: 500})
+  }
 }
 
 export default function ListVideos() {
@@ -65,7 +70,7 @@ export default function ListVideos() {
       .some((v) => v.video.interactive)
 
     actions.updateForm({
-      stage: LocalFilesFormStage.Music,
+      stage: LocalFilesFormStage.SelectMarkers,
       videos: videos.filter((v) => v.markers.length > 0),
       selectedMarkers: videos
         .flatMap((m) => m.markers)
@@ -79,7 +84,7 @@ export default function ListVideos() {
         })),
       interactive,
     })
-    navigate("/stash/music")
+    navigate("/local/markers")
   }
 
   return (
@@ -165,7 +170,7 @@ export default function ListVideos() {
                     "btn btn-sm",
                     videoPreview === video.video.id.id
                       ? "btn-error"
-                      : "btn-success"
+                      : "btn-secondary"
                   )}
                 >
                   <HiPlayPause className="mr-2" />

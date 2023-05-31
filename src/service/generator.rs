@@ -1,21 +1,22 @@
 use std::ffi::OsStr;
 
-use crate::{
-    data::{database::DbSong, stash_api::StashMarker},
-    service::MarkerInfo,
-    util::{commandline_error, debug_output},
-    Result,
-};
 use camino::{Utf8Path, Utf8PathBuf};
+use clip_mash_types::{Clip, VideoResolution};
 use futures::lock::Mutex;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use nanoid::nanoid;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
 
-use super::{directories::Directories, Clip, Marker};
+use super::directories::Directories;
+use super::Marker;
+use crate::data::database::DbSong;
+use crate::data::stash_api::StashMarker;
+use crate::service::MarkerInfo;
+use crate::util::{commandline_error, debug_output};
+use crate::Result;
 
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct Progress {
@@ -26,26 +27,6 @@ pub struct Progress {
 
 lazy_static! {
     static ref PROGRESS: Mutex<Progress> = Default::default();
-}
-
-#[derive(Debug, Clone, Copy, Deserialize)]
-pub enum VideoResolution {
-    #[serde(rename = "720")]
-    SevenTwenty,
-    #[serde(rename = "1080")]
-    TenEighty,
-    #[serde(rename = "4K")]
-    FourK,
-}
-
-impl VideoResolution {
-    fn resolution(&self) -> (u32, u32) {
-        match self {
-            Self::SevenTwenty => (1280, 720),
-            Self::TenEighty => (1920, 1080),
-            Self::FourK => (3840, 2160),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -121,7 +102,7 @@ impl CompilationGenerator {
             .output()
             .await?;
         if !output.status.success() {
-            commandline_error(output)
+            commandline_error(self.ffmpeg_path.as_str(), output)
         } else {
             debug_output(output);
             Ok(())
@@ -276,7 +257,7 @@ impl CompilationGenerator {
             .await?;
 
         if !output.status.success() {
-            return commandline_error(output);
+            return commandline_error(self.ffmpeg_path.as_str(), output);
         }
 
         self.increase_progress().await;

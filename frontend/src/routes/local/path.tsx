@@ -1,4 +1,4 @@
-import {HiCheck} from "react-icons/hi2"
+import {HiChevronRight} from "react-icons/hi2"
 import {LocalFilesFormStage, StateHelpers} from "../../types/types"
 import {useStateMachine} from "little-state-machine"
 import {updateForm} from "../actions"
@@ -32,7 +32,7 @@ export default function SelectVideos() {
       stage: LocalFilesFormStage.ListVideos,
       fileName: values.fileName
         ? `${values.fileName} [${state.data.id}].mp4`
-        : undefined,
+        : `${state.data.id}.mp4`,
     })
     navigate("/local/videos")
   }
@@ -66,9 +66,9 @@ export default function SelectVideos() {
             {...register("path", {required: true, minLength: 3})}
           />
         </div>
-        <div className="form-control">
+        <div className="form-control justify-between w-full">
           <label className="label cursor-pointer">
-            <span className="label-text mr-2">
+            <span className="label-text">
               Look at all the subdirectories as well
             </span>
             <input
@@ -79,8 +79,8 @@ export default function SelectVideos() {
           </label>
         </div>
         <button type="submit" className="btn btn-success self-end">
-          <HiCheck className="w-6 h-6 mr-2" />
-          Submit
+          Next
+          <HiChevronRight className="w-6 h-6 ml-1" />
         </button>
       </form>
     </>

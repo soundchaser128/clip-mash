@@ -1,19 +1,17 @@
-use std::{sync::Arc, time::Duration};
-
-use axum::{
-    extract::DefaultBodyLimit,
-    routing::{delete, get, post},
-    Router,
-};
-use color_eyre::Report;
 use std::env;
+use std::sync::Arc;
+use std::time::Duration;
+
+use axum::extract::DefaultBodyLimit;
+use axum::routing::{delete, get, post};
+use axum::Router;
+use color_eyre::Report;
 use tracing::{info, warn};
 
-use crate::{
-    data::database::Database,
-    server::handlers::AppState,
-    service::{directories::Directories, generator::CompilationGenerator},
-};
+use crate::data::database::Database;
+use crate::server::handlers::AppState;
+use crate::service::directories::Directories;
+use crate::service::generator::CompilationGenerator;
 
 mod data;
 mod server;
@@ -26,7 +24,8 @@ pub type Result<T> = std::result::Result<T, Report>;
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
 fn setup_logger() {
-    use tracing_subscriber::{prelude::*, EnvFilter};
+    use tracing_subscriber::prelude::*;
+    use tracing_subscriber::EnvFilter;
 
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "info");
@@ -56,6 +55,7 @@ async fn main() -> Result<()> {
     let ffmpeg = CompilationGenerator::new(directories.clone()).await?;
     let database_file = directories.database_file();
     let database = Database::new(database_file.as_str()).await?;
+    database.generate_all_beats().await?;
     let state = Arc::new(AppState {
         generator: ffmpeg,
         database,
@@ -74,6 +74,7 @@ async fn main() -> Result<()> {
     let local_routes = Router::new()
         .route("/video", post(handlers::local::list_videos))
         .route("/video/:id", get(handlers::local::get_video))
+        .route("/video/marker", get(handlers::local::list_markers))
         .route("/video/marker", post(handlers::local::persist_marker))
         .route("/video/marker/:id", delete(handlers::local::delete_marker));
 
@@ -85,10 +86,12 @@ async fn main() -> Result<()> {
         .route("/progress", get(handlers::common::get_progress))
         .route("/download", get(handlers::common::download_video))
         .route("/funscript", post(handlers::common::get_funscript))
-        .route("/music", get(handlers::common::list_songs))
-        .route("/music/download", post(handlers::common::download_music))
-        .route("/music/upload", post(handlers::common::upload_music))
-        .route("/open-directory", get(handlers::common::open_folder));
+        .route("/song", get(handlers::common::list_songs))
+        .route("/song/:id/stream", get(handlers::common::stream_song))
+        .route("/song/download", post(handlers::common::download_music))
+        .route("/song/upload", post(handlers::common::upload_music))
+        .route("/song/:id/beats", get(handlers::common::get_beats))
+        .route("/directory/open", get(handlers::common::open_folder));
 
     let app = Router::new()
         .nest("/api", api_routes)
@@ -105,7 +108,7 @@ async fn main() -> Result<()> {
         tokio::spawn(async move {
             tokio::time::sleep(Duration::from_millis(500)).await;
             if webbrowser::open("http://localhost:5174").is_err() {
-                warn!("failed to open UI in browser, please navigate to http://localhost:5147");
+                warn!("failed to open UI in browser, please navigate to http://localhost:5174");
             }
         });
     }

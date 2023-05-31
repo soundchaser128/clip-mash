@@ -1,18 +1,18 @@
-export interface Tag {
-  name: string
-  id: string
-  markerCount: number
-}
+import {
+  TagDto,
+  PerformerDto,
+  Clip,
+  MarkerDto,
+  VideoDto,
+  SongDto,
+  SelectedMarker,
+  ClipOrder,
+  MeasureCount,
+} from "../types.generated"
 
-export interface Performer {
-  name: string
-  id: string
-  sceneCount: number
-  imageUrl?: string
-  tags: string[]
-  rating?: number
-  favorite: boolean
-}
+export type Tag = TagDto
+
+export type Performer = PerformerDto
 
 export enum FormStage {
   SelectMode = 1,
@@ -27,10 +27,11 @@ export enum FormStage {
 export enum LocalFilesFormStage {
   SelectPath = 1,
   ListVideos = 2,
-  Music = 3,
-  VideoOptions = 4,
-  PreviewClips = 5,
-  Wait = 6,
+  SelectMarkers = 3,
+  Music = 4,
+  VideoOptions = 5,
+  PreviewClips = 6,
+  Wait = 7,
 }
 
 export type IdSource = "stash" | "localFile"
@@ -45,14 +46,6 @@ export interface VideoId {
   id: string
 }
 
-export interface SelectedMarker {
-  id: MarkerId
-  videoId: VideoId
-  selectedRange: [number, number]
-  indexWithinVideo: number
-  selected: boolean
-}
-
 export type SelectMode = "tags" | "performers" | "scenes"
 
 export type VideoSource = "stash" | "localFile" | undefined
@@ -64,12 +57,14 @@ export interface InitialFormState {
   id: string
 }
 
+type ClipStrategy = "pmv" | "default"
+
 interface CommonFormState {
   id: string
   videos?: VideoWithMarkers[]
   localVideoPath?: string
   recurse?: boolean
-  clipOrder?: "random" | "scene-order"
+  clipOrder?: ClipOrder
   clipDuration?: number
   outputResolution?: "720" | "1080" | "4K"
   outputFps?: number
@@ -82,6 +77,9 @@ interface CommonFormState {
   songs?: SongDto[]
   musicVolume?: number
   trimVideoForSongs?: boolean
+  beatsPerMeasure?: number
+  cutAfterMeasures?: MeasureCount
+  clipStrategy: ClipStrategy
 }
 
 export interface LocalVideosFormState extends CommonFormState {
@@ -94,7 +92,7 @@ export interface StashFormState extends CommonFormState {
   selectMode?: SelectMode
   selectedIds?: string[]
   includeAll?: boolean
-  markers?: Marker[]
+  markers?: MarkerDto[]
   stage: FormStage
 }
 
@@ -117,60 +115,7 @@ export const StateHelpers = {
     return state.source === undefined
   },
 }
-
-export interface Clip {
-  source: "stash" | "localFile"
-  videoId: VideoId
-  markerId: MarkerId
-  range: [number, number]
-  indexWithinVideo: number
-  indexWithinMarker: number
-}
-
-export interface VideoDto {
-  id: VideoId
-  title: string
-  performers: string[]
-  fileName: string
-  interactive: boolean
-}
-
-export interface Marker {
-  id: MarkerId
-  primaryTag: string
-  streamUrl: string
-  screenshotUrl: string
-  start: number
-  end: number
-  sceneTitle?: string
-  performers: string[]
-  fileName?: string
-  sceneInteractive: boolean
-  tags: string[]
-  indexWithinVideo: number
-  videoId: VideoId
-}
-
 export interface VideoWithMarkers {
   video: VideoDto
-  markers: Marker[]
-}
-
-export interface Scene {
-  id: string
-  performers: string[]
-  imageUrl: string
-  title: string
-  studio: string
-  tags: string[]
-  rating?: number
-  interactive: boolean
-  markerCount: number
-}
-
-export interface SongDto {
-  songId: number
-  duration: number
-  fileName: string
-  url: string
+  markers: MarkerDto[]
 }

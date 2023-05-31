@@ -1,43 +1,36 @@
-use axum::{
-    body::StreamBody,
-    extract::{Multipart, Query, State},
-    response::{
-        sse::{Event, KeepAlive},
-        IntoResponse, Sse,
-    },
-    Json,
-};
-use color_eyre::{eyre::eyre, Report};
-use futures::{
-    stream::{self, Stream},
-    FutureExt,
-};
+use std::collections::HashSet;
+use std::sync::Arc;
+use std::time::Duration;
 
+use axum::body::{Body, StreamBody};
+use axum::extract::{Multipart, Path, Query, State};
+use axum::response::sse::{Event, KeepAlive};
+use axum::response::{IntoResponse, Sse};
+use axum::Json;
+use clip_mash_types::*;
+use color_eyre::eyre::eyre;
+use color_eyre::Report;
+use futures::stream::{self, Stream};
+use futures::FutureExt;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, sync::Arc, time::Duration};
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
 
-use crate::{
-    data::{database::DbSong, service::DataService, stash_api::StashApi},
-    server::{
-        dtos::{ClipsResponse, CreateClipsBody, CreateVideoBody},
-        error::AppError,
-        handlers::get_streams,
-    },
-    service::{
-        clip,
-        funscript::{FunScript, ScriptBuilder},
-        generator::{self, Progress},
-        music::MusicService,
-        stash_config::Config,
-        Clip, VideoSource,
-    },
-    util::expect_file_name,
-};
-
 use super::AppState;
+use crate::data::database::DbSong;
+use crate::data::service::DataService;
+use crate::data::stash_api::StashApi;
+use crate::server::error::AppError;
+use crate::server::handlers::get_streams;
+use crate::service::beats::{self, Beats};
+use crate::service::clip::ClipService;
+use crate::service::funscript::{FunScript, ScriptBuilder};
+use crate::service::generator::{self, Progress};
+use crate::service::music::MusicService;
+use crate::service::stash_config::Config;
+use crate::service::VideoSource;
+use crate::util::expect_file_name;
 
 #[axum::debug_handler]
 pub async fn fetch_clips(
@@ -51,8 +44,8 @@ pub async fn fetch_clips(
     let options = service.convert_clip_options(body).await?;
     debug!("clip options: {options:?}");
 
-    let clips = clip::arrange_clips(options);
-    info!("generated {} clips", clips.len());
+    let clip_service = ClipService::new(state.database.clone());
+    let (clips, beat_offsets) = clip_service.arrange_clips(options).await?;
     let streams = get_streams(video_ids, &config)?;
     let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.clone()).collect();
     video_ids.sort();
@@ -69,6 +62,7 @@ pub async fn fetch_clips(
         clips,
         streams,
         videos,
+        beat_offsets,
     };
     Ok(Json(response))
 }
@@ -136,7 +130,8 @@ pub async fn download_video(
     state: State<Arc<AppState>>,
     Query(FilenameQuery { file_name }): Query<FilenameQuery>,
 ) -> Result<impl IntoResponse, AppError> {
-    use axum::{http::header, response::AppendHeaders};
+    use axum::http::header;
+    use axum::response::AppendHeaders;
 
     info!("downloading video '{file_name}'");
     let path = state.directories.video_dir().join(&file_name);
@@ -185,15 +180,19 @@ pub struct SongDto {
     pub duration: f64,
     pub file_name: String,
     pub url: String,
+    pub beats: Vec<f32>,
 }
 
 impl From<DbSong> for SongDto {
     fn from(value: DbSong) -> Self {
+        let beats: Option<Beats> = value.beats.and_then(|str| serde_json::from_str(&str).ok());
+
         SongDto {
             song_id: value.rowid.expect("must have rowid set"),
             duration: value.duration,
             file_name: expect_file_name(&value.file_path),
             url: value.url,
+            beats: beats.map(|b| b.offsets).unwrap_or_default(),
         }
     }
 }
@@ -208,6 +207,20 @@ pub async fn download_music(
     let song = music_service.download_song(&url).await?;
 
     Ok(Json(song.into()))
+}
+
+#[axum::debug_handler]
+pub async fn stream_song(
+    Path(song_id): Path<i64>,
+    State(state): State<Arc<AppState>>,
+    request: axum::http::Request<Body>,
+) -> Result<impl IntoResponse, AppError> {
+    use tower::ServiceExt;
+    use tower_http::services::ServeFile;
+
+    let song = state.database.get_song(song_id).await?;
+    let result = ServeFile::new(song.file_path).oneshot(request).await;
+    Ok(result)
 }
 
 #[axum::debug_handler]
@@ -276,4 +289,24 @@ pub async fn open_folder(
     opener::open(path).map_err(Report::from)?;
 
     Ok(())
+}
+
+#[axum::debug_handler]
+pub async fn get_beats(
+    Path(song_id): Path<i64>,
+    state: State<Arc<AppState>>,
+) -> Result<Json<Beats>, AppError> {
+    let beats = match state.database.fetch_beats(song_id).await? {
+        Some(beats) => beats,
+        None => {
+            let song = state.database.get_song(song_id).await?;
+            let beats = beats::detect_beats(&song.file_path)?;
+            state
+                .database
+                .persist_beats(song.rowid.unwrap(), &beats)
+                .await?;
+            beats
+        }
+    };
+    Ok(Json(beats))
 }

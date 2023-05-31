@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT beats FROM songs WHERE rowid = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "beats",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "cb0ce4fdd03eed9d90a3f2e0e20957be8dfd70d9dc16593e15ea8be88d080042"
+}

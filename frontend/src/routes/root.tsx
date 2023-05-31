@@ -32,7 +32,9 @@ const StashSteps: React.FC<{state: StashFormState}> = ({state}) => {
         {
           stage: FormStage.SelectCriteria,
           link: state.selectMode ? getUrl(state.selectMode) : "",
-          content: "Choose mode",
+          content: state.selectMode
+            ? `Select ${state.selectMode}`
+            : "Select criteria",
         },
         {
           stage: FormStage.SelectMarkers,
@@ -78,6 +80,11 @@ const LocalFileSteps: React.FC<{state: LocalVideosFormState}> = ({state}) => {
           stage: LocalFilesFormStage.ListVideos,
           link: "/local/videos",
           content: "Create markers",
+        },
+        {
+          stage: LocalFilesFormStage.SelectMarkers,
+          link: "/local/markers",
+          content: "Select markers",
         },
         {
           stage: LocalFilesFormStage.Music,
@@ -132,7 +139,9 @@ const RootLayout: React.FC = () => {
   return (
     <Layout isLoading={isLoading}>
       <section className="py-4 flex flex-col">
-        <h1 className="text-5xl font-bold mb-4 text-center">ClipMash</h1>
+        <h1 className="text-5xl text-brand font-bold mb-4 text-center">
+          ClipMash
+        </h1>
         <div className="self-center flex gap-2 mb-4">
           <button onClick={onReset} className="btn btn-sm btn-error">
             <HiXMark className="w-5 h-5 mr-2" />

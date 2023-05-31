@@ -67,81 +67,83 @@ function ConfigPage() {
   }, [urlValue, apiKeyValue])
 
   return (
-    <main className="container ml-auto mr-auto">
-      <section className="py-4 flex flex-col">
-        <h1 className="text-5xl font-bold mb-4 text-center">
-          Configuration setup
-        </h1>
-        <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg w-full">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">URL of your Stash instance:</span>
-            </label>
-            <input
-              type="url"
-              placeholder="Example: http://localhost:9999"
-              className="input input-bordered"
-              defaultValue="http://localhost:9999"
-              required
-              {...register("stashUrl", {required: true})}
-            />
-          </div>
+    <section className="py-4 flex flex-col">
+      <h1 className="text-5xl font-bold mb-4 text-center">
+        Configuration setup
+      </h1>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="max-w-lg w-full self-center"
+      >
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">URL of your Stash instance:</span>
+          </label>
+          <input
+            type="url"
+            placeholder="Example: http://localhost:9999"
+            className="input input-bordered"
+            defaultValue="http://localhost:9999"
+            required
+            {...register("stashUrl", {required: true})}
+          />
+        </div>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">API key:</span>
-            </label>
-            <input
-              type="text"
-              placeholder="eyJhbGc..."
-              className="input input-bordered"
-              required
-              {...register("apiKey", {required: true})}
-            />
-            <label className="label">
-              <span className="label-text-alt">
-                Navigate to{" "}
-                <a
-                  className="link"
-                  href={settingsPage}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {settingsPage}
-                </a>{" "}
-                to retrieve your API key.
-              </span>
-            </label>
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">API key:</span>
+          </label>
+          <input
+            type="text"
+            placeholder="eyJhbGc..."
+            className="input input-bordered"
+            required
+            {...register("apiKey", {required: true})}
+          />
+          <label className="label">
+            <span className="label-text-alt">
+              Navigate to{" "}
+              <a
+                className="link"
+                href={settingsPage}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {settingsPage}
+              </a>{" "}
+              to retrieve your API key.
+            </span>
+          </label>
+        </div>
+        <div className="w-full flex justify-between">
+          <button
+            onClick={onTestCredentials}
+            type="button"
+            className="btn btn-secondary"
+          >
+            Test credentials
+          </button>
+          <button type="submit" className="btn btn-success">
+            Submit
+          </button>
+        </div>
+        {healthResult && (
+          <div
+            className={clsx(
+              "mt-4",
+              healthResult.success && "text-green-600",
+              !healthResult.success && "text-red-600"
+            )}
+          >
+            {healthResult.success
+              ? "Credentials work!"
+              : "Error validating credentials: "}
+            <br />
+            {!healthResult.success && <code>{healthResult.message}</code>}
           </div>
-          <div className="w-full flex justify-between">
-            <button
-              onClick={onTestCredentials}
-              type="button"
-              className="btn btn-secondary"
-            >
-              Test credentials
-            </button>
-            <button type="submit" className="btn btn-success">
-              Submit
-            </button>
-          </div>
-          {healthResult && (
-            <div
-              className={clsx(
-                "mt-4",
-                healthResult.success && "text-green-600",
-                !healthResult.success && "text-red-600"
-              )}
-            >
-              {healthResult.success
-                ? "Credentials work!"
-                : "Error validating credentials: "}
-              {!healthResult.success && <pre>{healthResult.message}</pre>}
-            </div>
-          )}
-        </form>
-      </section>
-    </main>
+        )}
+      </form>
+    </section>
   )
 }
 

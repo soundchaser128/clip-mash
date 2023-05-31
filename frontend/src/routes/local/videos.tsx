@@ -117,10 +117,10 @@ export default function ListVideos() {
         </div>
       )}
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-2 w-full my-4">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
         {videos.map((video) => (
           <article
-            className="card card-compact bg-base-100 shadow-xl"
+            className="card card-compact bg-base-200 shadow-xl"
             key={video.video.id.id}
           >
             <figure className="">

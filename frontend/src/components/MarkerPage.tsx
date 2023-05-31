@@ -194,14 +194,14 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
           </span>
         </div>
       )}
-      <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
+      <section className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
         {markers.map((marker) => {
           const selectedMarker = selection[marker.id.id]
           return (
             <article
               key={marker.id.id}
               className={clsx(
-                "card card-compact bg-base-100 shadow-xl",
+                "card card-compact bg-base-200 shadow-xl",
                 !selectedMarker.selected && "opacity-50"
               )}
             >

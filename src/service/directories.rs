@@ -3,9 +3,19 @@ use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use directories::ProjectDirs;
+use serde::Deserialize;
 use tracing::info;
 
 use crate::Result;
+
+#[derive(Debug, Deserialize, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum FolderType {
+    Videos,
+    Music,
+    Database,
+    Config,
+}
 
 #[derive(Clone)]
 pub struct Directories {
@@ -24,6 +34,15 @@ impl Directories {
         Ok(Directories {
             dirs: Arc::new(dirs),
         })
+    }
+
+    pub fn get(&self, ty: FolderType) -> Utf8PathBuf {
+        match ty {
+            FolderType::Videos => self.video_dir(),
+            FolderType::Music => self.music_dir(),
+            FolderType::Database => self.database_file(),
+            FolderType::Config => self.config_dir().to_owned(),
+        }
     }
 
     pub fn config_dir(&self) -> &Utf8Path {

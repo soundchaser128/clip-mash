@@ -103,6 +103,6 @@ pub async fn download_video(
 ) -> Result<Json<VideoDto>, AppError> {
     let service = VideoService::from(state.0);
     let (video_id, path) = service.download_video(url).await?;
-    let db_video = service.persist_video(video_id, path).await?;
+    let db_video = service.persist_downloaded_video(video_id, path).await?;
     Ok(Json(db_video.into()))
 }

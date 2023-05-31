@@ -2,24 +2,18 @@ use std::sync::Arc;
 
 use axum::extract::multipart::Field;
 use camino::{Utf8Path, Utf8PathBuf};
-use color_eyre::eyre::bail;
 use nanoid::nanoid;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tracing::info;
-use youtube_dl::YoutubeDl;
+use url::Url;
 
 use crate::data::database::{CreateSong, Database, DbSong};
 use crate::server::handlers::AppState;
-use crate::service::commands::ffprobe;
-use crate::service::directories::Directories;
+use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
+use crate::service::directories::{Directories, FolderType};
+use crate::service::music;
 use crate::Result;
-
-const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
-    "yt-dlp.exe"
-} else {
-    "yt-dlp"
-};
 
 #[derive(Debug)]
 pub struct SongInfo {
@@ -50,19 +44,6 @@ impl MusicDownloadService {
         }
     }
 
-    async fn ensure_yt_dlp(&self) -> Result<Utf8PathBuf> {
-        let path = self.dirs.cache_dir();
-        if !path.is_dir() {
-            fs::create_dir_all(path).await?;
-        }
-
-        let executable = path.join(YT_DLP_EXECUTABLE);
-        if !executable.is_file() {
-            youtube_dl::download_yt_dlp(path).await?;
-        }
-        Ok(executable)
-    }
-
     async fn get_download_directory(&self) -> Result<Utf8PathBuf> {
         let base_dir = self.dirs.music_dir();
         let song_id = nanoid!(8);
@@ -75,39 +56,30 @@ impl MusicDownloadService {
         Ok(output_dir)
     }
 
-    async fn download_to_file(&self, url: &str) -> Result<SongInfo> {
-        let yt_dlp = self.ensure_yt_dlp().await?;
-        let output_dir = self.get_download_directory().await?;
+    async fn download_to_file(&self, url: Url) -> Result<SongInfo> {
+        let yt_dlp = YtDlp::new(self.dirs.clone());
+        let options = YtDlpOptions {
+            url,
+            extract_music: true,
+            destination: FolderType::Music,
+        };
+        let result = yt_dlp.run(&options).await?;
+        let ffprobe_result = ffprobe(&result.downloaded_file).await?;
+        let duration = ffprobe_result.format.duration().unwrap_or_default();
 
-        YoutubeDl::new(url)
-            .youtube_dl_path(yt_dlp)
-            .extract_audio(true)
-            .download(true)
-            .output_directory(output_dir.as_str())
-            .run_async()
-            .await?;
-
-        let mut iterator = fs::read_dir(output_dir).await?;
-        let entry = iterator.next_entry().await?;
-        if let Some(entry) = entry {
-            let path = Utf8PathBuf::from_path_buf(entry.path()).expect("path must be utf-8");
-            info!("downloaded music to {path}");
-            let info = ffprobe(&path).await?;
-            let duration = info.format.duration().unwrap_or_default();
-
-            Ok(SongInfo { path, duration })
-        } else {
-            bail!("could not find downloaded music file")
-        }
+        Ok(SongInfo {
+            path: result.downloaded_file,
+            duration,
+        })
     }
 
-    pub async fn download_song(&self, url: &str) -> Result<DbSong> {
-        let existing_song = self.db.get_song_by_url(url).await?;
+    pub async fn download_song(&self, url: Url) -> Result<DbSong> {
+        let existing_song = self.db.get_song_by_url(url.as_str()).await?;
         if let Some(mut song) = existing_song {
             if Utf8Path::new(&song.file_path).is_file() {
                 Ok(song)
             } else {
-                let downloaded_song = self.download_to_file(url).await?;
+                let downloaded_song = self.download_to_file(url.clone()).await?;
                 self.db
                     .update_song_file_path(
                         song.rowid.expect("must have rowid"),
@@ -118,13 +90,15 @@ impl MusicDownloadService {
                 Ok(song)
             }
         } else {
-            let downloaded_song = self.download_to_file(url).await?;
+            let downloaded_song = self.download_to_file(url.clone()).await?;
+            let beats = music::detect_beats(&downloaded_song.path).ok();
             let result = self
                 .db
                 .persist_song(CreateSong {
                     duration: downloaded_song.duration,
                     file_path: downloaded_song.path.to_string(),
                     url: url.to_string(),
+                    beats,
                 })
                 .await?;
             Ok(result)
@@ -143,6 +117,7 @@ impl MusicDownloadService {
         }
 
         let ffprobe_result = ffprobe(&path).await?;
+        let beats = music::detect_beats(&path).ok();
 
         let result = self
             .db
@@ -150,6 +125,7 @@ impl MusicDownloadService {
                 duration: ffprobe_result.format.duration().unwrap_or_default(),
                 file_path: path.to_string(),
                 url: format!("file:{path}"),
+                beats,
             })
             .await?;
         Ok(result)
@@ -162,6 +138,7 @@ mod test {
 
     use camino::Utf8Path;
     use sqlx::SqlitePool;
+    use url::Url;
 
     use crate::data::database::Database;
     use crate::service::directories::Directories;
@@ -173,22 +150,32 @@ mod test {
         let directories = Directories::new().unwrap();
         let service = MusicDownloadService::new(database.clone(), directories);
         let _ = color_eyre::install();
-        let url = "https://www.youtube.com/watch?v=DGaKVLFNWzs";
-        let info = service.download_song(url).await.unwrap();
+        let url: Url = "https://www.youtube.com/watch?v=DGaKVLFNWzs"
+            .try_into()
+            .unwrap();
+        let info = service.download_song(url.clone()).await.unwrap();
         let path = Utf8Path::new(&info.file_path);
         assert!(path.is_file());
 
-        let from_database = database.get_song_by_url(url).await.unwrap().unwrap();
-        assert_eq!(url, from_database.url);
+        let from_database = database
+            .get_song_by_url(url.as_str())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(url.as_str(), from_database.url);
 
         fs::remove_file(&from_database.file_path).unwrap();
 
-        let info = service.download_song(url).await.unwrap();
+        let info = service.download_song(url.clone()).await.unwrap();
         assert_ne!(from_database.file_path, info.file_path);
         let path = Utf8Path::new(&info.file_path);
         assert!(path.is_file());
 
-        let from_database = database.get_song_by_url(url).await.unwrap().unwrap();
+        let from_database = database
+            .get_song_by_url(url.as_str())
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(from_database.file_path, info.file_path);
     }
 }

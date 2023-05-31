@@ -1,12 +1,15 @@
 use std::sync::Arc;
 
 use camino::Utf8PathBuf;
+use color_eyre::eyre::bail;
+use nanoid::nanoid;
 use tokio::fs;
+use tracing::info;
 use url::Url;
+use youtube_dl::YoutubeDl;
 
-use crate::server::handlers::common::FolderType;
 use crate::server::handlers::AppState;
-use crate::service::directories::Directories;
+use crate::service::directories::{Directories, FolderType};
 use crate::Result;
 
 const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
@@ -16,10 +19,15 @@ const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
 };
 
 #[derive(Debug)]
-pub struct Options {
+pub struct YtDlpOptions {
     pub url: Url,
     pub extract_music: bool,
     pub destination: FolderType,
+}
+
+pub struct DownloadResult {
+    pub downloaded_file: Utf8PathBuf,
+    pub generated_id: String,
 }
 
 pub struct YtDlp {
@@ -35,6 +43,10 @@ impl From<Arc<AppState>> for YtDlp {
 }
 
 impl YtDlp {
+    pub fn new(dirs: Directories) -> Self {
+        Self { dirs }
+    }
+
     async fn ensure_yt_dlp(&self) -> Result<Utf8PathBuf> {
         let path = self.dirs.cache_dir();
         if !path.is_dir() {
@@ -48,8 +60,36 @@ impl YtDlp {
         Ok(executable)
     }
 
-    pub async fn run(&self, options: &Options) -> Result<Utf8PathBuf> {
-        let path = self.ensure_yt_dlp().await?;
-        todo!()
+    pub async fn run(&self, options: &YtDlpOptions) -> Result<DownloadResult> {
+        let yt_dlp_path = self.ensure_yt_dlp().await?;
+        let base_dir = self.dirs.get(options.destination);
+        let id = nanoid!(8);
+        let dir = base_dir.join(&id);
+
+        let mut youtube_dl = YoutubeDl::new(options.url.as_str());
+        youtube_dl
+            .youtube_dl_path(yt_dlp_path)
+            .download(true)
+            .output_directory(dir.as_str());
+
+        if options.extract_music {
+            youtube_dl.extract_audio(true);
+        }
+        youtube_dl.run_async().await?;
+
+        let mut iterator = fs::read_dir(dir).await?;
+        let entry = iterator.next_entry().await?;
+
+        if let Some(entry) = entry {
+            let path = Utf8PathBuf::from_path_buf(entry.path()).expect("path must be utf-8");
+            info!("yt-dlp finished, path {path}");
+
+            Ok(DownloadResult {
+                downloaded_file: path,
+                generated_id: id,
+            })
+        } else {
+            bail!("could not find downloaded music file")
+        }
     }
 }

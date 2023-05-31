@@ -7,6 +7,7 @@ import {
 } from "../../types/types"
 import {
   HiAdjustmentsVertical,
+  HiArrowDownTray,
   HiCheck,
   HiChevronRight,
   HiInformationCircle,
@@ -18,6 +19,7 @@ import {useEffect, useState} from "react"
 import {useImmer} from "use-immer"
 import {updateForm} from "../actions"
 import {
+  Link,
   LoaderFunction,
   Outlet,
   json,
@@ -92,16 +94,10 @@ export default function ListVideos() {
       <Outlet />
       {videos.length > 0 && (
         <div className="w-full flex justify-between">
-          <div>
-            <p>
-              Found <strong>{videos.length}</strong> videos in folder{" "}
-              <code>{state.data.localVideoPath}</code>.
-            </p>
-            <p>
-              <strong>Note:</strong> Only videos with markers will be added to
-              the compilation. Others will be ignored.
-            </p>
-          </div>
+          <Link to="download" className="btn btn-primary">
+            <HiArrowDownTray className="mr-2" />
+            Download videos
+          </Link>
 
           <button className="btn btn-success" onClick={onNextStage}>
             Next

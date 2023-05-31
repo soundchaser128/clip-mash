@@ -1,20 +1,42 @@
 use std::str::FromStr;
 
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
+use itertools::Itertools;
 use serde::Deserialize;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
 use tokio::task::spawn_blocking;
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::service::music::{self, Beats};
 use crate::Result;
+
+#[derive(Debug, Clone, Copy, sqlx::Type)]
+#[sqlx(rename_all = "lowercase")]
+pub enum LocalVideoSource {
+    Folder,
+    Download,
+}
+
+impl From<String> for LocalVideoSource {
+    fn from(value: String) -> Self {
+        match value.as_str() {
+            "folder" => Self::Folder,
+            "download" => Self::Download,
+            other => {
+                warn!("unknown enum constant {other}, falling back to LocalVideoSource::Folder");
+                LocalVideoSource::Folder
+            }
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct DbVideo {
     pub id: String,
     pub file_path: String,
     pub interactive: bool,
+    pub source: LocalVideoSource,
 }
 
 #[derive(Debug, Clone, PartialEq, FromRow)]
@@ -58,6 +80,7 @@ pub struct CreateSong {
     pub url: String,
     pub file_path: String,
     pub duration: f64,
+    pub beats: Option<Beats>,
 }
 
 #[derive(Clone)]
@@ -83,10 +106,70 @@ impl Database {
     }
 
     pub async fn get_video(&self, id: &str) -> Result<Option<DbVideo>> {
-        let video = sqlx::query_as!(DbVideo, "SELECT * FROM local_videos WHERE id = $1", id)
-            .fetch_optional(&self.pool)
-            .await?;
+        let video = sqlx::query_as!(
+            DbVideo,
+            "SELECT id, file_path, interactive, source FROM local_videos WHERE id = $1",
+            id
+        )
+        .fetch_optional(&self.pool)
+        .await?;
         Ok(video)
+    }
+
+    pub async fn get_downloaded_videos(&self) -> Result<Vec<LocalVideoWithMarkers>> {
+        let records = sqlx::query!("SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE source = 'download'")
+            .fetch_all(&self.pool)
+            .await?;
+        if records.is_empty() {
+            Ok(vec![])
+        } else {
+            let iter = records.into_iter().group_by(|v| v.id.clone());
+            let mut videos = vec![];
+            for (_, group) in &iter {
+                let group: Vec<_> = group.collect();
+                let video = DbVideo {
+                    id: group[0].id.clone(),
+                    file_path: group[0].file_path.clone(),
+                    interactive: group[0].interactive,
+                    source: group[0].source.clone().into(),
+                };
+                let markers: Vec<_> = group
+                    .into_iter()
+                    .filter_map(|r| {
+                        match (
+                            r.video_id,
+                            r.start_time,
+                            r.end_time,
+                            r.title,
+                            r.rowid,
+                            r.file_path,
+                            r.index_within_video,
+                        ) {
+                            (
+                                Some(video_id),
+                                Some(start_time),
+                                Some(end_time),
+                                Some(title),
+                                rowid,
+                                file_path,
+                                Some(index),
+                            ) => Some(DbMarker {
+                                rowid,
+                                title,
+                                video_id,
+                                start_time,
+                                end_time,
+                                file_path,
+                                index_within_video: index,
+                            }),
+                            _ => None,
+                        }
+                    })
+                    .collect();
+                videos.push(LocalVideoWithMarkers { video, markers })
+            }
+            Ok(videos)
+        }
     }
 
     pub async fn get_marker(&self, id: i64) -> Result<DbMarker> {
@@ -142,6 +225,7 @@ impl Database {
                 id: records[0].id.clone(),
                 file_path: records[0].file_path.clone(),
                 interactive: records[0].interactive,
+                source: records[0].source.clone().into(),
             };
             let markers = records
                 .into_iter()
@@ -182,10 +266,11 @@ impl Database {
 
     pub async fn persist_video(&self, video: DbVideo) -> Result<()> {
         sqlx::query!(
-            "INSERT INTO local_videos (id, file_path, interactive) VALUES ($1, $2, $3)",
+            "INSERT INTO local_videos (id, file_path, interactive, source) VALUES ($1, $2, $3, $4)",
             video.id,
             video.file_path,
-            video.interactive
+            video.interactive,
+            video.source,
         )
         .execute(&self.pool)
         .await?;
@@ -370,7 +455,7 @@ mod test {
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
-    use super::DbMarker;
+    use super::{DbMarker, LocalVideoSource};
     use crate::data::database::{CreateMarker, Database, DbVideo};
     use crate::Result;
 
@@ -379,6 +464,7 @@ mod test {
             file_path: FilePath().fake(),
             id: nanoid!(8),
             interactive: false,
+            source: LocalVideoSource::Folder,
         };
         db.persist_video(expected.clone()).await?;
         Ok(expected)

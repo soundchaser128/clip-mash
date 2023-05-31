@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::fs;
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -144,7 +146,6 @@ pub async fn download_ffmpeg(directories: &Directories) -> Result<Utf8PathBuf> {
     Ok(ffmpeg_path)
 }
 
-#[allow(unused)]
 #[derive(Default)]
 pub struct Ffmpeg {
     executable_path: Utf8PathBuf,

@@ -2,17 +2,17 @@ use std::cmp::Reverse;
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use color_eyre::eyre::bail;
 use nanoid::nanoid;
 use tokio::task::spawn_blocking;
 use tracing::{debug, info};
 use url::Url;
 use walkdir::WalkDir;
-use youtube_dl::YoutubeDl;
 
 use super::directories::Directories;
-use crate::data::database::{Database, DbVideo, LocalVideoWithMarkers};
+use crate::data::database::{Database, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
 use crate::server::handlers::AppState;
+use crate::service::commands::{YtDlp, YtDlpOptions};
+use crate::service::directories::FolderType;
 use crate::Result;
 
 pub struct VideoService {
@@ -65,6 +65,7 @@ impl VideoService {
                         id,
                         file_path: path.to_string(),
                         interactive,
+                        source: LocalVideoSource::Folder,
                     };
                     info!("inserting new video {video:#?}");
                     self.database.persist_video(video.clone()).await?;
@@ -75,48 +76,33 @@ impl VideoService {
                 }
             }
         }
-
+        let downloaded_videos = self.database.get_downloaded_videos().await?;
+        videos.extend(downloaded_videos);
         videos.sort_by_key(|v| Reverse(v.markers.len()));
 
         Ok(videos)
     }
 
     pub async fn download_video(&self, url: Url) -> Result<(String, Utf8PathBuf)> {
-        use tokio::fs;
-
-        let video_id = nanoid!(8);
-        let folder = self
-            .directories
-            .video_dir()
-            .join("downloads")
-            .join(&video_id);
-        if !folder.is_dir() {
-            fs::create_dir_all(&folder).await?;
-        }
-
-        YoutubeDl::new(url)
-            .output_directory(folder.as_str())
-            .download(true)
-            .run_async()
-            .await?;
-
-        let mut iterator = fs::read_dir(folder).await?;
-        let entry = iterator.next_entry().await?;
-        if let Some(entry) = entry {
-            let path = Utf8PathBuf::from_path_buf(entry.path()).expect("path must be utf-8");
-            info!("downloaded video to {path}");
-            Ok((video_id, path))
-        } else {
-            bail!("could not find downloaded music file")
-        }
+        info!("downloading video {url}");
+        let downloader = YtDlp::new(self.directories.clone());
+        let options = YtDlpOptions {
+            url,
+            extract_music: false,
+            destination: FolderType::Videos,
+        };
+        let result = downloader.run(&options).await?;
+        Ok((result.generated_id, result.downloaded_file))
     }
 
-    pub async fn persist_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
+    pub async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
         let video = DbVideo {
             id,
             file_path: path.as_str().to_string(),
             interactive: false,
+            source: LocalVideoSource::Download,
         };
+        info!("persisting downloaded video {video:#?}");
         self.database.persist_video(video.clone()).await?;
         Ok(video)
     }

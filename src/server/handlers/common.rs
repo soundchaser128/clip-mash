@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
+use url::Url;
 
 use super::AppState;
 use crate::data::database::DbSong;
@@ -24,6 +25,7 @@ use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::get_streams;
 use crate::service::clip::ClipService;
+use crate::service::directories::FolderType;
 use crate::service::funscript::{FunScript, ScriptBuilder};
 use crate::service::generator::{self, Progress};
 use crate::service::music::{self, Beats, MusicDownloadService};
@@ -169,7 +171,7 @@ pub async fn get_funscript(
 
 #[derive(Deserialize)]
 pub struct DownloadMusicQuery {
-    pub url: String,
+    pub url: Url,
 }
 
 #[derive(Serialize)]
@@ -203,7 +205,7 @@ pub async fn download_music(
 ) -> Result<Json<SongDto>, AppError> {
     info!("downloading music at url {url}");
     let music_service = MusicDownloadService::from(state);
-    let song = music_service.download_song(&url).await?;
+    let song = music_service.download_song(url).await?;
 
     Ok(Json(song.into()))
 }
@@ -252,15 +254,6 @@ pub async fn list_songs(
         .collect();
 
     Ok(Json(songs))
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum FolderType {
-    Videos,
-    Music,
-    Database,
-    Config,
 }
 
 #[derive(Debug, Deserialize)]

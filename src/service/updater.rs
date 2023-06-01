@@ -1,11 +1,12 @@
-/// Self-update logic ported over from https://github.com/mitsuhiko/rye/blob/ecfc17e7c31137d060d43e22d93637541aa0b051/rye/src/cli/rye.rs#L131-L190
-use crate::Result;
+use std::env::consts::OS;
+
 use axum::body::Bytes;
 use camino::Utf8Path;
 use color_eyre::eyre::bail;
-use std::env::consts::OS;
-
 use tracing::info;
+
+/// Self-update logic ported over from https://github.com/mitsuhiko/rye/blob/ecfc17e7c31137d060d43e22d93637541aa0b051/rye/src/cli/rye.rs#L131-L190
+use crate::Result;
 
 const GITHUB_REPO: &str = "https://github.com/soundchaser128/clip-mash";
 
@@ -19,8 +20,9 @@ async fn download_url(url: &str) -> Result<Bytes> {
 // executables come in a .tar.gz archive for Mac OS and Linux
 #[cfg(unix)]
 fn unzip_file(bytes: Bytes, destination: impl AsRef<Utf8Path>) -> Result<()> {
-    use libflate::gzip::Decoder;
     use std::io::Read;
+
+    use libflate::gzip::Decoder;
     use tar::Archive;
 
     let destination = destination.as_ref();
@@ -47,6 +49,7 @@ fn unzip_file(bytes: Bytes, destination: impl AsRef<Utf8Path>) -> Result<()> {
 #[cfg(not(unix))]
 fn unzip_file(bytes: Bytes, destination: impl AsRef<Utf8Path>) -> Result<()> {
     use std::fs::File;
+
     use zip::ZipArchive;
 
     let reader = Cursor::new(&bytes);

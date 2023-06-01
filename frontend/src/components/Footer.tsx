@@ -3,7 +3,12 @@ const Footer = () => {
     <footer className="w-full text-center text-sm font-light flex flex-col gap-1 my-4">
       <p>
         Made by{" "}
-        <a href="https://soundchaser128.xyz" className="link">
+        <a
+          href="https://soundchaser128.xyz"
+          className="link"
+          target="_blank"
+          rel="noreferrer"
+        >
           soundchaser128
         </a>
       </p>
@@ -12,6 +17,8 @@ const Footer = () => {
         <a
           className="link"
           href="https://github.com/soundchaser128/stash-compilation-maker"
+          target="_blank"
+          rel="noreferrer"
         >
           GitHub
         </a>

@@ -1,6 +1,8 @@
+pub mod beats;
 pub mod clip;
 pub mod directories;
 pub mod download_ffmpeg;
+pub mod ffmpeg;
 pub mod ffprobe;
 pub mod funscript;
 pub mod generator;
@@ -12,17 +14,13 @@ pub mod updater;
 #[cfg(test)]
 pub mod fixtures;
 
-use std::fmt;
-
+use clip_mash_types::{MarkerId, VideoId};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    data::{
-        database::{DbMarker, DbVideo},
-        stash_api::{find_scenes_query::FindScenesQueryFindScenesScenes, StashMarker},
-    },
-    util::expect_file_name,
-};
+use crate::data::database::{DbMarker, DbVideo};
+use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
+use crate::data::stash_api::StashMarker;
+use crate::util::expect_file_name;
 
 #[derive(Debug, Clone)]
 pub enum VideoInfo {
@@ -130,86 +128,5 @@ impl Marker {
     #[allow(unused)]
     fn duration(&self) -> f64 {
         self.end_time - self.start_time
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Clip {
-    pub source: VideoSource,
-    pub video_id: VideoId,
-    pub marker_id: MarkerId,
-    /// Start and endpoint inside the video in seconds.
-    pub range: (f64, f64),
-    pub index_within_video: usize,
-    pub index_within_marker: usize,
-}
-
-impl Clip {
-    pub fn range_millis(&self) -> (u32, u32) {
-        ((self.range.0 as u32) * 1000, (self.range.1 as u32) * 1000)
-    }
-
-    pub fn duration(&self) -> f64 {
-        let (start, end) = self.range;
-        end - start
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
-#[serde(rename_all = "camelCase", tag = "type", content = "id")]
-pub enum MarkerId {
-    LocalFile(i64),
-    Stash(i64),
-}
-
-impl MarkerId {
-    pub fn inner(&self) -> i64 {
-        match self {
-            MarkerId::LocalFile(id) => *id,
-            MarkerId::Stash(id) => *id,
-        }
-    }
-}
-
-impl fmt::Display for MarkerId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            MarkerId::LocalFile(id) => write!(f, "{}", id),
-            MarkerId::Stash(id) => write!(f, "{}", id),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
-#[serde(rename_all = "camelCase", tag = "type", content = "id")]
-pub enum VideoId {
-    LocalFile(String),
-    Stash(String),
-}
-
-impl VideoId {
-    pub fn source(&self) -> VideoSource {
-        match self {
-            VideoId::LocalFile(_) => VideoSource::LocalFile,
-            VideoId::Stash(_) => VideoSource::Stash,
-        }
-    }
-
-    pub fn as_stash_id(&self) -> &str {
-        if let Self::Stash(id) = self {
-            id
-        } else {
-            panic!("this is not a stash ID")
-        }
-    }
-}
-
-impl fmt::Display for VideoId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            VideoId::LocalFile(id) => write!(f, "{}", id),
-            VideoId::Stash(id) => write!(f, "{}", id),
-        }
     }
 }

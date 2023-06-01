@@ -1,14 +1,19 @@
-use super::{Clip, ClipCreator, Marker};
-use crate::service::clip::MIN_DURATION;
-use rand::{rngs::StdRng, seq::SliceRandom};
-
 use std::fmt::Debug;
+
+use rand::rngs::StdRng;
+use rand::seq::SliceRandom;
 use tracing::{debug, info};
+
+use super::{Clip, ClipCreator, Marker};
+
+// Specifc minimum duration for default clip generation
+const MIN_DURATION: f64 = 1.5;
 
 #[derive(Debug)]
 pub struct DefaultClipOptions {
     pub clip_duration: u32,
     pub seed: Option<String>,
+    pub divisors: Vec<f64>,
 }
 
 pub struct DefaultClipCreator;
@@ -24,11 +29,11 @@ impl ClipCreator for DefaultClipCreator {
     ) -> Vec<Clip> {
         info!("using DefaultClipCreator to create clips, options: {options:#?}",);
         let duration = options.clip_duration as f64;
-        let clip_lengths = [
-            (duration / 2.0).max(MIN_DURATION),
-            (duration / 3.0).max(MIN_DURATION),
-            (duration / 4.0).max(MIN_DURATION),
-        ];
+        let clip_lengths: Vec<f64> = options
+            .divisors
+            .into_iter()
+            .map(|d| (duration / d).max(MIN_DURATION))
+            .collect();
         let mut clips = vec![];
         for marker in markers {
             let start = marker.start_time;

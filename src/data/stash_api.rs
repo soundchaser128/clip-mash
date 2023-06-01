@@ -1,8 +1,3 @@
-use crate::{
-    service::{funscript::FunScript, stash_config::Config},
-    util::add_api_key,
-    Result,
-};
 use color_eyre::eyre::bail;
 use graphql_client::{GraphQLQuery, Response};
 use ordered_float::OrderedFloat;
@@ -10,20 +5,22 @@ use reqwest::Client;
 use serde::Deserialize;
 use tracing::debug;
 
-use self::{
-    find_markers_query::{
-        CriterionModifier, FindFilterType, FindMarkersQueryFindSceneMarkersSceneMarkers,
-        FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneMarkers,
-        FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams,
-        HierarchicalMultiCriterionInput, MultiCriterionInput, SceneMarkerFilterType,
-    },
-    find_performers_query::FindPerformersQueryFindPerformersPerformers,
-    find_scenes_query::{
-        FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
-        FindScenesQueryFindScenesScenesSceneStreams,
-    },
-    find_tags_query::FindTagsQueryFindTagsTags,
+use self::find_markers_query::{
+    CriterionModifier, FindFilterType, FindMarkersQueryFindSceneMarkersSceneMarkers,
+    FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneMarkers,
+    FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams, HierarchicalMultiCriterionInput,
+    MultiCriterionInput, SceneMarkerFilterType,
 };
+use self::find_performers_query::FindPerformersQueryFindPerformersPerformers;
+use self::find_scenes_query::{
+    FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
+    FindScenesQueryFindScenesScenesSceneStreams,
+};
+use self::find_tags_query::FindTagsQueryFindTagsTags;
+use crate::service::funscript::FunScript;
+use crate::service::stash_config::Config;
+use crate::util::add_api_key;
+use crate::Result;
 
 #[derive(GraphQLQuery)]
 #[graphql(

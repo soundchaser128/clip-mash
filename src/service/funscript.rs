@@ -1,10 +1,13 @@
 use camino::{Utf8Path, Utf8PathBuf};
+use clip_mash_types::Clip;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{info, warn};
 
-use super::{Clip, Video};
-use crate::{data::stash_api::StashApi, service::VideoInfo, Result};
+use super::Video;
+use crate::data::stash_api::StashApi;
+use crate::service::VideoInfo;
+use crate::Result;
 
 // Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
 

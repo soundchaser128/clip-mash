@@ -1,12 +1,14 @@
-use crate::Result;
+use std::str::FromStr;
+
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use serde::Deserialize;
-use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode},
-    SqlitePool,
-};
-use std::str::FromStr;
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
+use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
+use tokio::task::spawn_blocking;
 use tracing::info;
+
+use crate::service::beats::{self, Beats};
+use crate::Result;
 
 #[derive(Debug, Clone)]
 pub struct DbVideo {
@@ -15,7 +17,7 @@ pub struct DbVideo {
     pub interactive: bool,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, FromRow)]
 pub struct DbMarker {
     pub rowid: Option<i64>,
     pub video_id: String,
@@ -48,6 +50,7 @@ pub struct DbSong {
     pub url: String,
     pub file_path: String,
     pub duration: f64,
+    pub beats: Option<String>,
 }
 
 #[derive(Debug)]
@@ -97,6 +100,31 @@ impl Database {
         .fetch_one(&self.pool)
         .await?;
         Ok(marker)
+    }
+
+    pub async fn get_markers_for_video_ids(
+        &self,
+        ids: &[impl AsRef<str>],
+    ) -> Result<Vec<DbMarker>> {
+        let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video
+            FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
+            WHERE m.video_id IN ("
+        );
+        let mut separated = query_builder.separated(", ");
+        for id in ids {
+            separated.push_bind(id.as_ref());
+        }
+        separated.push_unseparated(") ");
+
+        let query = query_builder.build();
+        let rows: Vec<_> = query.fetch_all(&self.pool).await?;
+        let mut markers = vec![];
+        for row in rows {
+            markers.push(DbMarker::from_row(&row)?);
+        }
+
+        Ok(markers)
     }
 
     pub async fn get_video_by_path(&self, path: &str) -> Result<Option<LocalVideoWithMarkers>> {
@@ -218,13 +246,14 @@ impl Database {
             url: song.url,
             file_path: song.file_path,
             duration: song.duration,
+            beats: None,
         })
     }
 
     pub async fn get_song_by_url(&self, url: &str) -> Result<Option<DbSong>> {
         sqlx::query_as!(
             DbSong,
-            "SELECT rowid, url, file_path, duration FROM songs WHERE url = $1",
+            "SELECT rowid, url, file_path, duration, beats FROM songs WHERE url = $1",
             url
         )
         .fetch_optional(&self.pool)
@@ -235,7 +264,7 @@ impl Database {
     pub async fn get_song(&self, id: i64) -> Result<DbSong> {
         sqlx::query_as!(
             DbSong,
-            "SELECT rowid, url, file_path, duration FROM songs WHERE rowid = $1",
+            "SELECT rowid, url, file_path, duration, beats FROM songs WHERE rowid = $1",
             id
         )
         .fetch_one(&self.pool)
@@ -258,8 +287,11 @@ impl Database {
     pub async fn list_songs(&self) -> Result<Vec<DbSong>> {
         use tokio::fs;
 
-        let stream = sqlx::query_as!(DbSong, "SELECT rowid, url, file_path, duration FROM songs")
-            .fetch(&self.pool);
+        let stream = sqlx::query_as!(
+            DbSong,
+            "SELECT rowid, url, file_path, duration, beats FROM songs"
+        )
+        .fetch(&self.pool);
 
         let videos = stream
             .try_filter(|row| fs::try_exists(row.file_path.clone()).unwrap_or_else(|_| false))
@@ -280,24 +312,67 @@ impl Database {
         Ok(songs)
     }
 
-    pub async fn sum_song_durations(&self, song_ids: &[i64]) -> Result<f64> {
-        let duration = self
-            .get_songs(song_ids)
-            .await?
-            .into_iter()
-            .map(|s| s.duration)
-            .sum();
-        Ok(duration)
+    pub async fn fetch_beats(&self, song_id: i64) -> Result<Option<Beats>> {
+        let result = sqlx::query!("SELECT beats FROM songs WHERE rowid = $1", song_id)
+            .fetch_optional(&self.pool)
+            .await?;
+        match result {
+            Some(row) => match row.beats {
+                Some(json) => Ok(serde_json::from_str(&json)?),
+                None => Ok(None),
+            },
+            None => Ok(None),
+        }
+    }
+
+    pub async fn persist_beats(&self, song_id: i64, beats: &Beats) -> Result<()> {
+        let json = serde_json::to_string(&beats)?;
+        sqlx::query!(
+            "UPDATE songs SET beats = $1 WHERE rowid = $2",
+            json,
+            song_id
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn generate_all_beats(&self) -> Result<()> {
+        let rows = sqlx::query!("SELECT rowid, file_path FROM songs WHERE beats IS NULL")
+            .fetch_all(&self.pool)
+            .await?;
+        if rows.is_empty() {
+            return Ok(());
+        }
+        info!("generating beats for {} songs", rows.len());
+        let mut handles = vec![];
+        for row in rows {
+            handles.push(spawn_blocking(move || {
+                (beats::detect_beats(row.file_path), row.rowid)
+            }));
+        }
+
+        for handle in handles {
+            let (beats, song_id) = handle.await?;
+            self.persist_beats(song_id, &beats?).await?;
+        }
+
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::data::database::{CreateMarker, Database, DbVideo};
-    use crate::Result;
-    use fake::{faker::filesystem::en::FilePath, Fake};
+    use fake::faker::filesystem::en::FilePath;
+    use fake::faker::lorem::en::Sentence;
+    use fake::Fake;
     use nanoid::nanoid;
     use sqlx::SqlitePool;
+    use tracing_test::traced_test;
+
+    use super::DbMarker;
+    use crate::data::database::{CreateMarker, Database, DbVideo};
+    use crate::Result;
 
     async fn persist_video(db: &Database) -> Result<DbVideo> {
         let expected = DbVideo {
@@ -307,6 +382,23 @@ mod test {
         };
         db.persist_video(expected.clone()).await?;
         Ok(expected)
+    }
+
+    async fn persist_marker(
+        db: &Database,
+        video_id: &str,
+        index: i64,
+        start: f64,
+        end: f64,
+    ) -> Result<DbMarker> {
+        let marker = CreateMarker {
+            video_id: video_id.to_string(),
+            start,
+            end,
+            index_within_video: index,
+            title: Sentence(5..8).fake(),
+        };
+        db.persist_marker(marker).await
     }
 
     #[sqlx::test]
@@ -393,5 +485,35 @@ mod test {
         assert_eq!(result.video.file_path, expected.file_path);
         assert_eq!(result.video.interactive, expected.interactive);
         assert_eq!(result.markers.len(), 0);
+    }
+
+    #[traced_test]
+    #[sqlx::test]
+    async fn test_get_markers_for_video(pool: SqlitePool) {
+        let db = Database::with_pool(pool);
+        let video1 = persist_video(&db).await.unwrap();
+        for i in 0..5 {
+            let start = i as f64 + 2.0;
+            let end = i as f64 * 2.0 + 2.0;
+            persist_marker(&db, &video1.id, i, start, end)
+                .await
+                .unwrap();
+        }
+
+        let video2 = persist_video(&db).await.unwrap();
+        for i in 0..2 {
+            let start = i as f64 + 2.0;
+            let end = i as f64 * 2.0 + 2.0;
+            persist_marker(&db, &video2.id, i, start, end)
+                .await
+                .unwrap();
+        }
+
+        let marker_results = db
+            .get_markers_for_video_ids(&[video1.id, video2.id])
+            .await
+            .unwrap();
+
+        assert_eq!(7, marker_results.len());
     }
 }

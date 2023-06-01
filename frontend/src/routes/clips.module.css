@@ -1,0 +1,7 @@
+.timelineSegment {
+  @apply h-full tooltip transition-opacity inline-flex items-center justify-center;
+}
+
+.inactive {
+  @apply bg-opacity-50 hover:bg-opacity-75;
+}

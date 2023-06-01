@@ -2,12 +2,12 @@ use std::process::{Command, Stdio};
 
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
-use tokio::{fs, io::AsyncWriteExt};
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use tracing::{debug, info};
 
-use crate::Result;
-
 use super::directories::Directories;
+use crate::Result;
 
 fn download_url() -> Result<(&'static str, &'static str)> {
     if cfg!(not(target_arch = "x86_64")) {
@@ -48,7 +48,9 @@ fn unzip(
     path: impl AsRef<Utf8Path>,
     destination_folder: impl AsRef<Utf8Path>,
 ) -> Result<Utf8PathBuf> {
-    use std::{fs::File, io::BufReader};
+    use std::fs::File;
+    use std::io::BufReader;
+
     use tar::Archive;
     use xz2::bufread::XzDecoder;
 
@@ -77,6 +79,7 @@ fn unzip(
 ) -> Result<Utf8PathBuf> {
     use std::fs::File;
     use std::io::BufReader;
+
     use zip::ZipArchive;
 
     let file = BufReader::new(File::open(path.as_ref())?);

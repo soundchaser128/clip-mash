@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.8.0
+- feat: Generate clips based on a song's beats
+- feat: Add dedicated page for selecting markers for local videos
+- feat: Add clip options to clip preview page
+- fix: Improve frontend error handling
+- refactor: generate typescript definitions based on Rust types
+
 ## 0.7.2
 - fix: mismatch between length of generated clips and music
 - feat: add logging to file, not just terminal

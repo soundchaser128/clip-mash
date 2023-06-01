@@ -1,9 +1,11 @@
-use std::{fs, sync::Arc};
+use std::fs;
+use std::sync::Arc;
 
-use crate::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use directories::ProjectDirs;
 use tracing::info;
+
+use crate::Result;
 
 #[derive(Clone)]
 pub struct Directories {

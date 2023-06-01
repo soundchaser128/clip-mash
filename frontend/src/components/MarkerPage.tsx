@@ -1,8 +1,8 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
-import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, Marker, SelectedMarker, StateHelpers} from "../types/types"
-import {updateForm} from "./actions"
+import {useNavigate} from "react-router-dom"
+import {FormStage, StateHelpers} from "../types/types"
+import {updateForm} from "../routes/actions"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
 import {
@@ -16,37 +16,24 @@ import {
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
 import invariant from "tiny-invariant"
-import {formatSeconds, getFormState} from "../helpers"
+import {formatSeconds} from "../helpers"
+import {MarkerDto, SelectedMarker} from "../types.generated"
 
-interface Data {
-  markers: Marker[]
-}
-
-export const loader: LoaderFunction = async () => {
-  const state = getFormState()
-  if (state) {
-    invariant(StateHelpers.isStash(state))
-    const params = new URLSearchParams()
-    params.set("selectedIds", state.selectedIds!.join(","))
-    params.set("mode", state.selectMode!)
-    params.set("includeAll", state.includeAll ? "true" : "false")
-    const url = `/api/stash/markers?${params.toString()}`
-    const response = await fetch(url)
-    const markers = await response.json()
-    return {markers} satisfies Data
-  } else {
-    return null
+interface Props {
+  data: {
+    markers: MarkerDto[]
   }
+  withImages?: boolean
+  withPerformers?: boolean
 }
 
-function SelectMarkers() {
+const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
   const {actions, state} = useStateMachine({updateForm})
-  invariant(StateHelpers.isStash(state.data))
-  const data = useLoaderData() as Data
+  invariant(StateHelpers.isNotInitial(state.data))
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
-      invariant(StateHelpers.isStash(state.data))
+      invariant(StateHelpers.isNotInitial(state.data))
       const entries =
         state.data.selectedMarkers?.map((m) => [m.id.id, m]) ||
         data.markers.map((m) => [
@@ -192,7 +179,7 @@ function SelectMarkers() {
             <HiXMark className="mr-1" />
             Deselect all
           </button>
-          <button onClick={onSelectAll} className="btn btn-primary">
+          <button onClick={onSelectAll} className="btn btn-secondary">
             <HiCheck className="mr-1" />
             Select all
           </button>
@@ -218,17 +205,20 @@ function SelectMarkers() {
                 !selectedMarker.selected && "opacity-50"
               )}
             >
-              <figure>
-                {videoPreview === marker.id.id && (
-                  <video muted autoPlay src={marker.streamUrl} />
-                )}
-                {videoPreview !== marker.id.id && (
-                  <img
-                    src={marker.screenshotUrl}
-                    className="aspect-[16/9] object-cover object-top w-full"
-                  />
-                )}
-              </figure>
+              {withImages && (
+                <figure>
+                  {videoPreview === marker.id.id && (
+                    <video muted autoPlay src={marker.streamUrl} />
+                  )}
+                  {videoPreview !== marker.id.id && (
+                    <img
+                      src={marker.screenshotUrl || undefined}
+                      className="aspect-[16/9] object-cover object-top w-full"
+                    />
+                  )}
+                </figure>
+              )}
+
               <div className="card-body">
                 <h2 className="card-title">
                   {[marker.primaryTag, ...marker.tags].join(", ")}
@@ -240,13 +230,15 @@ function SelectMarkers() {
                   </strong>
                   {marker.sceneTitle || marker.fileName}
                 </p>
-                <p>
-                  <strong>
-                    <HiUser className="mr-2 inline" />
-                    Performers:{" "}
-                  </strong>
-                  {marker.performers.join(", ") || "No performers found"}
-                </p>
+                {withPerformers && (
+                  <p>
+                    <strong>
+                      <HiUser className="mr-2 inline" />
+                      Performers:{" "}
+                    </strong>
+                    {marker.performers.join(", ") || "No performers found"}
+                  </p>
+                )}
                 <p>
                   <strong>
                     <HiClock className="mr-2 inline" />
@@ -273,32 +265,38 @@ function SelectMarkers() {
                       max={marker.end - marker.start}
                       min={15}
                       type="range"
-                      className="range range-primary w-full"
+                      className="range w-full"
                     />
                   </div>
 
                   <div className="card-actions justify-between">
-                    <div className="form-control">
-                      <label className="label cursor-pointer">
-                        <span className="label-text">Video preview</span>
-                        <input
-                          onChange={(e) =>
-                            onVideoPreviewChange(marker.id.id, e.target.checked)
-                          }
-                          checked={videoPreview === marker.id.id}
-                          disabled={!selectedMarker.selected}
-                          type="checkbox"
-                          className="toggle ml-2"
-                        />
-                      </label>
-                    </div>
+                    {withImages && (
+                      <div className="form-control">
+                        <label className="label cursor-pointer">
+                          <span className="label-text">Video preview</span>
+                          <input
+                            onChange={(e) =>
+                              onVideoPreviewChange(
+                                marker.id.id,
+                                e.target.checked
+                              )
+                            }
+                            checked={videoPreview === marker.id.id}
+                            disabled={!selectedMarker.selected}
+                            type="checkbox"
+                            className="toggle ml-2"
+                          />
+                        </label>
+                      </div>
+                    )}
+                    {!withImages && <div />}
                     <div className="form-control">
                       <label className="label cursor-pointer">
                         <span className="label-text">Include</span>
                         <input
                           type="checkbox"
                           className="checkbox checkbox-primary ml-2"
-                          checked={selectedMarker.selected}
+                          checked={!!selectedMarker.selected}
                           onChange={(e) =>
                             onCheckboxChange(marker.id.id, e.target.checked)
                           }

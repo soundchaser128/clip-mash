@@ -1,14 +1,13 @@
 use std::cmp::Reverse;
 
-use crate::{
-    data::database::{Database, DbVideo, LocalVideoWithMarkers},
-    Result,
-};
 use camino::{Utf8Path, Utf8PathBuf};
 use nanoid::nanoid;
 use tokio::task::spawn_blocking;
 use tracing::{debug, info};
 use walkdir::WalkDir;
+
+use crate::data::database::{Database, DbVideo, LocalVideoWithMarkers};
+use crate::Result;
 
 async fn gather_files(path: Utf8PathBuf, recurse: bool) -> Result<Vec<Utf8PathBuf>> {
     spawn_blocking(move || {

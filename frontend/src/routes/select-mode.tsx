@@ -29,14 +29,14 @@ function SelectMode() {
         <div className="self-center grid grid-cols-1 md:grid-cols-3 gap-2">
           <button
             onClick={() => onNextStage("performers")}
-            className="btn btn-lg btn-secondary"
+            className="btn btn-lg btn-primary"
           >
             <HiUser className="mr-2 w-6 h-6" />
             Performers
           </button>
 
           <button
-            className="btn btn-lg btn-secondary"
+            className="btn btn-lg btn-primary"
             onClick={() => onNextStage("tags")}
           >
             <HiTag className="mr-2 w-6 h-6" />
@@ -44,7 +44,7 @@ function SelectMode() {
           </button>
 
           <button
-            className="btn btn-lg btn-secondary"
+            className="btn btn-lg btn-primary"
             onClick={() => onNextStage("scenes")}
           >
             <HiFilm className="mr-2 w-6 h-6" />

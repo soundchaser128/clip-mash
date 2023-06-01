@@ -1,4 +1,3 @@
-use crate::Result;
 use color_eyre::eyre::eyre;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -6,6 +5,7 @@ use tokio::sync::Mutex;
 use tracing::info;
 
 use super::directories::Directories;
+use crate::Result;
 
 lazy_static! {
     static ref CONFIG: Mutex<Option<Config>> = Default::default();

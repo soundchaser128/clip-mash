@@ -11,8 +11,8 @@ import {
 import Rating from "../../../components/Rating"
 import {LoaderFunction, useOutletContext} from "react-router-dom"
 import {Context} from "./root"
-import {Scene} from "../../../types/types"
 import useFilteredData from "../../../hooks/useFilteredData"
+import {StashScene} from "../../../types.generated"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/stash/scenes")
@@ -21,7 +21,7 @@ export const loader: LoaderFunction = async () => {
 
 function Scenes() {
   const {onCheckboxChange, selection, query} = useOutletContext<Context>()
-  const scenes = useFilteredData<Scene>({
+  const scenes = useFilteredData<StashScene>({
     query,
     keys: ["interactive", "performers", "tags", "title"],
   })
@@ -35,7 +35,7 @@ function Scenes() {
         >
           <figure>
             <img
-              src={scene.imageUrl}
+              src={scene.imageUrl || undefined}
               alt={scene.title}
               className="aspect-[16/9] object-cover object-top w-full"
             />

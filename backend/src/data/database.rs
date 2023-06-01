@@ -448,44 +448,13 @@ impl Database {
 
 #[cfg(test)]
 mod test {
-    use fake::faker::filesystem::en::FilePath;
-    use fake::faker::lorem::en::Sentence;
-    use fake::Fake;
     use nanoid::nanoid;
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
-    use super::{DbMarker, LocalVideoSource};
-    use crate::data::database::{CreateMarker, Database, DbVideo};
+    use crate::data::database::{CreateMarker, Database, DbVideo, LocalVideoSource};
+    use crate::service::fixtures::{persist_marker, persist_video, persist_video_with_source};
     use crate::Result;
-
-    async fn persist_video(db: &Database) -> Result<DbVideo> {
-        let expected = DbVideo {
-            file_path: FilePath().fake(),
-            id: nanoid!(8),
-            interactive: false,
-            source: LocalVideoSource::Folder,
-        };
-        db.persist_video(expected.clone()).await?;
-        Ok(expected)
-    }
-
-    async fn persist_marker(
-        db: &Database,
-        video_id: &str,
-        index: i64,
-        start: f64,
-        end: f64,
-    ) -> Result<DbMarker> {
-        let marker = CreateMarker {
-            video_id: video_id.to_string(),
-            start,
-            end,
-            index_within_video: index,
-            title: Sentence(5..8).fake(),
-        };
-        db.persist_marker(marker).await
-    }
 
     #[sqlx::test]
     async fn test_get_and_persist_video(pool: SqlitePool) {
@@ -601,5 +570,35 @@ mod test {
             .unwrap();
 
         assert_eq!(7, marker_results.len());
+    }
+
+    #[traced_test]
+    #[sqlx::test]
+    async fn test_get_downloaded_videos(pool: SqlitePool) -> Result<()> {
+        let db = Database::with_pool(pool);
+        let video1 = persist_video_with_source(&db, LocalVideoSource::Download).await?;
+        for i in 0..5 {
+            let start = i as f64 + 2.0;
+            let end = i as f64 * 2.0 + 2.0;
+            persist_marker(&db, &video1.id, i, start, end)
+                .await
+                .unwrap();
+        }
+
+        let video2 = persist_video_with_source(&db, LocalVideoSource::Download).await?;
+        for i in 0..2 {
+            let start = i as f64 + 2.0;
+            let end = i as f64 * 2.0 + 2.0;
+            persist_marker(&db, &video2.id, i, start, end)
+                .await
+                .unwrap();
+        }
+
+        let marker_results = db.get_downloaded_videos().await?;
+        assert_eq!(2, marker_results.len());
+        assert_eq!(5, marker_results[0].markers.len());
+        assert_eq!(2, marker_results[1].markers.len());
+
+        Ok(())
     }
 }

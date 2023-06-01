@@ -6,7 +6,7 @@ use typescript_type_def::{write_definition_file, DefinitionFileOptions};
 
 type Error = Box<dyn std::error::Error>;
 
-const TYPE_DEFINITIONS: &str = "./frontend/src/types.generated.ts";
+const TYPE_DEFINITIONS: &str = "../frontend/src/types.generated.ts";
 
 pub fn commandline_error<T>(command_name: &str, output: Output) -> Result<T, Error> {
     let stdout = std::str::from_utf8(&output.stdout).unwrap();

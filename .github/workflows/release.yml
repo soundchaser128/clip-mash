@@ -38,5 +38,6 @@ jobs:
           bin: clip-mash
           tar: unix
           zip: windows
+          manifest_path: backend/Cargo.toml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

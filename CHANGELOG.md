@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- feat: Allow downloading videos via `yt-dlp`
+- fix: Beats were not being generated for music
+- chore: move backend code into separate folder
 
 ## 0.8.0
 - feat: Generate clips based on a song's beats

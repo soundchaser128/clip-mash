@@ -1,7 +1,7 @@
 pub mod beats;
 pub mod clip;
-pub mod directories;
 pub mod commands;
+pub mod directories;
 pub mod funscript;
 pub mod generator;
 pub mod local_video;

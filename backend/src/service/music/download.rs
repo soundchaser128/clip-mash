@@ -60,7 +60,7 @@ impl MusicDownloadService {
         let yt_dlp = YtDlp::new(self.dirs.clone());
         let options = YtDlpOptions {
             url,
-            extract_music: true,
+            extract_audio: true,
             destination: FolderType::Music,
         };
         let result = yt_dlp.run(&options).await?;

@@ -88,7 +88,7 @@ impl VideoService {
         let downloader = YtDlp::new(self.directories.clone());
         let options = YtDlpOptions {
             url,
-            extract_music: false,
+            extract_audio: false,
             destination: FolderType::Videos,
         };
         let result = downloader.run(&options).await?;

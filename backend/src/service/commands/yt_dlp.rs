@@ -21,7 +21,7 @@ const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
 #[derive(Debug)]
 pub struct YtDlpOptions {
     pub url: Url,
-    pub extract_music: bool,
+    pub extract_audio: bool,
     pub destination: FolderType,
 }
 
@@ -72,7 +72,7 @@ impl YtDlp {
             .download(true)
             .output_directory(dir.as_str());
 
-        if options.extract_music {
+        if options.extract_audio {
             youtube_dl.extract_audio(true);
         }
         youtube_dl.run_async().await?;

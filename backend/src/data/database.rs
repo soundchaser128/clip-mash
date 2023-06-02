@@ -452,7 +452,7 @@ mod test {
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
-    use crate::data::database::{CreateMarker, Database, DbVideo, LocalVideoSource};
+    use crate::data::database::{CreateMarker, Database, LocalVideoSource};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_with_source};
     use crate::Result;
 

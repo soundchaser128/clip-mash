@@ -16,9 +16,12 @@ function Tags() {
   })
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-6 gap-2 w-full">
+    <section className="grid grid-cols-1 lg:grid-cols-6 gap-4 w-full">
       {tags.map((tag) => (
-        <article key={tag.id} className="card bg-base-100 shadow-xl">
+        <article
+          key={tag.id}
+          className="card card-compact bg-base-200 shadow-xl"
+        >
           <div className="card-body">
             <h2 className="card-title">{tag.name}</h2>
             <p>

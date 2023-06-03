@@ -42,6 +42,7 @@ import {HTML5Backend} from "react-dnd-html5-backend"
 import {SongDto} from "./types.generated"
 import MarkersPage from "./routes/local/markers"
 import {resetForm} from "./routes/actions"
+import DownloadVideosPage from "./routes/local/download"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -163,6 +164,10 @@ const router = createBrowserRouter([
           {
             path: "path",
             element: <SelectVideoPath />,
+          },
+          {
+            path: "videos/download",
+            element: <DownloadVideosPage />,
           },
           {
             path: "videos",

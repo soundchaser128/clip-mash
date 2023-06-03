@@ -119,3 +119,9 @@ export interface VideoWithMarkers {
   video: VideoDto
   markers: MarkerDto[]
 }
+
+export interface JsonError {
+  name: "JsonError"
+  message: "error"
+  error: string | Record<string, string>
+}

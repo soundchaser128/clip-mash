@@ -27,11 +27,11 @@ function Scenes() {
   })
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
+    <section className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
       {scenes.map((scene) => (
         <article
           key={scene.id}
-          className="card card-compact bg-base-100 shadow-xl"
+          className="card card-compact bg-base-200 shadow-xl"
         >
           <figure>
             <img

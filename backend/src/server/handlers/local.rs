@@ -73,10 +73,10 @@ pub async fn list_markers(
 fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str> {
     let mut errors = HashMap::new();
     if marker.title.trim().is_empty() {
-        errors.insert("title", "title must not be empty");
+        errors.insert("title", "Title must not be empty");
     }
-    if marker.start < marker.end {
-        errors.insert("end", "marker end must be after start");
+    if marker.end <= marker.start {
+        errors.insert("end", "Marker end must be after start");
     }
     errors
 }

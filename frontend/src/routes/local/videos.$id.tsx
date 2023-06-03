@@ -1,4 +1,4 @@
-import {VideoWithMarkers} from "../../types/types"
+import {JsonError, VideoWithMarkers} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
 import {useForm, FieldErrors} from "react-hook-form"
@@ -14,7 +14,7 @@ import {
   HiChevronRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
-import {formatSeconds, getSegmentColor, parseSeconds} from "../../helpers"
+import {formatSeconds, getSegmentColor, parseTimestamp} from "../../helpers"
 import Modal from "../../components/Modal"
 import {
   useNavigate,
@@ -24,6 +24,7 @@ import {
 } from "react-router-dom"
 import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
+import {Result} from "@badrap/result"
 
 interface Inputs {
   id?: number
@@ -70,14 +71,14 @@ interface CreateMarker {
   indexWithinVideo: number
 }
 
-async function persistMarker(
+async function  persistMarker(
   videoId: string,
   marker: Inputs,
   duration: number,
   index: number
-): Promise<MarkerDto> {
-  const start = Math.max(parseSeconds(marker.start), 0)
-  const end = Math.min(parseSeconds(marker.end!), duration)
+): Promise<Result<MarkerDto, JsonError>> {
+  const start = Math.max(parseTimestamp(marker.start), 0)
+  const end = Math.min(parseTimestamp(marker.end!), duration)
 
   const payload = {
     start,
@@ -92,9 +93,13 @@ async function persistMarker(
     body: JSON.stringify(payload),
     headers: {"Content-Type": "application/json"},
   })
-
-  // TODO error handling
-  return await response.json()
+  if (response.ok) {
+    const marker = (await response.json()) as MarkerDto
+    return Result.ok(marker)
+  } else {
+    const error = (await response.json()) as JsonError
+    return Result.err(error)
+  }
 }
 
 export default function EditVideoModal() {
@@ -106,7 +111,7 @@ export default function EditVideoModal() {
   )!
   const revalidator = useRevalidator()
   const handleValidation = (values: Inputs) => {
-    const {start, end} = values
+    const {start, end, title} = values
     const errors: FieldErrors<Inputs> = {}
     if ((end || 0) <= start) {
       errors.end = {
@@ -114,7 +119,13 @@ export default function EditVideoModal() {
         message: "End must be after start",
       }
     }
-    console.log(errors)
+    if (!title || !title.trim()) {
+      errors.title = {
+        type: "required",
+        message: "Must enter a title",
+      }
+    }
+
     return {
       values,
       errors,
@@ -127,6 +138,7 @@ export default function EditVideoModal() {
     handleSubmit,
     control,
     watch,
+    setError,
     formState: {errors},
   } = useForm<Inputs>({
     resolver: handleValidation,
@@ -151,21 +163,33 @@ export default function EditVideoModal() {
       throw new Error("could not find edited marker's ID in marker array")
     }
 
-    const newMarker = await persistMarker(
+    const result = await persistMarker(
       video.id.id,
       values,
       videoDuration!,
       index
     )
-    setMarkers((draft) => {
-      if (formMode === "create") {
-        draft.push(newMarker)
-      } else if (formMode === "edit") {
-        const idx = draft.findIndex((m) => m.id === newMarker.id)
-        draft[idx] = newMarker
+    if (result.isOk) {
+      const marker = result.unwrap()
+      setMarkers((draft) => {
+        if (formMode === "create") {
+          draft.push(marker)
+        } else if (formMode === "edit") {
+          const idx = draft.findIndex((m) => m.id === marker.id)
+          draft[idx] = marker
+        }
+      })
+      setFormMode("hidden")
+    } else {
+      const err = result.error
+      if (typeof err.error === "object") {
+        for (const key in err.error) {
+          setError(key as keyof Inputs, {
+            message: err.error[key],
+          })
+        }
       }
-    })
-    setFormMode("hidden")
+    }
   }
 
   const onShowForm = (marker?: MarkerDto) => {
@@ -237,7 +261,7 @@ export default function EditVideoModal() {
               <div className="flex w-full items-baseline justify-between">
                 <button
                   type="button"
-                  onClick={() => setVideoPosition(parseSeconds(markerStart))}
+                  onClick={() => setVideoPosition(parseTimestamp(markerStart))}
                   className="btn"
                 >
                   <HiChevronLeft className="mr-2" />
@@ -248,7 +272,7 @@ export default function EditVideoModal() {
                   type="button"
                   onClick={() =>
                     typeof markerEnd !== "undefined" &&
-                    setVideoPosition(parseSeconds(markerEnd))
+                    setVideoPosition(parseTimestamp(markerEnd))
                   }
                   className="btn"
                   disabled={typeof markerEnd === "undefined"}
@@ -260,6 +284,9 @@ export default function EditVideoModal() {
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">Marker title</span>
+                  <span className="label-text-alt text-error">
+                    {errors.title?.message}
+                  </span>
                 </label>
                 <input
                   type="text"

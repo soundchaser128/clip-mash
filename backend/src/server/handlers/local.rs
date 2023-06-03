@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use axum::body::Body;
@@ -69,15 +70,31 @@ pub async fn list_markers(
     Ok(Json(markers))
 }
 
+fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str> {
+    let mut errors = HashMap::new();
+    if marker.title.trim().is_empty() {
+        errors.insert("title", "title must not be empty");
+    }
+    if marker.start < marker.end {
+        errors.insert("end", "marker end must be after start");
+    }
+    errors
+}
+
 #[axum::debug_handler]
 pub async fn persist_marker(
     state: State<Arc<AppState>>,
     Json(marker): Json<CreateMarker>,
 ) -> Result<Json<MarkerDto>, AppError> {
-    info!("saving marker {marker:?} to the database");
-    let marker = state.database.persist_marker(marker).await?;
+    let validation = validate_marker(&marker);
+    if !validation.is_empty() {
+        Err(AppError::Validation(validation))
+    } else {
+        info!("saving marker {marker:?} to the database");
+        let marker = state.database.persist_marker(marker).await?;
 
-    Ok(Json(marker.into()))
+        Ok(Json(marker.into()))
+    }
 }
 
 #[axum::debug_handler]

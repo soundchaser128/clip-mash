@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io;
 
 use axum::response::{IntoResponse, Response};
@@ -14,6 +15,7 @@ pub enum AppError {
     Io(io::Error),
     Report(color_eyre::Report),
     StatusCode(StatusCode),
+    Validation(HashMap<&'static str, &'static str>),
 }
 
 impl From<StdError> for AppError {
@@ -39,13 +41,15 @@ impl IntoResponse for AppError {
         error!("request failed: {:?}", self);
         let status_code = match &self {
             AppError::StatusCode(code) => *code,
+            AppError::Validation(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
         let error_message = match self {
-            AppError::Generic(e) => e.to_string(),
-            AppError::Io(e) => format!("io error: {e}"),
-            AppError::Report(e) => e.to_string(),
-            AppError::StatusCode(s) => s.to_string(),
+            AppError::Generic(e) => json!(e.to_string()),
+            AppError::Io(e) => json!(format!("io error: {e}")),
+            AppError::Report(e) => json!(e.to_string()),
+            AppError::StatusCode(s) => json!(s.to_string()),
+            AppError::Validation(map) => json!(map),
         };
 
         let body = Json(json!({

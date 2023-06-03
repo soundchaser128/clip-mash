@@ -1,4 +1,4 @@
-import {format, formatDuration} from "date-fns"
+import {format, formatDuration, getMilliseconds, parse} from "date-fns"
 import {SelectedMarker} from "./types.generated"
 import {FormState} from "./types/types"
 
@@ -62,6 +62,10 @@ export function formatSeconds(
   } else {
     return format(duration * 1000, "mm:ss")
   }
+}
+
+export function parseSeconds(string: string): number {
+  return getMilliseconds(parse(string, "mm:ss", new Date())) / 1000.0
 }
 
 export function sumDurations(markers?: SelectedMarker[]): number {

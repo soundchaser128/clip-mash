@@ -18,7 +18,6 @@ export function resetForm(): GlobalState {
   return {
     data: {
       source: undefined,
-      id: nanoid(8),
     },
   }
 }

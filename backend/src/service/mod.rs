@@ -1,4 +1,3 @@
-pub mod beats;
 pub mod clip;
 pub mod commands;
 pub mod directories;

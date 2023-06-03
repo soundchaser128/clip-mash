@@ -111,8 +111,7 @@ export default function ListVideos() {
           <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />
           <span>
             No videos found at location &apos;{state.data.localVideoPath}&apos;.
-            Currently only <code>.mp4</code>
-            files are supported.
+            Currently only <code>.mp4</code> files are supported.
           </span>
         </div>
       )}

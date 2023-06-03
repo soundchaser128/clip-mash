@@ -71,7 +71,7 @@ interface CreateMarker {
   indexWithinVideo: number
 }
 
-async function  persistMarker(
+async function persistMarker(
   videoId: string,
   marker: Inputs,
   duration: number,

@@ -65,7 +65,7 @@ export function formatSeconds(
 }
 
 export function parseTimestamp(string: string): number {
-  const date = parse(string, 'mm:ss', 0)
+  const date = parse(string, "mm:ss", 0)
   const millis = getTime(date)
   return millis / 1000.0
 }

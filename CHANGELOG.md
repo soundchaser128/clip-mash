@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.9.0
 - feat: Allow downloading videos via `yt-dlp`
 - feat: Allow editing the marker start/end time fields
 - feat: Validate markers before saving them to the database

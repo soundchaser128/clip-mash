@@ -2,7 +2,6 @@ use std::cmp::Reverse;
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use nanoid::nanoid;
 use tokio::task::spawn_blocking;
 use tracing::{debug, info};
 use url::Url;
@@ -13,6 +12,7 @@ use crate::data::database::{Database, DbVideo, LocalVideoSource, LocalVideoWithM
 use crate::server::handlers::AppState;
 use crate::service::commands::{YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
+use crate::util::generate_id;
 use crate::Result;
 
 pub struct VideoService {
@@ -60,7 +60,7 @@ impl VideoService {
                     videos.push(video);
                 } else {
                     let interactive = path.with_extension("funscript").is_file();
-                    let id = nanoid!(8);
+                    let id = generate_id();
                     let video = DbVideo {
                         id,
                         file_path: path.to_string(),

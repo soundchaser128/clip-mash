@@ -1,11 +1,11 @@
 use fake::faker::filesystem::en::FilePath;
 use fake::faker::lorem::en::Sentence;
 use fake::{Fake, Faker};
-use nanoid::nanoid;
 
 use super::Marker;
 use crate::data::database::{CreateMarker, Database, DbMarker, DbVideo, LocalVideoSource};
 use crate::service::{MarkerId, MarkerInfo, VideoId};
+use crate::util::generate_id;
 use crate::Result;
 
 pub fn markers() -> Vec<Marker> {
@@ -211,7 +211,7 @@ pub fn create_marker(start_time: f64, end_time: f64, index: usize) -> Marker {
         start_time,
         end_time,
         index_within_video: index,
-        video_id: VideoId::LocalFile(nanoid!(8)),
+        video_id: VideoId::LocalFile(generate_id()),
         title: Faker.fake(),
         info: MarkerInfo::LocalFile {
             marker: DbMarker {
@@ -258,7 +258,7 @@ pub fn create_marker_video_id(
 pub async fn persist_video(db: &Database) -> Result<DbVideo> {
     let expected = DbVideo {
         file_path: FilePath().fake(),
-        id: nanoid!(8),
+        id: generate_id(),
         interactive: false,
         source: LocalVideoSource::Folder,
     };
@@ -269,7 +269,7 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
 pub async fn persist_video_with_source(db: &Database, source: LocalVideoSource) -> Result<DbVideo> {
     let video = DbVideo {
         file_path: FilePath().fake(),
-        id: nanoid!(8),
+        id: generate_id(),
         interactive: false,
         source,
     };

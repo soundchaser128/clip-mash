@@ -3,8 +3,10 @@ use std::hash::{Hash, Hasher};
 use std::process::Output;
 
 use camino::Utf8Path;
+use lazy_static::lazy_static;
 use rand::rngs::StdRng;
-use rand::SeedableRng;
+use rand::seq::SliceRandom;
+use rand::{thread_rng, SeedableRng};
 use reqwest::Url;
 use tracing::{debug, Level};
 
@@ -59,9 +61,29 @@ pub fn debug_output(output: Output) {
     }
 }
 
+pub fn generate_id() -> String {
+    const ADJECTIVES: &str = include_str!("../data/adjectives.txt");
+    const ANIMALS: &str = include_str!("../data/animals.txt");
+
+    lazy_static! {
+        static ref ADJECTIVE_LIST: Vec<&'static str> =
+            ADJECTIVES.split("\n").map(|n| n.trim()).collect();
+        static ref ANIMALS_LIST: Vec<&'static str> =
+            ANIMALS.split("\n").map(|n| n.trim()).collect();
+    }
+    let mut rng = thread_rng();
+    let adjective1 = ADJECTIVE_LIST.choose(&mut rng).unwrap();
+    let adjective2 = ADJECTIVE_LIST.choose(&mut rng).unwrap();
+    let animal = ANIMALS_LIST.choose(&mut rng).unwrap();
+
+    format!("{adjective1}-{adjective2}-{animal}")
+}
+
 #[cfg(test)]
 mod test {
-    use super::{add_api_key, expect_file_name};
+    use regex::Regex;
+
+    use super::{add_api_key, expect_file_name, generate_id};
 
     #[test]
     #[cfg(not(windows))]
@@ -83,5 +105,12 @@ mod test {
     fn test_add_api_key() {
         let result = add_api_key("http://localhost:3001", "super-secret-123");
         assert_eq!(result, "http://localhost:3001/?apikey=super-secret-123");
+    }
+
+    #[test]
+    fn test_generate_id() {
+        let id = generate_id();
+        let regex = Regex::new("[a-z]+-[a-z]+-[a-z]+").unwrap();
+        assert!(regex.is_match(&id));
     }
 }

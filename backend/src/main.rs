@@ -92,7 +92,8 @@ async fn main() -> Result<()> {
         .route("/song/download", post(handlers::common::download_music))
         .route("/song/upload", post(handlers::common::upload_music))
         .route("/song/:id/beats", get(handlers::common::get_beats))
-        .route("/directory/open", get(handlers::common::open_folder));
+        .route("/directory/open", get(handlers::common::open_folder))
+        .route("/id", get(handlers::common::get_new_id));
 
     let app = Router::new()
         .nest("/api", api_routes)

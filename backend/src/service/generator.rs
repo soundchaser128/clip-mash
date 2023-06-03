@@ -5,7 +5,6 @@ use clip_mash_types::{Clip, VideoResolution};
 use futures::lock::Mutex;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use nanoid::nanoid;
 use serde::Serialize;
 use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
@@ -15,7 +14,7 @@ use super::Marker;
 use crate::data::database::DbSong;
 use crate::data::stash_api::StashMarker;
 use crate::service::MarkerInfo;
-use crate::util::{commandline_error, debug_output};
+use crate::util::{commandline_error, debug_output, generate_id};
 use crate::Result;
 
 #[derive(Debug, Default, Clone, Serialize)]
@@ -225,7 +224,7 @@ impl CompilationGenerator {
     }
 
     async fn concat_songs(&self, songs: &[DbSong]) -> Result<Utf8PathBuf> {
-        let file_name = format!("{}.aac", nanoid!(8));
+        let file_name = format!("{}.aac", generate_id());
         let music_dir = self.directories.music_dir();
 
         let lines: Vec<_> = songs

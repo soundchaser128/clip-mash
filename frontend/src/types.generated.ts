@@ -117,3 +117,4 @@ export type SongDto = {
   url: string
   beats: F32[]
 }
+export type NewId = {id: string}

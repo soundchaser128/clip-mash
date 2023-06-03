@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use camino::Utf8PathBuf;
 use color_eyre::eyre::bail;
-use nanoid::nanoid;
 use tokio::fs;
 use tracing::info;
 use url::Url;
@@ -10,6 +9,7 @@ use youtube_dl::YoutubeDl;
 
 use crate::server::handlers::AppState;
 use crate::service::directories::{Directories, FolderType};
+use crate::util::generate_id;
 use crate::Result;
 
 const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
@@ -63,7 +63,7 @@ impl YtDlp {
     pub async fn run(&self, options: &YtDlpOptions) -> Result<DownloadResult> {
         let yt_dlp_path = self.ensure_yt_dlp().await?;
         let base_dir = self.dirs.get(options.destination);
-        let id = nanoid!(8);
+        let id = generate_id();
         let dir = base_dir.join(&id);
 
         let mut youtube_dl = YoutubeDl::new(options.url.as_str());

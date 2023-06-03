@@ -29,14 +29,18 @@ import Scenes, {loader as scenesLoader} from "./routes/stash/filter/scenes"
 import SelectVideoPath from "./routes/local/path"
 import SelectSource from "./routes"
 import SelectMode from "./routes/select-mode"
-import {nanoid} from "nanoid"
 import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
 import EditVideoModal from "./routes/local/videos.$id"
 import StashRoot from "./routes/root"
 import Layout from "./components/Layout"
 import Music from "./routes/music"
 import ConfigPage from "./routes/stash/config"
-import {configLoader, clipsLoader, localMarkerLoader} from "./routes/loaders"
+import {
+  configLoader,
+  clipsLoader,
+  localMarkerLoader,
+  newIdLoader,
+} from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import {SongDto} from "./types.generated"
@@ -152,6 +156,7 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <SelectSource />,
+        loader: newIdLoader,
       },
       {
         path: "/stash/config",
@@ -256,7 +261,6 @@ createStore(
   {
     data: {
       source: undefined,
-      id: nanoid(8),
     },
   },
   {

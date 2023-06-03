@@ -31,7 +31,7 @@ use crate::service::generator::{self, Progress};
 use crate::service::music::{self, Beats, MusicDownloadService};
 use crate::service::stash_config::Config;
 use crate::service::VideoSource;
-use crate::util::expect_file_name;
+use crate::util::{expect_file_name, generate_id};
 
 #[axum::debug_handler]
 pub async fn fetch_clips(
@@ -301,4 +301,10 @@ pub async fn get_beats(
         }
     };
     Ok(Json(beats))
+}
+
+#[axum::debug_handler]
+pub async fn get_new_id() -> Json<NewId> {
+    let id = generate_id();
+    Json(NewId { id })
 }

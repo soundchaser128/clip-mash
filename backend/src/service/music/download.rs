@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use axum::extract::multipart::Field;
 use camino::{Utf8Path, Utf8PathBuf};
-use nanoid::nanoid;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tracing::info;
@@ -13,6 +12,7 @@ use crate::server::handlers::AppState;
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::{Directories, FolderType};
 use crate::service::music;
+use crate::util::generate_id;
 use crate::Result;
 
 #[derive(Debug)]
@@ -46,7 +46,7 @@ impl MusicDownloadService {
 
     async fn get_download_directory(&self) -> Result<Utf8PathBuf> {
         let base_dir = self.dirs.music_dir();
-        let song_id = nanoid!(8);
+        let song_id = generate_id();
         let output_dir = base_dir.join(song_id);
 
         if !output_dir.is_dir() {

@@ -1,18 +1,19 @@
 import {useStateMachine} from "little-state-machine"
-import {useNavigate} from "react-router-dom"
+import {useLoaderData, useNavigate} from "react-router-dom"
 import {updateForm} from "./actions"
 import {FormStage, LocalFilesFormStage, VideoSource} from "../types/types"
-import {nanoid} from "nanoid"
 import Layout from "../components/Layout"
 import {HiArchiveBox, HiComputerDesktop} from "react-icons/hi2"
 
 export default function InitialRoot() {
+  const id = useLoaderData() as string
+
   const navigate = useNavigate()
   const {actions} = useStateMachine({updateForm})
   const onNextStage = (mode: VideoSource) => {
     const update = {
       source: mode,
-      id: nanoid(8),
+      id,
       stage:
         mode === "localFile"
           ? LocalFilesFormStage.SelectPath

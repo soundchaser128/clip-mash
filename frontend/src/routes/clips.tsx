@@ -392,7 +392,7 @@ function PreviewClips() {
           onTimeUpdate={onVideoTimeUpdate}
           ref={videoRef}
         />
-        <div className="flex flex-col px-4 py-2 w-1/4 bg-slate-100 justify-between">
+        <div className="flex flex-col px-4 py-2 w-1/4 bg-base-200 justify-between">
           <ClipSettingsForm
             initialValues={{
               clipDuration: state.data.clipDuration || 30,

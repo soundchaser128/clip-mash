@@ -278,6 +278,12 @@ pub struct SongDto {
     pub beats: Vec<f32>,
 }
 
+#[derive(Serialize, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct NewId {
+    pub id: String,
+}
+
 pub type Api = (
     StashScene,
     CreateVideoBody,
@@ -289,4 +295,5 @@ pub type Api = (
     PerformerDto,
     TagDto,
     SongDto,
+    NewId,
 );

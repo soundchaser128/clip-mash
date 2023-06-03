@@ -54,13 +54,13 @@ export type FormState = LocalVideosFormState | StashFormState | InitialFormState
 
 export interface InitialFormState {
   source: undefined
-  id: string
+  id?: string
 }
 
 type ClipStrategy = "pmv" | "default"
 
 interface CommonFormState {
-  id: string
+  id?: string
   videos?: VideoWithMarkers[]
   localVideoPath?: string
   recurse?: boolean

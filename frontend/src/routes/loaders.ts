@@ -11,6 +11,7 @@ import {
   ClipOptions,
   ClipsResponse,
   CreateClipsBody,
+  NewId,
   VideoDto,
 } from "../types.generated"
 
@@ -120,4 +121,16 @@ export const localMarkerLoader: LoaderFunction = async () => {
     const text = await response.text()
     throw json({error: text, request: "/api/local/video/marker"}, {status: 500})
   }
+}
+
+export const loadNewId = async () => {
+  const response = await fetch("/api/id")
+  const data = (await response.json()) as NewId
+  return data.id
+}
+
+export const newIdLoader: LoaderFunction = async () => {
+  const id = await loadNewId()
+
+  return id
 }

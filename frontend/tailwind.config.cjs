@@ -13,10 +13,11 @@ module.exports = {
   plugins: [require("daisyui")],
   daisyui: {
     themes: [
+      "dark",
       {
         clipmash: {
           // eslint-disable-next-line @typescript-eslint/no-var-requires
-          ...require("daisyui/src/colors/themes")["[data-theme=light]"],
+          ...require("daisyui/src/theming/themes")["[data-theme=light]"],
           primary: "#471AA0",
           secondary: "#dd77d0"
         },

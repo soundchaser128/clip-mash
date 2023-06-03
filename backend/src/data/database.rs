@@ -448,12 +448,12 @@ impl Database {
 
 #[cfg(test)]
 mod test {
-    use nanoid::nanoid;
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
     use crate::data::database::{CreateMarker, Database, LocalVideoSource};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_with_source};
+    use crate::util::generate_id;
     use crate::Result;
 
     #[sqlx::test]
@@ -489,7 +489,7 @@ mod test {
     #[sqlx::test]
     async fn test_marker_foreign_key_constraint(pool: SqlitePool) {
         let database = Database::with_pool(pool);
-        let video_id = nanoid!(8);
+        let video_id = generate_id();
         let expected = CreateMarker {
             title: "Some title".into(),
             video_id,

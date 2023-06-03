@@ -1,6 +1,5 @@
 import {GlobalState} from "little-state-machine"
 import {FormState} from "../types/types"
-import {nanoid} from "nanoid"
 
 export function updateForm(
   state: GlobalState,

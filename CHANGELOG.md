@@ -2,6 +2,8 @@
 
 ## Unreleased
 - feat: Allow downloading videos via `yt-dlp`
+- feat: Allow editing the marker start/end time fields
+- feat: Validate markers before saving them to the database
 - fix: Beats were not being generated for music
 - chore: move backend code into separate folder
 

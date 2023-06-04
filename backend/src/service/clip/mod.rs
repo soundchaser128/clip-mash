@@ -20,6 +20,7 @@ use crate::Result;
 mod default;
 mod pmv;
 mod sort;
+mod picker;
 
 #[derive(Debug)]
 pub struct CreateClipsOptions {

@@ -148,11 +148,59 @@ pub struct EqualLengthClipPicker;
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use tracing_test::traced_test;
+
+    use crate::{
+        service::{
+            clip::{
+                picker::{ClipPicker, WeightedRandomClipPicker, WeightedRandomClipPickerOptions},
+                pmv::PmvClipLengths,
+            },
+            fixtures,
+        },
+        util::create_seeded_rng,
+    };
 
     #[traced_test]
     #[test]
     fn test_weighted_random_clips() {
-        
+        let mut weights = HashMap::new();
+        weights.insert("Cowgirl".into(), 1.0 / 3.0);
+        weights.insert("Blowjob".into(), 1.0 / 3.0);
+        weights.insert("Doggy Style".into(), 1.0 / 3.0);
+
+        let mut picker = WeightedRandomClipPicker;
+        let options = WeightedRandomClipPickerOptions {
+            clip_lengths: PmvClipLengths::Randomized {
+                base_duration: 30.0,
+                divisors: vec![2.0, 3.0, 4.0],
+            },
+            length: 200.0,
+            weights: weights.clone(),
+        };
+
+        let markers = fixtures::markers();
+        let mut rng = create_seeded_rng(None);
+
+        let clips = picker.pick_clips(markers.clone(), options, &mut rng);
+        let clips: Vec<_> = clips
+            .into_iter()
+            .map(|clip| {
+                let marker_id = clip.marker_id;
+                let marker = markers.iter().find(|m| m.id == marker_id).unwrap();
+                (clip, marker)
+            })
+            .collect();
+        let tags: Vec<_> = weights.keys().collect();
+        let mut counts: HashMap<&String, usize> = HashMap::new();
+        for (_, marker) in clips {
+            assert!(tags.contains(&&marker.title));
+            let count = counts.entry(&marker.title).or_default();
+            *count += 1;
+        }
+
+        dbg!(counts);
     }
 }

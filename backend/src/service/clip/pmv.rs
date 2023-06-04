@@ -7,7 +7,10 @@ use rand::Rng;
 use tracing::{debug, info};
 
 use super::{Clip, ClipCreator, Marker};
-use crate::service::music::Beats;
+use crate::service::{
+    clip::picker::{ClipPicker, RoundRobinClipPicker, RoundRobinClipPickerOptions},
+    music::Beats,
+};
 
 const MIN_DURATION: f64 = 1.5;
 
@@ -113,55 +116,20 @@ impl ClipCreator for PmvClipCreator {
     fn create_clips(
         &self,
         markers: Vec<Marker>,
-        mut options: Self::Options,
+        options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
         info!(
             "using PmvClipCreator to create clips, seed={:?}, video duration = {}",
             options.seed, options.video_duration
         );
-
         let max_duration = options.video_duration;
-        let mut total_duration = 0.0;
-        let mut clips = vec![];
-        let mut marker_idx = 0;
-        let has_music = matches!(options.clip_lengths, PmvClipLengths::Songs(_));
-
-        let mut start_times: HashMap<i64, (f64, usize)> = markers
-            .iter()
-            .map(|m| (m.id.inner(), (m.start_time, 0)))
-            .collect();
-
-        while total_duration <= max_duration {
-            let marker = &markers[marker_idx % markers.len()];
-            let clip_duration = options.clip_lengths.pick_duration(rng);
-            if clip_duration.is_none() {
-                break;
-            }
-            let clip_duration = clip_duration.unwrap();
-
-            let (start, index) = start_times[&marker.id.inner()];
-            let end = (start + clip_duration).min(marker.end_time);
-            let duration = end - start;
-            if has_music || duration >= MIN_DURATION {
-                info!(
-                    "adding clip for video {} from {start} - {end}",
-                    marker.video_id
-                );
-                clips.push(Clip {
-                    index_within_marker: index,
-                    index_within_video: marker.index_within_video,
-                    marker_id: marker.id,
-                    range: (start, end),
-                    source: marker.video_id.source(),
-                    video_id: marker.video_id.clone(),
-                });
-            }
-
-            total_duration += duration;
-            marker_idx += 1;
-            start_times.insert(marker.id.inner(), (end, index + 1));
-        }
+        let mut picker = RoundRobinClipPicker;
+        let options = RoundRobinClipPickerOptions {
+            clip_lengths: options.clip_lengths,
+            length: options.video_duration,
+        };
+        let mut clips = picker.pick_clips(markers, options, rng);
 
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
         if clips_duration > max_duration {

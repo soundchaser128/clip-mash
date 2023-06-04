@@ -202,6 +202,7 @@ pub enum ClipPickerOptions {
     RoundRobin(RoundRobinClipOptions),
     WeightedRandom(WeightedRandomClipOptions),
     EqualLength(EqualLengthClipOptions),
+    NoSplit,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]

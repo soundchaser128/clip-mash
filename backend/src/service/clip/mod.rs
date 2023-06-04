@@ -101,6 +101,9 @@ impl ClipService {
                 let mut picker = EqualLengthClipPicker;
                 picker.pick_clips(options.markers, picker_options, &mut rng)
             }
+            ClipPickerOptions::NoSplit => {
+                markers_to_clips(options.markers)
+            }
         };
 
         let clips = match options.clip_options.order {
@@ -182,22 +185,23 @@ mod tests {
 
     #[traced_test]
     #[sqlx::test]
-    fn test_arrange_clips_dont_split(_pool: SqlitePool) {
-        todo!()
-        // let options = CreateClipsOptions {
-        //     order: ClipOrder::SceneOrder,
-        //     markers: vec![
-        //         create_marker_video_id(1, 1.0, 15.0, 0, "v1"),
-        //         create_marker_video_id(2, 1.0, 17.0, 0, "v2"),
-        //     ],
-        //     seed: None,
-        //     clip_options: ClipOptions::NoSplit,
-        // };
-        // let service = ClipService::new(Database::with_pool(pool));
-        // let (results, _) = service.arrange_clips(options).await.unwrap();
-        // assert_eq!(2, results.len());
-        // assert_eq!((1.0, 17.0), results[0].range);
-        // assert_eq!((1.0, 15.0), results[1].range);
+    fn test_arrange_clips_dont_split(pool: SqlitePool) {
+        let options = CreateClipsOptions {
+            markers: vec![
+                create_marker_video_id(1, 1.0, 15.0, 0, "v1"),
+                create_marker_video_id(2, 1.0, 17.0, 0, "v2"),
+            ],
+            seed: None,
+            clip_options: ClipOptions {
+                clip_picker: ClipPickerOptions::NoSplit,
+                order: ClipOrder::SceneOrder,
+            },
+        };
+        let service = ClipService::new(Database::with_pool(pool));
+        let ClipsResult { clips: results, .. } = service.arrange_clips(options).await.unwrap();
+        assert_eq!(2, results.len());
+        assert_eq!((1.0, 17.0), results[0].range);
+        assert_eq!((1.0, 15.0), results[1].range);
     }
 
     #[traced_test]
@@ -257,40 +261,6 @@ mod tests {
             .find(|m| m.id == MarkerId::LocalFile(5))
             .unwrap();
         assert_eq!(marker.index_within_video, 1);
-    }
-
-    #[traced_test]
-    #[sqlx::test]
-    async fn test_arrange_clips_bug(pool: SqlitePool) {
-        let video_duration = 673.515;
-        let markers = fixtures::markers();
-        let options = CreateClipsOptions {
-            markers,
-            seed: None,
-            clip_options: ClipOptions {
-                order: ClipOrder::SceneOrder,
-                clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
-                    length: video_duration,
-                    clip_lengths: clip_mash_types::PmvClipOptions::Randomized(
-                        RandomizedClipOptions {
-                            base_duration: 30.0,
-                            divisors: vec![2.0, 3.0, 4.0],
-                        },
-                    ),
-                }),
-            },
-        };
-
-        let service = ClipService::new(Database::with_pool(pool));
-        let ClipsResult { clips, .. } = service.arrange_clips(options).await.unwrap();
-        let clip_duration: f64 = clips
-            .iter()
-            .map(|c| {
-                let (start, end) = c.range;
-                end - start
-            })
-            .sum();
-        assert_approx_eq!(clip_duration, video_duration);
     }
 
     #[traced_test]

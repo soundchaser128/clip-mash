@@ -74,6 +74,7 @@ export type ClipPickerOptions =
   | ({type: "roundRobin"} & RoundRobinClipOptions)
   | ({type: "weightedRandom"} & WeightedRandomClipOptions)
   | ({type: "equalLength"} & EqualLengthClipOptions)
+  | {type: "noSplit"}
 export type ClipOptions = {clipPicker: ClipPickerOptions; order: ClipOrder}
 export type CreateClipsBody = {
   clipOrder: ClipOrder

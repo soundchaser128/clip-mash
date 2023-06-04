@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use clip_mash_types::Clip;
-use rand::{
-    distributions::WeightedIndex, prelude::Distribution, rngs::StdRng, seq::IteratorRandom,
-};
+use rand::distributions::WeightedIndex;
+use rand::prelude::Distribution;
+use rand::rngs::StdRng;
+use rand::seq::IteratorRandom;
 use tracing::info;
 
-use crate::service::Marker;
-
 use super::pmv::PmvClipLengths;
+use crate::service::Marker;
 
 const MIN_DURATION: f64 = 1.5;
 
@@ -152,16 +152,12 @@ mod tests {
 
     use tracing_test::traced_test;
 
-    use crate::{
-        service::{
-            clip::{
-                picker::{ClipPicker, WeightedRandomClipPicker, WeightedRandomClipPickerOptions},
-                pmv::PmvClipLengths,
-            },
-            fixtures,
-        },
-        util::create_seeded_rng,
+    use crate::service::clip::picker::{
+        ClipPicker, WeightedRandomClipPicker, WeightedRandomClipPickerOptions,
     };
+    use crate::service::clip::pmv::PmvClipLengths;
+    use crate::service::fixtures;
+    use crate::util::create_seeded_rng;
 
     #[traced_test]
     #[test]

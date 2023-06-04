@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fmt::Debug;
 
 use rand::rngs::StdRng;
@@ -7,10 +6,8 @@ use rand::Rng;
 use tracing::{debug, info};
 
 use super::{Clip, ClipCreator, Marker};
-use crate::service::{
-    clip::picker::{ClipPicker, RoundRobinClipPicker, RoundRobinClipPickerOptions},
-    music::Beats,
-};
+use crate::service::clip::picker::{ClipPicker, RoundRobinClipPicker, RoundRobinClipPickerOptions};
+use crate::service::music::Beats;
 
 const MIN_DURATION: f64 = 1.5;
 

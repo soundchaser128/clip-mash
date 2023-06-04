@@ -18,9 +18,9 @@ use crate::util::create_seeded_rng;
 use crate::Result;
 
 mod default;
+mod picker;
 mod pmv;
 mod sort;
-mod picker;
 
 #[derive(Debug)]
 pub struct CreateClipsOptions {

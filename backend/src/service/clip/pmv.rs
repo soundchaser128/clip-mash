@@ -1,13 +1,13 @@
 use std::fmt::Debug;
 
+use clip_mash_types::{Beats, MeasureCount, PmvClipOptions, RoundRobinClipOptions};
 use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
 use rand::Rng;
 use tracing::{debug, info};
 
 use super::{Clip, ClipCreator, Marker};
-use crate::service::clip::picker::{ClipPicker, RoundRobinClipPicker, RoundRobinClipPickerOptions};
-use crate::service::music::Beats;
+use crate::service::clip::picker::{ClipPicker, RoundRobinClipPicker};
 
 const MIN_DURATION: f64 = 1.5;
 
@@ -47,8 +47,8 @@ impl PmvSongs {
 
         let beats = &self.songs[self.song_index].offsets;
         let num_measures = match self.cut_after_measure_count {
-            MeasureCount::Fixed(n) => n,
-            MeasureCount::Randomized { min, max } => rng.gen_range(min..max),
+            MeasureCount::Fixed { count } => count,
+            MeasureCount::Random { min, max } => rng.gen_range(min..max),
         };
         let num_beats_to_advance = self.beats_per_measure * num_measures;
         let next_beat_index = (self.beat_index + num_beats_to_advance).min(beats.len() - 1);
@@ -66,12 +66,6 @@ impl PmvSongs {
 
         Some((end - start) as f64)
     }
-}
-
-#[derive(Debug)]
-pub enum MeasureCount {
-    Fixed(usize),
-    Randomized { min: usize, max: usize },
 }
 
 #[derive(Debug)]
@@ -98,6 +92,22 @@ impl PmvClipLengths {
     }
 }
 
+impl From<PmvClipOptions> for PmvClipLengths {
+    fn from(value: PmvClipOptions) -> Self {
+        match value {
+            PmvClipOptions::Randomized(options) => PmvClipLengths::Randomized {
+                base_duration: options.base_duration,
+                divisors: options.divisors,
+            },
+            PmvClipOptions::Songs(options) => PmvClipLengths::Songs(PmvSongs::new(
+                options.songs,
+                options.beats_per_measure,
+                options.cut_after_measures,
+            )),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct PmvClipCreatorOptions {
     pub seed: Option<String>,
@@ -120,33 +130,16 @@ impl ClipCreator for PmvClipCreator {
             "using PmvClipCreator to create clips, seed={:?}, video duration = {}",
             options.seed, options.video_duration
         );
-        let max_duration = options.video_duration;
-        let mut picker = RoundRobinClipPicker;
-        let options = RoundRobinClipPickerOptions {
-            clip_lengths: options.clip_lengths,
-            length: options.video_duration,
-        };
-        let mut clips = picker.pick_clips(markers, options, rng);
-
-        let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
-        if clips_duration > max_duration {
-            let slack = (clips_duration - max_duration) / clips.len() as f64;
-            info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");
-            for clip in &mut clips {
-                clip.range.1 = clip.range.1 - slack;
-            }
-        }
-
-        clips
+        todo!("dead code")
     }
 }
 
 #[cfg(test)]
 mod test {
+    use clip_mash_types::{Beats, MeasureCount};
     use tracing_test::traced_test;
 
-    use super::{MeasureCount, PmvSongs};
-    use crate::service::music::Beats;
+    use super::PmvSongs;
     use crate::util::create_seeded_rng;
 
     #[traced_test]
@@ -163,7 +156,7 @@ mod test {
                 offsets: (0..250).into_iter().map(|n| n as f32).collect(),
             },
         ];
-        let mut songs = PmvSongs::new(beats, 4, MeasureCount::Fixed(1));
+        let mut songs = PmvSongs::new(beats, 4, MeasureCount::Fixed { count: 1 });
         let mut durations = vec![];
         while let Some(duration) = songs.next_duration(&mut rng) {
             durations.push(duration);
@@ -186,7 +179,7 @@ mod test {
                 offsets: (0..250).into_iter().map(|n| n as f32).collect(),
             },
         ];
-        let mut songs = PmvSongs::new(beats, 4, MeasureCount::Randomized { min: 1, max: 3 });
+        let mut songs = PmvSongs::new(beats, 4, MeasureCount::Random { min: 1, max: 3 });
         let mut durations = vec![];
         while let Some(duration) = songs.next_duration(&mut rng) {
             durations.push(duration);

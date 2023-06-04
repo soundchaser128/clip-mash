@@ -53,17 +53,28 @@ export type RandomizedClipOptions = {baseDuration: F64; divisors: F64[]}
 export type MeasureCount =
   | ({type: "fixed"} & {count: Usize})
   | ({type: "random"} & {min: Usize; max: Usize})
+export type F32 = number
+export type Beats = {offsets: F32[]; length: F32}
 export type SongClipOptions = {
   beatsPerMeasure: Usize
   cutAfterMeasures: MeasureCount
+  songs: Beats[]
 }
 export type PmvClipOptions =
   | ({type: "randomized"} & RandomizedClipOptions)
   | ({type: "songs"} & SongClipOptions)
-export type ClipOptions =
-  | ({type: "pmv"} & {song_ids: I64[]; clips: PmvClipOptions})
-  | ({type: "default"} & RandomizedClipOptions)
-  | {type: "noSplit"}
+export type RoundRobinClipOptions = {length: F64; clipLengths: PmvClipOptions}
+export type WeightedRandomClipOptions = {
+  weights: Record<string, F64>
+  length: F64
+  clipLengths: PmvClipOptions
+}
+export type EqualLengthClipOptions = {clipDuration: F64; divisors: F64[]}
+export type ClipPickerOptions =
+  | ({type: "roundRobin"} & RoundRobinClipOptions)
+  | ({type: "weightedRandom"} & WeightedRandomClipOptions)
+  | ({type: "equalLength"} & EqualLengthClipOptions)
+export type ClipOptions = {clipPicker: ClipPickerOptions; order: ClipOrder}
 export type CreateClipsBody = {
   clipOrder: ClipOrder
   markers: SelectedMarker[]
@@ -94,7 +105,6 @@ export type MarkerDto = {
   indexWithinVideo: Usize
 }
 export type ListVideoDto = {video: VideoDto; markers: MarkerDto[]}
-export type F32 = number
 export type ClipsResponse = {
   clips: Clip[]
   streams: Record<string, string>

@@ -136,7 +136,6 @@ impl DataService {
 
     pub async fn convert_clip_options(&self, body: CreateClipsBody) -> Result<CreateClipsOptions> {
         Ok(CreateClipsOptions {
-            order: body.clip_order,
             markers: self.convert_selected_markers(body.markers).await?,
             seed: body.seed,
             clip_options: body.clips,

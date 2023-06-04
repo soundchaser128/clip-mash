@@ -3,6 +3,7 @@ use std::time::Instant;
 
 use aubio::{OnsetMode, Smpl, Tempo};
 use camino::{Utf8Path, Utf8PathBuf};
+use clip_mash_types::Beats;
 use color_eyre::eyre::eyre;
 use hound::WavReader;
 use serde::{Deserialize, Serialize};
@@ -15,12 +16,6 @@ use crate::Result as AppResult;
 const BUF_SIZE: usize = 512;
 const HOP_SIZE: usize = 256;
 const I16_TO_SMPL: Smpl = 1.0 / (1 << 16) as Smpl;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Beats {
-    pub offsets: Vec<f32>,
-    pub length: f32,
-}
 
 fn convert_to_wav(source: impl AsRef<Utf8Path>) -> AppResult<Utf8PathBuf> {
     let source = source.as_ref();

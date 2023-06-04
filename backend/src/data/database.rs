@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use clip_mash_types::Beats;
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
 use serde::Deserialize;
@@ -8,7 +9,7 @@ use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::{info, warn};
 
-use crate::service::music::{self, Beats};
+use crate::service::music::{self};
 use crate::Result;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]

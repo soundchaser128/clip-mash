@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
-use clip_mash_types::Clip;
+use clip_mash_types::{
+    Clip, EqualLengthClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
+};
 use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::rngs::StdRng;
-use rand::seq::IteratorRandom;
-use tracing::info;
+use rand::seq::{IteratorRandom, SliceRandom};
+use tracing::{debug, info};
 
 use super::pmv::PmvClipLengths;
 use crate::service::Marker;
@@ -23,15 +25,10 @@ pub trait ClipPicker {
     ) -> Vec<Clip>;
 }
 
-pub struct RoundRobinClipPickerOptions {
-    pub length: f64,
-    pub clip_lengths: PmvClipLengths,
-}
-
 pub struct RoundRobinClipPicker;
 
 impl ClipPicker for RoundRobinClipPicker {
-    type Options = RoundRobinClipPickerOptions;
+    type Options = RoundRobinClipOptions;
 
     fn pick_clips(
         &mut self,
@@ -46,11 +43,13 @@ impl ClipPicker for RoundRobinClipPicker {
             .collect();
         let mut clips = vec![];
         let mut total_duration = 0.0;
-        let has_music = matches!(options.clip_lengths, PmvClipLengths::Songs(_));
+        let mut clip_lengths: PmvClipLengths = options.clip_lengths.into();
+        let has_music = matches!(clip_lengths, PmvClipLengths::Songs(_));
+        let max_duration = options.length;
 
-        while total_duration <= options.length {
+        while total_duration <= max_duration {
             let marker = &markers[marker_idx % markers.len()];
-            let clip_duration = options.clip_lengths.pick_duration(rng);
+            let clip_duration = clip_lengths.pick_duration(rng);
             if clip_duration.is_none() {
                 break;
             }
@@ -79,20 +78,23 @@ impl ClipPicker for RoundRobinClipPicker {
             start_times.insert(marker.id.inner(), (end, index + 1));
         }
 
+        let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
+        if clips_duration > max_duration {
+            let slack = (clips_duration - max_duration) / clips.len() as f64;
+            info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");
+            for clip in &mut clips {
+                clip.range.1 = clip.range.1 - slack;
+            }
+        }
+
         clips
     }
 }
 
 pub struct WeightedRandomClipPicker;
 
-pub struct WeightedRandomClipPickerOptions {
-    pub weights: HashMap<String, f64>,
-    pub length: f64,
-    pub clip_lengths: PmvClipLengths,
-}
-
 impl ClipPicker for WeightedRandomClipPicker {
-    type Options = WeightedRandomClipPickerOptions;
+    type Options = WeightedRandomClipOptions;
 
     fn pick_clips(
         &mut self,
@@ -109,6 +111,7 @@ impl ClipPicker for WeightedRandomClipPicker {
             .map(|m| (m.id.inner(), (m.start_time, 0)))
             .collect();
         let mut clips = vec![];
+        let mut clip_lengths: PmvClipLengths = options.clip_lengths.into();
 
         while total_duration <= options.length {
             let marker_tag = &choices[distribution.sample(rng)].0;
@@ -118,7 +121,7 @@ impl ClipPicker for WeightedRandomClipPicker {
                 .choose(rng);
             if let Some(marker) = next_marker {
                 let (start, index) = start_times[&marker.id.inner()];
-                let clip_duration = options.clip_lengths.pick_duration(rng);
+                let clip_duration = clip_lengths.pick_duration(rng);
                 if clip_duration.is_none() {
                     break;
                 }
@@ -158,15 +161,65 @@ impl ClipPicker for WeightedRandomClipPicker {
 
 pub struct EqualLengthClipPicker;
 
+impl ClipPicker for EqualLengthClipPicker {
+    type Options = EqualLengthClipOptions;
+
+    fn pick_clips(
+        &mut self,
+        markers: Vec<Marker>,
+        options: Self::Options,
+        rng: &mut StdRng,
+    ) -> Vec<Clip> {
+        assert!(options.divisors.len() > 0, "divisors must not be empty");
+
+        let duration = options.clip_duration;
+        let clip_lengths: Vec<f64> = options
+            .divisors
+            .into_iter()
+            .map(|d| (duration / d).max(MIN_DURATION))
+            .collect();
+        let mut clips = vec![];
+        for marker in markers {
+            let start = marker.start_time;
+            let end = marker.end_time;
+
+            debug!("clip start = {start}, end = {end}");
+
+            let mut index = 0;
+            let mut offset = start;
+            while offset < end {
+                let duration = clip_lengths.choose(rng).unwrap();
+                let start = offset;
+                let end = (offset + duration).min(end);
+                let duration = end - start;
+                if duration > MIN_DURATION {
+                    debug!("adding clip {} - {}", start, end);
+                    clips.push(Clip {
+                        source: marker.video_id.source(),
+                        video_id: marker.video_id.clone(),
+                        marker_id: marker.id,
+                        range: (start, end),
+                        index_within_marker: index,
+                        index_within_video: marker.index_within_video,
+                    });
+                    index += 1;
+                }
+                offset += duration;
+            }
+        }
+
+        clips
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
 
+    use clip_mash_types::{PmvClipOptions, RandomizedClipOptions, WeightedRandomClipOptions};
     use tracing_test::traced_test;
 
-    use crate::service::clip::picker::{
-        ClipPicker, WeightedRandomClipPicker, WeightedRandomClipPickerOptions,
-    };
+    use crate::service::clip::picker::{ClipPicker, WeightedRandomClipPicker};
     use crate::service::clip::pmv::PmvClipLengths;
     use crate::service::fixtures;
     use crate::util::create_seeded_rng;
@@ -180,11 +233,11 @@ mod tests {
         weights.insert("Doggy Style".into(), 1.0 / 3.0);
 
         let mut picker = WeightedRandomClipPicker;
-        let options = WeightedRandomClipPickerOptions {
-            clip_lengths: PmvClipLengths::Randomized {
+        let options = WeightedRandomClipOptions {
+            clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
                 divisors: vec![2.0, 3.0, 4.0],
-            },
+            }),
             length: 200.0,
             weights: weights.clone(),
         };

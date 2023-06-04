@@ -50,14 +50,14 @@ export default function InitialRoot() {
             <div className="self-center btn-group">
               <button
                 onClick={() => onNextStage("stash")}
-                className="btn btn-lg btn-primary w-48"
+                className="btn btn-lg btn-primary w-52"
               >
                 <HiArchiveBox className="mr-2 w-6 h-6" />
                 Stash
               </button>
 
               <button
-                className="btn btn-lg btn-secondary w-48"
+                className="btn btn-lg btn-secondary w-52"
                 onClick={() => onNextStage("localFile")}
               >
                 <HiComputerDesktop className="mr-2 w-6 h-6" />

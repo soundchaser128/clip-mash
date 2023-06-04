@@ -11,7 +11,6 @@ pub mod stash_config;
 pub mod fixtures;
 
 use clip_mash_types::{MarkerId, VideoId};
-use serde::{Deserialize, Serialize};
 
 use crate::data::database::{DbMarker, DbVideo};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
@@ -26,13 +25,6 @@ pub enum VideoInfo {
     LocalFile {
         video: DbVideo,
     },
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum VideoSource {
-    Stash,
-    LocalFile,
 }
 
 #[derive(Debug, Clone)]

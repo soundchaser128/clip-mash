@@ -17,6 +17,7 @@ pub enum ClipOrder {
 pub enum VideoSource {
     Stash,
     LocalFile,
+    DownloadedLocalFile,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TypeDef)]
@@ -146,6 +147,7 @@ pub struct VideoDto {
     pub performers: Vec<String>,
     pub file_name: String,
     pub interactive: bool,
+    pub source: VideoSource,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]

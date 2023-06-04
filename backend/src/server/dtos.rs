@@ -1,10 +1,10 @@
 use camino::Utf8Path;
 use clip_mash_types::*;
 
-use crate::data::database::{DbMarker, DbVideo, LocalVideoWithMarkers};
+use crate::data::database::{DbMarker, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashMarker;
-use crate::service::Video;
+use crate::service::{Video, VideoInfo};
 use crate::util::{add_api_key, expect_file_name};
 
 impl From<StashMarker> for MarkerDto {
@@ -64,6 +64,7 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
                 .map(|f| f.basename.clone())
                 .unwrap_or_default(),
             interactive: value.interactive,
+            source: VideoSource::Stash,
         }
     }
 }
@@ -79,6 +80,10 @@ impl From<DbVideo> for VideoDto {
             performers: vec![],
             interactive: value.interactive,
             file_name: expect_file_name(&value.file_path),
+            source: match value.source {
+                LocalVideoSource::Folder => VideoSource::LocalFile,
+                LocalVideoSource::Download => VideoSource::DownloadedLocalFile,
+            },
         }
     }
 }
@@ -91,6 +96,13 @@ impl From<Video> for VideoDto {
             performers: value.performers,
             file_name: value.file_name,
             interactive: value.interactive,
+            source: match value.info {
+                VideoInfo::Stash { .. } => VideoSource::Stash,
+                VideoInfo::LocalFile { video } => match video.source {
+                    LocalVideoSource::Folder => VideoSource::LocalFile,
+                    LocalVideoSource::Download => VideoSource::DownloadedLocalFile,
+                },
+            },
         }
     }
 }

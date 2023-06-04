@@ -153,6 +153,13 @@ export default function ListVideos() {
                   <HiTag className="inline mr-2" />
                   Markers: <strong>{video.markers.length}</strong>
                 </li>
+                <li>
+                  <HiArrowDownTray className="inline mr-2" />
+                  Source:{" "}
+                  {video.video.source === "downloadedLocalFile"
+                    ? "Downloaded"
+                    : "Folder"}
+                </li>
               </ul>
               <div className="card-actions justify-between">
                 <button

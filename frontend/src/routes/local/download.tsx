@@ -78,6 +78,10 @@ const DownloadVideosPage: React.FC = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="max-w-lg w-full self-center flex flex-col"
       >
+        <p className="mb-4 text-gray-500">
+          You can download videos from YouTube, Vimeo or any other site that
+          yt-dlp supports.
+        </p>
         <Field label="Video URLs">
           <textarea
             className="textarea textarea-bordered"

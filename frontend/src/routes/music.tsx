@@ -399,7 +399,7 @@ export default function Music() {
     state.data.songs?.map((song) => song.songId) || []
   )
   const [formValues, setFormValues] = useState<MusicSettingsInputs>({
-    clipStrategy: state.data.clipStrategy || "default",
+    clipStrategy: state.data.clipStrategy || "pmv",
     musicVolume: state.data.musicVolume ? state.data.musicVolume * 100 : 75,
   })
   const navigate = useNavigate()
@@ -474,7 +474,7 @@ export default function Music() {
             <button
               disabled={selection.length < 2}
               onClick={() => setMode("order")}
-              className="btn btn-secondary w-48"
+              className="btn btn-secondary w-52"
             >
               <HiBarsArrowDown className="mr-2" />
               Set track order
@@ -482,7 +482,7 @@ export default function Music() {
           )}
           {mode === "order" && (
             <button
-              className="btn btn-success w-48"
+              className="btn btn-success w-52"
               onClick={() => setMode("table")}
             >
               <HiCheck className="mr-2" />

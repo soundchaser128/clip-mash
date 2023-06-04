@@ -13,7 +13,7 @@ export type StashScene = {
   interactive: boolean
   markerCount: Usize
 }
-export type VideoSource = "stash" | "localFile"
+export type VideoSource = "stash" | "localFile" | "downloadedLocalFile"
 export type VideoId =
   | {type: "localFile"; id: string}
   | {type: "stash"; id: string}
@@ -76,6 +76,7 @@ export type VideoDto = {
   performers: string[]
   fileName: string
   interactive: boolean
+  source: VideoSource
 }
 export type MarkerDto = {
   id: MarkerId

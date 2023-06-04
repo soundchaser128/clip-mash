@@ -1,13 +1,10 @@
 use std::fmt::Debug;
 
-use clip_mash_types::{Beats, MeasureCount, PmvClipOptions, RoundRobinClipOptions};
+use clip_mash_types::{Beats, MeasureCount, PmvClipOptions};
 use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
 use rand::Rng;
-use tracing::{debug, info};
-
-use super::{Clip, ClipCreator, Marker};
-use crate::service::clip::picker::{ClipPicker, RoundRobinClipPicker};
+use tracing::debug;
 
 const MIN_DURATION: f64 = 1.5;
 
@@ -105,32 +102,6 @@ impl From<PmvClipOptions> for PmvClipLengths {
                 options.cut_after_measures,
             )),
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct PmvClipCreatorOptions {
-    pub seed: Option<String>,
-    pub video_duration: f64,
-    pub clip_lengths: PmvClipLengths,
-}
-
-pub struct PmvClipCreator;
-
-impl ClipCreator for PmvClipCreator {
-    type Options = PmvClipCreatorOptions;
-
-    fn create_clips(
-        &self,
-        markers: Vec<Marker>,
-        options: Self::Options,
-        rng: &mut StdRng,
-    ) -> Vec<Clip> {
-        info!(
-            "using PmvClipCreator to create clips, seed={:?}, video duration = {}",
-            options.seed, options.video_duration
-        );
-        todo!("dead code")
     }
 }
 

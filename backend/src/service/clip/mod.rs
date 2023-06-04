@@ -1,21 +1,15 @@
 use std::fmt::Debug;
 use std::time::Instant;
 
-use clip_mash_types::{
-    Clip, ClipOptions, ClipOrder, ClipPickerOptions, PmvClipOptions, RandomizedClipOptions,
-    SongClipOptions,
-};
+use clip_mash_types::{Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use rand::rngs::StdRng;
 use tracing::info;
 
-use self::pmv::{PmvClipLengths, PmvSongs};
 use super::Marker;
 use crate::data::database::{Database, DbSong};
-use crate::service::clip::default::{DefaultClipCreator, DefaultClipOptions};
 use crate::service::clip::picker::{
     ClipPicker, EqualLengthClipPicker, RoundRobinClipPicker, WeightedRandomClipPicker,
 };
-use crate::service::clip::pmv::{PmvClipCreator, PmvClipCreatorOptions};
 use crate::service::clip::sort::{ClipSorter, RandomClipSorter, SceneOrderClipSorter};
 use crate::service::music::parse_beats;
 use crate::util::create_seeded_rng;
@@ -93,8 +87,7 @@ impl ClipService {
         let start = Instant::now();
         options.normalize_video_indices();
         let mut rng = create_seeded_rng(options.seed.as_deref());
-        // let order = options.order;
-        let mut beat_offsets = None;
+        let beat_offsets = None;
         let clips = match options.clip_options.clip_picker {
             ClipPickerOptions::RoundRobin(picker_options) => {
                 let mut picker = RoundRobinClipPicker;
@@ -110,69 +103,17 @@ impl ClipService {
             }
         };
 
-        // let clips = match options.clip_options {
-        //     ClipOptions::Pmv { song_ids, clips } => {
-        //         let songs = self.db.get_songs(&song_ids).await?;
-        //         beat_offsets = Some(normalize_beat_offsets(&songs));
-
-        //         let video_duration: f64 = songs.iter().map(|s| s.duration).sum();
-        //         let pmv_options = PmvClipCreatorOptions {
-        //             seed: options.seed,
-        //             video_duration,
-        //             clip_lengths: match clips {
-        //                 PmvClipOptions::Randomized(RandomizedClipOptions {
-        //                     base_duration,
-        //                     divisors,
-        //                 }) => PmvClipLengths::Randomized {
-        //                     base_duration,
-        //                     divisors,
-        //                 },
-        //                 PmvClipOptions::Songs(SongClipOptions {
-        //                     beats_per_measure,
-        //                     cut_after_measures,
-        //                 }) => {
-        //                     let beats = parse_beats(&songs);
-        //                     PmvClipLengths::Songs(PmvSongs::new(
-        //                         beats,
-        //                         beats_per_measure,
-        //                         match cut_after_measures {
-        //                             clip_mash_types::MeasureCount::Fixed { count } => {
-        //                                 pmv::MeasureCount::Fixed(count)
-        //                             }
-        //                             clip_mash_types::MeasureCount::Random { min, max } => {
-        //                                 pmv::MeasureCount::Randomized { min, max }
-        //                             }
-        //                         },
-        //                     ))
-        //                 }
-        //             },
-        //         };
-        //         let creator = PmvClipCreator;
-        //         creator.create_clips(options.markers, pmv_options, &mut rng)
-        //     }
-        //     ClipOptions::Default(o) => {
-        //         let default_options = DefaultClipOptions {
-        //             clip_duration: o.base_duration as u32,
-        //             seed: options.seed,
-        //             divisors: o.divisors,
-        //         };
-        //         let creator = DefaultClipCreator;
-        //         creator.create_clips(options.markers, default_options, &mut rng)
-        //     }
-        //     ClipOptions::NoSplit => markers_to_clips(options.markers),
-        // };
-
-        // let clips = match order {
-        //     ClipOrder::Random => {
-        //         let sorter = RandomClipSorter;
-        //         sorter.sort_clips(clips, &mut rng)
-        //     }
-        //     ClipOrder::SceneOrder => {
-        //         let sorter = SceneOrderClipSorter;
-        //         sorter.sort_clips(clips, &mut rng)
-        //     }
-        //     ClipOrder::Pmv => clips,
-        // };
+        let clips = match options.clip_options.order {
+            ClipOrder::Random => {
+                let sorter = RandomClipSorter;
+                sorter.sort_clips(clips, &mut rng)
+            }
+            ClipOrder::SceneOrder => {
+                let sorter = SceneOrderClipSorter;
+                sorter.sort_clips(clips, &mut rng)
+            }
+            ClipOrder::NoOp => clips,
+        };
 
         let elapsed = start.elapsed();
         info!("generated {} clips in {:?}", clips.len(), elapsed);
@@ -200,16 +141,15 @@ mod tests {
     use assert_approx_eq::assert_approx_eq;
     use clip_mash_types::{
         Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId,
-        RandomizedClipOptions, VideoSource,
+        RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
     };
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
     use crate::data::database::Database;
-    use crate::service::clip::pmv::{PmvClipCreatorOptions, PmvClipLengths};
     use crate::service::clip::sort::ClipSorter;
-    use crate::service::clip::{ClipCreator, ClipService, PmvClipCreator, SceneOrderClipSorter};
+    use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
     use crate::service::fixtures::{self, create_marker_video_id};
     use crate::service::VideoId;
     use crate::util::create_seeded_rng;
@@ -217,31 +157,32 @@ mod tests {
     #[traced_test]
     #[sqlx::test]
     fn test_arrange_clips_basic(pool: SqlitePool) {
-        todo!()
-        // let options = CreateClipsOptions {
-        //     order: ClipOrder::SceneOrder,
-        //     markers: vec![
-        //         create_marker_video_id(1, 1.0, 15.0, 0, "v2"),
-        //         create_marker_video_id(2, 1.0, 17.0, 0, "v1"),
-        //     ],
-        //     seed: None,
-        //     clip_options: ClipOptions::Default(RandomizedClipOptions {
-        //         base_duration: 30.0,
-        //         divisors: vec![2.0, 3.0, 4.0],
-        //     }),
-        // };
-        // let service = ClipService::new(Database::with_pool(pool));
-        // let (results, _) = service.arrange_clips(options).await.unwrap();
-        // assert_eq!(4, results.len());
-        // assert_eq!((1.0, 11.0), results[0].range);
-        // assert_eq!((1.0, 8.5), results[1].range);
-        // assert_eq!((11.0, 17.0), results[2].range);
-        // assert_eq!((8.5, 15.0), results[3].range);
+        let options = CreateClipsOptions {
+            markers: vec![
+                create_marker_video_id(1, 1.0, 15.0, 0, "v2"),
+                create_marker_video_id(2, 1.0, 17.0, 0, "v1"),
+            ],
+            seed: None,
+            clip_options: ClipOptions {
+                clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
+                    clip_duration: 30.0,
+                    divisors: vec![2.0, 3.0, 4.0],
+                }),
+                order: ClipOrder::SceneOrder,
+            },
+        };
+        let service = ClipService::new(Database::with_pool(pool));
+        let ClipsResult { clips: results, .. } = service.arrange_clips(options).await.unwrap();
+        assert_eq!(4, results.len());
+        assert_eq!((1.0, 11.0), results[0].range);
+        assert_eq!((1.0, 8.5), results[1].range);
+        assert_eq!((11.0, 17.0), results[2].range);
+        assert_eq!((8.5, 15.0), results[3].range);
     }
 
     #[traced_test]
     #[sqlx::test]
-    fn test_arrange_clips_dont_split(pool: SqlitePool) {
+    fn test_arrange_clips_dont_split(_pool: SqlitePool) {
         todo!()
         // let options = CreateClipsOptions {
         //     order: ClipOrder::SceneOrder,
@@ -319,21 +260,29 @@ mod tests {
     }
 
     #[traced_test]
-    #[test]
-    fn test_arrange_clips_bug() {
+    #[sqlx::test]
+    async fn test_arrange_clips_bug(pool: SqlitePool) {
         let video_duration = 673.515;
         let markers = fixtures::markers();
-        let options = PmvClipCreatorOptions {
+        let options = CreateClipsOptions {
+            markers,
             seed: None,
-            video_duration,
-            clip_lengths: PmvClipLengths::Randomized {
-                base_duration: 30.,
-                divisors: vec![2.0, 3.0, 4.0],
+            clip_options: ClipOptions {
+                order: ClipOrder::SceneOrder,
+                clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
+                    length: video_duration,
+                    clip_lengths: clip_mash_types::PmvClipOptions::Randomized(
+                        RandomizedClipOptions {
+                            base_duration: 30.0,
+                            divisors: vec![2.0, 3.0, 4.0],
+                        },
+                    ),
+                }),
             },
         };
-        let clip_creator = PmvClipCreator;
-        let mut rng = create_seeded_rng(None);
-        let clips = clip_creator.create_clips(markers, options, &mut rng);
+
+        let service = ClipService::new(Database::with_pool(pool));
+        let ClipsResult { clips, .. } = service.arrange_clips(options).await.unwrap();
         let clip_duration: f64 = clips
             .iter()
             .map(|c| {

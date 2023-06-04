@@ -1,6 +1,9 @@
+use std::sync::atomic::{AtomicI64, Ordering};
+
 use fake::faker::filesystem::en::FilePath;
 use fake::faker::lorem::en::Sentence;
 use fake::{Fake, Faker};
+use lazy_static::lazy_static;
 
 use super::Marker;
 use crate::data::database::{CreateMarker, Database, DbMarker, DbVideo, LocalVideoSource};
@@ -205,8 +208,14 @@ pub fn markers() -> Vec<Marker> {
 }
 
 pub fn create_marker(title: &str, start_time: f64, end_time: f64, index: usize) -> Marker {
+    lazy_static! {
+        static ref ID: AtomicI64 = AtomicI64::new(0);
+    }
+
+    let id = ID.fetch_add(1, Ordering::SeqCst);
+
     Marker {
-        id: MarkerId::LocalFile(Faker.fake()),
+        id: MarkerId::LocalFile(id),
         start_time,
         end_time,
         index_within_video: index,

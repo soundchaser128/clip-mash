@@ -9,7 +9,7 @@ use typescript_type_def::TypeDef;
 pub enum ClipOrder {
     Random,
     SceneOrder,
-    Pmv,
+    NoOp,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TypeDef)]

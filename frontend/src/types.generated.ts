@@ -48,7 +48,7 @@ export type CreateVideoBody = {
   songIds: I64[]
   musicVolume: F64 | null
 }
-export type ClipOrder = "random" | "scene-order" | "pmv"
+export type ClipOrder = "random" | "scene-order" | "no-op"
 export type RandomizedClipOptions = {baseDuration: F64; divisors: F64[]}
 export type MeasureCount =
   | ({type: "fixed"} & {count: Usize})

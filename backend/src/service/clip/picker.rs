@@ -33,7 +33,7 @@ impl ClipPicker for RoundRobinClipPicker {
     fn pick_clips(
         &mut self,
         markers: Vec<Marker>,
-        mut options: Self::Options,
+        options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
         let mut marker_idx = 0;
@@ -79,6 +79,7 @@ impl ClipPicker for RoundRobinClipPicker {
         }
 
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
+        info!("assembled clips duration: {clips_duration}, max duration: {max_duration}");
         if clips_duration > max_duration {
             let slack = (clips_duration - max_duration) / clips.len() as f64;
             info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");
@@ -99,7 +100,7 @@ impl ClipPicker for WeightedRandomClipPicker {
     fn pick_clips(
         &mut self,
         markers: Vec<Marker>,
-        mut options: Self::Options,
+        options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
         let choices: Vec<(String, f64)> = options.weights.into_iter().collect();
@@ -125,18 +126,14 @@ impl ClipPicker for WeightedRandomClipPicker {
                 if clip_duration.is_none() {
                     break;
                 }
+                if (start - marker.end_time).abs() < 0.01 {
+                    start_times.remove(&marker.id.inner());
+                    break;
+                }
+
                 let clip_duration = clip_duration.unwrap();
                 let end = (start + clip_duration).min(marker.end_time);
                 let duration = end - start;
-                assert!(
-                    duration > 0.0,
-                    "clip_duration = {}, start = {}, end = {}, start_times = {:?}",
-                    clip_duration,
-                    start,
-                    end,
-                    start_times
-                );
-
                 clips.push(Clip {
                     index_within_marker: index,
                     index_within_video: marker.index_within_video,
@@ -220,7 +217,6 @@ mod tests {
     use tracing_test::traced_test;
 
     use crate::service::clip::picker::{ClipPicker, WeightedRandomClipPicker};
-    use crate::service::clip::pmv::PmvClipLengths;
     use crate::service::fixtures;
     use crate::util::create_seeded_rng;
 

@@ -6,7 +6,6 @@ use camino::{Utf8Path, Utf8PathBuf};
 use clip_mash_types::Beats;
 use color_eyre::eyre::eyre;
 use hound::WavReader;
-use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use crate::data::database::DbSong;

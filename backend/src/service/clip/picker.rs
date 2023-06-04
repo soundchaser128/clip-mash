@@ -125,6 +125,14 @@ impl ClipPicker for WeightedRandomClipPicker {
                 let clip_duration = clip_duration.unwrap();
                 let end = (start + clip_duration).min(marker.end_time);
                 let duration = end - start;
+                assert!(
+                    duration > 0.0,
+                    "clip_duration = {}, start = {}, end = {}, start_times = {:?}",
+                    clip_duration,
+                    start,
+                    end,
+                    start_times
+                );
 
                 clips.push(Clip {
                     index_within_marker: index,
@@ -134,6 +142,10 @@ impl ClipPicker for WeightedRandomClipPicker {
                     source: marker.video_id.source(),
                     video_id: marker.video_id.clone(),
                 });
+                info!(
+                    "adding clip for tag {} with duration {}",
+                    marker.title, duration
+                );
 
                 start_times.insert(marker.id.inner(), (end, index + 1));
                 total_duration += duration;
@@ -177,7 +189,14 @@ mod tests {
             weights: weights.clone(),
         };
 
-        let markers = fixtures::markers();
+        let markers = vec![
+            fixtures::create_marker("Blowjob", 0.0, 30.0, 0),
+            fixtures::create_marker("Blowjob", 0.0, 30.0, 1),
+            fixtures::create_marker("Cowgirl", 0.0, 30.0, 0),
+            fixtures::create_marker("Cowgirl", 0.0, 30.0, 1),
+            fixtures::create_marker("Doggy Style", 0.0, 30.0, 0),
+            fixtures::create_marker("Doggy Style", 0.0, 30.0, 1),
+        ];
         let mut rng = create_seeded_rng(None);
 
         let clips = picker.pick_clips(markers.clone(), options, &mut rng);

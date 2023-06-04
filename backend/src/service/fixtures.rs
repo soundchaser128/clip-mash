@@ -204,21 +204,20 @@ pub fn markers() -> Vec<Marker> {
     ]
 }
 
-#[allow(unused)]
-pub fn create_marker(start_time: f64, end_time: f64, index: usize) -> Marker {
+pub fn create_marker(title: &str, start_time: f64, end_time: f64, index: usize) -> Marker {
     Marker {
-        id: MarkerId::LocalFile(1),
+        id: MarkerId::LocalFile(Faker.fake()),
         start_time,
         end_time,
         index_within_video: index,
         video_id: VideoId::LocalFile(generate_id()),
-        title: Faker.fake(),
+        title: title.to_string(),
         info: MarkerInfo::LocalFile {
             marker: DbMarker {
-                end_time,
                 start_time,
+                end_time,
                 rowid: None,
-                title: Faker.fake(),
+                title: title.to_string(),
                 video_id: Faker.fake(),
                 file_path: FilePath().fake(),
                 index_within_video: index as i64,

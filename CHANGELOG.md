@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.9.1
+- fix: Show whether a video was downloaded via the app on the video list page
+- fix: Fixed a few style issues with smaller screens
+
 ## 0.9.0
 - feat: Allow downloading videos via `yt-dlp`
 - feat: Allow editing the marker start/end time fields

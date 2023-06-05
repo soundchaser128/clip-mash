@@ -19,6 +19,8 @@ import {Clip, ClipOrder} from "../types.generated"
 import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
 import styles from "./clips.module.css"
+import Modal from "../components/Modal"
+import {useImmer} from "use-immer"
 
 const DEBUG = false
 
@@ -80,6 +82,112 @@ const Timeline: React.FC<TimelineProps> = ({
   )
 }
 
+const WeightsModal: React.FC = () => {
+  const revalidator = useRevalidator()
+  const {state, actions} = useStateMachine({updateForm})
+  invariant(StateHelpers.isNotInitial(state.data))
+
+  const [weights, setWeights] = useImmer<Array<[string, number]>>(() => {
+    invariant(StateHelpers.isNotInitial(state.data))
+    if (state.data.clipWeights) {
+      return state.data.clipWeights
+    } else {
+      const markerTitles = Array.from(
+        new Set(state.data.selectedMarkers?.map((m) => m.title))
+      ).sort()
+      return Array.from(markerTitles).map((title) => [title, 1.0])
+    }
+  })
+
+  const [enabled, setEnabled] = useState(
+    state.data.clipStrategy === "weighted-random"
+  )
+  const [open, setOpen] = useState(false)
+
+  const onWeightChange = (title: string, weight: number) => {
+    setWeights((draft) => {
+      const index = draft.findIndex((e) => e[0] === title)
+      if (index !== -1) {
+        draft[index][1] = weight / 100
+      }
+    })
+  }
+
+  const onClose = () => {
+    setOpen(false)
+    if (enabled) {
+      actions.updateForm({
+        clipWeights: weights,
+        clipStrategy: "weighted-random",
+      })
+
+      revalidator.revalidate()
+    }
+  }
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="btn btn-secondary">
+        Adjust marker ratios
+      </button>
+      <Modal size="fluid" isOpen={open} onClose={onClose}>
+        <h1 className="text-2xl font-bold mb-2">Marker ratios</h1>
+        <p className="text-sm mb-4">
+          Here, you can adjust the likelihood of each marker type to be included
+          in the compilation.
+        </p>
+
+        <div className="flex flex-col gap-4 items-center">
+          <div className="form-control w-72">
+            <label className="label">
+              <span className="label-text">Enable marker ratios</span>
+            </label>
+
+            <input
+              type="checkbox"
+              className="checkbox checkbox-primary"
+              onChange={(e) => setEnabled(e.target.checked)}
+              checked={enabled}
+            />
+          </div>
+          {weights.map(([title, weight]) => (
+            <div
+              className={clsx(
+                "form-control",
+                !enabled && "opacity-50 cursor-not-allowed"
+              )}
+              key={title}
+            >
+              <label className="label">
+                <span className="label-text font-semibold">{title}</span>
+              </label>
+              <input
+                disabled={!enabled}
+                type="range"
+                min="0"
+                max="100"
+                className="range range-sm w-72"
+                step="5"
+                value={weight * 100}
+                onChange={(e) => onWeightChange(title, e.target.valueAsNumber)}
+              />
+              <div className="w-full flex justify-between text-xs px-2">
+                <span>0%</span>
+                <span className="font-bold">{Math.round(weight * 100)}%</span>
+                <span>100%</span>
+              </div>
+            </div>
+          ))}
+
+          <button onClick={onClose} className="btn btn-primary self-end">
+            Done
+          </button>
+        </div>
+      </Modal>
+    </>
+  )
+}
+
 interface Inputs {
   clipOrder: ClipOrder
   seed?: string
@@ -130,6 +238,7 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
       <h2 className="text-xl font-bold">Settings</h2>
+      <WeightsModal />
       {!isPmv && (
         <>
           <div className="form-control">
@@ -311,7 +420,6 @@ function PreviewClips() {
     const duration = event.currentTarget.duration
     const position = event.currentTarget.currentTime
     if (Math.abs(duration - position) <= 0.1 && autoPlay) {
-      console.log("switching song")
       setSongIndex((idx) => Math.min(songs.length - 1, idx + 1))
     }
   }

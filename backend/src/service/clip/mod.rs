@@ -1,17 +1,19 @@
 use std::fmt::Debug;
 use std::time::Instant;
 
-use clip_mash_types::{Clip, ClipOptions, ClipOrder, ClipPickerOptions};
+use clip_mash_types::{
+    Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions, PmvClipOptions, RoundRobinClipOptions,
+    SongClipOptions,
+};
 use rand::rngs::StdRng;
 use tracing::info;
 
 use super::Marker;
-use crate::data::database::{Database, DbSong};
+use crate::data::database::Database;
 use crate::service::clip::picker::{
     ClipPicker, EqualLengthClipPicker, RoundRobinClipPicker, WeightedRandomClipPicker,
 };
 use crate::service::clip::sort::{ClipSorter, RandomClipSorter, SceneOrderClipSorter};
-use crate::service::music::parse_beats;
 use crate::util::create_seeded_rng;
 use crate::Result;
 
@@ -56,11 +58,11 @@ fn markers_to_clips(markers: Vec<Marker>) -> Vec<Clip> {
         .collect()
 }
 
-fn normalize_beat_offsets(songs: &[DbSong]) -> Vec<f32> {
+fn normalize_beat_offsets(songs: &[Beats]) -> Vec<f32> {
     let mut offsets = vec![];
     let mut current = 0.0;
-    for beats in parse_beats(songs) {
-        for offset in beats.offsets {
+    for beats in songs {
+        for offset in &beats.offsets {
             offsets.push(current + offset);
         }
         current += beats.length;
@@ -86,8 +88,18 @@ impl ClipService {
     pub async fn arrange_clips(&self, mut options: CreateClipsOptions) -> Result<ClipsResult> {
         let start = Instant::now();
         options.normalize_video_indices();
+
+        let beat_offsets = if let ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
+            clip_lengths: PmvClipOptions::Songs(SongClipOptions { ref songs, .. }),
+            ..
+        }) = options.clip_options.clip_picker
+        {
+            Some(normalize_beat_offsets(songs))
+        } else {
+            None
+        };
+
         let mut rng = create_seeded_rng(options.seed.as_deref());
-        let beat_offsets = None;
         let clips = match options.clip_options.clip_picker {
             ClipPickerOptions::RoundRobin(picker_options) => {
                 let mut picker = RoundRobinClipPicker;
@@ -139,10 +151,9 @@ pub trait ClipCreator {
 
 #[cfg(test)]
 mod tests {
-    use assert_approx_eq::assert_approx_eq;
+
     use clip_mash_types::{
-        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId,
-        RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
+        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, VideoSource,
     };
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
@@ -151,7 +162,7 @@ mod tests {
     use crate::data::database::Database;
     use crate::service::clip::sort::ClipSorter;
     use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
-    use crate::service::fixtures::{self, create_marker_video_id};
+    use crate::service::fixtures::create_marker_video_id;
     use crate::service::VideoId;
     use crate::util::create_seeded_rng;
 

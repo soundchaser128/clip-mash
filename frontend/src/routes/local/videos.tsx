@@ -83,6 +83,7 @@ export default function ListVideos() {
           selected: true,
           selectedRange: [marker.start, marker.end],
           videoId: marker.videoId,
+          title: marker.primaryTag,
         })),
       interactive,
     })

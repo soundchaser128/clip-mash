@@ -8,7 +8,6 @@ import {
 } from "../types/types"
 import {
   Clip,
-  ClipOptions,
   ClipPickerOptions,
   ClipsResponse,
   CreateClipsBody,
@@ -30,6 +29,23 @@ export const configLoader: LoaderFunction = async () => {
 const getClipSettings = (
   state: LocalVideosFormState | StashFormState
 ): ClipPickerOptions => {
+  if (state.clipStrategy === "weighted-random" && state.clipWeights) {
+    return {
+      type: "weightedRandom",
+      length:
+        state.selectedMarkers?.reduce(
+          (sum, {selectedRange: [start, end]}) => sum + (end - start),
+          0
+        ) || 0,
+      weights: state.clipWeights,
+      clipLengths: {
+        type: "randomized",
+        baseDuration: state.clipDuration || 30,
+        divisors: [2, 3, 4],
+      },
+    }
+  }
+
   if (state.songs && state.songs.length > 0) {
     const songsLength = state.songs.reduce(
       (sum, song) => sum + song.duration,

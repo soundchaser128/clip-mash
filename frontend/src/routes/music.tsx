@@ -333,7 +333,7 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
 
 interface MusicSettingsInputs {
   musicVolume: number
-  clipStrategy: "pmv" | "default"
+  clipStrategy: "pmv" | "default" | "weighted-random"
 }
 
 interface MusicSettingsFormProps {

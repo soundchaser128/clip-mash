@@ -158,6 +158,7 @@ pub struct SelectedMarker {
     pub selected_range: (f64, f64),
     pub index_within_video: usize,
     pub selected: Option<bool>,
+    pub title: String,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
@@ -215,7 +216,7 @@ pub struct RoundRobinClipOptions {
 #[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct WeightedRandomClipOptions {
-    pub weights: HashMap<String, f64>,
+    pub weights: Vec<(String, f64)>,
     pub length: f64,
     pub clip_lengths: PmvClipOptions,
 }

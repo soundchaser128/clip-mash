@@ -36,6 +36,7 @@ export type SelectedMarker = {
   selectedRange: [F64, F64]
   indexWithinVideo: Usize
   selected: boolean | null
+  title: string
 }
 export type VideoResolution = "720" | "1080" | "4K"
 export type U32 = number
@@ -68,7 +69,7 @@ export type RoundRobinClipOptions = {
   clipLengths: PmvClipOptions
 }
 export type WeightedRandomClipOptions = {
-  weights: Record<string, F64>
+  weights: [string, F64][]
   length: F64
   clipLengths: PmvClipOptions
 }

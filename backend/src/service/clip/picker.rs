@@ -107,8 +107,8 @@ impl ClipPicker for WeightedRandomClipPicker {
         options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
-        info!("using WeightedRandomClipPicker to make clips: {options:?}");
-        let choices: Vec<(String, f64)> = options.weights.into_iter().collect();
+        info!("using WeightedRandomClipPicker to make clips: {options:#?}");
+        let choices = options.weights;
         let distribution = WeightedIndex::new(choices.iter().map(|item| item.1))
             .expect("could not build distribution");
         let mut total_duration = 0.0;
@@ -233,10 +233,11 @@ mod tests {
     #[traced_test]
     #[test]
     fn test_weighted_random_clips() {
-        let mut weights = HashMap::new();
-        weights.insert("Cowgirl".into(), 1.0 / 3.0);
-        weights.insert("Blowjob".into(), 1.0 / 3.0);
-        weights.insert("Doggy Style".into(), 1.0 / 3.0);
+        let weights = vec![
+            ("Cowgirl".into(), 1.0 / 3.0),
+            ("Blowjob".into(), 1.0 / 3.0),
+            ("Doggy Style".into(), 1.0 / 3.0),
+        ];
 
         let mut picker = WeightedRandomClipPicker;
         let options = WeightedRandomClipOptions {
@@ -267,7 +268,7 @@ mod tests {
                 (clip, marker)
             })
             .collect();
-        let tags: Vec<_> = weights.keys().collect();
+        let tags: Vec<_> = weights.iter().map(|m| &m.0).collect();
         let mut counts: HashMap<&String, usize> = HashMap::new();
         for (_, marker) in clips {
             assert!(tags.contains(&&marker.title));

@@ -57,7 +57,7 @@ export interface InitialFormState {
   id?: string
 }
 
-type ClipStrategy = "pmv" | "default"
+type ClipStrategy = "pmv" | "default" | "weighted-random"
 
 interface CommonFormState {
   id?: string
@@ -80,6 +80,7 @@ interface CommonFormState {
   beatsPerMeasure?: number
   cutAfterMeasures?: MeasureCount
   clipStrategy: ClipStrategy
+  clipWeights?: Array<[string, number]>
 }
 
 export interface LocalVideosFormState extends CommonFormState {

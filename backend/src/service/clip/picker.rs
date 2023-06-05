@@ -38,7 +38,9 @@ impl ClipPicker for RoundRobinClipPicker {
     ) -> Vec<Clip> {
         info!("using RoundRobinClipPicker to make clips: {options:?}");
 
-        let max_duration = options.length;
+        let max_duration = options
+            .length
+            .unwrap_or_else(|| markers.iter().map(|m| m.duration()).sum());
         let mut total_duration = 0.0;
         let mut clips = vec![];
         let mut marker_idx = 0;
@@ -217,17 +219,16 @@ impl ClipPicker for EqualLengthClipPicker {
 mod tests {
     use std::collections::HashMap;
 
+    use assert_approx_eq::assert_approx_eq;
     use clip_mash_types::{
         PmvClipOptions, RandomizedClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
     };
     use tracing_test::traced_test;
 
+    use super::RoundRobinClipPicker;
     use crate::service::clip::picker::{ClipPicker, WeightedRandomClipPicker};
     use crate::service::fixtures;
     use crate::util::create_seeded_rng;
-
-    use super::RoundRobinClipPicker;
-    use assert_approx_eq::assert_approx_eq;
 
     #[traced_test]
     #[test]
@@ -283,7 +284,7 @@ mod tests {
         let video_duration = 673.515;
         let markers = fixtures::markers();
         let options = RoundRobinClipOptions {
-            length: video_duration,
+            length: Some(video_duration),
             clip_lengths: clip_mash_types::PmvClipOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
                 divisors: vec![2.0, 3.0, 4.0],

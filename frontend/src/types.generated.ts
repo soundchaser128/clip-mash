@@ -63,7 +63,10 @@ export type SongClipOptions = {
 export type PmvClipOptions =
   | ({type: "randomized"} & RandomizedClipOptions)
   | ({type: "songs"} & SongClipOptions)
-export type RoundRobinClipOptions = {length: F64; clipLengths: PmvClipOptions}
+export type RoundRobinClipOptions = {
+  length: F64 | null
+  clipLengths: PmvClipOptions
+}
 export type WeightedRandomClipOptions = {
   weights: Record<string, F64>
   length: F64

@@ -9,6 +9,7 @@ import {
 import {
   Clip,
   ClipOptions,
+  ClipPickerOptions,
   ClipsResponse,
   CreateClipsBody,
   NewId,
@@ -28,27 +29,35 @@ export const configLoader: LoaderFunction = async () => {
 
 const getClipSettings = (
   state: LocalVideosFormState | StashFormState
-): ClipOptions => {
+): ClipPickerOptions => {
   if (state.songs && state.songs.length > 0) {
+    const songsLength = state.songs.reduce(
+      (sum, song) => sum + song.duration,
+      0
+    )
     if (state.clipStrategy === "pmv") {
       return {
-        type: "pmv",
-        song_ids: state.songs.map(({songId}) => songId),
-        clips: {
+        type: "roundRobin",
+        clipLengths: {
           type: "songs",
           beatsPerMeasure: state.beatsPerMeasure || 4,
           cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
+          songs: state.songs.map((s) => ({
+            length: s.duration,
+            offsets: s.beats,
+          })),
         },
+        length: songsLength,
       }
     } else {
       return {
-        type: "pmv",
-        song_ids: state.songs.map(({songId}) => songId),
-        clips: {
+        type: "roundRobin",
+        clipLengths: {
           type: "randomized",
-          divisors: [2.0, 3.0, 4.0],
           baseDuration: state.clipDuration || 30,
+          divisors: [2, 3, 4],
         },
+        length: null,
       }
     }
   } else {
@@ -58,9 +67,9 @@ const getClipSettings = (
       }
     } else {
       return {
-        type: "default",
-        baseDuration: state.clipDuration || 30,
-        divisors: [2.0, 3.0, 4.0],
+        type: "equalLength",
+        clipDuration: state.clipDuration || 30,
+        divisors: [2, 3, 4],
       }
     }
   }
@@ -81,7 +90,10 @@ export const clipsLoader: LoaderFunction = async () => {
     clipOrder: state.clipOrder || "scene-order",
     markers: state.selectedMarkers!.filter((m) => m.selected),
     seed: state.seed || null,
-    clips: getClipSettings(state),
+    clips: {
+      clipPicker: getClipSettings(state),
+      order: state.clipOrder || "scene-order",
+    },
   } satisfies CreateClipsBody
 
   const response = await fetch("/api/clips", {

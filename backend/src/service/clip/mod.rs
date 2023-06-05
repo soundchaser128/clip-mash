@@ -101,9 +101,7 @@ impl ClipService {
                 let mut picker = EqualLengthClipPicker;
                 picker.pick_clips(options.markers, picker_options, &mut rng)
             }
-            ClipPickerOptions::NoSplit => {
-                markers_to_clips(options.markers)
-            }
+            ClipPickerOptions::NoSplit => markers_to_clips(options.markers),
         };
 
         let clips = match options.clip_options.order {

@@ -49,30 +49,29 @@ const getClipLengths = (
   }
 }
 
+type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>
+
 const getClipSettings = (
   state: LocalVideosFormState | StashFormState
 ): ClipPickerOptions => {
-  const options: Partial<ClipPickerOptions> = {
+  const options: AtLeast<ClipPickerOptions, "type"> = {
     type: state.clipStrategy || "roundRobin",
   }
 
   if (options.type === "weightedRandom") {
     options.weights = state.clipWeights
     options.clipLengths = getClipLengths(state)
-  }
-
-  if (options.type === "equalLength") {
+  } else if (options.type === "equalLength") {
     options.clipDuration = state.clipDuration || 30
     options.divisors = [2, 3, 4]
-  }
-
-  if (options.type === "roundRobin") {
+  } else if (options.type === "roundRobin") {
     options.clipLengths = getClipLengths(state)
     if (state.songs && state.songs.length) {
       options.length = state.songs.reduce((sum, song) => sum + song.duration, 0)
     }
   }
 
+  // @ts-expect-error meh
   return options
 }
 

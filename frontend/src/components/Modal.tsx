@@ -7,6 +7,7 @@ interface Props {
   children?: React.ReactNode
   className?: string
   size?: "full-screen" | "fluid"
+  position?: "top" | "off-center"
 }
 
 const Modal: React.FC<Props> = ({
@@ -15,6 +16,7 @@ const Modal: React.FC<Props> = ({
   children,
   className,
   size = "full-screen",
+  position = "off-center",
 }) => {
   function handleClose() {
     onClose && onClose()
@@ -32,11 +34,15 @@ const Modal: React.FC<Props> = ({
         className={clsx(
           "fixed left-1/2 transform -translate-x-1/2",
           size === "full-screen" && "w-[95vw] top-4",
-          size !== "full-screen" && "top-32"
+          size !== "full-screen" && position === "off-center" && "top-32",
+          size !== "full-screen" && position === "top" && "top-4"
         )}
       >
         <div
-          className={clsx("bg-white rounded-lg p-4 flex flex-col", className)}
+          className={clsx(
+            "bg-white rounded-lg p-4 flex flex-col overflow-y-auto max-h-[95vh]",
+            className
+          )}
         >
           {children}
         </div>

@@ -7,6 +7,7 @@ import {
   HiBackward,
   HiCheck,
   HiChevronRight,
+  HiCog8Tooth,
   HiForward,
   HiPause,
   HiPlay,
@@ -82,7 +83,7 @@ const Timeline: React.FC<TimelineProps> = ({
   )
 }
 
-const WeightsModal: React.FC = () => {
+const WeightsModal: React.FC<{className?: string}> = ({className}) => {
   const revalidator = useRevalidator()
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
@@ -132,10 +133,14 @@ const WeightsModal: React.FC = () => {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="btn btn-secondary">
+      <button
+        onClick={() => setOpen(true)}
+        className={clsx("btn btn-secondary", className)}
+      >
+        <HiCog8Tooth className="mr-2" />
         Adjust marker ratios
       </button>
-      <Modal size="fluid" isOpen={open} onClose={onClose}>
+      <Modal position="top" size="fluid" isOpen={open} onClose={onClose}>
         <h1 className="text-2xl font-bold mb-2">Marker ratios</h1>
         <p className="text-sm mb-4">
           Here, you can adjust the likelihood of each marker type to be included
@@ -144,16 +149,15 @@ const WeightsModal: React.FC = () => {
 
         <div className="flex flex-col gap-4 items-center">
           <div className="form-control w-72">
-            <label className="label">
+            <label className="label cursor-pointer">
               <span className="label-text">Enable marker ratios</span>
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary"
+                onChange={(e) => setEnabled(e.target.checked)}
+                checked={enabled}
+              />
             </label>
-
-            <input
-              type="checkbox"
-              className="checkbox checkbox-primary"
-              onChange={(e) => setEnabled(e.target.checked)}
-              checked={enabled}
-            />
           </div>
           {weights.map(([title, weight]) => (
             <div
@@ -242,7 +246,7 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
       <h2 className="text-xl font-bold">Settings</h2>
-      <WeightsModal />
+      <WeightsModal className="my-4" />
       {!isPmv && (
         <>
           <div className="form-control">

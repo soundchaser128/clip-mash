@@ -61,6 +61,14 @@ const getClipSettings = (
   if (options.type === "weightedRandom") {
     options.weights = state.clipWeights
     options.clipLengths = getClipLengths(state)
+    if (state.songs && state.songs.length) {
+      options.length = state.songs.reduce((sum, song) => sum + song.duration, 0)
+    } else {
+      options.length = state.selectedMarkers!.reduce(
+        (sum, {selectedRange: [start, end]}) => sum + (end - start),
+        0
+      )
+    }
   } else if (options.type === "equalLength") {
     options.clipDuration = state.clipDuration || 30
     options.divisors = [2, 3, 4]

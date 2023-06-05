@@ -58,9 +58,13 @@ impl ClipPicker for RoundRobinClipPicker {
             if clip_duration.is_none() {
                 break;
             }
+            let (start, index) = start_times[&marker.id.inner()];
+            if (start - marker.end_time).abs() < 0.01 {
+                start_times.remove(&marker.id.inner());
+                break;
+            }
             let clip_duration = clip_duration.unwrap();
 
-            let (start, index) = start_times[&marker.id.inner()];
             let end = (start + clip_duration).min(marker.end_time);
             let duration = end - start;
             if has_music || duration >= MIN_DURATION {

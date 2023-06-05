@@ -87,6 +87,7 @@ const WeightsModal: React.FC = () => {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
 
+  const [previousStrategy] = useState(state.data.clipStrategy)
   const [weights, setWeights] = useImmer<Array<[string, number]>>(() => {
     invariant(StateHelpers.isNotInitial(state.data))
     if (state.data.clipWeights) {
@@ -100,7 +101,7 @@ const WeightsModal: React.FC = () => {
   })
 
   const [enabled, setEnabled] = useState(
-    state.data.clipStrategy === "weighted-random"
+    state.data.clipStrategy === "weightedRandom"
   )
   const [open, setOpen] = useState(false)
 
@@ -118,10 +119,14 @@ const WeightsModal: React.FC = () => {
     if (enabled) {
       actions.updateForm({
         clipWeights: weights,
-        clipStrategy: "weighted-random",
+        clipStrategy: "weightedRandom",
       })
 
       revalidator.revalidate()
+    } else {
+      actions.updateForm({
+        clipStrategy: previousStrategy,
+      })
     }
   }
 
@@ -212,8 +217,7 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
   const revalidator = useRevalidator()
   const {actions, state} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
-  const isPmv =
-    state.data.songs?.length !== 0 && state.data.clipStrategy === "pmv"
+  const isPmv = state.data.songs?.length !== 0
 
   const onSubmit = (values: Inputs) => {
     actions.updateForm({

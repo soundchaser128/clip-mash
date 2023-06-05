@@ -3,7 +3,12 @@ import Field from "../components/Field"
 import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
 import invariant from "tiny-invariant"
-import {FormStage, LocalFilesFormStage, StateHelpers} from "../types/types"
+import {
+  ClipStrategy,
+  FormStage,
+  LocalFilesFormStage,
+  StateHelpers,
+} from "../types/types"
 import React, {useCallback, useRef, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds, sumDurations} from "../helpers"
@@ -333,7 +338,7 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
 
 interface MusicSettingsInputs {
   musicVolume: number
-  clipStrategy: "pmv" | "default" | "weighted-random"
+  clipStrategy: ClipStrategy
 }
 
 interface MusicSettingsFormProps {
@@ -399,7 +404,7 @@ export default function Music() {
     state.data.songs?.map((song) => song.songId) || []
   )
   const [formValues, setFormValues] = useState<MusicSettingsInputs>({
-    clipStrategy: state.data.clipStrategy || "pmv",
+    clipStrategy: state.data.clipStrategy || "",
     musicVolume: state.data.musicVolume ? state.data.musicVolume * 100 : 75,
   })
   const navigate = useNavigate()

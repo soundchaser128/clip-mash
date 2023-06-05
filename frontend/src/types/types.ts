@@ -57,7 +57,11 @@ export interface InitialFormState {
   id?: string
 }
 
-type ClipStrategy = "pmv" | "default" | "weighted-random"
+export type ClipStrategy =
+  | "roundRobin"
+  | "weightedRandom"
+  | "equalLength"
+  | "noSplit"
 
 interface CommonFormState {
   id?: string

@@ -12,6 +12,7 @@ import {
   ClipsResponse,
   CreateClipsBody,
   NewId,
+  PmvClipOptions,
   VideoDto,
 } from "../types.generated"
 
@@ -26,69 +27,53 @@ export const configLoader: LoaderFunction = async () => {
   }
 }
 
+const getClipLengths = (
+  state: LocalVideosFormState | StashFormState
+): PmvClipOptions => {
+  if (state.songs && state.songs.length) {
+    return {
+      type: "songs",
+      beatsPerMeasure: state.beatsPerMeasure || 4,
+      cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
+      songs: state.songs.map((song) => ({
+        length: song.duration,
+        offsets: song.beats,
+      })),
+    }
+  } else {
+    return {
+      type: "randomized",
+      baseDuration: state.clipDuration || 30,
+      divisors: [2, 3, 4],
+    }
+  }
+}
+
 const getClipSettings = (
   state: LocalVideosFormState | StashFormState
 ): ClipPickerOptions => {
-  if (state.clipStrategy === "weighted-random" && state.clipWeights) {
-    return {
-      type: "weightedRandom",
-      length:
-        state.selectedMarkers?.reduce(
-          (sum, {selectedRange: [start, end]}) => sum + (end - start),
-          0
-        ) || 0,
-      weights: state.clipWeights,
-      clipLengths: {
-        type: "randomized",
-        baseDuration: state.clipDuration || 30,
-        divisors: [2, 3, 4],
-      },
+  const options: Partial<ClipPickerOptions> = {
+    type: state.clipStrategy || "roundRobin",
+  }
+
+  if (options.type === "weightedRandom") {
+    options.weights = state.clipWeights
+    options.clipLengths = getClipLengths(state)
+  }
+
+  if (options.type === "equalLength") {
+    options.clipDuration = state.clipDuration || 30
+    options.divisors = [2, 3, 4]
+  }
+
+  if (options.type === "roundRobin") {
+    options.clipLengths = getClipLengths(state)
+    if (state.songs && state.songs.length) {
+      options.length = state.songs.reduce((sum, song) => sum + song.duration, 0)
     }
   }
 
-  if (state.songs && state.songs.length > 0) {
-    const songsLength = state.songs.reduce(
-      (sum, song) => sum + song.duration,
-      0
-    )
-    if (state.clipStrategy === "pmv") {
-      return {
-        type: "roundRobin",
-        clipLengths: {
-          type: "songs",
-          beatsPerMeasure: state.beatsPerMeasure || 4,
-          cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
-          songs: state.songs.map((s) => ({
-            length: s.duration,
-            offsets: s.beats,
-          })),
-        },
-        length: songsLength,
-      }
-    } else {
-      return {
-        type: "roundRobin",
-        clipLengths: {
-          type: "randomized",
-          baseDuration: state.clipDuration || 30,
-          divisors: [2, 3, 4],
-        },
-        length: null,
-      }
-    }
-  } else {
-    if (state.splitClips === false) {
-      return {
-        type: "noSplit",
-      }
-    } else {
-      return {
-        type: "equalLength",
-        clipDuration: state.clipDuration || 30,
-        divisors: [2, 3, 4],
-      }
-    }
-  }
+  return options
 }
 
 export interface ClipsLoaderData {

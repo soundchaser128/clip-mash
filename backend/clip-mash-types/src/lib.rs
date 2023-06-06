@@ -209,7 +209,7 @@ pub enum ClipPickerOptions {
 #[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct RoundRobinClipOptions {
-    pub length: Option<f64>,
+    pub length: f64,
     pub clip_lengths: PmvClipOptions,
 }
 

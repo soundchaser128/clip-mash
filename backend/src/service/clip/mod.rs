@@ -5,7 +5,6 @@ use clip_mash_types::{
     Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions, PmvClipOptions, RoundRobinClipOptions,
     SongClipOptions,
 };
-use rand::rngs::StdRng;
 use tracing::info;
 
 use super::Marker;
@@ -17,7 +16,6 @@ use crate::service::clip::sort::{ClipSorter, RandomClipSorter, SceneOrderClipSor
 use crate::util::create_seeded_rng;
 use crate::Result;
 
-mod default;
 mod picker;
 mod pmv;
 mod sort;
@@ -138,20 +136,8 @@ impl ClipService {
     }
 }
 
-pub trait ClipCreator {
-    type Options;
-
-    fn create_clips(
-        &self,
-        markers: Vec<Marker>,
-        options: Self::Options,
-        rng: &mut StdRng,
-    ) -> Vec<Clip>;
-}
-
 #[cfg(test)]
 mod tests {
-
     use clip_mash_types::{
         Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, VideoSource,
     };

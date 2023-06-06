@@ -49,38 +49,47 @@ const getClipLengths = (
   }
 }
 
-type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>
-
 const getClipSettings = (
   state: LocalVideosFormState | StashFormState
 ): ClipPickerOptions => {
-  const options: AtLeast<ClipPickerOptions, "type"> = {
-    type: state.clipStrategy || "roundRobin",
-  }
-
-  if (options.type === "weightedRandom") {
-    options.weights = state.clipWeights
-    options.clipLengths = getClipLengths(state)
-    if (state.songs && state.songs.length) {
-      options.length = state.songs.reduce((sum, song) => sum + song.duration, 0)
-    } else {
-      options.length = state.selectedMarkers!.reduce(
-        (sum, {selectedRange: [start, end]}) => sum + (end - start),
-        0
-      )
+  if (state.clipStrategy === "weightedRandom") {
+    return {
+      type: "weightedRandom",
+      weights: state.clipWeights!,
+      clipLengths: getClipLengths(state),
+      length:
+        state.songs && state.songs.length > 0
+          ? state.songs.reduce((sum, song) => sum + song.duration, 0)
+          : state.selectedMarkers!.reduce(
+              (sum, {selectedRange: [start, end]}) => sum + (end - start),
+              0
+            ),
     }
-  } else if (options.type === "equalLength") {
-    options.clipDuration = state.clipDuration || 30
-    options.divisors = [2, 3, 4]
-  } else if (options.type === "roundRobin") {
-    options.clipLengths = getClipLengths(state)
-    if (state.songs && state.songs.length) {
-      options.length = state.songs.reduce((sum, song) => sum + song.duration, 0)
+  } else if (state.clipStrategy === "equalLength") {
+    return {
+      type: "equalLength",
+      clipDuration: state.clipDuration || 30,
+      divisors: [2, 3, 4],
+    }
+  } else if (
+    state.clipStrategy === "roundRobin" &&
+    state.songs &&
+    state.songs.length > 0
+  ) {
+    return {
+      type: "roundRobin",
+      clipLengths: getClipLengths(state),
+      length: state.songs.reduce((sum, song) => sum + song.duration, 0),
+    }
+  } else if (state.clipStrategy === "noSplit") {
+    return {type: "noSplit"}
+  } else {
+    return {
+      type: "equalLength",
+      clipDuration: state.clipDuration || 30,
+      divisors: [2, 3, 4],
     }
   }
-
-  // @ts-expect-error meh
-  return options
 }
 
 export interface ClipsLoaderData {

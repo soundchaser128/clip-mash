@@ -75,10 +75,10 @@ impl MarkerState {
         }
     }
 
-    fn find_marker(&self, marker_tag: &str, rng: &mut StdRng) -> Option<Marker> {
+    fn find_marker_by_title(&self, title: &str, rng: &mut StdRng) -> Option<Marker> {
         self.markers
             .iter()
-            .filter(|m| &m.title == marker_tag)
+            .filter(|m| &m.title == title)
             .choose(rng)
             .cloned()
     }
@@ -190,7 +190,7 @@ impl ClipPicker for WeightedRandomClipPicker {
 
         while (total_duration - options.length).abs() > 0.01 {
             let marker_tag = &choices[distribution.sample(rng)].0;
-            if let Some(marker) = marker_state.find_marker(&marker_tag, rng) {
+            if let Some(marker) = marker_state.find_marker_by_title(&marker_tag, rng) {
                 let clip_duration = clip_lengths.pick_duration(rng);
                 if clip_duration.is_none() {
                     break;
@@ -286,10 +286,10 @@ impl ClipPicker for EqualLengthClipPicker {
 mod tests {
     use std::collections::HashMap;
 
-    use assert_approx_eq::assert_approx_eq;
     use clip_mash_types::{
         PmvClipOptions, RandomizedClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
     };
+    use float_cmp::assert_approx_eq;
     use tracing_test::traced_test;
 
     use super::RoundRobinClipPicker;
@@ -369,24 +369,24 @@ mod tests {
                 end - start
             })
             .sum();
-        // assert_eq!(66, clips.len());
-        assert_approx_eq!(clip_duration, video_duration);
+        assert_approx_eq!(f64, clip_duration, video_duration);
     }
 
     #[traced_test]
     #[test]
     fn test_arrange_clips_loop_bug() {
-        // let options = RoundRobinClipOptions {
-        //     length: None,
-        //     clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
-        //         base_duration: 30.0,
-        //         divisors: vec![2.0, 3.0, 4.0],
-        //     }),
-        // };
-        // let markers = fixtures::other_markers();
-        // let mut rng = create_seeded_rng(None);
-        // let mut picker = RoundRobinClipPicker;
-        // let clips = picker.pick_clips(markers, options, &mut rng);
-        // dbg!(clips);
+        let options = RoundRobinClipOptions {
+            length: 200.0,
+            clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                base_duration: 30.0,
+                divisors: vec![2.0, 3.0, 4.0],
+            }),
+        };
+        let markers = fixtures::other_markers();
+        let mut rng = create_seeded_rng(None);
+        let mut picker = RoundRobinClipPicker;
+        let clips = picker.pick_clips(markers, options, &mut rng);
+        let length = clips.iter().map(|c| c.range.1 - c.range.0).sum::<f64>();
+        assert_approx_eq!(f64, length, 200.0, epsilon = 0.01);
     }
 }

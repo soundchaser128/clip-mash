@@ -446,7 +446,7 @@ export default function EditVideoModal() {
                 left: `${offset}%`,
               }}
             >
-              <span className="truncate">{marker.primaryTag}</span>
+              {marker.primaryTag}
             </div>
           )
         })}

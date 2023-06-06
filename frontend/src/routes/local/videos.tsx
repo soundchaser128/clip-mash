@@ -136,7 +136,7 @@ export default function ListVideos() {
             </figure>
             <div className="card-body">
               <h2 className="card-title">
-                <span className="truncate">{video.video.fileName}</span>
+                {video.video.fileName}
               </h2>
               <ul className="flex flex-col gap-2 self-start">
                 <li>

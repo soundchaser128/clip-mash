@@ -41,6 +41,12 @@ impl Clip {
         let (start, end) = self.range;
         end - start
     }
+
+    pub fn can_merge_with(&self, clip: &Clip) -> bool {
+        self.video_id == clip.video_id
+            && self.marker_id == clip.marker_id
+            && self.range.1 == clip.range.0
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, TypeDef)]
@@ -334,3 +340,43 @@ pub type Api = (
     SongDto,
     NewId,
 );
+
+#[cfg(test)]
+mod tests {
+    use crate::{Clip, MarkerId, VideoId, VideoSource};
+
+    #[test]
+    fn test_clip_can_merge_with() {
+        // test that clips can merge with each other
+        let clip1 = Clip {
+            source: VideoSource::Stash,
+            video_id: VideoId::Stash("1".into()),
+            marker_id: MarkerId::Stash(0),
+            range: (0.0, 9.0),
+            index_within_video: 0,
+            index_within_marker: 0,
+        };
+
+        let clip2 = Clip {
+            source: VideoSource::Stash,
+            video_id: VideoId::Stash("1".into()),
+            marker_id: MarkerId::Stash(0),
+            range: (9.0, 14.0),
+            index_within_video: 0,
+            index_within_marker: 1,
+        };
+
+        let clip3 = Clip {
+            source: VideoSource::Stash,
+            video_id: VideoId::Stash("2".into()),
+            marker_id: MarkerId::Stash(0),
+            range: (9.0, 14.0),
+            index_within_video: 0,
+            index_within_marker: 1,
+        };
+
+        assert!(clip1.can_merge_with(&clip2));
+        assert!(!clip1.can_merge_with(&clip3));
+        assert!(!clip2.can_merge_with(&clip1));
+    }
+}

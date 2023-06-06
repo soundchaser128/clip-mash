@@ -23,8 +23,6 @@ import styles from "./clips.module.css"
 import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
 
-const DEBUG = false
-
 interface ClipState {
   included: boolean
   clip: Clip
@@ -95,7 +93,7 @@ const WeightsModal: React.FC<{className?: string}> = ({className}) => {
       return state.data.clipWeights
     } else {
       const markerTitles = Array.from(
-        new Set(state.data.selectedMarkers?.map((m) => m.title))
+        new Set(state.data.selectedMarkers?.map((m) => m.title.trim()))
       ).sort()
       return Array.from(markerTitles).map((title) => [title, 1.0])
     }
@@ -396,6 +394,9 @@ function PreviewClips() {
   const navigate = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const currentMarker = state.data.selectedMarkers?.find(
+    (m) => currentClip.markerId.id === m.id.id
+  )
   const totalLength = clips.reduce(
     (len, {clip}) => len + (clip.range[1] - clip.range[0]),
     0
@@ -472,12 +473,10 @@ function PreviewClips() {
               {formatSeconds(totalLength, "short")}
             </span>
           </p>
-          {DEBUG && (
-            <>
-              <p>Index within the marker: {currentClip.indexWithinMarker}</p>
-              <p>Index within its video: {currentClip.indexWithinVideo}</p>
-            </>
-          )}
+          <p>
+            Marker title:{" "}
+            <span className="font-semibold">{currentMarker?.title}</span>
+          </p>
         </div>
         <button
           type="button"

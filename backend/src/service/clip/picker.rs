@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use clip_mash_types::{
     Clip, EqualLengthClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
 };
+use float_cmp::approx_eq;
 use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::rngs::StdRng;
@@ -53,7 +54,7 @@ impl ClipPicker for RoundRobinClipPicker {
 
         loop {
             let is_finished = match max_duration {
-                Some(len) => (len - total_duration).abs() < 0.05,
+                Some(len) => approx_eq!(f64, len, total_duration, epsilon = 0.001),
                 None => markers.is_empty(),
             };
             if is_finished {
@@ -88,7 +89,7 @@ impl ClipPicker for RoundRobinClipPicker {
             marker_idx += 1;
             start_times.insert(marker.id.inner(), (end, index + 1));
             {
-                if (start - end).abs() < 0.01 {
+                if approx_eq!(f64, start, end, epsilon = 0.001) {
                     markers.remove(marker_idx);
                 }
             }

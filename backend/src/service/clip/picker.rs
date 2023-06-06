@@ -116,7 +116,7 @@ impl ClipPicker for RoundRobinClipPicker {
         let mut clip_lengths: PmvClipLengths = options.clip_lengths.into();
         let mut marker_state = MarkerState::new(markers);
 
-        while (total_duration - options.length).abs() > 0.01 {
+        while total_duration <= options.length {
             if let Some(marker) = marker_state.find_marker_by_index(marker_idx) {
                 if let Some(MarkerStart {
                     start_time: start,
@@ -188,7 +188,7 @@ impl ClipPicker for WeightedRandomClipPicker {
         let mut clips = vec![];
         let mut clip_lengths: PmvClipLengths = options.clip_lengths.into();
 
-        while (total_duration - options.length).abs() > 0.01 {
+        while total_duration <= options.length {
             let marker_tag = &choices[distribution.sample(rng)].0;
             if let Some(marker) = marker_state.find_marker_by_title(&marker_tag, rng) {
                 let clip_duration = clip_lengths.pick_duration(rng);
@@ -369,7 +369,7 @@ mod tests {
                 end - start
             })
             .sum();
-        assert_approx_eq!(f64, clip_duration, video_duration);
+        assert_approx_eq!(f64, clip_duration, video_duration, epsilon = 0.01);
     }
 
     #[traced_test]

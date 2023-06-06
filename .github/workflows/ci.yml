@@ -25,4 +25,4 @@ jobs:
     - name: Test Rust
       env:
         SQLX_OFFLINE: "true"
-      run: cd backend && cargo fmt --check && cargo test
+      run: cd backend && cargo fmt --check --all && cargo test --all

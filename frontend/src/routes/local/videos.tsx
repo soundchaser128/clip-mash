@@ -135,9 +135,7 @@ export default function ListVideos() {
               )}
             </figure>
             <div className="card-body">
-              <h2 className="card-title">
-                {video.video.fileName}
-              </h2>
+              <h2 className="card-title">{video.video.fileName}</h2>
               <ul className="flex flex-col gap-2 self-start">
                 <li>
                   <HiAdjustmentsVertical className="inline mr-2" />

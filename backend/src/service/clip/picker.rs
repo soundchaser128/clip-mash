@@ -32,16 +32,14 @@ impl ClipPicker for RoundRobinClipPicker {
 
     fn pick_clips(
         &mut self,
-        markers: Vec<Marker>,
+        mut markers: Vec<Marker>,
         options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
         info!("using RoundRobinClipPicker to make clips from markers {markers:#?} with options {options:#?}");
 
-        let max_duration = options
-            .length
-            .unwrap_or_else(|| markers.iter().map(|m| m.duration()).sum());
-        info!("maximum video duration: {max_duration}");
+        let max_duration = options.length;
+        info!("maximum video duration: {max_duration:?}");
         let mut total_duration = 0.0;
         let mut clips = vec![];
         let mut marker_idx = 0;
@@ -53,7 +51,15 @@ impl ClipPicker for RoundRobinClipPicker {
             .map(|m| (m.id.inner(), (m.start_time, 0)))
             .collect();
 
-        while (total_duration - max_duration).abs() > 0.01 {
+        loop {
+            let is_finished = match max_duration {
+                Some(len) => (len - total_duration).abs() < 0.05,
+                None => markers.is_empty(),
+            };
+            if is_finished {
+                break;
+            }
+
             let marker = &markers[marker_idx % markers.len()];
             let clip_duration = clip_lengths.pick_duration(rng);
             if clip_duration.is_none() {
@@ -61,7 +67,6 @@ impl ClipPicker for RoundRobinClipPicker {
             }
             let (start, index) = start_times[&marker.id.inner()];
             let clip_duration = clip_duration.unwrap();
-
             let end = (start + clip_duration).min(marker.end_time);
             let duration = end - start;
             if has_music || duration >= MIN_DURATION {
@@ -82,14 +87,21 @@ impl ClipPicker for RoundRobinClipPicker {
             total_duration += duration;
             marker_idx += 1;
             start_times.insert(marker.id.inner(), (end, index + 1));
+            {
+                if (start - end).abs() < 0.01 {
+                    markers.remove(marker_idx);
+                }
+            }
         }
 
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
-        if clips_duration > max_duration {
-            let slack = (clips_duration - max_duration) / clips.len() as f64;
-            info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");
-            for clip in &mut clips {
-                clip.range.1 -= slack;
+        if let Some(max_duration) = max_duration {
+            if clips_duration > max_duration {
+                let slack = (clips_duration - max_duration) / clips.len() as f64;
+                info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");
+                for clip in &mut clips {
+                    clip.range.1 -= slack;
+                }
             }
         }
 
@@ -132,10 +144,10 @@ impl ClipPicker for WeightedRandomClipPicker {
                 if clip_duration.is_none() {
                     break;
                 }
-                // if (start - marker.end_time).abs() < 0.01 {
-                //     start_times.remove(&marker.id.inner());
-                //     break;
-                // }
+                if (start - marker.end_time).abs() < 0.01 {
+                    start_times.remove(&marker.id.inner());
+                    break;
+                }
 
                 let clip_duration = clip_duration.unwrap();
                 let end = (start + clip_duration).min(marker.end_time);

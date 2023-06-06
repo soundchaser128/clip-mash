@@ -228,7 +228,7 @@ impl CompilationGenerator {
         let music_dir = self.directories.music_dir();
 
         let lines: Vec<_> = songs
-            .into_iter()
+            .iter()
             .map(|file| format!("file '{}'", file.file_path))
             .collect();
         let file_content = lines.join("\n");

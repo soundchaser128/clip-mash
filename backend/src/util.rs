@@ -67,9 +67,9 @@ pub fn generate_id() -> String {
 
     lazy_static! {
         static ref ADJECTIVE_LIST: Vec<&'static str> =
-            ADJECTIVES.split("\n").map(|n| n.trim()).collect();
+            ADJECTIVES.split('\n').map(|n| n.trim()).collect();
         static ref ANIMALS_LIST: Vec<&'static str> =
-            ANIMALS.split("\n").map(|n| n.trim()).collect();
+            ANIMALS.split('\n').map(|n| n.trim()).collect();
     }
     let mut rng = thread_rng();
     let adjective1 = ADJECTIVE_LIST.choose(&mut rng).unwrap();

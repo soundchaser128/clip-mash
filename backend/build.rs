@@ -23,7 +23,7 @@ pub fn commandline_error<T>(command_name: &str, output: Output) -> Result<T, Err
 
 fn format_file() -> Result<(), Error> {
     let output = Command::new("prettier")
-        .args(&["--write", TYPE_DEFINITIONS])
+        .args(["--write", TYPE_DEFINITIONS])
         .output()?;
     if output.status.success() {
         Ok(())

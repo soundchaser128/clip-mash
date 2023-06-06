@@ -8,7 +8,6 @@ use color_eyre::eyre::eyre;
 use hound::WavReader;
 use tracing::info;
 
-use crate::data::database::DbSong;
 use crate::util::commandline_error;
 use crate::Result as AppResult;
 
@@ -85,15 +84,4 @@ pub fn detect_beats(file: impl AsRef<Utf8Path>) -> AppResult<Beats> {
         offsets,
         length: duration as f32 / format.sample_rate as f32,
     })
-}
-
-pub fn parse_beats(songs: &[DbSong]) -> Vec<Beats> {
-    songs
-        .iter()
-        .filter_map(|s| {
-            s.beats
-                .as_deref()
-                .and_then(|json| serde_json::from_str(&json).ok())
-        })
-        .collect()
 }

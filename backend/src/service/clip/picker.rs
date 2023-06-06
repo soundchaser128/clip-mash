@@ -36,11 +36,12 @@ impl ClipPicker for RoundRobinClipPicker {
         options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
-        info!("using RoundRobinClipPicker to make clips: {options:?}");
+        info!("using RoundRobinClipPicker to make clips from markers {markers:#?} with options {options:#?}");
 
         let max_duration = options
             .length
             .unwrap_or_else(|| markers.iter().map(|m| m.duration()).sum());
+        info!("maximum video duration: {max_duration}");
         let mut total_duration = 0.0;
         let mut clips = vec![];
         let mut marker_idx = 0;
@@ -52,24 +53,20 @@ impl ClipPicker for RoundRobinClipPicker {
             .map(|m| (m.id.inner(), (m.start_time, 0)))
             .collect();
 
-        while total_duration <= max_duration {
+        while (total_duration - max_duration).abs() > 0.01 {
             let marker = &markers[marker_idx % markers.len()];
             let clip_duration = clip_lengths.pick_duration(rng);
             if clip_duration.is_none() {
                 break;
             }
             let (start, index) = start_times[&marker.id.inner()];
-            if (start - marker.end_time).abs() < 0.01 {
-                start_times.remove(&marker.id.inner());
-                break;
-            }
             let clip_duration = clip_duration.unwrap();
 
             let end = (start + clip_duration).min(marker.end_time);
             let duration = end - start;
             if has_music || duration >= MIN_DURATION {
                 info!(
-                    "adding clip for video {} from {start} - {end}",
+                    "adding clip for video {} from {start} - {end}, total_length = {total_duration}",
                     marker.video_id
                 );
                 clips.push(Clip {
@@ -92,7 +89,7 @@ impl ClipPicker for RoundRobinClipPicker {
             let slack = (clips_duration - max_duration) / clips.len() as f64;
             info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");
             for clip in &mut clips {
-                clip.range.1 = clip.range.1 - slack;
+                clip.range.1 -= slack;
             }
         }
 
@@ -123,7 +120,7 @@ impl ClipPicker for WeightedRandomClipPicker {
         let mut clips = vec![];
         let mut clip_lengths: PmvClipLengths = options.clip_lengths.into();
 
-        while total_duration <= options.length {
+        while (total_duration - options.length).abs() > 0.01 {
             let marker_tag = &choices[distribution.sample(rng)].0;
             let next_marker = markers
                 .iter()
@@ -135,10 +132,10 @@ impl ClipPicker for WeightedRandomClipPicker {
                 if clip_duration.is_none() {
                     break;
                 }
-                if (start - marker.end_time).abs() < 0.01 {
-                    start_times.remove(&marker.id.inner());
-                    break;
-                }
+                // if (start - marker.end_time).abs() < 0.01 {
+                //     start_times.remove(&marker.id.inner());
+                //     break;
+                // }
 
                 let clip_duration = clip_duration.unwrap();
                 let end = (start + clip_duration).min(marker.end_time);
@@ -285,7 +282,7 @@ mod tests {
 
     #[traced_test]
     #[test]
-    fn test_arrange_clips_bug() {
+    fn test_arrange_clips_length_bug() {
         let video_duration = 673.515;
         let markers = fixtures::markers();
         let options = RoundRobinClipOptions {
@@ -308,5 +305,22 @@ mod tests {
             .sum();
         assert_eq!(66, clips.len());
         assert_approx_eq!(clip_duration, video_duration);
+    }
+
+    #[traced_test]
+    #[test]
+    fn test_arrange_clips_loop_bug() {
+        let options = RoundRobinClipOptions {
+            length: None,
+            clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                base_duration: 30.0,
+                divisors: vec![2.0, 3.0, 4.0],
+            }),
+        };
+        let markers = fixtures::other_markers();
+        let mut rng = create_seeded_rng(None);
+        let mut picker = RoundRobinClipPicker;
+        let clips = picker.pick_clips(markers, options, &mut rng);
+        dbg!(clips);
     }
 }

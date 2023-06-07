@@ -71,7 +71,7 @@ const DownloadVideosPage: React.FC = () => {
             onClick={() => clearErrors("urls")}
           />
           <p className="font-bold">Some downloads failed:</p>
-          <pre>{errors.urls.message}</pre>
+          <code>{errors.urls.message}</code>
         </div>
       )}
       <form

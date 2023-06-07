@@ -78,7 +78,7 @@ fn merge_clips(input: Vec<Clip>) -> Vec<Clip> {
     let mut clips = vec![];
     for (key, group) in &input
         .into_iter()
-        .group_by(|v| (v.video_id.clone(), v.marker_id))
+        .group_by(|clip| (clip.video_id.clone(), clip.marker_id))
     {
         let group = group.collect_vec();
         let start = group[0].range.0;
@@ -379,5 +379,6 @@ mod tests {
         let merged = merge_clips(clips);
         assert_eq!(merged.len(), 2);
         assert_eq!(merged[0].range, (0.0, 18.0));
+        assert_eq!(merged[1].range, (12.0, 18.0));
     }
 }

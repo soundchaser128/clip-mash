@@ -59,7 +59,7 @@ impl MarkerState {
         });
 
         if let Entry::Occupied(e) = entry {
-            if approx_eq!(f64, e.get().end_time, start_time) {
+            if approx_eq!(f64, e.get().end_time, start_time, epsilon = 0.001) {
                 e.remove();
                 let index = self.markers.iter().position(|m| m.id == *id).unwrap();
                 self.markers.remove(index);
@@ -133,8 +133,8 @@ impl ClipPicker for RoundRobinClipPicker {
                     let duration = end - start;
                     if has_music || duration >= MIN_DURATION {
                         info!(
-                            "adding clip for video {} from {start} - {end}",
-                            marker.video_id
+                            "adding clip for video {} with duration {duration} and title {}",
+                            marker.video_id, marker.title
                         );
                         clips.push(Clip {
                             index_within_marker: *index,
@@ -214,8 +214,8 @@ impl ClipPicker for WeightedRandomClipPicker {
                         video_id: marker.video_id.clone(),
                     });
                     info!(
-                        "adding clip for tag {} with duration {}",
-                        marker.title, duration
+                        "adding clip for video {} with duration {duration} and title {}",
+                        marker.video_id, marker.title
                     );
 
                     marker_state.update(&marker.id, end, index + 1);
@@ -263,7 +263,10 @@ impl ClipPicker for EqualLengthClipPicker {
                 let end = (offset + duration).min(end);
                 let duration = end - start;
                 if duration > MIN_DURATION {
-                    info!("adding clip {} - {}", start, end);
+                    info!(
+                        "adding clip for video {} with duration {duration} and title {}",
+                        marker.video_id, marker.title
+                    );
                     clips.push(Clip {
                         source: marker.video_id.source(),
                         video_id: marker.video_id.clone(),

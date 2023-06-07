@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use tracing::info;
+use tracing::{debug, info};
 
 use super::Clip;
 
@@ -29,9 +29,11 @@ impl ClipSorter for SceneOrderClipSorter {
     fn sort_clips(&self, clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip> {
         info!("sorting clips with SceneOrderClipSorter");
         let mut clips: Vec<_> = clips.into_iter().map(|c| (c, rng.gen::<usize>())).collect();
+        debug!("clips: {:#?}", clips);
         clips.sort_by_key(|(clip, random)| {
             (clip.index_within_video, clip.index_within_marker, *random)
         });
+        debug!("sorted clips: {:#?}", clips);
         clips.into_iter().map(|(clip, _)| clip).collect()
     }
 }

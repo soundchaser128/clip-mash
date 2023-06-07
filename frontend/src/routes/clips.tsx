@@ -86,7 +86,6 @@ const WeightsModal: React.FC<{className?: string}> = ({className}) => {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
 
-  const [previousStrategy] = useState(state.data.clipStrategy)
   const [weights, setWeights] = useImmer<Array<[string, number]>>(() => {
     invariant(StateHelpers.isNotInitial(state.data))
     if (state.data.clipWeights) {
@@ -124,7 +123,7 @@ const WeightsModal: React.FC<{className?: string}> = ({className}) => {
       revalidator.revalidate()
     } else {
       actions.updateForm({
-        clipStrategy: previousStrategy,
+        clipStrategy: "roundRobin",
       })
     }
   }

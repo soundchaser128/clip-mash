@@ -176,17 +176,34 @@ impl ClipPicker for RoundRobinClipPicker {
 
 pub struct WeightedRandomClipPicker;
 
+impl WeightedRandomClipPicker {
+    fn validate_options(&self, markers: &[Marker], options: &WeightedRandomClipOptions) {
+        for (title, weight) in &options.weights {
+            assert!(
+                *weight > 0.0,
+                "weight for title {} must be greater than 0",
+                title
+            );
+            let marker_count = markers.iter().filter(|m| &m.title == title).count();
+            assert!(marker_count > 0, "no markers found for title {}", title);
+        }
+    }
+}
+
 impl ClipPicker for WeightedRandomClipPicker {
     type Options = WeightedRandomClipOptions;
 
     fn pick_clips(
         &mut self,
         markers: Vec<Marker>,
-        options: Self::Options,
+        mut options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
         info!("using WeightedRandomClipPicker to make clips: {options:#?}");
+        options.weights.retain(|(_, weight)| *weight > 0.0);
+        self.validate_options(&markers, &options);
         let choices = options.weights;
+
         let distribution = WeightedIndex::new(choices.iter().map(|item| item.1))
             .expect("could not build distribution");
         let mut total_duration = 0.0;
@@ -195,7 +212,7 @@ impl ClipPicker for WeightedRandomClipPicker {
         let mut clip_lengths: PmvClipLengths = options.clip_lengths.into();
 
         while total_duration <= options.length {
-            debug!("marker state: {marker_state:#?}, total duration: {total_duration}, target duration: {}", options.length);
+            // debug!("marker state: {marker_state:#?}, total duration: {total_duration}, target duration: {}", options.length);
             if marker_state.markers.is_empty() {
                 info!("no more markers to pick from, stopping");
                 break;
@@ -232,6 +249,11 @@ impl ClipPicker for WeightedRandomClipPicker {
                     marker_state.update(&marker.id, end, index + 1);
                     total_duration += duration;
                 }
+            } else {
+                info!(
+                    "no marker found for title {marker_tag}, skipping, remaining markers: {:?}",
+                    marker_state.markers
+                );
             }
         }
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
@@ -314,7 +336,7 @@ mod tests {
 
     use super::RoundRobinClipPicker;
     use crate::service::clip::picker::{ClipPicker, WeightedRandomClipPicker};
-    use crate::service::fixtures;
+    use crate::service::fixtures::{self, other_markers};
     use crate::util::create_seeded_rng;
 
     #[traced_test]
@@ -391,5 +413,33 @@ mod tests {
         let clip_duration: f64 = clips.iter().map(|c| c.duration()).sum();
 
         assert_approx_eq!(f64, clip_duration, video_duration, epsilon = 0.1);
+    }
+
+    #[traced_test]
+    #[test]
+    fn test_weighted_marker_infinite_loop_bug() {
+        let options = WeightedRandomClipOptions {
+            weights: vec![
+                ("Cowgirl".into(), 1.0),
+                ("Doggy Style".into(), 1.0),
+                ("Handjiob".into(), 1.0),
+                ("Mating Press".into(), 1.0),
+                ("Missionary".into(), 0.0),
+                ("Sex".into(), 1.0),
+                ("Sideways".into(), 1.0),
+            ],
+            length: 956.839832,
+            clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                base_duration: 30.0,
+                divisors: vec![2.0, 3.0, 4.0],
+            }),
+        };
+        let length = options.length;
+        let markers = other_markers();
+        let mut rng = create_seeded_rng(None);
+        let mut picker = WeightedRandomClipPicker;
+        let clips = picker.pick_clips(markers, options, &mut rng);
+        let clip_duration: f64 = clips.iter().map(|c| c.duration()).sum();
+        assert_approx_eq!(f64, clip_duration, length, epsilon = 0.1);
     }
 }

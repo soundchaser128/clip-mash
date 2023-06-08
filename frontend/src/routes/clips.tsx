@@ -85,18 +85,41 @@ const Timeline: React.FC<TimelineProps> = ({
   )
 }
 
-const WeightsModal: React.FC<{className?: string}> = ({className}) => {
+interface MarkerCount {
+  total: number
+  current: number
+}
+
+interface WeightsModalProps {
+  className?: string
+  clips: Clip[]
+}
+
+const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
   const revalidator = useRevalidator()
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
   const markerCounts = useMemo(() => {
     invariant(StateHelpers.isNotInitial(state.data))
 
-    const counts = new Map<string, number>()
+    const counts = new Map<string, MarkerCount>()
     for (const marker of state.data.selectedMarkers ?? []) {
-      const count = counts.get(marker.title) ?? 0
-      counts.set(marker.title, count + 1)
+      const count = counts.get(marker.title) ?? {total: 0, current: 0}
+      counts.set(marker.title, {total: count.total + 1, current: count.current})
     }
+    for (const clip of clips) {
+      const marker = state.data.selectedMarkers?.find(
+        (m) => m.id.id === clip.markerId.id
+      )
+      if (marker && marker.title) {
+        const count = counts.get(marker.title) ?? {total: 0, current: 0}
+        counts.set(marker.title, {
+          total: count.total,
+          current: count.current + 1,
+        })
+      }
+    }
+
     return counts
   }, [state.data.selectedMarkers])
 
@@ -170,37 +193,45 @@ const WeightsModal: React.FC<{className?: string}> = ({className}) => {
               />
             </label>
           </div>
-          {weights.map(([title, weight]) => (
-            <div
-              className={clsx(
-                "form-control",
-                !enabled && "opacity-50 cursor-not-allowed"
-              )}
-              key={title}
-            >
-              <label className="label">
-                <span className="label-text font-semibold">
-                  {title} ({markerCounts.get(title)}{" "}
-                  {pluralize("occurrence", markerCounts.get(title))})
-                </span>
-              </label>
-              <input
-                disabled={!enabled}
-                type="range"
-                min="0"
-                max="100"
-                className="range range-sm w-72"
-                step="5"
-                value={weight * 100}
-                onChange={(e) => onWeightChange(title, e.target.valueAsNumber)}
-              />
-              <div className="w-full flex justify-between text-xs px-2">
-                <span>0%</span>
-                <span className="font-bold">{Math.round(weight * 100)}%</span>
-                <span>100%</span>
+          {weights.map(([title, weight]) => {
+            const count = markerCounts.get(title)
+            const markerLabel = pluralize("marker", count?.total ?? 0)
+            const clipLabel = pluralize("clip", count?.current ?? 0)
+
+            return (
+              <div
+                className={clsx(
+                  "form-control",
+                  !enabled && "opacity-50 cursor-not-allowed"
+                )}
+                key={title}
+              >
+                <label className="label">
+                  <span className="label-text font-semibold">
+                    {title} ({count?.total} {markerLabel}, {count?.current}{" "}
+                    {clipLabel})
+                  </span>
+                </label>
+                <input
+                  disabled={!enabled}
+                  type="range"
+                  min="0"
+                  max="100"
+                  className="range range-sm w-72"
+                  step="5"
+                  value={weight * 100}
+                  onChange={(e) =>
+                    onWeightChange(title, e.target.valueAsNumber)
+                  }
+                />
+                <div className="w-full flex justify-between text-xs px-2">
+                  <span>0%</span>
+                  <span className="font-bold">{Math.round(weight * 100)}%</span>
+                  <span>100%</span>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
 
           <button onClick={onClose} className="btn btn-primary self-end">
             Done
@@ -223,8 +254,9 @@ interface Inputs {
   measureCountRandomEnd: number
 }
 
-const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
+const ClipSettingsForm: React.FC<{initialValues: Inputs; clips: Clip[]}> = ({
   initialValues,
+  clips,
 }) => {
   const {register, handleSubmit, watch} = useForm<Inputs>({
     defaultValues: initialValues,
@@ -260,7 +292,7 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
       <h2 className="text-xl font-bold">Settings</h2>
-      <WeightsModal className="my-4" />
+      <WeightsModal className="my-4" clips={clips} />
       {!isPmv && (
         <>
           <div className="form-control">
@@ -525,6 +557,7 @@ function PreviewClips() {
         />
         <div className="flex flex-col px-4 py-2 w-1/4 bg-base-200 justify-between">
           <ClipSettingsForm
+            clips={clips.map((c) => c.clip)}
             initialValues={{
               clipDuration: state.data.clipDuration || 30,
               clipOrder: state.data.clipOrder || "scene-order",

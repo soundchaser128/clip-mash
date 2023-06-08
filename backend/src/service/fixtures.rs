@@ -208,7 +208,202 @@ pub fn markers() -> Vec<Marker> {
 }
 
 pub fn other_markers() -> Vec<Marker> {
-    vec![]
+    vec![
+        Marker {
+            id: MarkerId::LocalFile(5),
+            start_time: 0.0,
+            end_time: 36.153941,
+            index_within_video: 0,
+            video_id: VideoId::LocalFile("2H0r8zLH".into()),
+            title: "Handjiob".into(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    rowid: Some(5),
+                    video_id: "2H0r8zLH".into(),
+                    start_time: 0.0,
+                    end_time: 36.153941,
+                    title: "Handjiob".into(),
+                    file_path: "/home/martin/videos/[ent duke] Widowmaker HJ.mp4".into(),
+                    index_within_video: 0,
+                },
+            },
+        },
+        Marker {
+            id: MarkerId::LocalFile(2),
+            start_time: 0.0,
+            end_time: 146.014932,
+            index_within_video: 0,
+            video_id: VideoId::LocalFile("PxTxOTfX".into()),
+            title: "Doggy Style".into(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    rowid: Some(2),
+                    video_id: "PxTxOTfX".into(),
+                    start_time: 0.0,
+                    end_time: 146.014932,
+                    title: "Doggy Style".into(),
+                    file_path:
+                        "/home/martin/videos/[HydraFXX] Tifa x Cloud Halloween (Extended).mp4"
+                            .into(),
+                    index_within_video: 0,
+                },
+            },
+        },
+        Marker {
+            id: MarkerId::LocalFile(6),
+            start_time: 0.0,
+            end_time: 61.034,
+            index_within_video: 0,
+            video_id: VideoId::LocalFile("R43ZTr0w".into()),
+            title: "Sideways".into(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    rowid: Some(6),
+                    video_id: "R43ZTr0w".into(),
+                    start_time: 0.0,
+                    end_time: 61.034,
+                    title: "Sideways".into(),
+                    file_path: "/home/martin/videos/4k-dokkaebi-idemi_2160p.mp4".into(),
+                    index_within_video: 0,
+                },
+            },
+        },
+        Marker {
+            id: MarkerId::LocalFile(4),
+            start_time: 14.43444,
+            end_time: 130.941,
+            index_within_video: 0,
+            video_id: VideoId::LocalFile("R_fDbo2f".into()),
+            title: "Mating Press".into(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    rowid: Some(4),
+                    video_id: "R_fDbo2f".into(),
+                    start_time: 14.43444,
+                    end_time: 130.941,
+                    title: "Mating Press".into(),
+                    file_path: "/home/martin/videos/yeero d.va hard anal 1080p.mp4".into(),
+                    index_within_video: 0,
+                },
+            },
+        },
+        Marker {
+            id: MarkerId::LocalFile(1),
+            start_time: 0.0,
+            end_time: 57.126817,
+            index_within_video: 0,
+            video_id: VideoId::LocalFile("RrTBwBZG".into()),
+            title: "Cowgirl".into(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    rowid: Some(1),
+                    video_id: "RrTBwBZG".into(),
+                    start_time: 0.0,
+                    end_time: 57.126817,
+                    title: "Cowgirl".into(),
+                    file_path: "/home/martin/videos/tifa-lockhart-leading-juicyneko_2160p.mp4"
+                        .into(),
+                    index_within_video: 0,
+                },
+            },
+        },
+        Marker {
+            id: MarkerId::LocalFile(7),
+            start_time: 0.0,
+            end_time: 137.472,
+            index_within_video: 0,
+            video_id: VideoId::LocalFile("ZZtG7qbI".into()),
+            title: "Doggy Style".into(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    rowid: Some(7),
+                    video_id: "ZZtG7qbI".into(),
+                    start_time: 0.0,
+                    end_time: 137.472,
+                    title: "Doggy Style".into(),
+                    file_path: "/home/martin/videos/(nagoonimation) Cammy Round 1.mp4".into(),
+                    index_within_video: 0,
+                },
+            },
+        },
+        Marker {
+            id: MarkerId::LocalFile(9),
+            start_time: 0.0,
+            end_time: 162.447575,
+            index_within_video: 0,
+            video_id: VideoId::LocalFile("bJTtKsIe".into()),
+            title: "Missionary".into(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    rowid: Some(9),
+                    video_id: "bJTtKsIe".into(),
+                    start_time: 0.0,
+                    end_time: 162.447575,
+                    title: "Missionary".into(),
+                    file_path: "/home/martin/videos/mercy's appointment nagoonimation 720p.mp4"
+                        .into(),
+                    index_within_video: 0,
+                },
+            },
+        },
+        Marker {
+            id: MarkerId::LocalFile(3),
+            start_time: 0.0,
+            end_time: 39.487,
+            index_within_video: 0,
+            video_id: VideoId::LocalFile("rDxeypDY".into()),
+            title: "Cowgirl".into(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    rowid: Some(3),
+                    video_id: "rDxeypDY".into(),
+                    start_time: 0.0,
+                    end_time: 39.487,
+                    title: "Cowgirl".into(),
+                    file_path: "/home/martin/videos/[HydraFXX] Widowmaker Riding [4K].mp4".into(),
+                    index_within_video: 0,
+                },
+            },
+        },
+        Marker {
+            id: MarkerId::LocalFile(10),
+            start_time: 0.0,
+            end_time: 166.0,
+            index_within_video: 0,
+            video_id: VideoId::LocalFile("wkjHYedN".into()),
+            title: "Sex".into(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    rowid: Some(10),
+                    video_id: "wkjHYedN".into(),
+                    start_time: 0.0,
+                    end_time: 166.0,
+                    title: "Sex".into(),
+                    file_path: "/home/martin/videos/(Hydrafxx) Rachel Amber.mp4".into(),
+                    index_within_video: 0,
+                },
+            },
+        },
+        Marker {
+            id: MarkerId::LocalFile(8),
+            start_time: 0.0,
+            end_time: 34.597007,
+            index_within_video: 0,
+            video_id: VideoId::LocalFile("yObK_Z7p".into()),
+            title: "Sideways".into(),
+            info: MarkerInfo::LocalFile {
+                marker: DbMarker {
+                    rowid: Some(8),
+                    video_id: "yObK_Z7p".into(),
+                    start_time: 0.0,
+                    end_time: 34.597007,
+                    title: "Sideways".into(),
+                    file_path: "/home/martin/videos/tifa-spooning-juicyneko_2160p.mp4".into(),
+                    index_within_video: 0,
+                },
+            },
+        },
+    ]
 }
 
 pub fn create_marker(title: &str, start_time: f64, end_time: f64, index: usize) -> Marker {

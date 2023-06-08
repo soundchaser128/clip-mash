@@ -177,7 +177,12 @@ impl ClipPicker for RoundRobinClipPicker {
 pub struct WeightedRandomClipPicker;
 
 impl WeightedRandomClipPicker {
-    fn validate_options(&self, markers: &[Marker], options: &WeightedRandomClipOptions) {
+    fn validate_options(
+        &self,
+        markers: &[Marker],
+        options: &WeightedRandomClipOptions,
+        weight_labels: &HashSet<&String>,
+    ) {
         for (title, weight) in &options.weights {
             assert!(
                 *weight > 0.0,
@@ -186,12 +191,10 @@ impl WeightedRandomClipPicker {
             );
             let marker_count = markers.iter().filter(|m| &m.title == title).count();
             assert!(marker_count > 0, "no markers found for title {}", title);
-
-            let weights_exist = markers
-                .iter()
-                .all(|m| options.weights.iter().any(|(t, _)| t == &m.title));
-            assert!(weights_exist);
         }
+
+        let weights_exist = markers.iter().all(|m| weight_labels.contains(&m.title));
+        assert!(weights_exist, "all markers must have a weight");
     }
 }
 
@@ -210,7 +213,7 @@ impl ClipPicker for WeightedRandomClipPicker {
         let weight_labels: HashSet<_> = options.weights.iter().map(|(label, _)| label).collect();
         markers.retain(|m| weight_labels.contains(&m.title));
 
-        self.validate_options(&markers, &options);
+        self.validate_options(&markers, &options, &weight_labels);
         let choices = options.weights;
 
         let distribution = WeightedIndex::new(choices.iter().map(|item| item.1))

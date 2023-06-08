@@ -1,4 +1,9 @@
-import {parseTimestamp, formatSeconds} from "../helpers"
+import {
+  parseTimestamp,
+  formatSeconds,
+  sumDurations,
+  HasDuration,
+} from "../helpers"
 import {describe, expect, it} from "vitest"
 
 describe("parseTimestamp", () => {
@@ -23,5 +28,38 @@ describe("formatSeconds", () => {
     expect(formatSeconds(200, "long")).toBe("3 minutes 20 seconds")
     expect(formatSeconds(100.08, "long")).toBe("1 minute 40 seconds")
     expect(formatSeconds(0, "long")).toBe("0 seconds")
+  })
+})
+
+describe("sumDurations", () => {
+  it("should return 0 when no markers are provided", () => {
+    expect(sumDurations()).toBe(0)
+  })
+
+  it("should return 0 when no markers are selected", () => {
+    const markers = [
+      {selected: false, selectedRange: [0, 10]},
+      {selected: false, selectedRange: [10, 20]},
+      {selected: false, selectedRange: [20, 30]},
+    ] satisfies HasDuration[]
+    expect(sumDurations(markers)).toBe(0)
+  })
+
+  it("should return the sum of selected marker durations", () => {
+    const markers = [
+      {selected: true, selectedRange: [0, 10]},
+      {selected: false, selectedRange: [10, 20]},
+      {selected: true, selectedRange: [20, 30]},
+    ] satisfies HasDuration[]
+    expect(sumDurations(markers)).toBe(20)
+  })
+
+  it("should handle markers with overlapping selected ranges", () => {
+    const markers = [
+      {selected: true, selectedRange: [0, 10]},
+      {selected: true, selectedRange: [5, 15]},
+      {selected: true, selectedRange: [10, 20]},
+    ] satisfies HasDuration[]
+    expect(sumDurations(markers)).toBe(30)
   })
 })

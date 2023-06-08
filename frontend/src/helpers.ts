@@ -70,7 +70,9 @@ export function parseTimestamp(string: string): number {
   return millis / 1000.0
 }
 
-export function sumDurations(markers?: SelectedMarker[]): number {
+export type HasDuration = Pick<SelectedMarker, "selected" | "selectedRange">
+
+export function sumDurations(markers?: HasDuration[]): number {
   if (!markers) {
     return 0
   } else {

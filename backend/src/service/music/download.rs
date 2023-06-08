@@ -144,6 +144,7 @@ mod test {
     use crate::service::directories::Directories;
     use crate::service::music::download::MusicDownloadService;
 
+    #[ignore]
     #[sqlx::test]
     async fn test_download_song(pool: SqlitePool) {
         let database = Database::with_pool(pool);

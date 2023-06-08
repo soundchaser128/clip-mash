@@ -6,7 +6,7 @@ use rand::seq::IteratorRandom;
 use rand::Rng;
 use tracing::debug;
 
-const MIN_DURATION: f64 = 1.5;
+use super::MIN_DURATION;
 
 #[derive(Debug)]
 pub struct SongOptionsState {

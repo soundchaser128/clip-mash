@@ -134,6 +134,40 @@ mod tests {
 
     #[traced_test]
     #[test]
+    fn test_weighted_distribution() {
+        let options = WeightedRandomClipOptions {
+            weights: vec![
+                ("Cowgirl".into(), 0.0),
+                ("Doggy Style".into(), 1.0),
+                ("Handjiob".into(), 1.0),
+                ("Mating Press".into(), 1.0),
+                ("Missionary".into(), 0.0),
+                ("Sex".into(), 0.0),
+                ("Sideways".into(), 1.0),
+            ],
+            length: 956.839832,
+            clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                base_duration: 30.0,
+                divisors: vec![2.0, 3.0, 4.0],
+            }),
+        };
+        let markers = fixtures::other_markers();
+        let mut rng = create_seeded_rng(None);
+        let mut picker = WeightedRandomClipPicker;
+        let clips = picker.pick_clips(markers.clone(), options, &mut rng);
+        for clip in clips {
+            let marker = markers
+                .iter()
+                .find(|marker| marker.id == clip.marker_id)
+                .unwrap();
+            assert_ne!(marker.title, "Cowgirl");
+            assert_ne!(marker.title, "Missionary");
+            assert_ne!(marker.title, "Sex");
+        }
+    }
+
+    #[traced_test]
+    #[test]
     fn test_weighted_marker_infinite_loop_bug() {
         let options = WeightedRandomClipOptions {
             weights: vec![

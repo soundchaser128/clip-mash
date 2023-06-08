@@ -23,6 +23,10 @@ import styles from "./clips.module.css"
 import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
 
+function pluralize(word: string, count: number | undefined | null): string {
+  return count === 1 ? word : `${word}s`
+}
+
 interface ClipState {
   included: boolean
   clip: Clip
@@ -85,6 +89,16 @@ const WeightsModal: React.FC<{className?: string}> = ({className}) => {
   const revalidator = useRevalidator()
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
+  const markerCounts = useMemo(() => {
+    invariant(StateHelpers.isNotInitial(state.data))
+
+    const counts = new Map<string, number>()
+    for (const marker of state.data.selectedMarkers ?? []) {
+      const count = counts.get(marker.title) ?? 0
+      counts.set(marker.title, count + 1)
+    }
+    return counts
+  }, [state.data.selectedMarkers])
 
   const [weights, setWeights] = useImmer<Array<[string, number]>>(() => {
     invariant(StateHelpers.isNotInitial(state.data))
@@ -165,7 +179,10 @@ const WeightsModal: React.FC<{className?: string}> = ({className}) => {
               key={title}
             >
               <label className="label">
-                <span className="label-text font-semibold">{title}</span>
+                <span className="label-text font-semibold">
+                  {title} ({markerCounts.get(title)}{" "}
+                  {pluralize("occurrence", markerCounts.get(title))})
+                </span>
               </label>
               <input
                 disabled={!enabled}

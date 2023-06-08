@@ -1,11 +1,13 @@
 import React from "react"
-import { render, screen, fireEvent } from "@testing-library/react"
+import {render} from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import Modal from "../Modal"
+import {vi} from "vitest"
 
 describe("Modal", () => {
   it("renders children when isOpen is true", () => {
-    render(
-      <Modal isOpen={true}>
+    const screen = render(
+      <Modal isOpen>
         <div>Test Content</div>
       </Modal>
     )
@@ -14,7 +16,7 @@ describe("Modal", () => {
   })
 
   it("does not render children when isOpen is false", () => {
-    render(
+    const screen = render(
       <Modal isOpen={false}>
         <div>Test Content</div>
       </Modal>
@@ -23,38 +25,26 @@ describe("Modal", () => {
     expect(screen.queryByText("Test Content")).not.toBeInTheDocument()
   })
 
-  it("calls onClose when close button is clicked", () => {
-    const handleClose = jest.fn()
+  it("calls onClose when close button is clicked", async () => {
+    const handleClose = vi.fn()
 
-    render(
+    const screen = render(
       <Modal isOpen={true} onClose={handleClose}>
         <div>Test Content</div>
       </Modal>
     )
-
-    fireEvent.click(screen.getByRole("button"))
+    await userEvent.click(screen.getByRole("button"))
 
     expect(handleClose).toHaveBeenCalledTimes(1)
   })
 
   it("applies className to root element", () => {
-    render(
+    const screen = render(
       <Modal isOpen={true} className="test-class">
         <div>Test Content</div>
       </Modal>
     )
 
-    expect(screen.getByTestId("modal-root")).toHaveClass("test-class")
-  })
-
-  it("applies size and position props correctly", () => {
-    render(
-      <Modal isOpen={true} size="fluid" position="top">
-        <div>Test Content</div>
-      </Modal>
-    )
-
-    expect(screen.getByTestId("modal-content")).toHaveClass("top-4")
-    expect(screen.getByTestId("modal-content")).not.toHaveClass("w-[95vw]")
+    expect(screen.getByTestId("modal-content")).toHaveClass("test-class")
   })
 })

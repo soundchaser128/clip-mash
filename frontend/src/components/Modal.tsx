@@ -22,8 +22,13 @@ const Modal: React.FC<Props> = ({
     onClose && onClose()
   }
 
+  if (!isOpen) {
+    return null
+  }
+
   return (
     <div
+      data-testid="modal-root"
       className={clsx(
         isOpen && "fixed inset-0 z-50 overflow-auto",
         !isOpen && "hidden"
@@ -39,6 +44,7 @@ const Modal: React.FC<Props> = ({
         )}
       >
         <div
+          data-testid="modal-content"
           className={clsx(
             "bg-white rounded-lg p-4 flex flex-col overflow-y-auto max-h-[95vh]",
             className
@@ -48,6 +54,7 @@ const Modal: React.FC<Props> = ({
         </div>
 
         <button
+          data-testid="modal-close-button"
           className="absolute top-1 right-1 text-gray-700 hover:text-gray-800"
           onClick={handleClose}
         >

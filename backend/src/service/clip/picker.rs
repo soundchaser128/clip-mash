@@ -176,26 +176,25 @@ impl ClipPicker for RoundRobinClipPicker {
 
 pub struct WeightedRandomClipPicker;
 
-impl WeightedRandomClipPicker {
-    fn validate_options(
-        &self,
-        markers: &[Marker],
-        options: &WeightedRandomClipOptions,
-        weight_labels: &HashSet<&String>,
-    ) {
-        for (title, weight) in &options.weights {
-            assert!(
-                *weight > 0.0,
-                "weight for title {} must be greater than 0",
-                title
-            );
-            let marker_count = markers.iter().filter(|m| &m.title == title).count();
-            assert!(marker_count > 0, "no markers found for title {}", title);
-        }
-
-        let weights_exist = markers.iter().all(|m| weight_labels.contains(&m.title));
-        assert!(weights_exist, "all markers must have a weight");
+fn validate_options(
+    markers: &[Marker],
+    options: &WeightedRandomClipOptions,
+    weight_labels: &HashSet<&str>,
+) {
+    for (title, weight) in &options.weights {
+        assert!(
+            *weight > 0.0,
+            "weight for title {} must be greater than 0",
+            title
+        );
+        let marker_count = markers.iter().filter(|m| &m.title == title).count();
+        assert!(marker_count > 0, "no markers found for title {}", title);
     }
+
+    let weights_exist = markers
+        .iter()
+        .all(|m| weight_labels.contains(m.title.as_str()));
+    assert!(weights_exist, "all markers must have a weight");
 }
 
 impl ClipPicker for WeightedRandomClipPicker {
@@ -210,10 +209,14 @@ impl ClipPicker for WeightedRandomClipPicker {
         info!("using WeightedRandomClipPicker to make clips: {options:#?}");
         debug!("using markers: {markers:#?}");
         options.weights.retain(|(_, weight)| *weight > 0.0);
-        let weight_labels: HashSet<_> = options.weights.iter().map(|(label, _)| label).collect();
-        markers.retain(|m| weight_labels.contains(&m.title));
+        let weight_labels: HashSet<_> = options
+            .weights
+            .iter()
+            .map(|(label, _)| label.as_str())
+            .collect();
+        markers.retain(|m| weight_labels.contains(m.title.as_str()));
 
-        self.validate_options(&markers, &options, &weight_labels);
+        validate_options(&markers, &options, &weight_labels);
         let choices = options.weights;
 
         let distribution = WeightedIndex::new(choices.iter().map(|item| item.1))
@@ -346,7 +349,7 @@ mod tests {
     use float_cmp::assert_approx_eq;
     use tracing_test::traced_test;
 
-    use super::RoundRobinClipPicker;
+    use super::{validate_options, RoundRobinClipPicker};
     use crate::service::clip::picker::{ClipPicker, WeightedRandomClipPicker};
     use crate::service::fixtures::{self, other_markers};
     use crate::util::create_seeded_rng;
@@ -446,12 +449,86 @@ mod tests {
                 divisors: vec![2.0, 3.0, 4.0],
             }),
         };
-        let length = options.length;
         let markers = other_markers();
         let mut rng = create_seeded_rng(None);
         let mut picker = WeightedRandomClipPicker;
         let clips = picker.pick_clips(markers, options, &mut rng);
         let clip_duration: f64 = clips.iter().map(|c| c.duration()).sum();
         assert!(clip_duration >= 0.0);
+    }
+
+    #[test]
+    fn test_validate_options_valid() {
+        let markers = vec![
+            fixtures::create_marker("A", 0.0, 30.0, 0),
+            fixtures::create_marker("B", 0.0, 30.0, 1),
+            fixtures::create_marker("C", 0.0, 30.0, 2),
+        ];
+        let options = WeightedRandomClipOptions {
+            weights: vec![
+                ("A".to_string(), 1.0),
+                ("B".to_string(), 2.0),
+                ("C".to_string(), 3.0),
+            ],
+            clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                base_duration: 30.0,
+                divisors: vec![2.0, 3.0, 4.0],
+            }),
+            length: 30.0,
+        };
+        let weight_labels = vec!["A", "B", "C"].into_iter().collect();
+
+        validate_options(&markers, &options, &weight_labels);
+    }
+
+    #[test]
+    #[should_panic(expected = "weight for title A must be greater than 0")]
+    fn test_validate_options_zero_weight() {
+        let markers = vec![fixtures::create_marker("A", 0.0, 30.0, 0)];
+        let options = WeightedRandomClipOptions {
+            weights: vec![("A".to_string(), 0.0)],
+            clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                base_duration: 30.0,
+                divisors: vec![2.0, 3.0, 4.0],
+            }),
+            length: 30.0,
+        };
+        let weight_labels = vec!["A"].into_iter().collect();
+
+        validate_options(&markers, &options, &weight_labels);
+    }
+
+    #[test]
+    #[should_panic(expected = "no markers found for title B")]
+    fn test_validate_options_missing_marker() {
+        let markers = vec![fixtures::create_marker("A", 0.0, 30.0, 0)];
+        let options = WeightedRandomClipOptions {
+            weights: vec![("B".to_string(), 1.0)],
+            clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                base_duration: 30.0,
+                divisors: vec![2.0, 3.0, 4.0],
+            }),
+            length: 30.0,
+        };
+        let weight_labels = vec!["B"].into_iter().collect();
+
+        validate_options(&markers, &options, &weight_labels);
+    }
+
+    #[test]
+    #[should_panic(expected = "all markers must have a weight")]
+    fn test_validate_options_missing_weight() {
+        let markers = vec![fixtures::create_marker("A", 0.0, 30.0, 0)];
+        let options = WeightedRandomClipOptions {
+            weights: vec![],
+            clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                base_duration: 30.0,
+                divisors: vec![2.0, 3.0, 4.0],
+            }),
+            length: 30.0,
+        };
+        let weight_labels = vec![].into_iter().collect();
+
+        validate_options(&markers, &options, &weight_labels);
     }
 }

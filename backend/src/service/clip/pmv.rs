@@ -9,7 +9,7 @@ use tracing::debug;
 const MIN_DURATION: f64 = 1.5;
 
 #[derive(Debug)]
-pub struct PmvSongs {
+pub struct SongOptionsState {
     pub songs: Vec<Beats>,
     pub beats_per_measure: usize,
     pub cut_after_measure_count: MeasureCount,
@@ -18,7 +18,7 @@ pub struct PmvSongs {
     beat_index: usize,
 }
 
-impl PmvSongs {
+impl SongOptionsState {
     pub fn new(
         songs: Vec<Beats>,
         beats_per_measure: usize,
@@ -66,37 +66,37 @@ impl PmvSongs {
 }
 
 #[derive(Debug)]
-pub enum PmvClipLengths {
+pub enum ClipLength {
     Randomized {
         base_duration: f64,
         divisors: Vec<f64>,
     },
-    Songs(PmvSongs),
+    Songs(SongOptionsState),
 }
 
-impl PmvClipLengths {
+impl ClipLength {
     pub fn pick_duration(&mut self, rng: &mut StdRng) -> Option<f64> {
         match self {
-            PmvClipLengths::Randomized {
+            ClipLength::Randomized {
                 base_duration,
                 divisors,
             } => divisors
                 .iter()
                 .map(|d| (*base_duration / *d).max(MIN_DURATION))
                 .choose(rng),
-            PmvClipLengths::Songs(songs) => songs.next_duration(rng),
+            ClipLength::Songs(songs) => songs.next_duration(rng),
         }
     }
 }
 
-impl From<PmvClipOptions> for PmvClipLengths {
+impl From<PmvClipOptions> for ClipLength {
     fn from(value: PmvClipOptions) -> Self {
         match value {
-            PmvClipOptions::Randomized(options) => PmvClipLengths::Randomized {
+            PmvClipOptions::Randomized(options) => ClipLength::Randomized {
                 base_duration: options.base_duration,
                 divisors: options.divisors,
             },
-            PmvClipOptions::Songs(options) => PmvClipLengths::Songs(PmvSongs::new(
+            PmvClipOptions::Songs(options) => ClipLength::Songs(SongOptionsState::new(
                 options.songs,
                 options.beats_per_measure,
                 options.cut_after_measures,
@@ -110,7 +110,7 @@ mod test {
     use clip_mash_types::{Beats, MeasureCount};
     use tracing_test::traced_test;
 
-    use super::PmvSongs;
+    use super::SongOptionsState;
     use crate::util::create_seeded_rng;
 
     #[traced_test]
@@ -127,7 +127,7 @@ mod test {
                 offsets: (0..250).into_iter().map(|n| n as f32).collect(),
             },
         ];
-        let mut songs = PmvSongs::new(beats, 4, MeasureCount::Fixed { count: 1 });
+        let mut songs = SongOptionsState::new(beats, 4, MeasureCount::Fixed { count: 1 });
         let mut durations = vec![];
         while let Some(duration) = songs.next_duration(&mut rng) {
             durations.push(duration);
@@ -150,7 +150,7 @@ mod test {
                 offsets: (0..250).into_iter().map(|n| n as f32).collect(),
             },
         ];
-        let mut songs = PmvSongs::new(beats, 4, MeasureCount::Random { min: 1, max: 3 });
+        let mut songs = SongOptionsState::new(beats, 4, MeasureCount::Random { min: 1, max: 3 });
         let mut durations = vec![];
         while let Some(duration) = songs.next_duration(&mut rng) {
             durations.push(duration);

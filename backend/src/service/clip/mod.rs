@@ -6,20 +6,37 @@ use clip_mash_types::{
     SongClipOptions,
 };
 use itertools::Itertools;
+use rand::rngs::StdRng;
 use tracing::{debug, info};
 
 use super::Marker;
 use crate::data::database::Database;
-use crate::service::clip::picker::{
-    ClipPicker, EqualLengthClipPicker, RoundRobinClipPicker, WeightedRandomClipPicker,
-};
+use crate::service::clip::equal_len::EqualLengthClipPicker;
+use crate::service::clip::round_robin::RoundRobinClipPicker;
 use crate::service::clip::sort::{ClipSorter, RandomClipSorter, SceneOrderClipSorter};
+use crate::service::clip::weighted::WeightedRandomClipPicker;
 use crate::util::create_seeded_rng;
 use crate::Result;
 
+mod equal_len;
 mod picker;
 mod pmv;
+mod round_robin;
 mod sort;
+mod weighted;
+
+const MIN_DURATION: f64 = 1.5;
+
+pub trait ClipPicker {
+    type Options;
+
+    fn pick_clips(
+        &mut self,
+        markers: Vec<Marker>,
+        options: Self::Options,
+        rng: &mut StdRng,
+    ) -> Vec<Clip>;
+}
 
 #[derive(Debug)]
 pub struct CreateClipsOptions {

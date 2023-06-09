@@ -2,9 +2,9 @@ use clip_mash_types::{Clip, PmvClipOptions, RoundRobinClipOptions};
 use rand::rngs::StdRng;
 use tracing::{debug, info};
 
-use super::pmv::ClipLength;
+use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
-use crate::service::clip::picker::{MarkerStart, MarkerState};
+use crate::service::clip::state::{MarkerStart, MarkerState};
 use crate::service::clip::MIN_DURATION;
 use crate::service::Marker;
 
@@ -26,7 +26,7 @@ impl ClipPicker for RoundRobinClipPicker {
         let mut clips = vec![];
         let mut marker_idx = 0;
         let has_music = matches!(options.clip_lengths, PmvClipOptions::Songs(_));
-        let mut clip_lengths: ClipLength = options.clip_lengths.into();
+        let mut clip_lengths: ClipLengthPicker = options.clip_lengths.into();
         let mut marker_state = MarkerState::new(markers);
 
         while total_duration <= options.length {
@@ -55,7 +55,12 @@ impl ClipPicker for RoundRobinClipPicker {
                             "adding clip for video {} with duration {duration} and title {}",
                             marker.video_id, marker.title
                         );
-                        assert!(end > *start, "end time {} must be greater than start time {}", end, start);
+                        assert!(
+                            end > *start,
+                            "end time {} must be greater than start time {}",
+                            end,
+                            start
+                        );
                         clips.push(Clip {
                             index_within_marker: *index,
                             index_within_video: marker.index_within_video,

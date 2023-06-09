@@ -66,7 +66,7 @@ impl SongOptionsState {
 }
 
 #[derive(Debug)]
-pub enum ClipLength {
+pub enum ClipLengthPicker {
     Randomized {
         base_duration: f64,
         divisors: Vec<f64>,
@@ -74,29 +74,29 @@ pub enum ClipLength {
     Songs(SongOptionsState),
 }
 
-impl ClipLength {
+impl ClipLengthPicker {
     pub fn pick_duration(&mut self, rng: &mut StdRng) -> Option<f64> {
         match self {
-            ClipLength::Randomized {
+            ClipLengthPicker::Randomized {
                 base_duration,
                 divisors,
             } => divisors
                 .iter()
                 .map(|d| (*base_duration / *d).max(MIN_DURATION))
                 .choose(rng),
-            ClipLength::Songs(songs) => songs.next_duration(rng),
+            ClipLengthPicker::Songs(songs) => songs.next_duration(rng),
         }
     }
 }
 
-impl From<PmvClipOptions> for ClipLength {
+impl From<PmvClipOptions> for ClipLengthPicker {
     fn from(value: PmvClipOptions) -> Self {
         match value {
-            PmvClipOptions::Randomized(options) => ClipLength::Randomized {
+            PmvClipOptions::Randomized(options) => ClipLengthPicker::Randomized {
                 base_duration: options.base_duration,
                 divisors: options.divisors,
             },
-            PmvClipOptions::Songs(options) => ClipLength::Songs(SongOptionsState::new(
+            PmvClipOptions::Songs(options) => ClipLengthPicker::Songs(SongOptionsState::new(
                 options.songs,
                 options.beats_per_measure,
                 options.cut_after_measures,

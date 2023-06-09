@@ -19,10 +19,10 @@ use crate::util::create_seeded_rng;
 use crate::Result;
 
 mod equal_len;
-mod picker;
-mod pmv;
+mod length_picker;
 mod round_robin;
 mod sort;
+mod state;
 mod weighted;
 
 const MIN_DURATION: f64 = 1.5;

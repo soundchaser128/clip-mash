@@ -242,9 +242,7 @@ pub fn other_markers() -> Vec<Marker> {
                     start_time: 0.0,
                     end_time: 146.014932,
                     title: "Doggy Style".into(),
-                    file_path:
-                        "/videos/[HydraFXX] Tifa x Cloud Halloween (Extended).mp4"
-                            .into(),
+                    file_path: "/videos/[HydraFXX] Tifa x Cloud Halloween (Extended).mp4".into(),
                     index_within_video: 0,
                 },
             },
@@ -301,8 +299,7 @@ pub fn other_markers() -> Vec<Marker> {
                     start_time: 0.0,
                     end_time: 57.126817,
                     title: "Cowgirl".into(),
-                    file_path: "/videos/tifa-lockhart-leading-juicyneko_2160p.mp4"
-                        .into(),
+                    file_path: "/videos/tifa-lockhart-leading-juicyneko_2160p.mp4".into(),
                     index_within_video: 0,
                 },
             },
@@ -340,8 +337,7 @@ pub fn other_markers() -> Vec<Marker> {
                     start_time: 0.0,
                     end_time: 162.447575,
                     title: "Missionary".into(),
-                    file_path: "/videos/mercy's appointment nagoonimation 720p.mp4"
-                        .into(),
+                    file_path: "/videos/mercy's appointment nagoonimation 720p.mp4".into(),
                     index_within_video: 0,
                 },
             },

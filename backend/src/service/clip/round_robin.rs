@@ -55,6 +55,7 @@ impl ClipPicker for RoundRobinClipPicker {
                             "adding clip for video {} with duration {duration} and title {}",
                             marker.video_id, marker.title
                         );
+                        assert!(end > *start, "end time {} must be greater than start time {}", end, start);
                         clips.push(Clip {
                             index_within_marker: *index,
                             index_within_video: marker.index_within_video,

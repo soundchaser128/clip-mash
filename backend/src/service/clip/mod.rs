@@ -7,7 +7,7 @@ use clip_mash_types::{
 };
 use itertools::Itertools;
 use rand::rngs::StdRng;
-use tracing::{debug, info};
+use tracing::info;
 
 use super::Marker;
 use crate::data::database::Database;
@@ -90,32 +90,6 @@ pub struct ClipsResult {
     pub beat_offsets: Option<Vec<f32>>,
 }
 
-fn merge_clips(input: Vec<Clip>) -> Vec<Clip> {
-    info!("merging {} clips", input.len());
-    let mut clips = vec![];
-    for (key, group) in &input
-        .into_iter()
-        .group_by(|clip| (clip.video_id.clone(), clip.marker_id))
-    {
-        let group = group.collect_vec();
-        let start = group[0].range.0;
-        let end = group.last().unwrap().range.1;
-        clips.push(Clip {
-            source: group[0].source.clone(),
-            video_id: key.0,
-            marker_id: key.1,
-            range: (start, end),
-            index_within_marker: 0,
-            index_within_video: group[0].index_within_video,
-        })
-    }
-
-    debug!("merging resulted in clips {clips:#?}");
-    info!("merge result: {} clips", clips.len());
-
-    clips
-}
-
 pub struct ClipService {
     _db: Database,
 }
@@ -167,7 +141,6 @@ impl ClipService {
             }
             ClipOrder::NoOp => clips,
         };
-        let clips = merge_clips(clips);
 
         let elapsed = start.elapsed();
         info!("generated {} clips in {:?}", clips.len(), elapsed);
@@ -190,7 +163,7 @@ mod tests {
     use super::{ClipOrder, CreateClipsOptions};
     use crate::data::database::Database;
     use crate::service::clip::sort::ClipSorter;
-    use crate::service::clip::{merge_clips, ClipService, ClipsResult, SceneOrderClipSorter};
+    use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
     use crate::service::fixtures::create_marker_video_id;
     use crate::service::VideoId;
     use crate::util::create_seeded_rng;
@@ -328,74 +301,5 @@ mod tests {
 
         assert_eq!(sorted[0].range, (1.0, 12.0));
         assert_eq!(sorted[1].range, (0.0, 9.0));
-    }
-
-    #[traced_test]
-    #[test]
-    fn test_merge_two_clips() {
-        let clips = vec![
-            Clip {
-                index_within_marker: 0,
-                index_within_video: 0,
-                marker_id: MarkerId::LocalFile(1),
-                range: (0.0, 9.0),
-                source: VideoSource::LocalFile,
-                video_id: VideoId::LocalFile("1".into()),
-            },
-            Clip {
-                index_within_marker: 1,
-                index_within_video: 0,
-                marker_id: MarkerId::LocalFile(1),
-                range: (9.0, 12.0),
-                source: VideoSource::LocalFile,
-                video_id: VideoId::LocalFile("1".into()),
-            },
-        ];
-        let merged = merge_clips(clips);
-        assert_eq!(merged.len(), 1);
-        assert_eq!(merged[0].range, (0.0, 12.0));
-    }
-
-    #[traced_test]
-    #[test]
-    fn test_merge_three_clips() {
-        let clips = vec![
-            Clip {
-                index_within_marker: 0,
-                index_within_video: 0,
-                marker_id: MarkerId::LocalFile(1),
-                range: (0.0, 9.0),
-                source: VideoSource::LocalFile,
-                video_id: VideoId::LocalFile("1".into()),
-            },
-            Clip {
-                index_within_marker: 1,
-                index_within_video: 0,
-                marker_id: MarkerId::LocalFile(1),
-                range: (9.0, 12.0),
-                source: VideoSource::LocalFile,
-                video_id: VideoId::LocalFile("1".into()),
-            },
-            Clip {
-                index_within_marker: 2,
-                index_within_video: 0,
-                marker_id: MarkerId::LocalFile(1),
-                range: (12.0, 18.0),
-                source: VideoSource::LocalFile,
-                video_id: VideoId::LocalFile("1".into()),
-            },
-            Clip {
-                index_within_marker: 2,
-                index_within_video: 0,
-                marker_id: MarkerId::LocalFile(1),
-                range: (12.0, 18.0),
-                source: VideoSource::LocalFile,
-                video_id: VideoId::LocalFile("2".into()),
-            },
-        ];
-        let merged = merge_clips(clips);
-        assert_eq!(merged.len(), 2);
-        assert_eq!(merged[0].range, (0.0, 18.0));
-        assert_eq!(merged[1].range, (12.0, 18.0));
     }
 }

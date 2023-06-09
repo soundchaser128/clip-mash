@@ -150,6 +150,7 @@ const ReorderSongs: React.FC<{
       draft.splice(dragIndex, 1)
       draft.splice(hoverIndex, 0, temp)
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (

@@ -121,7 +121,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
     }
 
     return counts
-  }, [state.data.selectedMarkers])
+  }, [state.data, clips])
 
   const [weights, setWeights] = useImmer<Array<[string, number]>>(() => {
     invariant(StateHelpers.isNotInitial(state.data))

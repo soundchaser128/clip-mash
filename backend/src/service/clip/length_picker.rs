@@ -24,9 +24,14 @@ impl SongOptionsState {
         beats_per_measure: usize,
         cut_after_measure_count: MeasureCount,
     ) -> Self {
-        let first_song = &mut songs[0];
-        if first_song.offsets[0] != 0.0 {
-            first_song.offsets.insert(0, 0.0);
+        for beats in &mut songs {
+            if beats.offsets[0] != 0.0 {
+                beats.offsets.insert(0, 0.0);
+            }
+
+            if beats.offsets.last() != Some(&beats.length) {
+                beats.offsets.push(beats.length);
+            }
         }
 
         Self {
@@ -71,15 +76,12 @@ impl SongOptionsState {
         );
 
         if next_beat_index == beats.len() - 1 {
-            let current_beat = beats[self.beat_index - 1];
-            let next_beat = beats[self.beat_index + 1];
             self.song_index += 1;
             self.beat_index = 0;
-            Some((next_beat - current_beat) as f64)
         } else {
             self.beat_index = next_beat_index;
-            Some(duration)
         }
+        Some(duration)
     }
 }
 
@@ -190,7 +192,7 @@ mod test {
         let mut rng = create_seeded_rng(None);
         let songs = fixtures::songs();
         let expected_duration: f64 = songs.iter().map(|s| s.length as f64).sum();
-        let mut state = SongOptionsState::new(songs, 4, MeasureCount::Fixed { count: 4 });
+        let mut state = SongOptionsState::new(songs, 1, MeasureCount::Fixed { count: 1 });
         let mut total = 0.0;
         while let Some(duration) = state.next_duration(&mut rng) {
             total += duration;

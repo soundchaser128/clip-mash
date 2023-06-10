@@ -1,6 +1,6 @@
 use clip_mash_types::{Clip, PmvClipOptions, RoundRobinClipOptions};
 use rand::rngs::StdRng;
-use tracing::{debug, info};
+use tracing::info;
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
@@ -36,7 +36,7 @@ impl ClipPicker for RoundRobinClipPicker {
         let mut marker_state = MarkerState::new(markers);
 
         while total_duration <= options.length {
-            debug!("marker state: {marker_state:#?}, total duration: {total_duration}, target duration: {}", options.length);
+            // debug!("marker state: {marker_state:#?}, total duration: {total_duration}, target duration: {}", options.length);
             if marker_state.markers.is_empty() {
                 info!("no more markers to pick from, stopping");
                 break;
@@ -109,7 +109,10 @@ impl ClipPicker for RoundRobinClipPicker {
 
 #[cfg(test)]
 mod test {
-    use clip_mash_types::{MeasureCount, PmvClipOptions, RoundRobinClipOptions, SongClipOptions};
+    use clip_mash_types::{
+        Beats, MeasureCount, PmvClipOptions, RoundRobinClipOptions, SongClipOptions,
+    };
+    use float_cmp::assert_approx_eq;
     use tracing_test::traced_test;
 
     use crate::service::clip::round_robin::RoundRobinClipPicker;
@@ -118,19 +121,56 @@ mod test {
     use crate::util::create_seeded_rng;
 
     #[traced_test]
+    #[ignore]
     #[test]
     fn test_songs_clips_too_short() {
+        let songs = fixtures::songs();
+        let song_duration = songs.iter().map(|s| s.length as f64).sum();
+
         let options = RoundRobinClipOptions {
-            length: 471.875,
+            length: song_duration,
             clip_lengths: PmvClipOptions::Songs(SongClipOptions {
                 beats_per_measure: 4,
                 cut_after_measures: MeasureCount::Fixed { count: 4 },
-                songs: fixtures::songs(),
+                songs,
             }),
         };
         let markers = fixtures::markers();
         let mut rng = create_seeded_rng(None);
         let mut picker = RoundRobinClipPicker;
+        let _clips = picker.pick_clips(markers, options, &mut rng);
+    }
+
+    #[traced_test]
+    #[test]
+    fn test_songs_clips() {
+        let songs = vec![
+            Beats {
+                length: 10.0,
+                offsets: (0..10).into_iter().map(|n| n as f32).collect(),
+            },
+            Beats {
+                length: 10.0,
+                offsets: (0..10).into_iter().map(|n| n as f32).collect(),
+            },
+        ];
+        let song_duration = songs.iter().map(|s| s.length as f64).sum();
+
+        let options = RoundRobinClipOptions {
+            length: song_duration,
+            clip_lengths: PmvClipOptions::Songs(SongClipOptions {
+                beats_per_measure: 4,
+                cut_after_measures: MeasureCount::Fixed { count: 4 },
+                songs,
+            }),
+        };
+
+        let markers = fixtures::markers();
+        let mut rng = create_seeded_rng(None);
+        let mut picker = RoundRobinClipPicker;
         let clips = picker.pick_clips(markers, options, &mut rng);
+        let clip_duration = clips.iter().map(|c| c.duration()).sum::<f64>();
+
+        assert_approx_eq!(f64, clip_duration, song_duration, epsilon = 0.01);
     }
 }

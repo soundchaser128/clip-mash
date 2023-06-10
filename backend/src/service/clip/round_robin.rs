@@ -106,3 +106,34 @@ impl ClipPicker for RoundRobinClipPicker {
         clips
     }
 }
+
+#[cfg(test)]
+mod test {
+    use clip_mash_types::{MeasureCount, PmvClipOptions, RoundRobinClipOptions, SongClipOptions};
+    use tracing_test::traced_test;
+
+    use crate::{
+        service::{
+            clip::{round_robin::RoundRobinClipPicker, ClipPicker},
+            fixtures,
+        },
+        util::create_seeded_rng,
+    };
+
+    #[traced_test]
+    #[test]
+    fn test_songs_clips_too_short() {
+        let options = RoundRobinClipOptions {
+            length: 471.875,
+            clip_lengths: PmvClipOptions::Songs(SongClipOptions {
+                beats_per_measure: 4,
+                cut_after_measures: MeasureCount::Fixed { count: 4 },
+                songs: fixtures::songs(),
+            }),
+        };
+        let markers = fixtures::markers();
+        let mut rng = create_seeded_rng(None);
+        let mut picker = RoundRobinClipPicker;
+        let clips = picker.pick_clips(markers, options, &mut rng);
+    }
+}

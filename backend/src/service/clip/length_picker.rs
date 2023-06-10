@@ -61,8 +61,9 @@ impl SongOptionsState {
         let next_beat_index = (self.beat_index + num_beats_to_advance).min(beats.len() - 1);
         let start = beats[self.beat_index];
         let end = beats[next_beat_index];
+        let duration = (end - start) as f64;
 
-        info!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds");
+        info!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds ({duration} seconds long)");
         info!(
             "next beat index: {}, number of beats: {}",
             next_beat_index,
@@ -70,13 +71,15 @@ impl SongOptionsState {
         );
 
         if next_beat_index == beats.len() - 1 {
+            let current_beat = beats[self.beat_index - 1];
+            let next_beat = beats[self.beat_index + 1];
             self.song_index += 1;
             self.beat_index = 0;
+            Some((next_beat - current_beat) as f64)
         } else {
             self.beat_index = next_beat_index;
+            Some(duration)
         }
-
-        Some((end - start) as f64)
     }
 }
 
@@ -126,6 +129,7 @@ mod test {
     use tracing_test::traced_test;
 
     use super::SongOptionsState;
+    use crate::service::fixtures;
     use crate::util::create_seeded_rng;
 
     #[traced_test]
@@ -157,20 +161,46 @@ mod test {
         let mut rng = create_seeded_rng(None);
         let beats = vec![
             Beats {
-                length: 250.0,
-                offsets: (0..250).into_iter().map(|n| n as f32).collect(),
+                length: 10.0,
+                offsets: (0..10).into_iter().map(|n| n as f32).collect(),
             },
             Beats {
-                length: 250.0,
-                offsets: (0..250).into_iter().map(|n| n as f32).collect(),
+                length: 10.0,
+                offsets: (0..10).into_iter().map(|n| n as f32).collect(),
             },
         ];
         let mut songs = SongOptionsState::new(beats, 4, MeasureCount::Random { min: 1, max: 3 });
         let mut durations = vec![];
         while let Some(duration) = songs.next_duration(&mut rng) {
-            durations.push(duration);
+            durations.push(dbg!(duration));
         }
 
-        assert_eq!(79, durations.len());
+        assert_eq!(6, durations.len());
+        let total_duration = durations.iter().sum::<f64>();
+        assert!(
+            total_duration >= 20.0,
+            "total duration was {} but expected at least 20",
+            total_duration
+        );
+    }
+
+    #[traced_test]
+    #[test]
+    fn clip_lengths_songs() {
+        let mut rng = create_seeded_rng(None);
+        let songs = fixtures::songs();
+        let expected_duration: f64 = songs.iter().map(|s| s.length as f64).sum();
+        let mut state = SongOptionsState::new(songs, 4, MeasureCount::Fixed { count: 4 });
+        let mut total = 0.0;
+        while let Some(duration) = state.next_duration(&mut rng) {
+            total += duration;
+        }
+
+        assert!(
+            total >= expected_duration,
+            "total duration was {} but expected at least {}",
+            total,
+            expected_duration
+        );
     }
 }

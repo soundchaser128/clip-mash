@@ -112,13 +112,10 @@ mod test {
     use clip_mash_types::{MeasureCount, PmvClipOptions, RoundRobinClipOptions, SongClipOptions};
     use tracing_test::traced_test;
 
-    use crate::{
-        service::{
-            clip::{round_robin::RoundRobinClipPicker, ClipPicker},
-            fixtures,
-        },
-        util::create_seeded_rng,
-    };
+    use crate::service::clip::round_robin::RoundRobinClipPicker;
+    use crate::service::clip::ClipPicker;
+    use crate::service::fixtures;
+    use crate::util::create_seeded_rng;
 
     #[traced_test]
     #[test]

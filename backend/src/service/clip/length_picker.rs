@@ -4,7 +4,7 @@ use clip_mash_types::{Beats, MeasureCount, PmvClipOptions};
 use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
 use rand::Rng;
-use tracing::debug;
+use tracing::info;
 
 use super::MIN_DURATION;
 
@@ -20,10 +20,15 @@ pub struct SongOptionsState {
 
 impl SongOptionsState {
     pub fn new(
-        songs: Vec<Beats>,
+        mut songs: Vec<Beats>,
         beats_per_measure: usize,
         cut_after_measure_count: MeasureCount,
     ) -> Self {
+        let first_song = &mut songs[0];
+        if first_song.offsets[0] != 0.0 {
+            first_song.offsets.insert(0, 0.0);
+        }
+
         Self {
             songs,
             beats_per_measure,
@@ -34,11 +39,16 @@ impl SongOptionsState {
     }
 
     pub fn next_duration(&mut self, rng: &mut StdRng) -> Option<f64> {
-        debug!(
+        info!(
             "state: song_index = {}, beat_index = {}",
             self.song_index, self.beat_index
         );
         if self.song_index >= self.songs.len() {
+            info!(
+                "no more songs to pick from, stopping (song index = {}, len = {})",
+                self.song_index,
+                self.songs.len()
+            );
             return None;
         }
 
@@ -52,7 +62,12 @@ impl SongOptionsState {
         let start = beats[self.beat_index];
         let end = beats[next_beat_index];
 
-        debug!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds");
+        info!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds");
+        info!(
+            "next beat index: {}, number of beats: {}",
+            next_beat_index,
+            beats.len()
+        );
 
         if next_beat_index == beats.len() - 1 {
             self.song_index += 1;

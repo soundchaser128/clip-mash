@@ -19,8 +19,14 @@ impl ClipPicker for RoundRobinClipPicker {
         options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
-        info!("using RoundRobinClipPicker to make clips from markers {markers:#?} with options {options:#?}");
+        info!("using RoundRobinClipPicker to make clips with options {options:#?}");
 
+        let song_duration = match &options.clip_lengths {
+            PmvClipOptions::Songs(options) => {
+                Some(options.songs.iter().map(|s| s.length as f64).sum())
+            }
+            _ => None,
+        };
         let max_duration = options.length;
         let mut total_duration = 0.0;
         let mut clips = vec![];
@@ -45,6 +51,7 @@ impl ClipPicker for RoundRobinClipPicker {
                 {
                     let clip_duration = clip_lengths.pick_duration(rng);
                     if clip_duration.is_none() {
+                        info!("no more clip lengths to pick from, stopping");
                         break;
                     }
                     let clip_duration = clip_duration.unwrap();
@@ -79,6 +86,15 @@ impl ClipPicker for RoundRobinClipPicker {
         }
 
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
+        if let Some(song_duration) = song_duration {
+            assert!(
+                clips_duration >= song_duration,
+                "clips duration {} must be greater or equal to song duration {}",
+                clips_duration,
+                song_duration
+            )
+        }
+
         if clips_duration > max_duration {
             let slack = (clips_duration - max_duration) / clips.len() as f64;
             info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");

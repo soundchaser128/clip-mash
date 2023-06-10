@@ -388,8 +388,8 @@ const MusicSettingsForm: React.FC<MusicSettingsFormProps> = ({
           className="select select-bordered"
           {...register("clipStrategy")}
         >
-          <option value="pmv">Music-based (cut on the beat)</option>
-          <option value="default">Random lengths (default)</option>
+          <option value="roundRobin">Music-based (cut on the beat)</option>
+          <option value="equalLength">Random lengths (default)</option>
         </select>
       </div>
     </form>
@@ -405,7 +405,7 @@ export default function Music() {
     state.data.songs?.map((song) => song.songId) || []
   )
   const [formValues, setFormValues] = useState<MusicSettingsInputs>({
-    clipStrategy: state.data.clipStrategy || "",
+    clipStrategy: state.data.clipStrategy || "roundRobin",
     musicVolume: state.data.musicVolume ? state.data.musicVolume * 100 : 75,
   })
   const navigate = useNavigate()

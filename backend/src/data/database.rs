@@ -9,7 +9,7 @@ use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::{info, warn};
 
-use crate::service::music::{self};
+use crate::service::music;
 use crate::Result;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]

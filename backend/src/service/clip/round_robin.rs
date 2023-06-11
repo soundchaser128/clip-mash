@@ -1,6 +1,6 @@
 use clip_mash_types::{Clip, PmvClipOptions, RoundRobinClipOptions};
 use rand::rngs::StdRng;
-use tracing::{debug, info};
+use tracing::info;
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;

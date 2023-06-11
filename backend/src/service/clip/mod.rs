@@ -10,13 +10,11 @@ use rand::rngs::StdRng;
 use tracing::info;
 
 use super::Marker;
-use crate::data::database::Database;
 use crate::service::clip::equal_len::EqualLengthClipPicker;
 use crate::service::clip::round_robin::RoundRobinClipPicker;
 use crate::service::clip::sort::{ClipSorter, RandomClipSorter, SceneOrderClipSorter};
 use crate::service::clip::weighted::WeightedRandomClipPicker;
 use crate::util::create_seeded_rng;
-use crate::Result;
 
 mod equal_len;
 mod length_picker;
@@ -90,16 +88,14 @@ pub struct ClipsResult {
     pub beat_offsets: Option<Vec<f32>>,
 }
 
-pub struct ClipService {
-    _db: Database,
-}
+pub struct ClipService {}
 
 impl ClipService {
-    pub fn new(db: Database) -> Self {
-        Self { _db: db }
+    pub fn new() -> Self {
+        Self {}
     }
 
-    pub async fn arrange_clips(&self, mut options: CreateClipsOptions) -> Result<ClipsResult> {
+    pub fn arrange_clips(&self, mut options: CreateClipsOptions) -> ClipsResult {
         let start = Instant::now();
         options.normalize_video_indices();
 
@@ -145,10 +141,10 @@ impl ClipService {
         let elapsed = start.elapsed();
         info!("generated {} clips in {:?}", clips.len(), elapsed);
 
-        Ok(ClipsResult {
+        ClipsResult {
             clips,
             beat_offsets,
-        })
+        }
     }
 }
 
@@ -157,11 +153,9 @@ mod tests {
     use clip_mash_types::{
         Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, VideoSource,
     };
-    use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
-    use crate::data::database::Database;
     use crate::service::clip::sort::ClipSorter;
     use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
     use crate::service::fixtures::create_marker_video_id;
@@ -169,8 +163,8 @@ mod tests {
     use crate::util::create_seeded_rng;
 
     #[traced_test]
-    #[sqlx::test]
-    fn test_arrange_clips_basic(pool: SqlitePool) {
+    #[test]
+    fn test_arrange_clips_basic() {
         let options = CreateClipsOptions {
             markers: vec![
                 create_marker_video_id(1, 1.0, 15.0, 0, "v2"),
@@ -185,8 +179,8 @@ mod tests {
                 order: ClipOrder::SceneOrder,
             },
         };
-        let service = ClipService::new(Database::with_pool(pool));
-        let ClipsResult { clips: results, .. } = service.arrange_clips(options).await.unwrap();
+        let service = ClipService::new();
+        let ClipsResult { clips: results, .. } = service.arrange_clips(options);
         assert_eq!(4, results.len());
         assert_eq!((1.0, 11.0), results[0].range);
         assert_eq!((1.0, 8.5), results[1].range);
@@ -195,8 +189,8 @@ mod tests {
     }
 
     #[traced_test]
-    #[sqlx::test]
-    fn test_arrange_clips_dont_split(pool: SqlitePool) {
+    #[test]
+    fn test_arrange_clips_dont_split() {
         let options = CreateClipsOptions {
             markers: vec![
                 create_marker_video_id(1, 1.0, 15.0, 0, "v1"),
@@ -208,8 +202,8 @@ mod tests {
                 order: ClipOrder::SceneOrder,
             },
         };
-        let service = ClipService::new(Database::with_pool(pool));
-        let ClipsResult { clips: results, .. } = service.arrange_clips(options).await.unwrap();
+        let service = ClipService::new();
+        let ClipsResult { clips: results, .. } = service.arrange_clips(options);
         assert_eq!(2, results.len());
         assert_eq!((1.0, 17.0), results[0].range);
         assert_eq!((1.0, 15.0), results[1].range);

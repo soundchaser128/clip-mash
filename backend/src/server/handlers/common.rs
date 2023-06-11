@@ -44,11 +44,11 @@ pub async fn fetch_clips(
     let options = service.convert_clip_options(body).await?;
     debug!("clip options: {options:?}");
 
-    let clip_service = ClipService::new(state.database.clone());
+    let clip_service = ClipService::new();
     let ClipsResult {
         beat_offsets,
         clips,
-    } = clip_service.arrange_clips(options).await?;
+    } = clip_service.arrange_clips(options);
     let streams = get_streams(video_ids, &config)?;
     let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.clone()).collect();
     video_ids.sort();

@@ -206,6 +206,33 @@ pub enum ClipPickerOptions {
     NoSplit,
 }
 
+impl ClipPickerOptions {
+    pub fn clip_lengths(&self) -> Option<&PmvClipOptions> {
+        match self {
+            ClipPickerOptions::RoundRobin(opts) => Some(&opts.clip_lengths),
+            ClipPickerOptions::WeightedRandom(opts) => Some(&opts.clip_lengths),
+            ClipPickerOptions::EqualLength(_) => None,
+            ClipPickerOptions::NoSplit => None,
+        }
+    }
+
+    pub fn has_music(&self) -> bool {
+        if let Some(clip_lengths) = self.clip_lengths() {
+            matches!(clip_lengths, PmvClipOptions::Songs(_))
+        } else {
+            false
+        }
+    }
+
+    pub fn songs(&self) -> Option<&[Beats]> {
+        if let Some(PmvClipOptions::Songs(songs)) = self.clip_lengths() {
+            Some(&songs.songs)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct RoundRobinClipOptions {

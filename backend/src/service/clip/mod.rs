@@ -1,10 +1,7 @@
 use std::fmt::Debug;
 use std::time::Instant;
 
-use clip_mash_types::{
-    Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions, PmvClipOptions, RoundRobinClipOptions,
-    SongClipOptions,
-};
+use clip_mash_types::{Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use itertools::Itertools;
 use rand::rngs::StdRng;
 use tracing::info;
@@ -99,15 +96,16 @@ impl ClipService {
         let start = Instant::now();
         options.normalize_video_indices();
 
-        let beat_offsets = if let ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
-            clip_lengths: PmvClipOptions::Songs(SongClipOptions { ref songs, .. }),
-            ..
-        }) = options.clip_options.clip_picker
-        {
+        let beat_offsets = if let Some(songs) = options.clip_options.clip_picker.songs() {
             Some(normalize_beat_offsets(songs))
         } else {
             None
         };
+
+        if options.clip_options.clip_picker.has_music() {
+            info!("options have music, not sorting clips");
+            options.clip_options.order = ClipOrder::NoOp;
+        }
 
         let mut rng = create_seeded_rng(options.seed.as_deref());
         let clips = match options.clip_options.clip_picker {

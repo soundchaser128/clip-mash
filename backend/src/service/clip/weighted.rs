@@ -59,16 +59,12 @@ impl ClipPicker for WeightedRandomClipPicker {
         let distribution = WeightedIndex::new(choices.iter().map(|item| item.1))
             .expect("could not build distribution");
         let mut total_duration = 0.0;
-        let mut marker_state = MarkerState::new(markers);
+        let mut marker_state = MarkerState::new(markers, options.length);
         let mut clips = vec![];
         let mut clip_lengths: ClipLengthPicker = options.clip_lengths.into();
 
-        while total_duration <= options.length {
+        while !marker_state.finished() {
             debug!("marker state: {marker_state:#?}, total duration: {total_duration}, target duration: {}", options.length);
-            if marker_state.markers.is_empty() {
-                info!("no more markers to pick from, stopping");
-                break;
-            }
             let marker_tag = &choices[distribution.sample(rng)].0;
             if let Some(marker) = marker_state.find_marker_by_title(&marker_tag, rng) {
                 let clip_duration = clip_lengths.pick_duration(rng);
@@ -82,7 +78,8 @@ impl ClipPicker for WeightedRandomClipPicker {
                 }) = marker_state.get(&marker.id)
                 {
                     let clip_duration = clip_duration.unwrap();
-                    let end = (start + clip_duration).min(marker.end_time);
+                    // let end = (start + clip_duration).min(marker.end_time);
+                    let end = start + clip_duration;
                     let duration = end - start;
 
                     clips.push(Clip {
@@ -98,14 +95,9 @@ impl ClipPicker for WeightedRandomClipPicker {
                         marker.video_id, marker.title
                     );
 
-                    marker_state.update(&marker.id, end, index + 1);
+                    marker_state.update(&marker.id, end, index + 1, duration);
                     total_duration += duration;
                 }
-            } else {
-                debug!(
-                    "no marker found for title {marker_tag}, skipping, remaining markers: {:?}",
-                    marker_state.markers
-                );
             }
         }
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();

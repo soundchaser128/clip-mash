@@ -36,20 +36,14 @@ impl ClipPicker for RoundRobinClipPicker {
         );
 
         let max_duration = options.length;
-        let mut total_duration = 0.0;
         let mut clips = vec![];
         let mut marker_idx = 0;
         let has_music = matches!(options.clip_lengths, PmvClipOptions::Songs(_));
         let mut clip_lengths: ClipLengthPicker = options.clip_lengths.into();
-        let mut marker_state = MarkerState::new(markers);
+        let mut marker_state = MarkerState::new(markers, options.length);
 
-        while total_duration <= options.length {
+        while !marker_state.finished() {
             // debug!("marker state: {marker_state:#?}, total duration: {total_duration}, target duration: {}", options.length);
-            if marker_state.markers.is_empty() {
-                info!("no more markers to pick from, stopping");
-                break;
-            }
-
             if let Some(marker) = marker_state.find_marker_by_index(marker_idx) {
                 if let Some(MarkerStart {
                     start_time: start,
@@ -58,7 +52,9 @@ impl ClipPicker for RoundRobinClipPicker {
                 }) = marker_state.get(&marker.id)
                 {
                     if let Some(clip_duration) = clip_lengths.pick_duration(rng) {
-                        let end = (start + clip_duration).min(marker.end_time);
+                        // TODO
+                        // let end = (start + clip_duration).min(marker.end_time);
+                        let end = start + clip_duration;
                         let duration = end - start;
                         if has_music || duration >= MIN_DURATION {
                             info!(
@@ -81,9 +77,8 @@ impl ClipPicker for RoundRobinClipPicker {
                             });
                         }
 
-                        total_duration += duration;
                         marker_idx += 1;
-                        marker_state.update(&marker.id, end, index + 1);
+                        marker_state.update(&marker.id, end, index + 1, duration);
                     } else {
                         info!("no more clips to pick from, stopping");
                         break;

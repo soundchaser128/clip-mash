@@ -17,12 +17,14 @@ pub struct MarkerStart {
 
 #[derive(Debug)]
 pub struct MarkerState {
-    pub data: HashMap<i64, MarkerStart>,
-    pub markers: Vec<Marker>,
+    data: HashMap<i64, MarkerStart>,
+    markers: Vec<Marker>,
+    total_duration: f64,
+    length: f64,
 }
 
 impl MarkerState {
-    pub fn new(data: Vec<Marker>) -> Self {
+    pub fn new(data: Vec<Marker>, length: f64) -> Self {
         Self {
             data: data
                 .iter()
@@ -38,6 +40,8 @@ impl MarkerState {
                 })
                 .collect(),
             markers: data,
+            total_duration: 0.0,
+            length,
         }
     }
 
@@ -45,7 +49,8 @@ impl MarkerState {
         self.data.get(&id.inner())
     }
 
-    pub fn update(&mut self, id: &MarkerId, start_time: f64, index: usize) {
+    pub fn update(&mut self, id: &MarkerId, start_time: f64, index: usize, duration: f64) {
+        self.total_duration += duration;
         let entry = self.data.entry(id.inner()).and_modify(|e| {
             e.start_time = start_time;
             e.index = index;
@@ -74,5 +79,9 @@ impl MarkerState {
             .filter(|m| &m.title == title)
             .choose(rng)
             .cloned()
+    }
+
+    pub fn finished(&self) -> bool {
+        self.markers.is_empty() || self.total_duration >= self.length
     }
 }

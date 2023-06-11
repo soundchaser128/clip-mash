@@ -1,6 +1,6 @@
 use clip_mash_types::{Clip, PmvClipOptions, RoundRobinClipOptions};
 use rand::rngs::StdRng;
-use tracing::info;
+use tracing::{debug, info};
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
@@ -19,7 +19,7 @@ impl ClipPicker for RoundRobinClipPicker {
         options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
-        info!("using RoundRobinClipPicker to make clips with options {options:#?}");
+        info!("using RoundRobinClipPicker to make clips");
 
         let song_duration = match &options.clip_lengths {
             PmvClipOptions::Songs(options) => {
@@ -27,6 +27,14 @@ impl ClipPicker for RoundRobinClipPicker {
             }
             _ => None,
         };
+        let marker_duration = markers.iter().map(|m| m.duration()).sum::<f64>();
+        assert!(
+            marker_duration >= options.length,
+            "marker duration {} must be greater or equal to target duration {}",
+            marker_duration,
+            options.length
+        );
+
         let max_duration = options.length;
         let mut total_duration = 0.0;
         let mut clips = vec![];
@@ -49,38 +57,37 @@ impl ClipPicker for RoundRobinClipPicker {
                     ..
                 }) = marker_state.get(&marker.id)
                 {
-                    let clip_duration = clip_lengths.pick_duration(rng);
-                    if clip_duration.is_none() {
-                        info!("no more clip lengths to pick from, stopping");
+                    if let Some(clip_duration) = clip_lengths.pick_duration(rng) {
+                        let end = (start + clip_duration).min(marker.end_time);
+                        let duration = end - start;
+                        if has_music || duration >= MIN_DURATION {
+                            info!(
+                                "adding clip for video {} with duration {duration} and title {}",
+                                marker.video_id, marker.title
+                            );
+                            assert!(
+                                end > *start,
+                                "end time {} must be greater than start time {}",
+                                end,
+                                start
+                            );
+                            clips.push(Clip {
+                                index_within_marker: *index,
+                                index_within_video: marker.index_within_video,
+                                marker_id: marker.id,
+                                range: (*start, end),
+                                source: marker.video_id.source(),
+                                video_id: marker.video_id.clone(),
+                            });
+                        }
+
+                        total_duration += duration;
+                        marker_idx += 1;
+                        marker_state.update(&marker.id, end, index + 1);
+                    } else {
+                        info!("no more clips to pick from, stopping");
                         break;
                     }
-                    let clip_duration = clip_duration.unwrap();
-                    let end = (start + clip_duration).min(marker.end_time);
-                    let duration = end - start;
-                    if has_music || duration >= MIN_DURATION {
-                        info!(
-                            "adding clip for video {} with duration {duration} and title {}",
-                            marker.video_id, marker.title
-                        );
-                        assert!(
-                            end > *start,
-                            "end time {} must be greater than start time {}",
-                            end,
-                            start
-                        );
-                        clips.push(Clip {
-                            index_within_marker: *index,
-                            index_within_video: marker.index_within_video,
-                            marker_id: marker.id,
-                            range: (*start, end),
-                            source: marker.video_id.source(),
-                            video_id: marker.video_id.clone(),
-                        });
-                    }
-
-                    total_duration += duration;
-                    marker_idx += 1;
-                    marker_state.update(&marker.id, end, index + 1);
                 }
             }
         }
@@ -121,7 +128,6 @@ mod test {
     use crate::util::create_seeded_rng;
 
     #[traced_test]
-    #[ignore]
     #[test]
     fn test_songs_clips_too_short() {
         let songs = fixtures::songs();
@@ -143,7 +149,7 @@ mod test {
 
     #[traced_test]
     #[test]
-    fn test_songs_clips() {
+    fn test_songs_clips_simple() {
         let songs = vec![
             Beats {
                 length: 10.0,

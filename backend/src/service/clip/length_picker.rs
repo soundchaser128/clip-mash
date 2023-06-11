@@ -25,7 +25,7 @@ impl SongOptionsState {
         cut_after_measure_count: MeasureCount,
     ) -> Self {
         for beats in &mut songs {
-            if beats.offsets[0] != 0.0 {
+            if beats.offsets.first() != Some(&0.0) {
                 beats.offsets.insert(0, 0.0);
             }
 
@@ -125,12 +125,86 @@ impl From<PmvClipOptions> for ClipLengthPicker {
     }
 }
 
+pub struct SongClipLengths<'a> {
+    rng: &'a mut StdRng,
+    songs: &'a [Beats],
+    beats_per_measure: usize,
+    cut_after_measure_count: MeasureCount,
+
+    song_index: usize,
+    beat_index: usize,
+}
+
+impl<'a> SongClipLengths<'a> {
+    pub fn new(
+        songs: &'a [Beats],
+        beats_per_measure: usize,
+        cut_after_measure_count: MeasureCount,
+        rng: &'a mut StdRng,
+    ) -> Self {
+        Self {
+            rng,
+            songs,
+            beats_per_measure,
+            cut_after_measure_count,
+            song_index: 0,
+            beat_index: 0,
+        }
+    }
+}
+
+impl<'a> Iterator for SongClipLengths<'a> {
+    type Item = f64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        info!(
+            "state: song_index = {}, beat_index = {}",
+            self.song_index, self.beat_index
+        );
+        if self.song_index >= self.songs.len() {
+            info!(
+                "no more songs to pick from, stopping (song index = {}, len = {})",
+                self.song_index,
+                self.songs.len()
+            );
+            return None;
+        }
+
+        let beats = &self.songs[self.song_index].offsets;
+        let num_measures = match self.cut_after_measure_count {
+            MeasureCount::Fixed { count } => count,
+            MeasureCount::Random { min, max } => self.rng.gen_range(min..max),
+        };
+        let num_beats_to_advance = self.beats_per_measure * num_measures;
+        let next_beat_index = (self.beat_index + num_beats_to_advance).min(beats.len() - 1);
+        let start = beats[self.beat_index];
+        let end = beats[next_beat_index];
+        let duration = (end - start) as f64;
+
+        info!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds ({duration} seconds long)");
+        info!(
+            "next beat index: {}, number of beats: {}",
+            next_beat_index,
+            beats.len()
+        );
+
+        if next_beat_index == beats.len() - 1 {
+            self.song_index += 1;
+            self.beat_index = 0;
+        } else {
+            self.beat_index = next_beat_index;
+        }
+        Some(duration)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use clip_mash_types::{Beats, MeasureCount};
     use tracing_test::traced_test;
 
     use super::SongOptionsState;
+    use crate::service::clip::length_picker::SongClipLengths;
     use crate::service::fixtures;
     use crate::util::create_seeded_rng;
 
@@ -195,6 +269,26 @@ mod test {
         let mut state = SongOptionsState::new(songs, 1, MeasureCount::Fixed { count: 1 });
         let mut total = 0.0;
         while let Some(duration) = state.next_duration(&mut rng) {
+            total += duration;
+        }
+
+        assert!(
+            total >= expected_duration,
+            "total duration was {} but expected at least {}",
+            total,
+            expected_duration
+        );
+    }
+
+    #[traced_test]
+    #[test]
+    fn test_song_lengths_iterator() {
+        let mut rng = create_seeded_rng(None);
+        let songs = fixtures::songs();
+        let expected_duration: f64 = songs.iter().map(|s| s.length as f64).sum();
+        let iterator = SongClipLengths::new(&songs, 4, MeasureCount::Fixed { count: 1 }, &mut rng);
+        let mut total = 0.0;
+        for duration in iterator {
             total += duration;
         }
 

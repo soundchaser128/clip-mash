@@ -1,6 +1,6 @@
 use clip_mash_types::{Clip, PmvClipOptions, RoundRobinClipOptions};
 use rand::rngs::StdRng;
-use tracing::info;
+use tracing::{info, warn};
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
@@ -52,9 +52,12 @@ impl ClipPicker for RoundRobinClipPicker {
                 }) = marker_state.get(&marker.id)
                 {
                     if let Some(clip_duration) = clip_lengths.pick_duration(rng) {
-                        // TODO
-                        // let end = (start + clip_duration).min(marker.end_time);
                         let end = start + clip_duration;
+                        if end > marker.end_time {
+                            warn!("clip end time {} is after marker end time {}, skipping", end, marker.end_time);
+                            marker_idx += 1;
+                            continue;
+                        }
                         let duration = end - start;
                         if has_music || duration >= MIN_DURATION {
                             info!(

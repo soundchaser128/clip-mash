@@ -39,7 +39,11 @@ impl ClipPicker for RoundRobinClipPicker {
         let mut clips = vec![];
         let mut marker_idx = 0;
         let has_music = matches!(options.clip_lengths, PmvClipOptions::Songs(_));
-        let mut clip_lengths: ClipLengthPicker = options.clip_lengths.into();
+        // let mut clip_lengths: ClipLengthPicker = options.clip_lengths.into();
+        let mut clip_lengths = match options.clip_lengths {
+            PmvClipOptions::Randomized(options) => todo!(),
+            PmvClipOptions::Songs(options) => todo!(),
+        };
         let mut marker_state = MarkerState::new(markers, options.length);
 
         while !marker_state.finished() {
@@ -54,7 +58,10 @@ impl ClipPicker for RoundRobinClipPicker {
                     if let Some(clip_duration) = clip_lengths.pick_duration(rng) {
                         let end = start + clip_duration;
                         if end > marker.end_time {
-                            warn!("clip end time {} is after marker end time {}, skipping", end, marker.end_time);
+                            warn!(
+                                "clip end time {} is after marker end time {}, skipping",
+                                end, marker.end_time
+                            );
                             marker_idx += 1;
                             continue;
                         }

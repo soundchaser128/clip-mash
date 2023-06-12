@@ -85,6 +85,106 @@ impl SongOptionsState {
     }
 }
 
+pub struct RandomizedClipLengthPicker<'a> {
+    rng: &'a mut StdRng,
+    divisors: &'a [f64],
+    base_duration: f64,
+}
+
+impl<'a> RandomizedClipLengthPicker<'a> {
+    pub fn new(rng: &'a mut StdRng, divisors: &'a [f64], base_duration: f64) -> Self {
+        assert!(!divisors.is_empty(), "divisors must not be empty");
+
+        Self {
+            rng,
+            divisors,
+            base_duration,
+        }
+    }
+
+    pub fn durations(&mut self) -> impl Iterator<Item = f64> + '_ {
+        std::iter::repeat_with(|| {
+            self.divisors
+                .iter()
+                .map(|d| (self.base_duration / *d).max(MIN_DURATION))
+                .choose(self.rng)
+                .expect("divisors must not be empty")
+        })
+    }
+}
+
+pub struct SongClipLengthPicker<'a> {
+    rng: &'a mut StdRng,
+    songs: &'a [Beats],
+    beats_per_measure: usize,
+    cut_after_measure_count: MeasureCount,
+    song_index: usize,
+    beat_index: usize,
+}
+
+impl<'a> SongClipLengthPicker<'a> {
+    pub fn new(
+        rng: &'a mut StdRng,
+        songs: &'a [Beats],
+        beats_per_measure: usize,
+        cut_after_measure_count: MeasureCount,
+    ) -> Self {
+        Self {
+            rng,
+            songs,
+            beats_per_measure,
+            cut_after_measure_count,
+            song_index: 0,
+            beat_index: 0,
+        }
+    }
+}
+
+impl<'a> Iterator for SongClipLengthPicker<'a> {
+    type Item = f64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        info!(
+            "state: song_index = {}, beat_index = {}",
+            self.song_index, self.beat_index
+        );
+        if self.song_index >= self.songs.len() {
+            info!(
+                "no more songs to pick from, stopping (song index = {}, len = {})",
+                self.song_index,
+                self.songs.len()
+            );
+            return None;
+        }
+
+        let beats = &self.songs[self.song_index].offsets;
+        let num_measures = match self.cut_after_measure_count {
+            MeasureCount::Fixed { count } => count,
+            MeasureCount::Random { min, max } => self.rng.gen_range(min..max),
+        };
+        let num_beats_to_advance = self.beats_per_measure * num_measures;
+        let next_beat_index = (self.beat_index + num_beats_to_advance).min(beats.len() - 1);
+        let start = beats[self.beat_index];
+        let end = beats[next_beat_index];
+        let duration = (end - start) as f64;
+
+        info!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds ({duration} seconds long)");
+        info!(
+            "next beat index: {}, number of beats: {}",
+            next_beat_index,
+            beats.len()
+        );
+
+        if next_beat_index == beats.len() - 1 {
+            self.song_index += 1;
+            self.beat_index = 0;
+        } else {
+            self.beat_index = next_beat_index;
+        }
+        Some(duration)
+    }
+}
+
 #[derive(Debug)]
 pub enum ClipLengthPicker {
     Randomized {

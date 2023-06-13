@@ -46,7 +46,7 @@ impl<'a> Iterator for RandomizedClipLengthPicker<'a> {
             let time = self
                 .divisors
                 .iter()
-                .map(|d| (self.base_duration / d).min(MIN_DURATION))
+                .map(|d| (self.base_duration / d).max(MIN_DURATION))
                 .choose(self.rng)
                 .unwrap();
             self.current_duration += time;
@@ -179,10 +179,13 @@ impl<'a> ClipLengthPicker<'a> {
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashSet;
+
     use clip_mash_types::{Beats, MeasureCount};
+    use ordered_float::OrderedFloat;
     use tracing_test::traced_test;
 
-    use crate::service::clip::length_picker::SongClipLengthPicker;
+    use crate::service::clip::length_picker::{RandomizedClipLengthPicker, SongClipLengthPicker};
     use crate::service::fixtures;
     use crate::util::create_seeded_rng;
 
@@ -246,5 +249,23 @@ mod test {
             total,
             expected_duration
         );
+    }
+
+    #[traced_test]
+    #[test]
+    fn randomized_clip_lengths() {
+        let mut rng = create_seeded_rng(None);
+        let picker = RandomizedClipLengthPicker::new(&mut rng, vec![2.0, 3.0, 4.0], 30.0, 600.0);
+        let durations: Vec<_> = picker.collect();
+        let total = durations.iter().sum::<f64>();
+        assert!(
+            total >= 600.0,
+            "total duration was {} but expected at least 600",
+            total
+        );
+
+        let distinct_values: HashSet<_> =
+            durations.iter().map(|n| OrderedFloat::from(*n)).collect();
+        assert_eq!(3, distinct_values.len());
     }
 }

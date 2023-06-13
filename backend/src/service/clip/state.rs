@@ -73,13 +73,14 @@ impl MarkerState {
     }
 
     pub fn find_marker_by_index(&self, index: usize) -> Option<MarkerStateInfo> {
+        let index = index % self.markers.len();
         let next_duration = self.durations.last().copied();
         if let Some(duration) = next_duration {
             self.markers.iter().enumerate().find_map(|(i, marker)| {
                 if i < index {
                     return None;
                 }
-                let state = &self.data[&marker.id.inner()];
+                let state = self.get(&marker.id).unwrap();
                 let next_end_time = state.start_time + duration;
                 if next_end_time >= marker.end_time {
                     None
@@ -103,7 +104,7 @@ impl MarkerState {
                 if marker.title != title {
                     return None;
                 }
-                let state = &self.data[&marker.id.inner()];
+                let state = self.get(&marker.id).unwrap();
                 let next_end_time = state.start_time + duration;
                 if next_end_time >= marker.end_time {
                     None

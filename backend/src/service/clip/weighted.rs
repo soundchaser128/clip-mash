@@ -8,7 +8,7 @@ use tracing::{debug, info};
 
 use super::ClipPicker;
 use crate::service::clip::length_picker::ClipLengthPicker;
-use crate::service::clip::state::{MarkerStart, MarkerState, MarkerStateInfo};
+use crate::service::clip::state::{MarkerState, MarkerStateInfo};
 use crate::service::Marker;
 
 pub struct WeightedRandomClipPicker;
@@ -44,7 +44,7 @@ impl ClipPicker for WeightedRandomClipPicker {
         rng: &mut StdRng,
     ) -> Vec<Clip> {
         info!("using WeightedRandomClipPicker to make clips: {options:#?}");
-        debug!("using markers: {markers:#?}");
+        // debug!("using markers: {markers:#?}");
         options.weights.retain(|(_, weight)| *weight > 0.0);
         let weight_labels: HashSet<_> = options
             .weights
@@ -58,7 +58,6 @@ impl ClipPicker for WeightedRandomClipPicker {
 
         let distribution = WeightedIndex::new(choices.iter().map(|item| item.1))
             .expect("could not build distribution");
-        let mut total_duration = 0.0;
         let mut clips = vec![];
         let clip_lengths = ClipLengthPicker::new(options.clip_lengths, options.length, rng);
         let durations = clip_lengths.durations();
@@ -86,7 +85,6 @@ impl ClipPicker for WeightedRandomClipPicker {
                 );
 
                 marker_state.update(&marker.id, end, index + 1, duration);
-                total_duration += duration;
                 index += 1;
             } else {
                 break;

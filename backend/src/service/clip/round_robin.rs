@@ -4,7 +4,7 @@ use tracing::{info, warn};
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
-use crate::service::clip::state::{MarkerStart, MarkerState};
+use crate::service::clip::state::{MarkerStart, MarkerState, MarkerStateInfo};
 use crate::service::clip::MIN_DURATION;
 use crate::service::Marker;
 
@@ -39,59 +39,41 @@ impl ClipPicker for RoundRobinClipPicker {
         let mut clips = vec![];
         let mut marker_idx = 0;
         let has_music = matches!(options.clip_lengths, PmvClipOptions::Songs(_));
-        let mut clip_lengths = ClipLengthPicker::new(&options.clip_lengths, max_duration, rng);
-        let mut clip_lengths = clip_lengths.durations();
+        let clip_lengths = ClipLengthPicker::new(options.clip_lengths, max_duration, rng);
+        let clip_lengths = clip_lengths.durations();
 
-        let mut marker_state = MarkerState::new(markers, options.length);
+        let mut marker_state = MarkerState::new(markers, clip_lengths, options.length);
 
         while !marker_state.finished() {
-            // debug!("marker state: {marker_state:#?}, total duration: {total_duration}, target duration: {}", options.length);
-            if let Some(marker) = marker_state.find_marker_by_index(marker_idx) {
-                if let Some(MarkerStart {
-                    start_time: start,
-                    index,
-                    ..
-                }) = marker_state.get(&marker.id)
-                {
-                    if let Some(clip_duration) = clip_lengths.pop() {
-                        let end = start + clip_duration;
-                        if end > marker.end_time {
-                            warn!(
-                                "clip end time {} is after marker end time {}, skipping",
-                                end, marker.end_time
-                            );
-                            marker_idx += 1;
-                            continue;
-                        }
-                        let duration = end - start;
-                        if has_music || duration >= MIN_DURATION {
-                            info!(
-                                "adding clip for video {} with duration {duration} and title {}",
-                                marker.video_id, marker.title
-                            );
-                            assert!(
-                                end > *start,
-                                "end time {} must be greater than start time {}",
-                                end,
-                                start
-                            );
-                            clips.push(Clip {
-                                index_within_marker: *index,
-                                index_within_video: marker.index_within_video,
-                                marker_id: marker.id,
-                                range: (*start, end),
-                                source: marker.video_id.source(),
-                                video_id: marker.video_id.clone(),
-                            });
-                        }
-
-                        marker_idx += 1;
-                        marker_state.update(&marker.id, end, index + 1, duration);
-                    } else {
-                        info!("no more clips to pick from, stopping");
-                        break;
-                    }
+            if let Some(MarkerStateInfo { start, end, marker }) =
+                marker_state.find_marker_by_index(marker_idx)
+            {
+                let duration = end - start;
+                if has_music || duration >= MIN_DURATION {
+                    info!(
+                        "adding clip for video {} with duration {duration} and title {}",
+                        marker.video_id, marker.title
+                    );
+                    assert!(
+                        end > start,
+                        "end time {} must be greater than start time {}",
+                        end,
+                        start
+                    );
+                    clips.push(Clip {
+                        index_within_marker: marker_idx,
+                        index_within_video: marker.index_within_video,
+                        marker_id: marker.id,
+                        range: (start, end),
+                        source: marker.video_id.source(),
+                        video_id: marker.video_id.clone(),
+                    });
                 }
+
+                marker_state.update(&marker.id, end, marker_idx + 1, duration);
+                marker_idx += 1;
+            } else {
+                break;
             }
         }
 

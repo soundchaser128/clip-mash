@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use clip_mash_types::MarkerId;
 use float_cmp::approx_eq;
 use rand::rngs::StdRng;
-use rand::seq::IteratorRandom;
 
 use crate::service::Marker;
 
@@ -15,17 +14,25 @@ pub struct MarkerStart {
     pub index: usize,
 }
 
+pub struct MarkerStateInfo {
+    pub marker: Marker,
+    pub start: f64,
+    pub end: f64,
+}
+
 #[derive(Debug)]
 pub struct MarkerState {
     data: HashMap<i64, MarkerStart>,
+    durations: Vec<f64>,
     markers: Vec<Marker>,
     total_duration: f64,
     length: f64,
 }
 
 impl MarkerState {
-    pub fn new(data: Vec<Marker>, length: f64) -> Self {
+    pub fn new(data: Vec<Marker>, durations: Vec<f64>, length: f64) -> Self {
         Self {
+            durations,
             data: data
                 .iter()
                 .map(|m| {
@@ -65,23 +72,55 @@ impl MarkerState {
         }
     }
 
-    pub fn find_marker_by_index(&self, index: usize) -> Option<Marker> {
-        if self.markers.is_empty() {
-            None
+    pub fn find_marker_by_index(&self, index: usize) -> Option<MarkerStateInfo> {
+        let next_duration = self.durations.last().copied();
+        if let Some(duration) = next_duration {
+            self.markers.iter().enumerate().find_map(|(i, marker)| {
+                if i < index {
+                    return None;
+                }
+                let state = &self.data[&marker.id.inner()];
+                let next_end_time = state.start_time + duration;
+                if next_end_time >= marker.end_time {
+                    None
+                } else {
+                    Some(MarkerStateInfo {
+                        marker: marker.clone(),
+                        start: state.start_time,
+                        end: next_end_time,
+                    })
+                }
+            })
         } else {
-            self.markers.get(index % self.markers.len()).cloned()
+            None
         }
     }
 
-    pub fn find_marker_by_title(&self, title: &str, rng: &mut StdRng) -> Option<Marker> {
-        self.markers
-            .iter()
-            .filter(|m| &m.title == title)
-            .choose(rng)
-            .cloned()
+    pub fn find_marker_by_title(&self, title: &str, rng: &mut StdRng) -> Option<MarkerStateInfo> {
+        let next_duration = self.durations.last().copied();
+        if let Some(duration) = next_duration {
+            self.markers.iter().find_map(|marker| {
+                if marker.title != title {
+                    return None;
+                }
+                let state = &self.data[&marker.id.inner()];
+                let next_end_time = state.start_time + duration;
+                if next_end_time >= marker.end_time {
+                    None
+                } else {
+                    Some(MarkerStateInfo {
+                        marker: marker.clone(),
+                        start: state.start_time,
+                        end: next_end_time,
+                    })
+                }
+            })
+        } else {
+            None
+        }
     }
 
     pub fn finished(&self) -> bool {
-        self.markers.is_empty() || self.total_duration >= self.length
+        self.markers.is_empty() || self.total_duration >= self.length || self.durations.is_empty()
     }
 }

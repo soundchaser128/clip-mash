@@ -8,7 +8,7 @@ use tracing::{debug, info};
 
 use super::ClipPicker;
 use crate::service::clip::length_picker::ClipLengthPicker;
-use crate::service::clip::state::{MarkerStart, MarkerState};
+use crate::service::clip::state::{MarkerStart, MarkerState, MarkerStateInfo};
 use crate::service::Marker;
 
 pub struct WeightedRandomClipPicker;
@@ -59,46 +59,37 @@ impl ClipPicker for WeightedRandomClipPicker {
         let distribution = WeightedIndex::new(choices.iter().map(|item| item.1))
             .expect("could not build distribution");
         let mut total_duration = 0.0;
-        let mut marker_state = MarkerState::new(markers, options.length);
         let mut clips = vec![];
-        let mut clip_lengths = ClipLengthPicker::new(&options.clip_lengths, options.length, rng);
-        let mut clip_lengths = clip_lengths.durations();
+        let clip_lengths = ClipLengthPicker::new(options.clip_lengths, options.length, rng);
+        let durations = clip_lengths.durations();
+        let mut marker_state = MarkerState::new(markers, durations, options.length);
+        let mut index = 0;
 
         while !marker_state.finished() {
-            debug!("marker state: {marker_state:#?}, total duration: {total_duration}, target duration: {}", options.length);
             let marker_tag = &choices[distribution.sample(rng)].0;
-            if let Some(marker) = marker_state.find_marker_by_title(&marker_tag, rng) {
-                let clip_duration = clip_lengths.pop();
-                if clip_duration.is_none() {
-                    break;
-                }
-                if let Some(MarkerStart {
-                    start_time: start,
-                    index,
-                    ..
-                }) = marker_state.get(&marker.id)
-                {
-                    let clip_duration = clip_duration.unwrap();
-                    // let end = (start + clip_duration).min(marker.end_time);
-                    let end = start + clip_duration;
-                    let duration = end - start;
+            if let Some(MarkerStateInfo { start, end, marker }) =
+                marker_state.find_marker_by_title(&marker_tag, rng)
+            {
+                let duration = end - start;
 
-                    clips.push(Clip {
-                        index_within_marker: *index,
-                        index_within_video: marker.index_within_video,
-                        marker_id: marker.id,
-                        range: (*start, end),
-                        source: marker.video_id.source(),
-                        video_id: marker.video_id.clone(),
-                    });
-                    info!(
-                        "adding clip for video {} with duration {duration} and title {}",
-                        marker.video_id, marker.title
-                    );
+                clips.push(Clip {
+                    index_within_marker: index,
+                    index_within_video: marker.index_within_video,
+                    marker_id: marker.id,
+                    range: (start, end),
+                    source: marker.video_id.source(),
+                    video_id: marker.video_id.clone(),
+                });
+                info!(
+                    "adding clip for video {} with duration {duration} and title {}",
+                    marker.video_id, marker.title
+                );
 
-                    marker_state.update(&marker.id, end, index + 1, duration);
-                    total_duration += duration;
-                }
+                marker_state.update(&marker.id, end, index + 1, duration);
+                total_duration += duration;
+                index += 1;
+            } else {
+                break;
             }
         }
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();

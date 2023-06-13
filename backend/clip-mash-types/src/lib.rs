@@ -168,7 +168,7 @@ pub struct RandomizedClipOptions {
     pub divisors: Vec<f64>,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum MeasureCount {
     Fixed { count: usize },

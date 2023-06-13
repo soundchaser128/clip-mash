@@ -61,7 +61,7 @@ impl ClipPicker for WeightedRandomClipPicker {
         let mut total_duration = 0.0;
         let mut marker_state = MarkerState::new(markers, options.length);
         let mut clips = vec![];
-        let mut clip_lengths = ClipLengthPicker::new(options.clip_lengths, options.length, rng);
+        let mut clip_lengths = ClipLengthPicker::new(&options.clip_lengths, options.length, rng);
         let mut clip_lengths = clip_lengths.durations();
 
         while !marker_state.finished() {

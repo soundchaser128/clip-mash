@@ -39,7 +39,7 @@ impl ClipPicker for RoundRobinClipPicker {
         let mut clips = vec![];
         let mut marker_idx = 0;
         let has_music = matches!(options.clip_lengths, PmvClipOptions::Songs(_));
-        let mut clip_lengths = ClipLengthPicker::new(options.clip_lengths, max_duration, rng);
+        let mut clip_lengths = ClipLengthPicker::new(&options.clip_lengths, max_duration, rng);
         let mut clip_lengths = clip_lengths.durations();
 
         let mut marker_state = MarkerState::new(markers, options.length);

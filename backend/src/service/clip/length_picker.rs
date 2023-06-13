@@ -138,7 +138,7 @@ pub enum ClipLengthPicker<'a> {
 }
 
 impl<'a> ClipLengthPicker<'a> {
-    pub fn new(options: PmvClipOptions, total_duration: f64, rng: &'a mut StdRng) -> Self {
+    pub fn new(options: &'a PmvClipOptions, total_duration: f64, rng: &'a mut StdRng) -> Self {
         match options {
             PmvClipOptions::Randomized(options) => {
                 ClipLengthPicker::Randomized(RandomizedClipLengthPicker::new(
@@ -157,7 +157,7 @@ impl<'a> ClipLengthPicker<'a> {
         }
     }
 
-    pub fn durations(&self) -> Vec<f64> {
+    pub fn durations(self) -> Vec<f64> {
         match self {
             ClipLengthPicker::Randomized(picker) => picker.collect(),
             ClipLengthPicker::Songs(picker) => picker.collect(),
@@ -170,6 +170,7 @@ mod test {
     use clip_mash_types::{Beats, MeasureCount};
     use tracing_test::traced_test;
 
+    use crate::service::clip::length_picker::SongClipLengthPicker;
     use crate::service::fixtures;
     use crate::util::create_seeded_rng;
 
@@ -187,12 +188,9 @@ mod test {
                 offsets: (0..250).into_iter().map(|n| n as f32).collect(),
             },
         ];
-        let mut songs = SongOptionsState::new(beats, 4, MeasureCount::Fixed { count: 1 });
-        let mut durations = vec![];
-        while let Some(duration) = songs.next_duration(&mut rng) {
-            durations.push(duration);
-        }
-
+        let mut songs =
+            SongClipLengthPicker::new(&mut rng, &beats, 4, MeasureCount::Fixed { count: 1 });
+        let durations: Vec<_> = songs.collect();
         assert_eq!(126, durations.len());
     }
 
@@ -210,11 +208,9 @@ mod test {
                 offsets: (0..10).into_iter().map(|n| n as f32).collect(),
             },
         ];
-        let mut songs = SongOptionsState::new(beats, 4, MeasureCount::Random { min: 1, max: 3 });
-        let mut durations = vec![];
-        while let Some(duration) = songs.next_duration(&mut rng) {
-            durations.push(dbg!(duration));
-        }
+        let mut songs =
+            SongClipLengthPicker::new(&mut rng, &beats, 4, MeasureCount::Random { min: 1, max: 3 });
+        let durations: Vec<_> = songs.collect();
 
         assert_eq!(6, durations.len());
         let total_duration = durations.iter().sum::<f64>();
@@ -231,12 +227,9 @@ mod test {
         let mut rng = create_seeded_rng(None);
         let songs = fixtures::songs();
         let expected_duration: f64 = songs.iter().map(|s| s.length as f64).sum();
-        let mut state = SongOptionsState::new(songs, 1, MeasureCount::Fixed { count: 1 });
-        let mut total = 0.0;
-        while let Some(duration) = state.next_duration(&mut rng) {
-            total += duration;
-        }
-
+        let state =
+            SongClipLengthPicker::new(&mut rng, &songs, 1, MeasureCount::Fixed { count: 1 });
+        let total: f64 = state.sum();
         assert!(
             total >= expected_duration,
             "total duration was {} but expected at least {}",

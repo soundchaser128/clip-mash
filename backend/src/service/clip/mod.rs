@@ -4,6 +4,7 @@ use std::time::Instant;
 use clip_mash_types::{Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use itertools::Itertools;
 use rand::rngs::StdRng;
+use rand::seq::SliceRandom;
 use tracing::info;
 
 use super::Marker;
@@ -108,6 +109,7 @@ impl ClipService {
         }
 
         let mut rng = create_seeded_rng(options.seed.as_deref());
+        options.markers.shuffle(&mut rng);
         let clips = match options.clip_options.clip_picker {
             ClipPickerOptions::RoundRobin(picker_options) => {
                 let mut picker = RoundRobinClipPicker;

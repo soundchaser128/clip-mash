@@ -1,10 +1,10 @@
 use clip_mash_types::{Clip, PmvClipOptions, RoundRobinClipOptions};
 use rand::rngs::StdRng;
-use tracing::{info, warn};
+use tracing::info;
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
-use crate::service::clip::state::{MarkerStart, MarkerState, MarkerStateInfo};
+use crate::service::clip::state::{MarkerState, MarkerStateInfo};
 use crate::service::clip::MIN_DURATION;
 use crate::service::Marker;
 
@@ -41,17 +41,22 @@ impl ClipPicker for RoundRobinClipPicker {
         let has_music = matches!(options.clip_lengths, PmvClipOptions::Songs(_));
         let clip_lengths = ClipLengthPicker::new(options.clip_lengths, max_duration, rng);
         let clip_lengths = clip_lengths.durations();
+        info!("clip lengths: {:?}", clip_lengths);
 
         let mut marker_state = MarkerState::new(markers, clip_lengths, options.length);
 
         while !marker_state.finished() {
-            if let Some(MarkerStateInfo { start, end, marker }) =
-                marker_state.find_marker_by_index(marker_idx)
+            if let Some(MarkerStateInfo {
+                start,
+                end,
+                marker,
+                skipped_duration,
+            }) = marker_state.find_marker_by_index(marker_idx)
             {
                 let duration = end - start;
                 if has_music || duration >= MIN_DURATION {
                     info!(
-                        "adding clip for video {} with duration {duration} and title {}",
+                        "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
                         marker.video_id, marker.title
                     );
                     assert!(
@@ -70,11 +75,11 @@ impl ClipPicker for RoundRobinClipPicker {
                     });
                 }
 
-                marker_state.update(&marker.id, end, marker_idx + 1, duration);
-                marker_idx += 1;
+                marker_state.update(&marker.id, end, duration);
             } else {
                 break;
             }
+            marker_idx += 1;
         }
 
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
@@ -122,7 +127,7 @@ mod test {
             length: song_duration,
             clip_lengths: PmvClipOptions::Songs(SongClipOptions {
                 beats_per_measure: 4,
-                cut_after_measures: MeasureCount::Fixed { count: 4 },
+                cut_after_measures: MeasureCount::Fixed { count: 1 },
                 songs,
             }),
         };

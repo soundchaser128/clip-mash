@@ -4,7 +4,7 @@ use clip_mash_types::{Clip, WeightedRandomClipOptions};
 use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::rngs::StdRng;
-use tracing::{debug, info};
+use tracing::info;
 
 use super::ClipPicker;
 use crate::service::clip::length_picker::ClipLengthPicker;
@@ -66,8 +66,12 @@ impl ClipPicker for WeightedRandomClipPicker {
 
         while !marker_state.finished() {
             let marker_tag = &choices[distribution.sample(rng)].0;
-            if let Some(MarkerStateInfo { start, end, marker }) =
-                marker_state.find_marker_by_title(&marker_tag, rng)
+            if let Some(MarkerStateInfo {
+                start,
+                end,
+                marker,
+                skipped_duration,
+            }) = marker_state.find_marker_by_title(&marker_tag, rng)
             {
                 let duration = end - start;
 
@@ -84,10 +88,8 @@ impl ClipPicker for WeightedRandomClipPicker {
                     marker.video_id, marker.title
                 );
 
-                marker_state.update(&marker.id, end, index + 1, duration);
+                marker_state.update(&marker.id, end, duration);
                 index += 1;
-            } else {
-                break;
             }
         }
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();

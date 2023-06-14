@@ -109,7 +109,7 @@ impl ClipService {
         }
 
         let mut rng = create_seeded_rng(options.seed.as_deref());
-        options.markers.shuffle(&mut rng);
+        // options.markers.shuffle(&mut rng);
         let clips = match options.clip_options.clip_picker {
             ClipPickerOptions::RoundRobin(picker_options) => {
                 let mut picker = RoundRobinClipPicker;
@@ -181,6 +181,7 @@ mod tests {
         };
         let service = ClipService::new();
         let ClipsResult { clips: results, .. } = service.arrange_clips(options);
+        dbg!(&results);
         assert_eq!(4, results.len());
         assert_eq!((1.0, 11.0), results[0].range);
         assert_eq!((1.0, 8.5), results[1].range);

@@ -5,7 +5,7 @@ use clip_mash_types::MarkerId;
 use float_cmp::approx_eq;
 use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
-use tracing::{debug, info};
+use tracing::debug;
 
 use crate::service::Marker;
 
@@ -60,8 +60,17 @@ impl MarkerState {
         self.data.get(&id.inner())
     }
 
-    pub fn update(&mut self, id: &MarkerId, start_time: f64, duration: f64) {
+    pub fn update(
+        &mut self,
+        id: &MarkerId,
+        start_time: f64,
+        duration: f64,
+        remaining_duration: f64,
+    ) {
         self.durations.pop();
+        if remaining_duration > 0.0 {
+            self.durations.push(remaining_duration);
+        }
         self.total_duration += duration;
         let entry = self.data.entry(id.inner()).and_modify(|e| {
             e.start_time = start_time;
@@ -90,13 +99,8 @@ impl MarkerState {
                     0.0
                 };
                 debug!(
-                    "found marker: {}: {} - {} (skipped: {} - {} = {})",
-                    marker.title,
-                    state.start_time,
-                    next_end_time,
-                    next_end_time,
-                    marker.end_time,
-                    skipped_duration,
+                    "found marker: {}: {} - {} (skipped: {})",
+                    marker.title, state.start_time, next_end_time, skipped_duration,
                 );
                 Some(MarkerStateInfo {
                     marker: marker.clone(),

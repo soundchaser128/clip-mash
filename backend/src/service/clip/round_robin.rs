@@ -75,11 +75,9 @@ impl ClipPicker for RoundRobinClipPicker {
                     });
                 }
 
-                marker_state.update(&marker.id, end, duration);
-            } else {
-                break;
+                marker_state.update(&marker.id, end, duration, skipped_duration);
+                marker_idx += 1;
             }
-            marker_idx += 1;
         }
 
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
@@ -127,7 +125,7 @@ mod test {
             length: song_duration,
             clip_lengths: PmvClipOptions::Songs(SongClipOptions {
                 beats_per_measure: 4,
-                cut_after_measures: MeasureCount::Fixed { count: 1 },
+                cut_after_measures: MeasureCount::Fixed { count: 4 },
                 songs,
             }),
         };

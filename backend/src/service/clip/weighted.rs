@@ -74,7 +74,10 @@ impl ClipPicker for WeightedRandomClipPicker {
             }) = marker_state.find_marker_by_title(&marker_tag, rng)
             {
                 let duration = end - start;
-
+                info!(
+                    "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
+                    marker.video_id, marker.title
+                );
                 clips.push(Clip {
                     index_within_marker: index,
                     index_within_video: marker.index_within_video,
@@ -88,7 +91,7 @@ impl ClipPicker for WeightedRandomClipPicker {
                     marker.video_id, marker.title
                 );
 
-                marker_state.update(&marker.id, end, duration);
+                marker_state.update(&marker.id, end, duration, skipped_duration);
                 index += 1;
             }
         }

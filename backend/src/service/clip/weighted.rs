@@ -116,6 +116,8 @@ mod tests {
         PmvClipOptions, RandomizedClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
     };
     use float_cmp::assert_approx_eq;
+    use itertools::Itertools;
+    use rand::Rng;
     use tracing_test::traced_test;
 
     use super::validate_options;
@@ -335,5 +337,45 @@ mod tests {
         let weight_labels = vec![].into_iter().collect();
 
         validate_options(&markers, &options, &weight_labels);
+    }
+
+    #[test]
+    fn test_weights_marker_distribution() {
+        let mut rng = create_seeded_rng(None);
+        let mut markers = vec![];
+        for _ in 0..95 {
+            let start = rng.gen_range(0..5) as f64;
+            let end = rng.gen_range(60..90) as f64;
+            let index = rng.gen_range(0..6);
+            markers.push(fixtures::create_marker("Blowjob", start, end, index))
+        }
+
+        for _ in 0..5 {
+            let start = rng.gen_range(50..90) as f64;
+            let end = rng.gen_range(100..140) as f64;
+            let index = rng.gen_range(6..15);
+            markers.push(fixtures::create_marker("Cowgirl", start, end, index))
+        }
+        let options = WeightedRandomClipOptions {
+            weights: vec![("Cowgirl".to_string(), 1.0), ("Blowjob".to_string(), 1.0)],
+            clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                base_duration: 30.0,
+                divisors: vec![2.0, 3.0, 4.0],
+            }),
+            length: 10.0 * 1000.0,
+        };
+        let mut picker = WeightedRandomClipPicker;
+        let clips = picker.pick_clips(markers.clone(), options, &mut rng);
+
+        let marker_titles: Vec<_> = clips
+            .iter()
+            .map(|c| {
+                let marker = markers.iter().find(|m| m.id == c.marker_id).unwrap();
+                marker.title.as_str()
+            })
+            .collect();
+        let clip_counts = marker_titles.iter().counts();
+        dbg!(&clip_counts);
+        assert!(clip_counts[&"Blowjob"] > clip_counts[&"Cowgirl"])
     }
 }

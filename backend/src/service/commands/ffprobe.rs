@@ -11,6 +11,17 @@ pub struct FfProbe {
     pub format: Format,
 }
 
+impl FfProbe {
+    pub fn duration(&self) -> f64 {
+        self.format
+            .duration
+            .clone()
+            .expect("duration must be present")
+            .parse()
+            .expect("must be valid floating point")
+    }
+}
+
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
 pub struct Stream {
     pub index: i64,

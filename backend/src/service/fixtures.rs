@@ -465,6 +465,7 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
         id: generate_id(),
         interactive: false,
         source: LocalVideoSource::Folder,
+        duration: 50.0,
     };
     db.persist_video(expected.clone()).await?;
     Ok(expected)
@@ -476,6 +477,7 @@ pub async fn persist_video_with_source(db: &Database, source: LocalVideoSource) 
         id: generate_id(),
         interactive: false,
         source,
+        duration: 50.0,
     };
     db.persist_video(video.clone()).await?;
     Ok(video)

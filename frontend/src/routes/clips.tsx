@@ -19,7 +19,6 @@ import {formatSeconds, getSegmentColor} from "../helpers"
 import {Clip, ClipOrder} from "../types.generated"
 import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
-import styles from "./clips.module.css"
 import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
 
@@ -55,7 +54,7 @@ const Timeline: React.FC<TimelineProps> = ({
     sceneIds.sort()
     const sceneColors = new Map()
     sceneIds.forEach((id, index) => {
-      sceneColors.set(id, [getSegmentColor(index), index])
+      sceneColors.set(id, [getSegmentColor(index, sceneIds.length), index])
     })
 
     return [segments, sceneColors]
@@ -70,11 +69,11 @@ const Timeline: React.FC<TimelineProps> = ({
           <div
             key={index}
             className={clsx(
-              styles.timelineSegment,
-              color,
-              index !== currentClipIndex && styles.inactive
+              "flex justify-center items-center text-sm cursor-pointer",
+              index !== currentClipIndex && "opacity-30 hover:opacity-60",
+              index === currentClipIndex && "opacity-100"
             )}
-            style={{width}}
+            style={{width, backgroundColor: color}}
             onClick={() => setCurrentClipIndex(index)}
           >
             {sceneId + 1}

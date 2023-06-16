@@ -10,8 +10,10 @@ import {
   HiArrowDownTray,
   HiCheck,
   HiChevronRight,
+  HiClock,
   HiInformationCircle,
   HiPlayPause,
+  HiPlus,
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
@@ -26,8 +28,9 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom"
-import {getFormState} from "../../helpers"
+import {formatSeconds, getFormState} from "../../helpers"
 import clsx from "clsx"
+import {persistMarker} from "./api"
 
 export const loader: LoaderFunction = async () => {
   const formState = getFormState()
@@ -55,7 +58,6 @@ export default function ListVideos() {
   invariant(StateHelpers.isLocalFiles(state.data))
   const initialVideos = useLoaderData() as VideoWithMarkers[]
   const [videos, setVideos] = useImmer<VideoWithMarkers[]>(initialVideos)
-  const [videoPreview, setVideoPreview] = useState<string>()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -64,6 +66,32 @@ export default function ListVideos() {
 
   const onOpenModal = ({video}: VideoWithMarkers) => {
     navigate(`/local/videos/${video.id.id}`)
+  }
+
+  const onAddFullVideo = async (video: VideoWithMarkers) => {
+    const duration = video.video.duration
+    const result = await persistMarker(
+      video.video.id.id,
+      {
+        start: 0.0,
+        end: duration,
+        title: "Untitled",
+      },
+      duration,
+      0
+    )
+
+    if (result.isOk) {
+      const marker = result.unwrap()
+      setVideos((draft) => {
+        const video = draft.find((v) => v.video.id.id === marker.videoId.id)
+        invariant(video)
+        video.markers.push(marker)
+      })
+    } else {
+      const error = result.error
+      console.error(error)
+    }
   }
 
   const onNextStage = () => {
@@ -126,17 +154,6 @@ export default function ListVideos() {
             )}
             key={video.video.id.id}
           >
-            <figure>
-              {videoPreview === video.video.id.id && (
-                <video
-                  controls
-                  autoPlay
-                  className="w-full aspect-video"
-                  muted
-                  src={`/api/local/video/${video.video.id.id}`}
-                />
-              )}
-            </figure>
             <div className="card-body">
               <h2 className="card-title">{video.video.fileName}</h2>
               <ul className="flex flex-col gap-2 self-start">
@@ -162,23 +179,20 @@ export default function ListVideos() {
                     ? "Downloaded"
                     : "Folder"}
                 </li>
+                <li>
+                  <HiClock className="inline mr-2" />
+                  Duration:{" "}
+                  <strong>{formatSeconds(video.video.duration)}</strong>
+                </li>
               </ul>
-              <div className="card-actions justify-between">
+              <div className="card-actions justify-between grow items-end">
                 <button
-                  onClick={() =>
-                    setVideoPreview((id) =>
-                      id ? undefined : video.video.id.id
-                    )
-                  }
-                  className={clsx(
-                    "btn btn-sm",
-                    videoPreview === video.video.id.id
-                      ? "btn-error"
-                      : "btn-secondary"
-                  )}
+                  disabled={video.markers.length > 0}
+                  onClick={() => onAddFullVideo(video)}
+                  className="btn btn-sm btn-secondary"
                 >
-                  <HiPlayPause className="mr-2" />
-                  {videoPreview === video.video.id.id ? "Stop" : "Preview"}
+                  <HiPlus className="w-4 h-4" />
+                  Add entire video
                 </button>
 
                 <button

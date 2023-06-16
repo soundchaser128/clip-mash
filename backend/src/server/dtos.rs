@@ -51,6 +51,8 @@ impl From<DbMarker> for MarkerDto {
 
 impl From<FindScenesQueryFindScenesScenes> for VideoDto {
     fn from(value: FindScenesQueryFindScenesScenes) -> Self {
+        let file = value.files.get(0).expect("must have at least one file");
+
         VideoDto {
             id: VideoId::Stash(value.id),
             title: value
@@ -58,13 +60,10 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
                 .or(value.files.get(0).map(|m| m.basename.clone()))
                 .unwrap_or_default(),
             performers: value.performers.into_iter().map(|p| p.name).collect(),
-            file_name: value
-                .files
-                .get(0)
-                .map(|f| f.basename.clone())
-                .unwrap_or_default(),
+            file_name: file.basename.clone(),
             interactive: value.interactive,
             source: VideoSource::Stash,
+            duration: file.duration,
         }
     }
 }
@@ -84,12 +83,14 @@ impl From<DbVideo> for VideoDto {
                 LocalVideoSource::Folder => VideoSource::LocalFile,
                 LocalVideoSource::Download => VideoSource::DownloadedLocalFile,
             },
+            duration: value.duration,
         }
     }
 }
 
 impl From<Video> for VideoDto {
     fn from(value: Video) -> Self {
+        let duration = value.duration();
         VideoDto {
             id: value.id,
             title: value.title,
@@ -103,6 +104,7 @@ impl From<Video> for VideoDto {
                     LocalVideoSource::Download => VideoSource::DownloadedLocalFile,
                 },
             },
+            duration,
         }
     }
 }

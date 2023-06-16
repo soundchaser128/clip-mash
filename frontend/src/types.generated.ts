@@ -90,6 +90,7 @@ export type VideoDto = {
   fileName: string
   interactive: boolean
   source: VideoSource
+  duration: F64
 }
 export type MarkerDto = {
   id: MarkerId

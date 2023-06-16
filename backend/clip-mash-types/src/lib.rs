@@ -148,6 +148,7 @@ pub struct VideoDto {
     pub file_name: String,
     pub interactive: bool,
     pub source: VideoSource,
+    pub duration: f64,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]

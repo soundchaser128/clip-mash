@@ -120,10 +120,13 @@ export default function ListVideos() {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
         {videos.map((video) => (
           <article
-            className="card card-compact bg-base-200 shadow-xl"
+            className={clsx(
+              "card card-compact shadow-xl bg-base-200",
+              video.markers.length > 0 && "border-2 border-green-600"
+            )}
             key={video.video.id.id}
           >
-            <figure className="">
+            <figure>
               {videoPreview === video.video.id.id && (
                 <video
                   controls

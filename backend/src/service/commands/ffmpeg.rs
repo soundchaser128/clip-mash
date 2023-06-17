@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use std::fs;
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -155,7 +153,7 @@ pub struct Ffmpeg {
     duration: Option<String>,
     video_codec: Option<String>,
     audio_codec: Option<String>,
-    crf: Option<String>,
+    crf: Option<u32>,
     preset: Option<String>,
     extra_args: Vec<String>,
     video_filter: Option<String>,
@@ -192,7 +190,17 @@ impl Ffmpeg {
         self
     }
 
-    pub async fn run(&self) -> Result<()> {
+    pub fn video_filter(&mut self, filter: impl Into<String>) -> &mut Self {
+        self.video_filter = Some(filter.into());
+        self
+    }
+
+    pub fn extra_arg(&mut self, arg: impl Into<String>) -> &mut Self {
+        self.extra_args.push(arg.into());
+        self
+    }
+
+    fn build_args(&self) -> Vec<&str> {
         let mut args = vec!["-hide-banner", "-loglevel", "warning"];
 
         if let Some(start) = &self.start {
@@ -206,6 +214,11 @@ impl Ffmpeg {
         }
 
         args.push(&self.output_file);
+        args
+    }
+
+    pub async fn run(&self) -> Result<()> {
+        let args = self.build_args();
         let mut command = Command::new(self.executable_path.as_str());
         command.args(args);
 

@@ -1,4 +1,4 @@
-import {JsonError, VideoWithMarkers} from "../../types/types"
+import {VideoWithMarkers} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
 import {useForm, FieldErrors} from "react-hook-form"

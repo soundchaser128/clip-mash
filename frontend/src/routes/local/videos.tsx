@@ -187,7 +187,9 @@ export default function ListVideos() {
               </ul>
               <div className="card-actions justify-between grow items-end">
                 <button
-                  disabled={video.markers.length > 0}
+                  disabled={
+                    video.markers.length > 0 && video.video.duration <= 0
+                  }
                   onClick={() => onAddFullVideo(video)}
                   className="btn btn-sm btn-secondary"
                 >

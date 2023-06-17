@@ -1,4 +1,5 @@
-use tracing::info;
+use camino::Utf8Path;
+use tracing::{info, warn};
 
 use crate::data::database::Database;
 use crate::service::commands::ffprobe;
@@ -19,9 +20,16 @@ async fn set_video_durations(database: &Database) -> Result<()> {
         // initial value from migration
         if video.duration == -1.0 {
             info!("determining duration for video {}", video.file_path);
-            let ffprobe = ffprobe(&video.file_path).await?;
-            let duration = ffprobe.duration();
-            database.set_video_duration(&video.id, duration).await?;
+            if !Utf8Path::new(&video.file_path).exists() {
+                info!("video {} does not exist, skipping", video.file_path);
+            } else {
+                if let Ok(ffprobe) = ffprobe(&video.file_path).await {
+                    let duration = ffprobe.duration().unwrap_or_default();
+                    database.set_video_duration(&video.id, duration).await?;
+                } else {
+                    warn!("failed to determine duration for video {}", video.file_path);
+                }
+            }
         }
     }
 

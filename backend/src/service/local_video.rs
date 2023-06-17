@@ -68,7 +68,7 @@ impl VideoService {
                         file_path: path.to_string(),
                         interactive,
                         source: LocalVideoSource::Folder,
-                        duration,
+                        duration: duration.unwrap_or_default(),
                     };
                     info!("inserting new video {video:#?}");
                     self.database.persist_video(video.clone()).await?;
@@ -107,7 +107,7 @@ impl VideoService {
             file_path: path.as_str().to_string(),
             interactive: false,
             source: LocalVideoSource::Download,
-            duration,
+            duration: duration.unwrap_or_default(),
         };
         info!("persisting downloaded video {video:#?}");
         self.database.persist_video(video.clone()).await?;

@@ -12,13 +12,11 @@ pub struct FfProbe {
 }
 
 impl FfProbe {
-    pub fn duration(&self) -> f64 {
+    pub fn duration(&self) -> Option<f64> {
         self.format
             .duration
-            .clone()
-            .expect("duration must be present")
-            .parse()
-            .expect("must be valid floating point")
+            .as_deref()
+            .and_then(|n| n.parse::<f64>().ok())
     }
 }
 

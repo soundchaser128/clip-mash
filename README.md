@@ -26,7 +26,7 @@ downloading the executable and placing it into their `$PATH` or installing it wi
 ## Troubleshooting
 ### ClipMash doesn't start, it only shows a console window for a fraction of a second and nothing else happens
 This seems to happen sometimes on Windows when ClipMash can't download the ffmpeg and ffprobe executables. You can solve it 
-by downloading the ffmpeg executables from (here)[https://ffmpeg.org/download.html] and placing them next to `clip-mash.exe`.
+by downloading the ffmpeg executables from [here](https://ffmpeg.org/download.html) and placing them next to `clip-mash.exe`.
 
 ## Building
 Requires `cargo`, `rustc` (see http://rustup.rs/) and `node` and `npm` (see https://nodejs.org/en). When those

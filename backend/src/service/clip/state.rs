@@ -90,7 +90,7 @@ impl MarkerState {
         let index = index % self.markers.len();
         let next_duration = self.durations.last().copied();
         if let Some(duration) = next_duration {
-            self.markers.get(index).and_then(|marker| {
+            self.markers.get(index).map(|marker| {
                 let state = self.get(&marker.id).unwrap();
                 let next_end_time = state.start_time + duration;
                 let skipped_duration = if next_end_time > marker.end_time {
@@ -102,12 +102,12 @@ impl MarkerState {
                     "found marker: {}: {} - {} (skipped: {})",
                     marker.title, state.start_time, next_end_time, skipped_duration,
                 );
-                Some(MarkerStateInfo {
+                MarkerStateInfo {
                     marker: marker.clone(),
                     start: state.start_time,
                     end: next_end_time.min(marker.end_time),
                     skipped_duration,
-                })
+                }
             })
         } else {
             None

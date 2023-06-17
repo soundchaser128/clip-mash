@@ -97,11 +97,11 @@ impl ClipService {
         let start = Instant::now();
         options.normalize_video_indices();
 
-        let beat_offsets = if let Some(songs) = options.clip_options.clip_picker.songs() {
-            Some(normalize_beat_offsets(songs))
-        } else {
-            None
-        };
+        let beat_offsets = options
+            .clip_options
+            .clip_picker
+            .songs()
+            .map(|songs| normalize_beat_offsets(songs));
 
         if options.clip_options.clip_picker.has_music() {
             info!("options have music, not sorting clips");

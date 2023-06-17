@@ -218,11 +218,7 @@ impl ClipPickerOptions {
     }
 
     pub fn has_music(&self) -> bool {
-        if let Some(clip_lengths) = self.clip_lengths() {
-            matches!(clip_lengths, PmvClipOptions::Songs(_))
-        } else {
-            false
-        }
+        matches!(self.clip_lengths(), Some(PmvClipOptions::Songs(_)))
     }
 
     pub fn songs(&self) -> Option<&[Beats]> {

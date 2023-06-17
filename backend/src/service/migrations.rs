@@ -22,13 +22,11 @@ async fn set_video_durations(database: &Database) -> Result<()> {
             info!("determining duration for video {}", video.file_path);
             if !Utf8Path::new(&video.file_path).exists() {
                 info!("video {} does not exist, skipping", video.file_path);
+            } else if let Ok(ffprobe) = ffprobe(&video.file_path).await {
+                let duration = ffprobe.duration().unwrap_or_default();
+                database.set_video_duration(&video.id, duration).await?;
             } else {
-                if let Ok(ffprobe) = ffprobe(&video.file_path).await {
-                    let duration = ffprobe.duration().unwrap_or_default();
-                    database.set_video_duration(&video.id, duration).await?;
-                } else {
-                    warn!("failed to determine duration for video {}", video.file_path);
-                }
+                warn!("failed to determine duration for video {}", video.file_path);
             }
         }
     }

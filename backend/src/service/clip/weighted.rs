@@ -100,7 +100,7 @@ impl ClipPicker for WeightedRandomClipPicker {
             let slack = (clips_duration - options.length) / clips.len() as f64;
             info!("clip duration {clips_duration} longer than permitted maximum duration {}, making each clip {slack} shorter", options.length);
             for clip in &mut clips {
-                clip.range.1 = clip.range.1 - slack;
+                clip.range.1 -= slack;
             }
         }
 

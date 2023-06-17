@@ -94,7 +94,7 @@ impl ClipPicker for RoundRobinClipPicker {
             let slack = (clips_duration - max_duration) / clips.len() as f64;
             info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");
             for clip in &mut clips {
-                clip.range.1 = clip.range.1 - slack;
+                clip.range.1 -= slack;
             }
         }
 

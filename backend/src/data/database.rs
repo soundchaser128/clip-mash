@@ -277,11 +277,12 @@ impl Database {
 
     pub async fn persist_video(&self, video: DbVideo) -> Result<()> {
         sqlx::query!(
-            "INSERT INTO local_videos (id, file_path, interactive, source) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO local_videos (id, file_path, interactive, source, duration) VALUES ($1, $2, $3, $4, $5)",
             video.id,
             video.file_path,
             video.interactive,
             video.source,
+            video.duration,
         )
         .execute(&self.pool)
         .await?;

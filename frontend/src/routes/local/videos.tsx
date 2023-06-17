@@ -12,12 +12,11 @@ import {
   HiChevronRight,
   HiClock,
   HiInformationCircle,
-  HiPlayPause,
   HiPlus,
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
-import {useEffect, useState} from "react"
+import {useEffect} from "react"
 import {useImmer} from "use-immer"
 import {updateForm} from "../actions"
 import {

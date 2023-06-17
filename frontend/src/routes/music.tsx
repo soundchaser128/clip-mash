@@ -439,6 +439,9 @@ export default function Music() {
     })
     setMode("table")
     revalidator.revalidate()
+    new Notification("Music download finished!", {
+      icon: "/android-chrome-192x192.png",
+    })
   }
 
   const onFormChange = (values: MusicSettingsInputs) => {

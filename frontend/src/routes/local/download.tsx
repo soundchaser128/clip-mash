@@ -57,6 +57,9 @@ const DownloadVideosPage: React.FC = () => {
       if (errors.length > 0) {
         setError("urls", {message: errors.join("\n")})
       } else {
+        new Notification("Video downloads finished!", {
+          icon: "/android-chrome-192x192.png",
+        })
         navigate("/local/videos")
       }
     }

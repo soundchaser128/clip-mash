@@ -3,12 +3,13 @@ import {
   StateMachineProvider,
   useStateMachine,
 } from "little-state-machine"
-import React from "react"
+import React, {useEffect} from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
   isRouteErrorResponse,
   LoaderFunction,
+  Outlet,
   RouterProvider,
   useNavigate,
   useRouteError,
@@ -148,10 +149,27 @@ const musicLoader: LoaderFunction = async () => {
   return data
 }
 
+const NotificationPermission = () => {
+  useEffect(() => {
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          new Notification("Notifications enabled.", {
+            icon: "/android-chrome-192x192.png",
+          })
+        }
+      })
+    }
+  }, [])
+
+  return <Outlet />
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
     errorElement: <ErrorBoundary />,
+    element: <NotificationPermission />,
     children: [
       {
         index: true,

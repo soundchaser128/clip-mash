@@ -62,6 +62,9 @@ function Progress() {
         if (data.done) {
           setFinished(true)
           es.close()
+          new Notification("Video generation finished!", {
+            icon: "/android-chrome-192x192.png",
+          })
         }
         setProgress(data)
       }

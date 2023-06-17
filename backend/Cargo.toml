@@ -14,7 +14,7 @@ color-eyre = "0.6.2"
 clip-mash-types = { path = "clip-mash-types" }
 directories = "5.0.1"
 futures = "0.3.28"
-graphql_client = "0.12.0"
+graphql_client = "0.13.0"
 hound = "3.5.0"
 include_dir = "0.7.3"
 itertools = "0.10.5"

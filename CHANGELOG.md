@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- feat: add browser notifications when downloads are finished or video generation is done
 
 ## 0.10.0
 - feat: Allow specifying weights for markers

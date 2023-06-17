@@ -14,7 +14,7 @@ color-eyre = "0.6.2"
 clip-mash-types = { path = "clip-mash-types" }
 directories = "5.0.1"
 futures = "0.3.28"
-graphql_client = "0.12.0"
+graphql_client = "0.13.0"
 hound = "3.5.0"
 include_dir = "0.7.3"
 itertools = "0.10.5"
@@ -40,6 +40,7 @@ walkdir = "2.3.3"
 webbrowser = "0.8.10"
 youtube_dl = { version = "0.8.1", features = ["tokio", "downloader"] }
 url = { version = "2.3.1", features = ["serde"] }
+float-cmp = "0.9.0"
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.38"
@@ -52,7 +53,6 @@ zip = "0.6.6"
 opt-level = 3
 
 [dev-dependencies]
-assert_approx_eq = "1.1.0"
 fake = "2.6.1"
 tracing-test = "0.2.4"
 

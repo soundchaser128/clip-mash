@@ -41,9 +41,7 @@ function Scenes() {
             />
           </figure>
           <div className="card-body">
-            <h2 className="card-title tooltip" data-tip={scene.title}>
-              <span className="truncate">{scene.title}</span>
-            </h2>
+            <h2 className="card-title">{scene.title}</h2>
             <ul className="text-base grow flex flex-col items-start">
               <li className="tooltip" data-tip="Performers">
                 <HiUser className="inline mr-2" />

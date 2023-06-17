@@ -3,24 +3,17 @@ use std::time::Instant;
 
 use aubio::{OnsetMode, Smpl, Tempo};
 use camino::{Utf8Path, Utf8PathBuf};
+use clip_mash_types::Beats;
 use color_eyre::eyre::eyre;
 use hound::WavReader;
-use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::data::database::DbSong;
 use crate::util::commandline_error;
 use crate::Result as AppResult;
 
 const BUF_SIZE: usize = 512;
 const HOP_SIZE: usize = 256;
 const I16_TO_SMPL: Smpl = 1.0 / (1 << 16) as Smpl;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Beats {
-    pub offsets: Vec<f32>,
-    pub length: f32,
-}
 
 fn convert_to_wav(source: impl AsRef<Utf8Path>) -> AppResult<Utf8PathBuf> {
     let source = source.as_ref();
@@ -91,15 +84,4 @@ pub fn detect_beats(file: impl AsRef<Utf8Path>) -> AppResult<Beats> {
         offsets,
         length: duration as f32 / format.sample_rate as f32,
     })
-}
-
-pub fn parse_beats(songs: &[DbSong]) -> Vec<Beats> {
-    songs
-        .iter()
-        .filter_map(|s| {
-            s.beats
-                .as_deref()
-                .and_then(|json| serde_json::from_str(&json).ok())
-        })
-        .collect()
 }

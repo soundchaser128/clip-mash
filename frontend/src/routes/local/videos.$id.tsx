@@ -1,4 +1,4 @@
-import {JsonError, VideoWithMarkers} from "../../types/types"
+import {VideoWithMarkers} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
 import {useForm, FieldErrors} from "react-hook-form"
@@ -24,7 +24,7 @@ import {
 } from "react-router-dom"
 import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
-import {Result} from "@badrap/result"
+import {persistMarker} from "./api"
 
 interface Inputs {
   id?: number
@@ -62,45 +62,6 @@ function getSegments(
 }
 
 type FormMode = "hidden" | "create" | "edit"
-
-interface CreateMarker {
-  videoId: string
-  start: number
-  end: number
-  title: string
-  indexWithinVideo: number
-}
-
-async function persistMarker(
-  videoId: string,
-  marker: Inputs,
-  duration: number,
-  index: number
-): Promise<Result<MarkerDto, JsonError>> {
-  const start = Math.max(parseTimestamp(marker.start), 0)
-  const end = Math.min(parseTimestamp(marker.end!), duration)
-
-  const payload = {
-    start,
-    end,
-    title: marker.title.trim(),
-    videoId,
-    indexWithinVideo: index,
-  } satisfies CreateMarker
-
-  const response = await fetch("/api/local/video/marker", {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: {"Content-Type": "application/json"},
-  })
-  if (response.ok) {
-    const marker = (await response.json()) as MarkerDto
-    return Result.ok(marker)
-  } else {
-    const error = (await response.json()) as JsonError
-    return Result.err(error)
-  }
-}
 
 export default function EditVideoModal() {
   const {id} = useParams()
@@ -437,16 +398,16 @@ export default function EditVideoModal() {
             <div
               key={index}
               className={clsx(
-                "absolute h-full tooltip transition-opacity flex items-center justify-center cursor-pointer",
-                getSegmentColor(index)
+                "absolute h-full tooltip transition-opacity flex items-center justify-center cursor-pointer text-white"
               )}
               onClick={() => onShowForm(marker)}
               style={{
                 width: `${width}%`,
                 left: `${offset}%`,
+                backgroundColor: getSegmentColor(index, markers.length),
               }}
             >
-              <span className="truncate">{marker.primaryTag}</span>
+              {marker.primaryTag}
             </div>
           )
         })}

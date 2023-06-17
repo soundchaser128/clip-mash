@@ -7,6 +7,7 @@ import {
   HiBackward,
   HiCheck,
   HiChevronRight,
+  HiCog8Tooth,
   HiForward,
   HiPause,
   HiPlay,
@@ -18,9 +19,12 @@ import {formatSeconds, getSegmentColor} from "../helpers"
 import {Clip, ClipOrder} from "../types.generated"
 import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
-import styles from "./clips.module.css"
+import Modal from "../components/Modal"
+import {useImmer} from "use-immer"
 
-const DEBUG = false
+function pluralize(word: string, count: number | undefined | null): string {
+  return count === 1 ? word : `${word}s`
+}
 
 interface ClipState {
   included: boolean
@@ -50,7 +54,7 @@ const Timeline: React.FC<TimelineProps> = ({
     sceneIds.sort()
     const sceneColors = new Map()
     sceneIds.forEach((id, index) => {
-      sceneColors.set(id, [getSegmentColor(index), index])
+      sceneColors.set(id, [getSegmentColor(index, sceneIds.length), index])
     })
 
     return [segments, sceneColors]
@@ -65,11 +69,11 @@ const Timeline: React.FC<TimelineProps> = ({
           <div
             key={index}
             className={clsx(
-              styles.timelineSegment,
-              color,
-              index !== currentClipIndex && styles.inactive
+              "flex justify-center items-center text-sm cursor-pointer",
+              index !== currentClipIndex && "opacity-30 hover:opacity-60",
+              index === currentClipIndex && "opacity-100"
             )}
-            style={{width}}
+            style={{width, backgroundColor: color}}
             onClick={() => setCurrentClipIndex(index)}
           >
             {sceneId + 1}
@@ -77,6 +81,163 @@ const Timeline: React.FC<TimelineProps> = ({
         )
       })}
     </div>
+  )
+}
+
+interface MarkerCount {
+  total: number
+  current: number
+}
+
+interface WeightsModalProps {
+  className?: string
+  clips: Clip[]
+}
+
+const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
+  const revalidator = useRevalidator()
+  const {state, actions} = useStateMachine({updateForm})
+  invariant(StateHelpers.isNotInitial(state.data))
+  const markerCounts = useMemo(() => {
+    invariant(StateHelpers.isNotInitial(state.data))
+
+    const counts = new Map<string, MarkerCount>()
+    for (const marker of state.data.selectedMarkers ?? []) {
+      const count = counts.get(marker.title) ?? {total: 0, current: 0}
+      counts.set(marker.title, {total: count.total + 1, current: count.current})
+    }
+    for (const clip of clips) {
+      const marker = state.data.selectedMarkers?.find(
+        (m) => m.id.id === clip.markerId.id
+      )
+      if (marker && marker.title) {
+        const count = counts.get(marker.title) ?? {total: 0, current: 0}
+        counts.set(marker.title, {
+          total: count.total,
+          current: count.current + 1,
+        })
+      }
+    }
+
+    return counts
+  }, [state.data, clips])
+
+  const [weights, setWeights] = useImmer<Array<[string, number]>>(() => {
+    invariant(StateHelpers.isNotInitial(state.data))
+    if (state.data.clipWeights) {
+      return state.data.clipWeights
+    } else {
+      const markerTitles = Array.from(
+        new Set(state.data.selectedMarkers?.map((m) => m.title.trim()))
+      ).sort()
+      return Array.from(markerTitles).map((title) => [title, 1.0])
+    }
+  })
+
+  const [enabled, setEnabled] = useState(
+    state.data.clipStrategy === "weightedRandom"
+  )
+  const [open, setOpen] = useState(false)
+
+  const onWeightChange = (title: string, weight: number) => {
+    setWeights((draft) => {
+      const index = draft.findIndex((e) => e[0] === title)
+      if (index !== -1) {
+        draft[index][1] = weight / 100
+      }
+    })
+  }
+
+  const onClose = () => {
+    setOpen(false)
+    if (enabled) {
+      actions.updateForm({
+        clipWeights: weights,
+        clipStrategy: "weightedRandom",
+      })
+
+      revalidator.revalidate()
+    } else {
+      actions.updateForm({
+        clipStrategy: "roundRobin",
+      })
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className={clsx("btn btn-secondary", className)}
+      >
+        <HiCog8Tooth className="mr-2" />
+        Adjust marker ratios
+      </button>
+      <Modal position="top" size="fluid" isOpen={open} onClose={onClose}>
+        <h1 className="text-2xl font-bold mb-2">Marker ratios</h1>
+        <p className="text-sm mb-4">
+          Here, you can adjust the likelihood of each marker type to be included
+          in the compilation.
+        </p>
+
+        <div className="flex flex-col gap-4 items-center">
+          <div className="form-control w-72">
+            <label className="label cursor-pointer">
+              <span className="label-text">Enable marker ratios</span>
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary"
+                onChange={(e) => setEnabled(e.target.checked)}
+                checked={enabled}
+              />
+            </label>
+          </div>
+          {weights.map(([title, weight]) => {
+            const count = markerCounts.get(title)
+            const markerLabel = pluralize("marker", count?.total ?? 0)
+            const clipLabel = pluralize("clip", count?.current ?? 0)
+
+            return (
+              <div
+                className={clsx(
+                  "form-control",
+                  !enabled && "opacity-50 cursor-not-allowed"
+                )}
+                key={title}
+              >
+                <label className="label">
+                  <span className="label-text font-semibold">
+                    {title} ({count?.total} {markerLabel}, {count?.current}{" "}
+                    {clipLabel})
+                  </span>
+                </label>
+                <input
+                  disabled={!enabled}
+                  type="range"
+                  min="0"
+                  max="100"
+                  className="range range-sm w-72"
+                  step="5"
+                  value={weight * 100}
+                  onChange={(e) =>
+                    onWeightChange(title, e.target.valueAsNumber)
+                  }
+                />
+                <div className="w-full flex justify-between text-xs px-2">
+                  <span>0%</span>
+                  <span className="font-bold">{Math.round(weight * 100)}%</span>
+                  <span>100%</span>
+                </div>
+              </div>
+            )
+          })}
+
+          <button onClick={onClose} className="btn btn-primary self-end">
+            Done
+          </button>
+        </div>
+      </Modal>
+    </>
   )
 }
 
@@ -92,8 +253,9 @@ interface Inputs {
   measureCountRandomEnd: number
 }
 
-const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
+const ClipSettingsForm: React.FC<{initialValues: Inputs; clips: Clip[]}> = ({
   initialValues,
+  clips,
 }) => {
   const {register, handleSubmit, watch} = useForm<Inputs>({
     defaultValues: initialValues,
@@ -104,8 +266,7 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
   const revalidator = useRevalidator()
   const {actions, state} = useStateMachine({updateForm})
   invariant(StateHelpers.isNotInitial(state.data))
-  const isPmv =
-    state.data.songs?.length !== 0 && state.data.clipStrategy === "pmv"
+  const isPmv = state.data.songs?.length !== 0
 
   const onSubmit = (values: Inputs) => {
     actions.updateForm({
@@ -130,6 +291,7 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs}> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
       <h2 className="text-xl font-bold">Settings</h2>
+      <WeightsModal className="my-4" clips={clips} />
       {!isPmv && (
         <>
           <div className="form-control">
@@ -279,6 +441,9 @@ function PreviewClips() {
   const navigate = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const currentMarker = state.data.selectedMarkers?.find(
+    (m) => currentClip.markerId.id === m.id.id
+  )
   const totalLength = clips.reduce(
     (len, {clip}) => len + (clip.range[1] - clip.range[0]),
     0
@@ -311,7 +476,6 @@ function PreviewClips() {
     const duration = event.currentTarget.duration
     const position = event.currentTarget.currentTime
     if (Math.abs(duration - position) <= 0.1 && autoPlay) {
-      console.log("switching song")
       setSongIndex((idx) => Math.min(songs.length - 1, idx + 1))
     }
   }
@@ -356,12 +520,10 @@ function PreviewClips() {
               {formatSeconds(totalLength, "short")}
             </span>
           </p>
-          {DEBUG && (
-            <>
-              <p>Index within the marker: {currentClip.indexWithinMarker}</p>
-              <p>Index within its video: {currentClip.indexWithinVideo}</p>
-            </>
-          )}
+          <p>
+            Marker title:{" "}
+            <span className="font-semibold">{currentMarker?.title}</span>
+          </p>
         </div>
         <button
           type="button"
@@ -394,6 +556,7 @@ function PreviewClips() {
         />
         <div className="flex flex-col px-4 py-2 w-1/4 bg-base-200 justify-between">
           <ClipSettingsForm
+            clips={clips.map((c) => c.clip)}
             initialValues={{
               clipDuration: state.data.clipDuration || 30,
               clipOrder: state.data.clipOrder || "scene-order",

@@ -3,7 +3,12 @@ import Field from "../components/Field"
 import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
 import invariant from "tiny-invariant"
-import {FormStage, LocalFilesFormStage, StateHelpers} from "../types/types"
+import {
+  ClipStrategy,
+  FormStage,
+  LocalFilesFormStage,
+  StateHelpers,
+} from "../types/types"
 import React, {useCallback, useRef, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds, sumDurations} from "../helpers"
@@ -145,6 +150,7 @@ const ReorderSongs: React.FC<{
       draft.splice(dragIndex, 1)
       draft.splice(hoverIndex, 0, temp)
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -333,7 +339,7 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
 
 interface MusicSettingsInputs {
   musicVolume: number
-  clipStrategy: "pmv" | "default"
+  clipStrategy: ClipStrategy
 }
 
 interface MusicSettingsFormProps {
@@ -382,8 +388,8 @@ const MusicSettingsForm: React.FC<MusicSettingsFormProps> = ({
           className="select select-bordered"
           {...register("clipStrategy")}
         >
-          <option value="pmv">Music-based (cut on the beat)</option>
-          <option value="default">Random lengths (default)</option>
+          <option value="roundRobin">Music-based (cut on the beat)</option>
+          <option value="equalLength">Random lengths (default)</option>
         </select>
       </div>
     </form>
@@ -399,7 +405,7 @@ export default function Music() {
     state.data.songs?.map((song) => song.songId) || []
   )
   const [formValues, setFormValues] = useState<MusicSettingsInputs>({
-    clipStrategy: state.data.clipStrategy || "pmv",
+    clipStrategy: state.data.clipStrategy || "roundRobin",
     musicVolume: state.data.musicVolume ? state.data.musicVolume * 100 : 75,
   })
   const navigate = useNavigate()

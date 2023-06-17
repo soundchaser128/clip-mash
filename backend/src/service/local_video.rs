@@ -10,7 +10,7 @@ use walkdir::WalkDir;
 use super::directories::Directories;
 use crate::data::database::{Database, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
 use crate::server::handlers::AppState;
-use crate::service::commands::{YtDlp, YtDlpOptions};
+use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
 use crate::util::generate_id;
 use crate::Result;
@@ -60,12 +60,15 @@ impl VideoService {
                     videos.push(video);
                 } else {
                     let interactive = path.with_extension("funscript").is_file();
+                    let ffprobe = ffprobe(&path).await?;
+                    let duration = ffprobe.duration();
                     let id = generate_id();
                     let video = DbVideo {
                         id,
                         file_path: path.to_string(),
                         interactive,
                         source: LocalVideoSource::Folder,
+                        duration: duration.unwrap_or_default(),
                     };
                     info!("inserting new video {video:#?}");
                     self.database.persist_video(video.clone()).await?;
@@ -96,11 +99,15 @@ impl VideoService {
     }
 
     pub async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
+        let ffprobe = ffprobe(&path).await?;
+        let duration = ffprobe.duration();
+
         let video = DbVideo {
             id,
             file_path: path.as_str().to_string(),
             interactive: false,
             source: LocalVideoSource::Download,
+            duration: duration.unwrap_or_default(),
         };
         info!("persisting downloaded video {video:#?}");
         self.database.persist_video(video.clone()).await?;

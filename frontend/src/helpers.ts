@@ -1,6 +1,8 @@
 import {format, formatDuration, getTime, parse} from "date-fns"
 import {SelectedMarker} from "./types.generated"
 import {FormState} from "./types/types"
+import {scaleSequential} from "d3-scale"
+import {interpolatePlasma} from "d3-scale-chromatic"
 
 export function getFormState(): FormState | null {
   const json = sessionStorage.getItem("form-state")
@@ -12,20 +14,12 @@ export function getFormState(): FormState | null {
   }
 }
 
-export const segmentColors = [
-  "bg-purple-400 hover:bg-purple-500 text-white",
-  "bg-green-400 hover:bg-green-500 text-white",
-  "bg-yellow-400 hover:bg-yellow-500 text-white",
-  "bg-red-400 hover:bg-red-500 text-white",
-  "bg-teal-400 hover:bg-teal-500 text-white",
-  "bg-orange-600 hover:bg-orange-500 text-white",
-  "bg-rose-400 hover:bg-rose-500 text-white",
-  "bg-stone-400 hover:bg-stone-500 text-white",
-  "bg-amber-400 hover:bg-amber-500 text-white",
-]
+export function getSegmentColor(index: number, count: number): string {
+  const colorScale = scaleSequential()
+    .domain([0, count - 1])
+    .interpolator(interpolatePlasma)
 
-export function getSegmentColor(index: number): string {
-  return segmentColors[index % segmentColors.length]
+  return colorScale(index)
 }
 
 type DurationFormat = "long" | "short"
@@ -64,13 +58,19 @@ export function formatSeconds(
   }
 }
 
-export function parseTimestamp(string: string): number {
-  const date = parse(string, "mm:ss", 0)
-  const millis = getTime(date)
-  return millis / 1000.0
+export function parseTimestamp(input: string | number): number {
+  if (typeof input === "string") {
+    const date = parse(input, "mm:ss", 0)
+    const millis = getTime(date)
+    return millis / 1000.0
+  } else {
+    return input
+  }
 }
 
-export function sumDurations(markers?: SelectedMarker[]): number {
+export type HasDuration = Pick<SelectedMarker, "selected" | "selectedRange">
+
+export function sumDurations(markers?: HasDuration[]): number {
   if (!markers) {
     return 0
   } else {

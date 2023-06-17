@@ -24,11 +24,11 @@ use crate::data::service::DataService;
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::get_streams;
-use crate::service::clip::ClipService;
+use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::directories::FolderType;
 use crate::service::funscript::{FunScript, ScriptBuilder};
 use crate::service::generator::{self, Progress};
-use crate::service::music::{self, Beats, MusicDownloadService};
+use crate::service::music::{self, MusicDownloadService};
 use crate::service::stash_config::Config;
 use crate::util::{expect_file_name, generate_id};
 
@@ -44,8 +44,11 @@ pub async fn fetch_clips(
     let options = service.convert_clip_options(body).await?;
     debug!("clip options: {options:?}");
 
-    let clip_service = ClipService::new(state.database.clone());
-    let (clips, beat_offsets) = clip_service.arrange_clips(options).await?;
+    let clip_service = ClipService::new();
+    let ClipsResult {
+        beat_offsets,
+        clips,
+    } = clip_service.arrange_clips(options);
     let streams = get_streams(video_ids, &config)?;
     let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.clone()).collect();
     video_ids.sort();

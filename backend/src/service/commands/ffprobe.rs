@@ -11,6 +11,15 @@ pub struct FfProbe {
     pub format: Format,
 }
 
+impl FfProbe {
+    pub fn duration(&self) -> Option<f64> {
+        self.format
+            .duration
+            .as_deref()
+            .and_then(|n| n.parse::<f64>().ok())
+    }
+}
+
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
 pub struct Stream {
     pub index: i64,

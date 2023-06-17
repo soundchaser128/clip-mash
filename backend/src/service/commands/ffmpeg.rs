@@ -197,12 +197,12 @@ impl Ffmpeg {
 
         if let Some(start) = &self.start {
             args.push("-ss");
-            args.push(&start);
+            args.push(start);
         }
 
         for input in &self.inputs {
             args.push("-i");
-            args.push(&input);
+            args.push(input);
         }
 
         args.push(&self.output_file);

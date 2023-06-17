@@ -44,6 +44,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
             videoId: m.videoId,
             selected: true,
             selectedRange: [m.start, m.end],
+            title: m.primaryTag,
           } satisfies SelectedMarker,
         ])
       return Object.fromEntries(entries)

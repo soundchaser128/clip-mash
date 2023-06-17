@@ -8,10 +8,11 @@ import {
 } from "../types/types"
 import {
   Clip,
-  ClipOptions,
+  ClipPickerOptions,
   ClipsResponse,
   CreateClipsBody,
   NewId,
+  PmvClipOptions,
   VideoDto,
 } from "../types.generated"
 
@@ -26,42 +27,67 @@ export const configLoader: LoaderFunction = async () => {
   }
 }
 
-const getClipSettings = (
+const getClipLengths = (
   state: LocalVideosFormState | StashFormState
-): ClipOptions => {
-  if (state.songs && state.songs.length > 0) {
-    if (state.clipStrategy === "pmv") {
-      return {
-        type: "pmv",
-        song_ids: state.songs.map(({songId}) => songId),
-        clips: {
-          type: "songs",
-          beatsPerMeasure: state.beatsPerMeasure || 4,
-          cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
-        },
-      }
-    } else {
-      return {
-        type: "pmv",
-        song_ids: state.songs.map(({songId}) => songId),
-        clips: {
-          type: "randomized",
-          divisors: [2.0, 3.0, 4.0],
-          baseDuration: state.clipDuration || 30,
-        },
-      }
+): PmvClipOptions => {
+  if (state.songs && state.songs.length) {
+    return {
+      type: "songs",
+      beatsPerMeasure: state.beatsPerMeasure || 4,
+      cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
+      songs: state.songs.map((song) => ({
+        length: song.duration,
+        offsets: song.beats,
+      })),
     }
   } else {
-    if (state.splitClips === false) {
-      return {
-        type: "noSplit",
-      }
-    } else {
-      return {
-        type: "default",
-        baseDuration: state.clipDuration || 30,
-        divisors: [2.0, 3.0, 4.0],
-      }
+    return {
+      type: "randomized",
+      baseDuration: state.clipDuration || 30,
+      divisors: [2, 3, 4],
+    }
+  }
+}
+
+const getClipSettings = (
+  state: LocalVideosFormState | StashFormState
+): ClipPickerOptions => {
+  if (state.clipStrategy === "weightedRandom") {
+    return {
+      type: "weightedRandom",
+      weights: state.clipWeights!,
+      clipLengths: getClipLengths(state),
+      length:
+        state.songs && state.songs.length > 0
+          ? state.songs.reduce((sum, song) => sum + song.duration, 0)
+          : state.selectedMarkers!.reduce(
+              (sum, {selectedRange: [start, end]}) => sum + (end - start),
+              0
+            ),
+    }
+  } else if (state.clipStrategy === "equalLength") {
+    return {
+      type: "equalLength",
+      clipDuration: state.clipDuration || 30,
+      divisors: [2, 3, 4],
+    }
+  } else if (
+    state.clipStrategy === "roundRobin" &&
+    state.songs &&
+    state.songs.length > 0
+  ) {
+    return {
+      type: "roundRobin",
+      clipLengths: getClipLengths(state),
+      length: state.songs.reduce((sum, song) => sum + song.duration, 0),
+    }
+  } else if (state.clipStrategy === "noSplit") {
+    return {type: "noSplit"}
+  } else {
+    return {
+      type: "equalLength",
+      clipDuration: state.clipDuration || 30,
+      divisors: [2, 3, 4],
     }
   }
 }
@@ -81,7 +107,10 @@ export const clipsLoader: LoaderFunction = async () => {
     clipOrder: state.clipOrder || "scene-order",
     markers: state.selectedMarkers!.filter((m) => m.selected),
     seed: state.seed || null,
-    clips: getClipSettings(state),
+    clips: {
+      clipPicker: getClipSettings(state),
+      order: state.clipOrder || "scene-order",
+    },
   } satisfies CreateClipsBody
 
   const response = await fetch("/api/clips", {

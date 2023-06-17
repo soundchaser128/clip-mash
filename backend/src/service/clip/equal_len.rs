@@ -1,34 +1,27 @@
-use std::fmt::Debug;
-
+use clip_mash_types::{Clip, EqualLengthClipOptions};
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
-use tracing::{debug, info};
+use tracing::info;
 
-use super::{Clip, ClipCreator, Marker};
+use super::ClipPicker;
+use crate::service::clip::MIN_DURATION;
+use crate::service::Marker;
 
-// Specifc minimum duration for default clip generation
-const MIN_DURATION: f64 = 1.5;
+pub struct EqualLengthClipPicker;
 
-#[derive(Debug)]
-pub struct DefaultClipOptions {
-    pub clip_duration: u32,
-    pub seed: Option<String>,
-    pub divisors: Vec<f64>,
-}
+impl ClipPicker for EqualLengthClipPicker {
+    type Options = EqualLengthClipOptions;
 
-pub struct DefaultClipCreator;
-
-impl ClipCreator for DefaultClipCreator {
-    type Options = DefaultClipOptions;
-
-    fn create_clips(
-        &self,
+    fn pick_clips(
+        &mut self,
         markers: Vec<Marker>,
         options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
-        info!("using DefaultClipCreator to create clips, options: {options:#?}",);
-        let duration = options.clip_duration as f64;
+        assert!(options.divisors.len() > 0, "divisors must not be empty");
+        info!("using EqualLengthClipPicker to make clips: {options:?}");
+
+        let duration = options.clip_duration;
         let clip_lengths: Vec<f64> = options
             .divisors
             .into_iter()
@@ -39,8 +32,6 @@ impl ClipCreator for DefaultClipCreator {
             let start = marker.start_time;
             let end = marker.end_time;
 
-            debug!("clip start = {start}, end = {end}");
-
             let mut index = 0;
             let mut offset = start;
             while offset < end {
@@ -49,7 +40,10 @@ impl ClipCreator for DefaultClipCreator {
                 let end = (offset + duration).min(end);
                 let duration = end - start;
                 if duration > MIN_DURATION {
-                    debug!("adding clip {} - {}", start, end);
+                    info!(
+                        "adding clip for video {} with duration {duration} and title {}",
+                        marker.video_id, marker.title
+                    );
                     clips.push(Clip {
                         source: marker.video_id.source(),
                         video_id: marker.video_id.clone(),

@@ -28,7 +28,7 @@ impl Directories {
             .expect("could not determine config path");
 
         for directory in &[dirs.config_dir(), dirs.cache_dir(), dirs.data_dir()] {
-            fs::create_dir_all(&directory)?;
+            fs::create_dir_all(directory)?;
         }
 
         Ok(Directories {

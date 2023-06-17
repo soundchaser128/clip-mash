@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use clip_mash_types::Beats;
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
 use serde::Deserialize;
@@ -8,7 +9,7 @@ use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::{info, warn};
 
-use crate::service::music::{self, Beats};
+use crate::service::music;
 use crate::Result;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
@@ -37,6 +38,7 @@ pub struct DbVideo {
     pub file_path: String,
     pub interactive: bool,
     pub source: LocalVideoSource,
+    pub duration: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, FromRow)]
@@ -108,7 +110,7 @@ impl Database {
     pub async fn get_video(&self, id: &str) -> Result<Option<DbVideo>> {
         let video = sqlx::query_as!(
             DbVideo,
-            "SELECT id, file_path, interactive, source FROM local_videos WHERE id = $1",
+            "SELECT id, file_path, interactive, source, duration FROM local_videos WHERE id = $1",
             id
         )
         .fetch_optional(&self.pool)
@@ -132,6 +134,7 @@ impl Database {
                     file_path: group[0].file_path.clone(),
                     interactive: group[0].interactive,
                     source: group[0].source.clone().into(),
+                    duration: group[0].duration,
                 };
                 let markers: Vec<_> = group
                     .into_iter()
@@ -226,6 +229,7 @@ impl Database {
                 file_path: records[0].file_path.clone(),
                 interactive: records[0].interactive,
                 source: records[0].source.clone().into(),
+                duration: records[0].duration,
             };
             let markers = records
                 .into_iter()
@@ -264,13 +268,21 @@ impl Database {
         }
     }
 
+    pub async fn get_videos(&self) -> Result<Vec<DbVideo>> {
+        sqlx::query_as!(DbVideo, "SELECT * FROM local_videos")
+            .fetch_all(&self.pool)
+            .await
+            .map_err(From::from)
+    }
+
     pub async fn persist_video(&self, video: DbVideo) -> Result<()> {
         sqlx::query!(
-            "INSERT INTO local_videos (id, file_path, interactive, source) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO local_videos (id, file_path, interactive, source, duration) VALUES ($1, $2, $3, $4, $5)",
             video.id,
             video.file_path,
             video.interactive,
             video.source,
+            video.duration,
         )
         .execute(&self.pool)
         .await?;
@@ -441,6 +453,18 @@ impl Database {
             let (beats, song_id) = handle.await?;
             self.persist_beats(song_id, &beats?).await?;
         }
+
+        Ok(())
+    }
+
+    pub async fn set_video_duration(&self, id: &str, duration: f64) -> Result<()> {
+        sqlx::query!(
+            "UPDATE local_videos SET duration = $1 WHERE id = $2",
+            duration,
+            id
+        )
+        .execute(&self.pool)
+        .await?;
 
         Ok(())
     }

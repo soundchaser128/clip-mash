@@ -4,6 +4,7 @@ pub mod directories;
 pub mod funscript;
 pub mod generator;
 pub mod local_video;
+pub mod migrations;
 pub mod music;
 pub mod stash_config;
 
@@ -35,6 +36,15 @@ pub struct Video {
     pub file_name: String,
     pub performers: Vec<String>,
     pub info: VideoInfo,
+}
+
+impl Video {
+    pub fn duration(&self) -> f64 {
+        match &self.info {
+            VideoInfo::Stash { scene } => scene.files[0].duration,
+            VideoInfo::LocalFile { video } => video.duration,
+        }
+    }
 }
 
 impl From<DbVideo> for Video {

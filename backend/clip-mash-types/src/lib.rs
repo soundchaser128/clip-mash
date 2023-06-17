@@ -9,7 +9,7 @@ use typescript_type_def::TypeDef;
 pub enum ClipOrder {
     Random,
     SceneOrder,
-    Pmv,
+    NoOp,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TypeDef)]
@@ -148,6 +148,7 @@ pub struct VideoDto {
     pub file_name: String,
     pub interactive: bool,
     pub source: VideoSource,
+    pub duration: f64,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
@@ -158,6 +159,7 @@ pub struct SelectedMarker {
     pub selected_range: (f64, f64),
     pub index_within_video: usize,
     pub selected: Option<bool>,
+    pub title: String,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
@@ -167,7 +169,7 @@ pub struct RandomizedClipOptions {
     pub divisors: Vec<f64>,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum MeasureCount {
     Fixed { count: usize },
@@ -179,6 +181,7 @@ pub enum MeasureCount {
 pub struct SongClipOptions {
     pub beats_per_measure: usize,
     pub cut_after_measures: MeasureCount,
+    pub songs: Vec<Beats>,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
@@ -189,14 +192,64 @@ pub enum PmvClipOptions {
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct ClipOptions {
+    pub clip_picker: ClipPickerOptions,
+    pub order: ClipOrder,
+}
+
+#[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase", tag = "type")]
-pub enum ClipOptions {
-    Pmv {
-        song_ids: Vec<i64>,
-        clips: PmvClipOptions,
-    },
-    Default(RandomizedClipOptions),
+pub enum ClipPickerOptions {
+    RoundRobin(RoundRobinClipOptions),
+    WeightedRandom(WeightedRandomClipOptions),
+    EqualLength(EqualLengthClipOptions),
     NoSplit,
+}
+
+impl ClipPickerOptions {
+    pub fn clip_lengths(&self) -> Option<&PmvClipOptions> {
+        match self {
+            ClipPickerOptions::RoundRobin(opts) => Some(&opts.clip_lengths),
+            ClipPickerOptions::WeightedRandom(opts) => Some(&opts.clip_lengths),
+            ClipPickerOptions::EqualLength(_) => None,
+            ClipPickerOptions::NoSplit => None,
+        }
+    }
+
+    pub fn has_music(&self) -> bool {
+        matches!(self.clip_lengths(), Some(PmvClipOptions::Songs(_)))
+    }
+
+    pub fn songs(&self) -> Option<&[Beats]> {
+        if let Some(PmvClipOptions::Songs(songs)) = self.clip_lengths() {
+            Some(&songs.songs)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Deserialize, Debug, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct RoundRobinClipOptions {
+    pub length: f64,
+    pub clip_lengths: PmvClipOptions,
+}
+
+#[derive(Deserialize, Debug, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct WeightedRandomClipOptions {
+    pub weights: Vec<(String, f64)>,
+    pub length: f64,
+    pub clip_lengths: PmvClipOptions,
+}
+
+#[derive(Deserialize, Debug, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct EqualLengthClipOptions {
+    pub clip_duration: f64,
+    pub divisors: Vec<f64>,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
@@ -270,6 +323,12 @@ pub struct StashScene {
     pub marker_count: usize,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, TypeDef)]
+pub struct Beats {
+    pub offsets: Vec<f32>,
+    pub length: f32,
+}
+
 #[derive(Serialize, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct SongDto {
@@ -299,3 +358,6 @@ pub type Api = (
     SongDto,
     NewId,
 );
+
+#[cfg(test)]
+mod tests {}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO local_videos (id, file_path, interactive, source, duration) VALUES ($1, $2, $3, $4, $5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "be0950c07d7bb81bac5a6a22d2259afaef4019914201cff2a3473061c8fd998d"
+}

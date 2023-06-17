@@ -24,33 +24,38 @@
         "type_info": "Text"
       },
       {
-        "name": "video_id",
+        "name": "duration",
         "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "video_id",
+        "ordinal": 5,
         "type_info": "Text"
       },
       {
         "name": "start_time",
-        "ordinal": 5,
-        "type_info": "Float"
-      },
-      {
-        "name": "end_time",
         "ordinal": 6,
         "type_info": "Float"
       },
       {
-        "name": "title",
+        "name": "end_time",
         "ordinal": 7,
+        "type_info": "Float"
+      },
+      {
+        "name": "title",
+        "ordinal": 8,
         "type_info": "Text"
       },
       {
         "name": "index_within_video",
-        "ordinal": 8,
+        "ordinal": 9,
         "type_info": "Int64"
       },
       {
         "name": "rowid",
-        "ordinal": 9,
+        "ordinal": 10,
         "type_info": "Int64"
       }
     ],
@@ -58,6 +63,7 @@
       "Right": 1
     },
     "nullable": [
+      false,
       false,
       false,
       false,

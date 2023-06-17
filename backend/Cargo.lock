@@ -392,7 +392,7 @@ dependencies = [
 
 [[package]]
 name = "clip-mash"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
  "aubio",
  "axum",

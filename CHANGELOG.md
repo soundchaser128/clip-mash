@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.10.0
+- feat: Allow specifying weights for markers
+- feat: Added button to quickly add entire video as a marker
+- feat: Use ffprobe to detect the video length for local videos
+
 ## 0.9.1
 - fix: Show whether a video was downloaded via the app on the video list page
 - fix: Fixed a few style issues with smaller screens

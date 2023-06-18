@@ -12,6 +12,7 @@ use crate::data::database::{Database, DbVideo, LocalVideoSource, LocalVideoWithM
 use crate::server::handlers::AppState;
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
+use crate::service::preview_image::generate_preview_image;
 use crate::util::generate_id;
 use crate::Result;
 
@@ -64,15 +65,18 @@ impl VideoService {
                     let duration = ffprobe.duration();
                     let id = generate_id();
 
-                    // TODO generate video preview image with ffmpeg
-                    let image_path = None;
+                    let image_path = generate_preview_image(
+                        &path,
+                        duration.map(|d| d / 2.0).unwrap_or_default(),
+                    )
+                    .await?;
                     let video = DbVideo {
                         id,
                         file_path: path.to_string(),
                         interactive,
                         source: LocalVideoSource::Folder,
                         duration: duration.unwrap_or_default(),
-                        video_preview_image: image_path,
+                        video_preview_image: Some(image_path.to_string()),
                     };
                     info!("inserting new video {video:#?}");
                     self.database.persist_video(video.clone()).await?;
@@ -105,9 +109,8 @@ impl VideoService {
     pub async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
         let ffprobe = ffprobe(&path).await?;
         let duration = ffprobe.duration();
-
-        // TODO generate video preview image with ffmpeg
-        let preview_image = None;
+        let preview_image =
+            generate_preview_image(&path, duration.map(|d| d / 2.0).unwrap_or_default()).await?;
 
         let video = DbVideo {
             id,
@@ -115,7 +118,7 @@ impl VideoService {
             interactive: false,
             source: LocalVideoSource::Download,
             duration: duration.unwrap_or_default(),
-            video_preview_image: preview_image,
+            video_preview_image: Some(preview_image.to_string()),
         };
         info!("persisting downloaded video {video:#?}");
         self.database.persist_video(video.clone()).await?;

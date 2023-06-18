@@ -200,7 +200,7 @@ impl Database {
         ids: &[impl AsRef<str>],
     ) -> Result<Vec<DbMarker>> {
         let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
             FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
             WHERE m.video_id IN ("
         );
@@ -281,6 +281,17 @@ impl Database {
 
     pub async fn get_videos(&self) -> Result<Vec<DbVideo>> {
         sqlx::query_as!(DbVideo, "SELECT * FROM local_videos")
+            .fetch_all(&self.pool)
+            .await
+            .map_err(From::from)
+    }
+
+    pub async fn get_markers(&self) -> Result<Vec<DbMarker>> {
+        sqlx::query_as!(
+            DbMarker,
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
+            FROM markers m INNER JOIN local_videos v ON m.video_id = v.id"
+        )
             .fetch_all(&self.pool)
             .await
             .map_err(From::from)
@@ -474,6 +485,30 @@ impl Database {
         sqlx::query!(
             "UPDATE local_videos SET duration = $1 WHERE id = $2",
             duration,
+            id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn set_video_preview_image(&self, id: &str, preview_image: &str) -> Result<()> {
+        sqlx::query!(
+            "UPDATE local_videos SET video_preview_image = $1 WHERE id = $2",
+            preview_image,
+            id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn set_marker_preview_image(&self, id: i64, preview_image: &str) -> Result<()> {
+        sqlx::query!(
+            "UPDATE markers SET marker_preview_image = $1 WHERE rowid = $2",
+            preview_image,
             id
         )
         .execute(&self.pool)

@@ -153,6 +153,9 @@ export default function ListVideos() {
             )}
             key={video.video.id.id}
           >
+            <figure>
+              <img src={`/api/local/video/${video.video.id.id}/preview`} />
+            </figure>
             <div className="card-body">
               <h2 className="card-title">{video.video.fileName}</h2>
               <ul className="flex flex-col gap-2 self-start">

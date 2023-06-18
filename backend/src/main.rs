@@ -76,6 +76,10 @@ async fn main() -> Result<()> {
     let local_routes = Router::new()
         .route("/video", post(handlers::local::list_videos))
         .route("/video/:id", get(handlers::local::get_video))
+        .route(
+            "/video/:id/preview",
+            get(handlers::local::get_video_preview),
+        )
         .route("/video/marker", get(handlers::local::list_markers))
         .route("/video/marker", post(handlers::local::persist_marker))
         .route("/video/marker/:id", delete(handlers::local::delete_marker))

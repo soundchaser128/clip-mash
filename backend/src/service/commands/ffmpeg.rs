@@ -201,7 +201,7 @@ impl Ffmpeg {
     }
 
     fn build_args(&self) -> Vec<&str> {
-        let mut args = vec!["-hide-banner", "-loglevel", "warning"];
+        let mut args = vec!["-hide_banner", "-loglevel", "warning"];
 
         if let Some(start) = &self.start {
             args.push("-ss");
@@ -211,6 +211,9 @@ impl Ffmpeg {
         for input in &self.inputs {
             args.push("-i");
             args.push(input);
+        }
+        for extra_arg in &self.extra_args {
+            args.push(extra_arg);
         }
 
         args.push(&self.output_file);

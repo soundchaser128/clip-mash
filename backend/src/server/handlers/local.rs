@@ -10,13 +10,14 @@ use clip_mash_types::{ListVideoDto, MarkerDto, VideoDto};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tower::ServiceExt;
-use tracing::info;
+use tracing::{info, warn};
 use url::Url;
 
 use crate::data::database::CreateMarker;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::service::local_video::VideoService;
+use crate::service::preview_image::generate_preview_image;
 
 #[axum::debug_handler]
 pub async fn get_video(
@@ -29,6 +30,23 @@ pub async fn get_video(
     let video = state.database.get_video(&id).await?;
     if let Some(video) = video {
         let result = ServeFile::new(video.file_path).oneshot(request).await;
+        Ok(result)
+    } else {
+        Err(AppError::StatusCode(StatusCode::NOT_FOUND))
+    }
+}
+
+#[axum::debug_handler]
+pub async fn get_video_preview(
+    Path(id): Path<String>,
+    state: State<Arc<AppState>>,
+    request: axum::http::Request<Body>,
+) -> Result<impl IntoResponse, AppError> {
+    use tower_http::services::ServeFile;
+
+    let video = state.database.get_video(&id).await?;
+    if let Some(preview_image) = video.and_then(|v| v.video_preview_image) {
+        let result = ServeFile::new(preview_image).oneshot(request).await;
         Ok(result)
     } else {
         Err(AppError::StatusCode(StatusCode::NOT_FOUND))
@@ -92,12 +110,17 @@ pub async fn persist_marker(
     } else {
         info!("saving marker {marker:?} to the database");
 
-        // TODO generate preview image with ffmpeg
-        let preview_image = None;
-        marker.preview_image_path = preview_image;
-        let marker = state.database.persist_marker(marker).await?;
+        if let Some(video) = state.database.get_video(&marker.video_id).await? {
+            let video_path = video.file_path;
+            let preview_image = generate_preview_image(&video_path, marker.start).await?;
+            marker.preview_image_path = Some(preview_image.to_string());
+            let marker = state.database.persist_marker(marker).await?;
 
-        Ok(Json(marker.into()))
+            Ok(Json(marker.into()))
+        } else {
+            warn!("No video found for marker {marker:?}, returning 404");
+            Err(AppError::StatusCode(StatusCode::NOT_FOUND))
+        }
     }
 }
 

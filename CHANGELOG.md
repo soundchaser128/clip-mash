@@ -2,6 +2,7 @@
 
 ## Unreleased
 - feat: add browser notifications when downloads are finished or video generation is done
+- feat: generate video and marker preview images for local videos and show them in the UI
 
 ## 0.10.0
 - feat: Allow specifying weights for markers

@@ -120,14 +120,16 @@ pub async fn download_ffmpeg(directories: &Directories) -> Result<()> {
         return Ok(());
     }
 
+    info!("ffmpeg not found, downlaoding...");
     let (url, file_name) = download_url()?;
+    info!("downloading ffmpeg from {}", url);
 
     let archive_dest = dest.join(file_name);
     if !archive_dest.is_file() {
         download_archive(url, &archive_dest).await?;
     }
 
-    info!("downloaded ffmpeg archive");
+    info!("downloaded ffmpeg archive to {archive_dest}, extracting...");
     unzip(&archive_dest, dest)?;
     fs::remove_file(archive_dest)?;
 

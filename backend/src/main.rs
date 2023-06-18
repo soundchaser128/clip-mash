@@ -48,6 +48,8 @@ async fn main() -> Result<()> {
 
     color_eyre::install()?;
     setup_logger();
+    let version = env!("CARGO_PKG_VERSION");
+    info!("starting clip-mash v{}", version);
 
     let directories = Directories::new()?;
 

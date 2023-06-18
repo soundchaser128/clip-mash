@@ -83,7 +83,10 @@ fn unzip(path: impl AsRef<Utf8Path>, destination_folder: impl AsRef<Utf8Path>) -
     for i in 0..zip.len() {
         let mut file = zip.by_index(i)?;
         if file.name().contains("ffmpeg.exe") || file.name().contains("ffprobe.exe") {
-            let dest_path = destination_folder.as_ref().join(file.name());
+            let path = Utf8Path::new(file.name());
+            let file_name = path.file_name().unwrap();
+
+            let dest_path = destination_folder.as_ref().join(file_name);
             let mut dest_file = File::create(&dest_path)?;
             std::io::copy(&mut file, &mut dest_file)?;
         }

@@ -155,7 +155,7 @@ export default function ListVideos() {
           >
             <figure>
               <img
-                className="aspect-[16/9] object-cover"
+                className="aspect-[16/9] object-cover w-full"
                 src={`/api/local/video/${video.video.id.id}/preview`}
               />
             </figure>

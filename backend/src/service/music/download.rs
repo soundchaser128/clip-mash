@@ -64,7 +64,7 @@ impl MusicDownloadService {
             destination: FolderType::Music,
         };
         let result = yt_dlp.run(&options).await?;
-        let ffprobe_result = ffprobe(&result.downloaded_file).await?;
+        let ffprobe_result = ffprobe(&result.downloaded_file, &self.dirs).await?;
         let duration = ffprobe_result.format.duration().unwrap_or_default();
 
         Ok(SongInfo {
@@ -91,7 +91,7 @@ impl MusicDownloadService {
             }
         } else {
             let downloaded_song = self.download_to_file(url.clone()).await?;
-            let beats = music::detect_beats(&downloaded_song.path).ok();
+            let beats = music::detect_beats(&downloaded_song.path, self.dirs.clone()).ok();
             let result = self
                 .db
                 .persist_song(CreateSong {
@@ -116,8 +116,8 @@ impl MusicDownloadService {
             writer.write_all(&chunk).await?;
         }
 
-        let ffprobe_result = ffprobe(&path).await?;
-        let beats = music::detect_beats(&path).ok();
+        let ffprobe_result = ffprobe(&path, &self.dirs).await?;
+        let beats = music::detect_beats(&path, self.dirs.clone()).ok();
 
         let result = self
             .db

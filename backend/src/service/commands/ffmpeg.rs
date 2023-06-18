@@ -45,10 +45,7 @@ fn is_installed(dest: &Utf8Path) -> bool {
 }
 
 #[cfg(target_os = "linux")]
-fn unzip(
-    path: impl AsRef<Utf8Path>,
-    destination_folder: impl AsRef<Utf8Path>,
-) -> Result<Utf8PathBuf> {
+fn unzip(path: impl AsRef<Utf8Path>, destination_folder: impl AsRef<Utf8Path>) -> Result<()> {
     use std::fs::File;
     use std::io::BufReader;
 
@@ -58,26 +55,22 @@ fn unzip(
     let file = BufReader::new(File::open(path.as_ref())?);
     let reader = XzDecoder::new(file);
     let mut archive = Archive::new(reader);
-    let dest_file = destination_folder.as_ref().join("ffmpeg");
-    info!("unzipping to {dest_file}");
 
     for entry in archive.entries()? {
         let mut entry = entry?;
         let path = entry.path()?;
         let path = Utf8Path::from_path(path.as_ref()).unwrap();
-        if let Some("ffmpeg") = path.file_name() {
+        if let Some("ffmpeg") | Some("ffprobe") = path.file_name() {
+            let dest_file = destination_folder.as_ref().join(path.file_name().unwrap());
             entry.unpack(&dest_file)?;
         }
     }
 
-    Ok(dest_file)
+    Ok(())
 }
 
 #[cfg(target_os = "windows")]
-fn unzip(
-    path: impl AsRef<Utf8Path>,
-    destination_folder: impl AsRef<Utf8Path>,
-) -> Result<Utf8PathBuf> {
+fn unzip(path: impl AsRef<Utf8Path>, destination_folder: impl AsRef<Utf8Path>) -> Result<()> {
     use std::fs::File;
     use std::io::BufReader;
 
@@ -85,24 +78,21 @@ fn unzip(
 
     let file = BufReader::new(File::open(path.as_ref())?);
     let mut zip = ZipArchive::new(file)?;
-    let dest_path = destination_folder.as_ref().join("ffmpeg.exe");
-    let mut dest_file = File::create(&dest_path)?;
 
     for i in 0..zip.len() {
         let mut file = zip.by_index(i)?;
-        if file.name().contains("ffmpeg.exe") {
+        if file.name().contains("ffmpeg.exe") || file.name().contains("ffprobe.exe") {
+            let dest_path = destination_folder.as_ref().join(file.name());
+            let mut dest_file = File::create(&dest_path)?;
             std::io::copy(&mut file, &mut dest_file)?;
-            return Ok(dest_path);
         }
     }
-    bail!("no file found")
+
+    Ok(())
 }
 
 #[cfg(target_os = "macos")]
-fn unzip(
-    _path: impl AsRef<Utf8Path>,
-    _destination_folder: impl AsRef<Utf8Path>,
-) -> Result<Utf8PathBuf> {
+fn unzip(_path: impl AsRef<Utf8Path>, _destination_folder: impl AsRef<Utf8Path>) -> Result<()> {
     bail!("Please use `brew` to install ffmpeg manually.")
 }
 
@@ -122,12 +112,12 @@ async fn download_archive(url: &str, destination: &Utf8Path) -> Result<()> {
     Ok(())
 }
 
-pub async fn download_ffmpeg(directories: &Directories) -> Result<Utf8PathBuf> {
+pub async fn download_ffmpeg(directories: &Directories) -> Result<()> {
     let dest = directories.cache_dir().join("ffmpeg");
     fs::create_dir_all(&dest)?;
     if is_installed(&dest) {
         info!("ffmpeg already installed, not doing anything.");
-        return Ok("ffmpeg".into());
+        return Ok(());
     }
 
     let (url, file_name) = download_url()?;
@@ -138,10 +128,10 @@ pub async fn download_ffmpeg(directories: &Directories) -> Result<Utf8PathBuf> {
     }
 
     info!("downloaded ffmpeg archive");
-    let ffmpeg_path = unzip(&archive_dest, dest)?;
+    unzip(&archive_dest, dest)?;
     fs::remove_file(archive_dest)?;
 
-    Ok(ffmpeg_path)
+    Ok(())
 }
 
 #[derive(Default)]

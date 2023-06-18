@@ -33,7 +33,7 @@ impl Migrator {
                 info!("determining duration for video {}", video.file_path);
                 if !Utf8Path::new(&video.file_path).exists() {
                     info!("video {} does not exist, skipping", video.file_path);
-                } else if let Ok(ffprobe) = ffprobe(&video.file_path).await {
+                } else if let Ok(ffprobe) = ffprobe(&video.file_path, &self.directories).await {
                     let duration = ffprobe.duration().unwrap_or_default();
                     self.database
                         .set_video_duration(&video.id, duration)
@@ -100,7 +100,9 @@ impl Migrator {
     pub async fn run(&self) -> Result<()> {
         info!("running migrations if necessary...");
 
-        self.database.generate_all_beats().await?;
+        self.database
+            .generate_all_beats(self.directories.clone())
+            .await?;
         self.set_video_durations().await?;
         self.generate_video_preview_images().await?;
         self.generate_marker_preview_images().await?;

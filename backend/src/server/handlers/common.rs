@@ -294,7 +294,7 @@ pub async fn get_beats(
         Some(beats) => beats,
         None => {
             let song = state.database.get_song(song_id).await?;
-            let beats = music::detect_beats(&song.file_path)?;
+            let beats = music::detect_beats(&song.file_path, state.directories.clone())?;
             state
                 .database
                 .persist_beats(song.rowid.unwrap(), &beats)

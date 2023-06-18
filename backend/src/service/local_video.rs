@@ -61,7 +61,7 @@ impl VideoService {
                     videos.push(video);
                 } else {
                     let interactive = path.with_extension("funscript").is_file();
-                    let ffprobe = ffprobe(&path).await?;
+                    let ffprobe = ffprobe(&path, &self.directories).await?;
                     let duration = ffprobe.duration();
                     let id = generate_id();
                     let preview_generator = PreviewGenerator::new(self.directories.clone());
@@ -106,7 +106,7 @@ impl VideoService {
     }
 
     pub async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
-        let ffprobe = ffprobe(&path).await?;
+        let ffprobe = ffprobe(&path, &self.directories).await?;
         let duration = ffprobe.duration();
         let preview_generator = PreviewGenerator::new(self.directories.clone());
         let image_path = preview_generator

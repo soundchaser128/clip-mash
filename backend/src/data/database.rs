@@ -9,6 +9,7 @@ use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::{info, warn};
 
+use crate::service::directories::Directories;
 use crate::service::music;
 use crate::Result;
 
@@ -459,7 +460,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn generate_all_beats(&self) -> Result<()> {
+    pub async fn generate_all_beats(&self, directories: Directories) -> Result<()> {
         let rows = sqlx::query!("SELECT rowid, file_path FROM songs WHERE beats IS NULL")
             .fetch_all(&self.pool)
             .await?;
@@ -469,8 +470,9 @@ impl Database {
         info!("generating beats for {} songs", rows.len());
         let mut handles = vec![];
         for row in rows {
+            let directories = directories.clone();
             handles.push(spawn_blocking(move || {
-                (music::detect_beats(row.file_path), row.rowid)
+                (music::detect_beats(row.file_path, directories), row.rowid)
             }));
         }
 

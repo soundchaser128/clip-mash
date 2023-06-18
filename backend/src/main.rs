@@ -43,12 +43,16 @@ fn setup_logger() {
 #[tokio::main]
 async fn main() -> Result<()> {
     use server::{handlers, static_files};
+    use service::commands::ffmpeg;
     use service::migrations;
 
     color_eyre::install()?;
     setup_logger();
 
     let directories = Directories::new()?;
+
+    ffmpeg::download_ffmpeg(&directories).await?;
+
     service::stash_config::init(&directories).await;
 
     let ffmpeg = CompilationGenerator::new(directories.clone()).await?;

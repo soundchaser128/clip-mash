@@ -81,6 +81,7 @@ impl YtDlp {
             youtube_dl.extract_audio(true);
         }
 
+        info!("using ffmpeg {:?}", ffmpeg_location);
         if let FfmpegLocation::Local(path) = ffmpeg_location {
             youtube_dl
                 .extra_arg("--ffmpeg-location")

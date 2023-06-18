@@ -31,17 +31,22 @@ fn download_url() -> Result<(&'static str, &'static str)> {
     }
 }
 
-fn is_installed(dest: &Utf8Path) -> bool {
-    if dest.join("ffmpeg").is_file() || dest.join("ffmpeg.exe").is_file() {
-        true
+fn get_ffmpeg_location(base_dir: &Utf8Path) -> Option<FfmpegLocation> {
+    if base_dir.join("ffmpeg").is_file() || base_dir.join("ffmpeg.exe").is_file() {
+        Some(FfmpegLocation::Local(Arc::new(base_dir.to_owned())))
     } else {
-        Command::new("ffmpeg")
+        let is_system = Command::new("ffmpeg")
             .arg("-version")
             .stderr(Stdio::null())
             .stdout(Stdio::null())
             .status()
             .map(|s| s.success())
-            .unwrap_or_else(|_| false)
+            .unwrap_or_else(|_| false);
+        if is_system {
+            Some(FfmpegLocation::System)
+        } else {
+            None
+        }
     }
 }
 
@@ -141,9 +146,11 @@ impl FfmpegLocation {
 pub async fn download_ffmpeg(directories: &Directories) -> Result<FfmpegLocation> {
     let dest = directories.cache_dir().join("ffmpeg");
     fs::create_dir_all(&dest)?;
-    if is_installed(&dest) {
-        info!("ffmpeg already installed, not doing anything.");
-        return Ok(FfmpegLocation::System);
+
+    let existing_install = get_ffmpeg_location(&dest);
+    if let Some(location) = existing_install {
+        info!("found existing ffmpeg binaries at {location:?}");
+        return Ok(location);
     }
 
     info!("ffmpeg not found, downlaoding...");

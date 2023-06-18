@@ -9,6 +9,7 @@ use serde::Serialize;
 use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
 
+use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::Marker;
 use crate::data::database::DbSong;
@@ -79,8 +80,8 @@ pub struct CompilationGenerator {
 }
 
 impl CompilationGenerator {
-    pub async fn new(directories: Directories) -> Result<Self> {
-        let ffmpeg_path = directories.ffmpeg_executable();
+    pub async fn new(directories: Directories, ffmpeg_location: &FfmpegLocation) -> Result<Self> {
+        let ffmpeg_path = ffmpeg_location.ffmpeg();
         Ok(CompilationGenerator {
             directories,
             ffmpeg_path,

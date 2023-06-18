@@ -53,19 +53,25 @@ async fn main() -> Result<()> {
 
     let directories = Directories::new()?;
 
-    ffmpeg::download_ffmpeg(&directories).await?;
+    let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
 
     service::stash_config::init(&directories).await;
 
-    let ffmpeg = CompilationGenerator::new(directories.clone()).await?;
+    let generator = CompilationGenerator::new(directories.clone(), &ffmpeg_location).await?;
     let database_file = directories.database_file();
     let database = Database::new(database_file.as_str()).await?;
-    migrations::run(database.clone(), directories.clone()).await?;
+    migrations::run(
+        database.clone(),
+        directories.clone(),
+        ffmpeg_location.clone(),
+    )
+    .await?;
 
     let state = Arc::new(AppState {
-        generator: ffmpeg,
+        generator,
         database,
         directories,
+        ffmpeg_location,
     });
 
     let stash_routes = Router::new()

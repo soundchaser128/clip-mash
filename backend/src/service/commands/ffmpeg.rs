@@ -1,6 +1,7 @@
 use std::fs;
 use std::io::Write;
 use std::process::{Command, Stdio};
+use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
@@ -112,12 +113,34 @@ async fn download_archive(url: &str, destination: &Utf8Path) -> Result<()> {
     Ok(())
 }
 
-pub async fn download_ffmpeg(directories: &Directories) -> Result<()> {
+#[derive(Debug, Clone)]
+pub enum FfmpegLocation {
+    System,
+    Local(Arc<Utf8PathBuf>),
+}
+
+impl FfmpegLocation {
+    pub fn ffmpeg(&self) -> Utf8PathBuf {
+        match self {
+            FfmpegLocation::System => Utf8PathBuf::from("ffmpeg"),
+            FfmpegLocation::Local(path) => path.join("ffmpeg"),
+        }
+    }
+
+    pub fn ffprobe(&self) -> Utf8PathBuf {
+        match self {
+            FfmpegLocation::System => Utf8PathBuf::from("ffprobe"),
+            FfmpegLocation::Local(path) => path.join("ffprobe"),
+        }
+    }
+}
+
+pub async fn download_ffmpeg(directories: &Directories) -> Result<FfmpegLocation> {
     let dest = directories.cache_dir().join("ffmpeg");
     fs::create_dir_all(&dest)?;
     if is_installed(&dest) {
         info!("ffmpeg already installed, not doing anything.");
-        return Ok(());
+        return Ok(FfmpegLocation::System);
     }
 
     info!("ffmpeg not found, downlaoding...");
@@ -130,10 +153,10 @@ pub async fn download_ffmpeg(directories: &Directories) -> Result<()> {
     }
 
     info!("downloaded ffmpeg archive to {archive_dest}, extracting...");
-    unzip(&archive_dest, dest)?;
+    unzip(&archive_dest, &dest)?;
     fs::remove_file(archive_dest)?;
 
-    Ok(())
+    Ok(FfmpegLocation::Local(Arc::new(dest)))
 }
 
 #[derive(Default)]
@@ -147,10 +170,10 @@ pub struct Ffmpeg {
 }
 
 impl Ffmpeg {
-    pub fn new(executable: impl AsRef<Utf8Path>, output_file: String) -> Self {
+    pub fn new(location: &FfmpegLocation, output_file: String) -> Self {
         Ffmpeg {
             output_file,
-            executable_path: executable.as_ref().to_owned(),
+            executable_path: location.ffmpeg(),
             ..Default::default()
         }
     }

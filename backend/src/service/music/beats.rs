@@ -8,7 +8,7 @@ use color_eyre::eyre::eyre;
 use hound::WavReader;
 use tracing::info;
 
-use crate::service::directories::Directories;
+use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::util::commandline_error;
 use crate::Result as AppResult;
 
@@ -16,10 +16,7 @@ const BUF_SIZE: usize = 512;
 const HOP_SIZE: usize = 256;
 const I16_TO_SMPL: Smpl = 1.0 / (1 << 16) as Smpl;
 
-fn convert_to_wav(
-    source: impl AsRef<Utf8Path>,
-    directories: &Directories,
-) -> AppResult<Utf8PathBuf> {
+fn convert_to_wav(source: impl AsRef<Utf8Path>, ffmpeg: &FfmpegLocation) -> AppResult<Utf8PathBuf> {
     let source = source.as_ref();
     let file_stem = source
         .file_stem()
@@ -34,7 +31,7 @@ fn convert_to_wav(
         return Ok(destination);
     }
 
-    let output = Command::new(directories.ffmpeg_executable())
+    let output = Command::new(ffmpeg.ffmpeg())
         .args(vec![
             "-i",
             source.as_str(),
@@ -50,10 +47,10 @@ fn convert_to_wav(
     }
 }
 
-pub fn detect_beats(file: impl AsRef<Utf8Path>, directories: Directories) -> AppResult<Beats> {
+pub fn detect_beats(file: impl AsRef<Utf8Path>, ffmpeg: &FfmpegLocation) -> AppResult<Beats> {
     let start = Instant::now();
     let file = file.as_ref();
-    let wav_file = convert_to_wav(file, &directories)?;
+    let wav_file = convert_to_wav(file, &ffmpeg)?;
     let reader = WavReader::open(wav_file)?;
     let format = reader.spec();
     let duration = reader.duration();

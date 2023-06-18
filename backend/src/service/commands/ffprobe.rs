@@ -2,7 +2,7 @@ use camino::Utf8Path;
 use serde::Deserialize;
 use tracing::info;
 
-use crate::service::directories::Directories;
+use super::ffmpeg::FfmpegLocation;
 use crate::util::commandline_error;
 use crate::Result;
 
@@ -145,7 +145,7 @@ pub struct FormatTags {
     pub encoder: Option<String>,
 }
 
-pub async fn ffprobe(path: impl AsRef<Utf8Path>, directories: &Directories) -> Result<FfProbe> {
+pub async fn ffprobe(path: impl AsRef<Utf8Path>, location: &FfmpegLocation) -> Result<FfProbe> {
     use tokio::process::Command;
 
     // TODO use ffmpeg path
@@ -160,10 +160,7 @@ pub async fn ffprobe(path: impl AsRef<Utf8Path>, directories: &Directories) -> R
     ];
 
     info!("running ffprobe with args {args:?}");
-    let output = Command::new(directories.ffprobe_executable())
-        .args(args)
-        .output()
-        .await?;
+    let output = Command::new(location.ffprobe()).args(args).output().await?;
     if output.status.success() {
         let json = serde_json::from_slice(&output.stdout)?;
         Ok(json)

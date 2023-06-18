@@ -7,6 +7,7 @@ use tracing::{debug, info};
 use url::Url;
 use walkdir::WalkDir;
 
+use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use crate::data::database::{Database, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
 use crate::server::handlers::AppState;
@@ -19,6 +20,7 @@ use crate::Result;
 pub struct VideoService {
     database: Database,
     directories: Directories,
+    ffmpeg_location: FfmpegLocation,
 }
 
 impl From<Arc<AppState>> for VideoService {
@@ -26,6 +28,7 @@ impl From<Arc<AppState>> for VideoService {
         VideoService {
             database: value.database.clone(),
             directories: value.directories.clone(),
+            ffmpeg_location: value.ffmpeg_location.clone(),
         }
     }
 }
@@ -61,10 +64,13 @@ impl VideoService {
                     videos.push(video);
                 } else {
                     let interactive = path.with_extension("funscript").is_file();
-                    let ffprobe = ffprobe(&path, &self.directories).await?;
+                    let ffprobe = ffprobe(&path, &self.ffmpeg_location).await?;
                     let duration = ffprobe.duration();
                     let id = generate_id();
-                    let preview_generator = PreviewGenerator::new(self.directories.clone());
+                    let preview_generator = PreviewGenerator::new(
+                        self.directories.clone(),
+                        self.ffmpeg_location.clone(),
+                    );
                     let image_path = preview_generator
                         .generate_preview(&id, &path, duration.map_or(0.0, |d| d / 2.0))
                         .await?;
@@ -106,9 +112,10 @@ impl VideoService {
     }
 
     pub async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
-        let ffprobe = ffprobe(&path, &self.directories).await?;
+        let ffprobe = ffprobe(&path, &self.ffmpeg_location).await?;
         let duration = ffprobe.duration();
-        let preview_generator = PreviewGenerator::new(self.directories.clone());
+        let preview_generator =
+            PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
         let image_path = preview_generator
             .generate_preview(&id, &path, duration.map_or(0.0, |d| d / 2.0))
             .await?;

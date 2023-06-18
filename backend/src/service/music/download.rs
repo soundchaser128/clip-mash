@@ -9,6 +9,7 @@ use url::Url;
 
 use crate::data::database::{CreateSong, Database, DbSong};
 use crate::server::handlers::AppState;
+use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::{Directories, FolderType};
 use crate::service::music;
@@ -24,6 +25,7 @@ pub struct SongInfo {
 pub struct MusicDownloadService {
     db: Database,
     dirs: Directories,
+    ffmpeg_location: FfmpegLocation,
 }
 
 impl From<Arc<AppState>> for MusicDownloadService {
@@ -31,16 +33,18 @@ impl From<Arc<AppState>> for MusicDownloadService {
         Self {
             db: value.database.clone(),
             dirs: value.directories.clone(),
+            ffmpeg_location: value.ffmpeg_location.clone(),
         }
     }
 }
 
 impl MusicDownloadService {
     #[cfg(test)]
-    pub fn new(database: Database, directories: Directories) -> Self {
+    pub fn new(database: Database, directories: Directories, ffmpeg: FfmpegLocation) -> Self {
         Self {
             db: database,
             dirs: directories,
+            ffmpeg_location: ffmpeg,
         }
     }
 
@@ -64,7 +68,7 @@ impl MusicDownloadService {
             destination: FolderType::Music,
         };
         let result = yt_dlp.run(&options).await?;
-        let ffprobe_result = ffprobe(&result.downloaded_file, &self.dirs).await?;
+        let ffprobe_result = ffprobe(&result.downloaded_file, &self.ffmpeg_location).await?;
         let duration = ffprobe_result.format.duration().unwrap_or_default();
 
         Ok(SongInfo {
@@ -91,7 +95,7 @@ impl MusicDownloadService {
             }
         } else {
             let downloaded_song = self.download_to_file(url.clone()).await?;
-            let beats = music::detect_beats(&downloaded_song.path, self.dirs.clone()).ok();
+            let beats = music::detect_beats(&downloaded_song.path, &self.ffmpeg_location).ok();
             let result = self
                 .db
                 .persist_song(CreateSong {
@@ -116,8 +120,8 @@ impl MusicDownloadService {
             writer.write_all(&chunk).await?;
         }
 
-        let ffprobe_result = ffprobe(&path, &self.dirs).await?;
-        let beats = music::detect_beats(&path, self.dirs.clone()).ok();
+        let ffprobe_result = ffprobe(&path, &self.ffmpeg_location).await?;
+        let beats = music::detect_beats(&path, &self.ffmpeg_location).ok();
 
         let result = self
             .db
@@ -141,6 +145,7 @@ mod test {
     use url::Url;
 
     use crate::data::database::Database;
+    use crate::service::commands::ffmpeg::FfmpegLocation;
     use crate::service::directories::Directories;
     use crate::service::music::download::MusicDownloadService;
 
@@ -149,7 +154,8 @@ mod test {
     async fn test_download_song(pool: SqlitePool) {
         let database = Database::with_pool(pool);
         let directories = Directories::new().unwrap();
-        let service = MusicDownloadService::new(database.clone(), directories);
+        let service =
+            MusicDownloadService::new(database.clone(), directories, FfmpegLocation::System);
         let _ = color_eyre::install();
         let url: Url = "https://www.youtube.com/watch?v=DGaKVLFNWzs"
             .try_into()

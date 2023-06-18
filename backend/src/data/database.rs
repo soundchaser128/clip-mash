@@ -9,7 +9,7 @@ use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::{info, warn};
 
-use crate::service::directories::Directories;
+use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::music;
 use crate::Result;
 
@@ -87,6 +87,12 @@ pub struct CreateSong {
     pub file_path: String,
     pub duration: f64,
     pub beats: Option<Beats>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum AllVideosFilter {
+    NoVideoDuration,
+    NoPreviewImage,
 }
 
 #[derive(Clone)]
@@ -280,18 +286,31 @@ impl Database {
         }
     }
 
-    pub async fn get_videos(&self) -> Result<Vec<DbVideo>> {
-        sqlx::query_as!(DbVideo, "SELECT * FROM local_videos")
-            .fetch_all(&self.pool)
-            .await
-            .map_err(From::from)
+    pub async fn get_videos(&self, filter: AllVideosFilter) -> Result<Vec<DbVideo>> {
+        let query = match filter {
+            AllVideosFilter::NoVideoDuration => {
+                sqlx::query_as!(DbVideo, "SELECT * FROM local_videos WHERE duration = -1.0")
+                    .fetch_all(&self.pool)
+                    .await
+            }
+            AllVideosFilter::NoPreviewImage => {
+                sqlx::query_as!(
+                    DbVideo,
+                    "SELECT * FROM local_videos WHERE video_preview_image IS NULL"
+                )
+                .fetch_all(&self.pool)
+                .await
+            }
+        };
+        query.map_err(From::from)
     }
 
-    pub async fn get_markers(&self) -> Result<Vec<DbMarker>> {
+    pub async fn get_markers_without_preview_images(&self) -> Result<Vec<DbMarker>> {
         sqlx::query_as!(
             DbMarker,
             "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
-            FROM markers m INNER JOIN local_videos v ON m.video_id = v.id"
+            FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
+            WHERE m.marker_preview_image IS NULL"
         )
             .fetch_all(&self.pool)
             .await
@@ -460,7 +479,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn generate_all_beats(&self, directories: Directories) -> Result<()> {
+    pub async fn generate_all_beats(&self, ffmpeg: FfmpegLocation) -> Result<()> {
         let rows = sqlx::query!("SELECT rowid, file_path FROM songs WHERE beats IS NULL")
             .fetch_all(&self.pool)
             .await?;
@@ -470,9 +489,9 @@ impl Database {
         info!("generating beats for {} songs", rows.len());
         let mut handles = vec![];
         for row in rows {
-            let directories = directories.clone();
+            let ffmpeg = ffmpeg.clone();
             handles.push(spawn_blocking(move || {
-                (music::detect_beats(row.file_path, directories), row.rowid)
+                (music::detect_beats(row.file_path, &ffmpeg), row.rowid)
             }));
         }
 

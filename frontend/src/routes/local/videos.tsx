@@ -149,7 +149,7 @@ export default function ListVideos() {
           <article
             className={clsx(
               "card card-compact shadow-xl bg-base-200",
-              video.markers.length > 0 && "border-2 border-green-600"
+              video.markers.length > 0 && "ring-2 ring-green-500"
             )}
             key={video.video.id.id}
           >
@@ -193,7 +193,7 @@ export default function ListVideos() {
               <div className="card-actions justify-between grow items-end">
                 <button
                   disabled={
-                    video.markers.length > 0 && video.video.duration <= 0
+                    video.markers.length > 0 || video.video.duration <= 0
                   }
                   onClick={() => onAddFullVideo(video)}
                   className="btn btn-sm btn-secondary"

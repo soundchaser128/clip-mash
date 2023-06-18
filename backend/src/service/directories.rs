@@ -84,18 +84,6 @@ impl Directories {
         self.data_dir().join("videos.sqlite3")
     }
 
-    pub fn ffmepg_folder(&self) -> Utf8PathBuf {
-        self.cache_dir().join("ffmpeg")
-    }
-
-    pub fn ffmpeg_executable(&self) -> Utf8PathBuf {
-        self.ffmepg_folder().join("ffmpeg")
-    }
-
-    pub fn ffprobe_executable(&self) -> Utf8PathBuf {
-        self.ffmepg_folder().join("ffprobe")
-    }
-
     pub fn info(&self) {
         info!("config directory: {}", self.config_dir());
         info!("cache directory: {}", self.cache_dir());

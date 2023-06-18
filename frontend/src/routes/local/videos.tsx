@@ -16,7 +16,7 @@ import {
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
-import {useEffect} from "react"
+import {useEffect, useState} from "react"
 import {useImmer} from "use-immer"
 import {updateForm} from "../actions"
 import {
@@ -30,6 +30,7 @@ import {
 import {formatSeconds, getFormState} from "../../helpers"
 import clsx from "clsx"
 import {persistMarker} from "./api"
+import useFuse from "../../hooks/useFuse"
 
 export const loader: LoaderFunction = async () => {
   const formState = getFormState()
@@ -56,7 +57,15 @@ export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
   const initialVideos = useLoaderData() as VideoWithMarkers[]
-  const [videos, setVideos] = useImmer<VideoWithMarkers[]>(initialVideos)
+  const [videoState, setVideos] = useImmer<VideoWithMarkers[]>(initialVideos)
+  const [filter, setFilter] = useState("")
+
+  const videoIds = useFuse({
+    items: videoState.flatMap((v) => v.video),
+    query: filter,
+    keys: ["fileName", "id", "title"],
+  }).map((v) => v.id.id)
+  const videos = videoState.filter((v) => videoIds.includes(v.video.id.id))
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -120,21 +129,31 @@ export default function ListVideos() {
   return (
     <>
       <Outlet />
-      {videos.length > 0 && (
-        <div className="w-full flex justify-between">
+
+      <div className="w-full flex justify-between">
+        <div className="flex gap-4">
           <Link to="download" className="btn btn-primary">
             <HiArrowDownTray className="mr-2" />
             Download videos
           </Link>
+          <input
+            type="text"
+            placeholder="Filter..."
+            className="input input-bordered w-full lg:w-96"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+        </div>
 
+        {videos.length > 0 && (
           <button className="btn btn-success" onClick={onNextStage}>
             Next
             <HiChevronRight className="ml-1" />
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
-      {videos.length === 0 && (
+      {videoState.length === 0 && (
         <div className="mt-4 alert alert-info w-fit self-center">
           <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />
           <span>

@@ -40,9 +40,12 @@ impl From<DbMarker> for MarkerDto {
             primary_tag: value.title,
             scene_interactive: false,
             scene_title: None,
-            stream_url: format!("TODO"),
+            stream_url: format!("/api/local/video/{}", value.video_id),
             tags: vec![],
-            screenshot_url: None,
+            screenshot_url: Some(format!(
+                "/api/local/video/marker/{}/preview",
+                value.rowid.unwrap()
+            )),
             index_within_video: value.index_within_video as usize,
             video_id: VideoId::LocalFile(value.video_id),
         }

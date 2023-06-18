@@ -49,14 +49,12 @@ async fn main() -> Result<()> {
     setup_logger();
 
     let directories = Directories::new()?;
-    directories.info();
-
     service::stash_config::init(&directories).await;
 
     let ffmpeg = CompilationGenerator::new(directories.clone()).await?;
     let database_file = directories.database_file();
     let database = Database::new(database_file.as_str()).await?;
-    migrations::run(&database).await?;
+    migrations::run(database.clone(), directories.clone()).await?;
 
     let state = Arc::new(AppState {
         generator: ffmpeg,
@@ -83,6 +81,10 @@ async fn main() -> Result<()> {
         .route("/video/marker", get(handlers::local::list_markers))
         .route("/video/marker", post(handlers::local::persist_marker))
         .route("/video/marker/:id", delete(handlers::local::delete_marker))
+        .route(
+            "/video/marker/:id/preview",
+            get(handlers::local::get_marker_preview),
+        )
         .route("/video/download", post(handlers::local::download_video));
 
     let api_routes = Router::new()

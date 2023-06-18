@@ -148,15 +148,8 @@ pub async fn download_ffmpeg(directories: &Directories) -> Result<Utf8PathBuf> {
 pub struct Ffmpeg {
     executable_path: Utf8PathBuf,
     inputs: Vec<String>,
-    output: Option<String>,
     start: Option<String>,
-    duration: Option<String>,
-    video_codec: Option<String>,
-    audio_codec: Option<String>,
-    crf: Option<u32>,
-    preset: Option<String>,
     extra_args: Vec<String>,
-    video_filter: Option<String>,
     working_directory: Option<Utf8PathBuf>,
     output_file: String,
 }
@@ -182,16 +175,6 @@ impl Ffmpeg {
 
     pub fn start(&mut self, start: f64) -> &mut Self {
         self.start = Some(start.to_string());
-        self
-    }
-
-    pub fn duration(&mut self, duration: f64) -> &mut Self {
-        self.duration = Some(duration.to_string());
-        self
-    }
-
-    pub fn video_filter(&mut self, filter: impl Into<String>) -> &mut Self {
-        self.video_filter = Some(filter.into());
         self
     }
 

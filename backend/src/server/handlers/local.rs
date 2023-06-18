@@ -17,7 +17,7 @@ use crate::data::database::CreateMarker;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::service::local_video::VideoService;
-use crate::service::preview_image::generate_preview_image;
+use crate::service::preview_image::PreviewGenerator;
 
 #[axum::debug_handler]
 pub async fn get_video(
@@ -46,6 +46,23 @@ pub async fn get_video_preview(
 
     let video = state.database.get_video(&id).await?;
     if let Some(preview_image) = video.and_then(|v| v.video_preview_image) {
+        let result = ServeFile::new(preview_image).oneshot(request).await;
+        Ok(result)
+    } else {
+        Err(AppError::StatusCode(StatusCode::NOT_FOUND))
+    }
+}
+
+#[axum::debug_handler]
+pub async fn get_marker_preview(
+    Path(id): Path<i64>,
+    state: State<Arc<AppState>>,
+    request: axum::http::Request<Body>,
+) -> Result<impl IntoResponse, AppError> {
+    use tower_http::services::ServeFile;
+
+    let marker = state.database.get_marker(id).await?;
+    if let Some(preview_image) = marker.marker_preview_image {
         let result = ServeFile::new(preview_image).oneshot(request).await;
         Ok(result)
     } else {
@@ -111,8 +128,10 @@ pub async fn persist_marker(
         info!("saving marker {marker:?} to the database");
 
         if let Some(video) = state.database.get_video(&marker.video_id).await? {
-            let video_path = video.file_path;
-            let preview_image = generate_preview_image(&video_path, marker.start).await?;
+            let preview_generator: PreviewGenerator = state.0.clone().into();
+            let preview_image = preview_generator
+                .generate_preview(&video.id, &video.file_path, video.duration / 2.0)
+                .await?;
             marker.preview_image_path = Some(preview_image.to_string());
             let marker = state.database.persist_marker(marker).await?;
 

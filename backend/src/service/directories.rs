@@ -30,10 +30,17 @@ impl Directories {
         for directory in &[dirs.config_dir(), dirs.cache_dir(), dirs.data_dir()] {
             fs::create_dir_all(directory)?;
         }
-
-        Ok(Directories {
+        let dirs = Directories {
             dirs: Arc::new(dirs),
-        })
+        };
+
+        for directory in &[dirs.preview_image_dir(), dirs.music_dir(), dirs.video_dir()] {
+            fs::create_dir_all(directory)?;
+        }
+
+        dirs.info();
+
+        Ok(dirs)
     }
 
     pub fn get(&self, ty: FolderType) -> Utf8PathBuf {
@@ -55,6 +62,10 @@ impl Directories {
 
     pub fn data_dir(&self) -> &Utf8Path {
         Utf8Path::from_path(self.dirs.data_dir()).expect("path must be utf-8")
+    }
+
+    pub fn preview_image_dir(&self) -> Utf8PathBuf {
+        self.cache_dir().join("preview-images")
     }
 
     pub fn config_file_path(&self) -> Utf8PathBuf {

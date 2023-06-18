@@ -5,5 +5,5 @@ import MarkerPage from "../../components/MarkerPage"
 export default function LocalMarkersPage() {
   const data = useLoaderData() as MarkerDto[]
 
-  return <MarkerPage data={{markers: data}} />
+  return <MarkerPage data={{markers: data}} withImages />
 }

@@ -107,7 +107,7 @@ impl VideoService {
             extract_audio: false,
             destination: FolderType::Videos,
         };
-        let result = downloader.run(&options).await?;
+        let result = downloader.run(&options, &self.ffmpeg_location).await?;
         Ok((result.generated_id, result.downloaded_file))
     }
 

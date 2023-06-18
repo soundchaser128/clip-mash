@@ -67,7 +67,7 @@ impl MusicDownloadService {
             extract_audio: true,
             destination: FolderType::Music,
         };
-        let result = yt_dlp.run(&options).await?;
+        let result = yt_dlp.run(&options, &self.ffmpeg_location).await?;
         let ffprobe_result = ffprobe(&result.downloaded_file, &self.ffmpeg_location).await?;
         let duration = ffprobe_result.format.duration().unwrap_or_default();
 

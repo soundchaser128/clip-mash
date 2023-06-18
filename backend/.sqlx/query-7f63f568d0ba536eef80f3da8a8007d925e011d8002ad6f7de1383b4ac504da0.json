@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE local_videos SET video_preview_image = $1 WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "7f63f568d0ba536eef80f3da8a8007d925e011d8002ad6f7de1383b4ac504da0"
+}

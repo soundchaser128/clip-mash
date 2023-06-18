@@ -27,6 +27,11 @@
         "name": "duration",
         "ordinal": 4,
         "type_info": "Float"
+      },
+      {
+        "name": "video_preview_image",
+        "ordinal": 5,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -37,7 +42,8 @@
       false,
       false,
       false,
-      false
+      false,
+      true
     ]
   },
   "hash": "e8331e427bf01fbc2d2f8b914584929b3a3381f8139160a9fe332ddaa24468af"

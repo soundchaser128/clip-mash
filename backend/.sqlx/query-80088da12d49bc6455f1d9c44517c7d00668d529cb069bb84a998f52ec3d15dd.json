@@ -29,33 +29,43 @@
         "type_info": "Float"
       },
       {
-        "name": "video_id",
+        "name": "video_preview_image",
         "ordinal": 5,
         "type_info": "Text"
       },
       {
-        "name": "start_time",
+        "name": "video_id",
         "ordinal": 6,
-        "type_info": "Float"
+        "type_info": "Text"
       },
       {
-        "name": "end_time",
+        "name": "start_time",
         "ordinal": 7,
         "type_info": "Float"
       },
       {
-        "name": "title",
+        "name": "end_time",
         "ordinal": 8,
+        "type_info": "Float"
+      },
+      {
+        "name": "title",
+        "ordinal": 9,
         "type_info": "Text"
       },
       {
         "name": "index_within_video",
-        "ordinal": 9,
+        "ordinal": 10,
         "type_info": "Int64"
       },
       {
+        "name": "marker_preview_image",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
         "name": "rowid",
-        "ordinal": 10,
+        "ordinal": 12,
         "type_info": "Int64"
       }
     ],
@@ -68,6 +78,8 @@
       false,
       false,
       false,
+      true,
+      true,
       true,
       true,
       true,

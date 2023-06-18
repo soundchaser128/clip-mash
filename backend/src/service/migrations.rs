@@ -10,13 +10,13 @@ use crate::data::database::{AllVideosFilter, Database};
 use crate::service::commands::ffprobe;
 use crate::Result;
 
-pub async fn run(
-    database: Database,
-    directories: Directories,
-    ffmpeg_location: FfmpegLocation,
-) -> Result<()> {
-    let migrator = Migrator::new(database, directories, ffmpeg_location);
-    migrator.run().await
+pub fn run_async(database: Database, directories: Directories, ffmpeg_location: FfmpegLocation) {
+    tokio::spawn(async move {
+        let migrator = Migrator::new(database, directories, ffmpeg_location);
+        if let Err(e) = migrator.run().await {
+            tracing::error!("failed to run migrations: {e:?}")
+        }
+    });
 }
 
 pub struct Migrator {

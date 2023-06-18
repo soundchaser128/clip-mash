@@ -60,12 +60,11 @@ async fn main() -> Result<()> {
     let generator = CompilationGenerator::new(directories.clone(), &ffmpeg_location).await?;
     let database_file = directories.database_file();
     let database = Database::new(database_file.as_str()).await?;
-    migrations::run(
+    migrations::run_async(
         database.clone(),
         directories.clone(),
         ffmpeg_location.clone(),
-    )
-    .await?;
+    );
 
     let state = Arc::new(AppState {
         generator,

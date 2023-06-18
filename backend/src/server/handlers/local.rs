@@ -84,13 +84,17 @@ fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str>
 #[axum::debug_handler]
 pub async fn persist_marker(
     state: State<Arc<AppState>>,
-    Json(marker): Json<CreateMarker>,
+    Json(mut marker): Json<CreateMarker>,
 ) -> Result<Json<MarkerDto>, AppError> {
     let validation = validate_marker(&marker);
     if !validation.is_empty() {
         Err(AppError::Validation(validation))
     } else {
         info!("saving marker {marker:?} to the database");
+
+        // TODO generate preview image with ffmpeg
+        let preview_image = None;
+        marker.preview_image_path = preview_image;
         let marker = state.database.persist_marker(marker).await?;
 
         Ok(Json(marker.into()))

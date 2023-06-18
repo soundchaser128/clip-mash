@@ -63,12 +63,16 @@ impl VideoService {
                     let ffprobe = ffprobe(&path).await?;
                     let duration = ffprobe.duration();
                     let id = generate_id();
+
+                    // TODO generate video preview image with ffmpeg
+                    let image_path = None;
                     let video = DbVideo {
                         id,
                         file_path: path.to_string(),
                         interactive,
                         source: LocalVideoSource::Folder,
                         duration: duration.unwrap_or_default(),
+                        video_preview_image: image_path,
                     };
                     info!("inserting new video {video:#?}");
                     self.database.persist_video(video.clone()).await?;
@@ -102,12 +106,16 @@ impl VideoService {
         let ffprobe = ffprobe(&path).await?;
         let duration = ffprobe.duration();
 
+        // TODO generate video preview image with ffmpeg
+        let preview_image = None;
+
         let video = DbVideo {
             id,
             file_path: path.as_str().to_string(),
             interactive: false,
             source: LocalVideoSource::Download,
             duration: duration.unwrap_or_default(),
+            video_preview_image: preview_image,
         };
         info!("persisting downloaded video {video:#?}");
         self.database.persist_video(video.clone()).await?;

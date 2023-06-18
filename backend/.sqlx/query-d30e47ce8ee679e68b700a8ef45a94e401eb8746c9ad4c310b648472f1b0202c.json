@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM local_videos",
+  "query": "SELECT * FROM local_videos WHERE video_preview_image IS NULL",
   "describe": {
     "columns": [
       {
@@ -46,5 +46,5 @@
       true
     ]
   },
-  "hash": "e8331e427bf01fbc2d2f8b914584929b3a3381f8139160a9fe332ddaa24468af"
+  "hash": "d30e47ce8ee679e68b700a8ef45a94e401eb8746c9ad4c310b648472f1b0202c"
 }

@@ -1,11 +1,7 @@
 import {LoaderFunction, json} from "react-router-dom"
 import {getFormState} from "../helpers"
 import invariant from "tiny-invariant"
-import {
-  LocalVideosFormState,
-  StashFormState,
-  StateHelpers,
-} from "../types/types"
+import {FormState, StateHelpers} from "../types/types"
 import {
   Clip,
   ClipPickerOptions,
@@ -27,9 +23,7 @@ export const configLoader: LoaderFunction = async () => {
   }
 }
 
-const getClipLengths = (
-  state: LocalVideosFormState | StashFormState
-): PmvClipOptions => {
+const getClipLengths = (state: FormState): PmvClipOptions => {
   if (state.songs && state.songs.length) {
     return {
       type: "songs",
@@ -49,9 +43,7 @@ const getClipLengths = (
   }
 }
 
-const getClipSettings = (
-  state: LocalVideosFormState | StashFormState
-): ClipPickerOptions => {
+const getClipSettings = (state: FormState): ClipPickerOptions => {
   if (state.clipStrategy === "weightedRandom") {
     return {
       type: "weightedRandom",
@@ -101,7 +93,6 @@ export interface ClipsLoaderData {
 
 export const clipsLoader: LoaderFunction = async () => {
   const state = getFormState()!
-  invariant(StateHelpers.isNotInitial(state))
 
   const body = {
     clipOrder: state.clipOrder || "scene-order",

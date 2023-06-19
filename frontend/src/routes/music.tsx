@@ -2,7 +2,6 @@ import {useStateMachine} from "little-state-machine"
 import Field from "../components/Field"
 import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
-import invariant from "tiny-invariant"
 import {
   ClipStrategy,
   FormStage,
@@ -400,7 +399,7 @@ export default function Music() {
   const [mode, setMode] = useState<Mode>("table")
   const songs = useLoaderData() as SongDto[]
   const {actions, state} = useStateMachine({updateForm})
-  invariant(StateHelpers.isNotInitial(state.data))
+
   const [selection, setSelection] = useImmer<number[]>(
     state.data.songs?.map((song) => song.songId) || []
   )
@@ -433,7 +432,6 @@ export default function Music() {
   }
 
   const onUploadSuccess = async (song: SongDto) => {
-    invariant(StateHelpers.isNotInitial(state.data))
     actions.updateForm({
       songs: [...(state.data.songs || []), song],
     })

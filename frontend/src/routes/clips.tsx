@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import React, {useMemo, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
-import {FormStage, StateHelpers} from "../types/types"
+import {FormStage} from "../types/types"
 import {updateForm} from "./actions"
 import {
   HiBackward,
@@ -14,7 +14,6 @@ import {
 } from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
-import invariant from "tiny-invariant"
 import {formatSeconds, getSegmentColor} from "../helpers"
 import {Clip, ClipOrder} from "../types.generated"
 import {useForm} from "react-hook-form"
@@ -97,10 +96,8 @@ interface WeightsModalProps {
 const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
   const revalidator = useRevalidator()
   const {state, actions} = useStateMachine({updateForm})
-  invariant(StateHelpers.isNotInitial(state.data))
-  const markerCounts = useMemo(() => {
-    invariant(StateHelpers.isNotInitial(state.data))
 
+  const markerCounts = useMemo(() => {
     const counts = new Map<string, MarkerCount>()
     for (const marker of state.data.selectedMarkers ?? []) {
       const count = counts.get(marker.title) ?? {total: 0, current: 0}
@@ -123,7 +120,6 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
   }, [state.data, clips])
 
   const [weights, setWeights] = useImmer<Array<[string, number]>>(() => {
-    invariant(StateHelpers.isNotInitial(state.data))
     if (state.data.clipWeights) {
       return state.data.clipWeights
     } else {
@@ -265,7 +261,6 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs; clips: Clip[]}> = ({
 
   const revalidator = useRevalidator()
   const {actions, state} = useStateMachine({updateForm})
-  invariant(StateHelpers.isNotInitial(state.data))
   const isPmv = state.data.songs?.length !== 0
 
   const onSubmit = (values: Inputs) => {
@@ -429,7 +424,6 @@ function PreviewClips() {
   const loaderData = useLoaderData() as ClipsLoaderData
   const streams = loaderData.streams
   const {actions, state} = useStateMachine({updateForm})
-  invariant(StateHelpers.isNotInitial(state.data))
   const songs = state.data.songs ?? []
   const clips = loaderData.clips.map((clip) => ({clip, included: true}))
 

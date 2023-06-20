@@ -59,12 +59,13 @@ fn unzip_file(bytes: Bytes, destination: impl AsRef<Utf8Path>) -> Result<()> {
 #[cfg(not(unix))]
 fn unzip_file(bytes: Bytes, destination: impl AsRef<Utf8Path>) -> Result<()> {
     use std::fs::File;
+    use std::io::Cursor;
 
     use zip::ZipArchive;
 
     let reader = Cursor::new(&bytes);
     let mut zip = ZipArchive::new(reader)?;
-    let mut dest_file = File::create(destination)?;
+    let mut dest_file = File::create(destination.as_ref())?;
 
     for i in 0..zip.len() {
         let mut file = zip.by_index(i)?;
@@ -137,6 +138,7 @@ pub async fn self_update(tag: Option<&str>) -> Result<()> {
     fs::remove_file(&path)?;
 
     let current_executable = env::current_exe()?;
+    info!("starting process from {}", current_executable.display());
     let _process = Command::new(current_executable).spawn()?;
     process::exit(0);
 }

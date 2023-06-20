@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO github_release (json_data) VALUES ($1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "ab675f206c67fb2ea6fd39cbb8514d5fb90b499db2f8b0a2abad88ed81703cd8"
+}

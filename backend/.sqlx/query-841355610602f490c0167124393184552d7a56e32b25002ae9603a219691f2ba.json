@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT json_data FROM github_release WHERE fetched_at > datetime('now', '-6 hours')",
+  "describe": {
+    "columns": [
+      {
+        "name": "json_data",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "841355610602f490c0167124393184552d7a56e32b25002ae9603a219691f2ba"
+}

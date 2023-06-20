@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.11.0
 - feat: Added browser notifications when downloads are finished or video generation is done
 - feat: Generate video and marker preview images for local videos and show them in the UI
 - feat: Added filter to local video list page

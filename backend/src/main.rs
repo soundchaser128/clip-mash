@@ -6,6 +6,7 @@ use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post};
 use axum::Router;
 use color_eyre::Report;
+use reqwest::Client;
 use tracing::{info, warn};
 
 use crate::data::database::Database;
@@ -71,6 +72,7 @@ async fn main() -> Result<()> {
         database,
         directories,
         ffmpeg_location,
+        reqwest: Client::new(),
     });
 
     let stash_routes = Router::new()
@@ -112,7 +114,11 @@ async fn main() -> Result<()> {
         .route("/song/upload", post(handlers::common::upload_music))
         .route("/song/:id/beats", get(handlers::common::get_beats))
         .route("/directory/open", get(handlers::common::open_folder))
-        .route("/self-update", post(handlers::common::self_update))
+        .route(
+            "/self/check-for-updates",
+            get(handlers::common::check_for_updates),
+        )
+        .route("/self/update", post(handlers::common::self_update))
         .route("/id", get(handlers::common::get_new_id));
 
     let app = Router::new()

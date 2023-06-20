@@ -322,3 +322,10 @@ pub async fn self_update() -> impl IntoResponse {
         StatusCode::OK
     }
 }
+
+#[axum::debug_handler]
+pub async fn check_for_updates(state: State<Arc<AppState>>) -> Result<impl IntoResponse, AppError> {
+    let app_version = updater::check_for_updates(&state.reqwest).await?;
+
+    Ok(Json(app_version))
+}

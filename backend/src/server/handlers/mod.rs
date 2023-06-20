@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use clip_mash_types::VideoId;
-use reqwest::Url;
+use reqwest::{Client, Url};
 
 use crate::data::database::Database;
 use crate::service::commands::ffmpeg::FfmpegLocation;
@@ -18,6 +18,7 @@ pub struct AppState {
     pub database: Database,
     pub directories: Directories,
     pub ffmpeg_location: FfmpegLocation,
+    pub reqwest: Client,
 }
 
 pub fn get_streams(

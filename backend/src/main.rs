@@ -43,25 +43,34 @@ fn setup_logger() {
 #[tokio::main]
 async fn main() -> Result<()> {
     use server::{handlers, static_files};
+    use service::commands::ffmpeg;
     use service::migrations;
 
     color_eyre::install()?;
     setup_logger();
+    let version = env!("CARGO_PKG_VERSION");
+    info!("starting clip-mash v{}", version);
 
     let directories = Directories::new()?;
-    directories.info();
+
+    let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
 
     service::stash_config::init(&directories).await;
 
-    let ffmpeg = CompilationGenerator::new(directories.clone()).await?;
+    let generator = CompilationGenerator::new(directories.clone(), &ffmpeg_location).await?;
     let database_file = directories.database_file();
     let database = Database::new(database_file.as_str()).await?;
-    migrations::run(&database).await?;
+    migrations::run_async(
+        database.clone(),
+        directories.clone(),
+        ffmpeg_location.clone(),
+    );
 
     let state = Arc::new(AppState {
-        generator: ffmpeg,
+        generator,
         database,
         directories,
+        ffmpeg_location,
     });
 
     let stash_routes = Router::new()
@@ -76,9 +85,17 @@ async fn main() -> Result<()> {
     let local_routes = Router::new()
         .route("/video", post(handlers::local::list_videos))
         .route("/video/:id", get(handlers::local::get_video))
+        .route(
+            "/video/:id/preview",
+            get(handlers::local::get_video_preview),
+        )
         .route("/video/marker", get(handlers::local::list_markers))
         .route("/video/marker", post(handlers::local::persist_marker))
         .route("/video/marker/:id", delete(handlers::local::delete_marker))
+        .route(
+            "/video/marker/:id/preview",
+            get(handlers::local::get_marker_preview),
+        )
         .route("/video/download", post(handlers::local::download_video));
 
     let api_routes = Router::new()

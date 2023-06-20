@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {useNavigate} from "react-router-dom"
-import {FormStage, StateHelpers} from "../types/types"
+import {FormStage} from "../types/types"
 import {updateForm} from "../routes/actions"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
@@ -15,7 +15,6 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
-import invariant from "tiny-invariant"
 import {formatSeconds} from "../helpers"
 import {MarkerDto, SelectedMarker} from "../types.generated"
 
@@ -29,11 +28,9 @@ interface Props {
 
 const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
   const {actions, state} = useStateMachine({updateForm})
-  invariant(StateHelpers.isNotInitial(state.data))
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
-      invariant(StateHelpers.isNotInitial(state.data))
       const entries =
         state.data.selectedMarkers?.map((m) => [m.id.id, m]) ||
         data.markers.map((m) => [

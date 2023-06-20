@@ -52,11 +52,6 @@ export type VideoSource = "stash" | "localFile" | undefined
 
 export type FormState = LocalVideosFormState | StashFormState | InitialFormState
 
-export interface InitialFormState {
-  source: undefined
-  id?: string
-}
-
 export type ClipStrategy =
   | "roundRobin"
   | "weightedRandom"
@@ -83,8 +78,12 @@ interface CommonFormState {
   trimVideoForSongs?: boolean
   beatsPerMeasure?: number
   cutAfterMeasures?: MeasureCount
-  clipStrategy: ClipStrategy
+  clipStrategy?: ClipStrategy
   clipWeights?: Array<[string, number]>
+}
+
+export interface InitialFormState extends CommonFormState {
+  source: undefined
 }
 
 export interface LocalVideosFormState extends CommonFormState {
@@ -109,17 +108,8 @@ export const StateHelpers = {
   isLocalFiles(state: FormState): state is LocalVideosFormState {
     return state.source === "localFile"
   },
-
-  isNotInitial(
-    state: FormState
-  ): state is StashFormState | LocalVideosFormState {
-    return state.source === "stash" || state.source === "localFile"
-  },
-
-  isInitial(state: FormState): state is InitialFormState {
-    return state.source === undefined
-  },
 }
+
 export interface VideoWithMarkers {
   video: VideoDto
   markers: MarkerDto[]

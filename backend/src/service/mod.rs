@@ -6,6 +6,7 @@ pub mod generator;
 pub mod local_video;
 pub mod migrations;
 pub mod music;
+pub mod preview_image;
 pub mod stash_config;
 
 #[cfg(test)]

@@ -1,6 +1,6 @@
 # ClipMash
 
-[Discord](https://discord.gg/qRbDqtqmrX)
+[Discord](https://discord.gg/qRbDqtqmrX) - [Ko-Fi](https://ko-fi.com/soundchaser128)
 
 ClipMash is a video editing app that allows you to automate creating compilations from multiple videos. It runs in your browser.
 It's mostly made for, ahem, adult content, which is why it can connect to [Stash](https://stashapp.cc/) and fetch videos

@@ -4,6 +4,7 @@ use clip_mash_types::VideoId;
 use reqwest::Url;
 
 use crate::data::database::Database;
+use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
 use crate::service::stash_config::Config;
@@ -16,6 +17,7 @@ pub struct AppState {
     pub generator: CompilationGenerator,
     pub database: Database,
     pub directories: Directories,
+    pub ffmpeg_location: FfmpegLocation,
 }
 
 pub fn get_streams(

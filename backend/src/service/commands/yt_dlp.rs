@@ -7,6 +7,7 @@ use tracing::info;
 use url::Url;
 use youtube_dl::YoutubeDl;
 
+use super::ffmpeg::FfmpegLocation;
 use crate::server::handlers::AppState;
 use crate::service::directories::{Directories, FolderType};
 use crate::util::generate_id;
@@ -60,7 +61,11 @@ impl YtDlp {
         Ok(executable)
     }
 
-    pub async fn run(&self, options: &YtDlpOptions) -> Result<DownloadResult> {
+    pub async fn run(
+        &self,
+        options: &YtDlpOptions,
+        ffmpeg_location: &FfmpegLocation,
+    ) -> Result<DownloadResult> {
         let yt_dlp_path = self.ensure_yt_dlp().await?;
         let base_dir = self.dirs.get(options.destination);
         let id = generate_id();
@@ -75,6 +80,14 @@ impl YtDlp {
         if options.extract_audio {
             youtube_dl.extract_audio(true);
         }
+
+        info!("using ffmpeg {:?}", ffmpeg_location);
+        if let FfmpegLocation::Local(path) = ffmpeg_location {
+            youtube_dl
+                .extra_arg("--ffmpeg-location")
+                .extra_arg(path.as_str());
+        }
+
         youtube_dl.run_async().await?;
 
         let mut iterator = fs::read_dir(dir).await?;

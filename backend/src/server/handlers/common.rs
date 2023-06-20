@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
+use url::Url;
 
 use super::AppState;
 use crate::data::database::DbSong;
@@ -24,9 +25,11 @@ use crate::data::service::DataService;
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::get_streams;
-use crate::service::clip::ClipService;
+use crate::service::clip::{ClipService, ClipsResult};
+use crate::service::directories::FolderType;
 use crate::service::funscript::{FunScript, ScriptBuilder};
 use crate::service::generator::{self, Progress};
+use crate::service::music::{self, MusicDownloadService};
 use crate::service::stash_config::Config;
 use crate::service::updater;
 use crate::util::{expect_file_name, generate_id};
@@ -43,8 +46,11 @@ pub async fn fetch_clips(
     let options = service.convert_clip_options(body).await?;
     debug!("clip options: {options:?}");
 
-    let clip_service = ClipService::new(state.database.clone());
-    let (clips, beat_offsets) = clip_service.arrange_clips(options).await?;
+    let clip_service = ClipService::new();
+    let ClipsResult {
+        beat_offsets,
+        clips,
+    } = clip_service.arrange_clips(options);
     let streams = get_streams(video_ids, &config)?;
     let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.clone()).collect();
     video_ids.sort();
@@ -169,7 +175,7 @@ pub async fn get_funscript(
 
 #[derive(Deserialize)]
 pub struct DownloadMusicQuery {
-    pub url: String,
+    pub url: Url,
 }
 
 #[derive(Serialize)]
@@ -202,8 +208,8 @@ pub async fn download_music(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<SongDto>, AppError> {
     info!("downloading music at url {url}");
-    let music_service = MusicService::new(state.database.clone(), state.directories.clone());
-    let song = music_service.download_song(&url).await?;
+    let music_service = MusicDownloadService::from(state);
+    let song = music_service.download_song(url).await?;
 
     Ok(Json(song.into()))
 }
@@ -227,7 +233,7 @@ pub async fn upload_music(
     State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
 ) -> Result<Json<SongDto>, AppError> {
-    let music_service = MusicService::new(state.database.clone(), state.directories.clone());
+    let music_service = MusicDownloadService::from(state);
 
     while let Some(field) = multipart.next_field().await.map_err(Report::from)? {
         if field.name() == Some("file") {
@@ -252,15 +258,6 @@ pub async fn list_songs(
         .collect();
 
     Ok(Json(songs))
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum FolderType {
-    Videos,
-    Music,
-    Database,
-    Config,
 }
 
 #[derive(Debug, Deserialize)]
@@ -299,7 +296,7 @@ pub async fn get_beats(
         Some(beats) => beats,
         None => {
             let song = state.database.get_song(song_id).await?;
-            let beats = beats::detect_beats(&song.file_path)?;
+            let beats = music::detect_beats(&song.file_path, &state.ffmpeg_location)?;
             state
                 .database
                 .persist_beats(song.rowid.unwrap(), &beats)
@@ -311,6 +308,12 @@ pub async fn get_beats(
 }
 
 #[axum::debug_handler]
+pub async fn get_new_id() -> Json<NewId> {
+    let id = generate_id();
+    Json(NewId { id })
+}
+
+#[axum::debug_handler]
 pub async fn self_update() -> impl IntoResponse {
     if let Err(e) = updater::self_update(None).await {
         error!("failed to self-update: {e:?}");
@@ -318,10 +321,4 @@ pub async fn self_update() -> impl IntoResponse {
     } else {
         StatusCode::OK
     }
-}
-
-#[axum::debug_handler]
-pub async fn get_new_id() -> Json<NewId> {
-    let id = generate_id();
-    Json(NewId { id })
 }

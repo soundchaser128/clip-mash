@@ -97,7 +97,7 @@ pub async fn check_for_updates(client: &Client) -> Result<AppVersion> {
     Ok(AppVersion {
         new_version: version.to_string(),
         current_version: current_version.to_string(),
-        needs_update: true, //version > current_version,
+        needs_update: version > current_version,
     })
 }
 

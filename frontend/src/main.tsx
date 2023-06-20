@@ -3,7 +3,7 @@ import {
   StateMachineProvider,
   useStateMachine,
 } from "little-state-machine"
-import React, {useEffect} from "react"
+import React, {useEffect, useState} from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
@@ -11,6 +11,7 @@ import {
   LoaderFunction,
   Outlet,
   RouterProvider,
+  useLoaderData,
   useNavigate,
   useRouteError,
 } from "react-router-dom"
@@ -44,10 +45,12 @@ import {
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
-import {SongDto} from "./types.generated"
+import {AppVersion, SongDto} from "./types.generated"
 import MarkersPage from "./routes/local/markers"
 import {resetForm} from "./routes/actions"
 import DownloadVideosPage from "./routes/local/download"
+import useSessionStorage from "./hooks/useSessionStorage"
+import {HiCheck, HiNoSymbol, HiXMark} from "react-icons/hi2"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -149,7 +152,20 @@ const musicLoader: LoaderFunction = async () => {
   return data
 }
 
-const NotificationPermission = () => {
+const versionLoader: LoaderFunction = async () => {
+  const response = await fetch("/api/self/version")
+  const data = (await response.json()) as AppVersion
+  return data
+}
+
+const RootElement = () => {
+  const [updateDeclined, setUpdateDeclined] = useSessionStorage(
+    "updateDeclined",
+    false
+  )
+  const navigate = useNavigate()
+  const [updating, setUpdating] = useState(false)
+
   useEffect(() => {
     if (Notification.permission === "default") {
       Notification.requestPermission().then((permission) => {
@@ -162,14 +178,66 @@ const NotificationPermission = () => {
     }
   }, [])
 
-  return <Outlet />
+  const onSelfUpdate = async () => {
+    setUpdating(true)
+    await fetch("/api/self/update", {method: "POST"})
+    setUpdating(false)
+    window.location.reload()
+  }
+
+  const onUpdateDecliend = () => {
+    setUpdateDeclined(true)
+    navigate("/")
+  }
+
+  const data = useLoaderData() as AppVersion
+  if (data.needsUpdate && !updateDeclined) {
+    return (
+      <Layout>
+        <div className="flex items-center flex-col">
+          <h1 className="mt-8 text-3xl mb-6 font-bold">
+            There is a new version of ClipMash available!
+          </h1>
+          <p className="mb-2 text-lg">
+            Update to version <strong>{data.newVersion}</strong> now?
+          </p>
+          <div className="join">
+            <button
+              onClick={onSelfUpdate}
+              className="btn join-item btn-success w-48"
+            >
+              <HiCheck className="mr-2" />
+              Yes!
+            </button>
+            <button
+              onClick={onUpdateDecliend}
+              className="btn join-item btn-error w-48"
+            >
+              <HiXMark className="mr-2" />
+              No, maybe later.
+            </button>
+          </div>
+        </div>
+      </Layout>
+    )
+  } else if (updating) {
+    return (
+      <div className="flex flex-col h-screen items-center justify-center w-full">
+        <p className="text-xl mb-2">Updating...</p>
+        <span className="loading loading-ring w-16"></span>
+      </div>
+    )
+  } else {
+    return <Outlet />
+  }
 }
 
 const router = createBrowserRouter([
   {
     path: "/",
     errorElement: <ErrorBoundary />,
-    element: <NotificationPermission />,
+    element: <RootElement />,
+    loader: versionLoader,
     children: [
       {
         index: true,

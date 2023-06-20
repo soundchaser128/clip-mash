@@ -114,10 +114,7 @@ async fn main() -> Result<()> {
         .route("/song/upload", post(handlers::common::upload_music))
         .route("/song/:id/beats", get(handlers::common::get_beats))
         .route("/directory/open", get(handlers::common::open_folder))
-        .route(
-            "/self/check-for-updates",
-            get(handlers::common::check_for_updates),
-        )
+        .route("/self/version", get(handlers::common::check_for_updates))
         .route("/self/update", post(handlers::common::self_update))
         .route("/id", get(handlers::common::get_new_id));
 

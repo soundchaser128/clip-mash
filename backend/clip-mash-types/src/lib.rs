@@ -345,6 +345,14 @@ pub struct NewId {
     pub id: String,
 }
 
+#[derive(Debug, Serialize, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct AppVersion {
+    pub new_version: String,
+    pub current_version: String,
+    pub needs_update: bool,
+}
+
 pub type Api = (
     StashScene,
     CreateVideoBody,
@@ -357,6 +365,7 @@ pub type Api = (
     TagDto,
     SongDto,
     NewId,
+    AppVersion,
 );
 
 #[cfg(test)]

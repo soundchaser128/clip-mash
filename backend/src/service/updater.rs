@@ -6,10 +6,10 @@ use std::{fs, process};
 
 use axum::body::Bytes;
 use camino::Utf8Path;
+use clip_mash_types::AppVersion;
 use color_eyre::eyre::bail;
 use reqwest::Client;
 use semver::Version;
-use serde::Serialize;
 use tracing::info;
 
 use crate::Result;
@@ -74,14 +74,6 @@ fn unzip_file(bytes: Bytes, destination: impl AsRef<Utf8Path>) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AppVersion {
-    pub new_version: String,
-    pub current_version: String,
-    pub needs_update: bool,
-}
-
 pub async fn check_for_updates(client: &Client) -> Result<AppVersion> {
     // call the github API to get the latest release tag
     let url =
@@ -105,7 +97,7 @@ pub async fn check_for_updates(client: &Client) -> Result<AppVersion> {
     Ok(AppVersion {
         new_version: version.to_string(),
         current_version: current_version.to_string(),
-        needs_update: version > current_version,
+        needs_update: true, //version > current_version,
     })
 }
 
@@ -126,7 +118,7 @@ pub async fn self_update(tag: Option<&str>) -> Result<()> {
     let bytes = download_url(&url).await?;
     let path = Utf8Path::new("clip-mash-new").with_extension(EXE_EXTENSION);
     unzip_file(bytes, &path)?;
-
+    // TODO remove assets folder before starting new version
     info!("unzipped executable to {path}, replacing self");
     self_replace::self_replace(&path)?;
     fs::remove_file(&path)?;

@@ -132,3 +132,8 @@ export type SongDto = {
   beats: F32[]
 }
 export type NewId = {id: string}
+export type AppVersion = {
+  newVersion: string
+  currentVersion: string
+  needsUpdate: boolean
+}

@@ -1,12 +1,14 @@
+use std::env;
 /// Self-update logic ported over from https://github.com/mitsuhiko/rye/blob/ecfc17e7c31137d060d43e22d93637541aa0b051/rye/src/cli/rye.rs#L131-L190
 use std::env::consts::{EXE_EXTENSION, OS};
+use std::process::Command;
 
+use crate::Result;
 use axum::body::Bytes;
 use camino::Utf8Path;
 use color_eyre::eyre::bail;
+use std::fs;
 use tracing::info;
-
-use crate::Result;
 
 const GITHUB_REPO: &str = "https://github.com/soundchaser128/clip-mash";
 
@@ -85,7 +87,12 @@ pub async fn self_update(tag: Option<&str>) -> Result<()> {
     unzip_file(bytes, &path)?;
 
     info!("unzipped executable to {path}, replacing self");
-    self_replace::self_replace(path)?;
+    self_replace::self_replace(&path)?;
+    fs::remove_file(&path)?;
+
+    let current_executable = env::current_exe()?;
+    let process = Command::new(current_executable).spawn()?;
+    std::process::exit(0);
 
     Ok(())
 }

@@ -4,6 +4,7 @@ use clip_mash_types::Beats;
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
 use serde::Deserialize;
+use serde_json::Value;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
 use tokio::task::spawn_blocking;
@@ -535,6 +536,30 @@ impl Database {
         )
         .execute(&self.pool)
         .await?;
+
+        Ok(())
+    }
+
+    pub async fn latest_release(&self) -> Result<Option<Value>> {
+        let cached_value = sqlx::query!(
+            "SELECT json_data FROM github_release WHERE fetched_at > datetime('now', '-6 hours')"
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        let json = cached_value.and_then(|r| serde_json::from_str(&r.json_data).ok());
+        Ok(json)
+    }
+
+    pub async fn persist_release(&self, json: &Value) -> Result<()> {
+        sqlx::query!("DELETE FROM github_release")
+            .execute(&self.pool)
+            .await?;
+
+        let json = serde_json::to_string(json)?;
+        sqlx::query!("INSERT INTO github_release (json_data) VALUES ($1)", json)
+            .execute(&self.pool)
+            .await?;
 
         Ok(())
     }

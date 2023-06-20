@@ -10,8 +10,10 @@ use clip_mash_types::AppVersion;
 use color_eyre::eyre::bail;
 use reqwest::Client;
 use semver::Version;
+use serde_json::Value;
 use tracing::info;
 
+use crate::data::database::Database;
 use crate::Result;
 
 const GITHUB_USER: &str = "soundchaser128";
@@ -74,18 +76,29 @@ fn unzip_file(bytes: Bytes, destination: impl AsRef<Utf8Path>) -> Result<()> {
     Ok(())
 }
 
-pub async fn check_for_updates(client: &Client) -> Result<AppVersion> {
-    // call the github API to get the latest release tag
-    let url =
-        format!("https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO_NAME}/releases/latest");
-    info!("sending request to {url}");
-    let response = client
-        .get(&url)
-        .header("User-Agent", "clip-mash")
-        .send()
-        .await?
-        .error_for_status()?;
-    let release = response.json::<serde_json::Value>().await?;
+async fn fetch_release(client: &Client, database: &Database) -> Result<Value> {
+    if let Some(release) = database.latest_release().await? {
+        info!("found cached release JSON");
+        Ok(release)
+    } else {
+        let url = format!(
+            "https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO_NAME}/releases/latest"
+        );
+        info!("sending request to {url}");
+        let response = client
+            .get(&url)
+            .header("User-Agent", "clip-mash")
+            .send()
+            .await?
+            .error_for_status()?;
+        let release = response.json::<Value>().await?;
+        database.persist_release(&release).await?;
+        Ok(release)
+    }
+}
+
+pub async fn check_for_updates(client: &Client, database: &Database) -> Result<AppVersion> {
+    let release = fetch_release(client, database).await?;
     let name = release["tag_name"].as_str().unwrap();
     info!("latest release is {name}");
     // compare it to the current version

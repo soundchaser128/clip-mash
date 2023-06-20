@@ -2,8 +2,12 @@ import {useStateMachine} from "little-state-machine"
 import Field from "../components/Field"
 import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
-import invariant from "tiny-invariant"
-import {FormStage, LocalFilesFormStage, StateHelpers} from "../types/types"
+import {
+  ClipStrategy,
+  FormStage,
+  LocalFilesFormStage,
+  StateHelpers,
+} from "../types/types"
 import React, {useCallback, useRef, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds, sumDurations} from "../helpers"
@@ -145,6 +149,7 @@ const ReorderSongs: React.FC<{
       draft.splice(dragIndex, 1)
       draft.splice(hoverIndex, 0, temp)
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -333,7 +338,7 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
 
 interface MusicSettingsInputs {
   musicVolume: number
-  clipStrategy: "pmv" | "default"
+  clipStrategy: ClipStrategy
 }
 
 interface MusicSettingsFormProps {
@@ -382,8 +387,8 @@ const MusicSettingsForm: React.FC<MusicSettingsFormProps> = ({
           className="select select-bordered"
           {...register("clipStrategy")}
         >
-          <option value="pmv">Music-based (cut on the beat)</option>
-          <option value="default">Random lengths (default)</option>
+          <option value="roundRobin">Music-based (cut on the beat)</option>
+          <option value="equalLength">Random lengths (default)</option>
         </select>
       </div>
     </form>
@@ -394,12 +399,12 @@ export default function Music() {
   const [mode, setMode] = useState<Mode>("table")
   const songs = useLoaderData() as SongDto[]
   const {actions, state} = useStateMachine({updateForm})
-  invariant(StateHelpers.isNotInitial(state.data))
+
   const [selection, setSelection] = useImmer<number[]>(
     state.data.songs?.map((song) => song.songId) || []
   )
   const [formValues, setFormValues] = useState<MusicSettingsInputs>({
-    clipStrategy: state.data.clipStrategy || "default",
+    clipStrategy: state.data.clipStrategy || "roundRobin",
     musicVolume: state.data.musicVolume ? state.data.musicVolume * 100 : 75,
   })
   const navigate = useNavigate()
@@ -427,12 +432,14 @@ export default function Music() {
   }
 
   const onUploadSuccess = async (song: SongDto) => {
-    invariant(StateHelpers.isNotInitial(state.data))
     actions.updateForm({
       songs: [...(state.data.songs || []), song],
     })
     setMode("table")
     revalidator.revalidate()
+    new Notification("Music download finished!", {
+      icon: "/android-chrome-192x192.png",
+    })
   }
 
   const onFormChange = (values: MusicSettingsInputs) => {
@@ -474,7 +481,7 @@ export default function Music() {
             <button
               disabled={selection.length < 2}
               onClick={() => setMode("order")}
-              className="btn btn-secondary w-48"
+              className="btn btn-secondary w-52"
             >
               <HiBarsArrowDown className="mr-2" />
               Set track order
@@ -482,7 +489,7 @@ export default function Music() {
           )}
           {mode === "order" && (
             <button
-              className="btn btn-success w-48"
+              className="btn btn-success w-52"
               onClick={() => setMode("table")}
             >
               <HiCheck className="mr-2" />

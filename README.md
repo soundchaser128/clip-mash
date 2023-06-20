@@ -1,6 +1,6 @@
 # ClipMash
 
-[Discord](https://discord.gg/qRbDqtqmrX)
+[Discord](https://discord.gg/qRbDqtqmrX) - [Ko-Fi](https://ko-fi.com/soundchaser128)
 
 ClipMash is a video editing app that allows you to automate creating compilations from multiple videos. It runs in your browser.
 It's mostly made for, ahem, adult content, which is why it can connect to [Stash](https://stashapp.cc/) and fetch videos
@@ -22,6 +22,11 @@ Download the binary for your OS from the releases page and run it. A new browser
 The app requires `ffmpeg` to run, and will attempt to download it, if it isn't installed on your machine.
 This currently only works for Windows and Linux systems, Mac users will have to install it either by 
 downloading the executable and placing it into their `$PATH` or installing it with `brew install ffmpeg`.
+
+## Troubleshooting
+### ClipMash doesn't start, it only shows a console window for a fraction of a second and nothing else happens
+This seems to happen sometimes on Windows when ClipMash can't download the ffmpeg and ffprobe executables. You can solve it 
+by downloading the ffmpeg executables from [here](https://ffmpeg.org/download.html) and placing them next to `clip-mash.exe`.
 
 ## Building
 Requires `cargo`, `rustc` (see http://rustup.rs/) and `node` and `npm` (see https://nodejs.org/en). When those

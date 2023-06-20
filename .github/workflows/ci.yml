@@ -21,8 +21,8 @@ jobs:
     - name: Install ffmpeg 
       run: sudo apt-get update && sudo apt-get -y --no-install-recommends install ffmpeg
     - name: Build Node
-      run: cd frontend && npm ci && npm run format-check && npm run lint && npm run build
+      run: cd frontend && npm ci && npm run format-check && npm run lint && npm run test && npm run build
     - name: Test Rust
       env:
         SQLX_OFFLINE: "true"
-      run: cargo fmt --check && cargo test
+      run: cd backend && cargo fmt --check --all && cargo test --all

@@ -1,16 +1,14 @@
 import {LoaderFunction, json} from "react-router-dom"
 import {getFormState} from "../helpers"
 import invariant from "tiny-invariant"
-import {
-  LocalVideosFormState,
-  StashFormState,
-  StateHelpers,
-} from "../types/types"
+import {FormState, StateHelpers} from "../types/types"
 import {
   Clip,
-  ClipOptions,
+  ClipPickerOptions,
   ClipsResponse,
   CreateClipsBody,
+  NewId,
+  PmvClipOptions,
   VideoDto,
 } from "../types.generated"
 
@@ -25,42 +23,63 @@ export const configLoader: LoaderFunction = async () => {
   }
 }
 
-const getClipSettings = (
-  state: LocalVideosFormState | StashFormState
-): ClipOptions => {
-  if (state.songs && state.songs.length > 0) {
-    if (state.clipStrategy === "pmv") {
-      return {
-        type: "pmv",
-        song_ids: state.songs.map(({songId}) => songId),
-        clips: {
-          type: "songs",
-          beatsPerMeasure: state.beatsPerMeasure || 4,
-          cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
-        },
-      }
-    } else {
-      return {
-        type: "pmv",
-        song_ids: state.songs.map(({songId}) => songId),
-        clips: {
-          type: "randomized",
-          divisors: [2.0, 3.0, 4.0],
-          baseDuration: state.clipDuration || 30,
-        },
-      }
+const getClipLengths = (state: FormState): PmvClipOptions => {
+  if (state.songs && state.songs.length) {
+    return {
+      type: "songs",
+      beatsPerMeasure: state.beatsPerMeasure || 4,
+      cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
+      songs: state.songs.map((song) => ({
+        length: song.duration,
+        offsets: song.beats,
+      })),
     }
   } else {
-    if (state.splitClips === false) {
-      return {
-        type: "noSplit",
-      }
-    } else {
-      return {
-        type: "default",
-        baseDuration: state.clipDuration || 30,
-        divisors: [2.0, 3.0, 4.0],
-      }
+    return {
+      type: "randomized",
+      baseDuration: state.clipDuration || 30,
+      divisors: [2, 3, 4],
+    }
+  }
+}
+
+const getClipSettings = (state: FormState): ClipPickerOptions => {
+  if (state.clipStrategy === "weightedRandom") {
+    return {
+      type: "weightedRandom",
+      weights: state.clipWeights!,
+      clipLengths: getClipLengths(state),
+      length:
+        state.songs && state.songs.length > 0
+          ? state.songs.reduce((sum, song) => sum + song.duration, 0)
+          : state.selectedMarkers!.reduce(
+              (sum, {selectedRange: [start, end]}) => sum + (end - start),
+              0
+            ),
+    }
+  } else if (state.clipStrategy === "equalLength") {
+    return {
+      type: "equalLength",
+      clipDuration: state.clipDuration || 30,
+      divisors: [2, 3, 4],
+    }
+  } else if (
+    state.clipStrategy === "roundRobin" &&
+    state.songs &&
+    state.songs.length > 0
+  ) {
+    return {
+      type: "roundRobin",
+      clipLengths: getClipLengths(state),
+      length: state.songs.reduce((sum, song) => sum + song.duration, 0),
+    }
+  } else if (state.clipStrategy === "noSplit") {
+    return {type: "noSplit"}
+  } else {
+    return {
+      type: "equalLength",
+      clipDuration: state.clipDuration || 30,
+      divisors: [2, 3, 4],
     }
   }
 }
@@ -74,13 +93,15 @@ export interface ClipsLoaderData {
 
 export const clipsLoader: LoaderFunction = async () => {
   const state = getFormState()!
-  invariant(StateHelpers.isNotInitial(state))
 
   const body = {
     clipOrder: state.clipOrder || "scene-order",
     markers: state.selectedMarkers!.filter((m) => m.selected),
     seed: state.seed || null,
-    clips: getClipSettings(state),
+    clips: {
+      clipPicker: getClipSettings(state),
+      order: state.clipOrder || "scene-order",
+    },
   } satisfies CreateClipsBody
 
   const response = await fetch("/api/clips", {
@@ -120,4 +141,16 @@ export const localMarkerLoader: LoaderFunction = async () => {
     const text = await response.text()
     throw json({error: text, request: "/api/local/video/marker"}, {status: 500})
   }
+}
+
+export const loadNewId = async () => {
+  const response = await fetch("/api/id")
+  const data = (await response.json()) as NewId
+  return data.id
+}
+
+export const newIdLoader: LoaderFunction = async () => {
+  const id = await loadNewId()
+
+  return id
 }

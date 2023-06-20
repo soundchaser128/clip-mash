@@ -27,11 +27,11 @@ function Scenes() {
   })
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
+    <section className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
       {scenes.map((scene) => (
         <article
           key={scene.id}
-          className="card card-compact bg-base-100 shadow-xl"
+          className="card card-compact bg-base-200 shadow-xl"
         >
           <figure>
             <img
@@ -41,9 +41,7 @@ function Scenes() {
             />
           </figure>
           <div className="card-body">
-            <h2 className="card-title tooltip" data-tip={scene.title}>
-              <span className="truncate">{scene.title}</span>
-            </h2>
+            <h2 className="card-title">{scene.title}</h2>
             <ul className="text-base grow flex flex-col items-start">
               <li className="tooltip" data-tip="Performers">
                 <HiUser className="inline mr-2" />

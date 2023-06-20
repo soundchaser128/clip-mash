@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {useNavigate} from "react-router-dom"
-import {FormStage, StateHelpers} from "../types/types"
+import {FormStage} from "../types/types"
 import {updateForm} from "../routes/actions"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
@@ -15,7 +15,6 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
-import invariant from "tiny-invariant"
 import {formatSeconds} from "../helpers"
 import {MarkerDto, SelectedMarker} from "../types.generated"
 
@@ -29,11 +28,9 @@ interface Props {
 
 const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
   const {actions, state} = useStateMachine({updateForm})
-  invariant(StateHelpers.isNotInitial(state.data))
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
-      invariant(StateHelpers.isNotInitial(state.data))
       const entries =
         state.data.selectedMarkers?.map((m) => [m.id.id, m]) ||
         data.markers.map((m) => [
@@ -44,6 +41,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
             videoId: m.videoId,
             selected: true,
             selectedRange: [m.start, m.end],
+            title: m.primaryTag,
           } satisfies SelectedMarker,
         ])
       return Object.fromEntries(entries)
@@ -194,14 +192,14 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
           </span>
         </div>
       )}
-      <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
+      <section className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
         {markers.map((marker) => {
           const selectedMarker = selection[marker.id.id]
           return (
             <article
               key={marker.id.id}
               className={clsx(
-                "card card-compact bg-base-100 shadow-xl",
+                "card card-compact bg-base-200 shadow-xl",
                 !selectedMarker.selected && "opacity-50"
               )}
             >

@@ -3,12 +3,13 @@ import {
   StateMachineProvider,
   useStateMachine,
 } from "little-state-machine"
-import React from "react"
+import React, {useEffect} from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
   isRouteErrorResponse,
   LoaderFunction,
+  Outlet,
   RouterProvider,
   useNavigate,
   useRouteError,
@@ -29,19 +30,24 @@ import Scenes, {loader as scenesLoader} from "./routes/stash/filter/scenes"
 import SelectVideoPath from "./routes/local/path"
 import SelectSource from "./routes"
 import SelectMode from "./routes/select-mode"
-import {nanoid} from "nanoid"
 import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
 import EditVideoModal from "./routes/local/videos.$id"
 import StashRoot from "./routes/root"
 import Layout from "./components/Layout"
 import Music from "./routes/music"
 import ConfigPage from "./routes/stash/config"
-import {configLoader, clipsLoader, localMarkerLoader} from "./routes/loaders"
+import {
+  configLoader,
+  clipsLoader,
+  localMarkerLoader,
+  newIdLoader,
+} from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import {SongDto} from "./types.generated"
 import MarkersPage from "./routes/local/markers"
 import {resetForm} from "./routes/actions"
+import DownloadVideosPage from "./routes/local/download"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -143,14 +149,32 @@ const musicLoader: LoaderFunction = async () => {
   return data
 }
 
+const NotificationPermission = () => {
+  useEffect(() => {
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          new Notification("Notifications enabled.", {
+            icon: "/android-chrome-192x192.png",
+          })
+        }
+      })
+    }
+  }, [])
+
+  return <Outlet />
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
     errorElement: <ErrorBoundary />,
+    element: <NotificationPermission />,
     children: [
       {
         index: true,
         element: <SelectSource />,
+        loader: newIdLoader,
       },
       {
         path: "/stash/config",
@@ -163,6 +187,10 @@ const router = createBrowserRouter([
           {
             path: "path",
             element: <SelectVideoPath />,
+          },
+          {
+            path: "videos/download",
+            element: <DownloadVideosPage />,
           },
           {
             path: "videos",
@@ -251,7 +279,6 @@ createStore(
   {
     data: {
       source: undefined,
-      id: nanoid(8),
     },
   },
   {

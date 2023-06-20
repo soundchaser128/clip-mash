@@ -1,0 +1,92 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE source = 'download'",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "file_path",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "interactive",
+        "ordinal": 2,
+        "type_info": "Bool"
+      },
+      {
+        "name": "source",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "duration",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "video_preview_image",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_id",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "start_time",
+        "ordinal": 7,
+        "type_info": "Float"
+      },
+      {
+        "name": "end_time",
+        "ordinal": 8,
+        "type_info": "Float"
+      },
+      {
+        "name": "title",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "index_within_video",
+        "ordinal": 10,
+        "type_info": "Int64"
+      },
+      {
+        "name": "marker_preview_image",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "rowid",
+        "ordinal": 12,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "13aa7bdb16a66268619f0b3f4d13624b4efcd148e8b7c101b6eaa41d2e55bd09"
+}

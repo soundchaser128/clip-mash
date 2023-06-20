@@ -1,0 +1,16 @@
+/target
+/videos
+.DS_Store
+/assets
+/ffmpeg
+/ffmpeg.tar.xz
+/ffmpeg.zip
+/ffmpeg.7z
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+.env
+/music
+/yt-dlp
+/logs
+/samples

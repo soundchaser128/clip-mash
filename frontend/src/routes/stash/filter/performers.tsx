@@ -19,11 +19,11 @@ function Performers() {
   })
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-4 gap-2 w-full">
+    <section className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
       {performers.map((performer) => (
         <article
           key={performer.id}
-          className="card card-compact bg-base-100 shadow-xl"
+          className="card card-compact bg-base-200 shadow-xl"
         >
           <figure className="relative">
             <HiOutlineHeart

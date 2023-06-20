@@ -15,7 +15,12 @@ const HelpModal: React.FC<Props> = ({children}) => {
         <HiInformationCircle className="mr-2" />
         Information
       </button>
-      <Modal size="fluid" isOpen={open} onClose={() => setOpen(false)}>
+      <Modal
+        position="off-center"
+        size="fluid"
+        isOpen={open}
+        onClose={() => setOpen(false)}
+      >
         <div className="text-gray-600 self-start">{children}</div>
         <button onClick={() => setOpen(false)} className="btn self-end mt-6">
           Close

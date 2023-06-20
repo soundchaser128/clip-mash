@@ -1,8 +1,8 @@
 const Footer = () => {
   return (
-    <footer className="w-full text-center text-sm font-light flex flex-col gap-1 my-4">
+    <footer className="w-full text-center text-sm flex flex-col gap-1 my-4">
       <p>
-        Made by{" "}
+        Made with ❤️ by{" "}
         <a
           href="https://soundchaser128.xyz"
           className="link"
@@ -11,6 +11,7 @@ const Footer = () => {
         >
           soundchaser128
         </a>
+        .
       </p>
       <p>
         This project is open source and available on{" "}
@@ -22,6 +23,7 @@ const Footer = () => {
         >
           GitHub
         </a>
+        .
       </p>
     </footer>
   )

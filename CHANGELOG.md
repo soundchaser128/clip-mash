@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 0.11.0
+- feat: Added browser notifications when downloads are finished or video generation is done
+- feat: Generate video and marker preview images for local videos and show them in the UI
+- feat: Added filter to local video list page
+
+## 0.10.0
+- feat: Allow specifying weights for markers
+- feat: Added button to quickly add entire video as a marker
+- feat: Use ffprobe to detect the video length for local videos
+
+## 0.9.1
+- fix: Show whether a video was downloaded via the app on the video list page
+- fix: Fixed a few style issues with smaller screens
+
+## 0.9.0
+- feat: Allow downloading videos via `yt-dlp`
+- feat: Allow editing the marker start/end time fields
+- feat: Validate markers before saving them to the database
+- fix: Beats were not being generated for music
+- chore: move backend code into separate folder
+
 ## 0.8.0
 - feat: Generate clips based on a song's beats
 - feat: Add dedicated page for selecting markers for local videos

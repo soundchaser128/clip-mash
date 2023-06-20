@@ -1,8 +1,7 @@
-import {getMilliseconds, parse} from "date-fns"
 import {VideoWithMarkers} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
-import {useForm, Controller} from "react-hook-form"
+import {useForm, FieldErrors} from "react-hook-form"
 import {
   HiClock,
   HiTrash,
@@ -15,7 +14,7 @@ import {
   HiChevronRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
-import {formatSeconds, getSegmentColor} from "../../helpers"
+import {formatSeconds, getSegmentColor, parseTimestamp} from "../../helpers"
 import Modal from "../../components/Modal"
 import {
   useNavigate,
@@ -24,15 +23,14 @@ import {
   useRouteLoaderData,
 } from "react-router-dom"
 import {MarkerDto} from "../../types.generated"
+import TimestampInput from "../../components/TimestampInput"
+import {persistMarker} from "./api"
+
 interface Inputs {
   id?: number
   title: string
-  start: number
-  end?: number
-}
-
-function parseSeconds(string: string): number {
-  return getMilliseconds(parse(string, "mm:ss", new Date())) / 1000.0
+  start: string
+  end?: string
 }
 
 interface Segment {
@@ -65,38 +63,6 @@ function getSegments(
 
 type FormMode = "hidden" | "create" | "edit"
 
-interface CreateMarker {
-  videoId: string
-  start: number
-  end: number
-  title: string
-  indexWithinVideo: number
-}
-
-async function persistMarker(
-  videoId: string,
-  marker: Inputs,
-  duration: number,
-  index: number
-): Promise<MarkerDto> {
-  const payload = {
-    start: Math.max(marker.start, 0),
-    end: Math.min(marker.end!, duration),
-    title: marker.title.trim(),
-    videoId,
-    indexWithinVideo: index,
-  } satisfies CreateMarker
-
-  const response = await fetch("/api/local/video/marker", {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: {"Content-Type": "application/json"},
-  })
-
-  // TODO error handling
-  return await response.json()
-}
-
 export default function EditVideoModal() {
   const {id} = useParams()
   const navigate = useNavigate()
@@ -105,7 +71,39 @@ export default function EditVideoModal() {
     ({video}) => video.id.id === id
   )!
   const revalidator = useRevalidator()
-  const {register, setValue, handleSubmit, control, watch} = useForm<Inputs>({})
+  const handleValidation = (values: Inputs) => {
+    const {start, end, title} = values
+    const errors: FieldErrors<Inputs> = {}
+    if ((end || 0) <= start) {
+      errors.end = {
+        type: "required",
+        message: "End must be after start",
+      }
+    }
+    if (!title || !title.trim()) {
+      errors.title = {
+        type: "required",
+        message: "Must enter a title",
+      }
+    }
+
+    return {
+      values,
+      errors,
+    }
+  }
+
+  const {
+    register,
+    setValue,
+    handleSubmit,
+    control,
+    watch,
+    setError,
+    formState: {errors},
+  } = useForm<Inputs>({
+    resolver: handleValidation,
+  })
   const [markers, setMarkers] = useImmer<MarkerDto[]>(videoMarkers)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [formMode, setFormMode] = useState<FormMode>("hidden")
@@ -126,28 +124,40 @@ export default function EditVideoModal() {
       throw new Error("could not find edited marker's ID in marker array")
     }
 
-    const newMarker = await persistMarker(
+    const result = await persistMarker(
       video.id.id,
       values,
       videoDuration!,
       index
     )
-    setMarkers((draft) => {
-      if (formMode === "create") {
-        draft.push(newMarker)
-      } else if (formMode === "edit") {
-        const idx = draft.findIndex((m) => m.id === newMarker.id)
-        draft[idx] = newMarker
+    if (result.isOk) {
+      const marker = result.unwrap()
+      setMarkers((draft) => {
+        if (formMode === "create") {
+          draft.push(marker)
+        } else if (formMode === "edit") {
+          const idx = draft.findIndex((m) => m.id === marker.id)
+          draft[idx] = marker
+        }
+      })
+      setFormMode("hidden")
+    } else {
+      const err = result.error
+      if (typeof err.error === "object") {
+        for (const key in err.error) {
+          setError(key as keyof Inputs, {
+            message: err.error[key],
+          })
+        }
       }
-    })
-    setFormMode("hidden")
+    }
   }
 
   const onShowForm = (marker?: MarkerDto) => {
     setFormMode(marker ? "edit" : "create")
     const start = videoRef.current?.currentTime || 0
-    setValue("start", marker?.start || start)
-    setValue("end", marker?.end || undefined)
+    setValue("start", formatSeconds(marker?.start || start, "short"))
+    setValue("end", formatSeconds(marker?.end || undefined, "short"))
     setValue("title", marker?.primaryTag || "")
 
     if (marker) {
@@ -156,7 +166,7 @@ export default function EditVideoModal() {
   }
 
   const onSetCurrentTime = (field: "start" | "end") => {
-    setValue(field, videoRef.current?.currentTime || 0)
+    setValue(field, formatSeconds(videoRef.current?.currentTime || 0, "short"))
   }
 
   const onRemoveMarker = async () => {
@@ -212,7 +222,7 @@ export default function EditVideoModal() {
               <div className="flex w-full items-baseline justify-between">
                 <button
                   type="button"
-                  onClick={() => setVideoPosition(markerStart)}
+                  onClick={() => setVideoPosition(parseTimestamp(markerStart))}
                   className="btn"
                 >
                   <HiChevronLeft className="mr-2" />
@@ -223,7 +233,7 @@ export default function EditVideoModal() {
                   type="button"
                   onClick={() =>
                     typeof markerEnd !== "undefined" &&
-                    setVideoPosition(markerEnd)
+                    setVideoPosition(parseTimestamp(markerEnd))
                   }
                   className="btn"
                   disabled={typeof markerEnd === "undefined"}
@@ -235,6 +245,9 @@ export default function EditVideoModal() {
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">Marker title</span>
+                  <span className="label-text-alt text-error">
+                    {errors.title?.message}
+                  </span>
                 </label>
                 <input
                   type="text"
@@ -248,22 +261,10 @@ export default function EditVideoModal() {
                   <span className="label-text">Start time</span>
                 </label>
                 <div className="input-group w-full">
-                  <Controller
-                    control={control}
+                  <TimestampInput
                     name="start"
-                    render={({field}) => {
-                      return (
-                        <input
-                          type="text"
-                          className="input grow input-bordered"
-                          {...field}
-                          required
-                          value={formatSeconds(field.value, "short")}
-                          onChange={(e) => parseSeconds(e.target.value)}
-                          disabled
-                        />
-                      )
-                    }}
+                    control={control}
+                    error={errors.start}
                   />
 
                   <button
@@ -280,24 +281,15 @@ export default function EditVideoModal() {
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">End time</span>
+                  <span className="label-text-alt text-error">
+                    {errors.end?.message}
+                  </span>
                 </label>
                 <div className="input-group w-full">
-                  <Controller
-                    control={control}
+                  <TimestampInput
                     name="end"
-                    render={({field}) => {
-                      return (
-                        <input
-                          type="text"
-                          className="input grow input-bordered"
-                          {...field}
-                          required
-                          value={formatSeconds(field.value, "short")}
-                          onChange={(e) => parseSeconds(e.target.value)}
-                          disabled
-                        />
-                      )
-                    }}
+                    control={control}
+                    error={errors.end}
                   />
 
                   <button
@@ -406,16 +398,16 @@ export default function EditVideoModal() {
             <div
               key={index}
               className={clsx(
-                "absolute h-full tooltip transition-opacity flex items-center justify-center cursor-pointer",
-                getSegmentColor(index)
+                "absolute h-full tooltip transition-opacity flex items-center justify-center cursor-pointer text-white"
               )}
               onClick={() => onShowForm(marker)}
               style={{
                 width: `${width}%`,
                 left: `${offset}%`,
+                backgroundColor: getSegmentColor(index, markers.length),
               }}
             >
-              <span className="truncate">{marker.primaryTag}</span>
+              {marker.primaryTag}
             </div>
           )
         })}

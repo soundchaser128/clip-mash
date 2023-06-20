@@ -6,12 +6,7 @@ import {
   HiOutlineFolder,
   HiRocketLaunch,
 } from "react-icons/hi2"
-import {
-  LocalVideosFormState,
-  StashFormState,
-  StateHelpers,
-} from "../types/types"
-import invariant from "tiny-invariant"
+import {FormState} from "../types/types"
 import {formatSeconds} from "../helpers"
 
 interface Progress {
@@ -20,13 +15,12 @@ interface Progress {
   done: boolean
 }
 
-type CreateVideoBody = Omit<LocalVideosFormState | StashFormState, "songs"> & {
+type CreateVideoBody = Omit<FormState, "songs"> & {
   songIds: number[]
 }
 
 function Progress() {
   const {state} = useStateMachine()
-  invariant(StateHelpers.isNotInitial(state.data))
 
   const [progress, setProgress] = useState<Progress>()
   const [finished, setFinished] = useState(false)
@@ -36,7 +30,6 @@ function Progress() {
   const fileName = state.data.fileName || `Compilation [${state.data.id}].mp4`
 
   const onSubmit = async (e: React.MouseEvent) => {
-    invariant(StateHelpers.isNotInitial(state.data))
     e.preventDefault()
 
     const songIds = state.data.songs?.map((s) => s.songId) || []
@@ -62,6 +55,9 @@ function Progress() {
         if (data.done) {
           setFinished(true)
           es.close()
+          new Notification("Video generation finished!", {
+            icon: "/android-chrome-192x192.png",
+          })
         }
         setProgress(data)
       }

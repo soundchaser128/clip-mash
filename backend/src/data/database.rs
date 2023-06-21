@@ -542,7 +542,7 @@ impl Database {
 
     pub async fn latest_release(&self) -> Result<Option<Value>> {
         let cached_value = sqlx::query!(
-            "SELECT json_data FROM github_release WHERE fetched_at > datetime('now', '-6 hours')"
+            "SELECT json_data FROM github_release WHERE fetched_at > datetime('now', '-1 hour')"
         )
         .fetch_optional(&self.pool)
         .await?;

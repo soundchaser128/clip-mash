@@ -3,13 +3,14 @@ import {useMemo} from "react"
 
 export interface Options<T> {
   items: T[]
-  keys: (keyof T & string)[]
+  keys: (keyof T & string)[] | string[]
   query?: string
+  threshold?: number
 }
 
-function useFuse<T>({items, keys, query}: Options<T>): T[] {
+function useFuse<T>({items, keys, query, threshold = 0.1}: Options<T>): T[] {
   const fuse = useMemo(() => {
-    const fuse = new Fuse(items, {keys, threshold: 0.1})
+    const fuse = new Fuse(items, {keys, threshold})
     return fuse
   }, [items, keys])
 

@@ -60,12 +60,12 @@ export default function ListVideos() {
   const [videoState, setVideos] = useImmer<VideoWithMarkers[]>(initialVideos)
   const [filter, setFilter] = useState("")
 
-  const videoIds = useFuse({
-    items: videoState.flatMap((v) => v.video),
+  const videos = useFuse({
+    items: videoState,
     query: filter,
-    keys: ["fileName", "id", "title"],
-  }).map((v) => v.id.id)
-  const videos = videoState.filter((v) => videoIds.includes(v.video.id.id))
+    keys: ["video.fileName", "video.id", "markers.primaryTag"],
+    threshold: 0.3,
+  })
   const navigate = useNavigate()
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT json_data FROM github_release WHERE fetched_at > datetime('now', '-6 hours')",
+  "query": "SELECT json_data FROM github_release WHERE fetched_at > datetime('now', '-1 hour')",
   "describe": {
     "columns": [
       {
@@ -16,5 +16,5 @@
       false
     ]
   },
-  "hash": "841355610602f490c0167124393184552d7a56e32b25002ae9603a219691f2ba"
+  "hash": "07c6d9d4aec55fbe5eba3b3b9f6e8f1b204c346cfe1f1c174d48fdf1f0330beb"
 }

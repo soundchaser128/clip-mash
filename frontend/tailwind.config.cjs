@@ -13,7 +13,6 @@ module.exports = {
   plugins: [require("daisyui")],
   daisyui: {
     themes: [
-      "dark",
       {
         clipmash: {
           // eslint-disable-next-line @typescript-eslint/no-var-requires

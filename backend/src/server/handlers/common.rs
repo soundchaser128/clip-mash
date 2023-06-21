@@ -31,7 +31,7 @@ use crate::service::funscript::{FunScript, ScriptBuilder};
 use crate::service::generator::{self, Progress};
 use crate::service::music::{self, MusicDownloadService};
 use crate::service::stash_config::Config;
-use crate::service::updater;
+use crate::service::updater::{self, Updater};
 use crate::util::{expect_file_name, generate_id};
 
 #[axum::debug_handler]
@@ -313,9 +313,14 @@ pub async fn get_new_id() -> Json<NewId> {
     Json(NewId { id })
 }
 
+#[derive(Debug, Deserialize)]
+pub struct SelfUpdateQuery {
+    pub tag: Option<String>,
+}
+
 #[axum::debug_handler]
-pub async fn self_update() -> impl IntoResponse {
-    if let Err(e) = updater::self_update(None).await {
+pub async fn self_update(Query(query): Query<SelfUpdateQuery>) -> impl IntoResponse {
+    if let Err(e) = updater::self_update(query.tag.as_deref()).await {
         error!("failed to self-update: {e:?}");
         StatusCode::INTERNAL_SERVER_ERROR
     } else {
@@ -325,7 +330,8 @@ pub async fn self_update() -> impl IntoResponse {
 
 #[axum::debug_handler]
 pub async fn check_for_updates(state: State<Arc<AppState>>) -> Result<impl IntoResponse, AppError> {
-    let app_version = updater::check_for_updates(&state.reqwest, &state.database).await?;
+    let updater = Updater::from(state.0);
+    let app_version = updater.check_for_updates().await?;
 
     Ok(Json(app_version))
 }

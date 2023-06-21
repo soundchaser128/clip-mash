@@ -2,6 +2,7 @@
 use std::env;
 use std::env::consts::{EXE_EXTENSION, OS};
 use std::process::Command;
+use std::sync::Arc;
 use std::{fs, process};
 
 use axum::body::Bytes;
@@ -14,6 +15,7 @@ use serde_json::Value;
 use tracing::info;
 
 use crate::data::database::Database;
+use crate::server::handlers::AppState;
 use crate::Result;
 
 const GITHUB_USER: &str = "soundchaser128";
@@ -77,42 +79,59 @@ fn unzip_file(bytes: Bytes, destination: impl AsRef<Utf8Path>) -> Result<()> {
     Ok(())
 }
 
-async fn fetch_release(client: &Client, database: &Database) -> Result<Value> {
-    if let Some(release) = database.latest_release().await? {
-        info!("found cached release JSON");
-        Ok(release)
-    } else {
-        let url = format!(
-            "https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO_NAME}/releases/latest"
-        );
-        info!("sending request to {url}");
-        let response = client
-            .get(&url)
-            .header("User-Agent", "clip-mash")
-            .send()
-            .await?
-            .error_for_status()?;
-        let release = response.json::<Value>().await?;
-        database.persist_release(&release).await?;
-        Ok(release)
+pub struct Updater {
+    client: Client,
+    database: Database,
+}
+
+impl From<Arc<AppState>> for Updater {
+    fn from(value: Arc<AppState>) -> Self {
+        Self {
+            client: value.reqwest.clone(),
+            database: value.database.clone(),
+        }
     }
 }
 
-pub async fn check_for_updates(client: &Client, database: &Database) -> Result<AppVersion> {
-    let release = fetch_release(client, database).await?;
-    let name = release["tag_name"].as_str().unwrap();
-    info!("latest release is {name}");
-    // compare it to the current version
-    let version = &name[1..];
-    let version = Version::parse(version)?;
-    let current_version = Version::parse(env!("CARGO_PKG_VERSION"))?;
-    info!("current version is {current_version}, latest version is {version}");
+impl Updater {
+    async fn fetch_release(&self) -> Result<Value> {
+        if let Some(release) = self.database.latest_release().await? {
+            info!("found cached release JSON");
+            Ok(release)
+        } else {
+            let url = format!(
+                "https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO_NAME}/releases/latest"
+            );
+            info!("sending request to {url}");
+            let response = self
+                .client
+                .get(&url)
+                .header("User-Agent", "clip-mash")
+                .send()
+                .await?
+                .error_for_status()?;
+            let release = response.json::<Value>().await?;
+            self.database.persist_release(&release).await?;
+            Ok(release)
+        }
+    }
 
-    Ok(AppVersion {
-        new_version: version.to_string(),
-        current_version: current_version.to_string(),
-        needs_update: version > current_version,
-    })
+    pub async fn check_for_updates(&self) -> Result<AppVersion> {
+        let release = self.fetch_release().await?;
+        let name = release["tag_name"].as_str().unwrap();
+        info!("latest release is {name}");
+        // compare it to the current version
+        let version = &name[1..];
+        let version = Version::parse(version)?;
+        let current_version = Version::parse(env!("CARGO_PKG_VERSION"))?;
+        info!("current version is {current_version}, latest version is {version}");
+
+        Ok(AppVersion {
+            new_version: version.to_string(),
+            current_version: current_version.to_string(),
+            needs_update: version > current_version,
+        })
+    }
 }
 
 pub async fn self_update(tag: Option<&str>) -> Result<()> {

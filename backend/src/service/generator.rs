@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use clip_mash_types::{Clip, VideoResolution};
+use clip_mash_types::{Clip, EncodingEffort, VideoCodec, VideoQuality, VideoResolution};
 use futures::lock::Mutex;
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -38,6 +38,9 @@ pub struct CompilationOptions {
     pub file_name: String,
     pub songs: Vec<DbSong>,
     pub music_volume: f64,
+    pub video_codec: VideoCodec,
+    pub video_quality: VideoQuality,
+    pub encoding_effort: EncodingEffort,
 }
 
 pub fn find_stash_stream_url(marker: &StashMarker) -> &str {
@@ -107,6 +110,43 @@ impl CompilationGenerator {
         }
     }
 
+    fn video_encoding_parameters(
+        &self,
+        codec: VideoCodec,
+        quality: VideoQuality,
+        effort: EncodingEffort,
+    ) -> Vec<&str> {
+        let encoder = match codec {
+            VideoCodec::H264 => "libx264",
+            VideoCodec::H265 => "libx265",
+            VideoCodec::AV1 => "libaom-av1",
+        };
+        let effort = match effort {
+            EncodingEffort::Low => "veryfast",
+            EncodingEffort::Medium => "medium",
+            EncodingEffort::High => "slow",
+        };
+        let crf = match codec {
+            VideoCodec::H264 => match quality {
+                VideoQuality::Low => "28",
+                VideoQuality::Medium => "24",
+                VideoQuality::High => "19",
+            },
+            VideoCodec::H265 => match quality {
+                VideoQuality::Low => "32",
+                VideoQuality::Medium => "28",
+                VideoQuality::High => "24",
+            },
+            VideoCodec::AV1 => match quality {
+                VideoQuality::Low => "32",
+                VideoQuality::Medium => "28",
+                VideoQuality::High => "24",
+            },
+        };
+
+        vec!["-c:v", encoder, "-preset", effort, "-crf", crf]
+    }
+
     async fn create_clip(
         &self,
         url: &str,
@@ -116,6 +156,9 @@ impl CompilationGenerator {
         height: u32,
         fps: f64,
         out_file: &Utf8Path,
+        codec: VideoCodec,
+        quality: VideoQuality,
+        effort: EncodingEffort,
     ) -> Result<()> {
         let clip_str = duration.to_string();
         let seconds_str = start.to_string();
@@ -123,7 +166,7 @@ impl CompilationGenerator {
             fps=fps,
         );
 
-        let args = vec![
+        let mut args = vec![
             "-hide_banner",
             "-loglevel",
             "warning",
@@ -133,12 +176,9 @@ impl CompilationGenerator {
             url,
             "-t",
             clip_str.as_str(),
-            "-c:v",
-            "libx264",
-            "-preset",
-            "slow",
-            "-crf",
-            "22",
+        ];
+        args.extend(self.video_encoding_parameters(codec, quality, effort));
+        args.extend(&[
             "-acodec",
             "aac",
             "-vf",
@@ -146,7 +186,8 @@ impl CompilationGenerator {
             "-ar",
             "48000",
             out_file.as_str(),
-        ];
+        ]);
+
         self.ffmpeg(args).await
     }
 
@@ -210,6 +251,9 @@ impl CompilationGenerator {
                     height,
                     options.output_fps as f64,
                     &out_file,
+                    options.video_codec,
+                    options.video_quality,
+                    options.encoding_effort,
                 )
                 .await?;
             } else {

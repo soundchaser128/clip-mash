@@ -40,6 +40,9 @@ export type SelectedMarker = {
 }
 export type VideoResolution = "720" | "1080" | "4K"
 export type U32 = number
+export type VideoCodec = "av1" | "h264" | "h265"
+export type VideoQuality = "low" | "medium" | "high"
+export type EncodingEffort = "low" | "medium" | "high"
 export type CreateVideoBody = {
   fileName: string
   clips: Clip[]
@@ -48,6 +51,9 @@ export type CreateVideoBody = {
   outputFps: U32
   songIds: I64[]
   musicVolume: F64 | null
+  videoCodec: VideoCodec
+  videoQuality: VideoQuality
+  encodingEffort: EncodingEffort
 }
 export type ClipOrder = "random" | "scene-order" | "no-op"
 export type RandomizedClipOptions = {baseDuration: F64; divisors: F64[]}

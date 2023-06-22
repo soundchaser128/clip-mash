@@ -297,6 +297,30 @@ impl VideoResolution {
     }
 }
 
+#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum VideoCodec {
+    Av1,
+    H264,
+    H265,
+}
+
+#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum VideoQuality {
+    Low,
+    Medium,
+    High,
+}
+
+#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum EncodingEffort {
+    Low,
+    Medium,
+    High,
+}
+
 #[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateVideoBody {
@@ -307,6 +331,9 @@ pub struct CreateVideoBody {
     pub output_fps: u32,
     pub song_ids: Vec<i64>,
     pub music_volume: Option<f64>,
+    pub video_codec: VideoCodec,
+    pub video_quality: VideoQuality,
+    pub encoding_effort: EncodingEffort,
 }
 
 #[derive(Serialize, Debug, TypeDef)]

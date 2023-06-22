@@ -72,9 +72,20 @@ pub async fn get_marker_preview(
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ListVideoQuery {
+pub struct AddNewVideosBody {
     path: String,
     recurse: bool,
+}
+
+pub async fn add_new_videos(
+    state: State<Arc<AppState>>,
+    Json(body): Json<AddNewVideosBody>,
+) -> Result<impl IntoResponse, AppError> {
+    let video_service: VideoService = state.0.clone().into();
+    video_service
+        .add_new_videos(body.path, body.recurse)
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[axum::debug_handler]

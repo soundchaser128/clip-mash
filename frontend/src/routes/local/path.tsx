@@ -1,5 +1,5 @@
-import {HiChevronRight} from "react-icons/hi2"
-import {LocalFilesFormStage, StateHelpers} from "../../types/types"
+import {HiCheck, HiChevronRight} from "react-icons/hi2"
+import {StateHelpers} from "../../types/types"
 import {useStateMachine} from "little-state-machine"
 import {updateForm} from "../actions"
 import invariant from "tiny-invariant"
@@ -13,7 +13,7 @@ interface Inputs {
 }
 
 export default function SelectVideos() {
-  const {state, actions} = useStateMachine({updateForm})
+  const {state} = useStateMachine()
   invariant(StateHelpers.isLocalFiles(state.data))
   const navigate = useNavigate()
 
@@ -25,16 +25,22 @@ export default function SelectVideos() {
   })
 
   const onSubmit = async (values: Inputs) => {
-    actions.updateForm({
-      source: "localFile",
-      localVideoPath: values.path,
-      recurse: values.recurse,
-      stage: LocalFilesFormStage.ListVideos,
-      fileName: values.fileName
-        ? `${values.fileName} [${state.data.id}].mp4`
-        : `${state.data.id}.mp4`,
+    const response = await fetch("/api/local/video", {
+      method: "POST",
+      body: JSON.stringify({
+        path: values.path,
+        recurse: values.recurse,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
     })
-    navigate("/local/videos")
+    if (response.ok) {
+      navigate("/local/videos")
+    } else {
+      const text = await response.text()
+      console.error("request failed", text)
+    }
   }
 
   return (
@@ -43,17 +49,6 @@ export default function SelectVideos() {
         onSubmit={handleSubmit(onSubmit)}
         className="flex gap-4 items-start flex-col self-center"
       >
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Compilation name</span>
-          </label>
-          <input
-            type="text"
-            className="input input-bordered w-96"
-            placeholder="Enter a name for your compilation (optional)"
-            {...register("fileName", {required: false})}
-          />
-        </div>
         <div className="form-control">
           <label className="label">
             <span className="label-text">Folder containing your videos</span>
@@ -79,8 +74,8 @@ export default function SelectVideos() {
           </label>
         </div>
         <button type="submit" className="btn btn-success self-end">
-          Next
-          <HiChevronRight className="w-6 h-6 ml-1" />
+          <HiCheck className="mr-2" />
+          Submit
         </button>
       </form>
     </>

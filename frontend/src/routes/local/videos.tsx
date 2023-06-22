@@ -12,6 +12,7 @@ import {
   HiCheck,
   HiChevronRight,
   HiClock,
+  HiFolder,
   HiInformationCircle,
   HiPlus,
   HiTag,
@@ -28,7 +29,7 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom"
-import {formatSeconds, getFormState} from "../../helpers"
+import {formatSeconds} from "../../helpers"
 import clsx from "clsx"
 import {persistMarker} from "./api"
 import useFuse from "../../hooks/useFuse"
@@ -41,9 +42,7 @@ export const loader: LoaderFunction = async ({request}) => {
     size: "18",
     page: page.toString(),
   })
-  const response = await fetch(`/api/local/video?${params.toString()}`, {
-    method: "POST",
-  })
+  const response = await fetch(`/api/local/video?${params.toString()}`)
   if (response.ok) {
     const data = await response.json()
     return json(data)
@@ -137,6 +136,10 @@ export default function ListVideos() {
           <Link to="download" className="btn btn-primary">
             <HiArrowDownTray className="mr-2" />
             Download videos
+          </Link>
+          <Link to="/local/path" className="btn btn-primary">
+            <HiFolder className="mr-2" />
+            Add folder with videos
           </Link>
           <input
             type="text"

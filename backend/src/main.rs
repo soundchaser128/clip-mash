@@ -83,7 +83,8 @@ async fn main() -> Result<()> {
         .route("/config", post(handlers::stash::set_config));
 
     let local_routes = Router::new()
-        .route("/video", post(handlers::local::list_videos))
+        .route("/video", get(handlers::local::list_videos))
+        .route("/video", post(handlers::local::add_new_videos))
         .route("/video/:id", get(handlers::local::get_video))
         .route(
             "/video/:id/preview",

@@ -126,3 +126,11 @@ export interface JsonError {
   message: "error"
   error: string | Record<string, string>
 }
+
+export interface Page<T> {
+  content: T[]
+  totalItems: number
+  pageNumber: number
+  pageSize: number
+  totalPages: number
+}

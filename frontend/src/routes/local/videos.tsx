@@ -4,6 +4,7 @@ import {
   VideoWithMarkers,
   StateHelpers,
   LocalFilesFormStage,
+  Page,
 } from "../../types/types"
 import {
   HiAdjustmentsVertical,
@@ -31,16 +32,15 @@ import {formatSeconds, getFormState} from "../../helpers"
 import clsx from "clsx"
 import {persistMarker} from "./api"
 import useFuse from "../../hooks/useFuse"
+import {ListVideoDto} from "../../types.generated"
+import Pagination from "../../components/Pagination"
 
-export const loader: LoaderFunction = async () => {
-  const formState = getFormState()
-  invariant(StateHelpers.isLocalFiles(formState!))
-
+export const loader: LoaderFunction = async ({request}) => {
+  const page = new URL(request.url).searchParams.get("page") || 0
   const params = new URLSearchParams({
-    path: formState.localVideoPath!,
-    recurse: formState.recurse ? "true" : "false",
+    size: "18",
+    page: page.toString(),
   })
-
   const response = await fetch(`/api/local/video?${params.toString()}`, {
     method: "POST",
   })
@@ -56,8 +56,10 @@ export const loader: LoaderFunction = async () => {
 export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
-  const initialVideos = useLoaderData() as VideoWithMarkers[]
-  const [videoState, setVideos] = useImmer<VideoWithMarkers[]>(initialVideos)
+  const initialVideos = useLoaderData() as Page<ListVideoDto>
+  const [videoState, setVideos] = useImmer<ListVideoDto[]>(
+    initialVideos.content
+  )
   const [filter, setFilter] = useState("")
 
   const videos = useFuse({
@@ -69,7 +71,7 @@ export default function ListVideos() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    setVideos(initialVideos)
+    setVideos(initialVideos.content)
   }, [initialVideos])
 
   const onOpenModal = ({video}: VideoWithMarkers) => {
@@ -233,6 +235,13 @@ export default function ListVideos() {
           </article>
         ))}
       </section>
+
+      <Pagination
+        totalPages={initialVideos.totalPages}
+        currentPage={initialVideos.pageNumber}
+        prevLink={{search: `?page=${initialVideos.pageNumber - 1}`}}
+        nextLink={{search: `?page=${initialVideos.pageNumber + 1}`}}
+      />
     </>
   )
 }

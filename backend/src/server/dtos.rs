@@ -151,15 +151,21 @@ pub struct Page<T: Serialize> {
     pub total_items: usize,
     pub page_number: usize,
     pub page_size: usize,
+    pub total_pages: usize,
 }
 
 impl<T: Serialize> Page<T> {
     pub fn new(content: Vec<T>, size: usize, page: PageParameters) -> Self {
+        let page_number = page.page.unwrap_or(PageParameters::DEFAULT_PAGE as usize);
+        let page_size = page.size.unwrap_or(PageParameters::DEFAULT_SIZE as usize);
+        let total_pages = (size as f64 / page_size as f64).ceil() as usize;
+
         Page {
             content,
             total_items: size,
-            page_number: page.page.unwrap_or_default(),
-            page_size: page.size.unwrap_or(PageParameters::DEFAULT_SIZE as usize),
+            page_number,
+            page_size,
+            total_pages,
         }
     }
 }

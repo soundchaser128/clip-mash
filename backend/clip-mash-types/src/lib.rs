@@ -372,6 +372,27 @@ pub struct NewId {
     pub id: String,
 }
 
+#[derive(Deserialize, Debug, Clone, Copy, TypeDef)]
+pub struct PageParameters {
+    pub page: Option<usize>,
+    pub size: Option<usize>,
+}
+
+impl PageParameters {
+    pub const DEFAULT_PAGE: i64 = 0;
+    pub const DEFAULT_SIZE: i64 = 20;
+
+    pub fn limit(&self) -> i64 {
+        self.size.map(|s| s as i64).unwrap_or(Self::DEFAULT_SIZE)
+    }
+
+    pub fn offset(&self) -> i64 {
+        self.page
+            .map(|p| p as i64 * self.limit())
+            .unwrap_or(Self::DEFAULT_PAGE)
+    }
+}
+
 pub type Api = (
     StashScene,
     CreateVideoBody,
@@ -384,6 +405,7 @@ pub type Api = (
     TagDto,
     SongDto,
     NewId,
+    PageParameters,
 );
 
 #[cfg(test)]

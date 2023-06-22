@@ -138,3 +138,4 @@ export type SongDto = {
   beats: F32[]
 }
 export type NewId = {id: string}
+export type PageParameters = {page: Usize | null; size: Usize | null}

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use clip_mash_types::Beats;
+use clip_mash_types::{Beats, ListVideoDto, PageParameters};
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
 use serde::Deserialize;
@@ -424,6 +424,82 @@ impl Database {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn list_videos(&self, params: PageParameters) -> Result<(Vec<ListVideoDto>, usize)> {
+        let count = sqlx::query_scalar!("SELECT COUNT(*) FROM local_videos")
+            .fetch_one(&self.pool)
+            .await?;
+        let limit = params.limit();
+        let offset = params.offset();
+        let records = sqlx::query!(
+            "SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id LIMIT $1 OFFSET $2",
+            limit,
+            offset,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        if records.is_empty() {
+            Ok((vec![], count as usize))
+        } else {
+            let iter = records.into_iter().group_by(|v| v.id.clone());
+            let mut videos = vec![];
+            for (_, group) in &iter {
+                let group: Vec<_> = group.collect();
+                let video = DbVideo {
+                    id: group[0].id.clone(),
+                    file_path: group[0].file_path.clone(),
+                    interactive: group[0].interactive,
+                    source: group[0].source.clone().into(),
+                    duration: group[0].duration,
+                    video_preview_image: group[0].video_preview_image.clone(),
+                };
+                let markers: Vec<_> = group
+                    .into_iter()
+                    .filter_map(|r| {
+                        match (
+                            r.video_id,
+                            r.start_time,
+                            r.end_time,
+                            r.title,
+                            r.rowid,
+                            r.file_path,
+                            r.index_within_video,
+                            r.marker_preview_image,
+                        ) {
+                            (
+                                Some(video_id),
+                                Some(start_time),
+                                Some(end_time),
+                                Some(title),
+                                rowid,
+                                file_path,
+                                Some(index),
+                                marker_preview_image,
+                            ) => Some(
+                                DbMarker {
+                                    rowid,
+                                    title,
+                                    video_id,
+                                    start_time,
+                                    end_time,
+                                    file_path,
+                                    index_within_video: index,
+                                    marker_preview_image,
+                                }
+                                .into(),
+                            ),
+                            _ => None,
+                        }
+                    })
+                    .collect();
+                videos.push(ListVideoDto {
+                    video: video.into(),
+                    markers,
+                })
+            }
+            Ok((videos, count as usize))
+        }
     }
 
     pub async fn list_songs(&self) -> Result<Vec<DbSong>> {

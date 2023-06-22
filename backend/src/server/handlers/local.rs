@@ -5,8 +5,7 @@ use axum::body::Body;
 use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
-use camino::Utf8PathBuf;
-use clip_mash_types::{ListVideoDto, MarkerDto, VideoDto};
+use clip_mash_types::{ListVideoDto, MarkerDto, PageParameters, VideoDto};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tower::ServiceExt;
@@ -14,6 +13,7 @@ use tracing::{info, warn};
 use url::Url;
 
 use crate::data::database::CreateMarker;
+use crate::server::dtos::Page;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::service::local_video::VideoService;
@@ -79,14 +79,11 @@ pub struct ListVideoQuery {
 
 #[axum::debug_handler]
 pub async fn list_videos(
-    Query(ListVideoQuery { path, recurse }): Query<ListVideoQuery>,
+    Query(page): Query<PageParameters>,
     state: State<Arc<AppState>>,
-) -> Result<Json<Vec<ListVideoDto>>, AppError> {
-    let service = VideoService::from(state.0);
-    let path = Utf8PathBuf::from(path);
-
-    let videos = service.list_videos(path, recurse).await?;
-    Ok(Json(videos.into_iter().map(From::from).collect()))
+) -> Result<Json<Page<ListVideoDto>>, AppError> {
+    let (videos, size) = state.database.list_videos(page).await?;
+    Ok(Json(Page::new(videos, size, page)))
 }
 
 #[derive(Deserialize)]

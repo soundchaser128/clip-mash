@@ -1,5 +1,6 @@
 use camino::Utf8Path;
 use clip_mash_types::*;
+use serde::Serialize;
 
 use crate::data::database::{DbMarker, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
@@ -139,6 +140,26 @@ impl<'a> From<StashSceneWrapper<'a>> for StashScene {
             rating: scene.rating100,
             interactive: scene.interactive,
             marker_count: scene.scene_markers.len(),
+        }
+    }
+}
+
+#[derive(Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Page<T: Serialize> {
+    pub content: Vec<T>,
+    pub total_items: usize,
+    pub page_number: usize,
+    pub page_size: usize,
+}
+
+impl<T: Serialize> Page<T> {
+    pub fn new(content: Vec<T>, size: usize, page: PageParameters) -> Self {
+        Page {
+            content,
+            total_items: size,
+            page_number: page.page.unwrap_or_default(),
+            page_size: page.size.unwrap_or(PageParameters::DEFAULT_SIZE as usize),
         }
     }
 }

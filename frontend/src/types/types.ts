@@ -8,6 +8,9 @@ import {
   SelectedMarker,
   ClipOrder,
   MeasureCount,
+  VideoCodec,
+  VideoQuality,
+  EncodingEffort,
 } from "../types.generated"
 
 export type Tag = TagDto
@@ -80,6 +83,9 @@ interface CommonFormState {
   cutAfterMeasures?: MeasureCount
   clipStrategy?: ClipStrategy
   clipWeights?: Array<[string, number]>
+  videoCodec?: VideoCodec
+  videoQuality?: VideoQuality
+  encodingEffort?: EncodingEffort
 }
 
 export interface InitialFormState extends CommonFormState {

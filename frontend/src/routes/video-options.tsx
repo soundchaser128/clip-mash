@@ -3,18 +3,28 @@ import {useForm} from "react-hook-form"
 import {useNavigate} from "react-router-dom"
 import {
   FormStage,
+  FormState,
   LocalFilesFormStage,
-  StashFormState,
   StateHelpers,
 } from "../types/types"
 import {updateForm} from "./actions"
 import {HiChevronRight} from "react-icons/hi2"
 
-type Inputs = Pick<StashFormState, "outputFps" | "outputResolution">
+type Inputs = Pick<
+  FormState,
+  | "outputFps"
+  | "outputResolution"
+  | "videoCodec"
+  | "videoQuality"
+  | "encodingEffort"
+>
 
 const defaultOptions: Inputs = {
   outputFps: 30,
   outputResolution: "720",
+  videoCodec: "h264",
+  videoQuality: "medium",
+  encodingEffort: "medium",
 }
 
 function VideoOptions() {
@@ -68,6 +78,60 @@ function VideoOptions() {
               max="120"
               {...register("outputFps", {valueAsNumber: true})}
             />
+          </div>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Video codec:</span>
+            </label>
+            <select
+              className="select select-bordered"
+              {...register("videoCodec")}
+            >
+              <option disabled value="none">
+                Select codec
+              </option>
+              <option value="h264">H.264 (most common, quick to encode)</option>
+              <option value="h265">
+                H.265 (more efficient, slower to encode)
+              </option>
+              <option value="av1">
+                AV1 (even more efficient, slower to encode)
+              </option>
+            </select>
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Video codec:</span>
+            </label>
+            <select
+              className="select select-bordered"
+              {...register("videoQuality")}
+            >
+              <option disabled value="none">
+                Select quality
+              </option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Encoding effort:</span>
+            </label>
+            <select
+              className="select select-bordered"
+              {...register("encodingEffort")}
+            >
+              <option disabled value="none">
+                Select encoding effort
+              </option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
           </div>
         </div>
         <div className="w-full flex justify-between mb-4">

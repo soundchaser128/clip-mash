@@ -119,7 +119,7 @@ impl CompilationGenerator {
         let encoder = match codec {
             VideoCodec::H264 => "libx264",
             VideoCodec::H265 => "libx265",
-            VideoCodec::AV1 => "libaom-av1",
+            VideoCodec::Av1 => "libaom-av1",
         };
         let effort = match effort {
             EncodingEffort::Low => "veryfast",
@@ -137,7 +137,7 @@ impl CompilationGenerator {
                 VideoQuality::Medium => "28",
                 VideoQuality::High => "24",
             },
-            VideoCodec::AV1 => match quality {
+            VideoCodec::Av1 => match quality {
                 VideoQuality::Low => "32",
                 VideoQuality::Medium => "28",
                 VideoQuality::High => "24",

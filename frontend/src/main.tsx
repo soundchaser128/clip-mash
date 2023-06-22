@@ -50,7 +50,7 @@ import MarkersPage from "./routes/local/markers"
 import {resetForm} from "./routes/actions"
 import DownloadVideosPage from "./routes/local/download"
 import useSessionStorage from "./hooks/useSessionStorage"
-import {HiCheck, HiNoSymbol, HiXMark} from "react-icons/hi2"
+import {HiCheck, HiXMark} from "react-icons/hi2"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})

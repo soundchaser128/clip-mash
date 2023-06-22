@@ -29,7 +29,7 @@ export default function useLocalStorage<T>(
         value instanceof Function ? value(storedValue) : value
       // Save state
       setStoredValue(valueToStore)
-      // Save to local storage
+      // Save to session storage
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(key, JSON.stringify(valueToStore))
       }

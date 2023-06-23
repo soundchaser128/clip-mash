@@ -1,4 +1,3 @@
-use std::cmp::Reverse;
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
@@ -9,7 +8,7 @@ use walkdir::WalkDir;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
-use crate::data::database::{Database, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
+use crate::data::database::{Database, DbVideo, LocalVideoSource};
 use crate::server::handlers::AppState;
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;

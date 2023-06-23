@@ -111,13 +111,12 @@ pub struct ListMarkersQuery {
 
 #[axum::debug_handler]
 pub async fn list_markers(
-    Query(ListMarkersQuery { ids }): Query<ListMarkersQuery>,
+    Query(page): Query<PageParameters>,
     state: State<Arc<AppState>>,
-) -> Result<Json<Vec<MarkerDto>>, AppError> {
-    let ids: Vec<_> = ids.split(',').map(|s| s.trim()).collect();
-    let markers = state.database.get_markers_for_video_ids(&ids).await?;
+) -> Result<Json<Page<MarkerDto>>, AppError> {
+    let (markers, count) = state.database.get_markers_page(page).await?;
     let markers = markers.into_iter().map(From::from).collect();
-    Ok(Json(markers))
+    Ok(Json(Page::new(markers, count, page)))
 }
 
 fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str> {

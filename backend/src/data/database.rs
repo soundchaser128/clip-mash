@@ -5,7 +5,7 @@ use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
 use serde::Deserialize;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
-use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
+use sqlx::{FromRow, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::{info, warn};
 
@@ -141,29 +141,20 @@ impl Database {
         Ok(marker)
     }
 
-    pub async fn get_markers_for_video_ids(
-        &self,
-        ids: &[impl AsRef<str>],
-    ) -> Result<Vec<DbMarker>> {
-        let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
-            FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
-            WHERE m.video_id IN ("
-        );
-        let mut separated = query_builder.separated(", ");
-        for id in ids {
-            separated.push_bind(id.as_ref());
-        }
-        separated.push_unseparated(") ");
-
-        let query = query_builder.build();
-        let rows: Vec<_> = query.fetch_all(&self.pool).await?;
-        let mut markers = vec![];
-        for row in rows {
-            markers.push(DbMarker::from_row(&row)?);
-        }
-
-        Ok(markers)
+    pub async fn get_markers_page(&self, page: PageParameters) -> Result<(Vec<DbMarker>, usize)> {
+        let count = sqlx::query_scalar!("SELECT COUNT(*) FROM markers")
+            .fetch_one(&self.pool)
+            .await?;
+        let limit = page.limit();
+        let offset = page.offset();
+        let markers = sqlx::query_as!(DbMarker, "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
+                FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
+                ORDER BY m.rowid DESC
+                LIMIT $1 OFFSET $2",
+            limit, offset)
+            .fetch_all(&self.pool)
+            .await?;
+        Ok((markers, count as usize))
     }
 
     pub async fn get_video_by_path(&self, path: &str) -> Result<Option<LocalVideoWithMarkers>> {
@@ -574,10 +565,9 @@ impl Database {
 #[cfg(test)]
 mod test {
     use sqlx::SqlitePool;
-    use tracing_test::traced_test;
 
     use crate::data::database::{CreateMarker, Database};
-    use crate::service::fixtures::{persist_marker, persist_video};
+    use crate::service::fixtures::persist_video;
     use crate::util::generate_id;
 
     #[sqlx::test]
@@ -667,35 +657,5 @@ mod test {
         assert_eq!(result.video.file_path, expected.file_path);
         assert_eq!(result.video.interactive, expected.interactive);
         assert_eq!(result.markers.len(), 0);
-    }
-
-    #[traced_test]
-    #[sqlx::test]
-    async fn test_get_markers_for_video(pool: SqlitePool) {
-        let db = Database::with_pool(pool);
-        let video1 = persist_video(&db).await.unwrap();
-        for i in 0..5 {
-            let start = i as f64 + 2.0;
-            let end = i as f64 * 2.0 + 2.0;
-            persist_marker(&db, &video1.id, i, start, end)
-                .await
-                .unwrap();
-        }
-
-        let video2 = persist_video(&db).await.unwrap();
-        for i in 0..2 {
-            let start = i as f64 + 2.0;
-            let end = i as f64 * 2.0 + 2.0;
-            persist_marker(&db, &video2.id, i, start, end)
-                .await
-                .unwrap();
-        }
-
-        let marker_results = db
-            .get_markers_for_video_ids(&[video1.id, video2.id])
-            .await
-            .unwrap();
-
-        assert_eq!(7, marker_results.len());
     }
 }

@@ -127,13 +127,12 @@ export const clipsLoader: LoaderFunction = async () => {
   }
 }
 
-export const localMarkerLoader: LoaderFunction = async () => {
+export const localMarkerLoader: LoaderFunction = async ({request}) => {
   const formState = getFormState()!
   invariant(StateHelpers.isLocalFiles(formState))
-  const videoIds = formState.videos?.map((v) => v.video.id.id).join(",") || ""
-  const params = new URLSearchParams({ids: videoIds})
+  const params = new URL(request.url).search
 
-  const response = await fetch(`/api/local/video/marker?${params.toString()}`)
+  const response = await fetch(`/api/local/video/marker${params}`)
   if (response.ok) {
     const json = await response.json()
     return json

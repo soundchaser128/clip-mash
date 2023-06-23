@@ -104,8 +104,8 @@ export default function ListVideos() {
 
     actions.updateForm({
       stage: LocalFilesFormStage.SelectMarkers,
-      videos: [],
-      selectedMarkers: [],
+      // videos: [],
+      // selectedMarkers: [],
       // TODO fetch on marker page instead
 
       // videos: videos.filter((v) => v.markers.length > 0),

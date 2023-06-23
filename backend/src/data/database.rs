@@ -377,6 +377,7 @@ impl Database {
             FROM local_videos v 
             LEFT JOIN markers m ON v.id = m.video_id 
             WHERE v.file_path LIKE $1
+            ORDER BY file_path DESC
             LIMIT $2 
             OFFSET $3",
             query,

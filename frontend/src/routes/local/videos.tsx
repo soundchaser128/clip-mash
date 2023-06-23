@@ -104,22 +104,6 @@ export default function ListVideos() {
 
     actions.updateForm({
       stage: LocalFilesFormStage.SelectMarkers,
-      // videos: [],
-      // selectedMarkers: [],
-      // TODO fetch on marker page instead
-
-      // videos: videos.filter((v) => v.markers.length > 0),
-      // selectedMarkers: videos
-      //   .flatMap((m) => m.markers)
-      //   .map((marker) => ({
-      //     duration: marker.end - marker.start,
-      //     id: marker.id,
-      //     indexWithinVideo: marker.indexWithinVideo,
-      //     selected: true,
-      //     selectedRange: [marker.start, marker.end],
-      //     videoId: marker.videoId,
-      //     title: marker.primaryTag,
-      //   })),
       interactive,
     })
     navigate("/local/markers")
@@ -155,6 +139,14 @@ export default function ListVideos() {
           </button>
         )}
       </div>
+
+      {videos.length === 0 && (
+        <div className="flex flex-col items-center justify-center mt-4">
+          <HiFolder className="text-8xl" />
+          <h1 className="text-xl">No videos found</h1>
+          <p>Add some by either downloading them or adding a video folder.</p>
+        </div>
+      )}
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
         {videos.map((video) => (

@@ -19,6 +19,10 @@ const Pagination: React.FC<PaginationProps> = ({
   const hasNextPage = currentPage < totalPages - 1
   const hasPreviousPage = currentPage > 0
 
+  if (totalPages <= 1) {
+    return null
+  }
+
   return (
     <div className="w-full flex justify-between items-center">
       <Link

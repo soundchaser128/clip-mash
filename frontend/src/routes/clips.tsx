@@ -68,7 +68,7 @@ const Timeline: React.FC<TimelineProps> = ({
           <div
             key={index}
             className={clsx(
-              "flex justify-center items-center text-sm cursor-pointer",
+              "flex justify-center items-center text-sm cursor-pointer text-white",
               index !== currentClipIndex && "opacity-30 hover:opacity-60",
               index === currentClipIndex && "opacity-100"
             )}

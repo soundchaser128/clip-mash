@@ -82,9 +82,9 @@ export default function SelectVideos() {
         )}
 
         {submitting && (
-          <div className="self-center flex gap-4 items-center">
-            <span className="loading loading-ring loading-lg" />
-            <p className="text-sm">
+          <div className="self-center flex gap-4 items-center mt-4">
+            <span className="loading loading-ring w-16" />
+            <p>
               Scanning your videos...
               <br /> This might take a while, depending on how many videos you
               have.

@@ -34,6 +34,7 @@ import clsx from "clsx"
 import {persistMarker} from "./api"
 import {ListVideoDto} from "../../types.generated"
 import Pagination from "../../components/Pagination"
+import debounce from "lodash.debounce"
 
 export const loader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
@@ -58,6 +59,11 @@ export default function ListVideos() {
   const [params, setParams] = useSearchParams()
   const [filter, setFilter] = useState(params.get("query") ?? "")
 
+  const setQuery = (query: string) => {
+    setParams({query})
+  }
+  const debouncedSetQuery = debounce(setQuery, 500)
+
   useEffect(() => {
     setVideos(initialVideos.content)
   }, [initialVideos, setVideos])
@@ -68,7 +74,7 @@ export default function ListVideos() {
 
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value)
-    setParams({query: e.target.value.trim()})
+    debouncedSetQuery(e.target.value.trim())
   }
 
   const onAddFullVideo = async (video: VideoWithMarkers) => {
@@ -141,7 +147,7 @@ export default function ListVideos() {
       </div>
 
       {videos.length === 0 && (
-        <div className="flex flex-col items-center justify-center mt-4">
+        <div className="flex flex-col items-center justify-center mt-8">
           <HiFolder className="text-8xl" />
           <h1 className="text-xl">No videos found</h1>
           <p>Add some by either downloading them or adding a video folder.</p>

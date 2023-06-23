@@ -13,7 +13,6 @@ import {
   HiChevronRight,
   HiClock,
   HiFolder,
-  HiInformationCircle,
   HiPlus,
   HiTag,
   HiXMark,
@@ -28,21 +27,19 @@ import {
   json,
   useLoaderData,
   useNavigate,
+  useSearchParams,
 } from "react-router-dom"
 import {formatSeconds} from "../../helpers"
 import clsx from "clsx"
 import {persistMarker} from "./api"
-import useFuse from "../../hooks/useFuse"
 import {ListVideoDto} from "../../types.generated"
 import Pagination from "../../components/Pagination"
 
 export const loader: LoaderFunction = async ({request}) => {
-  const page = new URL(request.url).searchParams.get("page") || 0
-  const params = new URLSearchParams({
-    size: "18",
-    page: page.toString(),
-  })
-  const response = await fetch(`/api/local/video?${params.toString()}`)
+  const url = new URL(request.url)
+  const query = url.searchParams
+  query.set("size", "18")
+  const response = await fetch(`/api/local/video?${query.toString()}`)
   if (response.ok) {
     const data = await response.json()
     return json(data)
@@ -56,25 +53,22 @@ export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
   const initialVideos = useLoaderData() as Page<ListVideoDto>
-  const [videoState, setVideos] = useImmer<ListVideoDto[]>(
-    initialVideos.content
-  )
-  const [filter, setFilter] = useState("")
-
-  const videos = useFuse({
-    items: videoState,
-    query: filter,
-    keys: ["video.fileName", "video.id", "markers.primaryTag"],
-    threshold: 0.3,
-  })
+  const [videos, setVideos] = useImmer<ListVideoDto[]>(initialVideos.content)
   const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
+  const [filter, setFilter] = useState(params.get("query") ?? "")
 
   useEffect(() => {
     setVideos(initialVideos.content)
-  }, [initialVideos])
+  }, [initialVideos, setVideos])
 
   const onOpenModal = ({video}: VideoWithMarkers) => {
     navigate(`/local/videos/${video.id.id}`)
+  }
+
+  const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilter(e.target.value)
+    setParams({query: e.target.value.trim()})
   }
 
   const onAddFullVideo = async (video: VideoWithMarkers) => {
@@ -110,18 +104,22 @@ export default function ListVideos() {
 
     actions.updateForm({
       stage: LocalFilesFormStage.SelectMarkers,
-      videos: videos.filter((v) => v.markers.length > 0),
-      selectedMarkers: videos
-        .flatMap((m) => m.markers)
-        .map((marker) => ({
-          duration: marker.end - marker.start,
-          id: marker.id,
-          indexWithinVideo: marker.indexWithinVideo,
-          selected: true,
-          selectedRange: [marker.start, marker.end],
-          videoId: marker.videoId,
-          title: marker.primaryTag,
-        })),
+      videos: [],
+      selectedMarkers: [],
+      // TODO fetch on marker page instead
+
+      // videos: videos.filter((v) => v.markers.length > 0),
+      // selectedMarkers: videos
+      //   .flatMap((m) => m.markers)
+      //   .map((marker) => ({
+      //     duration: marker.end - marker.start,
+      //     id: marker.id,
+      //     indexWithinVideo: marker.indexWithinVideo,
+      //     selected: true,
+      //     selectedRange: [marker.start, marker.end],
+      //     videoId: marker.videoId,
+      //     title: marker.primaryTag,
+      //   })),
       interactive,
     })
     navigate("/local/markers")
@@ -146,7 +144,7 @@ export default function ListVideos() {
             placeholder="Filter..."
             className="input input-bordered w-full lg:w-96"
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={onFilterChange}
           />
         </div>
 
@@ -157,16 +155,6 @@ export default function ListVideos() {
           </button>
         )}
       </div>
-
-      {videoState.length === 0 && (
-        <div className="mt-4 alert alert-info w-fit self-center">
-          <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />
-          <span>
-            No videos found at location &apos;{state.data.localVideoPath}&apos;.
-            Currently only <code>.mp4</code> files are supported.
-          </span>
-        </div>
-      )}
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
         {videos.map((video) => (

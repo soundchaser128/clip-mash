@@ -63,7 +63,6 @@ export type ClipStrategy =
 interface CommonFormState {
   id?: string
   videos?: VideoWithMarkers[]
-  localVideoPath?: string
   recurse?: boolean
   clipOrder?: ClipOrder
   clipDuration?: number

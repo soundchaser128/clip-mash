@@ -365,14 +365,30 @@ impl Database {
         Ok(())
     }
 
-    pub async fn list_videos(&self, params: PageParameters) -> Result<(Vec<ListVideoDto>, usize)> {
-        let count = sqlx::query_scalar!("SELECT COUNT(*) FROM local_videos")
-            .fetch_one(&self.pool)
-            .await?;
+    pub async fn list_videos(
+        &self,
+        query: Option<&str>,
+        params: PageParameters,
+    ) -> Result<(Vec<ListVideoDto>, usize)> {
+        let query = query
+            .map(|q| format!("%{q}%"))
+            .unwrap_or_else(|| "%".to_string());
+        let count = sqlx::query_scalar!(
+            "SELECT COUNT(*) FROM local_videos WHERE file_path LIKE $1",
+            query
+        )
+        .fetch_one(&self.pool)
+        .await?;
         let limit = params.limit();
         let offset = params.offset();
         let records = sqlx::query!(
-            "SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id LIMIT $1 OFFSET $2",
+            "SELECT *, m.rowid AS rowid 
+            FROM local_videos v 
+            LEFT JOIN markers m ON v.id = m.video_id 
+            WHERE v.file_path LIKE $1
+            LIMIT $2 
+            OFFSET $3",
+            query,
             limit,
             offset,
         )

@@ -1,7 +1,6 @@
-import {HiCheck, HiChevronRight} from "react-icons/hi2"
+import {HiCheck} from "react-icons/hi2"
 import {StateHelpers} from "../../types/types"
 import {useStateMachine} from "little-state-machine"
-import {updateForm} from "../actions"
 import invariant from "tiny-invariant"
 import {useNavigate} from "react-router-dom"
 import {useForm} from "react-hook-form"
@@ -17,12 +16,7 @@ export default function SelectVideos() {
   invariant(StateHelpers.isLocalFiles(state.data))
   const navigate = useNavigate()
 
-  const {register, handleSubmit} = useForm<Inputs>({
-    defaultValues: {
-      path: state.data.localVideoPath,
-      recurse: state.data.recurse,
-    },
-  })
+  const {register, handleSubmit} = useForm<Inputs>({})
 
   const onSubmit = async (values: Inputs) => {
     const response = await fetch("/api/local/video", {

@@ -88,12 +88,19 @@ pub async fn add_new_videos(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[derive(Deserialize)]
+pub struct VideoSearchQuery {
+    pub query: Option<String>,
+}
+
 #[axum::debug_handler]
 pub async fn list_videos(
     Query(page): Query<PageParameters>,
+    Query(VideoSearchQuery { query }): Query<VideoSearchQuery>,
     state: State<Arc<AppState>>,
 ) -> Result<Json<Page<ListVideoDto>>, AppError> {
-    let (videos, size) = state.database.list_videos(page).await?;
+    info!("handling list_videos request with page {page:?} and query {query:?}");
+    let (videos, size) = state.database.list_videos(query.as_deref(), page).await?;
     Ok(Json(Page::new(videos, size, page)))
 }
 

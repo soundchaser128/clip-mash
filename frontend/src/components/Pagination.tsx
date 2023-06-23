@@ -23,7 +23,11 @@ const Pagination: React.FC<PaginationProps> = ({
     <div className="w-full flex justify-between items-center">
       <Link
         to={prevLink}
-        className={clsx("btn", !hasPreviousPage && "btn-disabled")}
+        className={clsx(
+          "btn",
+          hasPreviousPage && "btn-primary",
+          !hasPreviousPage && "btn-disabled"
+        )}
       >
         <HiChevronLeft className="mr-2" />
         Previous
@@ -33,7 +37,11 @@ const Pagination: React.FC<PaginationProps> = ({
       </span>
       <Link
         to={nextLink}
-        className={clsx("btn", !hasNextPage && "btn-disabled")}
+        className={clsx(
+          "btn",
+          hasNextPage && "btn-primary",
+          !hasNextPage && "btn-disabled"
+        )}
       >
         Next
         <HiChevronRight className="ml-2" />

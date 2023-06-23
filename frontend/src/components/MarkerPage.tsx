@@ -261,7 +261,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
                       }
                       disabled={!selectedMarker.selected}
                       max={marker.end - marker.start}
-                      min={15}
+                      min={0}
                       type="range"
                       className="range w-full"
                     />

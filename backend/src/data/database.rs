@@ -565,10 +565,11 @@ impl Database {
 
 #[cfg(test)]
 mod test {
+    use clip_mash_types::PageParameters;
     use sqlx::SqlitePool;
 
     use crate::data::database::{CreateMarker, Database};
-    use crate::service::fixtures::persist_video;
+    use crate::service::fixtures::{self, persist_video, persist_video_with_file_name};
     use crate::util::generate_id;
 
     #[sqlx::test]
@@ -658,5 +659,73 @@ mod test {
         assert_eq!(result.video.file_path, expected.file_path);
         assert_eq!(result.video.interactive, expected.interactive);
         assert_eq!(result.markers.len(), 0);
+    }
+
+    #[sqlx::test]
+    async fn test_get_markers_page(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        for i in 0..45 {
+            fixtures::persist_marker(&database, &video.id, i, 0.0, i as f64 * 2.0)
+                .await
+                .unwrap();
+        }
+
+        let page = PageParameters {
+            page: Some(0),
+            size: Some(10),
+        };
+        let (result, total) = database.get_markers_page(page).await.unwrap();
+        assert_eq!(45, total);
+        assert_eq!(result.len(), 10);
+        let page = PageParameters {
+            page: Some(1),
+            size: Some(10),
+        };
+        let (result, _) = database.get_markers_page(page).await.unwrap();
+        assert_eq!(result.len(), 10);
+    }
+
+    #[sqlx::test]
+    async fn test_list_videos(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        for _ in 0..45 {
+            persist_video(&database).await.unwrap();
+        }
+        let page = PageParameters {
+            page: Some(0),
+            size: Some(10),
+        };
+        let (result, total) = database.list_videos(None, page).await.unwrap();
+        assert_eq!(45, total);
+        assert_eq!(10, result.len());
+    }
+
+    #[sqlx::test]
+    async fn test_list_videos_search(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+
+        persist_video_with_file_name(&database, "/some/path/sexy.mp4")
+            .await
+            .unwrap();
+        persist_video_with_file_name(&database, "/other/path/cool.mp4")
+            .await
+            .unwrap();
+
+        let page = PageParameters {
+            page: Some(0),
+            size: Some(10),
+        };
+        let (result, total) = database.list_videos(Some("sexy"), page).await.unwrap();
+        assert_eq!(1, total);
+        assert_eq!(1, result.len());
+        let file_name = &result[0].video.file_name;
+        assert_eq!(file_name, "sexy.mp4");
+
+        let (result, total) = database.list_videos(Some("cool"), page).await.unwrap();
+        assert_eq!(1, total);
+        assert_eq!(1, result.len());
+        let file_name = &result[0].video.file_name;
+        assert_eq!(file_name, "cool.mp4");
     }
 }

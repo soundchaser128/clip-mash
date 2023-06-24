@@ -130,8 +130,8 @@ impl CompilationGenerator {
             _ => match effort {
                 EncodingEffort::Low => "veryfast",
                 EncodingEffort::Medium => "medium",
-                EncodingEffort::High => "slow",    
-            }
+                EncodingEffort::High => "slow",
+            },
         };
         let crf = match codec {
             VideoCodec::H264 => match quality {

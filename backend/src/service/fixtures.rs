@@ -494,12 +494,12 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
     Ok(expected)
 }
 
-pub async fn persist_video_with_source(db: &Database, source: LocalVideoSource) -> Result<DbVideo> {
+pub async fn persist_video_with_file_name(db: &Database, name: &str) -> Result<DbVideo> {
     let video = DbVideo {
-        file_path: FilePath().fake(),
+        file_path: name.to_string(),
         id: generate_id(),
         interactive: false,
-        source,
+        source: LocalVideoSource::Folder,
         duration: 50.0,
         video_preview_image: None,
     };

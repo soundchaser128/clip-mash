@@ -54,6 +54,7 @@ async fn main() -> Result<()> {
     let directories = Directories::new()?;
 
     let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
+    info!("using ffmpeg at {ffmpeg_location:?}");
 
     service::stash_config::init(&directories).await;
 

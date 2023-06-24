@@ -233,13 +233,14 @@ impl CompilationGenerator {
         let video_dir = self.directories.video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
 
+        let total = clips.len();
         let mut paths = vec![];
-        for Clip {
-            range: (start, end),
-            marker_id,
-            ..
-        } in clips
-        {
+        for (index, clip) in clips.into_iter().enumerate() {
+            let Clip {
+                range: (start, end),
+                marker_id,
+                ..
+            } = clip;
             let marker = options
                 .markers
                 .iter()
@@ -249,7 +250,7 @@ impl CompilationGenerator {
             let (width, height) = options.output_resolution.resolution();
             let out_file = video_dir.join(format!("{}_{}-{}.mp4", marker.video_id, start, end));
             if !out_file.is_file() {
-                info!("creating clip {out_file}");
+                info!("creating clip {} / {} at {out_file}", index + 1, total);
                 self.create_clip(
                     url,
                     *start,

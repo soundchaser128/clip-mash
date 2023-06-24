@@ -1,8 +1,10 @@
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::process::Output;
+use std::time::{Duration, Instant};
 
 use camino::Utf8Path;
+use clip_mash_types::Progress;
 use lazy_static::lazy_static;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
@@ -77,6 +79,54 @@ pub fn generate_id() -> String {
     let animal = ANIMALS_LIST.choose(&mut rng).unwrap();
 
     format!("{adjective1}-{adjective2}-{animal}")
+}
+
+pub struct ProgressTracker {
+    work_done: u64,
+    started_at: Instant,
+    work_total: u64,
+}
+
+impl ProgressTracker {
+    pub fn new(work_todo: u64) -> Self {
+        ProgressTracker {
+            work_done: 0,
+            started_at: Instant::now(),
+            work_total: work_todo,
+        }
+    }
+
+    pub fn inc_work_done(&mut self) {
+        self.work_done = self.work_done + 1;
+    }
+
+    /// Increment work done by a given amonut.
+    pub fn inc_work_done_by(&mut self, units: u64) {
+        self.work_done = self.work_done + units;
+    }
+
+    pub fn eta(&self) -> Duration {
+        let work_not_done = self
+            .work_total
+            .checked_sub(self.work_done)
+            .unwrap_or(self.work_total);
+        let not_done_to_done_ratio = work_not_done as f64 / self.work_done as f64;
+        let seconds_since_start = Instant::now() - self.started_at;
+        let eta_seconds = not_done_to_done_ratio * seconds_since_start.as_secs() as f64;
+
+        Duration::from_secs(eta_seconds as u64)
+    }
+}
+
+impl From<ProgressTracker> for Progress {
+    fn from(value: ProgressTracker) -> Self {
+        Progress {
+            items_finished: value.work_done,
+            items_total: value.work_total,
+            eta_seconds: value.eta().as_secs_f64(),
+            done: value.work_done == value.work_total,
+        }
+    }
 }
 
 #[cfg(test)]

@@ -8,12 +8,7 @@ import {
 } from "react-icons/hi2"
 import {FormState} from "../types/types"
 import {formatSeconds} from "../helpers"
-
-interface Progress {
-  finished: number
-  total: number
-  done: boolean
-}
+import {Progress} from "../types.generated"
 
 type CreateVideoBody = Omit<FormState, "songs"> & {
   songIds: number[]
@@ -124,12 +119,13 @@ function Progress() {
         <div className="text-center w-full">
           <progress
             className="progress h-6 progress-primary w-full"
-            value={progress?.finished}
-            max={progress?.total}
+            value={progress?.itemsFinished}
+            max={progress?.itemsTotal}
           />
           <p>
-            {progress.finished} / {progress.total} clips finished
+            {progress.itemsFinished} / {progress.itemsTotal} clips finished
           </p>
+          <p>Estimated time remaining: {formatSeconds(progress.etaSeconds)}</p>
         </div>
       )}
 

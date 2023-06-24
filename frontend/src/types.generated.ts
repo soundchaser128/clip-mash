@@ -139,3 +139,10 @@ export type SongDto = {
 }
 export type NewId = {id: string}
 export type PageParameters = {page: Usize | null; size: Usize | null}
+export type U64 = number
+export type Progress = {
+  itemsFinished: U64
+  itemsTotal: U64
+  done: boolean
+  etaSeconds: F64
+}

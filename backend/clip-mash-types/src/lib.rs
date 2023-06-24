@@ -393,6 +393,15 @@ impl PageParameters {
     }
 }
 
+#[derive(Debug, Default, Clone, Serialize, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct Progress {
+    pub items_finished: u64,
+    pub items_total: u64,
+    pub done: bool,
+    pub eta_seconds: f64,
+}
+
 pub type Api = (
     StashScene,
     CreateVideoBody,
@@ -406,6 +415,7 @@ pub type Api = (
     SongDto,
     NewId,
     PageParameters,
+    Progress,
 );
 
 #[cfg(test)]

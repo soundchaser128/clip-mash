@@ -1,13 +1,14 @@
+use std::cell::RefCell;
 use std::ffi::OsStr;
+use std::time::{Duration, Instant};
 
 use camino::{Utf8Path, Utf8PathBuf};
-use clip_mash_types::{Clip, EncodingEffort, VideoCodec, VideoQuality, VideoResolution};
+use clip_mash_types::{Clip, EncodingEffort, Progress, VideoCodec, VideoQuality, VideoResolution};
 use futures::lock::Mutex;
 use itertools::Itertools;
-use lazy_static::lazy_static;
-use serde::Serialize;
 use tokio::process::Command;
-use tracing::{debug, enabled, info, Level};
+use tokio::sync::watch;
+use tracing::{debug, enabled, info, warn, Level};
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
@@ -15,18 +16,11 @@ use super::Marker;
 use crate::data::database::DbSong;
 use crate::data::stash_api::StashMarker;
 use crate::service::MarkerInfo;
-use crate::util::{commandline_error, debug_output, generate_id};
+use crate::util::{commandline_error, debug_output, generate_id, ProgressTracker};
 use crate::Result;
 
-#[derive(Debug, Default, Clone, Serialize)]
-pub struct Progress {
-    pub finished: usize,
-    pub total: usize,
-    pub done: bool,
-}
-
-lazy_static! {
-    static ref PROGRESS: Mutex<Progress> = Default::default();
+lazy_static::lazy_static! {
+    static ref PROGRESS: Mutex<Option<ProgressTracker>> = Default::default();
 }
 
 #[derive(Debug)]
@@ -72,8 +66,9 @@ pub fn find_stream_url(marker: &Marker) -> &str {
     }
 }
 
-pub async fn get_progress() -> Progress {
-    PROGRESS.lock().await.clone()
+pub async fn get_progress() -> Option<Progress> {
+    let locked = PROGRESS.lock().await;
+    locked.into()
 }
 
 #[derive(Clone)]
@@ -198,30 +193,28 @@ impl CompilationGenerator {
         self.ffmpeg(args).await
     }
 
-    async fn initialize_progress(&self, total_items: usize) {
-        let mut progress = PROGRESS.lock().await;
-        progress.total = total_items;
-        progress.done = false;
-        progress.finished = 0;
-        debug!("setting progress total to {total_items}");
+    async fn initialize_progress(&self, total_items: u64) {
+        let progress = ProgressTracker::new(total_items);
+        // self.progress.replace(Some(progress));
     }
 
-    async fn increase_progress(&self) {
-        let mut progress = PROGRESS.lock().await;
-        progress.finished += 1;
-        if progress.finished == progress.total {
-            info!(
-                "finished all items, setting done = true ({} items)",
-                progress.finished
-            );
-            progress.done = true;
-        }
-        debug!("bumping progress, count = {}", progress.finished);
+    async fn increase_progress(&self, clip_duration: f64) {
+        // let mut wrapper = PROGRESS.lock().await;
+        // let mut progress = &mut wrapper.progress;
+        // progress.items_finished += 1;
+        // if progress.items_finished == progress.items_total {
+        //     info!(
+        //         "finished all items, setting done = true ({} items)",
+        //         progress.items_finished
+        //     );
+        //     progress.done = true;
+        // }
+        // debug!("bumping progress, count = {}", progress.items_finished);
     }
 
     async fn reset_progress(&self) {
-        let mut progress = PROGRESS.lock().await;
-        *progress = Default::default();
+        // let mut progress = PROGRESS.lock().await;
+        // *progress = ProgressWrapper::new();
         info!("reset progress to default");
     }
 
@@ -229,7 +222,7 @@ impl CompilationGenerator {
         let clips = &options.clips;
         self.reset_progress().await;
         let progress_items = clips.len() + if options.songs.len() >= 2 { 2 } else { 1 };
-        self.initialize_progress(progress_items).await;
+        self.initialize_progress(progress_items as u64).await;
         let video_dir = self.directories.video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
 
@@ -267,7 +260,7 @@ impl CompilationGenerator {
             } else {
                 info!("clip {out_file} already exists, skipping");
             }
-            self.increase_progress().await;
+            self.increase_progress(clip.duration()).await;
             paths.push(out_file);
         }
 
@@ -310,7 +303,7 @@ impl CompilationGenerator {
             return commandline_error(self.ffmpeg_path.as_str(), output);
         }
 
-        self.increase_progress().await;
+        self.increase_progress(1.0).await;
 
         Ok(destination)
     }
@@ -398,7 +391,7 @@ impl CompilationGenerator {
         self.ffmpeg(args).await?;
 
         info!("finished assembling video, result at {destination}");
-        self.increase_progress().await;
+        self.increase_progress(1.0).await;
         Ok(destination)
     }
 }

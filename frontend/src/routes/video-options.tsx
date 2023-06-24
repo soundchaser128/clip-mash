@@ -51,7 +51,7 @@ function VideoOptions() {
         <div className="flex flex-col gap-4 self-center max-w-lg">
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Output resolution:</span>
+              <span className="label-text">Output resolution</span>
             </label>
             <select
               className="select select-bordered"
@@ -68,7 +68,7 @@ function VideoOptions() {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Output frames per second:</span>
+              <span className="label-text">Output frames per second</span>
             </label>
             <input
               type="number"
@@ -81,7 +81,7 @@ function VideoOptions() {
           </div>
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Video codec:</span>
+              <span className="label-text">Video codec</span>
             </label>
             <select
               className="select select-bordered"
@@ -102,7 +102,7 @@ function VideoOptions() {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Video codec:</span>
+              <span className="label-text">Video quality</span>
             </label>
             <select
               className="select select-bordered"
@@ -119,7 +119,7 @@ function VideoOptions() {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Encoding effort:</span>
+              <span className="label-text">Encoding effort</span>
             </label>
             <select
               className="select select-bordered"

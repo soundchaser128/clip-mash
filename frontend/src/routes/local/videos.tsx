@@ -111,6 +111,7 @@ export default function ListVideos() {
     actions.updateForm({
       stage: LocalFilesFormStage.SelectMarkers,
       interactive,
+      selectedMarkers: undefined,
     })
     navigate("/local/markers")
   }

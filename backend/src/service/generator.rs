@@ -190,28 +190,26 @@ impl CompilationGenerator {
         self.ffmpeg(args).await
     }
 
-    async fn initialize_progress(&self, total_items: u64) {
+    async fn initialize_progress(&self, total_items: f64) {
         let mut progress = PROGRESS.lock().await;
         progress.reset(total_items);
     }
 
-    async fn increase_progress(&self, clip_duration: f64) {
-        let units = clip_duration as u64;
+    async fn increase_progress(&self, seconds: f64) {
         let mut progress = PROGRESS.lock().await;
-        progress.inc_work_done_by(units);
+        progress.inc_work_done_by(seconds);
     }
 
     async fn reset_progress(&self) {
         let mut progress = PROGRESS.lock().await;
-        progress.reset(0);
+        progress.reset(0.0);
         info!("reset progress to default");
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
         let clips = &options.clips;
         self.reset_progress().await;
-        let progress_items = clips.len() + if options.songs.len() >= 2 { 2 } else { 1 };
-        let total_duration = clips.iter().map(|c| c.duration() as u64).sum();
+        let total_duration = clips.iter().map(|c| c.duration()).sum();
         self.initialize_progress(total_duration).await;
         let video_dir = self.directories.video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;

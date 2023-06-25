@@ -396,8 +396,8 @@ impl PageParameters {
 #[derive(Debug, Default, Clone, Serialize, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct Progress {
-    pub items_finished: u64,
-    pub items_total: u64,
+    pub items_finished: f64,
+    pub items_total: f64,
     pub done: bool,
     pub eta_seconds: f64,
 }

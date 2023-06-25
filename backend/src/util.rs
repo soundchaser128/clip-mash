@@ -82,55 +82,48 @@ pub fn generate_id() -> String {
 }
 
 pub struct ProgressTracker {
-    work_done: u64,
+    work_total: f64,
+    work_done: f64,
     started_at: Instant,
-    work_total: u64,
 }
 
 impl Default for ProgressTracker {
     fn default() -> Self {
         ProgressTracker {
-            work_done: 0,
+            work_done: 0.0,
             started_at: Instant::now(),
-            work_total: 0,
+            work_total: 0.0,
         }
     }
 }
 
 impl ProgressTracker {
-    pub fn new(work_todo: u64) -> Self {
+    pub fn new(work_todo: f64) -> Self {
         ProgressTracker {
-            work_done: 0,
+            work_done: 0.0,
             started_at: Instant::now(),
             work_total: work_todo,
         }
     }
 
-    pub fn reset(&mut self, work_todo: u64) {
-        self.work_done = 0;
+    pub fn reset(&mut self, work_todo: f64) {
+        self.work_done = 0.0;
         self.started_at = Instant::now();
         self.work_total = work_todo;
     }
 
-    pub fn inc_work_done(&mut self) {
-        self.work_done = self.work_done + 1;
-    }
-
     /// Increment work done by a given amonut.
-    pub fn inc_work_done_by(&mut self, units: u64) {
+    pub fn inc_work_done_by(&mut self, units: f64) {
         self.work_done = self.work_done + units;
     }
 
     pub fn eta(&self) -> Duration {
-        let work_not_done = self
-            .work_total
-            .checked_sub(self.work_done)
-            .unwrap_or(self.work_total);
+        let work_not_done = (self.work_total - self.work_done).max(self.work_total);
         let not_done_to_done_ratio = work_not_done as f64 / self.work_done as f64;
         let seconds_since_start = Instant::now() - self.started_at;
         let eta_seconds = not_done_to_done_ratio * seconds_since_start.as_secs() as f64;
 
-        Duration::from_secs(eta_seconds as u64)
+        Duration::from_secs_f64(eta_seconds)
     }
 
     pub fn progress(&self) -> Progress {

@@ -71,11 +71,6 @@ const LocalFileSteps: React.FC<{state: LocalVideosFormState}> = ({state}) => {
     <Steps
       currentStage={state.stage}
       steps={[
-        // {
-        //   stage: LocalFilesFormStage.SelectPath,
-        //   link: "/local/path",
-        //   content: "Select file path",
-        // },
         {
           stage: LocalFilesFormStage.ListVideos,
           link: "/local/videos",

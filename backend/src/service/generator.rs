@@ -1,14 +1,11 @@
-use std::cell::RefCell;
 use std::ffi::OsStr;
-use std::time::{Duration, Instant};
 
 use camino::{Utf8Path, Utf8PathBuf};
 use clip_mash_types::{Clip, EncodingEffort, Progress, VideoCodec, VideoQuality, VideoResolution};
 use futures::lock::Mutex;
 use itertools::Itertools;
 use tokio::process::Command;
-use tokio::sync::watch;
-use tracing::{debug, enabled, info, warn, Level};
+use tracing::{debug, enabled, info, Level};
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
@@ -68,7 +65,7 @@ pub fn find_stream_url(marker: &Marker) -> &str {
 
 pub async fn get_progress() -> Option<Progress> {
     let locked = PROGRESS.lock().await;
-    locked.into()
+    locked.as_ref().map(|p| p.progress())
 }
 
 #[derive(Clone)]

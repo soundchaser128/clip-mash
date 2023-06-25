@@ -116,15 +116,13 @@ impl ProgressTracker {
 
         Duration::from_secs(eta_seconds as u64)
     }
-}
 
-impl From<ProgressTracker> for Progress {
-    fn from(value: ProgressTracker) -> Self {
+    pub fn progress(&self) -> Progress {
         Progress {
-            items_finished: value.work_done,
-            items_total: value.work_total,
-            eta_seconds: value.eta().as_secs_f64(),
-            done: value.work_done == value.work_total,
+            items_finished: self.work_done,
+            items_total: self.work_total,
+            eta_seconds: self.eta().as_secs_f64(),
+            done: self.work_done == self.work_total,
         }
     }
 }

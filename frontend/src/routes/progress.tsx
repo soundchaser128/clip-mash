@@ -123,7 +123,8 @@ function Progress() {
             max={progress?.itemsTotal}
           />
           <p>
-            {progress.itemsFinished} / {progress.itemsTotal} clips finished
+            {formatSeconds(progress.itemsFinished, "short")} /{" "}
+            {formatSeconds(progress.itemsTotal, "short")} finished
           </p>
           <p>Estimated time remaining: {formatSeconds(progress.etaSeconds)}</p>
         </div>

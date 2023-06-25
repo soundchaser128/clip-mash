@@ -17,7 +17,7 @@ use crate::util::{commandline_error, debug_output, generate_id, ProgressTracker}
 use crate::Result;
 
 lazy_static::lazy_static! {
-    static ref PROGRESS: Mutex<Option<ProgressTracker>> = Default::default();
+    static ref PROGRESS: Mutex<ProgressTracker> = Default::default();
 }
 
 #[derive(Debug)]
@@ -63,9 +63,9 @@ pub fn find_stream_url(marker: &Marker) -> &str {
     }
 }
 
-pub async fn get_progress() -> Option<Progress> {
+pub async fn get_progress() -> Progress {
     let locked = PROGRESS.lock().await;
-    locked.as_ref().map(|p| p.progress())
+    locked.progress()
 }
 
 #[derive(Clone)]
@@ -191,27 +191,19 @@ impl CompilationGenerator {
     }
 
     async fn initialize_progress(&self, total_items: u64) {
-        let progress = ProgressTracker::new(total_items);
-        // self.progress.replace(Some(progress));
+        let mut progress = PROGRESS.lock().await;
+        progress.reset(total_items);
     }
 
     async fn increase_progress(&self, clip_duration: f64) {
-        // let mut wrapper = PROGRESS.lock().await;
-        // let mut progress = &mut wrapper.progress;
-        // progress.items_finished += 1;
-        // if progress.items_finished == progress.items_total {
-        //     info!(
-        //         "finished all items, setting done = true ({} items)",
-        //         progress.items_finished
-        //     );
-        //     progress.done = true;
-        // }
-        // debug!("bumping progress, count = {}", progress.items_finished);
+        let units = clip_duration as u64;
+        let mut progress = PROGRESS.lock().await;
+        progress.inc_work_done_by(units);
     }
 
     async fn reset_progress(&self) {
-        // let mut progress = PROGRESS.lock().await;
-        // *progress = ProgressWrapper::new();
+        let mut progress = PROGRESS.lock().await;
+        progress.reset(0);
         info!("reset progress to default");
     }
 
@@ -219,7 +211,8 @@ impl CompilationGenerator {
         let clips = &options.clips;
         self.reset_progress().await;
         let progress_items = clips.len() + if options.songs.len() >= 2 { 2 } else { 1 };
-        self.initialize_progress(progress_items as u64).await;
+        let total_duration = clips.iter().map(|c| c.duration() as u64).sum();
+        self.initialize_progress(total_duration).await;
         let video_dir = self.directories.video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
 

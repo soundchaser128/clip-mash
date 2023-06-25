@@ -87,6 +87,16 @@ pub struct ProgressTracker {
     work_total: u64,
 }
 
+impl Default for ProgressTracker {
+    fn default() -> Self {
+        ProgressTracker {
+            work_done: 0,
+            started_at: Instant::now(),
+            work_total: 0,
+        }
+    }
+}
+
 impl ProgressTracker {
     pub fn new(work_todo: u64) -> Self {
         ProgressTracker {
@@ -94,6 +104,12 @@ impl ProgressTracker {
             started_at: Instant::now(),
             work_total: work_todo,
         }
+    }
+
+    pub fn reset(&mut self, work_todo: u64) {
+        self.work_done = 0;
+        self.started_at = Instant::now();
+        self.work_total = work_todo;
     }
 
     pub fn inc_work_done(&mut self) {

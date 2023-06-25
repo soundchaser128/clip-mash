@@ -1,11 +1,15 @@
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::process::Output;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+#[cfg(not(test))]
+use std::time::Instant;
 
 use camino::Utf8Path;
 use clip_mash_types::Progress;
 use lazy_static::lazy_static;
+#[cfg(test)]
+use mock_instant::Instant;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, SeedableRng};
@@ -138,9 +142,12 @@ impl ProgressTracker {
 
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
+
+    use mock_instant::MockClock;
     use regex::Regex;
 
-    use super::{add_api_key, expect_file_name, generate_id};
+    use super::{add_api_key, expect_file_name, generate_id, ProgressTracker};
 
     #[test]
     #[cfg(not(windows))]
@@ -169,5 +176,21 @@ mod test {
         let id = generate_id();
         let regex = Regex::new("[a-z]+-[a-z]+-[a-z]+").unwrap();
         assert!(regex.is_match(&id));
+    }
+
+    #[test]
+    fn test_progress_tracker() {
+        let mut tracker = ProgressTracker::new(100.0);
+        tracker.inc_work_done_by(10.0);
+        MockClock::advance(Duration::from_secs(1));
+        assert_eq!(10.0, tracker.progress().items_finished);
+        assert_eq!(10.0, tracker.eta().as_secs_f64());
+
+        MockClock::advance(Duration::from_secs(2));
+        tracker.inc_work_done_by(10.0);
+
+        let eta = tracker.eta().as_secs_f64();
+        assert!(eta >= 15.0);
+        dbg!(eta);
     }
 }

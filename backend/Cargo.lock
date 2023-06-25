@@ -408,6 +408,7 @@ dependencies = [
  "include_dir",
  "itertools",
  "lazy_static",
+ "mock_instant",
  "opener",
  "ordered-float",
  "rand",
@@ -1551,6 +1552,12 @@ dependencies = [
  "wasi",
  "windows-sys 0.48.0",
 ]
+
+[[package]]
+name = "mock_instant"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c1a54de846c4006b88b1516731cc1f6026eb5dc4bcb186aa071ef66d40524ec"
 
 [[package]]
 name = "multer"

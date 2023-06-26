@@ -173,7 +173,7 @@ export default function ListVideos() {
           <article
             className={clsx(
               "card card-compact shadow-xl bg-base-200",
-              video.markers.length > 0 && "ring-2 ring-green-500"
+              video.markers.length > 0 && "ring-4 ring-green-500"
             )}
             key={video.video.id.id}
           >

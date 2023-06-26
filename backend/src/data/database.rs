@@ -157,6 +157,15 @@ impl Database {
         Ok((markers, count as usize))
     }
 
+    pub async fn get_all_markers(&self) -> Result<Vec<DbMarker>> {
+        let markers = sqlx::query_as!(DbMarker, "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
+        FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
+        ORDER BY m.rowid DESC")
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(markers)
+    }
+
     pub async fn get_video_by_path(&self, path: &str) -> Result<Option<LocalVideoWithMarkers>> {
         let records = sqlx::query!(
             "SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.file_path = $1",

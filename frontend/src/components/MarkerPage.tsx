@@ -286,7 +286,7 @@ const SelectMarkers: React.FC<Props> = ({
                         <span className="label-text">Include</span>
                         <input
                           type="checkbox"
-                          className="checkbox checkbox-primary ml-2"
+                          className="toggle toggle-sm toggle-primary"
                           checked={!!selectedMarker.selected}
                           onChange={(e) =>
                             onCheckboxChange(marker.id.id, e.target.checked)
@@ -308,7 +308,7 @@ const SelectMarkers: React.FC<Props> = ({
                             checked={videoPreview === marker.id.id}
                             disabled={!selectedMarker.selected}
                             type="checkbox"
-                            className="toggle ml-2"
+                            className="toggle toggle-sm"
                           />
                         </label>
                       </div>
@@ -320,8 +320,9 @@ const SelectMarkers: React.FC<Props> = ({
                       </label>
                       <input
                         type="number"
-                        className="input input-sm"
+                        className="input input-sm input-bordered w-16"
                         value={selectedMarker.loops || 1}
+                        disabled={!selectedMarker.selected}
                         onChange={(e) =>
                           onSetLoops(marker.id.id, e.target.valueAsNumber)
                         }

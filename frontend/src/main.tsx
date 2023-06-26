@@ -11,6 +11,7 @@ import {
   LoaderFunction,
   Outlet,
   RouterProvider,
+  ScrollRestoration,
   useNavigate,
   useRouteError,
 } from "react-router-dom"
@@ -163,7 +164,12 @@ const NotificationPermission = () => {
     }
   }, [])
 
-  return <Outlet />
+  return (
+    <>
+      <Outlet />
+      <ScrollRestoration />
+    </>
+  )
 }
 
 const router = createBrowserRouter([

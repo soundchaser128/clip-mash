@@ -1,14 +1,14 @@
 import {useLoaderData} from "react-router-dom"
 import {MarkerDto} from "../../types.generated"
 import MarkerPage from "../../components/MarkerPage"
-import {LocalFilesFormStage, Page} from "../../types/types"
+import {LocalFilesFormStage} from "../../types/types"
 
 export default function LocalMarkersPage() {
-  const data = useLoaderData() as Page<MarkerDto>
+  const data = useLoaderData() as MarkerDto[]
 
   return (
     <MarkerPage
-      data={{markers: data.content}}
+      data={{markers: data}}
       withImages
       nextStage={LocalFilesFormStage.Music}
     />

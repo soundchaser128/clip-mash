@@ -124,13 +124,10 @@ pub struct ListMarkersQuery {
 }
 
 #[axum::debug_handler]
-pub async fn list_markers(
-    Query(page): Query<PageParameters>,
-    state: State<Arc<AppState>>,
-) -> Result<Json<Page<MarkerDto>>, AppError> {
-    let (markers, count) = state.database.get_markers_page(page).await?;
+pub async fn list_markers(state: State<Arc<AppState>>) -> Result<Json<Vec<MarkerDto>>, AppError> {
+    let markers = state.database.get_all_markers().await?;
     let markers = markers.into_iter().map(From::from).collect();
-    Ok(Json(Page::new(markers, count, page)))
+    Ok(Json(markers))
 }
 
 fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str> {

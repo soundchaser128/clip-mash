@@ -144,8 +144,13 @@ export const localMarkerLoader: LoaderFunction = async ({request}) => {
 
 export const loadNewId = async () => {
   const response = await fetch("/api/id")
-  const data = (await response.json()) as NewId
-  return data.id
+  if (response.ok) {
+    const data = (await response.json()) as NewId
+    return data.id
+  } else {
+    const text = await response.text()
+    throw json({error: text, request: "/api/id"}, {status: 500})
+  }
 }
 
 export const newIdLoader: LoaderFunction = async () => {

@@ -193,7 +193,7 @@ export default function EditVideoModal() {
 
   const onClose = () => {
     revalidator.revalidate()
-    navigate("/local/videos")
+    navigate(-1)
   }
 
   return (

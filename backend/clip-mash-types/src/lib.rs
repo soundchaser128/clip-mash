@@ -392,6 +392,14 @@ impl PageParameters {
             .map(|p| p as i64 * self.limit())
             .unwrap_or(Self::DEFAULT_PAGE)
     }
+
+    pub fn size(&self) -> i64 {
+        self.size.map(|s| s as i64).unwrap_or(Self::DEFAULT_SIZE)
+    }
+
+    pub fn page(&self) -> i64 {
+        self.page.map(|p| p as i64).unwrap_or(Self::DEFAULT_PAGE)
+    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, TypeDef)]

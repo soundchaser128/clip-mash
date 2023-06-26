@@ -197,13 +197,11 @@ const router = createBrowserRouter([
             path: "videos",
             element: <ListVideos />,
             loader: listVideosLoader,
-            children: [
-              {
-                path: ":id",
-                element: <EditVideoModal />,
-                loader: videoDetailsLoader,
-              },
-            ],
+          },
+          {
+            path: "videos/:id",
+            element: <EditVideoModal />,
+            loader: videoDetailsLoader,
           },
           {
             path: "markers",

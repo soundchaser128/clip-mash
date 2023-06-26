@@ -85,7 +85,7 @@ export default function SelectVideos() {
           <div className="self-center flex gap-4 items-center mt-4">
             <span className="loading loading-ring w-16" />
             <p>
-              Scanning your videos...
+              Scanning your videos and generating preview images...
               <br /> This might take a while, depending on how many videos you
               have.
             </p>

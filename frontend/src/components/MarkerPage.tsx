@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {useNavigate} from "react-router-dom"
-import {FormStage} from "../types/types"
+import {FormStage, LocalFilesFormStage} from "../types/types"
 import {updateForm} from "../routes/actions"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
@@ -24,9 +24,15 @@ interface Props {
   }
   withImages?: boolean
   withPerformers?: boolean
+  nextStage: FormStage | LocalFilesFormStage
 }
 
-const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
+const SelectMarkers: React.FC<Props> = ({
+  data,
+  withImages,
+  withPerformers,
+  nextStage,
+}) => {
   const {actions, state} = useStateMachine({updateForm})
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
@@ -99,6 +105,12 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
     })
   }
 
+  const onSetLoops = (id: number, loops: number) => {
+    setSelection((draft) => {
+      draft[id].loops = loops
+    })
+  }
+
   const onNextStage = () => {
     const selectedMarkers = Object.values(selection)
     const hasInteractiveScenes = data.markers
@@ -106,7 +118,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
       .some((m) => m.sceneInteractive)
 
     actions.updateForm({
-      stage: FormStage.Music,
+      stage: nextStage,
       selectedMarkers,
       markers: data.markers,
       interactive: hasInteractiveScenes,
@@ -222,7 +234,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
                 <h2 className="card-title">
                   {[marker.primaryTag, ...marker.tags].join(", ")}
                 </h2>
-                <p>
+                <p className="truncate">
                   <strong>
                     <HiVideoCamera className="mr-2 inline" />
                     Scene:{" "}
@@ -230,7 +242,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
                   {marker.sceneTitle || marker.fileName}
                 </p>
                 {withPerformers && (
-                  <p>
+                  <p className="truncate">
                     <strong>
                       <HiUser className="mr-2 inline" />
                       Performers:{" "}
@@ -268,7 +280,20 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
                     />
                   </div>
 
-                  <div className="card-actions justify-between">
+                  <div className="grid grid-rows-2">
+                    <div className="form-control">
+                      <label className="label cursor-pointer">
+                        <span className="label-text">Include</span>
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-primary ml-2"
+                          checked={!!selectedMarker.selected}
+                          onChange={(e) =>
+                            onCheckboxChange(marker.id.id, e.target.checked)
+                          }
+                        />
+                      </label>
+                    </div>
                     {withImages && (
                       <div className="form-control">
                         <label className="label cursor-pointer">
@@ -288,19 +313,19 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
                         </label>
                       </div>
                     )}
-                    {!withImages && <div />}
-                    <div className="form-control">
-                      <label className="label cursor-pointer">
-                        <span className="label-text">Include</span>
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-primary ml-2"
-                          checked={!!selectedMarker.selected}
-                          onChange={(e) =>
-                            onCheckboxChange(marker.id.id, e.target.checked)
-                          }
-                        />
+
+                    <div className="flex flex-row justify-between">
+                      <label className="label">
+                        <span className="label-text grow">Loops</span>
                       </label>
+                      <input
+                        type="number"
+                        className="input input-sm"
+                        value={selectedMarker.loops || 1}
+                        onChange={(e) =>
+                          onSetLoops(marker.id.id, e.target.valueAsNumber)
+                        }
+                      />
                     </div>
                   </div>
                 </div>

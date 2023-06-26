@@ -116,17 +116,21 @@ function Progress() {
       )}
 
       {progress && !finished && (
-        <div className="text-center w-full">
+        <div className="w-full">
           <progress
             className="progress h-6 progress-primary w-full"
             value={progress?.itemsFinished}
             max={progress?.itemsTotal}
           />
           <p>
-            {formatSeconds(progress.itemsFinished, "short")} /{" "}
-            {formatSeconds(progress.itemsTotal, "short")} finished
+            <strong>{formatSeconds(progress.itemsFinished, "short")}</strong> /{" "}
+            <strong>{formatSeconds(progress.itemsTotal, "short")}</strong>{" "}
+            finished
           </p>
-          <p>Estimated time remaining: {formatSeconds(progress.etaSeconds)}</p>
+          <p>
+            Estimated time remaining:{" "}
+            <strong>{formatSeconds(progress.etaSeconds)}</strong>
+          </p>
         </div>
       )}
 

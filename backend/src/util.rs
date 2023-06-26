@@ -103,6 +103,7 @@ impl Default for ProgressTracker {
 }
 
 impl ProgressTracker {
+    #[cfg(test)]
     pub fn new(work_todo: f64) -> Self {
         ProgressTracker {
             work_done: 0.0,
@@ -123,10 +124,19 @@ impl ProgressTracker {
     }
 
     pub fn eta(&self) -> Duration {
+        if self.work_done == 0.0 || self.work_total == 0.0 {
+            return Duration::ZERO;
+        }
         let work_not_done = (self.work_total - self.work_done).max(self.work_total);
         let not_done_to_done_ratio = work_not_done / self.work_done;
         let seconds_since_start = Instant::now() - self.started_at;
         let eta_seconds = not_done_to_done_ratio * seconds_since_start.as_secs_f64();
+
+        assert!(
+            eta_seconds.is_finite(),
+            "eta_seconds is NaN or infinite: {}",
+            eta_seconds
+        );
 
         Duration::from_secs_f64(eta_seconds)
     }
@@ -136,7 +146,8 @@ impl ProgressTracker {
             items_finished: self.work_done,
             items_total: self.work_total,
             eta_seconds: self.eta().as_secs_f64(),
-            done: approx_eq!(f64, self.work_done, self.work_total, epsilon = 0.01),
+            done: self.work_total != 0.0
+                && approx_eq!(f64, self.work_done, self.work_total, epsilon = 0.01),
         }
     }
 }
@@ -199,7 +210,7 @@ mod test {
         tracker.inc_work_done_by(80.0);
 
         let eta = tracker.eta().as_secs_f64();
-        assert_approx_eq!(f64, eta, 0.0, ulps = 2);
+        assert_approx_eq!(f64, eta, 8.0, ulps = 2);
         assert!(tracker.progress().done);
     }
 

@@ -193,6 +193,7 @@ impl Ffmpeg {
         self
     }
 
+    #[allow(unused)]
     pub fn working_directory(&mut self, working_directory: impl Into<Utf8PathBuf>) -> &mut Self {
         self.working_directory = Some(working_directory.into());
         self

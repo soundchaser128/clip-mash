@@ -1,5 +1,5 @@
 import {LoaderFunction, useLoaderData} from "react-router-dom"
-import {StateHelpers} from "../../types/types"
+import {FormStage, StateHelpers} from "../../types/types"
 import invariant from "tiny-invariant"
 import {getFormState} from "../../helpers"
 import {MarkerDto} from "../../types.generated"
@@ -28,7 +28,14 @@ export const loader: LoaderFunction = async () => {
 
 function SelectMarkers() {
   const data = useLoaderData() as Data
-  return <MarkerPage data={data} withImages withPerformers />
+  return (
+    <MarkerPage
+      data={data}
+      withImages
+      withPerformers
+      nextStage={FormStage.Music}
+    />
+  )
 }
 
 export default SelectMarkers

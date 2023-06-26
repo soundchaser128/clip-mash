@@ -10,6 +10,7 @@ import {
   HiChevronRight,
   HiClock,
   HiInformationCircle,
+  HiMiniBars2,
   HiUser,
   HiVideoCamera,
   HiXMark,
@@ -77,10 +78,11 @@ const SelectMarkers: React.FC<Props> = ({
   const totalDuration = formatSeconds(
     Object.values(selection)
       .filter((m) => m.selected)
-      .reduce(
-        (sum, next) => sum + (next.selectedRange[1] - next.selectedRange[0]),
-        0
-      )
+      .reduce((sum, next) => {
+        const duration =
+          (next.selectedRange[1] - next.selectedRange[0]) * (next.loops || 1)
+        return sum + duration
+      }, 0)
   )
 
   const onCheckboxChange = (id: number, checked: boolean) => {
@@ -143,6 +145,26 @@ const SelectMarkers: React.FC<Props> = ({
     })
   }
 
+  const onEqualizeLengths = () => {
+    setSelection((draft) => {
+      // Find the longest selected marker
+      const longestSelectedMarker = Object.values(draft)
+        .filter((m) => m.selected)
+        .reduce((longest, next) => {
+          const len = next.selectedRange[1] - next.selectedRange[0]
+          return len > longest ? len : longest
+        }, 0)
+
+      // Set loops to match the longest selected marker
+      for (const selectedMarker of Object.values(draft)) {
+        selectedMarker.loops = Math.ceil(
+          longestSelectedMarker /
+            (selectedMarker.selectedRange[1] - selectedMarker.selectedRange[0])
+        )
+      }
+    })
+  }
+
   return (
     <div>
       <div className="w-full flex justify-between items-center">
@@ -178,10 +200,25 @@ const SelectMarkers: React.FC<Props> = ({
                 value={maxMarkerLength || ""}
                 onChange={(e) => setMaxMarkerLength(e.target.valueAsNumber)}
               />
-              <button className="btn" type="button" onClick={onLimitDuration}>
+              <button
+                className="btn btn-success"
+                type="button"
+                onClick={onLimitDuration}
+              >
+                <HiCheck className="mr-1" />
                 Apply
               </button>
             </div>
+          </div>
+
+          <div
+            className="tooltip"
+            data-tip="Makes the markers loop to match the duration of the longest selected marker."
+          >
+            <button className="btn" type="button" onClick={onEqualizeLengths}>
+              <HiMiniBars2 className="mr-1" />
+              Equalize lengths
+            </button>
           </div>
         </div>
 

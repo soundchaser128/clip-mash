@@ -5,7 +5,7 @@ use clip_mash_types::MarkerId;
 use float_cmp::approx_eq;
 use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
-use tracing::debug;
+use tracing::{debug, info};
 
 use crate::service::Marker;
 
@@ -25,7 +25,7 @@ pub struct MarkerStateInfo {
 
 #[derive(Debug)]
 pub struct MarkerState {
-    data: HashMap<i64, MarkerStart>,
+    data: HashMap<i64, Vec<MarkerStart>>,
     durations: Vec<f64>,
     markers: Vec<Marker>,
     total_duration: f64,
@@ -57,6 +57,7 @@ impl MarkerState {
     }
 
     pub fn get(&self, id: &MarkerId) -> Option<&MarkerStart> {
+        info!("getting marker {:?}", id);
         self.data.get(&id.inner())
     }
 
@@ -90,10 +91,11 @@ impl MarkerState {
         let index = index % self.markers.len();
         let next_duration = self.durations.last().copied();
         if let Some(duration) = next_duration {
-            self.markers.get(index).map(|marker| {
-                let state = self.get(&marker.id).unwrap();
+            self.markers.get(index).and_then(|marker| {
+                let state = self.get(&marker.id)?;
                 let next_end_time = state.start_time + duration;
                 let skipped_duration = if next_end_time > marker.end_time {
+                    info!("next_end_time: {}, marker end time: {} for marker {}", next_end_time, marker.end_time, marker.id);
                     next_end_time - marker.end_time
                 } else {
                     0.0
@@ -102,12 +104,12 @@ impl MarkerState {
                     "found marker: {}: {} - {} (skipped: {})",
                     marker.title, state.start_time, next_end_time, skipped_duration,
                 );
-                MarkerStateInfo {
+                Some(MarkerStateInfo {
                     marker: marker.clone(),
                     start: state.start_time,
                     end: next_end_time.min(marker.end_time),
                     skipped_duration,
-                }
+                })
             })
         } else {
             None

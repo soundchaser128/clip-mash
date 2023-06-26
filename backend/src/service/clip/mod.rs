@@ -63,14 +63,17 @@ impl CreateClipsOptions {
             .flat_map(|marker| {
                 let markers = if marker.loops > 1.0 {
                     let full_loops = marker.loops.floor() as usize;
-                    let rest_duration = marker.loops.fract();
-                    let mut partial_marker = marker.clone();
-                    partial_marker.end_time =
-                        partial_marker.start_time + partial_marker.duration() * rest_duration;
+                    // let rest_duration = marker.loops.fract();
+                    // let mut partial_marker = marker.clone();
+                    // let start_time = partial_marker.start_time;
+                    // let end_time = start_time + partial_marker.duration() * rest_duration;
+                    // info!("start_time: {}, end_time: {}", start_time, end_time);
+                    // partial_marker.end_time = end_time;
                     iter::repeat(marker)
                         .take(full_loops)
-                        .chain(iter::once(partial_marker))
+                        // .chain(iter::once(partial_marker))
                         .collect()
+                
                 } else {
                     vec![marker]
                 };

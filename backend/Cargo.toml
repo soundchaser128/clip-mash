@@ -55,7 +55,7 @@ opt-level = 3
 [dev-dependencies]
 fake = "2.6.1"
 tracing-test = "0.2.4"
-mock_instant = "0.3.1"
+mock_instant = "0.3.0"
 
 [build-dependencies]
 typescript-type-def = "0.5.6"

@@ -179,7 +179,7 @@ mod test {
     }
 
     #[test]
-    fn test_progress_tracker() {
+    fn test_progress_tracker_eta() {
         let mut tracker = ProgressTracker::new(100.0);
         tracker.inc_work_done_by(10.0);
         MockClock::advance(Duration::from_secs(1));
@@ -192,5 +192,11 @@ mod test {
         let eta = tracker.eta().as_secs_f64();
         assert!(eta >= 15.0);
         dbg!(eta);
+
+        MockClock::advance(Duration::from_secs(1));
+        tracker.inc_work_done_by(20.0);
     }
+
+    #[test]
+    fn test_progress_tracker() {}
 }

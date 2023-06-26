@@ -27,6 +27,7 @@ import {
   json,
   useLoaderData,
   useNavigate,
+  useNavigation,
   useSearchParams,
 } from "react-router-dom"
 import {formatSeconds} from "../../helpers"
@@ -56,8 +57,12 @@ export default function ListVideos() {
   const initialVideos = useLoaderData() as Page<ListVideoDto>
   const [videos, setVideos] = useImmer<ListVideoDto[]>(initialVideos.content)
   const navigate = useNavigate()
+  const navigation = useNavigation()
+  const isLoading = navigation.state === "loading"
   const [params, setParams] = useSearchParams()
   const [filter, setFilter] = useState(params.get("query") ?? "")
+  const noVideos = videos.length === 0 && !filter && !isLoading
+  const noVideosForFilter = videos.length === 0 && filter && !isLoading
 
   const setQuery = (query: string) => {
     setParams({query})
@@ -147,11 +152,19 @@ export default function ListVideos() {
         )}
       </div>
 
-      {videos.length === 0 && (
+      {noVideos && (
         <div className="flex flex-col items-center justify-center mt-8">
           <HiFolder className="text-8xl" />
           <h1 className="text-xl">No videos found</h1>
           <p>Add some by either downloading them or adding a video folder.</p>
+        </div>
+      )}
+
+      {noVideosForFilter && (
+        <div className="flex flex-col items-center justify-center mt-8">
+          <HiXMark className="text-8xl" />
+          <h1 className="text-xl">No videos found</h1>
+          <p>Try changing the filter.</p>
         </div>
       )}
 

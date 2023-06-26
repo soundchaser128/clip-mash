@@ -153,3 +153,15 @@ export const newIdLoader: LoaderFunction = async () => {
 
   return id
 }
+
+export const videoDetailsLoader: LoaderFunction = async ({params}) => {
+  const {id} = params
+  const response = await fetch(`/api/local/video/${id}`)
+  if (response.ok) {
+    const data = await response.json()
+    return data
+  } else {
+    const text = await response.text()
+    throw json({error: text, request: `/api/video/${id}`}, {status: 500})
+  }
+}

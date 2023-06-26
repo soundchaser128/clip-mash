@@ -41,7 +41,7 @@ impl From<DbMarker> for MarkerDto {
             primary_tag: value.title,
             scene_interactive: false,
             scene_title: None,
-            stream_url: format!("/api/local/video/{}", value.video_id),
+            stream_url: format!("/api/local/video/{}/file", value.video_id),
             tags: vec![],
             screenshot_url: Some(format!(
                 "/api/local/video/marker/{}/preview",

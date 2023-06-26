@@ -52,6 +52,24 @@ impl CreateClipsOptions {
             }
         }
     }
+
+    pub fn apply_marker_loops(&mut self) {
+        use std::iter;
+
+        let markers: Vec<_> = self
+            .markers
+            .iter()
+            .cloned()
+            .flat_map(|marker| {
+                if let Some(count) = marker.loops {
+                    iter::repeat(marker).take(count).collect::<Vec<_>>()
+                } else {
+                    iter::once(marker).collect::<Vec<_>>()
+                }
+            })
+            .collect();
+        self.markers = markers;
+    }
 }
 
 fn markers_to_clips(markers: Vec<Marker>) -> Vec<Clip> {
@@ -96,6 +114,7 @@ impl ClipService {
     pub fn arrange_clips(&self, mut options: CreateClipsOptions) -> ClipsResult {
         let start = Instant::now();
         options.normalize_video_indices();
+        options.apply_marker_loops();
 
         let beat_offsets = options
             .clip_options

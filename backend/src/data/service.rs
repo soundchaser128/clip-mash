@@ -107,6 +107,7 @@ impl DataService {
                 video_id,
                 index_within_video: selected_marker.index_within_video,
                 title,
+                loops: selected_marker.loops,
             })
         }
 

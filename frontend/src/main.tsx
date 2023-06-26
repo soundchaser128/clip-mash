@@ -41,6 +41,7 @@ import {
   clipsLoader,
   localMarkerLoader,
   newIdLoader,
+  videoDetailsLoader,
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
@@ -196,11 +197,11 @@ const router = createBrowserRouter([
             path: "videos",
             element: <ListVideos />,
             loader: listVideosLoader,
-            id: "video-list",
             children: [
               {
                 path: ":id",
                 element: <EditVideoModal />,
+                loader: videoDetailsLoader,
               },
             ],
           },

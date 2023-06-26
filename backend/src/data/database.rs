@@ -216,6 +216,65 @@ impl Database {
         }
     }
 
+    pub async fn get_video_with_markers(&self, id: &str) -> Result<Option<LocalVideoWithMarkers>> {
+        let records = sqlx::query!(
+            "SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.id = $1",
+            id,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        if records.is_empty() {
+            Ok(None)
+        } else {
+            let video = DbVideo {
+                id: records[0].id.clone(),
+                file_path: records[0].file_path.clone(),
+                interactive: records[0].interactive,
+                source: records[0].source.clone().into(),
+                duration: records[0].duration,
+                video_preview_image: records[0].video_preview_image.clone(),
+            };
+            let markers = records
+                .into_iter()
+                .filter_map(|r| {
+                    match (
+                        r.video_id,
+                        r.start_time,
+                        r.end_time,
+                        r.title,
+                        r.rowid,
+                        r.file_path,
+                        r.index_within_video,
+                        r.marker_preview_image,
+                    ) {
+                        (
+                            Some(video_id),
+                            Some(start_time),
+                            Some(end_time),
+                            Some(title),
+                            rowid,
+                            file_path,
+                            Some(index),
+                            marker_preview_image,
+                        ) => Some(DbMarker {
+                            rowid,
+                            title,
+                            video_id,
+                            start_time,
+                            end_time,
+                            file_path,
+                            index_within_video: index,
+                            marker_preview_image,
+                        }),
+                        _ => None,
+                    }
+                })
+                .collect();
+            Ok(Some(LocalVideoWithMarkers { video, markers }))
+        }
+    }
+
     pub async fn get_videos(&self, filter: AllVideosFilter) -> Result<Vec<DbVideo>> {
         let query = match filter {
             AllVideosFilter::NoVideoDuration => {

@@ -23,6 +23,20 @@ use crate::service::preview_image::PreviewGenerator;
 pub async fn get_video(
     Path(id): Path<String>,
     state: State<Arc<AppState>>,
+) -> Result<Json<ListVideoDto>, AppError> {
+    let video = state.database.get_video_with_markers(&id).await?;
+    if let Some(video) = video {
+        let dto = video.into();
+        Ok(Json(dto))
+    } else {
+        Err(AppError::StatusCode(StatusCode::NOT_FOUND))
+    }
+}
+
+#[axum::debug_handler]
+pub async fn get_video_file(
+    Path(id): Path<String>,
+    state: State<Arc<AppState>>,
     request: axum::http::Request<Body>,
 ) -> Result<impl IntoResponse, AppError> {
     use tower_http::services::ServeFile;

@@ -37,7 +37,7 @@ export type SelectedMarker = {
   indexWithinVideo: Usize
   selected: boolean | null
   title: string
-  loops: Usize | null
+  loops: F64
 }
 export type VideoResolution = "720" | "1080" | "4K"
 export type U32 = number

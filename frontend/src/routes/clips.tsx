@@ -443,6 +443,7 @@ function PreviewClips() {
     0
   )
   const [withMusic, setWithMusic] = useState(false)
+  const [videoMuted, setVideoMuted] = useState(true)
   const isPmv = state.data.songs && state.data.songs.length >= 1
   const [songIndex, setSongIndex] = useState(0)
 
@@ -543,7 +544,7 @@ function PreviewClips() {
         <video
           className="w-3/4 h-[650px]"
           src={clipUrl}
-          muted
+          muted={videoMuted}
           autoPlay={autoPlay}
           onTimeUpdate={onVideoTimeUpdate}
           ref={videoRef}
@@ -597,6 +598,17 @@ function PreviewClips() {
             >
               <HiForward />
             </button>
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text mr-2">Mute video</span>
+              <input
+                type="checkbox"
+                className="toggle"
+                checked={videoMuted}
+                onChange={(e) => setVideoMuted(e.target.checked)}
+              />
+            </label>
           </div>
 
           {isPmv && (

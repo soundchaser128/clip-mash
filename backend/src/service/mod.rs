@@ -121,7 +121,7 @@ pub struct Marker {
     pub video_id: VideoId,
     pub title: String,
     pub info: MarkerInfo,
-    pub loops: Option<usize>,
+    pub loops: f64,
 }
 
 impl Marker {

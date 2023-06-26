@@ -15,7 +15,7 @@ use crate::Result;
 pub fn markers() -> Vec<Marker> {
     vec![
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(1),
             start_time: 0.0,
             end_time: 171.7162,
@@ -37,7 +37,7 @@ pub fn markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(2),
             start_time: 19.178596,
             end_time: 130.772832,
@@ -58,7 +58,7 @@ pub fn markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(3),
             start_time: 0.0,
             end_time: 111.389977,
@@ -79,7 +79,7 @@ pub fn markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(10),
             start_time: 0.0,
             end_time: 39.487,
@@ -100,7 +100,7 @@ pub fn markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(7),
             start_time: 0.0,
             end_time: 36.055767,
@@ -121,7 +121,7 @@ pub fn markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(4),
             start_time: 0.0,
             end_time: 57.77,
@@ -142,7 +142,7 @@ pub fn markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(9),
             start_time: 0.0,
             end_time: 60.996935,
@@ -163,7 +163,7 @@ pub fn markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(5),
             start_time: 0.0,
             end_time: 34.597007,
@@ -184,7 +184,7 @@ pub fn markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(6),
             start_time: 0.0,
             end_time: 137.472,
@@ -205,7 +205,7 @@ pub fn markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(8),
             start_time: 0.0,
             end_time: 165.368725,
@@ -231,7 +231,7 @@ pub fn markers() -> Vec<Marker> {
 pub fn other_markers() -> Vec<Marker> {
     vec![
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(5),
             start_time: 0.0,
             end_time: 36.153941,
@@ -252,7 +252,7 @@ pub fn other_markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(2),
             start_time: 0.0,
             end_time: 146.014932,
@@ -273,7 +273,7 @@ pub fn other_markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(6),
             start_time: 0.0,
             end_time: 61.034,
@@ -294,7 +294,7 @@ pub fn other_markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(4),
             start_time: 14.43444,
             end_time: 130.941,
@@ -315,7 +315,7 @@ pub fn other_markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(1),
             start_time: 0.0,
             end_time: 57.126817,
@@ -336,7 +336,7 @@ pub fn other_markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(7),
             start_time: 0.0,
             end_time: 137.472,
@@ -357,7 +357,7 @@ pub fn other_markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(9),
             start_time: 0.0,
             end_time: 162.447575,
@@ -378,7 +378,7 @@ pub fn other_markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(3),
             start_time: 0.0,
             end_time: 39.487,
@@ -399,7 +399,7 @@ pub fn other_markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(10),
             start_time: 0.0,
             end_time: 166.0,
@@ -420,7 +420,7 @@ pub fn other_markers() -> Vec<Marker> {
             },
         },
         Marker {
-            loops: None,
+            loops: 1.0,
             id: MarkerId::LocalFile(8),
             start_time: 0.0,
             end_time: 34.597007,
@@ -451,7 +451,7 @@ pub fn create_marker(title: &str, start_time: f64, end_time: f64, index: usize) 
     let id = ID.fetch_add(1, Ordering::SeqCst);
 
     Marker {
-        loops: None,
+        loops: 1.0,
         id: MarkerId::LocalFile(id),
         start_time,
         end_time,
@@ -481,7 +481,7 @@ pub fn create_marker_video_id(
     video_id: &str,
 ) -> Marker {
     Marker {
-        loops: None,
+        loops: 1.0,
         id: MarkerId::LocalFile(id),
         start_time,
         end_time,

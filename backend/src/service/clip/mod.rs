@@ -73,7 +73,6 @@ impl CreateClipsOptions {
                         .take(full_loops)
                         // .chain(iter::once(partial_marker))
                         .collect()
-                
                 } else {
                     vec![marker]
                 };
@@ -325,5 +324,26 @@ mod tests {
 
         assert_eq!(sorted[0].range, (1.0, 12.0));
         assert_eq!(sorted[1].range, (0.0, 9.0));
+    }
+
+    #[test]
+    #[traced_test]
+    fn test_loop_markers() {
+        let options = CreateClipsOptions {
+            markers: vec![
+                create_marker_video_id(1, 1.0, 15.0, 0, "v1".into()),
+                create_marker_video_id(2, 1.0, 17.0, 0, "v2".into()),
+            ],
+            seed: None,
+            clip_options: ClipOptions {
+                clip_picker: ClipPickerOptions::NoSplit,
+                order: ClipOrder::SceneOrder,
+            },
+        };
+        let service = ClipService::new();
+        let ClipsResult { clips: results, .. } = service.arrange_clips(options);
+        assert_eq!(2, results.len());
+        assert_eq!((1.0, 15.0), results[0].range);
+        assert_eq!((1.0, 17.0), results[1].range);
     }
 }

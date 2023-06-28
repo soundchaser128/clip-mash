@@ -204,7 +204,6 @@ mod test {
 
         let eta = tracker.eta().as_secs_f64();
         assert!(eta >= 15.0);
-        dbg!(eta);
 
         MockClock::advance(Duration::from_secs(5));
         tracker.inc_work_done_by(80.0);

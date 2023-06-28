@@ -375,7 +375,6 @@ mod tests {
             })
             .collect();
         let clip_counts = marker_titles.iter().counts();
-        dbg!(&clip_counts);
         assert!(clip_counts[&"Blowjob"] > clip_counts[&"Cowgirl"])
     }
 }

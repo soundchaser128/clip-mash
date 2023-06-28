@@ -125,8 +125,20 @@ pub struct Marker {
 }
 
 impl Marker {
-    #[allow(unused)]
-    fn duration(&self) -> f64 {
+    pub fn duration(&self) -> f64 {
         self.end_time - self.start_time
+    }
+
+    pub fn multiply(&self, factor: f64) -> Self {
+        Marker {
+            id: self.id.clone(),
+            start_time: self.start_time,
+            end_time: self.end_time * factor,
+            index_within_video: self.index_within_video,
+            video_id: self.video_id.clone(),
+            title: self.title.clone(),
+            info: self.info.clone(),
+            loops: self.loops,
+        }
     }
 }

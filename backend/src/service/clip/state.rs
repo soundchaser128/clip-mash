@@ -34,28 +34,31 @@ pub struct MarkerState {
 }
 
 impl MarkerState {
-    pub fn new(data: Vec<Marker>, mut durations: Vec<f64>, length: f64) -> Self {
+    pub fn new(mut data: Vec<Marker>, mut durations: Vec<f64>, length: f64) -> Self {
         durations.reverse();
+        data.sort_by_key(|m| m.id.inner());
+        let marker_map: HashMap<i64, Vec<MarkerStart>> = data
+            .iter()
+            .group_by(|m| m.id.inner())
+            .into_iter()
+            .map(|(id, group)| {
+                (
+                    id,
+                    group
+                        .into_iter()
+                        .map(|m| MarkerStart {
+                            start_time: m.start_time,
+                            end_time: m.end_time,
+                            index: 0,
+                        })
+                        .collect(),
+                )
+            })
+            .collect();
+
         Self {
             durations,
-            data: data
-                .iter()
-                .group_by(|m| m.id)
-                .into_iter()
-                .map(|(id, group)| {
-                    (
-                        id.inner(),
-                        group
-                            .into_iter()
-                            .map(|m| MarkerStart {
-                                start_time: m.start_time,
-                                end_time: m.end_time,
-                                index: 0,
-                            })
-                            .collect(),
-                    )
-                })
-                .collect(),
+            data: marker_map,
             markers: data,
             total_duration: 0.0,
             length,
@@ -63,7 +66,7 @@ impl MarkerState {
     }
 
     pub fn get(&self, id: &MarkerId) -> Option<&MarkerStart> {
-        info!("getting marker {:?}", id);
+        // info!("getting marker {:?}", id);
         self.data.get(&id.inner()).and_then(|v| v.last())
     }
 

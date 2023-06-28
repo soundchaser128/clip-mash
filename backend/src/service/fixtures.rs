@@ -503,6 +503,37 @@ pub fn create_marker_video_id(
     }
 }
 
+pub fn create_marker_with_loops(
+    id: i64,
+    start_time: f64,
+    end_time: f64,
+    index: usize,
+    video_id: &str,
+    loops: f64,
+) -> Marker {
+    Marker {
+        loops: loops,
+        id: MarkerId::LocalFile(id),
+        start_time,
+        end_time,
+        index_within_video: index,
+        video_id: VideoId::LocalFile(video_id.to_string()),
+        title: Faker.fake(),
+        info: MarkerInfo::LocalFile {
+            marker: DbMarker {
+                end_time,
+                start_time,
+                rowid: None,
+                title: Faker.fake(),
+                video_id: video_id.to_string(),
+                file_path: FilePath().fake(),
+                index_within_video: index as i64,
+                marker_preview_image: None,
+            },
+        },
+    }
+}
+
 pub async fn persist_video(db: &Database) -> Result<DbVideo> {
     let expected = DbVideo {
         file_path: FilePath().fake(),

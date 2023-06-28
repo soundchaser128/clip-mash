@@ -53,25 +53,20 @@ impl CreateClipsOptions {
         }
     }
 
-    pub fn apply_marker_loops(&mut self) {
+    pub fn apply_marker_loops(self) -> Self {
         use std::iter;
 
         let markers: Vec<_> = self
             .markers
-            .iter()
-            .cloned()
+            .into_iter()
             .flat_map(|marker| {
                 let markers = if marker.loops > 1.0 {
                     let full_loops = marker.loops.floor() as usize;
-                    // let rest_duration = marker.loops.fract();
-                    // let mut partial_marker = marker.clone();
-                    // let start_time = partial_marker.start_time;
-                    // let end_time = start_time + partial_marker.duration() * rest_duration;
-                    // info!("start_time: {}, end_time: {}", start_time, end_time);
-                    // partial_marker.end_time = end_time;
+                    let rest_duration = marker.loops.fract();
+                    let partial_marker = marker.multiply(rest_duration);
                     iter::repeat(marker)
                         .take(full_loops)
-                        // .chain(iter::once(partial_marker))
+                        .chain(iter::once(partial_marker))
                         .collect()
                 } else {
                     vec![marker]
@@ -79,7 +74,7 @@ impl CreateClipsOptions {
                 markers
             })
             .collect();
-        self.markers = markers;
+        Self { markers, ..self }
     }
 }
 
@@ -125,7 +120,7 @@ impl ClipService {
     pub fn arrange_clips(&self, mut options: CreateClipsOptions) -> ClipsResult {
         let start = Instant::now();
         options.normalize_video_indices();
-        options.apply_marker_loops();
+        let mut options = options.apply_marker_loops();
 
         let beat_offsets = options
             .clip_options
@@ -181,14 +176,15 @@ impl ClipService {
 #[cfg(test)]
 mod tests {
     use clip_mash_types::{
-        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, VideoSource,
+        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, PmvClipOptions,
+        RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
     };
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
     use crate::service::clip::sort::ClipSorter;
     use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
-    use crate::service::fixtures::create_marker_video_id;
+    use crate::service::fixtures::{create_marker_video_id, create_marker_with_loops};
     use crate::service::VideoId;
     use crate::util::create_seeded_rng;
 
@@ -327,16 +323,22 @@ mod tests {
     }
 
     #[test]
-    #[traced_test]
+    // #[traced_test]
     fn test_loop_markers() {
         let options = CreateClipsOptions {
             markers: vec![
-                create_marker_video_id(1, 1.0, 15.0, 0, "v1".into()),
-                create_marker_video_id(2, 1.0, 17.0, 0, "v2".into()),
+                create_marker_with_loops(1, 1.0, 15.0, 0, "v1", 2.5),
+                create_marker_with_loops(2, 1.0, 17.0, 0, "v2", 3.5),
             ],
             seed: None,
             clip_options: ClipOptions {
-                clip_picker: ClipPickerOptions::NoSplit,
+                clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
+                    clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                        base_duration: 10.0,
+                        divisors: vec![2.0, 3.0, 4.0],
+                    }),
+                    length: 30.0,
+                }),
                 order: ClipOrder::SceneOrder,
             },
         };
@@ -345,5 +347,35 @@ mod tests {
         assert_eq!(2, results.len());
         assert_eq!((1.0, 15.0), results[0].range);
         assert_eq!((1.0, 17.0), results[1].range);
+    }
+
+    #[test]
+    #[traced_test]
+    fn test_apply_marker_loops() {
+        let m1 = create_marker_with_loops(1, 1.0, 15.0, 0, "v1", 2.5);
+        let m2 = create_marker_with_loops(2, 3.5, 17.0, 0, "v2", 3.5);
+        let options = CreateClipsOptions {
+            markers: vec![m1.clone(), m2.clone()],
+            seed: None,
+            clip_options: ClipOptions {
+                clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
+                    clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                        base_duration: 10.0,
+                        divisors: vec![2.0, 3.0, 4.0],
+                    }),
+                    length: 30.0,
+                }),
+                order: ClipOrder::SceneOrder,
+            },
+        };
+        let options = options.apply_marker_loops();
+        assert_eq!(options.markers.len(), 7);
+        assert_eq!(options.markers[0].id, m1.id);
+        assert_eq!(options.markers[1].id, m1.id);
+        assert_eq!(options.markers[2].id, m1.id);
+        assert_eq!(options.markers[3].id, m2.id);
+        assert_eq!(options.markers[4].id, m2.id);
+        assert_eq!(options.markers[5].id, m2.id);
+        assert_eq!(options.markers[6].id, m2.id);
     }
 }

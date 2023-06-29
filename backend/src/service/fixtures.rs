@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicI64, Ordering};
 
 use clip_mash_types::Beats;
 use fake::faker::filesystem::en::FilePath;
-use fake::faker::lorem::en::Sentence;
+use fake::faker::lorem::en::{Sentence, Word};
 use fake::{Fake, Faker};
 use lazy_static::lazy_static;
 
@@ -536,7 +536,11 @@ pub fn create_marker_with_loops(
 
 pub async fn persist_video(db: &Database) -> Result<DbVideo> {
     let expected = DbVideo {
-        file_path: FilePath().fake(),
+        file_path: format!(
+            "{}/{}",
+            Word().fake::<String>(),
+            FilePath().fake::<String>()
+        ),
         id: generate_id(),
         interactive: false,
         source: LocalVideoSource::Folder,

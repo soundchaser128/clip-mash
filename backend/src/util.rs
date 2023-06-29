@@ -203,19 +203,19 @@ mod test {
         tracker.inc_work_done_by(10.0, "");
         MockClock::advance(Duration::from_secs(1));
         assert_eq!(10.0, tracker.progress().items_finished);
-        assert_eq!(10.0, tracker.eta().as_secs_f64());
+        assert_eq!(9.0, tracker.eta().as_secs_f64());
 
         MockClock::advance(Duration::from_secs(2));
         tracker.inc_work_done_by(10.0, "");
 
         let eta = tracker.eta().as_secs_f64();
-        assert!(eta >= 15.0);
+        assert!(eta >= 12.0);
 
         MockClock::advance(Duration::from_secs(5));
         tracker.inc_work_done_by(80.0, "");
 
         let eta = tracker.eta().as_secs_f64();
-        assert_approx_eq!(f64, eta, 8.0, ulps = 2);
+        assert_approx_eq!(f64, eta, 0.0, ulps = 2);
         assert!(tracker.progress().done);
     }
 

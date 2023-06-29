@@ -121,40 +121,11 @@ pub struct Marker {
     pub video_id: VideoId,
     pub title: String,
     pub info: MarkerInfo,
-    pub loops: f64,
+    pub loops: usize,
 }
 
 impl Marker {
     pub fn duration(&self) -> f64 {
         self.end_time - self.start_time
-    }
-
-    pub fn multiply(&self, factor: f64) -> Self {
-        let new_duration = self.duration() * factor;
-        let new_end_time = self.start_time + new_duration;
-
-        Marker {
-            id: self.id.clone(),
-            start_time: self.start_time,
-            end_time: new_end_time,
-            index_within_video: self.index_within_video,
-            video_id: self.video_id.clone(),
-            title: self.title.clone(),
-            info: self.info.clone(),
-            loops: self.loops,
-        }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::service::fixtures::create_marker;
-
-    #[test]
-    fn test_marker_multiply() {
-        let marker = create_marker("title", 14.0, 24.0, 0);
-        let marker = marker.multiply(0.8);
-        assert!(marker.start_time < marker.end_time);
-        assert_eq!(marker.end_time, 22.0);
     }
 }

@@ -60,14 +60,9 @@ impl CreateClipsOptions {
             .markers
             .into_iter()
             .flat_map(|marker| {
-                let markers = if marker.loops > 1.05 {
-                    let full_loops = marker.loops.floor() as usize;
-                    let rest_duration = marker.loops.fract();
-                    let partial_marker = marker.multiply(rest_duration);
-                    iter::repeat(marker)
-                        .take(full_loops)
-                        .chain(iter::once(partial_marker))
-                        .collect()
+                let markers = if marker.loops > 1 {
+                    let loops = marker.loops;
+                    iter::repeat(marker).take(loops).collect()
                 } else {
                     vec![marker]
                 };
@@ -328,8 +323,8 @@ mod tests {
     fn test_loop_markers() {
         let options = CreateClipsOptions {
             markers: vec![
-                create_marker_with_loops(1, 1.0, 15.0, 0, "v1", 2.5),
-                create_marker_with_loops(2, 1.0, 17.0, 0, "v2", 3.5),
+                create_marker_with_loops(1, 1.0, 15.0, 0, "v1", 2),
+                create_marker_with_loops(2, 1.0, 17.0, 0, "v2", 3),
             ],
             seed: None,
             clip_options: ClipOptions {
@@ -353,8 +348,8 @@ mod tests {
     #[test]
     #[traced_test]
     fn test_apply_marker_loops() {
-        let m1 = create_marker_with_loops(1, 1.0, 15.0, 0, "v1", 2.5);
-        let m2 = create_marker_with_loops(2, 3.5, 17.0, 0, "v2", 3.5);
+        let m1 = create_marker_with_loops(1, 1.0, 15.0, 0, "v1", 2);
+        let m2 = create_marker_with_loops(2, 3.5, 17.0, 0, "v2", 3);
         let options = CreateClipsOptions {
             markers: vec![m1.clone(), m2.clone()],
             seed: None,
@@ -370,13 +365,11 @@ mod tests {
             },
         };
         let options = options.apply_marker_loops();
-        assert_eq!(options.markers.len(), 7);
+        assert_eq!(options.markers.len(), 5);
         assert_eq!(options.markers[0].id, m1.id);
         assert_eq!(options.markers[1].id, m1.id);
-        assert_eq!(options.markers[2].id, m1.id);
+        assert_eq!(options.markers[2].id, m2.id);
         assert_eq!(options.markers[3].id, m2.id);
         assert_eq!(options.markers[4].id, m2.id);
-        assert_eq!(options.markers[5].id, m2.id);
-        assert_eq!(options.markers[6].id, m2.id);
     }
 }

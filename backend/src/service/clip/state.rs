@@ -40,11 +40,12 @@ pub struct MarkerState {
 }
 
 impl MarkerState {
-    pub fn new(mut data: Vec<Marker>, mut durations: Vec<f64>, length: f64) -> Self {
+    pub fn new(data: Vec<Marker>, mut durations: Vec<f64>, length: f64) -> Self {
         durations.reverse();
-        data.sort_by_key(|m| m.id.inner());
-        let marker_map: HashMap<i64, Vec<MarkerStart>> = data
-            .iter()
+        let mut marker_data = data.clone();
+        marker_data.sort_by_key(|m| m.id.inner());
+        let marker_map: HashMap<i64, Vec<MarkerStart>> = marker_data
+            .into_iter()
             .group_by(|m| m.id.inner())
             .into_iter()
             .map(|(id, group)| {
@@ -99,7 +100,8 @@ impl MarkerState {
             let end_time = e.get().last().map(|e| e.end_time);
             let remaining_time = e.get().last().map(|e| e.remaining_duration());
             if let (Some(end_time), Some(remaining_time)) = (end_time, remaining_time) {
-                if approx_eq!(f64, end_time, start_time, epsilon = 0.001) || remaining_time < 0.001 {
+                if approx_eq!(f64, end_time, start_time, epsilon = 0.001) || remaining_time < 0.001
+                {
                     e.get_mut().pop();
                     if e.get().len() == 0 {
                         let index = self.markers.iter().position(|m| m.id == *id).unwrap();
@@ -115,7 +117,6 @@ impl MarkerState {
         let next_duration = self.durations.last().copied();
         if let Some(duration) = next_duration {
             self.markers.get(index).and_then(|marker| {
-                let id = marker.id.inner();
                 let state = self.get(&marker.id)?;
                 let next_end_time = state.start_time + duration;
                 let skipped_duration = if next_end_time > state.end_time {

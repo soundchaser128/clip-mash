@@ -28,11 +28,6 @@ interface Props {
   nextStage: FormStage | LocalFilesFormStage
 }
 
-function round(n: number, places: number): number {
-  const factor = Math.pow(10, places)
-  return Math.round(n * factor) / factor
-}
-
 const SelectMarkers: React.FC<Props> = ({
   data,
   withImages,
@@ -162,11 +157,8 @@ const SelectMarkers: React.FC<Props> = ({
 
       // Set loops to match the longest selected marker
       for (const selectedMarker of Object.values(draft)) {
-        selectedMarker.loops = round(
-          longestSelectedMarker /
-            (selectedMarker.selectedRange[1] - selectedMarker.selectedRange[0]),
-          2
-        )
+        const [start, end] = selectedMarker.selectedRange
+        selectedMarker.loops = Math.ceil(longestSelectedMarker / (end - start))
       }
     })
   }

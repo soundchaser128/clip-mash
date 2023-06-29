@@ -160,7 +160,7 @@ pub struct SelectedMarker {
     pub index_within_video: usize,
     pub selected: Option<bool>,
     pub title: String,
-    pub loops: f64,
+    pub loops: usize,
 }
 
 #[derive(Deserialize, Debug, TypeDef)]

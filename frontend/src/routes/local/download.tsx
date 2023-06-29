@@ -2,6 +2,7 @@ import {useForm} from "react-hook-form"
 import Field from "../../components/Field"
 import {HiArrowDownTray, HiXMark} from "react-icons/hi2"
 import {useNavigate} from "react-router"
+import useNotification from "../../hooks/useNotification"
 
 type Inputs = {urls: string}
 
@@ -27,6 +28,7 @@ const DownloadVideosPage: React.FC = () => {
     setError,
     clearErrors,
   } = useForm<Inputs>()
+  const sendNotification = useNotification()
 
   const onSubmit = async (values: Inputs) => {
     const urls = values.urls.split(splitRegex).map((res) => res.trim())
@@ -57,9 +59,7 @@ const DownloadVideosPage: React.FC = () => {
       if (errors.length > 0) {
         setError("urls", {message: errors.join("\n")})
       } else {
-        new Notification("Video downloads finished!", {
-          icon: "/android-chrome-192x192.png",
-        })
+        sendNotification("Video downloads finished!")
         navigate("/local/videos")
       }
     }

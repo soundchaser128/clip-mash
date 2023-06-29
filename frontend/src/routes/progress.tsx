@@ -9,7 +9,7 @@ import {
 import {FormState} from "../types/types"
 import {formatSeconds} from "../helpers"
 import {Progress} from "../types.generated"
-import {useImmer} from "use-immer"
+import useNotification from "../hooks/useNotification"
 
 class RingBuffer<T> {
   buffer: T[]
@@ -24,9 +24,11 @@ class RingBuffer<T> {
     return this.buffer[index]
   }
 
-  push(item: T) {
-    this.buffer.unshift(item)
-    this.buffer.splice(this.size, this.buffer.length - this.size)
+  push(item: T): RingBuffer<T> {
+    const buffer = [item, ...this.buffer].slice(0, this.size)
+    const ringBuffer = new RingBuffer<T>(this.size)
+    ringBuffer.buffer = buffer
+    return ringBuffer
   }
 }
 
@@ -38,13 +40,15 @@ function Progress() {
   const {state} = useStateMachine()
 
   const [progress, setProgress] = useState<Progress>()
-  // const [times, setTimes] = useImmer<RingBuffer<number>>(new RingBuffer(15))
-  // const eta = times.buffer.reduce((sum, time) => sum + time, 0) / times.size
+  const [times, setTimes] = useState<RingBuffer<number>>(new RingBuffer(5))
+
+  const eta = times.buffer.reduce((sum, time) => sum + time, 0) / times.size
   const [finished, setFinished] = useState(false)
   const [finalFileName, setFinalFileName] = useState("")
   const downloadLink = useRef<HTMLAnchorElement>(null)
   const [creatingScript, setCreatingScript] = useState(false)
   const fileName = state.data.fileName || `Compilation [${state.data.id}].mp4`
+  const sendNotification = useNotification()
 
   const onSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -72,15 +76,10 @@ function Progress() {
         if (data.done) {
           setFinished(true)
           es.close()
-          new Notification("Video generation finished!", {
-            icon: "/android-chrome-192x192.png",
-          })
+          sendNotification("Video generation finished!")
         }
         setProgress(data)
-
-        // setTimes((draft) => {
-        //   draft.push(data.etaSeconds)
-        // })
+        setTimes((buf) => buf.push(data.etaSeconds))
       }
     }
   }
@@ -156,6 +155,7 @@ function Progress() {
           <p>
             Estimated time remaining: <strong>{formatSeconds(eta)}</strong>
           </p>
+          <p>{progress.message}</p>
         </div>
       )}
 

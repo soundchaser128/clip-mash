@@ -409,6 +409,7 @@ pub struct Progress {
     pub items_total: f64,
     pub done: bool,
     pub eta_seconds: f64,
+    pub message: String,
 }
 
 pub type Api = (

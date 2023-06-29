@@ -25,6 +25,7 @@ import type {Identifier, XYCoord} from "dnd-core"
 import clsx from "clsx"
 import {SongDto} from "../types.generated"
 import HelpModal from "../components/HelpModal"
+import useNotification from "../hooks/useNotification"
 
 interface Inputs {
   musicUrl: string
@@ -409,6 +410,7 @@ export default function Music() {
   })
   const navigate = useNavigate()
   const revalidator = useRevalidator()
+  const sendNotification = useNotification()
 
   const totalMarkerDuration = sumDurations(state.data.selectedMarkers)
   const totalMusicDuration = selection
@@ -437,9 +439,7 @@ export default function Music() {
     })
     setMode("table")
     revalidator.revalidate()
-    new Notification("Music download finished!", {
-      icon: "/android-chrome-192x192.png",
-    })
+    sendNotification(`Song downloaded successfully!`)
   }
 
   const onFormChange = (values: MusicSettingsInputs) => {

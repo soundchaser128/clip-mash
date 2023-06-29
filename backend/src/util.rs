@@ -90,6 +90,7 @@ pub struct ProgressTracker {
     work_total: f64,
     work_done: f64,
     started_at: Instant,
+    message: String,
 }
 
 impl Default for ProgressTracker {
@@ -98,6 +99,7 @@ impl Default for ProgressTracker {
             work_done: 0.0,
             started_at: Instant::now(),
             work_total: 0.0,
+            message: String::new(),
         }
     }
 }
@@ -109,6 +111,7 @@ impl ProgressTracker {
             work_done: 0.0,
             started_at: Instant::now(),
             work_total: work_todo,
+            message: String::new(),
         }
     }
 
@@ -116,18 +119,20 @@ impl ProgressTracker {
         self.work_done = 0.0;
         self.started_at = Instant::now();
         self.work_total = work_todo;
+        self.message = String::new();
     }
 
     /// Increment work done by a given amonut.
-    pub fn inc_work_done_by(&mut self, units: f64) {
-        self.work_done = self.work_done + units;
+    pub fn inc_work_done_by(&mut self, units: f64, message: &str) {
+        self.work_done += units;
+        self.message = message.into();
     }
 
     pub fn eta(&self) -> Duration {
-        if self.work_done == 0.0 || self.work_total == 0.0 {
+        if self.work_done == 0.0 || self.work_total == 0.0 || self.work_total <= self.work_done {
             return Duration::ZERO;
         }
-        let work_not_done = (self.work_total - self.work_done).max(self.work_total);
+        let work_not_done = self.work_total - self.work_done;
         let not_done_to_done_ratio = work_not_done / self.work_done;
         let seconds_since_start = Instant::now() - self.started_at;
         let eta_seconds = not_done_to_done_ratio * seconds_since_start.as_secs_f64();
@@ -148,6 +153,7 @@ impl ProgressTracker {
             eta_seconds: self.eta().as_secs_f64(),
             done: self.work_total != 0.0
                 && approx_eq!(f64, self.work_done, self.work_total, epsilon = 0.01),
+            message: self.message.clone(),
         }
     }
 }
@@ -194,19 +200,19 @@ mod test {
     #[test]
     fn test_progress_tracker_eta() {
         let mut tracker = ProgressTracker::new(100.0);
-        tracker.inc_work_done_by(10.0);
+        tracker.inc_work_done_by(10.0, "");
         MockClock::advance(Duration::from_secs(1));
         assert_eq!(10.0, tracker.progress().items_finished);
         assert_eq!(10.0, tracker.eta().as_secs_f64());
 
         MockClock::advance(Duration::from_secs(2));
-        tracker.inc_work_done_by(10.0);
+        tracker.inc_work_done_by(10.0, "");
 
         let eta = tracker.eta().as_secs_f64();
         assert!(eta >= 15.0);
 
         MockClock::advance(Duration::from_secs(5));
-        tracker.inc_work_done_by(80.0);
+        tracker.inc_work_done_by(80.0, "");
 
         let eta = tracker.eta().as_secs_f64();
         assert_approx_eq!(f64, eta, 8.0, ulps = 2);

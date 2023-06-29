@@ -145,4 +145,5 @@ export type Progress = {
   itemsTotal: F64
   done: boolean
   etaSeconds: F64
+  message: string
 }

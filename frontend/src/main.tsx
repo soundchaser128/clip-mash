@@ -50,6 +50,7 @@ import {SongDto} from "./types.generated"
 import MarkersPage from "./routes/local/markers"
 import {resetForm} from "./routes/actions"
 import DownloadVideosPage from "./routes/local/download"
+import useNotification from "./hooks/useNotification"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -152,17 +153,7 @@ const musicLoader: LoaderFunction = async () => {
 }
 
 const NotificationPermission = () => {
-  useEffect(() => {
-    if (Notification.permission === "default") {
-      Notification.requestPermission().then((permission) => {
-        if (permission === "granted") {
-          new Notification("Notifications enabled.", {
-            icon: "/android-chrome-192x192.png",
-          })
-        }
-      })
-    }
-  }, [])
+  useNotification()
 
   return (
     <>

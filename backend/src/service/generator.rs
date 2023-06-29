@@ -195,9 +195,9 @@ impl CompilationGenerator {
         progress.reset(total_items);
     }
 
-    async fn increase_progress(&self, seconds: f64) {
+    async fn increase_progress(&self, seconds: f64, message: &str) {
         let mut progress = PROGRESS.lock().await;
-        progress.inc_work_done_by(seconds);
+        progress.inc_work_done_by(seconds, message);
     }
 
     async fn reset_progress(&self) {
@@ -248,7 +248,13 @@ impl CompilationGenerator {
             } else {
                 info!("clip {out_file} already exists, skipping");
             }
-            self.increase_progress(clip.duration()).await;
+            let message = format!(
+                "Encoding clip for marker '{}' from {} to {}",
+                marker.title,
+                start.round(),
+                end.round()
+            );
+            self.increase_progress(clip.duration(), &message).await;
             paths.push(out_file);
         }
 
@@ -291,7 +297,8 @@ impl CompilationGenerator {
             return commandline_error(self.ffmpeg_path.as_str(), output);
         }
 
-        self.increase_progress(1.0).await;
+        self.increase_progress(1.0, "Stitching together songs")
+            .await;
 
         Ok(destination)
     }
@@ -379,7 +386,8 @@ impl CompilationGenerator {
         self.ffmpeg(args).await?;
 
         info!("finished assembling video, result at {destination}");
-        self.increase_progress(1.0).await;
+        self.increase_progress(1.0, "Compiling clips together")
+            .await;
         Ok(destination)
     }
 }

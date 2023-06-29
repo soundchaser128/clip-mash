@@ -53,18 +53,19 @@ impl ClipPicker for RoundRobinClipPicker {
                 skipped_duration,
             }) = marker_state.find_marker_by_index(marker_idx)
             {
+                assert!(
+                    end > start,
+                    "end time {} must be greater than start time {}",
+                    end,
+                    start
+                );
                 let duration = end - start;
                 if has_music || duration >= MIN_DURATION {
                     info!(
                         "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
                         marker.video_id, marker.title
                     );
-                    assert!(
-                        end > start,
-                        "end time {} must be greater than start time {}",
-                        end,
-                        start
-                    );
+
                     clips.push(Clip {
                         index_within_marker: marker_idx,
                         index_within_video: marker.index_within_video,

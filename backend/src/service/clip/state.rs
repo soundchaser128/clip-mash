@@ -17,6 +17,12 @@ pub struct MarkerStart {
     pub index: usize,
 }
 
+impl MarkerStart {
+    pub fn remaining_duration(&self) -> f64 {
+        self.end_time - self.start_time
+    }
+}
+
 pub struct MarkerStateInfo {
     pub marker: Marker,
     pub start: f64,
@@ -91,8 +97,9 @@ impl MarkerState {
 
         if let Entry::Occupied(mut e) = entry {
             let end_time = e.get().last().map(|e| e.end_time);
-            if let Some(end_time) = end_time {
-                if approx_eq!(f64, end_time, start_time, epsilon = 0.001) {
+            let remaining_time = e.get().last().map(|e| e.remaining_duration());
+            if let (Some(end_time), Some(remaining_time)) = (end_time, remaining_time) {
+                if approx_eq!(f64, end_time, start_time, epsilon = 0.001) || remaining_time < 0.001 {
                     e.get_mut().pop();
                     if e.get().len() == 0 {
                         let index = self.markers.iter().position(|m| m.id == *id).unwrap();
@@ -108,9 +115,10 @@ impl MarkerState {
         let next_duration = self.durations.last().copied();
         if let Some(duration) = next_duration {
             self.markers.get(index).and_then(|marker| {
+                let id = marker.id.inner();
                 let state = self.get(&marker.id)?;
                 let next_end_time = state.start_time + duration;
-                let skipped_duration = if next_end_time > marker.end_time {
+                let skipped_duration = if next_end_time > state.end_time {
                     info!(
                         "next_end_time: {}, marker end time: {} for marker {}",
                         next_end_time, marker.end_time, marker.id
@@ -119,14 +127,15 @@ impl MarkerState {
                 } else {
                     0.0
                 };
-                debug!(
+                let end = next_end_time.min(state.end_time);
+                info!(
                     "found marker: {}: {} - {} (skipped: {})",
-                    marker.title, state.start_time, next_end_time, skipped_duration,
+                    marker.title, state.start_time, end, skipped_duration,
                 );
                 Some(MarkerStateInfo {
                     marker: marker.clone(),
                     start: state.start_time,
-                    end: next_end_time.min(marker.end_time),
+                    end,
                     skipped_duration,
                 })
             })

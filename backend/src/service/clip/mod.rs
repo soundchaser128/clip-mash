@@ -60,7 +60,7 @@ impl CreateClipsOptions {
             .markers
             .into_iter()
             .flat_map(|marker| {
-                let markers = if marker.loops > 1.0 {
+                let markers = if marker.loops > 1.05 {
                     let full_loops = marker.loops.floor() as usize;
                     let rest_duration = marker.loops.fract();
                     let partial_marker = marker.multiply(rest_duration);

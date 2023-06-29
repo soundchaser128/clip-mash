@@ -9,6 +9,26 @@ import {
 import {FormState} from "../types/types"
 import {formatSeconds} from "../helpers"
 import {Progress} from "../types.generated"
+import {useImmer} from "use-immer"
+
+class RingBuffer<T> {
+  buffer: T[]
+  size: number
+
+  constructor(size: number) {
+    this.buffer = []
+    this.size = size
+  }
+
+  get(index: number) {
+    return this.buffer[index]
+  }
+
+  push(item: T) {
+    this.buffer.unshift(item)
+    this.buffer.splice(this.size, this.buffer.length - this.size)
+  }
+}
 
 type CreateVideoBody = Omit<FormState, "songs"> & {
   songIds: number[]
@@ -18,6 +38,8 @@ function Progress() {
   const {state} = useStateMachine()
 
   const [progress, setProgress] = useState<Progress>()
+  // const [times, setTimes] = useImmer<RingBuffer<number>>(new RingBuffer(15))
+  // const eta = times.buffer.reduce((sum, time) => sum + time, 0) / times.size
   const [finished, setFinished] = useState(false)
   const [finalFileName, setFinalFileName] = useState("")
   const downloadLink = useRef<HTMLAnchorElement>(null)
@@ -55,6 +77,10 @@ function Progress() {
           })
         }
         setProgress(data)
+
+        // setTimes((draft) => {
+        //   draft.push(data.etaSeconds)
+        // })
       }
     }
   }
@@ -124,12 +150,11 @@ function Progress() {
           />
           <p>
             <strong>{formatSeconds(progress.itemsFinished, "short")}</strong> /{" "}
-            <strong>{formatSeconds(progress.itemsTotal, "short")}</strong>{" "}
-            finished
+            <strong>{formatSeconds(progress.itemsTotal, "short")}</strong> of
+            the compilation finished
           </p>
           <p>
-            Estimated time remaining:{" "}
-            <strong>{formatSeconds(progress.etaSeconds)}</strong>
+            Estimated time remaining: <strong>{formatSeconds(eta)}</strong>
           </p>
         </div>
       )}

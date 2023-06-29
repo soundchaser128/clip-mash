@@ -240,7 +240,7 @@ const SelectMarkers: React.FC<Props> = ({
           </span>
         </div>
       )}
-      <section className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
         {markers.map((marker) => {
           const selectedMarker = selection[marker.id.id]
           return (

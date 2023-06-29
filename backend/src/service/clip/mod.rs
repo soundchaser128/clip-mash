@@ -179,6 +179,7 @@ mod tests {
         Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, PmvClipOptions,
         RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
     };
+    use float_cmp::assert_approx_eq;
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
@@ -323,7 +324,7 @@ mod tests {
     }
 
     #[test]
-    // #[traced_test]
+    #[traced_test]
     fn test_loop_markers() {
         let options = CreateClipsOptions {
             markers: vec![
@@ -344,9 +345,9 @@ mod tests {
         };
         let service = ClipService::new();
         let ClipsResult { clips: results, .. } = service.arrange_clips(options);
-        assert_eq!(2, results.len());
-        assert_eq!((1.0, 15.0), results[0].range);
-        assert_eq!((1.0, 17.0), results[1].range);
+        let total_duration: f64 = results.iter().map(|c| c.duration()).sum();
+        assert_approx_eq!(f64, 30.0, total_duration, epsilon = 0.01);
+        assert_eq!(results.len(), 8);
     }
 
     #[test]

@@ -413,7 +413,7 @@ export default function Music() {
   const totalMarkerDuration = sumDurations(state.data.selectedMarkers)
   const totalMusicDuration = selection
     .map((s) => songs.find((song) => song.songId === s))
-    .reduce((sum, song) => sum + song!.duration, 0)
+    .reduce((sum, song) => sum + (song?.duration || 0), 0)
 
   const musicTooLong = totalMusicDuration > totalMarkerDuration
   const anySongsSelected = selection.length > 0

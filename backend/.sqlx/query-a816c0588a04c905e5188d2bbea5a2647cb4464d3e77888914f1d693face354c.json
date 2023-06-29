@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT *, m.rowid AS rowid \n            FROM local_videos v \n            LEFT JOIN markers m ON v.id = m.video_id \n            WHERE v.file_path LIKE $1\n            ORDER BY file_path DESC\n            LIMIT $2 \n            OFFSET $3",
+  "query": "SELECT *, m.rowid AS rowid \n            FROM local_videos v \n            LEFT JOIN markers m ON v.id = m.video_id \n            WHERE v.file_path LIKE $1\n            ORDER BY file_path ASC\n            LIMIT $2 \n            OFFSET $3",
   "describe": {
     "columns": [
       {
@@ -88,5 +88,5 @@
       true
     ]
   },
-  "hash": "277767669cf1ea65da59a9a8edb2757a9ef2313c7b42154ddd299990d1c67979"
+  "hash": "a816c0588a04c905e5188d2bbea5a2647cb4464d3e77888914f1d693face354c"
 }

@@ -116,6 +116,7 @@ impl MarkerState {
         let next_duration = self.durations.last().copied();
         if let Some(duration) = next_duration {
             self.markers.get(index).and_then(|marker| {
+                let id = marker.id.inner();
                 let state = self.get(&marker.id)?;
                 let next_end_time = state.start_time + duration;
                 let skipped_duration = if next_end_time > state.end_time {
@@ -140,6 +141,7 @@ impl MarkerState {
                 })
             })
         } else {
+            info!("no next duration, returning None");
             None
         }
     }

@@ -46,6 +46,8 @@ impl ClipPicker for RoundRobinClipPicker {
         let mut marker_state = MarkerState::new(markers, clip_lengths, options.length);
 
         while !marker_state.finished() {
+            // info!("marker state: {marker_state:#?}");
+
             if let Some(MarkerStateInfo {
                 start,
                 end,

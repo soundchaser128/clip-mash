@@ -107,8 +107,6 @@ impl ClipService {
     }
 
     pub fn arrange_clips(&self, mut options: CreateClipsOptions) -> ClipsResult {
-        let json = serde_json::to_string(&options).unwrap();
-        std::fs::write("test.json", &json).unwrap();
         let start = Instant::now();
         options.normalize_video_indices();
         let mut options = options.apply_marker_loops();
@@ -171,7 +169,6 @@ mod tests {
         RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
     };
     use float_cmp::assert_approx_eq;
-    use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};

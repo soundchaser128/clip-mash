@@ -1,4 +1,4 @@
-import {Page, VideoWithMarkers} from "../../types/types"
+import {VideoWithMarkers} from "../../types/types"
 import clsx from "clsx"
 import {useRef, useState} from "react"
 import {useForm, FieldErrors} from "react-hook-form"
@@ -16,12 +16,7 @@ import {
 import {useImmer} from "use-immer"
 import {formatSeconds, getSegmentColor, parseTimestamp} from "../../helpers"
 import Modal from "../../components/Modal"
-import {
-  useLoaderData,
-  useNavigate,
-  useParams,
-  useRevalidator,
-} from "react-router-dom"
+import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
 import {persistMarker} from "./api"

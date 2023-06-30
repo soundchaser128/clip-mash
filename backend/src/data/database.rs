@@ -3,7 +3,7 @@ use std::str::FromStr;
 use clip_mash_types::{Beats, ListVideoDto, PageParameters};
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::{FromRow, SqlitePool};
 use tokio::task::spawn_blocking;
@@ -43,7 +43,7 @@ pub struct DbVideo {
     pub video_preview_image: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, FromRow)]
+#[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
 pub struct DbMarker {
     pub rowid: Option<i64>,
     pub video_id: String,

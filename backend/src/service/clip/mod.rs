@@ -5,6 +5,7 @@ use clip_mash_types::{Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use itertools::Itertools;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
+use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use super::Marker;
@@ -34,7 +35,7 @@ pub trait ClipPicker {
     ) -> Vec<Clip>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateClipsOptions {
     pub markers: Vec<Marker>,
     pub seed: Option<String>,
@@ -106,6 +107,8 @@ impl ClipService {
     }
 
     pub fn arrange_clips(&self, mut options: CreateClipsOptions) -> ClipsResult {
+        let json = serde_json::to_string(&options).unwrap();
+        std::fs::write("test.json", &json).unwrap();
         let start = Instant::now();
         options.normalize_video_indices();
         let mut options = options.apply_marker_loops();
@@ -168,6 +171,7 @@ mod tests {
         RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
     };
     use float_cmp::assert_approx_eq;
+    use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
@@ -364,5 +368,14 @@ mod tests {
         assert_eq!(options.markers[2].id, m2.id);
         assert_eq!(options.markers[3].id, m2.id);
         assert_eq!(options.markers[4].id, m2.id);
+    }
+
+    #[test]
+    #[traced_test]
+    fn test_infinite_loop_marker_loops_with_music() {
+        let string = std::fs::read_to_string("testfiles/infinite-loop.json").unwrap();
+        let options: CreateClipsOptions = serde_json::from_str(&string).unwrap();
+        let service = ClipService::new();
+        let result = service.arrange_clips(options);
     }
 }

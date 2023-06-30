@@ -16,7 +16,7 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
-import {formatSeconds} from "../helpers"
+import {formatSeconds, sumDurations} from "../helpers"
 import {MarkerDto, SelectedMarker} from "../types.generated"
 
 interface Props {
@@ -69,15 +69,7 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
     }
   }
 
-  const totalDuration = formatSeconds(
-    Object.values(selection)
-      .filter((m) => m.selected)
-      .reduce((sum, next) => {
-        const duration =
-          (next.selectedRange[1] - next.selectedRange[0]) * next.loops
-        return sum + duration
-      }, 0)
-  )
+  const totalDuration = formatSeconds(sumDurations(Object.values(selection)))
 
   const onCheckboxChange = (id: number, checked: boolean) => {
     setSelection((draft) => {

@@ -4,7 +4,7 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use typescript_type_def::TypeDef;
 
-#[derive(Clone, Copy, Debug, Deserialize, TypeDef)]
+#[derive(Clone, Copy, Debug, Deserialize, TypeDef, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ClipOrder {
     Random,
@@ -163,21 +163,21 @@ pub struct SelectedMarker {
     pub loops: usize,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RandomizedClipOptions {
     pub base_duration: f64,
     pub divisors: Vec<f64>,
 }
 
-#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[derive(Deserialize, Debug, TypeDef, Clone, Copy, Serialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum MeasureCount {
     Fixed { count: usize },
     Random { min: usize, max: usize },
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SongClipOptions {
     pub beats_per_measure: usize,
@@ -185,21 +185,21 @@ pub struct SongClipOptions {
     pub songs: Vec<Beats>,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum PmvClipOptions {
     Randomized(RandomizedClipOptions),
     Songs(SongClipOptions),
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct ClipOptions {
     pub clip_picker: ClipPickerOptions,
     pub order: ClipOrder,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum ClipPickerOptions {
     RoundRobin(RoundRobinClipOptions),
@@ -231,14 +231,14 @@ impl ClipPickerOptions {
     }
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RoundRobinClipOptions {
     pub length: f64,
     pub clip_lengths: PmvClipOptions,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WeightedRandomClipOptions {
     pub weights: Vec<(String, f64)>,
@@ -246,7 +246,7 @@ pub struct WeightedRandomClipOptions {
     pub clip_lengths: PmvClipOptions,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct EqualLengthClipOptions {
     pub clip_duration: f64,

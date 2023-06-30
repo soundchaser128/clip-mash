@@ -439,7 +439,7 @@ export default function Music() {
     })
     setMode("table")
     revalidator.revalidate()
-    sendNotification(`Song downloaded successfully!`)
+    sendNotification("Success", "Song downloaded successfully!")
   }
 
   const onFormChange = (values: MusicSettingsInputs) => {

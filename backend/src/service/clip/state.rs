@@ -73,7 +73,6 @@ impl MarkerState {
     }
 
     pub fn get(&self, id: &MarkerId) -> Option<&MarkerStart> {
-        // info!("getting marker {:?}", id);
         self.data.get(&id.inner()).and_then(|v| v.last())
     }
 

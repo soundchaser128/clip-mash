@@ -7,10 +7,6 @@ export default function LocalMarkersPage() {
   const data = useLoaderData() as MarkerDto[]
 
   return (
-    <MarkerPage
-      data={{markers: data}}
-      withImages
-      nextStage={LocalFilesFormStage.Music}
-    />
+    <MarkerPage data={{markers: data}} nextStage={LocalFilesFormStage.Music} />
   )
 }

@@ -59,7 +59,7 @@ const DownloadVideosPage: React.FC = () => {
       if (errors.length > 0) {
         setError("urls", {message: errors.join("\n")})
       } else {
-        sendNotification("Video downloads finished!")
+        sendNotification("Success", "Video downloads finished!")
         navigate("/local/videos")
       }
     }

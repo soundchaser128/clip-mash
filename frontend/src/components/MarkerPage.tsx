@@ -23,17 +23,11 @@ interface Props {
   data: {
     markers: MarkerDto[]
   }
-  withImages?: boolean
   withPerformers?: boolean
   nextStage: FormStage | LocalFilesFormStage
 }
 
-const SelectMarkers: React.FC<Props> = ({
-  data,
-  withImages,
-  withPerformers,
-  nextStage,
-}) => {
+const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
   const {actions, state} = useStateMachine({updateForm})
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
@@ -80,7 +74,7 @@ const SelectMarkers: React.FC<Props> = ({
       .filter((m) => m.selected)
       .reduce((sum, next) => {
         const duration =
-          (next.selectedRange[1] - next.selectedRange[0]) * (next.loops || 1)
+          (next.selectedRange[1] - next.selectedRange[0]) * next.loops
         return sum + duration
       }, 0)
   )
@@ -251,19 +245,17 @@ const SelectMarkers: React.FC<Props> = ({
                 !selectedMarker.selected && "opacity-50"
               )}
             >
-              {withImages && (
-                <figure>
-                  {videoPreview === marker.id.id && (
-                    <video muted autoPlay src={marker.streamUrl} />
-                  )}
-                  {videoPreview !== marker.id.id && (
-                    <img
-                      src={marker.screenshotUrl || undefined}
-                      className="aspect-[16/9] object-cover object-top w-full"
-                    />
-                  )}
-                </figure>
-              )}
+              <figure>
+                {videoPreview === marker.id.id && (
+                  <video muted autoPlay src={marker.streamUrl} />
+                )}
+                {videoPreview !== marker.id.id && (
+                  <img
+                    src={marker.screenshotUrl || undefined}
+                    className="aspect-[16/9] object-cover object-top w-full"
+                  />
+                )}
+              </figure>
 
               <div className="card-body">
                 <h2 className="card-title">
@@ -329,25 +321,20 @@ const SelectMarkers: React.FC<Props> = ({
                         />
                       </label>
                     </div>
-                    {withImages && (
-                      <div className="form-control">
-                        <label className="label cursor-pointer">
-                          <span className="label-text">Video preview</span>
-                          <input
-                            onChange={(e) =>
-                              onVideoPreviewChange(
-                                marker.id.id,
-                                e.target.checked
-                              )
-                            }
-                            checked={videoPreview === marker.id.id}
-                            disabled={!selectedMarker.selected}
-                            type="checkbox"
-                            className="toggle toggle-sm"
-                          />
-                        </label>
-                      </div>
-                    )}
+                    <div className="form-control">
+                      <label className="label cursor-pointer">
+                        <span className="label-text">Video preview</span>
+                        <input
+                          onChange={(e) =>
+                            onVideoPreviewChange(marker.id.id, e.target.checked)
+                          }
+                          checked={videoPreview === marker.id.id}
+                          disabled={!selectedMarker.selected}
+                          type="checkbox"
+                          className="toggle toggle-sm"
+                        />
+                      </label>
+                    </div>
 
                     <div className="flex flex-row justify-between">
                       <label className="label">

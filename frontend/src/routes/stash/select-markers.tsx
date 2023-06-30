@@ -28,14 +28,7 @@ export const loader: LoaderFunction = async () => {
 
 function SelectMarkers() {
   const data = useLoaderData() as Data
-  return (
-    <MarkerPage
-      data={data}
-      withImages
-      withPerformers
-      nextStage={FormStage.Music}
-    />
-  )
+  return <MarkerPage data={data} withPerformers nextStage={FormStage.Music} />
 }
 
 export default SelectMarkers

@@ -19,9 +19,12 @@ export default function useNotification() {
   }, [])
 
   const sendNotification = useCallback(
-    (body: string) => {
+    (title: string, body?: string) => {
       if (windowVisible && Notification.permission === "granted") {
-        new Notification(body, options)
+        new Notification(title, {
+          ...options,
+          body,
+        })
       }
     },
     [windowVisible]

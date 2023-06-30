@@ -54,19 +54,12 @@ impl CreateClipsOptions {
     }
 
     pub fn apply_marker_loops(self) -> Self {
-        use std::iter;
-
         let markers: Vec<_> = self
             .markers
             .into_iter()
             .flat_map(|marker| {
-                let markers = if marker.loops > 1 {
-                    let loops = marker.loops;
-                    iter::repeat(marker).take(loops).collect()
-                } else {
-                    vec![marker]
-                };
-                markers
+                let loops = marker.loops;
+                vec![marker; loops]
             })
             .collect();
         Self { markers, ..self }

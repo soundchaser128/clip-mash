@@ -76,7 +76,7 @@ function Progress() {
         if (data.done) {
           setFinished(true)
           es.close()
-          sendNotification("Video generation finished!")
+          sendNotification("Success", "Video generation finished!")
         }
         setProgress(data)
         setTimes((buf) => buf.push(data.etaSeconds))

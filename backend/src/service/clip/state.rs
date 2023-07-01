@@ -73,7 +73,8 @@ impl MarkerState {
     }
 
     pub fn get(&self, id: &MarkerId) -> Option<&MarkerStart> {
-        self.data.get(&id.inner()).and_then(|v| v.last())
+        let entries = self.data.get(&id.inner())?;
+        entries.last()
     }
 
     pub fn update(
@@ -116,7 +117,6 @@ impl MarkerState {
         let next_duration = self.durations.last().copied();
         if let Some(duration) = next_duration {
             self.markers.get(index).and_then(|marker| {
-                let id = marker.id.inner();
                 let state = self.get(&marker.id)?;
                 let next_end_time = state.start_time + duration;
                 let skipped_duration = if next_end_time > state.end_time {

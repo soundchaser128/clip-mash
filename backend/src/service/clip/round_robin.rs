@@ -79,8 +79,8 @@ impl ClipPicker for RoundRobinClipPicker {
                 }
 
                 marker_state.update(&marker.id, end, duration, skipped_duration);
-                marker_idx += 1;
             }
+            marker_idx += 1;
         }
 
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();

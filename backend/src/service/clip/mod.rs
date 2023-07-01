@@ -373,6 +373,9 @@ mod tests {
         let string = std::fs::read_to_string("testfiles/infinite-loop.json").unwrap();
         let options: CreateClipsOptions = serde_json::from_str(&string).unwrap();
         let service = ClipService::new();
-        let result = service.arrange_clips(options);
+        let result = service.arrange_clips(options).clips;
+        let expected_length = 1084.0275;
+        let total_duration: f64 = result.iter().map(|c| c.duration()).sum();
+        assert_approx_eq!(f64, expected_length, total_duration, epsilon = 0.01);
     }
 }

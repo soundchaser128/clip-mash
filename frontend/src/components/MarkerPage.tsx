@@ -144,7 +144,7 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
       // Set loops to match the longest selected marker
       for (const selectedMarker of Object.values(draft)) {
         const [start, end] = selectedMarker.selectedRange
-        selectedMarker.loops = Math.ceil(longestSelectedMarker / (end - start))
+        selectedMarker.loops = Math.floor(longestSelectedMarker / (end - start))
       }
     })
   }

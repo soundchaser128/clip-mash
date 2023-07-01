@@ -32,7 +32,7 @@ import {
 } from "react-router-dom"
 import {formatSeconds} from "../../helpers"
 import clsx from "clsx"
-import {persistMarker} from "./api"
+import {createNewMarker} from "./api"
 import {ListVideoDto} from "../../types.generated"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
@@ -84,7 +84,7 @@ export default function ListVideos() {
 
   const onAddFullVideo = async (video: VideoWithMarkers) => {
     const duration = video.video.duration
-    const result = await persistMarker(
+    const result = await createNewMarker(
       video.video.id.id,
       {
         start: 0.0,

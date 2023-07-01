@@ -86,6 +86,13 @@ pub fn generate_id() -> String {
     format!("{adjective1}-{adjective2}-{animal}")
 }
 
+/// Formats a number of seconds as a mm:ss string
+pub fn format_duration(seconds: f64) -> String {
+    let minutes = (seconds / 60.0).floor();
+    let seconds = (seconds % 60.0).floor();
+    format!("{:02}:{:02}", minutes, seconds)
+}
+
 pub struct ProgressTracker {
     work_total: f64,
     work_done: f64,
@@ -166,7 +173,7 @@ mod test {
     use mock_instant::MockClock;
     use regex::Regex;
 
-    use super::{add_api_key, expect_file_name, generate_id, ProgressTracker};
+    use super::{add_api_key, expect_file_name, format_duration, generate_id, ProgressTracker};
 
     #[test]
     #[cfg(not(windows))]
@@ -220,5 +227,11 @@ mod test {
     }
 
     #[test]
-    fn test_progress_tracker() {}
+    fn test_format_duration() {
+        let formatted = format_duration(123.0);
+        assert_eq!("02:03", formatted);
+
+        let formatted = format_duration(123.456);
+        assert_eq!("02:03", formatted);
+    }
 }

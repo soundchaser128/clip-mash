@@ -5,14 +5,15 @@ use axum::body::Body;
 use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
-use clip_mash_types::{ListVideoDto, MarkerDto, PageParameters, VideoDto};
+use clip_mash_types::{
+    CreateMarker, ListVideoDto, MarkerDto, PageParameters, UpdateMarker, VideoDto,
+};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tower::ServiceExt;
 use tracing::{info, warn};
 use url::Url;
 
-use crate::data::database::CreateMarker;
 use crate::server::dtos::Page;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -142,7 +143,7 @@ fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str>
 }
 
 #[axum::debug_handler]
-pub async fn persist_marker(
+pub async fn create_new_marker(
     state: State<Arc<AppState>>,
     Json(mut marker): Json<CreateMarker>,
 ) -> Result<Json<MarkerDto>, AppError> {
@@ -158,7 +159,7 @@ pub async fn persist_marker(
                 .generate_preview(&video.id, &video.file_path, video.duration / 2.0)
                 .await?;
             marker.preview_image_path = Some(preview_image.to_string());
-            let marker = state.database.persist_marker(marker).await?;
+            let marker = state.database.create_new_marker(marker).await?;
 
             Ok(Json(marker.into()))
         } else {
@@ -166,6 +167,17 @@ pub async fn persist_marker(
             Err(AppError::StatusCode(StatusCode::NOT_FOUND))
         }
     }
+}
+
+#[axum::debug_handler]
+pub async fn update_marker(
+    state: State<Arc<AppState>>,
+    Json(marker): Json<UpdateMarker>,
+) -> Result<Json<MarkerDto>, AppError> {
+    info!("updating marker with {marker:?}");
+
+    let marker = state.database.update_marker(marker).await?;
+    Ok(Json(marker.into()))
 }
 
 #[axum::debug_handler]

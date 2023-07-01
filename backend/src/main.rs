@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::extract::DefaultBodyLimit;
-use axum::routing::{delete, get, post};
+use axum::routing::{delete, get, post, put};
 use axum::Router;
 use color_eyre::Report;
 use tracing::{info, warn};
@@ -93,7 +93,8 @@ async fn main() -> Result<()> {
             get(handlers::local::get_video_preview),
         )
         .route("/video/marker", get(handlers::local::list_markers))
-        .route("/video/marker", post(handlers::local::persist_marker))
+        .route("/video/marker", post(handlers::local::create_new_marker))
+        .route("/video/marker", put(handlers::local::update_marker))
         .route("/video/marker/:id", delete(handlers::local::delete_marker))
         .route(
             "/video/marker/:id/preview",

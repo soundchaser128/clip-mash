@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use clip_mash_types::{Beats, ListVideoDto, PageParameters};
+use clip_mash_types::{Beats, CreateMarker, ListVideoDto, PageParameters, UpdateMarker};
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -53,17 +53,6 @@ pub struct DbMarker {
     pub file_path: String,
     pub index_within_video: i64,
     pub marker_preview_image: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateMarker {
-    pub video_id: String,
-    pub start: f64,
-    pub end: f64,
-    pub title: String,
-    pub index_within_video: i64,
-    pub preview_image_path: Option<String>,
 }
 
 #[derive(Debug)]
@@ -314,7 +303,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn persist_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
+    pub async fn create_new_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
         let new_id = sqlx::query_scalar!(
             "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video, marker_preview_image) 
                 VALUES ($1, $2, $3, $4, $5, $6) 
@@ -342,6 +331,32 @@ impl Database {
         };
 
         info!("newly updated or inserted marker: {marker:?}");
+
+        Ok(marker)
+    }
+
+    pub async fn update_marker(&self, update: UpdateMarker) -> Result<DbMarker> {
+        let record = sqlx::query!(
+            "UPDATE markers SET start_time = $1, end_time = $2, title = $3 WHERE rowid = $4
+            RETURNING *",
+            update.start,
+            update.end,
+            update.title,
+            update.rowid
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        let marker = DbMarker {
+            rowid: Some(update.rowid),
+            video_id: record.video_id,
+            start_time: update.start,
+            end_time: update.end,
+            title: record.title,
+            file_path: "not-needed".to_string(),
+            index_within_video: record.index_within_video,
+            marker_preview_image: record.marker_preview_image,
+        };
 
         Ok(marker)
     }
@@ -617,11 +632,11 @@ impl Database {
 
 #[cfg(test)]
 mod test {
-    use clip_mash_types::PageParameters;
+    use clip_mash_types::{PageParameters, UpdateMarker};
     use sqlx::SqlitePool;
 
     use crate::data::database::{CreateMarker, Database};
-    use crate::service::fixtures::{persist_video, persist_video_with_file_name};
+    use crate::service::fixtures::{persist_marker, persist_video, persist_video_with_file_name};
     use crate::util::generate_id;
 
     #[sqlx::test]
@@ -636,7 +651,7 @@ mod test {
     }
 
     #[sqlx::test]
-    async fn test_persist_marker(pool: SqlitePool) {
+    async fn test_create_marker(pool: SqlitePool) {
         let database = Database::with_pool(pool);
         let video = persist_video(&database).await.unwrap();
         let expected = CreateMarker {
@@ -647,7 +662,7 @@ mod test {
             index_within_video: 0,
             preview_image_path: None,
         };
-        let result = database.persist_marker(expected.clone()).await.unwrap();
+        let result = database.create_new_marker(expected.clone()).await.unwrap();
 
         assert_eq!(result.start_time, expected.start);
         assert_eq!(result.end_time, expected.end);
@@ -668,7 +683,7 @@ mod test {
             preview_image_path: None,
         };
         let err = database
-            .persist_marker(expected.clone())
+            .create_new_marker(expected.clone())
             .await
             .expect_err("must fail due to a foreign key constraint");
         let err: sqlx::Error = err.downcast().unwrap();
@@ -688,7 +703,7 @@ mod test {
             index_within_video: 0,
             preview_image_path: None,
         };
-        let result = database.persist_marker(marker).await.unwrap();
+        let result = database.create_new_marker(marker).await.unwrap();
         let id = result.rowid.unwrap();
 
         database.delete_marker(id).await.unwrap();
@@ -754,5 +769,27 @@ mod test {
         assert_eq!(1, result.len());
         let file_name = &result[0].video.file_name;
         assert_eq!(file_name, "cool.mp4");
+    }
+
+    #[sqlx::test]
+    async fn test_update_marker(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        let marker = persist_marker(&database, &video.id, 0, 0.0, 15.0)
+            .await
+            .unwrap();
+        let title = marker.title.clone();
+        let update = UpdateMarker {
+            title: marker.title,
+            rowid: marker.rowid.unwrap(),
+            start: 5.0,
+            end: 15.0,
+        };
+        database.update_marker(update).await.unwrap();
+        let result = database.get_marker(marker.rowid.unwrap()).await.unwrap();
+
+        assert_eq!(result.title, title);
+        assert_eq!(result.end_time, 15.0);
+        assert_eq!(result.start_time, 5.0);
     }
 }

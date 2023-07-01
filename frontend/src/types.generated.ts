@@ -147,3 +147,12 @@ export type Progress = {
   etaSeconds: F64
   message: string
 }
+export type CreateMarker = {
+  videoId: string
+  start: F64
+  end: F64
+  title: string
+  indexWithinVideo: I64
+  previewImagePath: string | null
+}
+export type UpdateMarker = {rowid: I64; start: F64; end: F64; title: string}

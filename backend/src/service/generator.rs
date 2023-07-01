@@ -13,7 +13,7 @@ use super::Marker;
 use crate::data::database::DbSong;
 use crate::data::stash_api::StashMarker;
 use crate::service::MarkerInfo;
-use crate::util::{commandline_error, debug_output, generate_id, ProgressTracker};
+use crate::util::{commandline_error, debug_output, format_duration, generate_id, ProgressTracker};
 use crate::Result;
 
 lazy_static::lazy_static! {
@@ -251,8 +251,8 @@ impl CompilationGenerator {
             let message = format!(
                 "Encoding clip for marker '{}' from {} to {}",
                 marker.title,
-                start.round(),
-                end.round()
+                format_duration(*start),
+                format_duration(*end)
             );
             self.increase_progress(clip.duration(), &message).await;
             paths.push(out_file);

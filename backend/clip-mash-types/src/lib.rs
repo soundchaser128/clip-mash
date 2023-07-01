@@ -412,6 +412,26 @@ pub struct Progress {
     pub message: String,
 }
 
+#[derive(Debug, Clone, Deserialize, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateMarker {
+    pub video_id: String,
+    pub start: f64,
+    pub end: f64,
+    pub title: String,
+    pub index_within_video: i64,
+    pub preview_image_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateMarker {
+    pub rowid: i64,
+    pub start: f64,
+    pub end: f64,
+    pub title: String,
+}
+
 pub type Api = (
     StashScene,
     CreateVideoBody,
@@ -426,6 +446,8 @@ pub type Api = (
     NewId,
     PageParameters,
     Progress,
+    CreateMarker,
+    UpdateMarker,
 );
 
 #[cfg(test)]

@@ -19,7 +19,7 @@ import Modal from "../../components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
-import {persistMarker} from "./api"
+import {createNewMarker, updateMarker} from "./api"
 
 interface Inputs {
   id?: number
@@ -116,12 +116,11 @@ export default function EditVideoModal() {
       throw new Error("could not find edited marker's ID in marker array")
     }
 
-    const result = await persistMarker(
-      video.id.id,
-      values,
-      videoDuration!,
-      index
-    )
+    const result =
+      formMode === "create"
+        ? await createNewMarker(video.id.id, values, videoDuration!, index)
+        : await updateMarker(editedMarker!.id.id, values)
+
     if (result.isOk) {
       const marker = result.unwrap()
       setMarkers((draft) => {

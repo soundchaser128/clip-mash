@@ -107,6 +107,7 @@ impl DataService {
                 video_id,
                 index_within_video: selected_marker.index_within_video,
                 title,
+                loops: selected_marker.loops,
             })
         }
 
@@ -127,6 +128,9 @@ impl DataService {
             file_name: body.file_name,
             songs,
             music_volume: body.music_volume.unwrap_or(0.0),
+            video_codec: body.video_codec,
+            encoding_effort: body.encoding_effort,
+            video_quality: body.video_quality,
         })
     }
 

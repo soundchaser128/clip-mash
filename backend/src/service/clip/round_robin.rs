@@ -46,6 +46,8 @@ impl ClipPicker for RoundRobinClipPicker {
         let mut marker_state = MarkerState::new(markers, clip_lengths, options.length);
 
         while !marker_state.finished() {
+            // info!("marker state: {marker_state:#?}");
+
             if let Some(MarkerStateInfo {
                 start,
                 end,
@@ -53,18 +55,19 @@ impl ClipPicker for RoundRobinClipPicker {
                 skipped_duration,
             }) = marker_state.find_marker_by_index(marker_idx)
             {
+                assert!(
+                    end >= start,
+                    "end time {} must be greater than start time {}",
+                    end,
+                    start
+                );
                 let duration = end - start;
-                if has_music || duration >= MIN_DURATION {
+                if (has_music && duration > 0.0) || (!has_music && duration >= MIN_DURATION) {
                     info!(
                         "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
                         marker.video_id, marker.title
                     );
-                    assert!(
-                        end > start,
-                        "end time {} must be greater than start time {}",
-                        end,
-                        start
-                    );
+
                     clips.push(Clip {
                         index_within_marker: marker_idx,
                         index_within_video: marker.index_within_video,
@@ -76,8 +79,8 @@ impl ClipPicker for RoundRobinClipPicker {
                 }
 
                 marker_state.update(&marker.id, end, duration, skipped_duration);
-                marker_idx += 1;
             }
+            marker_idx += 1;
         }
 
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();

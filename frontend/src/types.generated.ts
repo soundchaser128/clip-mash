@@ -37,9 +37,13 @@ export type SelectedMarker = {
   indexWithinVideo: Usize
   selected: boolean | null
   title: string
+  loops: Usize
 }
 export type VideoResolution = "720" | "1080" | "4K"
 export type U32 = number
+export type VideoCodec = "av1" | "h264" | "h265"
+export type VideoQuality = "low" | "medium" | "high"
+export type EncodingEffort = "low" | "medium" | "high"
 export type CreateVideoBody = {
   fileName: string
   clips: Clip[]
@@ -48,6 +52,9 @@ export type CreateVideoBody = {
   outputFps: U32
   songIds: I64[]
   musicVolume: F64 | null
+  videoCodec: VideoCodec
+  videoQuality: VideoQuality
+  encodingEffort: EncodingEffort
 }
 export type ClipOrder = "random" | "scene-order" | "no-op"
 export type RandomizedClipOptions = {baseDuration: F64; divisors: F64[]}
@@ -132,3 +139,11 @@ export type SongDto = {
   beats: F32[]
 }
 export type NewId = {id: string}
+export type PageParameters = {page: Usize | null; size: Usize | null}
+export type Progress = {
+  itemsFinished: F64
+  itemsTotal: F64
+  done: boolean
+  etaSeconds: F64
+  message: string
+}

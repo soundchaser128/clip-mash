@@ -127,13 +127,12 @@ export const clipsLoader: LoaderFunction = async () => {
   }
 }
 
-export const localMarkerLoader: LoaderFunction = async () => {
+export const localMarkerLoader: LoaderFunction = async ({request}) => {
   const formState = getFormState()!
   invariant(StateHelpers.isLocalFiles(formState))
-  const videoIds = formState.videos?.map((v) => v.video.id.id).join(",") || ""
-  const params = new URLSearchParams({ids: videoIds})
+  const params = new URL(request.url).search
 
-  const response = await fetch(`/api/local/video/marker?${params.toString()}`)
+  const response = await fetch(`/api/local/video/marker${params}`)
   if (response.ok) {
     const json = await response.json()
     return json
@@ -145,12 +144,29 @@ export const localMarkerLoader: LoaderFunction = async () => {
 
 export const loadNewId = async () => {
   const response = await fetch("/api/id")
-  const data = (await response.json()) as NewId
-  return data.id
+  if (response.ok) {
+    const data = (await response.json()) as NewId
+    return data.id
+  } else {
+    const text = await response.text()
+    throw json({error: text, request: "/api/id"}, {status: 500})
+  }
 }
 
 export const newIdLoader: LoaderFunction = async () => {
   const id = await loadNewId()
 
   return id
+}
+
+export const videoDetailsLoader: LoaderFunction = async ({params}) => {
+  const {id} = params
+  const response = await fetch(`/api/local/video/${id}`)
+  if (response.ok) {
+    const data = await response.json()
+    return data
+  } else {
+    const text = await response.text()
+    throw json({error: text, request: `/api/video/${id}`}, {status: 500})
+  }
 }

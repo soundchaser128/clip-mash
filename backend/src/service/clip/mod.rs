@@ -5,6 +5,7 @@ use clip_mash_types::{Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use itertools::Itertools;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
+use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use super::Marker;
@@ -34,7 +35,7 @@ pub trait ClipPicker {
     ) -> Vec<Clip>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateClipsOptions {
     pub markers: Vec<Marker>,
     pub seed: Option<String>,
@@ -51,6 +52,18 @@ impl CreateClipsOptions {
                 marker.index_within_video = index;
             }
         }
+    }
+
+    pub fn apply_marker_loops(self) -> Self {
+        let markers: Vec<_> = self
+            .markers
+            .into_iter()
+            .flat_map(|marker| {
+                let loops = marker.loops;
+                vec![marker; loops]
+            })
+            .collect();
+        Self { markers, ..self }
     }
 }
 
@@ -96,6 +109,7 @@ impl ClipService {
     pub fn arrange_clips(&self, mut options: CreateClipsOptions) -> ClipsResult {
         let start = Instant::now();
         options.normalize_video_indices();
+        let mut options = options.apply_marker_loops();
 
         let beat_offsets = options
             .clip_options
@@ -151,14 +165,16 @@ impl ClipService {
 #[cfg(test)]
 mod tests {
     use clip_mash_types::{
-        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, VideoSource,
+        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, PmvClipOptions,
+        RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
     };
+    use float_cmp::assert_approx_eq;
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
     use crate::service::clip::sort::ClipSorter;
     use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
-    use crate::service::fixtures::create_marker_video_id;
+    use crate::service::fixtures::{create_marker_video_id, create_marker_with_loops};
     use crate::service::VideoId;
     use crate::util::create_seeded_rng;
 
@@ -294,5 +310,72 @@ mod tests {
 
         assert_eq!(sorted[0].range, (1.0, 12.0));
         assert_eq!(sorted[1].range, (0.0, 9.0));
+    }
+
+    #[test]
+    #[traced_test]
+    fn test_loop_markers() {
+        let options = CreateClipsOptions {
+            markers: vec![
+                create_marker_with_loops(1, 1.0, 15.0, 0, "v1", 2),
+                create_marker_with_loops(2, 1.0, 17.0, 0, "v2", 3),
+            ],
+            seed: None,
+            clip_options: ClipOptions {
+                clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
+                    clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                        base_duration: 10.0,
+                        divisors: vec![2.0, 3.0, 4.0],
+                    }),
+                    length: 30.0,
+                }),
+                order: ClipOrder::SceneOrder,
+            },
+        };
+        let service = ClipService::new();
+        let ClipsResult { clips: results, .. } = service.arrange_clips(options);
+        let total_duration: f64 = results.iter().map(|c| c.duration()).sum();
+        assert_approx_eq!(f64, 30.0, total_duration, epsilon = 0.01);
+        assert_eq!(results.len(), 8);
+    }
+
+    #[test]
+    #[traced_test]
+    fn test_apply_marker_loops() {
+        let m1 = create_marker_with_loops(1, 1.0, 15.0, 0, "v1", 2);
+        let m2 = create_marker_with_loops(2, 3.5, 17.0, 0, "v2", 3);
+        let options = CreateClipsOptions {
+            markers: vec![m1.clone(), m2.clone()],
+            seed: None,
+            clip_options: ClipOptions {
+                clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
+                    clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                        base_duration: 10.0,
+                        divisors: vec![2.0, 3.0, 4.0],
+                    }),
+                    length: 30.0,
+                }),
+                order: ClipOrder::SceneOrder,
+            },
+        };
+        let options = options.apply_marker_loops();
+        assert_eq!(options.markers.len(), 5);
+        assert_eq!(options.markers[0].id, m1.id);
+        assert_eq!(options.markers[1].id, m1.id);
+        assert_eq!(options.markers[2].id, m2.id);
+        assert_eq!(options.markers[3].id, m2.id);
+        assert_eq!(options.markers[4].id, m2.id);
+    }
+
+    #[test]
+    #[traced_test]
+    fn test_infinite_loop_marker_loops_with_music() {
+        let string = std::fs::read_to_string("testfiles/infinite-loop.json").unwrap();
+        let options: CreateClipsOptions = serde_json::from_str(&string).unwrap();
+        let service = ClipService::new();
+        let result = service.arrange_clips(options).clips;
+        let expected_length = 1084.0275;
+        let total_duration: f64 = result.iter().map(|c| c.duration()).sum();
+        assert_approx_eq!(f64, expected_length, total_duration, epsilon = 0.01);
     }
 }

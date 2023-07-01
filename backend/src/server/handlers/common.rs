@@ -27,7 +27,7 @@ use crate::server::handlers::get_streams;
 use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::directories::FolderType;
 use crate::service::funscript::{FunScript, ScriptBuilder};
-use crate::service::generator::{self, Progress};
+use crate::service::generator;
 use crate::service::music::{self, MusicDownloadService};
 use crate::service::stash_config::Config;
 use crate::util::{expect_file_name, generate_id};
@@ -112,8 +112,7 @@ pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::
         .chain(futures::stream::once(async {
             Progress {
                 done: true,
-                finished: 0,
-                total: 0,
+                ..Progress::default()
             }
         }))
         .map(|p| Event::default().json_data(p))

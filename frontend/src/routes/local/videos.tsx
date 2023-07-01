@@ -4,6 +4,7 @@ import {
   VideoWithMarkers,
   StateHelpers,
   LocalFilesFormStage,
+  Page,
 } from "../../types/types"
 import {
   HiAdjustmentsVertical,
@@ -11,7 +12,7 @@ import {
   HiCheck,
   HiChevronRight,
   HiClock,
-  HiInformationCircle,
+  HiFolder,
   HiPlus,
   HiTag,
   HiXMark,
@@ -26,24 +27,21 @@ import {
   json,
   useLoaderData,
   useNavigate,
+  useNavigation,
+  useSearchParams,
 } from "react-router-dom"
-import {formatSeconds, getFormState} from "../../helpers"
+import {formatSeconds} from "../../helpers"
 import clsx from "clsx"
 import {persistMarker} from "./api"
-import useFuse from "../../hooks/useFuse"
+import {ListVideoDto} from "../../types.generated"
+import Pagination from "../../components/Pagination"
+import debounce from "lodash.debounce"
 
-export const loader: LoaderFunction = async () => {
-  const formState = getFormState()
-  invariant(StateHelpers.isLocalFiles(formState!))
-
-  const params = new URLSearchParams({
-    path: formState.localVideoPath!,
-    recurse: formState.recurse ? "true" : "false",
-  })
-
-  const response = await fetch(`/api/local/video?${params.toString()}`, {
-    method: "POST",
-  })
+export const loader: LoaderFunction = async ({request}) => {
+  const url = new URL(request.url)
+  const query = url.searchParams
+  query.set("size", "18")
+  const response = await fetch(`/api/local/video?${query.toString()}`)
   if (response.ok) {
     const data = await response.json()
     return json(data)
@@ -56,24 +54,32 @@ export const loader: LoaderFunction = async () => {
 export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isLocalFiles(state.data))
-  const initialVideos = useLoaderData() as VideoWithMarkers[]
-  const [videoState, setVideos] = useImmer<VideoWithMarkers[]>(initialVideos)
-  const [filter, setFilter] = useState("")
-
-  const videos = useFuse({
-    items: videoState,
-    query: filter,
-    keys: ["video.fileName", "video.id", "markers.primaryTag"],
-    threshold: 0.3,
-  })
+  const initialVideos = useLoaderData() as Page<ListVideoDto>
+  const [videos, setVideos] = useImmer<ListVideoDto[]>(initialVideos.content)
   const navigate = useNavigate()
+  const navigation = useNavigation()
+  const isLoading = navigation.state === "loading"
+  const [params, setParams] = useSearchParams()
+  const [filter, setFilter] = useState(params.get("query") ?? "")
+  const noVideos = videos.length === 0 && !filter && !isLoading
+  const noVideosForFilter = videos.length === 0 && filter && !isLoading
+
+  const setQuery = (query: string) => {
+    setParams({query})
+  }
+  const debouncedSetQuery = debounce(setQuery, 500)
 
   useEffect(() => {
-    setVideos(initialVideos)
-  }, [initialVideos])
+    setVideos(initialVideos.content)
+  }, [initialVideos, setVideos])
 
   const onOpenModal = ({video}: VideoWithMarkers) => {
     navigate(`/local/videos/${video.id.id}`)
+  }
+
+  const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilter(e.target.value)
+    debouncedSetQuery(e.target.value.trim())
   }
 
   const onAddFullVideo = async (video: VideoWithMarkers) => {
@@ -109,19 +115,8 @@ export default function ListVideos() {
 
     actions.updateForm({
       stage: LocalFilesFormStage.SelectMarkers,
-      videos: videos.filter((v) => v.markers.length > 0),
-      selectedMarkers: videos
-        .flatMap((m) => m.markers)
-        .map((marker) => ({
-          duration: marker.end - marker.start,
-          id: marker.id,
-          indexWithinVideo: marker.indexWithinVideo,
-          selected: true,
-          selectedRange: [marker.start, marker.end],
-          videoId: marker.videoId,
-          title: marker.primaryTag,
-        })),
       interactive,
+      selectedMarkers: undefined,
     })
     navigate("/local/markers")
   }
@@ -129,37 +124,56 @@ export default function ListVideos() {
   return (
     <>
       <Outlet />
-
-      <div className="w-full flex justify-between">
-        <div className="flex gap-4">
+      <div className="my-4 grid grid-cols-3 items-center">
+        <div className="flex gap-2">
           <Link to="download" className="btn btn-primary">
             <HiArrowDownTray className="mr-2" />
             Download videos
           </Link>
-          <input
-            type="text"
-            placeholder="Filter..."
-            className="input input-bordered w-full lg:w-96"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
+          <Link to="/local/path" className="btn btn-primary">
+            <HiFolder className="mr-2" />
+            Add folder with videos
+          </Link>
         </div>
-
+        <span className="text-center">
+          Found <strong>{initialVideos.totalItems}</strong> videos.
+        </span>
         {videos.length > 0 && (
-          <button className="btn btn-success" onClick={onNextStage}>
+          <button
+            className="btn btn-success place-self-end"
+            onClick={onNextStage}
+          >
             Next
             <HiChevronRight className="ml-1" />
           </button>
         )}
       </div>
 
-      {videoState.length === 0 && (
-        <div className="mt-4 alert alert-info w-fit self-center">
-          <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />
-          <span>
-            No videos found at location &apos;{state.data.localVideoPath}&apos;.
-            Currently only <code>.mp4</code> files are supported.
-          </span>
+      <div className="w-full flex justify-between">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Filter..."
+            className="input input-primary w-full lg:w-96"
+            value={filter}
+            onChange={onFilterChange}
+          />
+        </div>
+      </div>
+
+      {noVideos && (
+        <div className="flex flex-col items-center justify-center mt-8">
+          <HiFolder className="text-8xl" />
+          <h1 className="text-xl">No videos found</h1>
+          <p>Add some by either downloading them or adding a video folder.</p>
+        </div>
+      )}
+
+      {noVideosForFilter && (
+        <div className="flex flex-col items-center justify-center mt-8">
+          <HiXMark className="text-8xl" />
+          <h1 className="text-xl">No videos found</h1>
+          <p>Try changing the filter.</p>
         </div>
       )}
 
@@ -168,7 +182,7 @@ export default function ListVideos() {
           <article
             className={clsx(
               "card card-compact shadow-xl bg-base-200",
-              video.markers.length > 0 && "ring-2 ring-green-500"
+              video.markers.length > 0 && "ring-4 ring-green-500"
             )}
             key={video.video.id.id}
           >
@@ -233,6 +247,13 @@ export default function ListVideos() {
           </article>
         ))}
       </section>
+
+      <Pagination
+        totalPages={initialVideos.totalPages}
+        currentPage={initialVideos.pageNumber}
+        prevLink={{search: `?page=${initialVideos.pageNumber - 1}`}}
+        nextLink={{search: `?page=${initialVideos.pageNumber + 1}`}}
+      />
     </>
   )
 }

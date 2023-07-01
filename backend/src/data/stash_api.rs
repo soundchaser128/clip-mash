@@ -2,7 +2,7 @@ use color_eyre::eyre::bail;
 use graphql_client::{GraphQLQuery, Response};
 use ordered_float::OrderedFloat;
 use reqwest::Client;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::debug;
 
 use self::find_markers_query::{
@@ -70,7 +70,7 @@ pub enum FilterMode {
     Scenes,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SceneStream {
     pub url: String,
     pub label: Option<String>,
@@ -121,7 +121,7 @@ where
         .unwrap_or(duration)
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StashMarker {
     pub id: String,
     pub primary_tag: String,

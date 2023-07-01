@@ -8,11 +8,28 @@ import {
 } from "react-icons/hi2"
 import {FormState} from "../types/types"
 import {formatSeconds} from "../helpers"
+import {Progress} from "../types.generated"
+import useNotification from "../hooks/useNotification"
 
-interface Progress {
-  finished: number
-  total: number
-  done: boolean
+class RingBuffer<T> {
+  buffer: T[]
+  size: number
+
+  constructor(size: number) {
+    this.buffer = []
+    this.size = size
+  }
+
+  get(index: number) {
+    return this.buffer[index]
+  }
+
+  push(item: T): RingBuffer<T> {
+    const buffer = [item, ...this.buffer].slice(0, this.size)
+    const ringBuffer = new RingBuffer<T>(this.size)
+    ringBuffer.buffer = buffer
+    return ringBuffer
+  }
 }
 
 type CreateVideoBody = Omit<FormState, "songs"> & {
@@ -23,11 +40,15 @@ function Progress() {
   const {state} = useStateMachine()
 
   const [progress, setProgress] = useState<Progress>()
+  const [times, setTimes] = useState<RingBuffer<number>>(new RingBuffer(5))
+
+  const eta = times.buffer.reduce((sum, time) => sum + time, 0) / times.size
   const [finished, setFinished] = useState(false)
   const [finalFileName, setFinalFileName] = useState("")
   const downloadLink = useRef<HTMLAnchorElement>(null)
   const [creatingScript, setCreatingScript] = useState(false)
   const fileName = state.data.fileName || `Compilation [${state.data.id}].mp4`
+  const sendNotification = useNotification()
 
   const onSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -55,11 +76,10 @@ function Progress() {
         if (data.done) {
           setFinished(true)
           es.close()
-          new Notification("Video generation finished!", {
-            icon: "/android-chrome-192x192.png",
-          })
+          sendNotification("Success", "Video generation finished!")
         }
         setProgress(data)
+        setTimes((buf) => buf.push(data.etaSeconds))
       }
     }
   }
@@ -121,15 +141,21 @@ function Progress() {
       )}
 
       {progress && !finished && (
-        <div className="text-center w-full">
+        <div className="w-full">
           <progress
             className="progress h-6 progress-primary w-full"
-            value={progress?.finished}
-            max={progress?.total}
+            value={progress?.itemsFinished}
+            max={progress?.itemsTotal}
           />
           <p>
-            {progress.finished} / {progress.total} clips finished
+            <strong>{formatSeconds(progress.itemsFinished, "short")}</strong> /{" "}
+            <strong>{formatSeconds(progress.itemsTotal, "short")}</strong> of
+            the compilation finished
           </p>
+          <p>
+            Estimated time remaining: <strong>{formatSeconds(eta)}</strong>
+          </p>
+          <p>{progress.message}</p>
         </div>
       )}
 

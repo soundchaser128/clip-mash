@@ -16,12 +16,7 @@ import {
 import {useImmer} from "use-immer"
 import {formatSeconds, getSegmentColor, parseTimestamp} from "../../helpers"
 import Modal from "../../components/Modal"
-import {
-  useNavigate,
-  useParams,
-  useRevalidator,
-  useRouteLoaderData,
-} from "react-router-dom"
+import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
 import {persistMarker} from "./api"
@@ -64,12 +59,9 @@ function getSegments(
 type FormMode = "hidden" | "create" | "edit"
 
 export default function EditVideoModal() {
-  const {id} = useParams()
   const navigate = useNavigate()
-  const videos = useRouteLoaderData("video-list") as VideoWithMarkers[]
-  const {video, markers: videoMarkers} = videos.find(
-    ({video}) => video.id.id === id
-  )!
+  const {video, markers: videoMarkers} = useLoaderData() as VideoWithMarkers
+
   const revalidator = useRevalidator()
   const handleValidation = (values: Inputs) => {
     const {start, end, title} = values
@@ -196,7 +188,7 @@ export default function EditVideoModal() {
 
   const onClose = () => {
     revalidator.revalidate()
-    navigate("/local/videos")
+    navigate(-1)
   }
 
   return (
@@ -206,7 +198,7 @@ export default function EditVideoModal() {
           className="w-2/3 max-h-[90vh]"
           muted
           controls
-          src={`/api/local/video/${video.id.id}`}
+          src={`/api/local/video/${video.id.id}/file`}
           ref={videoRef}
           onLoadedMetadata={onMetadataLoaded}
         />

@@ -5,8 +5,7 @@ use axum::body::Body;
 use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
-use camino::Utf8PathBuf;
-use clip_mash_types::{ListVideoDto, MarkerDto, VideoDto};
+use clip_mash_types::{ListVideoDto, MarkerDto, PageParameters, VideoDto};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tower::ServiceExt;
@@ -14,6 +13,7 @@ use tracing::{info, warn};
 use url::Url;
 
 use crate::data::database::CreateMarker;
+use crate::server::dtos::Page;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::service::local_video::VideoService;
@@ -21,6 +21,20 @@ use crate::service::preview_image::PreviewGenerator;
 
 #[axum::debug_handler]
 pub async fn get_video(
+    Path(id): Path<String>,
+    state: State<Arc<AppState>>,
+) -> Result<Json<ListVideoDto>, AppError> {
+    let video = state.database.get_video_with_markers(&id).await?;
+    if let Some(video) = video {
+        let dto = video.into();
+        Ok(Json(dto))
+    } else {
+        Err(AppError::StatusCode(StatusCode::NOT_FOUND))
+    }
+}
+
+#[axum::debug_handler]
+pub async fn get_video_file(
     Path(id): Path<String>,
     state: State<Arc<AppState>>,
     request: axum::http::Request<Body>,
@@ -72,21 +86,36 @@ pub async fn get_marker_preview(
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ListVideoQuery {
+pub struct AddNewVideosBody {
     path: String,
     recurse: bool,
 }
 
+pub async fn add_new_videos(
+    state: State<Arc<AppState>>,
+    Json(body): Json<AddNewVideosBody>,
+) -> Result<impl IntoResponse, AppError> {
+    let video_service: VideoService = state.0.clone().into();
+    video_service
+        .add_new_videos(body.path, body.recurse)
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Deserialize)]
+pub struct VideoSearchQuery {
+    pub query: Option<String>,
+}
+
 #[axum::debug_handler]
 pub async fn list_videos(
-    Query(ListVideoQuery { path, recurse }): Query<ListVideoQuery>,
+    Query(page): Query<PageParameters>,
+    Query(VideoSearchQuery { query }): Query<VideoSearchQuery>,
     state: State<Arc<AppState>>,
-) -> Result<Json<Vec<ListVideoDto>>, AppError> {
-    let service = VideoService::from(state.0);
-    let path = Utf8PathBuf::from(path);
-
-    let videos = service.list_videos(path, recurse).await?;
-    Ok(Json(videos.into_iter().map(From::from).collect()))
+) -> Result<Json<Page<ListVideoDto>>, AppError> {
+    info!("handling list_videos request with page {page:?} and query {query:?}");
+    let (videos, size) = state.database.list_videos(query.as_deref(), page).await?;
+    Ok(Json(Page::new(videos, size, page)))
 }
 
 #[derive(Deserialize)]
@@ -95,12 +124,8 @@ pub struct ListMarkersQuery {
 }
 
 #[axum::debug_handler]
-pub async fn list_markers(
-    Query(ListMarkersQuery { ids }): Query<ListMarkersQuery>,
-    state: State<Arc<AppState>>,
-) -> Result<Json<Vec<MarkerDto>>, AppError> {
-    let ids: Vec<_> = ids.split(',').map(|s| s.trim()).collect();
-    let markers = state.database.get_markers_for_video_ids(&ids).await?;
+pub async fn list_markers(state: State<Arc<AppState>>) -> Result<Json<Vec<MarkerDto>>, AppError> {
+    let markers = state.database.get_all_markers().await?;
     let markers = markers.into_iter().map(From::from).collect();
     Ok(Json(markers))
 }

@@ -12,7 +12,7 @@ function useFuse<T>({items, keys, query, threshold = 0.1}: Options<T>): T[] {
   const fuse = useMemo(() => {
     const fuse = new Fuse(items, {keys, threshold})
     return fuse
-  }, [items, keys])
+  }, [items, keys, threshold])
 
   if (query && query.trim()) {
     const result = fuse.search(query)

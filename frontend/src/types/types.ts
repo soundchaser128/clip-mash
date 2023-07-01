@@ -8,6 +8,9 @@ import {
   SelectedMarker,
   ClipOrder,
   MeasureCount,
+  VideoCodec,
+  VideoQuality,
+  EncodingEffort,
 } from "../types.generated"
 
 export type Tag = TagDto
@@ -25,13 +28,12 @@ export enum FormStage {
 }
 
 export enum LocalFilesFormStage {
-  SelectPath = 1,
-  ListVideos = 2,
-  SelectMarkers = 3,
-  Music = 4,
-  VideoOptions = 5,
-  PreviewClips = 6,
-  Wait = 7,
+  ListVideos = 1,
+  SelectMarkers = 2,
+  Music = 3,
+  VideoOptions = 4,
+  PreviewClips = 5,
+  Wait = 6,
 }
 
 export type IdSource = "stash" | "localFile"
@@ -61,7 +63,6 @@ export type ClipStrategy =
 interface CommonFormState {
   id?: string
   videos?: VideoWithMarkers[]
-  localVideoPath?: string
   recurse?: boolean
   clipOrder?: ClipOrder
   clipDuration?: number
@@ -80,6 +81,9 @@ interface CommonFormState {
   cutAfterMeasures?: MeasureCount
   clipStrategy?: ClipStrategy
   clipWeights?: Array<[string, number]>
+  videoCodec?: VideoCodec
+  videoQuality?: VideoQuality
+  encodingEffort?: EncodingEffort
 }
 
 export interface InitialFormState extends CommonFormState {
@@ -119,4 +123,12 @@ export interface JsonError {
   name: "JsonError"
   message: "error"
   error: string | Record<string, string>
+}
+
+export interface Page<T> {
+  content: T[]
+  totalItems: number
+  pageNumber: number
+  pageSize: number
+  totalPages: number
 }

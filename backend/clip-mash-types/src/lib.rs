@@ -4,7 +4,7 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use typescript_type_def::TypeDef;
 
-#[derive(Clone, Copy, Debug, Deserialize, TypeDef)]
+#[derive(Clone, Copy, Debug, Deserialize, TypeDef, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ClipOrder {
     Random,
@@ -160,23 +160,24 @@ pub struct SelectedMarker {
     pub index_within_video: usize,
     pub selected: Option<bool>,
     pub title: String,
+    pub loops: usize,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RandomizedClipOptions {
     pub base_duration: f64,
     pub divisors: Vec<f64>,
 }
 
-#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[derive(Deserialize, Debug, TypeDef, Clone, Copy, Serialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum MeasureCount {
     Fixed { count: usize },
     Random { min: usize, max: usize },
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SongClipOptions {
     pub beats_per_measure: usize,
@@ -184,21 +185,21 @@ pub struct SongClipOptions {
     pub songs: Vec<Beats>,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum PmvClipOptions {
     Randomized(RandomizedClipOptions),
     Songs(SongClipOptions),
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct ClipOptions {
     pub clip_picker: ClipPickerOptions,
     pub order: ClipOrder,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum ClipPickerOptions {
     RoundRobin(RoundRobinClipOptions),
@@ -230,14 +231,14 @@ impl ClipPickerOptions {
     }
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RoundRobinClipOptions {
     pub length: f64,
     pub clip_lengths: PmvClipOptions,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, TypeDef, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WeightedRandomClipOptions {
     pub weights: Vec<(String, f64)>,
@@ -245,7 +246,7 @@ pub struct WeightedRandomClipOptions {
     pub clip_lengths: PmvClipOptions,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Serialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct EqualLengthClipOptions {
     pub clip_duration: f64,
@@ -297,6 +298,30 @@ impl VideoResolution {
     }
 }
 
+#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum VideoCodec {
+    Av1,
+    H264,
+    H265,
+}
+
+#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum VideoQuality {
+    Low,
+    Medium,
+    High,
+}
+
+#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum EncodingEffort {
+    Low,
+    Medium,
+    High,
+}
+
 #[derive(Deserialize, Debug, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateVideoBody {
@@ -307,6 +332,9 @@ pub struct CreateVideoBody {
     pub output_fps: u32,
     pub song_ids: Vec<i64>,
     pub music_volume: Option<f64>,
+    pub video_codec: VideoCodec,
+    pub video_quality: VideoQuality,
+    pub encoding_effort: EncodingEffort,
 }
 
 #[derive(Serialize, Debug, TypeDef)]
@@ -345,6 +373,45 @@ pub struct NewId {
     pub id: String,
 }
 
+#[derive(Deserialize, Debug, Clone, Copy, TypeDef)]
+pub struct PageParameters {
+    pub page: Option<usize>,
+    pub size: Option<usize>,
+}
+
+impl PageParameters {
+    pub const DEFAULT_PAGE: i64 = 0;
+    pub const DEFAULT_SIZE: i64 = 20;
+
+    pub fn limit(&self) -> i64 {
+        self.size.map(|s| s as i64).unwrap_or(Self::DEFAULT_SIZE)
+    }
+
+    pub fn offset(&self) -> i64 {
+        self.page
+            .map(|p| p as i64 * self.limit())
+            .unwrap_or(Self::DEFAULT_PAGE)
+    }
+
+    pub fn size(&self) -> i64 {
+        self.size.map(|s| s as i64).unwrap_or(Self::DEFAULT_SIZE)
+    }
+
+    pub fn page(&self) -> i64 {
+        self.page.map(|p| p as i64).unwrap_or(Self::DEFAULT_PAGE)
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct Progress {
+    pub items_finished: f64,
+    pub items_total: f64,
+    pub done: bool,
+    pub eta_seconds: f64,
+    pub message: String,
+}
+
 pub type Api = (
     StashScene,
     CreateVideoBody,
@@ -357,6 +424,8 @@ pub type Api = (
     TagDto,
     SongDto,
     NewId,
+    PageParameters,
+    Progress,
 );
 
 #[cfg(test)]

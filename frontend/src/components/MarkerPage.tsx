@@ -18,6 +18,7 @@ import {
 import useFuse from "../hooks/useFuse"
 import {formatSeconds, sumDurations} from "../helpers"
 import {MarkerDto, SelectedMarker} from "../types.generated"
+import JumpToTop from "./JumpToTop"
 
 interface Props {
   data: {
@@ -151,6 +152,7 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
 
   return (
     <div>
+      <JumpToTop />
       <div className="w-full flex justify-between items-center">
         <div className="text-center">
           Estimated total duration of video: <strong>{totalDuration}</strong>

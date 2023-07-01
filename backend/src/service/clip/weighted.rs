@@ -43,7 +43,7 @@ impl ClipPicker for WeightedRandomClipPicker {
         mut options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
-        info!("using WeightedRandomClipPicker to make clips: {options:#?}");
+        info!("using WeightedRandomClipPicker to make clips");
         // debug!("using markers: {markers:#?}");
         options.weights.retain(|(_, weight)| *weight > 0.0);
         let weight_labels: HashSet<_> = options

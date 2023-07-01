@@ -26,6 +26,7 @@ import clsx from "clsx"
 import {SongDto} from "../types.generated"
 import HelpModal from "../components/HelpModal"
 import useNotification from "../hooks/useNotification"
+import Loader from "../components/Loader"
 
 interface Inputs {
   musicUrl: string
@@ -309,6 +310,10 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
     reset()
   }
 
+  if (loading) {
+    return <Loader>Downloading song and detecting beats.</Loader>
+  }
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -329,7 +334,7 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
         <button type="button" onClick={onCancel} className="btn btn-outline">
           Cancel
         </button>
-        <button disabled={loading} className="btn btn-success" type="submit">
+        <button className="btn btn-success" type="submit">
           Submit
         </button>
       </div>

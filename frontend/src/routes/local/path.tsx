@@ -5,6 +5,7 @@ import invariant from "tiny-invariant"
 import {useNavigate} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {useState} from "react"
+import Loader from "../../components/Loader"
 
 interface Inputs {
   path: string
@@ -82,14 +83,11 @@ export default function SelectVideos() {
         )}
 
         {submitting && (
-          <div className="self-center flex gap-4 items-center mt-4">
-            <span className="loading loading-ring w-16" />
-            <p>
-              Scanning your videos and generating preview images...
-              <br /> This might take a while, depending on how many videos you
-              have.
-            </p>
-          </div>
+          <Loader>
+            Scanning your videos and generating preview images...
+            <br /> This might take a while, depending on how many videos you
+            have.
+          </Loader>
         )}
       </form>
     </>

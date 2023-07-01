@@ -124,9 +124,8 @@ export default function ListVideos() {
   return (
     <>
       <Outlet />
-
-      <div className="w-full flex justify-between">
-        <div className="flex gap-4">
+      <div className="my-4 grid grid-cols-3 items-center">
+        <div className="flex gap-2">
           <Link to="download" className="btn btn-primary">
             <HiArrowDownTray className="mr-2" />
             Download videos
@@ -135,21 +134,31 @@ export default function ListVideos() {
             <HiFolder className="mr-2" />
             Add folder with videos
           </Link>
-          <input
-            type="text"
-            placeholder="Filter..."
-            className="input input-bordered w-full lg:w-96"
-            value={filter}
-            onChange={onFilterChange}
-          />
         </div>
-
+        <span className="text-center">
+          Found <strong>{initialVideos.totalItems}</strong> videos.
+        </span>
         {videos.length > 0 && (
-          <button className="btn btn-success" onClick={onNextStage}>
+          <button
+            className="btn btn-success place-self-end"
+            onClick={onNextStage}
+          >
             Next
             <HiChevronRight className="ml-1" />
           </button>
         )}
+      </div>
+
+      <div className="w-full flex justify-between">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Filter..."
+            className="input input-primary w-full lg:w-96"
+            value={filter}
+            onChange={onFilterChange}
+          />
+        </div>
       </div>
 
       {noVideos && (

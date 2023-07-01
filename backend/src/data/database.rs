@@ -141,22 +141,6 @@ impl Database {
         Ok(marker)
     }
 
-    pub async fn get_markers_page(&self, page: PageParameters) -> Result<(Vec<DbMarker>, usize)> {
-        let count = sqlx::query_scalar!("SELECT COUNT(*) FROM markers")
-            .fetch_one(&self.pool)
-            .await?;
-        let limit = page.limit();
-        let offset = page.offset();
-        let markers = sqlx::query_as!(DbMarker, "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
-                FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
-                ORDER BY m.rowid DESC
-                LIMIT $1 OFFSET $2",
-            limit, offset)
-            .fetch_all(&self.pool)
-            .await?;
-        Ok((markers, count as usize))
-    }
-
     pub async fn get_all_markers(&self) -> Result<Vec<DbMarker>> {
         let markers = sqlx::query_as!(DbMarker, "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
         FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
@@ -637,7 +621,7 @@ mod test {
     use sqlx::SqlitePool;
 
     use crate::data::database::{CreateMarker, Database};
-    use crate::service::fixtures::{self, persist_video, persist_video_with_file_name};
+    use crate::service::fixtures::{persist_video, persist_video_with_file_name};
     use crate::util::generate_id;
 
     #[sqlx::test]
@@ -727,31 +711,6 @@ mod test {
         assert_eq!(result.video.file_path, expected.file_path);
         assert_eq!(result.video.interactive, expected.interactive);
         assert_eq!(result.markers.len(), 0);
-    }
-
-    #[sqlx::test]
-    async fn test_get_markers_page(pool: SqlitePool) {
-        let database = Database::with_pool(pool);
-        let video = persist_video(&database).await.unwrap();
-        for i in 0..45 {
-            fixtures::persist_marker(&database, &video.id, i, 0.0, i as f64 * 2.0)
-                .await
-                .unwrap();
-        }
-
-        let page = PageParameters {
-            page: Some(0),
-            size: Some(10),
-        };
-        let (result, total) = database.get_markers_page(page).await.unwrap();
-        assert_eq!(45, total);
-        assert_eq!(result.len(), 10);
-        let page = PageParameters {
-            page: Some(1),
-            size: Some(10),
-        };
-        let (result, _) = database.get_markers_page(page).await.unwrap();
-        assert_eq!(result.len(), 10);
     }
 
     #[sqlx::test]

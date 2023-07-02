@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-# 0.12.0
+## 0.12.0
 - feat: Allow specifying video encoding parameters (codec, quality and encoding effort)
 - feat: Change video list page to show all videos on a page instead of having to specify a path first
 - feat: Show ETA during clip creation

@@ -53,6 +53,7 @@ pub struct DbMarker {
     pub file_path: String,
     pub index_within_video: i64,
     pub marker_preview_image: Option<String>,
+    pub interactive: bool,
 }
 
 #[derive(Debug)]
@@ -120,7 +121,7 @@ impl Database {
     pub async fn get_marker(&self, id: i64) -> Result<DbMarker> {
         let marker = sqlx::query_as!(
             DbMarker,
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
                 FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
                 WHERE m.rowid = $1",
             id
@@ -131,7 +132,8 @@ impl Database {
     }
 
     pub async fn get_all_markers(&self) -> Result<Vec<DbMarker>> {
-        let markers = sqlx::query_as!(DbMarker, "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
+        let markers = sqlx::query_as!(DbMarker, "
+        SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
         FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
         ORDER BY m.rowid DESC")
         .fetch_all(&self.pool)
@@ -170,6 +172,7 @@ impl Database {
                         r.file_path,
                         r.index_within_video,
                         r.marker_preview_image,
+                        r.interactive,
                     ) {
                         (
                             Some(video_id),
@@ -180,6 +183,7 @@ impl Database {
                             file_path,
                             Some(index),
                             marker_preview_image,
+                            interactive,
                         ) => Some(DbMarker {
                             rowid,
                             title,
@@ -189,6 +193,7 @@ impl Database {
                             file_path,
                             index_within_video: index,
                             marker_preview_image,
+                            interactive: interactive,
                         }),
                         _ => None,
                     }
@@ -229,6 +234,7 @@ impl Database {
                         r.file_path,
                         r.index_within_video,
                         r.marker_preview_image,
+                        r.interactive,
                     ) {
                         (
                             Some(video_id),
@@ -239,6 +245,7 @@ impl Database {
                             file_path,
                             Some(index),
                             marker_preview_image,
+                            interactive,
                         ) => Some(DbMarker {
                             rowid,
                             title,
@@ -248,6 +255,7 @@ impl Database {
                             file_path,
                             index_within_video: index,
                             marker_preview_image,
+                            interactive,
                         }),
                         _ => None,
                     }
@@ -279,7 +287,7 @@ impl Database {
     pub async fn get_markers_without_preview_images(&self) -> Result<Vec<DbMarker>> {
         sqlx::query_as!(
             DbMarker,
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
             FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
             WHERE m.marker_preview_image IS NULL"
         )
@@ -328,6 +336,7 @@ impl Database {
             file_path: "not-needed".to_string(),
             index_within_video: marker.index_within_video,
             marker_preview_image: marker.preview_image_path,
+            interactive: marker.video_interactive,
         };
 
         info!("newly updated or inserted marker: {marker:?}");
@@ -356,6 +365,8 @@ impl Database {
             file_path: "not-needed".to_string(),
             index_within_video: record.index_within_video,
             marker_preview_image: record.marker_preview_image,
+            // not needed for updating I think
+            interactive: false,
         };
 
         Ok(marker)
@@ -480,6 +491,7 @@ impl Database {
                             r.file_path,
                             r.index_within_video,
                             r.marker_preview_image,
+                            r.interactive,
                         ) {
                             (
                                 Some(video_id),
@@ -490,6 +502,7 @@ impl Database {
                                 file_path,
                                 Some(index),
                                 marker_preview_image,
+                                interactive,
                             ) => Some(
                                 DbMarker {
                                     rowid,
@@ -500,6 +513,7 @@ impl Database {
                                     file_path,
                                     index_within_video: index,
                                     marker_preview_image,
+                                    interactive,
                                 }
                                 .into(),
                             ),
@@ -661,6 +675,7 @@ mod test {
             end: 17.0,
             index_within_video: 0,
             preview_image_path: None,
+            video_interactive: false,
         };
         let result = database.create_new_marker(expected.clone()).await.unwrap();
 
@@ -681,6 +696,7 @@ mod test {
             end: 17.0,
             index_within_video: 0,
             preview_image_path: None,
+            video_interactive: false,
         };
         let err = database
             .create_new_marker(expected.clone())
@@ -702,6 +718,7 @@ mod test {
             end: 17.0,
             index_within_video: 0,
             preview_image_path: None,
+            video_interactive: false,
         };
         let result = database.create_new_marker(marker).await.unwrap();
         let id = result.rowid.unwrap();
@@ -775,7 +792,7 @@ mod test {
     async fn test_update_marker(pool: SqlitePool) {
         let database = Database::with_pool(pool);
         let video = persist_video(&database).await.unwrap();
-        let marker = persist_marker(&database, &video.id, 0, 0.0, 15.0)
+        let marker = persist_marker(&database, &video.id, 0, 0.0, 15.0, false)
             .await
             .unwrap();
         let title = marker.title.clone();

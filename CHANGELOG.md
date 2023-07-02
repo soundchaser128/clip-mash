@@ -6,6 +6,7 @@
 - feat: Show ETA during clip creation
 - feat: Allow repeating markers
 - fix: Changing a marker's range makes a duplicate
+- fix: Funscript file was not available for download when generating from local files
 
 ## 0.11.0
 - feat: Added browser notifications when downloads are finished or video generation is done

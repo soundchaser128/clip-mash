@@ -421,6 +421,7 @@ pub struct CreateMarker {
     pub title: String,
     pub index_within_video: i64,
     pub preview_image_path: Option<String>,
+    pub video_interactive: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, TypeDef)]

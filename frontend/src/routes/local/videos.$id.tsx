@@ -118,7 +118,7 @@ export default function EditVideoModal() {
 
     const result =
       formMode === "create"
-        ? await createNewMarker(video.id.id, values, videoDuration!, index)
+        ? await createNewMarker(video, values, videoDuration!, index)
         : await updateMarker(editedMarker!.id.id, values)
 
     if (result.isOk) {

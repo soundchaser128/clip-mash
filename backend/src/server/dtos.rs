@@ -39,7 +39,7 @@ impl From<DbMarker> for MarkerDto {
                 .map(|s| s.to_string()),
             performers: vec![],
             primary_tag: value.title,
-            scene_interactive: false,
+            scene_interactive: value.interactive,
             scene_title: None,
             stream_url: format!("/api/local/video/{}/file", value.video_id),
             tags: vec![],

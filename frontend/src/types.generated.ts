@@ -154,5 +154,6 @@ export type CreateMarker = {
   title: string
   indexWithinVideo: I64
   previewImagePath: string | null
+  videoInteractive: boolean
 }
 export type UpdateMarker = {rowid: I64; start: F64; end: F64; title: string}

@@ -3,13 +3,17 @@ import {useRef, useState} from "react"
 import {
   HiArrowDown,
   HiCodeBracket,
+  HiInformationCircle,
   HiOutlineFolder,
   HiRocketLaunch,
+  HiXCircle,
+  HiXMark,
 } from "react-icons/hi2"
 import {FormState} from "../types/types"
 import {formatSeconds} from "../helpers"
 import {Progress} from "../types.generated"
 import useNotification from "../hooks/useNotification"
+import Toast from "../components/Toast"
 
 class RingBuffer<T> {
   buffer: T[]
@@ -38,7 +42,6 @@ type CreateVideoBody = Omit<FormState, "songs"> & {
 
 function Progress() {
   const {state} = useStateMachine()
-
   const [progress, setProgress] = useState<Progress>()
   const [times, setTimes] = useState<RingBuffer<number>>(new RingBuffer(5))
 
@@ -180,6 +183,33 @@ function Progress() {
 
           {state.data.interactive && (
             <div className="flex flex-col">
+              <Toast type="info" dismissable>
+                This compilation is interactive. You can use e.g.{" "}
+                <a
+                  href="https://beta.funscript.io/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="link"
+                >
+                  Funplayer
+                </a>{" "}
+                to play it alongside the video in your browser, with supported
+                toys like the{" "}
+                <a
+                  href="https://www.thehandy.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="link"
+                >
+                  Handy
+                </a>
+                .
+                <br />
+                Make sure to take a look at the generated file before playing
+                it. It might contain awkward sections or abrupt changes in
+                speed.
+              </Toast>
+
               <p className="font-light self-start mb-1">
                 Download the generated .funscript file
               </p>
@@ -191,7 +221,6 @@ function Progress() {
                 <HiCodeBracket className="w-6 h-6 mr-2" />
                 Funscript
               </button>
-
               <a className="hidden" ref={downloadLink} />
             </div>
           )}

@@ -1,5 +1,10 @@
 import {Result} from "@badrap/result"
-import {CreateMarker, MarkerDto, UpdateMarker} from "../../types.generated"
+import {
+  CreateMarker,
+  MarkerDto,
+  UpdateMarker,
+  VideoDto,
+} from "../../types.generated"
 import {parseTimestamp} from "../../helpers"
 import {JsonError} from "../../types/types"
 import {satisfies} from "semver"
@@ -11,7 +16,7 @@ export interface MarkerInputs {
 }
 
 export async function createNewMarker(
-  videoId: string,
+  videoDto: VideoDto,
   marker: MarkerInputs,
   duration: number,
   index: number
@@ -23,9 +28,10 @@ export async function createNewMarker(
     start,
     end,
     title: marker.title.trim(),
-    videoId,
+    videoId: videoDto.id.id,
     indexWithinVideo: index,
     previewImagePath: null,
+    videoInteractive: videoDto.interactive,
   } satisfies CreateMarker
 
   const response = await fetch("/api/local/video/marker", {

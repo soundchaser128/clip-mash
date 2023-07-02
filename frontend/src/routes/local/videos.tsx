@@ -85,7 +85,7 @@ export default function ListVideos() {
   const onAddFullVideo = async (video: VideoWithMarkers) => {
     const duration = video.video.duration
     const result = await createNewMarker(
-      video.video.id.id,
+      video.video,
       {
         start: 0.0,
         end: duration,

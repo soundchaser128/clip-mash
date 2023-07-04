@@ -1,4 +1,3 @@
-use std::cmp::Reverse;
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
@@ -9,7 +8,7 @@ use walkdir::WalkDir;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
-use crate::data::database::{Database, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
+use crate::data::database::{Database, DbVideo, LocalVideoSource};
 use crate::server::handlers::AppState;
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
@@ -49,20 +48,18 @@ impl VideoService {
         .await?
     }
 
-    pub async fn list_videos(
-        &self,
-        path: impl AsRef<Utf8Path>,
-        recurse: bool,
-    ) -> Result<Vec<LocalVideoWithMarkers>> {
+    pub async fn add_new_videos(&self, path: impl AsRef<Utf8Path>, recurse: bool) -> Result<()> {
         let entries = self.gather_files(path.as_ref().to_owned(), recurse).await?;
         debug!("found files {entries:?} (recurse = {recurse})");
-        let mut videos = vec![];
         for path in entries {
             if path.extension() == Some("mp4") {
-                if let Some(video) = self.database.get_video_by_path(path.as_str()).await? {
-                    debug!("found existing video {video:#?}");
-                    videos.push(video);
-                } else {
+                let video_exists = self
+                    .database
+                    .get_video_by_path(path.as_str())
+                    .await?
+                    .is_some();
+                info!("video at path {path} exists: {video_exists}");
+                if !video_exists {
                     let interactive = path.with_extension("funscript").is_file();
                     let ffprobe = ffprobe(&path, &self.ffmpeg_location).await?;
                     let duration = ffprobe.duration();
@@ -85,18 +82,10 @@ impl VideoService {
                     };
                     info!("inserting new video {video:#?}");
                     self.database.persist_video(video.clone()).await?;
-                    videos.push(LocalVideoWithMarkers {
-                        video,
-                        markers: vec![],
-                    });
                 }
             }
         }
-        let downloaded_videos = self.database.get_downloaded_videos().await?;
-        videos.extend(downloaded_videos);
-        videos.sort_by_key(|v| Reverse(v.markers.len()));
-
-        Ok(videos)
+        Ok(())
     }
 
     pub async fn download_video(&self, url: Url) -> Result<(String, Utf8PathBuf)> {

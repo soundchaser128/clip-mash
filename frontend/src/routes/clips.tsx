@@ -68,7 +68,7 @@ const Timeline: React.FC<TimelineProps> = ({
           <div
             key={index}
             className={clsx(
-              "flex justify-center items-center text-sm cursor-pointer",
+              "flex justify-center items-center text-sm cursor-pointer text-white",
               index !== currentClipIndex && "opacity-30 hover:opacity-60",
               index === currentClipIndex && "opacity-100"
             )}
@@ -100,14 +100,19 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
   const markerCounts = useMemo(() => {
     const counts = new Map<string, MarkerCount>()
     for (const marker of state.data.selectedMarkers ?? []) {
-      const count = counts.get(marker.title) ?? {total: 0, current: 0}
-      counts.set(marker.title, {total: count.total + 1, current: count.current})
+      if (marker.selected) {
+        const count = counts.get(marker.title) ?? {total: 0, current: 0}
+        counts.set(marker.title, {
+          total: count.total + 1,
+          current: count.current,
+        })
+      }
     }
     for (const clip of clips) {
       const marker = state.data.selectedMarkers?.find(
         (m) => m.id.id === clip.markerId.id
       )
-      if (marker && marker.title) {
+      if (marker && marker.title && marker.selected) {
         const count = counts.get(marker.title) ?? {total: 0, current: 0}
         counts.set(marker.title, {
           total: count.total,
@@ -120,11 +125,20 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
   }, [state.data, clips])
 
   const [weights, setWeights] = useImmer<Array<[string, number]>>(() => {
+    const markerTitles = Array.from(
+      new Set(state.data.selectedMarkers?.map((m) => m.title.trim()))
+    ).sort()
     if (state.data.clipWeights) {
-      return state.data.clipWeights
+      return state.data.clipWeights.filter(([title]) =>
+        markerTitles.includes(title)
+      )
     } else {
       const markerTitles = Array.from(
-        new Set(state.data.selectedMarkers?.map((m) => m.title.trim()))
+        new Set(
+          state.data
+            .selectedMarkers!.filter((m) => m.selected)
+            .map((m) => m.title.trim())
+        )
       ).sort()
       return Array.from(markerTitles).map((title) => [title, 1.0])
     }
@@ -443,6 +457,7 @@ function PreviewClips() {
     0
   )
   const [withMusic, setWithMusic] = useState(false)
+  const [videoMuted, setVideoMuted] = useState(true)
   const isPmv = state.data.songs && state.data.songs.length >= 1
   const [songIndex, setSongIndex] = useState(0)
 
@@ -543,7 +558,7 @@ function PreviewClips() {
         <video
           className="w-3/4 h-[650px]"
           src={clipUrl}
-          muted
+          muted={videoMuted}
           autoPlay={autoPlay}
           onTimeUpdate={onVideoTimeUpdate}
           ref={videoRef}
@@ -597,6 +612,17 @@ function PreviewClips() {
             >
               <HiForward />
             </button>
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text mr-2">Mute video</span>
+              <input
+                type="checkbox"
+                className="toggle"
+                checked={videoMuted}
+                onChange={(e) => setVideoMuted(e.target.checked)}
+              />
+            </label>
           </div>
 
           {isPmv && (

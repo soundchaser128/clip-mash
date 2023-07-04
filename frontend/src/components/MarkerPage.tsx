@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {useNavigate} from "react-router-dom"
-import {FormStage} from "../types/types"
+import {FormStage, LocalFilesFormStage} from "../types/types"
 import {updateForm} from "../routes/actions"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
@@ -10,23 +10,25 @@ import {
   HiChevronRight,
   HiClock,
   HiInformationCircle,
+  HiMiniBars2,
   HiUser,
   HiVideoCamera,
   HiXMark,
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
-import {formatSeconds} from "../helpers"
+import {formatSeconds, sumDurations} from "../helpers"
 import {MarkerDto, SelectedMarker} from "../types.generated"
+import JumpToTop from "./JumpToTop"
 
 interface Props {
   data: {
     markers: MarkerDto[]
   }
-  withImages?: boolean
   withPerformers?: boolean
+  nextStage: FormStage | LocalFilesFormStage
 }
 
-const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
+const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
   const {actions, state} = useStateMachine({updateForm})
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
@@ -42,6 +44,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
             selected: true,
             selectedRange: [m.start, m.end],
             title: m.primaryTag,
+            loops: 1,
           } satisfies SelectedMarker,
         ])
       return Object.fromEntries(entries)
@@ -67,14 +70,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
     }
   }
 
-  const totalDuration = formatSeconds(
-    Object.values(selection)
-      .filter((m) => m.selected)
-      .reduce(
-        (sum, next) => sum + (next.selectedRange[1] - next.selectedRange[0]),
-        0
-      )
-  )
+  const totalDuration = formatSeconds(sumDurations(Object.values(selection)))
 
   const onCheckboxChange = (id: number, checked: boolean) => {
     setSelection((draft) => {
@@ -98,6 +94,12 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
     })
   }
 
+  const onSetLoops = (id: number, loops: number) => {
+    setSelection((draft) => {
+      draft[id].loops = loops
+    })
+  }
+
   const onNextStage = () => {
     const selectedMarkers = Object.values(selection)
     const hasInteractiveScenes = data.markers
@@ -105,7 +107,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
       .some((m) => m.sceneInteractive)
 
     actions.updateForm({
-      stage: FormStage.Music,
+      stage: nextStage,
       selectedMarkers,
       markers: data.markers,
       interactive: hasInteractiveScenes,
@@ -130,8 +132,27 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
     })
   }
 
+  const onEqualizeLengths = () => {
+    setSelection((draft) => {
+      // Find the longest selected marker
+      const longestSelectedMarker = Object.values(draft)
+        .filter((m) => m.selected)
+        .reduce((longest, next) => {
+          const len = next.selectedRange[1] - next.selectedRange[0]
+          return len > longest ? len : longest
+        }, 0)
+
+      // Set loops to match the longest selected marker
+      for (const selectedMarker of Object.values(draft)) {
+        const [start, end] = selectedMarker.selectedRange
+        selectedMarker.loops = Math.floor(longestSelectedMarker / (end - start))
+      }
+    })
+  }
+
   return (
     <div>
+      <JumpToTop />
       <div className="w-full flex justify-between items-center">
         <div className="text-center">
           Estimated total duration of video: <strong>{totalDuration}</strong>
@@ -165,10 +186,25 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
                 value={maxMarkerLength || ""}
                 onChange={(e) => setMaxMarkerLength(e.target.valueAsNumber)}
               />
-              <button className="btn" type="button" onClick={onLimitDuration}>
+              <button
+                className="btn btn-success"
+                type="button"
+                onClick={onLimitDuration}
+              >
+                <HiCheck className="mr-1" />
                 Apply
               </button>
             </div>
+          </div>
+
+          <div
+            className="tooltip"
+            data-tip="Makes the markers loop to match the duration of the longest selected marker."
+          >
+            <button className="btn" type="button" onClick={onEqualizeLengths}>
+              <HiMiniBars2 className="mr-1" />
+              Equalize lengths
+            </button>
           </div>
         </div>
 
@@ -192,7 +228,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
           </span>
         </div>
       )}
-      <section className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
         {markers.map((marker) => {
           const selectedMarker = selection[marker.id.id]
           return (
@@ -203,25 +239,23 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
                 !selectedMarker.selected && "opacity-50"
               )}
             >
-              {withImages && (
-                <figure>
-                  {videoPreview === marker.id.id && (
-                    <video muted autoPlay src={marker.streamUrl} />
-                  )}
-                  {videoPreview !== marker.id.id && (
-                    <img
-                      src={marker.screenshotUrl || undefined}
-                      className="aspect-[16/9] object-cover object-top w-full"
-                    />
-                  )}
-                </figure>
-              )}
+              <figure>
+                {videoPreview === marker.id.id && (
+                  <video muted autoPlay src={marker.streamUrl} />
+                )}
+                {videoPreview !== marker.id.id && (
+                  <img
+                    src={marker.screenshotUrl || undefined}
+                    className="aspect-[16/9] object-cover object-top w-full"
+                  />
+                )}
+              </figure>
 
               <div className="card-body">
                 <h2 className="card-title">
                   {[marker.primaryTag, ...marker.tags].join(", ")}
                 </h2>
-                <p>
+                <p className="truncate">
                   <strong>
                     <HiVideoCamera className="mr-2 inline" />
                     Scene:{" "}
@@ -229,7 +263,7 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
                   {marker.sceneTitle || marker.fileName}
                 </p>
                 {withPerformers && (
-                  <p>
+                  <p className="truncate">
                     <strong>
                       <HiUser className="mr-2 inline" />
                       Performers:{" "}
@@ -261,45 +295,54 @@ const SelectMarkers: React.FC<Props> = ({data, withImages, withPerformers}) => {
                       }
                       disabled={!selectedMarker.selected}
                       max={marker.end - marker.start}
-                      min={15}
+                      min={0}
                       type="range"
                       className="range w-full"
                     />
                   </div>
 
-                  <div className="card-actions justify-between">
-                    {withImages && (
-                      <div className="form-control">
-                        <label className="label cursor-pointer">
-                          <span className="label-text">Video preview</span>
-                          <input
-                            onChange={(e) =>
-                              onVideoPreviewChange(
-                                marker.id.id,
-                                e.target.checked
-                              )
-                            }
-                            checked={videoPreview === marker.id.id}
-                            disabled={!selectedMarker.selected}
-                            type="checkbox"
-                            className="toggle ml-2"
-                          />
-                        </label>
-                      </div>
-                    )}
-                    {!withImages && <div />}
+                  <div className="grid grid-rows-2">
                     <div className="form-control">
                       <label className="label cursor-pointer">
                         <span className="label-text">Include</span>
                         <input
                           type="checkbox"
-                          className="checkbox checkbox-primary ml-2"
+                          className="toggle toggle-sm toggle-primary"
                           checked={!!selectedMarker.selected}
                           onChange={(e) =>
                             onCheckboxChange(marker.id.id, e.target.checked)
                           }
                         />
                       </label>
+                    </div>
+                    <div className="form-control">
+                      <label className="label cursor-pointer">
+                        <span className="label-text">Video preview</span>
+                        <input
+                          onChange={(e) =>
+                            onVideoPreviewChange(marker.id.id, e.target.checked)
+                          }
+                          checked={videoPreview === marker.id.id}
+                          disabled={!selectedMarker.selected}
+                          type="checkbox"
+                          className="toggle toggle-sm"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="flex flex-row justify-between">
+                      <label className="label">
+                        <span className="label-text grow">Loops</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="input input-sm input-bordered w-24"
+                        value={selectedMarker.loops || 1}
+                        disabled={!selectedMarker.selected}
+                        onChange={(e) =>
+                          onSetLoops(marker.id.id, e.target.valueAsNumber)
+                        }
+                      />
                     </div>
                   </div>
                 </div>

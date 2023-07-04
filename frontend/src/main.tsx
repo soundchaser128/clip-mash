@@ -8,12 +8,13 @@ import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
   isRouteErrorResponse,
-  LoaderFunction,
   Outlet,
   RouterProvider,
   useLoaderData,
+  ScrollRestoration,
   useNavigate,
   useRouteError,
+  LoaderFunction,
 } from "react-router-dom"
 import "./index.css"
 import SelectCriteria from "./routes/stash/filter/root"
@@ -42,15 +43,19 @@ import {
   clipsLoader,
   localMarkerLoader,
   newIdLoader,
+  videoDetailsLoader,
+  musicLoader,
+  versionLoader,
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import {AppVersion, SongDto} from "./types.generated"
+import useSessionStorage from "./hooks/useSessionStorage"
+import {HiCheck, HiXMark} from "react-icons/hi2"
 import MarkersPage from "./routes/local/markers"
 import {resetForm} from "./routes/actions"
 import DownloadVideosPage from "./routes/local/download"
-import useSessionStorage from "./hooks/useSessionStorage"
-import {HiCheck, HiXMark} from "react-icons/hi2"
+import useNotification from "./hooks/useNotification"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -146,18 +151,6 @@ const ErrorBoundary = () => {
   )
 }
 
-const musicLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/song")
-  const data = (await response.json()) as SongDto[]
-  return data
-}
-
-const versionLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/self/version")
-  const data = (await response.json()) as AppVersion
-  return data
-}
-
 const RootElement = () => {
   const [updateDeclined, setUpdateDeclined] = useSessionStorage(
     "updateDeclined",
@@ -165,6 +158,7 @@ const RootElement = () => {
   )
   const navigate = useNavigate()
   const [updating, setUpdating] = useState(false)
+  useNotification()
 
   useEffect(() => {
     if (Notification.permission === "default") {
@@ -237,6 +231,7 @@ const router = createBrowserRouter([
     path: "/",
     errorElement: <ErrorBoundary />,
     element: <RootElement />,
+    id: "root",
     loader: versionLoader,
     children: [
       {
@@ -264,13 +259,11 @@ const router = createBrowserRouter([
             path: "videos",
             element: <ListVideos />,
             loader: listVideosLoader,
-            id: "video-list",
-            children: [
-              {
-                path: ":id",
-                element: <EditVideoModal />,
-              },
-            ],
+          },
+          {
+            path: "videos/:id",
+            element: <EditVideoModal />,
+            loader: videoDetailsLoader,
           },
           {
             path: "markers",

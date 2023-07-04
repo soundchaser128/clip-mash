@@ -38,28 +38,37 @@ describe("sumDurations", () => {
 
   it("should return 0 when no markers are selected", () => {
     const markers = [
-      {selected: false, selectedRange: [0, 10]},
-      {selected: false, selectedRange: [10, 20]},
-      {selected: false, selectedRange: [20, 30]},
+      {selected: false, selectedRange: [0, 10], loops: 1},
+      {selected: false, selectedRange: [10, 20], loops: 1},
+      {selected: false, selectedRange: [20, 30], loops: 1},
     ] satisfies HasDuration[]
     expect(sumDurations(markers)).toBe(0)
   })
 
   it("should return the sum of selected marker durations", () => {
     const markers = [
-      {selected: true, selectedRange: [0, 10]},
-      {selected: false, selectedRange: [10, 20]},
-      {selected: true, selectedRange: [20, 30]},
+      {selected: true, selectedRange: [0, 10], loops: 1},
+      {selected: false, selectedRange: [10, 20], loops: 1},
+      {selected: true, selectedRange: [20, 30], loops: 1},
     ] satisfies HasDuration[]
     expect(sumDurations(markers)).toBe(20)
   })
 
   it("should handle markers with overlapping selected ranges", () => {
     const markers = [
-      {selected: true, selectedRange: [0, 10]},
-      {selected: true, selectedRange: [5, 15]},
-      {selected: true, selectedRange: [10, 20]},
+      {selected: true, selectedRange: [0, 10], loops: 1},
+      {selected: true, selectedRange: [5, 15], loops: 1},
+      {selected: true, selectedRange: [10, 20], loops: 1},
     ] satisfies HasDuration[]
     expect(sumDurations(markers)).toBe(30)
+  })
+
+  it("should take loops into account", () => {
+    const markers = [
+      {selected: true, selectedRange: [0, 10], loops: 1},
+      {selected: true, selectedRange: [10, 20], loops: 2},
+      {selected: true, selectedRange: [20, 30], loops: 3},
+    ] satisfies HasDuration[]
+    expect(sumDurations(markers)).toBe(60)
   })
 })

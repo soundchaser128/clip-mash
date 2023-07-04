@@ -25,6 +25,8 @@ import type {Identifier, XYCoord} from "dnd-core"
 import clsx from "clsx"
 import {SongDto} from "../types.generated"
 import HelpModal from "../components/HelpModal"
+import useNotification from "../hooks/useNotification"
+import Loader from "../components/Loader"
 
 interface Inputs {
   musicUrl: string
@@ -308,6 +310,10 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
     reset()
   }
 
+  if (loading) {
+    return <Loader>Downloading song and detecting beats.</Loader>
+  }
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -328,7 +334,7 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
         <button type="button" onClick={onCancel} className="btn btn-outline">
           Cancel
         </button>
-        <button disabled={loading} className="btn btn-success" type="submit">
+        <button className="btn btn-success" type="submit">
           Submit
         </button>
       </div>
@@ -409,11 +415,12 @@ export default function Music() {
   })
   const navigate = useNavigate()
   const revalidator = useRevalidator()
+  const sendNotification = useNotification()
 
   const totalMarkerDuration = sumDurations(state.data.selectedMarkers)
   const totalMusicDuration = selection
     .map((s) => songs.find((song) => song.songId === s))
-    .reduce((sum, song) => sum + song!.duration, 0)
+    .reduce((sum, song) => sum + (song?.duration || 0), 0)
 
   const musicTooLong = totalMusicDuration > totalMarkerDuration
   const anySongsSelected = selection.length > 0
@@ -437,9 +444,7 @@ export default function Music() {
     })
     setMode("table")
     revalidator.revalidate()
-    new Notification("Music download finished!", {
-      icon: "/android-chrome-192x192.png",
-    })
+    sendNotification("Success", "Song downloaded successfully!")
   }
 
   const onFormChange = (values: MusicSettingsInputs) => {

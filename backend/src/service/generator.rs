@@ -1,11 +1,9 @@
 use std::ffi::OsStr;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use clip_mash_types::{Clip, VideoResolution};
+use clip_mash_types::{Clip, EncodingEffort, Progress, VideoCodec, VideoQuality, VideoResolution};
 use futures::lock::Mutex;
 use itertools::Itertools;
-use lazy_static::lazy_static;
-use serde::Serialize;
 use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
 
@@ -15,18 +13,11 @@ use super::Marker;
 use crate::data::database::DbSong;
 use crate::data::stash_api::StashMarker;
 use crate::service::MarkerInfo;
-use crate::util::{commandline_error, debug_output, generate_id};
+use crate::util::{commandline_error, debug_output, format_duration, generate_id, ProgressTracker};
 use crate::Result;
 
-#[derive(Debug, Default, Clone, Serialize)]
-pub struct Progress {
-    pub finished: usize,
-    pub total: usize,
-    pub done: bool,
-}
-
-lazy_static! {
-    static ref PROGRESS: Mutex<Progress> = Default::default();
+lazy_static::lazy_static! {
+    static ref PROGRESS: Mutex<ProgressTracker> = Default::default();
 }
 
 #[derive(Debug)]
@@ -38,6 +29,9 @@ pub struct CompilationOptions {
     pub file_name: String,
     pub songs: Vec<DbSong>,
     pub music_volume: f64,
+    pub video_codec: VideoCodec,
+    pub video_quality: VideoQuality,
+    pub encoding_effort: EncodingEffort,
 }
 
 pub fn find_stash_stream_url(marker: &StashMarker) -> &str {
@@ -70,7 +64,8 @@ pub fn find_stream_url(marker: &Marker) -> &str {
 }
 
 pub async fn get_progress() -> Progress {
-    PROGRESS.lock().await.clone()
+    let locked = PROGRESS.lock().await;
+    locked.progress()
 }
 
 #[derive(Clone)]
@@ -107,6 +102,50 @@ impl CompilationGenerator {
         }
     }
 
+    fn video_encoding_parameters(
+        &self,
+        codec: VideoCodec,
+        quality: VideoQuality,
+        effort: EncodingEffort,
+    ) -> Vec<&str> {
+        let encoder = match codec {
+            VideoCodec::H264 => "libx264",
+            VideoCodec::H265 => "libx265",
+            VideoCodec::Av1 => "libsvtav1",
+        };
+        let effort = match codec {
+            VideoCodec::Av1 => match effort {
+                EncodingEffort::Low => "3",
+                EncodingEffort::Medium => "7",
+                EncodingEffort::High => "10",
+            },
+            _ => match effort {
+                EncodingEffort::Low => "veryfast",
+                EncodingEffort::Medium => "medium",
+                EncodingEffort::High => "slow",
+            },
+        };
+        let crf = match codec {
+            VideoCodec::H264 => match quality {
+                VideoQuality::Low => "28",
+                VideoQuality::Medium => "24",
+                VideoQuality::High => "19",
+            },
+            VideoCodec::H265 => match quality {
+                VideoQuality::Low => "32",
+                VideoQuality::Medium => "28",
+                VideoQuality::High => "24",
+            },
+            VideoCodec::Av1 => match quality {
+                VideoQuality::Low => "35",
+                VideoQuality::Medium => "30",
+                VideoQuality::High => "26",
+            },
+        };
+
+        vec!["-c:v", encoder, "-preset", effort, "-crf", crf]
+    }
+
     async fn create_clip(
         &self,
         url: &str,
@@ -116,6 +155,9 @@ impl CompilationGenerator {
         height: u32,
         fps: f64,
         out_file: &Utf8Path,
+        codec: VideoCodec,
+        quality: VideoQuality,
+        effort: EncodingEffort,
     ) -> Result<()> {
         let clip_str = duration.to_string();
         let seconds_str = start.to_string();
@@ -123,7 +165,7 @@ impl CompilationGenerator {
             fps=fps,
         );
 
-        let args = vec![
+        let mut args = vec![
             "-hide_banner",
             "-loglevel",
             "warning",
@@ -133,12 +175,9 @@ impl CompilationGenerator {
             url,
             "-t",
             clip_str.as_str(),
-            "-c:v",
-            "libx264",
-            "-preset",
-            "slow",
-            "-crf",
-            "22",
+        ];
+        args.extend(self.video_encoding_parameters(codec, quality, effort));
+        args.extend(&[
             "-acodec",
             "aac",
             "-vf",
@@ -146,52 +185,43 @@ impl CompilationGenerator {
             "-ar",
             "48000",
             out_file.as_str(),
-        ];
+        ]);
+
         self.ffmpeg(args).await
     }
 
-    async fn initialize_progress(&self, total_items: usize) {
+    async fn initialize_progress(&self, total_items: f64) {
         let mut progress = PROGRESS.lock().await;
-        progress.total = total_items;
-        progress.done = false;
-        progress.finished = 0;
-        debug!("setting progress total to {total_items}");
+        progress.reset(total_items);
     }
 
-    async fn increase_progress(&self) {
+    async fn increase_progress(&self, seconds: f64, message: &str) {
         let mut progress = PROGRESS.lock().await;
-        progress.finished += 1;
-        if progress.finished == progress.total {
-            info!(
-                "finished all items, setting done = true ({} items)",
-                progress.finished
-            );
-            progress.done = true;
-        }
-        debug!("bumping progress, count = {}", progress.finished);
+        progress.inc_work_done_by(seconds, message);
     }
 
     async fn reset_progress(&self) {
         let mut progress = PROGRESS.lock().await;
-        *progress = Default::default();
+        progress.reset(0.0);
         info!("reset progress to default");
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
         let clips = &options.clips;
         self.reset_progress().await;
-        let progress_items = clips.len() + if options.songs.len() >= 2 { 2 } else { 1 };
-        self.initialize_progress(progress_items).await;
+        let total_duration = clips.iter().map(|c| c.duration()).sum();
+        self.initialize_progress(total_duration).await;
         let video_dir = self.directories.video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
 
+        let total = clips.len();
         let mut paths = vec![];
-        for Clip {
-            range: (start, end),
-            marker_id,
-            ..
-        } in clips
-        {
+        for (index, clip) in clips.into_iter().enumerate() {
+            let Clip {
+                range: (start, end),
+                marker_id,
+                ..
+            } = clip;
             let marker = options
                 .markers
                 .iter()
@@ -201,7 +231,7 @@ impl CompilationGenerator {
             let (width, height) = options.output_resolution.resolution();
             let out_file = video_dir.join(format!("{}_{}-{}.mp4", marker.video_id, start, end));
             if !out_file.is_file() {
-                info!("creating clip {out_file}");
+                info!("creating clip {} / {} at {out_file}", index + 1, total);
                 self.create_clip(
                     url,
                     *start,
@@ -210,12 +240,21 @@ impl CompilationGenerator {
                     height,
                     options.output_fps as f64,
                     &out_file,
+                    options.video_codec,
+                    options.video_quality,
+                    options.encoding_effort,
                 )
                 .await?;
             } else {
                 info!("clip {out_file} already exists, skipping");
             }
-            self.increase_progress().await;
+            let message = format!(
+                "Encoding clip for marker '{}' from {} to {}",
+                marker.title,
+                format_duration(*start),
+                format_duration(*end)
+            );
+            self.increase_progress(clip.duration(), &message).await;
             paths.push(out_file);
         }
 
@@ -258,7 +297,8 @@ impl CompilationGenerator {
             return commandline_error(self.ffmpeg_path.as_str(), output);
         }
 
-        self.increase_progress().await;
+        self.increase_progress(1.0, "Stitching together songs")
+            .await;
 
         Ok(destination)
     }
@@ -346,7 +386,8 @@ impl CompilationGenerator {
         self.ffmpeg(args).await?;
 
         info!("finished assembling video, result at {destination}");
-        self.increase_progress().await;
+        self.increase_progress(1.0, "Compiling clips together")
+            .await;
         Ok(destination)
     }
 }

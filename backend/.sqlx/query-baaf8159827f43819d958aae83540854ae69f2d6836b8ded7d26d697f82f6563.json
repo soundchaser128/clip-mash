@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive\n        FROM markers m INNER JOIN local_videos v ON m.video_id = v.id\n        ORDER BY m.rowid DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "rowid",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_id",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "file_path",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "start_time",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "end_time",
+        "ordinal": 5,
+        "type_info": "Float"
+      },
+      {
+        "name": "index_within_video",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "marker_preview_image",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "interactive",
+        "ordinal": 8,
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "baaf8159827f43819d958aae83540854ae69f2d6836b8ded7d26d697f82f6563"
+}

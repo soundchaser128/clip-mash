@@ -1,6 +1,7 @@
-const Footer = () => {
+function Footer({version}: {version: string}) {
   return (
     <footer className="w-full text-center text-sm flex flex-col gap-1 my-4">
+      <p>ClipMash v{version}</p>
       <p>
         Made with ❤️ by{" "}
         <a

@@ -1,13 +1,13 @@
 use std::sync::atomic::{AtomicI64, Ordering};
 
-use clip_mash_types::Beats;
+use clip_mash_types::{Beats, CreateMarker};
 use fake::faker::filesystem::en::FilePath;
-use fake::faker::lorem::en::Sentence;
+use fake::faker::lorem::en::{Sentence, Word};
 use fake::{Fake, Faker};
 use lazy_static::lazy_static;
 
 use super::Marker;
-use crate::data::database::{CreateMarker, Database, DbMarker, DbVideo, LocalVideoSource};
+use crate::data::database::{Database, DbMarker, DbVideo, LocalVideoSource};
 use crate::service::{MarkerId, MarkerInfo, VideoId};
 use crate::util::generate_id;
 use crate::Result;
@@ -15,6 +15,7 @@ use crate::Result;
 pub fn markers() -> Vec<Marker> {
     vec![
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(1),
             start_time: 0.0,
             end_time: 171.7162,
@@ -32,10 +33,12 @@ pub fn markers() -> Vec<Marker> {
                         .into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(2),
             start_time: 19.178596,
             end_time: 130.772832,
@@ -52,10 +55,12 @@ pub fn markers() -> Vec<Marker> {
                     file_path: "/videos/Black Widow Casting (Full ver.) [3104140].mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(3),
             start_time: 0.0,
             end_time: 111.389977,
@@ -72,10 +77,12 @@ pub fn markers() -> Vec<Marker> {
                     file_path: "/videos/[HydraFXX] Tifa x Cloud Halloween (Extended).mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(10),
             start_time: 0.0,
             end_time: 39.487,
@@ -92,10 +99,12 @@ pub fn markers() -> Vec<Marker> {
                     file_path: "/videos/[HydraFXX] Widowmaker Riding [4K].mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(7),
             start_time: 0.0,
             end_time: 36.055767,
@@ -112,10 +121,12 @@ pub fn markers() -> Vec<Marker> {
                     file_path: "/videos/[ent duke] Widowmaker HJ.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(4),
             start_time: 0.0,
             end_time: 57.77,
@@ -132,10 +143,12 @@ pub fn markers() -> Vec<Marker> {
                     file_path: "/videos/tifa-lockhart-leading-juicyneko_2160p.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(9),
             start_time: 0.0,
             end_time: 60.996935,
@@ -152,10 +165,12 @@ pub fn markers() -> Vec<Marker> {
                     file_path: "/videos/4k-dokkaebi-idemi_2160p.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(5),
             start_time: 0.0,
             end_time: 34.597007,
@@ -172,10 +187,12 @@ pub fn markers() -> Vec<Marker> {
                     file_path: "/videos/tifa-spooning-juicyneko_2160p.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(6),
             start_time: 0.0,
             end_time: 137.472,
@@ -192,10 +209,12 @@ pub fn markers() -> Vec<Marker> {
                     file_path: "/videos/testdir/testdir 2/(nagoonimation) Cammy Round 1.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(8),
             start_time: 0.0,
             end_time: 165.368725,
@@ -212,6 +231,7 @@ pub fn markers() -> Vec<Marker> {
                     file_path: "/videos/(Hydrafxx) Rachel Amber.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
@@ -221,6 +241,7 @@ pub fn markers() -> Vec<Marker> {
 pub fn other_markers() -> Vec<Marker> {
     vec![
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(5),
             start_time: 0.0,
             end_time: 36.153941,
@@ -237,10 +258,12 @@ pub fn other_markers() -> Vec<Marker> {
                     file_path: "/videos/[ent duke] Widowmaker HJ.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(2),
             start_time: 0.0,
             end_time: 146.014932,
@@ -257,10 +280,12 @@ pub fn other_markers() -> Vec<Marker> {
                     file_path: "/videos/[HydraFXX] Tifa x Cloud Halloween (Extended).mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(6),
             start_time: 0.0,
             end_time: 61.034,
@@ -277,10 +302,12 @@ pub fn other_markers() -> Vec<Marker> {
                     file_path: "/videos/4k-dokkaebi-idemi_2160p.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(4),
             start_time: 14.43444,
             end_time: 130.941,
@@ -297,10 +324,12 @@ pub fn other_markers() -> Vec<Marker> {
                     file_path: "/videos/yeero d.va hard anal 1080p.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(1),
             start_time: 0.0,
             end_time: 57.126817,
@@ -317,10 +346,12 @@ pub fn other_markers() -> Vec<Marker> {
                     file_path: "/videos/tifa-lockhart-leading-juicyneko_2160p.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(7),
             start_time: 0.0,
             end_time: 137.472,
@@ -337,10 +368,12 @@ pub fn other_markers() -> Vec<Marker> {
                     file_path: "/videos/(nagoonimation) Cammy Round 1.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(9),
             start_time: 0.0,
             end_time: 162.447575,
@@ -357,10 +390,12 @@ pub fn other_markers() -> Vec<Marker> {
                     file_path: "/videos/mercy's appointment nagoonimation 720p.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(3),
             start_time: 0.0,
             end_time: 39.487,
@@ -377,10 +412,12 @@ pub fn other_markers() -> Vec<Marker> {
                     file_path: "/videos/[HydraFXX] Widowmaker Riding [4K].mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(10),
             start_time: 0.0,
             end_time: 166.0,
@@ -397,10 +434,12 @@ pub fn other_markers() -> Vec<Marker> {
                     file_path: "/videos/(Hydrafxx) Rachel Amber.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
         Marker {
+            loops: 1,
             id: MarkerId::LocalFile(8),
             start_time: 0.0,
             end_time: 34.597007,
@@ -417,6 +456,7 @@ pub fn other_markers() -> Vec<Marker> {
                     file_path: "/videos/tifa-spooning-juicyneko_2160p.mp4".into(),
                     index_within_video: 0,
                     marker_preview_image: None,
+                    interactive: false,
                 },
             },
         },
@@ -431,6 +471,7 @@ pub fn create_marker(title: &str, start_time: f64, end_time: f64, index: usize) 
     let id = ID.fetch_add(1, Ordering::SeqCst);
 
     Marker {
+        loops: 1,
         id: MarkerId::LocalFile(id),
         start_time,
         end_time,
@@ -447,6 +488,7 @@ pub fn create_marker(title: &str, start_time: f64, end_time: f64, index: usize) 
                 file_path: FilePath().fake(),
                 index_within_video: index as i64,
                 marker_preview_image: None,
+                interactive: false,
             },
         },
     }
@@ -460,6 +502,7 @@ pub fn create_marker_video_id(
     video_id: &str,
 ) -> Marker {
     Marker {
+        loops: 1,
         id: MarkerId::LocalFile(id),
         start_time,
         end_time,
@@ -476,6 +519,39 @@ pub fn create_marker_video_id(
                 file_path: FilePath().fake(),
                 index_within_video: index as i64,
                 marker_preview_image: None,
+                interactive: false,
+            },
+        },
+    }
+}
+
+pub fn create_marker_with_loops(
+    id: i64,
+    start_time: f64,
+    end_time: f64,
+    index: usize,
+    video_id: &str,
+    loops: usize,
+) -> Marker {
+    Marker {
+        loops,
+        id: MarkerId::LocalFile(id),
+        start_time,
+        end_time,
+        index_within_video: index,
+        video_id: VideoId::LocalFile(video_id.to_string()),
+        title: Faker.fake(),
+        info: MarkerInfo::LocalFile {
+            marker: DbMarker {
+                end_time,
+                start_time,
+                rowid: None,
+                title: Faker.fake(),
+                video_id: video_id.to_string(),
+                file_path: FilePath().fake(),
+                index_within_video: index as i64,
+                marker_preview_image: None,
+                interactive: false,
             },
         },
     }
@@ -483,7 +559,11 @@ pub fn create_marker_video_id(
 
 pub async fn persist_video(db: &Database) -> Result<DbVideo> {
     let expected = DbVideo {
-        file_path: FilePath().fake(),
+        file_path: format!(
+            "{}/{}",
+            Word().fake::<String>(),
+            FilePath().fake::<String>()
+        ),
         id: generate_id(),
         interactive: false,
         source: LocalVideoSource::Folder,
@@ -494,12 +574,12 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
     Ok(expected)
 }
 
-pub async fn persist_video_with_source(db: &Database, source: LocalVideoSource) -> Result<DbVideo> {
+pub async fn persist_video_with_file_name(db: &Database, name: &str) -> Result<DbVideo> {
     let video = DbVideo {
-        file_path: FilePath().fake(),
+        file_path: name.to_string(),
         id: generate_id(),
         interactive: false,
-        source,
+        source: LocalVideoSource::Folder,
         duration: 50.0,
         video_preview_image: None,
     };
@@ -513,6 +593,7 @@ pub async fn persist_marker(
     index: i64,
     start: f64,
     end: f64,
+    video_interactive: bool,
 ) -> Result<DbMarker> {
     let marker = CreateMarker {
         video_id: video_id.to_string(),
@@ -521,8 +602,9 @@ pub async fn persist_marker(
         index_within_video: index,
         title: Sentence(5..8).fake(),
         preview_image_path: None,
+        video_interactive,
     };
-    db.persist_marker(marker).await
+    db.create_new_marker(marker).await
 }
 
 pub fn songs() -> Vec<Beats> {

@@ -1,6 +1,15 @@
 # Changelog
 
 ## Unreleased
+- feat: show version number in footer
+
+## 0.12.0
+- feat: Allow specifying video encoding parameters (codec, quality and encoding effort)
+- feat: Change video list page to show all videos on a page instead of having to specify a path first
+- feat: Show ETA during clip creation
+- feat: Allow repeating markers
+- fix: Changing a marker's range makes a duplicate
+- fix: Funscript file was not available for download when generating from local files
 
 ## 0.11.0
 - feat: Added browser notifications when downloads are finished or video generation is done

@@ -1,5 +1,6 @@
 use camino::Utf8Path;
 use clip_mash_types::*;
+use serde::Serialize;
 
 use crate::data::database::{DbMarker, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
@@ -38,9 +39,9 @@ impl From<DbMarker> for MarkerDto {
                 .map(|s| s.to_string()),
             performers: vec![],
             primary_tag: value.title,
-            scene_interactive: false,
+            scene_interactive: value.interactive,
             scene_title: None,
-            stream_url: format!("/api/local/video/{}", value.video_id),
+            stream_url: format!("/api/local/video/{}/file", value.video_id),
             tags: vec![],
             screenshot_url: Some(format!(
                 "/api/local/video/marker/{}/preview",
@@ -139,6 +140,32 @@ impl<'a> From<StashSceneWrapper<'a>> for StashScene {
             rating: scene.rating100,
             interactive: scene.interactive,
             marker_count: scene.scene_markers.len(),
+        }
+    }
+}
+
+#[derive(Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Page<T: Serialize> {
+    pub content: Vec<T>,
+    pub total_items: usize,
+    pub page_number: usize,
+    pub page_size: usize,
+    pub total_pages: usize,
+}
+
+impl<T: Serialize> Page<T> {
+    pub fn new(content: Vec<T>, size: usize, page: PageParameters) -> Self {
+        let page_number = page.page.unwrap_or(PageParameters::DEFAULT_PAGE as usize);
+        let page_size = page.size.unwrap_or(PageParameters::DEFAULT_SIZE as usize);
+        let total_pages = (size as f64 / page_size as f64).ceil() as usize;
+
+        Page {
+            content,
+            total_items: size,
+            page_number,
+            page_size,
+            total_pages,
         }
     }
 }

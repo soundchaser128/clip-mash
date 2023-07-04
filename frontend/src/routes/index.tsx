@@ -16,14 +16,14 @@ export default function InitialRoot() {
       id,
       stage:
         mode === "localFile"
-          ? LocalFilesFormStage.SelectPath
+          ? LocalFilesFormStage.ListVideos
           : FormStage.SelectMode,
     }
 
     // @ts-expect-error meh
     actions.updateForm(update)
 
-    navigate(mode === "localFile" ? "/local/path" : "/stash/mode")
+    navigate(mode === "localFile" ? "/local/videos" : "/stash/mode")
   }
 
   return (

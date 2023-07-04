@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::extract::DefaultBodyLimit;
-use axum::routing::{delete, get, post};
+use axum::routing::{delete, get, post, put};
 use axum::Router;
 use color_eyre::Report;
 use reqwest::Client;
@@ -55,6 +55,7 @@ async fn main() -> Result<()> {
     let directories = Directories::new()?;
 
     let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
+    info!("using ffmpeg at {ffmpeg_location:?}");
 
     service::stash_config::init(&directories).await;
 
@@ -85,14 +86,17 @@ async fn main() -> Result<()> {
         .route("/config", post(handlers::stash::set_config));
 
     let local_routes = Router::new()
-        .route("/video", post(handlers::local::list_videos))
+        .route("/video", get(handlers::local::list_videos))
+        .route("/video", post(handlers::local::add_new_videos))
         .route("/video/:id", get(handlers::local::get_video))
+        .route("/video/:id/file", get(handlers::local::get_video_file))
         .route(
             "/video/:id/preview",
             get(handlers::local::get_video_preview),
         )
         .route("/video/marker", get(handlers::local::list_markers))
-        .route("/video/marker", post(handlers::local::persist_marker))
+        .route("/video/marker", post(handlers::local::create_new_marker))
+        .route("/video/marker", put(handlers::local::update_marker))
         .route("/video/marker/:id", delete(handlers::local::delete_marker))
         .route(
             "/video/marker/:id/preview",
@@ -103,6 +107,7 @@ async fn main() -> Result<()> {
     let api_routes = Router::new()
         .nest("/local", local_routes)
         .nest("/stash", stash_routes)
+        .route("/version", get(handlers::common::get_version))
         .route("/clips", post(handlers::common::fetch_clips))
         .route("/create", post(handlers::common::create_video))
         .route("/progress", get(handlers::common::get_progress))

@@ -14,6 +14,7 @@ pub mod updater;
 pub mod fixtures;
 
 use clip_mash_types::{MarkerId, VideoId};
+use serde::{Deserialize, Serialize};
 
 use crate::data::database::{DbMarker, DbVideo};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
@@ -92,7 +93,7 @@ impl From<FindScenesQueryFindScenesScenes> for Video {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MarkerInfo {
     Stash { marker: StashMarker },
     LocalFile { marker: DbMarker },
@@ -113,7 +114,7 @@ impl MarkerInfo {
         }
     }
 }
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Marker {
     pub id: MarkerId,
     pub start_time: f64,
@@ -122,11 +123,11 @@ pub struct Marker {
     pub video_id: VideoId,
     pub title: String,
     pub info: MarkerInfo,
+    pub loops: usize,
 }
 
 impl Marker {
-    #[allow(unused)]
-    fn duration(&self) -> f64 {
+    pub fn duration(&self) -> f64 {
         self.end_time - self.start_time
     }
 }

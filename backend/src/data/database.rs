@@ -1,12 +1,12 @@
 use std::str::FromStr;
 
-use clip_mash_types::Beats;
+use clip_mash_types::{Beats, CreateMarker, ListVideoDto, PageParameters, UpdateMarker};
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
-use serde::Deserialize;
 use serde_json::Value;
+use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
-use sqlx::{FromRow, QueryBuilder, Sqlite, SqlitePool};
+use sqlx::{FromRow, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::{info, warn};
 
@@ -44,7 +44,7 @@ pub struct DbVideo {
     pub video_preview_image: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, FromRow)]
+#[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
 pub struct DbMarker {
     pub rowid: Option<i64>,
     pub video_id: String,
@@ -54,17 +54,7 @@ pub struct DbMarker {
     pub file_path: String,
     pub index_within_video: i64,
     pub marker_preview_image: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateMarker {
-    pub video_id: String,
-    pub start: f64,
-    pub end: f64,
-    pub title: String,
-    pub index_within_video: i64,
-    pub preview_image_path: Option<String>,
+    pub interactive: bool,
 }
 
 #[derive(Debug)]
@@ -129,71 +119,10 @@ impl Database {
         Ok(video)
     }
 
-    pub async fn get_downloaded_videos(&self) -> Result<Vec<LocalVideoWithMarkers>> {
-        let records = sqlx::query!("SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE source = 'download'")
-            .fetch_all(&self.pool)
-            .await?;
-        if records.is_empty() {
-            Ok(vec![])
-        } else {
-            let iter = records.into_iter().group_by(|v| v.id.clone());
-            let mut videos = vec![];
-            for (_, group) in &iter {
-                let group: Vec<_> = group.collect();
-                let video = DbVideo {
-                    id: group[0].id.clone(),
-                    file_path: group[0].file_path.clone(),
-                    interactive: group[0].interactive,
-                    source: group[0].source.clone().into(),
-                    duration: group[0].duration,
-                    video_preview_image: group[0].video_preview_image.clone(),
-                };
-                let markers: Vec<_> = group
-                    .into_iter()
-                    .filter_map(|r| {
-                        match (
-                            r.video_id,
-                            r.start_time,
-                            r.end_time,
-                            r.title,
-                            r.rowid,
-                            r.file_path,
-                            r.index_within_video,
-                            r.marker_preview_image,
-                        ) {
-                            (
-                                Some(video_id),
-                                Some(start_time),
-                                Some(end_time),
-                                Some(title),
-                                rowid,
-                                file_path,
-                                Some(index),
-                                marker_preview_image,
-                            ) => Some(DbMarker {
-                                rowid,
-                                title,
-                                video_id,
-                                start_time,
-                                end_time,
-                                file_path,
-                                index_within_video: index,
-                                marker_preview_image,
-                            }),
-                            _ => None,
-                        }
-                    })
-                    .collect();
-                videos.push(LocalVideoWithMarkers { video, markers })
-            }
-            Ok(videos)
-        }
-    }
-
     pub async fn get_marker(&self, id: i64) -> Result<DbMarker> {
         let marker = sqlx::query_as!(
             DbMarker,
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
                 FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
                 WHERE m.rowid = $1",
             id
@@ -203,28 +132,13 @@ impl Database {
         Ok(marker)
     }
 
-    pub async fn get_markers_for_video_ids(
-        &self,
-        ids: &[impl AsRef<str>],
-    ) -> Result<Vec<DbMarker>> {
-        let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
-            FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
-            WHERE m.video_id IN ("
-        );
-        let mut separated = query_builder.separated(", ");
-        for id in ids {
-            separated.push_bind(id.as_ref());
-        }
-        separated.push_unseparated(") ");
-
-        let query = query_builder.build();
-        let rows: Vec<_> = query.fetch_all(&self.pool).await?;
-        let mut markers = vec![];
-        for row in rows {
-            markers.push(DbMarker::from_row(&row)?);
-        }
-
+    pub async fn get_all_markers(&self) -> Result<Vec<DbMarker>> {
+        let markers = sqlx::query_as!(DbMarker, "
+        SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
+        FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
+        ORDER BY m.rowid DESC")
+        .fetch_all(&self.pool)
+        .await?;
         Ok(markers)
     }
 
@@ -259,6 +173,7 @@ impl Database {
                         r.file_path,
                         r.index_within_video,
                         r.marker_preview_image,
+                        r.interactive,
                     ) {
                         (
                             Some(video_id),
@@ -269,6 +184,7 @@ impl Database {
                             file_path,
                             Some(index),
                             marker_preview_image,
+                            interactive,
                         ) => Some(DbMarker {
                             rowid,
                             title,
@@ -278,6 +194,69 @@ impl Database {
                             file_path,
                             index_within_video: index,
                             marker_preview_image,
+                            interactive: interactive,
+                        }),
+                        _ => None,
+                    }
+                })
+                .collect();
+            Ok(Some(LocalVideoWithMarkers { video, markers }))
+        }
+    }
+
+    pub async fn get_video_with_markers(&self, id: &str) -> Result<Option<LocalVideoWithMarkers>> {
+        let records = sqlx::query!(
+            "SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.id = $1",
+            id,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        if records.is_empty() {
+            Ok(None)
+        } else {
+            let video = DbVideo {
+                id: records[0].id.clone(),
+                file_path: records[0].file_path.clone(),
+                interactive: records[0].interactive,
+                source: records[0].source.clone().into(),
+                duration: records[0].duration,
+                video_preview_image: records[0].video_preview_image.clone(),
+            };
+            let markers = records
+                .into_iter()
+                .filter_map(|r| {
+                    match (
+                        r.video_id,
+                        r.start_time,
+                        r.end_time,
+                        r.title,
+                        r.rowid,
+                        r.file_path,
+                        r.index_within_video,
+                        r.marker_preview_image,
+                        r.interactive,
+                    ) {
+                        (
+                            Some(video_id),
+                            Some(start_time),
+                            Some(end_time),
+                            Some(title),
+                            rowid,
+                            file_path,
+                            Some(index),
+                            marker_preview_image,
+                            interactive,
+                        ) => Some(DbMarker {
+                            rowid,
+                            title,
+                            video_id,
+                            start_time,
+                            end_time,
+                            file_path,
+                            index_within_video: index,
+                            marker_preview_image,
+                            interactive,
                         }),
                         _ => None,
                     }
@@ -309,7 +288,7 @@ impl Database {
     pub async fn get_markers_without_preview_images(&self) -> Result<Vec<DbMarker>> {
         sqlx::query_as!(
             DbMarker,
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
             FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
             WHERE m.marker_preview_image IS NULL"
         )
@@ -333,7 +312,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn persist_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
+    pub async fn create_new_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
         let new_id = sqlx::query_scalar!(
             "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video, marker_preview_image) 
                 VALUES ($1, $2, $3, $4, $5, $6) 
@@ -358,9 +337,38 @@ impl Database {
             file_path: "not-needed".to_string(),
             index_within_video: marker.index_within_video,
             marker_preview_image: marker.preview_image_path,
+            interactive: marker.video_interactive,
         };
 
         info!("newly updated or inserted marker: {marker:?}");
+
+        Ok(marker)
+    }
+
+    pub async fn update_marker(&self, update: UpdateMarker) -> Result<DbMarker> {
+        let record = sqlx::query!(
+            "UPDATE markers SET start_time = $1, end_time = $2, title = $3 WHERE rowid = $4
+            RETURNING *",
+            update.start,
+            update.end,
+            update.title,
+            update.rowid
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        let marker = DbMarker {
+            rowid: Some(update.rowid),
+            video_id: record.video_id,
+            start_time: update.start,
+            end_time: update.end,
+            title: record.title,
+            file_path: "not-needed".to_string(),
+            index_within_video: record.index_within_video,
+            marker_preview_image: record.marker_preview_image,
+            // not needed for updating I think
+            interactive: false,
+        };
 
         Ok(marker)
     }
@@ -425,6 +433,102 @@ impl Database {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn list_videos(
+        &self,
+        query: Option<&str>,
+        params: PageParameters,
+    ) -> Result<(Vec<ListVideoDto>, usize)> {
+        let query = query
+            .map(|q| format!("%{q}%"))
+            .unwrap_or_else(|| "%".to_string());
+        let count = sqlx::query_scalar!(
+            "SELECT COUNT(*) FROM local_videos WHERE file_path LIKE $1",
+            query
+        )
+        .fetch_one(&self.pool)
+        .await?;
+        let limit = params.limit();
+        let offset = params.offset();
+        let records = sqlx::query!(
+            "SELECT *, m.rowid AS rowid 
+            FROM local_videos v 
+            LEFT JOIN markers m ON v.id = m.video_id 
+            WHERE v.file_path LIKE $1
+            ORDER BY file_path ASC
+            LIMIT $2 
+            OFFSET $3",
+            query,
+            limit,
+            offset,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        if records.is_empty() {
+            Ok((vec![], count as usize))
+        } else {
+            let iter = records.into_iter().group_by(|v| v.id.clone());
+            let mut videos = vec![];
+            for (_, group) in &iter {
+                let group: Vec<_> = group.collect();
+                let video = DbVideo {
+                    id: group[0].id.clone(),
+                    file_path: group[0].file_path.clone(),
+                    interactive: group[0].interactive,
+                    source: group[0].source.clone().into(),
+                    duration: group[0].duration,
+                    video_preview_image: group[0].video_preview_image.clone(),
+                };
+                let markers: Vec<_> = group
+                    .into_iter()
+                    .filter_map(|r| {
+                        match (
+                            r.video_id,
+                            r.start_time,
+                            r.end_time,
+                            r.title,
+                            r.rowid,
+                            r.file_path,
+                            r.index_within_video,
+                            r.marker_preview_image,
+                            r.interactive,
+                        ) {
+                            (
+                                Some(video_id),
+                                Some(start_time),
+                                Some(end_time),
+                                Some(title),
+                                rowid,
+                                file_path,
+                                Some(index),
+                                marker_preview_image,
+                                interactive,
+                            ) => Some(
+                                DbMarker {
+                                    rowid,
+                                    title,
+                                    video_id,
+                                    start_time,
+                                    end_time,
+                                    file_path,
+                                    index_within_video: index,
+                                    marker_preview_image,
+                                    interactive,
+                                }
+                                .into(),
+                            ),
+                            _ => None,
+                        }
+                    })
+                    .collect();
+                videos.push(ListVideoDto {
+                    video: video.into(),
+                    markers,
+                })
+            }
+            Ok((videos, count as usize))
+        }
     }
 
     pub async fn list_songs(&self) -> Result<Vec<DbSong>> {
@@ -567,13 +671,12 @@ impl Database {
 
 #[cfg(test)]
 mod test {
+    use clip_mash_types::{PageParameters, UpdateMarker};
     use sqlx::SqlitePool;
-    use tracing_test::traced_test;
 
-    use crate::data::database::{CreateMarker, Database, LocalVideoSource};
-    use crate::service::fixtures::{persist_marker, persist_video, persist_video_with_source};
+    use crate::data::database::{CreateMarker, Database};
+    use crate::service::fixtures::{persist_marker, persist_video, persist_video_with_file_name};
     use crate::util::generate_id;
-    use crate::Result;
 
     #[sqlx::test]
     async fn test_get_and_persist_video(pool: SqlitePool) {
@@ -587,7 +690,7 @@ mod test {
     }
 
     #[sqlx::test]
-    async fn test_persist_marker(pool: SqlitePool) {
+    async fn test_create_marker(pool: SqlitePool) {
         let database = Database::with_pool(pool);
         let video = persist_video(&database).await.unwrap();
         let expected = CreateMarker {
@@ -597,8 +700,9 @@ mod test {
             end: 17.0,
             index_within_video: 0,
             preview_image_path: None,
+            video_interactive: false,
         };
-        let result = database.persist_marker(expected.clone()).await.unwrap();
+        let result = database.create_new_marker(expected.clone()).await.unwrap();
 
         assert_eq!(result.start_time, expected.start);
         assert_eq!(result.end_time, expected.end);
@@ -617,9 +721,10 @@ mod test {
             end: 17.0,
             index_within_video: 0,
             preview_image_path: None,
+            video_interactive: false,
         };
         let err = database
-            .persist_marker(expected.clone())
+            .create_new_marker(expected.clone())
             .await
             .expect_err("must fail due to a foreign key constraint");
         let err: sqlx::Error = err.downcast().unwrap();
@@ -638,8 +743,9 @@ mod test {
             end: 17.0,
             index_within_video: 0,
             preview_image_path: None,
+            video_interactive: false,
         };
-        let result = database.persist_marker(marker).await.unwrap();
+        let result = database.create_new_marker(marker).await.unwrap();
         let id = result.rowid.unwrap();
 
         database.delete_marker(id).await.unwrap();
@@ -664,63 +770,68 @@ mod test {
         assert_eq!(result.markers.len(), 0);
     }
 
-    #[traced_test]
     #[sqlx::test]
-    async fn test_get_markers_for_video(pool: SqlitePool) {
-        let db = Database::with_pool(pool);
-        let video1 = persist_video(&db).await.unwrap();
-        for i in 0..5 {
-            let start = i as f64 + 2.0;
-            let end = i as f64 * 2.0 + 2.0;
-            persist_marker(&db, &video1.id, i, start, end)
-                .await
-                .unwrap();
+    async fn test_list_videos(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        for _ in 0..45 {
+            persist_video(&database).await.unwrap();
         }
+        let page = PageParameters {
+            page: Some(0),
+            size: Some(10),
+        };
+        let (result, total) = database.list_videos(None, page).await.unwrap();
+        assert_eq!(45, total);
+        assert_eq!(10, result.len());
+    }
 
-        let video2 = persist_video(&db).await.unwrap();
-        for i in 0..2 {
-            let start = i as f64 + 2.0;
-            let end = i as f64 * 2.0 + 2.0;
-            persist_marker(&db, &video2.id, i, start, end)
-                .await
-                .unwrap();
-        }
+    #[sqlx::test]
+    async fn test_list_videos_search(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
 
-        let marker_results = db
-            .get_markers_for_video_ids(&[video1.id, video2.id])
+        persist_video_with_file_name(&database, "/some/path/sexy.mp4")
+            .await
+            .unwrap();
+        persist_video_with_file_name(&database, "/other/path/cool.mp4")
             .await
             .unwrap();
 
-        assert_eq!(7, marker_results.len());
+        let page = PageParameters {
+            page: Some(0),
+            size: Some(10),
+        };
+        let (result, total) = database.list_videos(Some("sexy"), page).await.unwrap();
+        assert_eq!(1, total);
+        assert_eq!(1, result.len());
+        let file_name = &result[0].video.file_name;
+        assert_eq!(file_name, "sexy.mp4");
+
+        let (result, total) = database.list_videos(Some("cool"), page).await.unwrap();
+        assert_eq!(1, total);
+        assert_eq!(1, result.len());
+        let file_name = &result[0].video.file_name;
+        assert_eq!(file_name, "cool.mp4");
     }
 
-    #[traced_test]
     #[sqlx::test]
-    async fn test_get_downloaded_videos(pool: SqlitePool) -> Result<()> {
-        let db = Database::with_pool(pool);
-        let video1 = persist_video_with_source(&db, LocalVideoSource::Download).await?;
-        for i in 0..5 {
-            let start = i as f64 + 2.0;
-            let end = i as f64 * 2.0 + 2.0;
-            persist_marker(&db, &video1.id, i, start, end)
-                .await
-                .unwrap();
-        }
+    async fn test_update_marker(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        let marker = persist_marker(&database, &video.id, 0, 0.0, 15.0, false)
+            .await
+            .unwrap();
+        let title = marker.title.clone();
+        let update = UpdateMarker {
+            title: marker.title,
+            rowid: marker.rowid.unwrap(),
+            start: 5.0,
+            end: 15.0,
+        };
+        database.update_marker(update).await.unwrap();
+        let result = database.get_marker(marker.rowid.unwrap()).await.unwrap();
 
-        let video2 = persist_video_with_source(&db, LocalVideoSource::Download).await?;
-        for i in 0..2 {
-            let start = i as f64 + 2.0;
-            let end = i as f64 * 2.0 + 2.0;
-            persist_marker(&db, &video2.id, i, start, end)
-                .await
-                .unwrap();
-        }
-
-        let marker_results = db.get_downloaded_videos().await?;
-        assert_eq!(2, marker_results.len());
-        assert_eq!(5, marker_results[0].markers.len());
-        assert_eq!(2, marker_results[1].markers.len());
-
-        Ok(())
+        assert_eq!(result.title, title);
+        assert_eq!(result.end_time, 15.0);
+        assert_eq!(result.start_time, 5.0);
     }
 }

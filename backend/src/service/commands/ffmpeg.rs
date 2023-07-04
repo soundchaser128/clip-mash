@@ -18,7 +18,7 @@ fn download_url() -> Result<(&'static str, &'static str)> {
 
     if cfg!(target_os = "windows") {
         Ok((
-            "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
+            "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
             "ffmpeg.zip",
         ))
     } else if cfg!(target_os = "unix") || cfg!(target_os = "linux") {
@@ -193,6 +193,7 @@ impl Ffmpeg {
         self
     }
 
+    #[allow(unused)]
     pub fn working_directory(&mut self, working_directory: impl Into<Utf8PathBuf>) -> &mut Self {
         self.working_directory = Some(working_directory.into());
         self

@@ -68,7 +68,10 @@ export function parseTimestamp(input: string | number): number {
   }
 }
 
-export type HasDuration = Pick<SelectedMarker, "selected" | "selectedRange">
+export type HasDuration = Pick<
+  SelectedMarker,
+  "selected" | "selectedRange" | "loops"
+>
 
 export function sumDurations(markers?: HasDuration[]): number {
   if (!markers) {
@@ -76,6 +79,10 @@ export function sumDurations(markers?: HasDuration[]): number {
   } else {
     return markers
       .filter((m) => m.selected)
-      .reduce((sum, {selectedRange: [start, end]}) => sum + (end - start), 0)
+      .reduce(
+        (sum, {selectedRange: [start, end], loops}) =>
+          sum + (end - start) * loops,
+        0
+      )
   }
 }

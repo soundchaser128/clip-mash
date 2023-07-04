@@ -30,7 +30,7 @@ pub fn get_streams(
     for id in video_ids {
         match id {
             VideoId::LocalFile(_) => {
-                let url = format!("/api/local/video/{id}");
+                let url = format!("/api/local/video/{id}/file");
                 urls.insert(id.to_string(), url);
             }
             VideoId::Stash(_) => {

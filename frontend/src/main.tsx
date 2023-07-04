@@ -11,10 +11,8 @@ import {
   Outlet,
   RouterProvider,
   useLoaderData,
-  ScrollRestoration,
   useNavigate,
   useRouteError,
-  LoaderFunction,
 } from "react-router-dom"
 import "./index.css"
 import SelectCriteria from "./routes/stash/filter/root"

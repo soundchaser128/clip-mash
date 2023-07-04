@@ -192,20 +192,20 @@ const RootElement = () => {
           <h1 className="mt-8 text-3xl mb-6 font-bold">
             There is a new version of ClipMash available!
           </h1>
-          <p className="mb-2 text-lg">
+          <p className="mb-4 text-lg">
             Update to version <strong>{data.newVersion}</strong> now?
           </p>
           <div className="join">
             <button
               onClick={onSelfUpdate}
-              className="btn join-item btn-success w-48"
+              className="btn join-item btn-success w-52"
             >
               <HiCheck className="mr-2" />
               Yes!
             </button>
             <button
               onClick={onUpdateDecliend}
-              className="btn join-item btn-error w-48"
+              className="btn join-item btn-error w-52"
             >
               <HiXMark className="mr-2" />
               No, maybe later.

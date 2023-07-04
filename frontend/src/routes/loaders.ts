@@ -9,6 +9,7 @@ import {
   CreateClipsBody,
   NewId,
   PmvClipOptions,
+  SongDto,
   VideoDto,
 } from "../types.generated"
 
@@ -169,4 +170,16 @@ export const videoDetailsLoader: LoaderFunction = async ({params}) => {
     const text = await response.text()
     throw json({error: text, request: `/api/video/${id}`}, {status: 500})
   }
+}
+
+export const musicLoader: LoaderFunction = async () => {
+  const response = await fetch("/api/song")
+  const data = (await response.json()) as SongDto[]
+  return data
+}
+
+export const versionLoader: LoaderFunction = async () => {
+  const response = await fetch("/api/version")
+  const data = (await response.json()) as {version: string}
+  return data.version
 }

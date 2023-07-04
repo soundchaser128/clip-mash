@@ -3,12 +3,11 @@ import {
   StateMachineProvider,
   useStateMachine,
 } from "little-state-machine"
-import React, {useEffect} from "react"
+import React from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
   isRouteErrorResponse,
-  LoaderFunction,
   Outlet,
   RouterProvider,
   ScrollRestoration,
@@ -43,10 +42,11 @@ import {
   localMarkerLoader,
   newIdLoader,
   videoDetailsLoader,
+  musicLoader,
+  versionLoader,
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
-import {SongDto} from "./types.generated"
 import MarkersPage from "./routes/local/markers"
 import {resetForm} from "./routes/actions"
 import DownloadVideosPage from "./routes/local/download"
@@ -146,12 +146,6 @@ const ErrorBoundary = () => {
   )
 }
 
-const musicLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/song")
-  const data = (await response.json()) as SongDto[]
-  return data
-}
-
 const NotificationPermission = () => {
   useNotification()
 
@@ -168,6 +162,8 @@ const router = createBrowserRouter([
     path: "/",
     errorElement: <ErrorBoundary />,
     element: <NotificationPermission />,
+    id: "root",
+    loader: versionLoader,
     children: [
       {
         index: true,

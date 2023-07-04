@@ -309,3 +309,14 @@ pub async fn get_new_id() -> Json<NewId> {
     let id = generate_id();
     Json(NewId { id })
 }
+
+#[derive(Serialize)]
+pub struct Version {
+    pub version: &'static str,
+}
+
+#[axum::debug_handler]
+pub async fn get_version() -> Json<Version> {
+    let version = env!("CARGO_PKG_VERSION");
+    Json(Version { version })
+}

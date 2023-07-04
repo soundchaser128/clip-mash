@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- feat: show version number in footer
 
 ## 0.12.0
 - feat: Allow specifying video encoding parameters (codec, quality and encoding effort)

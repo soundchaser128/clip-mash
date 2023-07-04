@@ -105,6 +105,7 @@ async fn main() -> Result<()> {
     let api_routes = Router::new()
         .nest("/local", local_routes)
         .nest("/stash", stash_routes)
+        .route("/version", get(handlers::common::get_version))
         .route("/clips", post(handlers::common::fetch_clips))
         .route("/create", post(handlers::common::create_video))
         .route("/progress", get(handlers::common::get_progress))

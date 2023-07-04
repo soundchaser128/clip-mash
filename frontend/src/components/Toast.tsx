@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import {useState} from "react"
-import {HiInformationCircle, HiXMark} from "react-icons/hi2"
+import {HiXMark} from "react-icons/hi2"
 
 interface Props {
   children: React.ReactNode

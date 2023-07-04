@@ -7,7 +7,6 @@ import {
 } from "../../types.generated"
 import {parseTimestamp} from "../../helpers"
 import {JsonError} from "../../types/types"
-import {satisfies} from "semver"
 
 export interface MarkerInputs {
   title: string

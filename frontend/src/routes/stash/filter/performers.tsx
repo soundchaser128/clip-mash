@@ -29,7 +29,7 @@ function Performers() {
             <HiOutlineHeart
               className={clsx(
                 "w-12 h-12 absolute bottom-2 right-2 text-red-600",
-                performer.favorite && "fill-red-600"
+                performer.favorite && "fill-red-600",
               )}
             />
             <img
@@ -84,7 +84,7 @@ function Performers() {
                       onCheckboxChange(
                         performer.id,
                         e.target.checked,
-                        performer.name
+                        performer.name,
                       )
                     }
                   />

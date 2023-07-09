@@ -30,7 +30,7 @@ const BeatIndicator: React.FC<{offsets: number[]; autoPlay: boolean}> = ({
       <div
         className={clsx(
           "w-12 h-12 self-center rounded-full my-2 flex items-center justify-center",
-          showBeat ? "bg-red-500" : "bg-white"
+          showBeat ? "bg-red-500" : "bg-white",
         )}
       >
         {measureCount}

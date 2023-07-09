@@ -30,7 +30,7 @@ const Pagination: React.FC<PaginationProps> = ({
         className={clsx(
           "btn",
           hasPreviousPage && "btn-primary",
-          !hasPreviousPage && "btn-disabled"
+          !hasPreviousPage && "btn-disabled",
         )}
       >
         <HiChevronLeft className="mr-2" />
@@ -44,7 +44,7 @@ const Pagination: React.FC<PaginationProps> = ({
         className={clsx(
           "btn",
           hasNextPage && "btn-primary",
-          !hasNextPage && "btn-disabled"
+          !hasNextPage && "btn-disabled",
         )}
       >
         Next

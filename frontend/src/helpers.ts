@@ -26,7 +26,7 @@ type DurationFormat = "long" | "short"
 
 export function formatSeconds(
   input: number | [number, number] | undefined,
-  durationFormat: DurationFormat = "long"
+  durationFormat: DurationFormat = "long",
 ): string {
   let duration = 0
   if (typeof input === "number") {
@@ -51,7 +51,7 @@ export function formatSeconds(
         minutes: date.getUTCMinutes(),
         seconds: date.getUTCSeconds(),
       },
-      {format: ["hours", "minutes", "seconds"]}
+      {format: ["hours", "minutes", "seconds"]},
     )
   } else {
     return format(duration * 1000, "mm:ss")
@@ -82,7 +82,7 @@ export function sumDurations(markers?: HasDuration[]): number {
       .reduce(
         (sum, {selectedRange: [start, end], loops}) =>
           sum + (end - start) * loops,
-        0
+        0,
       )
   }
 }

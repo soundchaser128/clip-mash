@@ -275,7 +275,7 @@ createStore(
   },
   {
     name: "form-state",
-  }
+  },
 )
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
@@ -285,5 +285,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         <RouterProvider router={router} />
       </DndProvider>
     </StateMachineProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 )

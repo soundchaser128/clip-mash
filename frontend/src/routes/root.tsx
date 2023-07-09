@@ -111,7 +111,7 @@ const RootLayout: React.FC = () => {
   const onReset = () => {
     if (
       confirm(
-        "Are you sure you want to reset the form and return to the start?"
+        "Are you sure you want to reset the form and return to the start?",
       )
     ) {
       actions.resetForm()

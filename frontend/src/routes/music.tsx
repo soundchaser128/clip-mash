@@ -301,7 +301,7 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
       `/api/song/download?url=${encodeURIComponent(values.musicUrl)}`,
       {
         method: "POST",
-      }
+      },
     )
     const data: SongDto = await response.json()
     await fetch(`/api/song/${data.songId}/beats`)
@@ -407,7 +407,7 @@ export default function Music() {
   const {actions, state} = useStateMachine({updateForm})
 
   const [selection, setSelection] = useImmer<number[]>(
-    state.data.songs?.map((song) => song.songId) || []
+    state.data.songs?.map((song) => song.songId) || [],
   )
   const [formValues, setFormValues] = useState<MusicSettingsInputs>({
     clipStrategy: state.data.clipStrategy || "roundRobin",

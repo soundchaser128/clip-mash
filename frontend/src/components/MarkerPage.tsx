@@ -48,7 +48,7 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
           } satisfies SelectedMarker,
         ])
       return Object.fromEntries(entries)
-    }
+    },
   )
   const [filter, setFilter] = useState("")
   const [videoPreview, setVideoPreview] = useState<number>()
@@ -119,7 +119,7 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
     setSelection((draft) => {
       for (const selectedMarker of Object.values(draft)) {
         const originalMarker = data.markers.find(
-          (m) => m.id.id === selectedMarker.id.id
+          (m) => m.id.id === selectedMarker.id.id,
         )!
         const start = selectedMarker.selectedRange[0]
         const maxLen =
@@ -236,7 +236,7 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
               key={marker.id.id}
               className={clsx(
                 "card card-compact bg-base-200 shadow-xl",
-                !selectedMarker.selected && "opacity-50"
+                !selectedMarker.selected && "opacity-50",
               )}
             >
               <figure>

@@ -35,7 +35,7 @@ interface Segment {
 
 function getSegments(
   duration: number | undefined,
-  markers: MarkerDto[]
+  markers: MarkerDto[],
 ): Segment[] {
   if (typeof duration !== "undefined" && !isNaN(duration)) {
     const totalDuration = duration
@@ -389,7 +389,7 @@ export default function EditVideoModal() {
             <div
               key={index}
               className={clsx(
-                "absolute h-full tooltip transition-opacity flex items-center justify-center cursor-pointer text-white"
+                "absolute h-full tooltip transition-opacity flex items-center justify-center cursor-pointer text-white",
               )}
               onClick={() => onShowForm(marker)}
               style={{

@@ -55,7 +55,7 @@ const getClipSettings = (state: FormState): ClipPickerOptions => {
           ? state.songs.reduce((sum, song) => sum + song.duration, 0)
           : state.selectedMarkers!.reduce(
               (sum, {selectedRange: [start, end]}) => sum + (end - start),
-              0
+              0,
             ),
     }
   } else if (state.clipStrategy === "equalLength") {

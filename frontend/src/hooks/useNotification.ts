@@ -27,7 +27,7 @@ export default function useNotification() {
         })
       }
     },
-    [windowVisible]
+    [windowVisible],
   )
 
   return sendNotification

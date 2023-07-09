@@ -42,7 +42,7 @@ function SelectCriteria() {
   const {state, actions} = useStateMachine({updateForm})
   invariant(StateHelpers.isStash(state.data))
   const [selection, setSelection] = useState<string[]>(
-    state.data.selectedIds || []
+    state.data.selectedIds || [],
   )
   const queryType = state.data.selectMode
   const navigate = useNavigate()

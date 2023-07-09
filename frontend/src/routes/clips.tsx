@@ -70,7 +70,7 @@ const Timeline: React.FC<TimelineProps> = ({
             className={clsx(
               "flex justify-center items-center text-sm cursor-pointer text-white",
               index !== currentClipIndex && "opacity-30 hover:opacity-60",
-              index === currentClipIndex && "opacity-100"
+              index === currentClipIndex && "opacity-100",
             )}
             style={{width, backgroundColor: color}}
             onClick={() => setCurrentClipIndex(index)}
@@ -110,7 +110,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
     }
     for (const clip of clips) {
       const marker = state.data.selectedMarkers?.find(
-        (m) => m.id.id === clip.markerId.id
+        (m) => m.id.id === clip.markerId.id,
       )
       if (marker && marker.title && marker.selected) {
         const count = counts.get(marker.title) ?? {total: 0, current: 0}
@@ -126,26 +126,26 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
 
   const [weights, setWeights] = useImmer<Array<[string, number]>>(() => {
     const markerTitles = Array.from(
-      new Set(state.data.selectedMarkers?.map((m) => m.title.trim()))
+      new Set(state.data.selectedMarkers?.map((m) => m.title.trim())),
     ).sort()
     if (state.data.clipWeights) {
       return state.data.clipWeights.filter(([title]) =>
-        markerTitles.includes(title)
+        markerTitles.includes(title),
       )
     } else {
       const markerTitles = Array.from(
         new Set(
           state.data
             .selectedMarkers!.filter((m) => m.selected)
-            .map((m) => m.title.trim())
-        )
+            .map((m) => m.title.trim()),
+        ),
       ).sort()
       return Array.from(markerTitles).map((title) => [title, 1.0])
     }
   })
 
   const [enabled, setEnabled] = useState(
-    state.data.clipStrategy === "weightedRandom"
+    state.data.clipStrategy === "weightedRandom",
   )
   const [open, setOpen] = useState(false)
 
@@ -211,7 +211,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
               <div
                 className={clsx(
                   "form-control",
-                  !enabled && "opacity-50 cursor-not-allowed"
+                  !enabled && "opacity-50 cursor-not-allowed",
                 )}
                 key={title}
               >
@@ -450,11 +450,11 @@ function PreviewClips() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const currentMarker = state.data.selectedMarkers?.find(
-    (m) => currentClip.markerId.id === m.id.id
+    (m) => currentClip.markerId.id === m.id.id,
   )
   const totalLength = clips.reduce(
     (len, {clip}) => len + (clip.range[1] - clip.range[0]),
-    0
+    0,
   )
   const [withMusic, setWithMusic] = useState(false)
   const [videoMuted, setVideoMuted] = useState(true)
@@ -470,7 +470,7 @@ function PreviewClips() {
   }
 
   const onVideoTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (
-    event
+    event,
   ) => {
     const endTimestamp = currentClip.range[1]
     const currentTime = event.currentTarget.currentTime
@@ -480,7 +480,7 @@ function PreviewClips() {
   }
 
   const onAudioTimeUpdate: React.ReactEventHandler<HTMLAudioElement> = (
-    event
+    event,
   ) => {
     const duration = event.currentTarget.duration
     const position = event.currentTarget.currentTime
@@ -599,7 +599,7 @@ function PreviewClips() {
             <button
               className={clsx(
                 "btn btn-square btn-lg",
-                autoPlay ? "btn-warning" : "btn-success"
+                autoPlay ? "btn-warning" : "btn-success",
               )}
               onClick={toggleAutoPlay}
             >

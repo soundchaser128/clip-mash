@@ -49,7 +49,7 @@ const DownloadVideosPage: React.FC = () => {
       const promises = urls.map((url) => {
         return fetch(
           `/api/local/video/download?url=${encodeURIComponent(url)}`,
-          {method: "POST"}
+          {method: "POST"},
         )
       })
       const responses = await Promise.all(promises)

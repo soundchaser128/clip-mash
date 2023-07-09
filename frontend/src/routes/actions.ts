@@ -3,7 +3,7 @@ import {FormState} from "../types/types"
 
 export function updateForm(
   state: GlobalState,
-  newState: Partial<FormState>
+  newState: Partial<FormState>,
 ): GlobalState {
   return {
     // @ts-expect-error broken, fixme

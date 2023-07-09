@@ -31,7 +31,7 @@ const Modal: React.FC<Props> = ({
       data-testid="modal-root"
       className={clsx(
         isOpen && "fixed inset-0 z-50 overflow-auto",
-        !isOpen && "hidden"
+        !isOpen && "hidden",
       )}
     >
       <div className="fixed inset-0 bg-black opacity-50"></div>
@@ -40,14 +40,14 @@ const Modal: React.FC<Props> = ({
           "fixed left-1/2 transform -translate-x-1/2",
           size === "full-screen" && "w-[95vw] top-4",
           size !== "full-screen" && position === "off-center" && "top-32",
-          size !== "full-screen" && position === "top" && "top-4"
+          size !== "full-screen" && position === "top" && "top-4",
         )}
       >
         <div
           data-testid="modal-content"
           className={clsx(
             "bg-white rounded-lg p-4 flex flex-col overflow-y-auto max-h-[95vh]",
-            className
+            className,
           )}
         >
           {children}

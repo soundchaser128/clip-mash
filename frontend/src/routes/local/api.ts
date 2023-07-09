@@ -18,7 +18,7 @@ export async function createNewMarker(
   videoDto: VideoDto,
   marker: MarkerInputs,
   duration: number,
-  index: number
+  index: number,
 ): Promise<Result<MarkerDto, JsonError>> {
   const start = Math.max(parseTimestamp(marker.start), 0)
   const end = Math.min(parseTimestamp(marker.end!), duration)
@@ -49,7 +49,7 @@ export async function createNewMarker(
 
 export async function updateMarker(
   id: number,
-  marker: MarkerInputs
+  marker: MarkerInputs,
 ): Promise<Result<MarkerDto, JsonError>> {
   const payload = {
     rowid: id,

@@ -132,7 +132,7 @@ function ConfigPage() {
             className={clsx(
               "mt-4",
               healthResult.success && "text-green-600",
-              !healthResult.success && "text-red-600"
+              !healthResult.success && "text-red-600",
             )}
           >
             {healthResult.success

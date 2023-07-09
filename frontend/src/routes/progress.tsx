@@ -88,7 +88,7 @@ function Progress() {
   }
 
   const onDownloadFunscript = async (
-    e: React.MouseEvent<HTMLButtonElement>
+    e: React.MouseEvent<HTMLButtonElement>,
   ) => {
     e.preventDefault()
     setCreatingScript(true)
@@ -116,7 +116,7 @@ function Progress() {
 
   const totalDuration = state.data.clips!.reduce(
     (duration, clip) => duration + (clip.range[1] - clip.range[0]),
-    0
+    0,
   )
 
   return (
@@ -171,7 +171,7 @@ function Progress() {
             </p>
             <a
               href={`/api/download?fileName=${encodeURIComponent(
-                finalFileName
+                finalFileName,
               )}`}
               className="btn btn-success btn-lg"
               download

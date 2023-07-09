@@ -312,6 +312,7 @@ pub enum VideoQuality {
     Low,
     Medium,
     High,
+    Lossless,
 }
 
 #[derive(Deserialize, Debug, TypeDef, Clone, Copy)]

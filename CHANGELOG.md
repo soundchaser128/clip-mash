@@ -2,6 +2,8 @@
 
 ## Unreleased
 - feat: show version number in footer
+- chore: update frontend and backend dependency versions
+- feat: add (almost) lossless encoding setting
 
 ## 0.12.0
 - feat: Allow specifying video encoding parameters (codec, quality and encoding effort)

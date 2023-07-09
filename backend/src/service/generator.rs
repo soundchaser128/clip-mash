@@ -130,16 +130,19 @@ impl CompilationGenerator {
                 VideoQuality::Low => "28",
                 VideoQuality::Medium => "24",
                 VideoQuality::High => "19",
+                VideoQuality::Lossless => "16",
             },
             VideoCodec::H265 => match quality {
                 VideoQuality::Low => "32",
                 VideoQuality::Medium => "28",
                 VideoQuality::High => "24",
+                VideoQuality::Lossless => "16",
             },
             VideoCodec::Av1 => match quality {
                 VideoQuality::Low => "35",
                 VideoQuality::Medium => "30",
                 VideoQuality::High => "26",
+                VideoQuality::Lossless => "20",
             },
         };
 

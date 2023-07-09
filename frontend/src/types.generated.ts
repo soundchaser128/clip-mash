@@ -42,7 +42,7 @@ export type SelectedMarker = {
 export type VideoResolution = "720" | "1080" | "4K"
 export type U32 = number
 export type VideoCodec = "av1" | "h264" | "h265"
-export type VideoQuality = "low" | "medium" | "high"
+export type VideoQuality = "low" | "medium" | "high" | "lossless"
 export type EncodingEffort = "low" | "medium" | "high"
 export type CreateVideoBody = {
   fileName: string

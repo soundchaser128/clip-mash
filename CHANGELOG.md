@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+# 0.13.0
 - feat: show version number in footer
 - chore: update frontend and backend dependency versions
 - feat: add (almost) lossless encoding setting

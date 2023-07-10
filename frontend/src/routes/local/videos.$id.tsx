@@ -420,7 +420,7 @@ export default function EditVideoModal() {
             <div
               key={index}
               className={clsx(
-                "absolute h-8 tooltip transition-opacity flex items-center justify-center cursor-pointer text-white",
+                "absolute h-8 tooltip transition-opacity flex items-center justify-center cursor-pointer",
               )}
               onClick={() => onShowForm(marker)}
               style={{

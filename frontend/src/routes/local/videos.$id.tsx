@@ -14,10 +14,15 @@ import {
   HiChevronRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
-import {formatSeconds, getSegmentColor, parseTimestamp} from "../../helpers"
+import {
+  formatSeconds,
+  getSegmentColor,
+  getSegmentTextColor,
+  parseTimestamp,
+} from "../../helpers"
 import Modal from "../../components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
-import {MarkerDto} from "../../types.generated"
+import {DetectedMarker, MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
 import {createNewMarker, updateMarker} from "./api"
 
@@ -105,6 +110,14 @@ export default function EditVideoModal() {
   const segments = getSegments(videoDuration, markers)
   const markerStart = watch("start")
   const markerEnd = watch("end")
+
+  const onDetectMarkers = async () => {
+    const result = await fetch(`/api/local/video/${video.id.id}/scenes`)
+    if (result.ok) {
+      const data = (await result.json()) as DetectedMarker[]
+      console.log(data)
+    }
+  }
 
   const onSubmit = async (values: Inputs) => {
     const index =
@@ -364,13 +377,19 @@ export default function EditVideoModal() {
           )}
           <div className="w-full flex justify-between">
             {formMode === "hidden" ? (
-              <button
-                onClick={() => onShowForm()}
-                className="btn btn-primary self-center"
-              >
-                <HiTag className="w-4 h-4 mr-2" />
-                Add new marker
-              </button>
+              <div className="flex gap-2">
+                <button onClick={onDetectMarkers} className="btn btn-secondary">
+                  <HiPlus className="mr-2" />
+                  Detect markers
+                </button>
+                <button
+                  onClick={() => onShowForm()}
+                  className="btn btn-primary"
+                >
+                  <HiTag className="w-4 h-4 mr-2" />
+                  Add new marker
+                </button>
+              </div>
             ) : (
               <span />
             )}
@@ -385,6 +404,8 @@ export default function EditVideoModal() {
       <div className="w-full h-8 flex mt-2 gap-0.5 bg-gray-100 relative">
         {segments.map(({width, offset}, index) => {
           const marker = markers[index]
+          const backgroundColor = getSegmentColor(index, markers.length)
+          const textColor = getSegmentTextColor(backgroundColor)
           return (
             <div
               key={index}
@@ -395,7 +416,8 @@ export default function EditVideoModal() {
               style={{
                 width: `${width}%`,
                 left: `${offset}%`,
-                backgroundColor: getSegmentColor(index, markers.length),
+                backgroundColor,
+                color: textColor,
               }}
             >
               {marker.primaryTag}

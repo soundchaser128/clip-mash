@@ -6,7 +6,7 @@ use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
 use clip_mash_types::{
-    CreateMarker, ListVideoDto, MarkerDto, PageParameters, UpdateMarker, VideoDto,
+    CreateMarker, DetectedMarker, ListVideoDto, MarkerDto, PageParameters, UpdateMarker, VideoDto,
 };
 use reqwest::StatusCode;
 use serde::Deserialize;
@@ -19,6 +19,7 @@ use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::service::local_video::VideoService;
 use crate::service::preview_image::PreviewGenerator;
+use crate::service::scene_detection::{detect_markers, detect_scenes};
 
 #[axum::debug_handler]
 pub async fn get_video(
@@ -205,4 +206,20 @@ pub async fn download_video(
     let (video_id, path) = service.download_video(url).await?;
     let db_video = service.persist_downloaded_video(video_id, path).await?;
     Ok(Json(db_video.into()))
+}
+
+#[axum::debug_handler]
+pub async fn get_scenes(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<DetectedMarker>>, AppError> {
+    let video = state.database.get_video(&id).await?;
+    if let Some(video) = video {
+        let timestamps =
+            detect_scenes(&video.file_path, 0.4, state.ffmpeg_location.clone()).await?;
+        let markers = detect_markers(timestamps, video.duration);
+        Ok(Json(markers))
+    } else {
+        Err(AppError::StatusCode(StatusCode::NOT_FOUND))
+    }
 }

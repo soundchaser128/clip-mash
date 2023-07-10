@@ -14,16 +14,17 @@ import {
 } from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
-import {formatSeconds, getSegmentColor} from "../helpers"
+import {
+  formatSeconds,
+  getSegmentColor,
+  getSegmentTextColor,
+  pluralize,
+} from "../helpers"
 import {Clip, ClipOrder} from "../types.generated"
 import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
 import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
-
-function pluralize(word: string, count: number | undefined | null): string {
-  return count === 1 ? word : `${word}s`
-}
 
 interface ClipState {
   included: boolean
@@ -53,7 +54,15 @@ const Timeline: React.FC<TimelineProps> = ({
     sceneIds.sort()
     const sceneColors = new Map()
     sceneIds.forEach((id, index) => {
-      sceneColors.set(id, [getSegmentColor(index, sceneIds.length), index])
+      const backgroundColor = getSegmentColor(index, sceneIds.length)
+      const color = getSegmentTextColor(backgroundColor)
+      sceneColors.set(id, [
+        {
+          backgroundColor,
+          color,
+        },
+        index,
+      ])
     })
 
     return [segments, sceneColors]
@@ -63,7 +72,7 @@ const Timeline: React.FC<TimelineProps> = ({
     <div className="flex h-10 mt-2 gap-0.5">
       {segments.map((width, index) => {
         const clip = clips[index].clip
-        const [color, sceneId] = sceneColors.get(clip.videoId.id)
+        const [style, sceneId] = sceneColors.get(clip.videoId.id)
         return (
           <div
             key={index}
@@ -72,7 +81,7 @@ const Timeline: React.FC<TimelineProps> = ({
               index !== currentClipIndex && "opacity-30 hover:opacity-60",
               index === currentClipIndex && "opacity-100",
             )}
-            style={{width, backgroundColor: color}}
+            style={{width, ...style}}
             onClick={() => setCurrentClipIndex(index)}
           >
             {sceneId + 1}

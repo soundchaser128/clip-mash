@@ -434,6 +434,13 @@ pub struct UpdateMarker {
     pub title: String,
 }
 
+#[derive(Debug, Clone, Deserialize, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct DetectedMarker {
+    pub start: f64,
+    pub end: f64,
+}
+
 pub type Api = (
     StashScene,
     CreateVideoBody,
@@ -450,6 +457,7 @@ pub type Api = (
     Progress,
     CreateMarker,
     UpdateMarker,
+    DetectedMarker,
 );
 
 #[cfg(test)]

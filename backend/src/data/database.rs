@@ -450,14 +450,12 @@ impl Database {
         .await?;
         let limit = params.limit();
         let offset = params.offset();
-        let records = sqlx::query!(
+        let mut records = sqlx::query!(
             "SELECT *, m.rowid AS rowid 
             FROM local_videos v 
             LEFT JOIN markers m ON v.id = m.video_id 
-            WHERE v.file_path LIKE $1
-            ORDER BY file_path ASC
-            LIMIT $2 
-            OFFSET $3",
+            WHERE v.file_path LIKE $1 AND v.rowid IN (SELECT rowid FROM local_videos LIMIT $2 OFFSET $3)
+            ORDER BY file_path ASC",
             query,
             limit,
             offset,
@@ -467,9 +465,13 @@ impl Database {
         if records.is_empty() {
             Ok((vec![], count as usize))
         } else {
+            records.sort_by_key(|v| v.id.clone());
+
             let iter = records.into_iter().group_by(|v| v.id.clone());
             let mut videos = vec![];
+            let mut count = 0;
             for (_, group) in &iter {
+                count += 1;
                 let group: Vec<_> = group.collect();
                 let video = DbVideo {
                     id: group[0].id.clone(),
@@ -494,18 +496,18 @@ impl Database {
                             r.interactive,
                         ) {
                             (
-                                Some(video_id),
-                                Some(start_time),
-                                Some(end_time),
-                                Some(title),
-                                rowid,
+                                video_id,
+                                start_time,
+                                end_time,
+                                title,
+                                Some(rowid),
                                 file_path,
-                                Some(index),
+                                index,
                                 marker_preview_image,
                                 interactive,
                             ) => Some(
                                 DbMarker {
-                                    rowid,
+                                    rowid: Some(rowid),
                                     title,
                                     video_id,
                                     start_time,

@@ -48,7 +48,10 @@ pub struct DetectedMarker {
 
 pub fn detect_markers(mut timestamps: Vec<f64>, total_duration: f64) -> Vec<DetectedMarker> {
     if timestamps.is_empty() {
-        return vec![];
+        return vec![DetectedMarker {
+            start: 0.0,
+            end: total_duration,
+        }];
     }
 
     if timestamps[0] != 0.0 {

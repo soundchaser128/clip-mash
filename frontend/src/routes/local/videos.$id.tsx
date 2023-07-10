@@ -1,5 +1,4 @@
 import {VideoWithMarkers} from "../../types/types"
-import clsx from "clsx"
 import {useRef, useState} from "react"
 import {useForm, FieldErrors} from "react-hook-form"
 import {
@@ -14,46 +13,19 @@ import {
   HiChevronRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
-import {formatSeconds, getSegmentColor, parseTimestamp} from "../../helpers"
+import {formatSeconds, parseTimestamp} from "../../helpers"
 import Modal from "../../components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
 import {createNewMarker, updateMarker} from "./api"
+import {SegmentedBar} from "../../components/SegmentedBar"
 
 interface Inputs {
   id?: number
   title: string
   start: string
   end?: string
-}
-
-interface Segment {
-  offset: number
-  width: number
-}
-
-function getSegments(
-  duration: number | undefined,
-  markers: MarkerDto[],
-): Segment[] {
-  if (typeof duration !== "undefined" && !isNaN(duration)) {
-    const totalDuration = duration
-    const result = []
-    for (const marker of markers) {
-      const offset = (marker.start / totalDuration) * 100
-      const seconds = marker.end - marker.start
-      const width = (seconds / totalDuration) * 100
-      result.push({
-        offset,
-        width,
-      })
-    }
-
-    return result
-  } else {
-    return []
-  }
 }
 
 type FormMode = "hidden" | "create" | "edit"
@@ -101,10 +73,23 @@ export default function EditVideoModal() {
   const [formMode, setFormMode] = useState<FormMode>("hidden")
   const [videoDuration, setVideoDuration] = useState<number>()
   const [editedMarker, setEditedMarker] = useState<MarkerDto>()
+  const [loading, setLoading] = useState(false)
 
-  const segments = getSegments(videoDuration, markers)
   const markerStart = watch("start")
   const markerEnd = watch("end")
+
+  const onDetectMarkers = async () => {
+    setLoading(true)
+    const result = await fetch(`/api/local/video/${video.id.id}/markers`, {
+      method: "POST",
+    })
+    if (result.ok) {
+      const data = (await result.json()) as MarkerDto[]
+      setMarkers(markers.concat(data))
+    }
+
+    setLoading(false)
+  }
 
   const onSubmit = async (values: Inputs) => {
     const index =
@@ -214,7 +199,7 @@ export default function EditVideoModal() {
                 <button
                   type="button"
                   onClick={() => setVideoPosition(parseTimestamp(markerStart))}
-                  className="btn"
+                  className="btn btn-secondary"
                 >
                   <HiChevronLeft className="mr-2" />
                   Go to start
@@ -226,7 +211,7 @@ export default function EditVideoModal() {
                     typeof markerEnd !== "undefined" &&
                     setVideoPosition(parseTimestamp(markerEnd))
                   }
-                  className="btn"
+                  className="btn btn-secondary"
                   disabled={typeof markerEnd === "undefined"}
                 >
                   Go to end
@@ -364,13 +349,23 @@ export default function EditVideoModal() {
           )}
           <div className="w-full flex justify-between">
             {formMode === "hidden" ? (
-              <button
-                onClick={() => onShowForm()}
-                className="btn btn-primary self-center"
-              >
-                <HiTag className="w-4 h-4 mr-2" />
-                Add new marker
-              </button>
+              <div className="flex gap-2">
+                <button
+                  disabled={loading || markers.length > 0}
+                  onClick={onDetectMarkers}
+                  className="btn btn-secondary"
+                >
+                  <HiPlus className="mr-2" />
+                  Detect markers
+                </button>
+                <button
+                  onClick={() => onShowForm()}
+                  className="btn btn-primary"
+                >
+                  <HiTag className="w-4 h-4 mr-2" />
+                  Add new marker
+                </button>
+              </div>
             ) : (
               <span />
             )}
@@ -382,27 +377,16 @@ export default function EditVideoModal() {
           </div>
         </div>
       </div>
-      <div className="w-full h-8 flex mt-2 gap-0.5 bg-gray-100 relative">
-        {segments.map(({width, offset}, index) => {
-          const marker = markers[index]
-          return (
-            <div
-              key={index}
-              className={clsx(
-                "absolute h-full tooltip transition-opacity flex items-center justify-center cursor-pointer text-white",
-              )}
-              onClick={() => onShowForm(marker)}
-              style={{
-                width: `${width}%`,
-                left: `${offset}%`,
-                backgroundColor: getSegmentColor(index, markers.length),
-              }}
-            >
-              {marker.primaryTag}
-            </div>
-          )
-        })}
-      </div>
+      <SegmentedBar
+        length={video.duration}
+        items={markers.map((marker) => ({
+          label: marker.primaryTag,
+          length: marker.end - marker.start,
+          offset: marker.start,
+        }))}
+        onItemClick={(item, index) => onShowForm(markers[index])}
+        selectedIndex={editedMarker ? markers.indexOf(editedMarker) : undefined}
+      />
     </Modal>
   )
 }

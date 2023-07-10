@@ -31,7 +31,7 @@ impl From<StashMarker> for MarkerDto {
 impl From<DbMarker> for MarkerDto {
     fn from(value: DbMarker) -> Self {
         MarkerDto {
-            id: MarkerId::LocalFile(value.rowid.expect("must have an ID")),
+            id: MarkerId::LocalFile(value.rowid.expect("marker must have a rowid")),
             start: value.start_time,
             end: value.end_time,
             file_name: Utf8Path::new(&value.file_path)

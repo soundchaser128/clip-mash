@@ -19,6 +19,7 @@ use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::service::local_video::VideoService;
 use crate::service::preview_image::PreviewGenerator;
+use crate::service::scene_detection;
 
 #[axum::debug_handler]
 pub async fn get_video(
@@ -205,4 +206,21 @@ pub async fn download_video(
     let (video_id, path) = service.download_video(url).await?;
     let db_video = service.persist_downloaded_video(video_id, path).await?;
     Ok(Json(db_video.into()))
+}
+
+#[derive(Deserialize)]
+pub struct DetectMarkersQuery {
+    pub threshold: Option<f64>,
+}
+
+#[axum::debug_handler]
+pub async fn detect_markers(
+    Path(id): Path<String>,
+    Query(DetectMarkersQuery { threshold }): Query<DetectMarkersQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<MarkerDto>>, AppError> {
+    let created_markers =
+        scene_detection::find_and_persist_markers(&id, threshold.unwrap_or(0.4), state.clone())
+            .await?;
+    Ok(Json(created_markers))
 }

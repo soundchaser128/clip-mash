@@ -7,6 +7,7 @@ pub mod local_video;
 pub mod migrations;
 pub mod music;
 pub mod preview_image;
+pub mod scene_detection;
 pub mod stash_config;
 
 #[cfg(test)]

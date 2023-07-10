@@ -1,7 +1,9 @@
 use std::ffi::OsStr;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use clip_mash_types::{Clip, EncodingEffort, Progress, VideoCodec, VideoQuality, VideoResolution};
+use clip_mash_types::{
+    Clip, EncodingEffort, Progress, VideoCodec, VideoId, VideoQuality, VideoResolution,
+};
 use futures::lock::Mutex;
 use itertools::Itertools;
 use tokio::process::Command;
@@ -66,6 +68,16 @@ pub fn find_stream_url(marker: &Marker) -> &str {
 pub async fn get_progress() -> Progress {
     let locked = PROGRESS.lock().await;
     locked.progress()
+}
+
+fn get_clip_file_name(
+    video_id: &VideoId,
+    start: f64,
+    end: f64,
+    codec: VideoCodec,
+    resolution: VideoResolution,
+) -> String {
+    format!("{video_id}_{start}-{end}-{codec}-{resolution}.mp4")
 }
 
 #[derive(Clone)]
@@ -232,7 +244,13 @@ impl CompilationGenerator {
                 .expect(&format!("no marker with ID {marker_id} found"));
             let url = find_stream_url(marker);
             let (width, height) = options.output_resolution.resolution();
-            let out_file = video_dir.join(format!("{}_{}-{}.mp4", marker.video_id, start, end));
+            let out_file = video_dir.join(get_clip_file_name(
+                &marker.video_id,
+                *start,
+                *end,
+                options.video_codec,
+                options.output_resolution,
+            ));
             if !out_file.is_file() {
                 info!("creating clip {} / {} at {out_file}", index + 1, total);
                 self.create_clip(

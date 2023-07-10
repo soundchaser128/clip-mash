@@ -87,6 +87,7 @@ async fn main() -> Result<()> {
         .route("/video", get(handlers::local::list_videos))
         .route("/video", post(handlers::local::add_new_videos))
         .route("/video/:id", get(handlers::local::get_video))
+        .route("/video/:id/markers", post(handlers::local::detect_markers))
         .route("/video/:id/file", get(handlers::local::get_video_file))
         .route(
             "/video/:id/preview",

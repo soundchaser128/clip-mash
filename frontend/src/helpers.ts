@@ -22,6 +22,21 @@ export function getSegmentColor(index: number, count: number): string {
   return colorScale(index)
 }
 
+export function getSegmentTextColor(color: string): string {
+  const [r, g, b] = color
+    .slice(1)
+    .match(/.{1,2}/g)!
+    .map((x) => parseInt(x, 16))
+
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+  if (luma < 140) {
+    return "#ffffff"
+  } else {
+    return "#000000"
+  }
+}
+
 type DurationFormat = "long" | "short"
 
 export function formatSeconds(
@@ -85,4 +100,11 @@ export function sumDurations(markers?: HasDuration[]): number {
         0,
       )
   }
+}
+
+export function pluralize(
+  word: string,
+  count: number | undefined | null,
+): string {
+  return count === 1 ? word : `${word}s`
 }

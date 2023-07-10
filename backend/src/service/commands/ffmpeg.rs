@@ -1,10 +1,10 @@
 use std::fs;
 use std::io::Write;
-use std::process::{Command, Stdio};
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
+use tokio::process::Command;
 use tracing::{debug, info};
 
 use crate::service::directories::Directories;
@@ -32,6 +32,8 @@ fn download_url() -> Result<(&'static str, &'static str)> {
 }
 
 fn get_ffmpeg_location(base_dir: &Utf8Path) -> Option<FfmpegLocation> {
+    use std::process::{Command, Stdio};
+
     if base_dir.join("ffmpeg").is_file() || base_dir.join("ffmpeg.exe").is_file() {
         Some(FfmpegLocation::Local(Arc::new(base_dir.to_owned())))
     } else {
@@ -176,13 +178,16 @@ pub struct Ffmpeg {
     start: Option<String>,
     extra_args: Vec<String>,
     working_directory: Option<Utf8PathBuf>,
+    filter: Option<String>,
+    format: Option<String>,
+    log_level: Option<String>,
     output_file: String,
 }
 
 impl Ffmpeg {
-    pub fn new(location: &FfmpegLocation, output_file: String) -> Self {
+    pub fn new(location: &FfmpegLocation, output_file: impl Into<String>) -> Self {
         Ffmpeg {
-            output_file,
+            output_file: output_file.into(),
             executable_path: location.ffmpeg(),
             ..Default::default()
         }
@@ -204,13 +209,34 @@ impl Ffmpeg {
         self
     }
 
+    pub fn video_filter(&mut self, filter: impl Into<String>) -> &mut Self {
+        self.filter = Some(filter.into());
+        self
+    }
+
+    pub fn format(&mut self, format: impl Into<String>) -> &mut Self {
+        self.format = Some(format.into());
+        self
+    }
+
+    pub fn log_level(&mut self, log_level: impl Into<String>) -> &mut Self {
+        self.log_level = Some(log_level.into());
+        self
+    }
+
     pub fn extra_arg(&mut self, arg: impl Into<String>) -> &mut Self {
         self.extra_args.push(arg.into());
         self
     }
 
     fn build_args(&self) -> Vec<&str> {
-        let mut args = vec!["-hide_banner", "-loglevel", "warning"];
+        let mut args = vec!["-hide_banner"];
+        args.push("-loglevel");
+        if let Some(log_level) = &self.log_level {
+            args.push(log_level);
+        } else {
+            args.push("warning");
+        }
 
         if let Some(start) = &self.start {
             args.push("-ss");
@@ -221,15 +247,27 @@ impl Ffmpeg {
             args.push("-i");
             args.push(input);
         }
+
+        if let Some(format) = &self.format {
+            args.push("-f");
+            args.push(format);
+        }
+
+        if let Some(filter) = &self.filter {
+            args.push("-filter:v");
+            args.push(filter);
+        }
+
         for extra_arg in &self.extra_args {
             args.push(extra_arg);
         }
 
         args.push(&self.output_file);
+        info!("running ffmpeg with arguments {:?}", args);
         args
     }
 
-    pub async fn run(&self) -> Result<()> {
+    fn command(&self) -> Command {
         let args = self.build_args();
         let mut command = Command::new(self.executable_path.as_str());
         command.args(args);
@@ -237,11 +275,25 @@ impl Ffmpeg {
         if let Some(dir) = &self.working_directory {
             command.current_dir(dir);
         }
+        command
+    }
 
-        let output = command.output()?;
+    pub async fn run(&self) -> Result<()> {
+        let mut command = self.command();
+        let output = command.output().await?;
 
         if output.status.success() {
             Ok(())
+        } else {
+            commandline_error(self.executable_path.as_str(), output)
+        }
+    }
+
+    pub async fn output(&self) -> Result<String> {
+        let mut command = self.command();
+        let output = command.output().await?;
+        if output.status.success() {
+            Ok(String::from_utf8_lossy(&output.stderr).into())
         } else {
             commandline_error(self.executable_path.as_str(), output)
         }

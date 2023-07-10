@@ -1,4 +1,3 @@
-use clip_mash_types::DetectedMarker;
 use lazy_static::lazy_static;
 use regex::Regex;
 use tracing::{debug, info};
@@ -37,12 +36,17 @@ pub async fn detect_scenes(
     Ok(timestamps)
 }
 
+#[derive(Debug, Clone)]
+pub struct DetectedMarker {
+    pub start: f64,
+    pub end: f64,
+}
+
 pub fn detect_markers(mut timestamps: Vec<f64>, total_duration: f64) -> Vec<DetectedMarker> {
     if timestamps.is_empty() {
         return vec![];
     }
 
-    let mut markers = vec![];
     if timestamps[0] != 0.0 {
         timestamps.insert(0, 0.0);
     }
@@ -53,8 +57,13 @@ pub fn detect_markers(mut timestamps: Vec<f64>, total_duration: f64) -> Vec<Dete
 
     let mut markers = vec![];
     for window in timestamps.windows(2) {
-        let [start, end] = window;
-        markers.push(DetectedMarker { start, end })
+        if let [start, end] = window {
+            info!("adding marker with start {} and end {}", start, end);
+            markers.push(DetectedMarker {
+                start: *start,
+                end: *end,
+            })
+        }
     }
     markers
 }
@@ -71,6 +80,6 @@ mod test {
     async fn test_detect_scenes() {
         let input = "/Users/martin/stuff/3D PMV [petty-wellworn-wuerhosaurus].mp4";
         let ffmpeg_location = FfmpegLocation::System;
-        let scenes = detect_scenes(input, 0.4, ffmpeg_location).await;
+        let _scenes = detect_scenes(input, 0.4, ffmpeg_location).await;
     }
 }

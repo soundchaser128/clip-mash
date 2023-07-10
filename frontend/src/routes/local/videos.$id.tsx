@@ -22,7 +22,7 @@ import {
 } from "../../helpers"
 import Modal from "../../components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
-import {DetectedMarker, MarkerDto} from "../../types.generated"
+import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
 import {createNewMarker, updateMarker} from "./api"
 
@@ -106,17 +106,23 @@ export default function EditVideoModal() {
   const [formMode, setFormMode] = useState<FormMode>("hidden")
   const [videoDuration, setVideoDuration] = useState<number>()
   const [editedMarker, setEditedMarker] = useState<MarkerDto>()
+  const [loading, setLoading] = useState(false)
 
   const segments = getSegments(videoDuration, markers)
   const markerStart = watch("start")
   const markerEnd = watch("end")
 
   const onDetectMarkers = async () => {
-    const result = await fetch(`/api/local/video/${video.id.id}/scenes`)
+    setLoading(true)
+    const result = await fetch(`/api/local/video/${video.id.id}/markers`, {
+      method: "POST",
+    })
     if (result.ok) {
-      const data = (await result.json()) as DetectedMarker[]
-      console.log(data)
+      const data = (await result.json()) as MarkerDto[]
+      setMarkers(markers.concat(data))
     }
+
+    setLoading(false)
   }
 
   const onSubmit = async (values: Inputs) => {
@@ -378,7 +384,11 @@ export default function EditVideoModal() {
           <div className="w-full flex justify-between">
             {formMode === "hidden" ? (
               <div className="flex gap-2">
-                <button onClick={onDetectMarkers} className="btn btn-secondary">
+                <button
+                  disabled={loading}
+                  onClick={onDetectMarkers}
+                  className="btn btn-secondary"
+                >
                   <HiPlus className="mr-2" />
                   Detect markers
                 </button>

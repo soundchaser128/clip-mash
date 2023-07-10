@@ -157,4 +157,3 @@ export type CreateMarker = {
   videoInteractive: boolean
 }
 export type UpdateMarker = {rowid: I64; start: F64; end: F64; title: string}
-export type DetectedMarker = {start: F64; end: F64}

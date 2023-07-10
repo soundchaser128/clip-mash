@@ -208,16 +208,26 @@ pub async fn download_video(
     Ok(Json(db_video.into()))
 }
 
+#[derive(Deserialize)]
+pub struct DetectMarkersQuery {
+    pub threshold: Option<f64>,
+}
+
 #[axum::debug_handler]
 pub async fn detect_markers(
     Path(id): Path<String>,
+    Query(DetectMarkersQuery { threshold }): Query<DetectMarkersQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<MarkerDto>>, AppError> {
     let video = state.database.get_video(&id).await?;
     if let Some(video) = video {
-        let timestamps =
-            scene_detection::detect_scenes(&video.file_path, 0.4, state.ffmpeg_location.clone())
-                .await?;
+        let threshold = threshold.unwrap_or(0.4);
+        let timestamps = scene_detection::detect_scenes(
+            &video.file_path,
+            threshold,
+            state.ffmpeg_location.clone(),
+        )
+        .await?;
         let markers = scene_detection::detect_markers(timestamps, video.duration);
 
         let mut created_markers = vec![];

@@ -14,6 +14,10 @@ pub async fn detect_scenes(
     threshold: f64,
     ffmpeg_location: FfmpegLocation,
 ) -> Result<Vec<f64>> {
+    info!(
+        "detecting scenes in input {} with threshold {}",
+        input, threshold
+    );
     let output = Ffmpeg::new(&ffmpeg_location, "-")
         .input(input)
         .format("null")
@@ -26,7 +30,7 @@ pub async fn detect_scenes(
     for line in output.split('\n') {
         if let Some(captures) = PTS_REGEX.captures(line) {
             let pts = captures.get(1).unwrap().as_str();
-            info!("pts: {}", pts);
+            debug!("found pts: {}", pts);
             if let Ok(pts) = pts.parse::<f64>() {
                 timestamps.push(pts);
             }

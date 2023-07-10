@@ -411,7 +411,7 @@ export default function EditVideoModal() {
           </div>
         </div>
       </div>
-      <div className="w-full h-8 flex mt-2 gap-0.5 bg-gray-100 relative">
+      <div className="w-full flex mt-2 gap-0.5 bg-gray-100 relative">
         {segments.map(({width, offset}, index) => {
           const marker = markers[index]
           const backgroundColor = getSegmentColor(index, markers.length)
@@ -420,7 +420,7 @@ export default function EditVideoModal() {
             <div
               key={index}
               className={clsx(
-                "absolute h-full tooltip transition-opacity flex items-center justify-center cursor-pointer text-white",
+                "absolute h-8 tooltip transition-opacity flex items-center justify-center cursor-pointer text-white",
               )}
               onClick={() => onShowForm(marker)}
               style={{

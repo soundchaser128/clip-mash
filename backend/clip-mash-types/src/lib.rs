@@ -298,12 +298,32 @@ impl VideoResolution {
     }
 }
 
+impl fmt::Display for VideoResolution {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::SevenTwenty => write!(f, "720"),
+            Self::TenEighty => write!(f, "1080"),
+            Self::FourK => write!(f, "4K"),
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum VideoCodec {
     Av1,
     H264,
     H265,
+}
+
+impl fmt::Display for VideoCodec {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Av1 => write!(f, "av1"),
+            Self::H264 => write!(f, "h264"),
+            Self::H265 => write!(f, "h265"),
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, TypeDef, Clone, Copy)]

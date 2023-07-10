@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- feat: Auotmated marker creation by detecting scene changes
+- fix: Add encoding parameters (resolution and codec name) to clip filenames
 
 ## 0.13.0
 - feat: show version number in footer

@@ -351,7 +351,7 @@ export default function EditVideoModal() {
             {formMode === "hidden" ? (
               <div className="flex gap-2">
                 <button
-                  disabled={loading}
+                  disabled={loading || markers.length > 0}
                   onClick={onDetectMarkers}
                   className="btn btn-secondary"
                 >
@@ -378,9 +378,11 @@ export default function EditVideoModal() {
         </div>
       </div>
       <SegmentedBar
+        length={video.duration}
         items={markers.map((marker) => ({
           label: marker.primaryTag,
           length: marker.end - marker.start,
+          offset: marker.start,
         }))}
         onItemClick={(item, index) => onShowForm(markers[index])}
         selectedIndex={editedMarker ? markers.indexOf(editedMarker) : undefined}

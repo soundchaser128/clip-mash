@@ -9,6 +9,8 @@ lazy_static! {
     static ref PTS_REGEX: Regex = Regex::new(r"pts_time:([\d\.]+)").unwrap();
 }
 
+const MIN_MARKER_DURATION: f64 = 5.0;
+
 pub async fn detect_scenes(
     input: &str,
     threshold: f64,
@@ -65,11 +67,14 @@ pub fn detect_markers(mut timestamps: Vec<f64>, total_duration: f64) -> Vec<Dete
     let mut markers = vec![];
     for window in timestamps.windows(2) {
         if let [start, end] = window {
-            info!("adding marker with start {} and end {}", start, end);
-            markers.push(DetectedMarker {
-                start: *start,
-                end: *end,
-            })
+            let duration = end - start;
+            if duration >= MIN_MARKER_DURATION {
+                info!("adding marker with start {} and end {}", start, end);
+                markers.push(DetectedMarker {
+                    start: *start,
+                    end: *end,
+                });
+            }
         }
     }
     markers

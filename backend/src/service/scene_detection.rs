@@ -74,19 +74,3 @@ pub fn detect_markers(mut timestamps: Vec<f64>, total_duration: f64) -> Vec<Dete
     }
     markers
 }
-
-#[cfg(test)]
-mod test {
-    use tracing_test::traced_test;
-
-    use super::detect_scenes;
-    use crate::service::commands::ffmpeg::FfmpegLocation;
-
-    #[traced_test]
-    #[tokio::test]
-    async fn test_detect_scenes() {
-        let input = "/Users/martin/stuff/3D PMV [petty-wellworn-wuerhosaurus].mp4";
-        let ffmpeg_location = FfmpegLocation::System;
-        let _scenes = detect_scenes(input, 0.4, ffmpeg_location).await;
-    }
-}

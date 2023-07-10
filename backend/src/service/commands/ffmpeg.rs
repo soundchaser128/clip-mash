@@ -1,6 +1,5 @@
 use std::fs;
 use std::io::Write;
-// use std::process::{Command, Stdio};
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};

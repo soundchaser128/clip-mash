@@ -469,9 +469,7 @@ impl Database {
 
             let iter = records.into_iter().group_by(|v| v.id.clone());
             let mut videos = vec![];
-            let mut count = 0;
             for (_, group) in &iter {
-                count += 1;
                 let group: Vec<_> = group.collect();
                 let video = DbVideo {
                     id: group[0].id.clone(),

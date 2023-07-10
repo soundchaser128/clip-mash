@@ -3,11 +3,8 @@ import {useRef, useState} from "react"
 import {
   HiArrowDown,
   HiCodeBracket,
-  HiInformationCircle,
   HiOutlineFolder,
   HiRocketLaunch,
-  HiXCircle,
-  HiXMark,
 } from "react-icons/hi2"
 import {FormState} from "../types/types"
 import {formatSeconds} from "../helpers"

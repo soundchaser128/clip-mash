@@ -25,7 +25,6 @@ import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
 import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
-import {SegmentedBar} from "../components/SegmentedBar"
 
 interface ClipState {
   included: boolean

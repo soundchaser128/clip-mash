@@ -232,6 +232,10 @@ pub async fn detect_markers(
 
         let mut created_markers = vec![];
         for (index, marker) in markers.into_iter().enumerate() {
+            let preview_generator: PreviewGenerator = state.clone().into();
+            let preview_image = preview_generator
+                .generate_preview(&video.id, &video.file_path, marker.start)
+                .await?;
             let db_marker = state
                 .database
                 .create_new_marker(CreateMarker {
@@ -239,7 +243,7 @@ pub async fn detect_markers(
                     title: "Untitled".to_string(),
                     start: marker.start,
                     end: marker.end,
-                    preview_image_path: None,
+                    preview_image_path: Some(preview_image.to_string()),
                     index_within_video: index as i64,
                     video_interactive: video.interactive,
                 })

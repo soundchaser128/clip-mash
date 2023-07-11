@@ -19,8 +19,9 @@ import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
 import {createNewMarker, updateMarker} from "./api"
+import {SegmentedBar} from "../../components/SegmentedBar"
 import Loader from "../../components/Loader"
-import TimelineEditor from "../../components/Timeline"
+import Timeline from "../../components/Timeline"
 
 interface Inputs {
   id?: number
@@ -397,11 +398,10 @@ export default function EditVideoModal() {
           </div>
         </div>
       </div>
-      <TimelineEditor items={timelineItems} />
-
+      <Timeline length={video.duration} items={timelineItems} />
       {/* <SegmentedBar
         length={video.duration}
-        items={
+        items={}
         onItemClick={(item, index) => onShowForm(markers[index])}
         selectedIndex={editedMarker ? markers.indexOf(editedMarker) : undefined}
       /> */}

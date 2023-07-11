@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@badrap/result": "^0.2.13",
-    "@xzdarcy/react-timeline-editor": "^0.1.9",
     "clsx": "^1.2.1",
     "d3-scale": "^4.0.2",
     "d3-scale-chromatic": "^3.0.0",

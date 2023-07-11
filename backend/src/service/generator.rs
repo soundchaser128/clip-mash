@@ -80,6 +80,20 @@ fn get_clip_file_name(
     format!("{video_id}_{start}-{end}-{codec}-{resolution}.mp4")
 }
 
+#[derive(Debug)]
+struct CreateClip<'a> {
+    url: &'a str,
+    start: f64,
+    duration: f64,
+    width: u32,
+    height: u32,
+    fps: f64,
+    out_file: &'a Utf8Path,
+    codec: VideoCodec,
+    quality: VideoQuality,
+    effort: EncodingEffort,
+}
+
 #[derive(Clone)]
 pub struct CompilationGenerator {
     directories: Directories,
@@ -161,23 +175,13 @@ impl CompilationGenerator {
         vec!["-c:v", encoder, "-preset", effort, "-crf", crf]
     }
 
-    async fn create_clip(
-        &self,
-        url: &str,
-        start: f64,
-        duration: f64,
-        width: u32,
-        height: u32,
-        fps: f64,
-        out_file: &Utf8Path,
-        codec: VideoCodec,
-        quality: VideoQuality,
-        effort: EncodingEffort,
-    ) -> Result<()> {
-        let clip_str = duration.to_string();
-        let seconds_str = start.to_string();
+    async fn create_clip(&self, clip: CreateClip<'_>) -> Result<()> {
+        let clip_str = clip.duration.to_string();
+        let seconds_str = clip.start.to_string();
         let filter = format!("scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:-1:-1:color=black,fps={fps}",
-            fps=fps,
+            width=clip.width,
+            height=clip.height,
+            fps=clip.fps,
         );
 
         let mut args = vec![
@@ -187,11 +191,11 @@ impl CompilationGenerator {
             "-ss",
             seconds_str.as_str(),
             "-i",
-            url,
+            clip.url,
             "-t",
             clip_str.as_str(),
         ];
-        args.extend(self.video_encoding_parameters(codec, quality, effort));
+        args.extend(self.video_encoding_parameters(clip.codec, clip.quality, clip.effort));
         args.extend(&[
             "-acodec",
             "aac",
@@ -199,7 +203,7 @@ impl CompilationGenerator {
             &filter,
             "-ar",
             "48000",
-            out_file.as_str(),
+            clip.out_file.as_str(),
         ]);
 
         self.ffmpeg(args).await
@@ -253,18 +257,18 @@ impl CompilationGenerator {
             ));
             if !out_file.is_file() {
                 info!("creating clip {} / {} at {out_file}", index + 1, total);
-                self.create_clip(
+                self.create_clip(CreateClip {
                     url,
-                    *start,
-                    end - start,
+                    start: *start,
+                    duration: end - start,
                     width,
                     height,
-                    options.output_fps as f64,
-                    &out_file,
-                    options.video_codec,
-                    options.video_quality,
-                    options.encoding_effort,
-                )
+                    fps: options.output_fps as f64,
+                    out_file: &out_file,
+                    codec: options.video_codec,
+                    quality: options.video_quality,
+                    effort: options.encoding_effort,
+                })
                 .await?;
             } else {
                 info!("clip {out_file} already exists, skipping");

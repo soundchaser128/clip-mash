@@ -44,7 +44,7 @@ export const SegmentedBar: React.FC<Props> = ({
           <div
             key={index}
             className={clsx(
-              "absolute text-sm cursor-pointer text-white py-2 text-center",
+              "absolute text-sm text-white py-2 text-center",
               !fadeInactiveItems && "hover:opacity-80",
               index !== selectedIndex &&
                 fadeInactiveItems &&
@@ -52,8 +52,13 @@ export const SegmentedBar: React.FC<Props> = ({
               index === selectedIndex && fadeInactiveItems && "opacity-100",
             )}
             style={style}
-            onClick={() => onItemClick(item, index)}
           >
+            <div className="relative w-full">
+              <div className="absolute w-full left-0 h-11 -top-3">
+                <span className="z-30 cursor-grab border-l-[12px] border-black absolute left-0 top-0 h-full"></span>
+                <span className="z-30 cursor-grab border-r-[12px] border-black absolute right-0 top-0 h-full"></span>
+              </div>
+            </div>
             {item.label}
           </div>
         )

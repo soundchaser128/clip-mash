@@ -1,5 +1,5 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use clip_mash_types::Clip;
+use clip_mash_types::{Beats, Clip};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{info, warn};
@@ -108,6 +108,12 @@ impl Default for FunScript {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum StrokeType {
+    EveryBeat,
+    EveryOtherBeat,
+}
+
 pub struct ScriptBuilder<'a> {
     api: &'a StashApi,
 }
@@ -115,6 +121,32 @@ pub struct ScriptBuilder<'a> {
 impl<'a> ScriptBuilder<'a> {
     pub fn new(api: &'a StashApi) -> Self {
         Self { api }
+    }
+
+    pub fn create_beat_script(&self, beats: &Beats, stroke_type: StrokeType) -> FunScript {
+        let mut actions = vec![];
+
+        let mut state = 0;
+        for beat in &beats.offsets {
+            let position = (beat * 1000.0).round() as u32;
+
+            let action = FSPoint {
+                pos: state,
+                at: position,
+            };
+            actions.push(action);
+            state = if state == 0 { 100 } else { 0 };
+        }
+
+        let version = env!("CARGO_PKG_VERSION");
+        FunScript {
+            actions,
+            metadata: Some(OFSMetadata {
+                creator: format!("clip-mash v{}", version),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }
     }
 
     pub async fn combine_scripts(&self, clips: Vec<(Video, Clip)>) -> Result<FunScript> {

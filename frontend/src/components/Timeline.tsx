@@ -1,4 +1,4 @@
-import {getSegmentColor, getSegmentTextColor} from "../helpers"
+import clsx from "clsx"
 
 interface Item {
   label: string
@@ -33,29 +33,39 @@ const Ticks = ({length}: {length: number}) => {
   return <div className="w-full relative">{ticks}</div>
 }
 
+interface DraggableHandleProps {
+  position: "left" | "right"
+}
+
+function DraggableHandle({position}: DraggableHandleProps) {
+  return (
+    <span
+      className={clsx(
+        "cursor-grab transition absolute h-10 top-0 w-4 hover:opacity-100 opacity-40 bg-black z-20",
+        position === "left" && "rounded-r-xl left-0",
+        position === "right" && "rounded-l-xl right-0",
+      )}
+    />
+  )
+}
+
 const Segments = ({items, length}: {items: Item[]; length: number}) => {
   const segments = items.map((item, index) => {
     const widthPercent = (item.length / length) * 100
     const offset = (item.offset / length) * 100
-    const backgroundColor = getSegmentColor(index, items.length)
-    const color = getSegmentTextColor(backgroundColor)
 
     return (
       <div
         key={index}
-        className="absolute py-2 text-center bg-gray-300 h-10"
+        className="absolute h-10 bg-slate-200 hover:bg-slate-300 text-black text-xs flex flex-col items-center justify-center text-center"
         style={{
           width: `${widthPercent}%`,
           left: `${offset}%`,
-          backgroundColor,
-          color,
         }}
       >
-        <div className="relative">
-          <div className="cursor-grab transition rounded-r-xl absolute h-10 w-4 hover:opacity-100 left-0 -top-2 opacity-50 bg-white z-20" />
-          <div className="cursor-grab transition rounded-l-xl absolute h-10 w-4 hover:opacity-100 right-0 opacity-50 -top-2 bg-white z-20" />
-        </div>
+        <DraggableHandle position="left" />
         {item.label}
+        <DraggableHandle position="right" />
       </div>
     )
   })

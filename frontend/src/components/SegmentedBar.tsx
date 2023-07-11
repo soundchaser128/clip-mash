@@ -1,5 +1,7 @@
 import clsx from "clsx"
 import {getSegmentColor, getSegmentTextColor} from "../helpers"
+import {useCallback, useRef} from "react"
+import {useDrag} from "react-dnd"
 
 interface Item {
   label: string
@@ -13,6 +15,31 @@ interface Props {
   onItemClick: (item: Item, index: number) => void
   selectedIndex?: number
   fadeInactiveItems?: boolean
+}
+
+interface DraggableHandleProps {
+  position: "left" | "right"
+  onDragEnd: (position: DOMRect) => void
+}
+
+function DraggableHandle({position, onDragEnd}: DraggableHandleProps) {
+  const [collected, drag, dragPreview] = useDrag(() => ({
+    type: "draggable-handle",
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+  }))
+  return (
+    <span
+      ref={drag}
+      className={clsx(
+        "z-30 cursor-grab border-primary absolute top-0 h-full",
+        position === "right" && "right-0 border-r-[12px]",
+        position === "left" && "left-0 border-l-[12px]",
+        collected.isDragging && "opacity-50",
+      )}
+    />
+  )
 }
 
 export const SegmentedBar: React.FC<Props> = ({
@@ -36,6 +63,14 @@ export const SegmentedBar: React.FC<Props> = ({
     } satisfies React.CSSProperties
   })
 
+  const onDragStartPoint = () => {
+    //
+  }
+
+  const onDragEndPoint = () => {
+    //
+  }
+
   return (
     <div className="flex h-10 mt-2 gap-0.5 relative w-full">
       {items.map((item, index) => {
@@ -55,8 +90,8 @@ export const SegmentedBar: React.FC<Props> = ({
           >
             <div className="relative w-full">
               <div className="absolute w-full left-0 h-11 -top-3">
-                <span className="z-30 cursor-grab border-l-[12px] border-black absolute left-0 top-0 h-full"></span>
-                <span className="z-30 cursor-grab border-r-[12px] border-black absolute right-0 top-0 h-full"></span>
+                <DraggableHandle position="left" onDragEnd={onDragStartPoint} />
+                <DraggableHandle position="right" onDragEnd={onDragEndPoint} />
               </div>
             </div>
             {item.label}

@@ -19,8 +19,8 @@ import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
 import {createNewMarker, updateMarker} from "./api"
-import {SegmentedBar} from "../../components/SegmentedBar"
 import Loader from "../../components/Loader"
+import TimelineEditor from "../../components/Timeline"
 
 interface Inputs {
   id?: number
@@ -175,6 +175,12 @@ export default function EditVideoModal() {
     revalidator.revalidate()
     navigate(-1)
   }
+
+  const timelineItems = markers.map((marker) => ({
+    label: marker.primaryTag,
+    length: marker.end - marker.start,
+    offset: marker.start,
+  }))
 
   return (
     <Modal isOpen onClose={onClose}>
@@ -331,7 +337,9 @@ export default function EditVideoModal() {
                     </button>
                   </div>
                 )}
-                {loading && <Loader className="h-full">Detecting markers...</Loader>}
+                {loading && (
+                  <Loader className="h-full">Detecting markers...</Loader>
+                )}
                 {markers.length > 0 && (
                   <table className="table table-compact w-full">
                     <thead>
@@ -389,16 +397,14 @@ export default function EditVideoModal() {
           </div>
         </div>
       </div>
-      <SegmentedBar
+      <TimelineEditor items={timelineItems} />
+
+      {/* <SegmentedBar
         length={video.duration}
-        items={markers.map((marker) => ({
-          label: marker.primaryTag,
-          length: marker.end - marker.start,
-          offset: marker.start,
-        }))}
+        items={
         onItemClick={(item, index) => onShowForm(markers[index])}
         selectedIndex={editedMarker ? markers.indexOf(editedMarker) : undefined}
-      />
+      /> */}
     </Modal>
   )
 }

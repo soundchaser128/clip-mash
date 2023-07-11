@@ -38,7 +38,7 @@ const Modal: React.FC<Props> = ({
       <div
         className={clsx(
           "fixed left-1/2 transform -translate-x-1/2",
-          size === "full-screen" && "w-[95vw] top-4",
+          size === "full-screen" && "w-[95vw] top-4 h-[90vh]",
           size !== "full-screen" && position === "off-center" && "top-32",
           size !== "full-screen" && position === "top" && "top-4",
         )}

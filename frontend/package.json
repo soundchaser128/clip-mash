@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
+    "dev": "vite",
+    "dev:network": "vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "format": "prettier --write src",

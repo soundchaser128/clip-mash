@@ -20,6 +20,7 @@ import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
 import {createNewMarker, updateMarker} from "./api"
 import {SegmentedBar} from "../../components/SegmentedBar"
+import Loader from "../../components/Loader"
 
 interface Inputs {
   id?: number
@@ -314,50 +315,61 @@ export default function EditVideoModal() {
             <div>
               <h2 className="text-xl font-bold mb-2">Markers</h2>
               <div className="overflow-x-auto">
-                <table className="table table-compact w-full">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>Tag</th>
-                      <th>Start</th>
-                      <th>End</th>
-                      <th>Edit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {markers.map((marker, idx) => (
-                      <tr key={marker.id.id}>
-                        <td>{idx + 1}</td>
-                        <td className="font-bold">{marker.primaryTag}</td>
-                        <td>{formatSeconds(marker.start, "short")}</td>
-                        <td>{formatSeconds(marker.end, "short")}</td>
-                        <td className="">
-                          <button
-                            onClick={() => onShowForm(marker)}
-                            type="button"
-                            className="btn btn-sm btn-square btn-primary"
-                          >
-                            <HiPencilSquare className="inline" />
-                          </button>
-                        </td>
+                {markers.length === 0 && !loading && (
+                  <div className="flex flex-col gap-2 h-full w-full justify-center items-center">
+                    <span className="text-lg">No markers yet.</span>
+                    <p className="text-sm">
+                      You can try letting ClipMash detect markers for you or add
+                      them manually.
+                    </p>
+                    <button
+                      onClick={onDetectMarkers}
+                      className="btn btn-secondary"
+                    >
+                      <HiPlus className="mr-2" />
+                      Detect markers
+                    </button>
+                  </div>
+                )}
+                {loading && <Loader className="h-full">Detecting markers...</Loader>}
+                {markers.length > 0 && (
+                  <table className="table table-compact w-full">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Tag</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Edit</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {markers.map((marker, idx) => (
+                        <tr key={marker.id.id}>
+                          <td>{idx + 1}</td>
+                          <td className="font-bold">{marker.primaryTag}</td>
+                          <td>{formatSeconds(marker.start, "short")}</td>
+                          <td>{formatSeconds(marker.end, "short")}</td>
+                          <td className="">
+                            <button
+                              onClick={() => onShowForm(marker)}
+                              type="button"
+                              className="btn btn-sm btn-square btn-primary"
+                            >
+                              <HiPencilSquare className="inline" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           )}
           <div className="w-full flex justify-between">
             {formMode === "hidden" ? (
               <div className="flex gap-2">
-                <button
-                  disabled={loading || markers.length > 0}
-                  onClick={onDetectMarkers}
-                  className="btn btn-secondary"
-                >
-                  <HiPlus className="mr-2" />
-                  Detect markers
-                </button>
                 <button
                   onClick={() => onShowForm()}
                   className="btn btn-primary"

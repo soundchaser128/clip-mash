@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.14.0
 - feat: Auotmated marker creation by detecting scene changes
 - fix: Add encoding parameters (resolution and codec name) to clip filenames
 

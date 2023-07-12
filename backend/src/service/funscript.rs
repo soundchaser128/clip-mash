@@ -117,7 +117,7 @@ impl<'a> ScriptBuilder<'a> {
         Self { api }
     }
 
-    pub fn create_beat_script(&self, songs: &[Beats], _stroke_type: StrokeType) -> FunScript {
+    pub fn create_beat_script(&self, songs: &[Beats], stroke_type: StrokeType) -> FunScript {
         let mut actions = vec![];
 
         let mut state = 0;

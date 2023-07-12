@@ -331,7 +331,9 @@ export default function EditVideoModal() {
                     </button>
                   </div>
                 )}
-                {loading && <Loader className="h-full">Detecting markers...</Loader>}
+                {loading && (
+                  <Loader className="h-full">Detecting markers...</Loader>
+                )}
                 {markers.length > 0 && (
                   <table className="table table-compact w-full">
                     <thead>

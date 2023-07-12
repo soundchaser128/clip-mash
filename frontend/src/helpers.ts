@@ -69,7 +69,7 @@ export function formatSeconds(
       {format: ["hours", "minutes", "seconds"]},
     )
   } else {
-    return format(duration * 1000, "mm:ss")
+    return format(duration * 1000, "hh:mm:ss")
   }
 }
 

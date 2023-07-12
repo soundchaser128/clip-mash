@@ -1,4 +1,7 @@
 import clsx from "clsx"
+import {set} from "date-fns"
+import {useState} from "react"
+import useDraggable from "../hooks/useDraggable"
 
 interface Item {
   label: string
@@ -38,13 +41,20 @@ interface DraggableHandleProps {
 }
 
 function DraggableHandle({position}: DraggableHandleProps) {
+  const {x, y, isDragging, handleMouseDown} = useDraggable({axis: "x"})
+  console.log({x, y})
+
   return (
     <span
+      onMouseDown={handleMouseDown}
       className={clsx(
         "cursor-grab transition absolute h-10 top-0 w-4 hover:opacity-100 opacity-40 bg-black z-20",
         position === "left" && "rounded-r-xl left-0",
         position === "right" && "rounded-l-xl right-0",
       )}
+      style={{
+        left: `${x}px`,
+      }}
     />
   )
 }

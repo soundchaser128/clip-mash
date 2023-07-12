@@ -380,13 +380,16 @@ impl Database {
     }
 
     pub async fn persist_song(&self, song: CreateSong) -> Result<DbSong> {
+        let beats = serde_json::to_string(&song.beats)?;
+
         let rowid = sqlx::query_scalar!(
-            "INSERT INTO songs (url, file_path, duration) 
-             VALUES ($1, $2, $3)
+            "INSERT INTO songs (url, file_path, duration, beats) 
+             VALUES ($1, $2, $3, $4)
              RETURNING rowid",
             song.url,
             song.file_path,
-            song.duration
+            song.duration,
+            beats,
         )
         .fetch_one(&self.pool)
         .await?;

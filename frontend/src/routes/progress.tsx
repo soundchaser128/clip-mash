@@ -207,46 +207,34 @@ function Progress() {
           </div>
 
           {interactive && (
-            <div className="flex flex-col">
-              <Toast type="info" dismissable>
-                This compilation is interactive. You can use e.g.{" "}
-                <a
-                  href="https://beta.funscript.io/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="link"
-                >
-                  Funplayer
-                </a>{" "}
-                to play it alongside the video in your browser, with supported
-                toys like the{" "}
-                <a
-                  href="https://www.thehandy.com/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="link"
-                >
-                  Handy
-                </a>
-                .
-                <br />
-                Make sure to take a look at the generated file before playing
-                it. It might contain awkward sections or abrupt changes in
-                speed.
-              </Toast>
-
-              <p className="font-light self-start mb-1">
-                Generate combined .funscript file
-              </p>
-              <button
-                onClick={onDownloadFunscript}
-                className="btn btn-success btn-lg"
-                disabled={creatingScript}
+            <Toast type="info" dismissable>
+              This compilation is interactive. You can use e.g.{" "}
+              <a
+                href="https://beta.funscript.io/"
+                target="_blank"
+                rel="noreferrer"
+                className="link"
               >
-                <HiCodeBracket className="w-6 h-6 mr-2" />
-                Funscript
-              </button>
-
+                Funplayer
+              </a>{" "}
+              to play it alongside the video in your browser, with supported
+              toys like the{" "}
+              <a
+                href="https://www.thehandy.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="link"
+              >
+                Handy
+              </a>
+              .
+              <br />
+              Make sure to take a look at the generated file before playing it.
+              It might contain awkward sections or abrupt changes in speed.
+            </Toast>
+          )}
+          {numSongs > 0 && (
+            <div>
               <p className="font-light self-start mb-1">
                 Generate beat-based .funscript file
               </p>
@@ -256,10 +244,26 @@ function Progress() {
                 disabled={creatingScript}
               >
                 <HiCodeBracket className="w-6 h-6 mr-2" />
-                Funscript
+                Beat-based funscript
               </button>
             </div>
           )}
+          {state.data.interactive && (
+            <div>
+              <p className="font-light self-start mb-1">
+                Generate combined .funscript file
+              </p>
+              <button
+                onClick={onDownloadFunscript}
+                className="btn btn-success btn-lg"
+                disabled={creatingScript}
+              >
+                <HiCodeBracket className="w-6 h-6 mr-2" />
+                Combined funscript
+              </button>
+            </div>
+          )}
+
           <a className="hidden" ref={downloadLink} />
           <div className="flex flex-col">
             <p className="font-light self-start mb-1">Open the videos folder</p>

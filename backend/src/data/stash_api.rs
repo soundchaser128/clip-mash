@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 use color_eyre::eyre::bail;
 use graphql_client::{GraphQLQuery, Response};
 use ordered_float::OrderedFloat;

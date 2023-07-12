@@ -8,7 +8,7 @@ import {
 } from "react-icons/hi2"
 import {FormState} from "../types/types"
 import {formatSeconds} from "../helpers"
-import {Progress} from "../types.generated"
+import {CreateBeatFunscriptBody, Progress} from "../types.generated"
 import useNotification from "../hooks/useNotification"
 import Toast from "../components/Toast"
 
@@ -49,6 +49,8 @@ function Progress() {
   const [creatingScript, setCreatingScript] = useState(false)
   const fileName = state.data.fileName || `Compilation [${state.data.id}].mp4`
   const sendNotification = useNotification()
+  const numSongs = state.data.songs?.length || 0
+  const interactive = numSongs > 0 || state.data.interactive
 
   const onSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -84,13 +86,39 @@ function Progress() {
     }
   }
 
+  const onCreateBeatFunscript = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    e.preventDefault()
+    setCreatingScript(true)
+    const songIds = state.data.songs?.map((s) => s.songId) || []
+    const data = {
+      songIds,
+      strokeType: "everyOtherBeat",
+    } satisfies CreateBeatFunscriptBody
+    const response = await fetch("/api/funscript/beat", {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {"content-type": "application/json"},
+    })
+    const script = await response.blob()
+    const file = finalFileName.replace(".mp4", ".funscript")
+    const downloadUrl = URL.createObjectURL(script)
+    if (downloadLink.current) {
+      downloadLink.current.href = downloadUrl
+      downloadLink.current.download = file
+      downloadLink.current.click()
+    }
+    setCreatingScript(false)
+  }
+
   const onDownloadFunscript = async (
     e: React.MouseEvent<HTMLButtonElement>,
   ) => {
     e.preventDefault()
     setCreatingScript(true)
     const body = JSON.stringify(state.data)
-    const response = await fetch("/api/funscript", {
+    const response = await fetch("/api/funscript/combined", {
       method: "POST",
       body,
       headers: {"content-type": "application/json"},
@@ -178,7 +206,7 @@ function Progress() {
             </a>
           </div>
 
-          {state.data.interactive && (
+          {interactive && (
             <div className="flex flex-col">
               <Toast type="info" dismissable>
                 This compilation is interactive. You can use e.g.{" "}
@@ -208,7 +236,7 @@ function Progress() {
               </Toast>
 
               <p className="font-light self-start mb-1">
-                Download the generated .funscript file
+                Generate combined .funscript file
               </p>
               <button
                 onClick={onDownloadFunscript}
@@ -218,10 +246,21 @@ function Progress() {
                 <HiCodeBracket className="w-6 h-6 mr-2" />
                 Funscript
               </button>
-              <a className="hidden" ref={downloadLink} />
+
+              <p className="font-light self-start mb-1">
+                Generate beat-based .funscript file
+              </p>
+              <button
+                onClick={onCreateBeatFunscript}
+                className="btn btn-success btn-lg"
+                disabled={creatingScript}
+              >
+                <HiCodeBracket className="w-6 h-6 mr-2" />
+                Funscript
+              </button>
             </div>
           )}
-
+          <a className="hidden" ref={downloadLink} />
           <div className="flex flex-col">
             <p className="font-light self-start mb-1">Open the videos folder</p>
             <button

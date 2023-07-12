@@ -157,3 +157,5 @@ export type CreateMarker = {
   videoInteractive: boolean
 }
 export type UpdateMarker = {rowid: I64; start: F64; end: F64; title: string}
+export type StrokeType = "everyBeat" | "everyOtherBeat"
+export type CreateBeatFunscriptBody = {songIds: I64[]; strokeType: StrokeType}

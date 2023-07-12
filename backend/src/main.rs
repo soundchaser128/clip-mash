@@ -111,7 +111,14 @@ async fn main() -> Result<()> {
         .route("/create", post(handlers::common::create_video))
         .route("/progress", get(handlers::common::get_progress))
         .route("/download", get(handlers::common::download_video))
-        .route("/funscript", post(handlers::common::get_funscript))
+        .route(
+            "/funscript/combined",
+            post(handlers::common::get_combined_funscript),
+        )
+        .route(
+            "/funscript/beat",
+            post(handlers::common::get_beat_funscript),
+        )
         .route("/song", get(handlers::common::list_songs))
         .route("/song/:id/stream", get(handlers::common::stream_song))
         .route("/song/download", post(handlers::common::download_music))

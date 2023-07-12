@@ -454,6 +454,20 @@ pub struct UpdateMarker {
     pub title: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub enum StrokeType {
+    EveryBeat,
+    EveryOtherBeat,
+}
+
+#[derive(Deserialize, Debug, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateBeatFunscriptBody {
+    pub song_ids: Vec<i64>,
+    pub stroke_type: StrokeType,
+}
+
 pub type Api = (
     StashScene,
     CreateVideoBody,
@@ -470,6 +484,7 @@ pub type Api = (
     Progress,
     CreateMarker,
     UpdateMarker,
+    CreateBeatFunscriptBody,
 );
 
 #[cfg(test)]

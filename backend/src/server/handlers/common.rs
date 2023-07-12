@@ -157,7 +157,7 @@ pub struct CreateFunscriptBody {
 }
 
 #[axum::debug_handler]
-pub async fn get_funscript(
+pub async fn get_combined_funscript(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateFunscriptBody>,
 ) -> Result<Json<FunScript>, AppError> {
@@ -166,6 +166,23 @@ pub async fn get_funscript(
     let service = DataService::new(state.database.clone()).await;
     let clips = service.convert_clips(body.clips).await?;
     let script = script_builder.combine_scripts(clips).await?;
+
+    Ok(Json(script))
+}
+
+#[axum::debug_handler]
+pub async fn get_beat_funscript(
+    State(state): State<Arc<AppState>>,
+    Json(body): Json<CreateBeatFunscriptBody>,
+) -> Result<Json<FunScript>, AppError> {
+    let stash_api = StashApi::load_config().await?;
+    let script_builder = ScriptBuilder::new(&stash_api);
+    let songs = state.database.get_songs(&body.song_ids).await?;
+    let beats: Vec<Beats> = songs
+        .into_iter()
+        .filter_map(|s| s.beats.and_then(|b| serde_json::from_str(&b).ok()))
+        .collect();
+    let script = script_builder.create_beat_script(&beats, body.stroke_type);
 
     Ok(Json(script))
 }

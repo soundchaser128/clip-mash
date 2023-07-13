@@ -228,7 +228,7 @@ mod test {
             },
         ];
 
-        let script = builder.create_beat_script(&beats, StrokeType::EveryBeat);
+        let script = builder.create_beat_script(&beats, StrokeType::EveryNth { n: 1 });
 
         assert_eq!(script.actions.len(), 7);
         assert_eq!(script.actions[0].pos, 0);

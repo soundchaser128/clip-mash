@@ -157,5 +157,17 @@ export type CreateMarker = {
   videoInteractive: boolean
 }
 export type UpdateMarker = {rowid: I64; start: F64; end: F64; title: string}
-export type StrokeType = "everyBeat" | "everyOtherBeat"
+export type StrokeType =
+  | {
+      /**
+       * Creates a beat every `n` beats
+       */
+      everyNth: {n: Usize}
+    }
+  | {
+      /**
+       * Steadily accellerates the beat from `start_strokes_per_beat` to `end_strokes_per_beat`
+       */
+      accellerate: {start_strokes_per_beat: Usize; end_strokes_per_beat: Usize}
+    }
 export type CreateBeatFunscriptBody = {songIds: I64[]; strokeType: StrokeType}

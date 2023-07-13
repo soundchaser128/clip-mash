@@ -457,8 +457,13 @@ pub struct UpdateMarker {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub enum StrokeType {
-    EveryBeat,
-    EveryOtherBeat,
+    /// Creates a beat every `n` beats
+    EveryNth { n: usize },
+    /// Steadily accellerates the beat from `start_strokes_per_beat` to `end_strokes_per_beat`
+    Accellerate {
+        start_strokes_per_beat: usize,
+        end_strokes_per_beat: usize,
+    },
 }
 
 #[derive(Deserialize, Debug, TypeDef)]
@@ -486,6 +491,3 @@ pub type Api = (
     UpdateMarker,
     CreateBeatFunscriptBody,
 );
-
-#[cfg(test)]
-mod tests {}

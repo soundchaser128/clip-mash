@@ -69,7 +69,11 @@ export function formatSeconds(
       {format: ["hours", "minutes", "seconds"]},
     )
   } else {
-    return format(duration * 1000, "hh:mm:ss")
+    if (date.getUTCHours() > 0) {
+      return format(date, "HH:mm:ss")
+    } else {
+      return format(date, "mm:ss")
+    }
   }
 }
 

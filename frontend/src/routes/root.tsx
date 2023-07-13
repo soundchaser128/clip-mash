@@ -129,7 +129,7 @@ const RootLayout: React.FC = () => {
     if (!configExists && isStashMode) {
       navigate("/stash/config")
     }
-  }, [configExists, isStashMode])
+  }, [configExists, isStashMode, navigate])
 
   return (
     <Layout isLoading={isLoading}>

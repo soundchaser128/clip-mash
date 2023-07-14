@@ -109,30 +109,44 @@ impl Default for FunScript {
 }
 
 struct BeatState {
-    beat_offsets: Vec<f32>,
-
+    songs: Vec<Beats>,
     stroke_type: StrokeType,
+    song_index: usize,
+    offset: f32,
 }
 
 impl BeatState {
-    pub fn new(mut offsets: Vec<f32>, stroke_type: StrokeType) -> Self {
-        offsets.reverse();
+    pub fn new(mut songs: Vec<Beats>, stroke_type: StrokeType) -> Self {
+        for song in &mut songs {
+            song.offsets.reverse();
+        }
+
         Self {
-            beat_offsets: offsets,
+            songs,
             stroke_type,
+            song_index: 0,
+            offset: 0.0,
         }
     }
 
     pub fn next_offset(&mut self) -> Option<f32> {
-        if self.beat_offsets.is_empty() {
+        if self.song_index == self.songs.len() - 1 && self.songs[self.song_index].offsets.is_empty()
+        {
             return None;
+        }
+
+        if self.songs[self.song_index].offsets.is_empty() {
+            let song_duration = self.songs[self.song_index].length;
+            self.song_index += 1;
+            self.offset += song_duration;
         }
 
         match self.stroke_type {
             StrokeType::EveryNth { n } => {
-                let offset = self.beat_offsets.pop()?;
-                if self.beat_offsets.len() % n == 0 {
-                    Some(offset)
+                let song = &mut self.songs[self.song_index];
+                let beat = song.offsets.pop()?;
+                if song.offsets.len() % n == 0 {
+                    Some(beat + self.offset)
                 } else {
                     self.next_offset()
                 }
@@ -140,7 +154,9 @@ impl BeatState {
             StrokeType::Accellerate {
                 start_strokes_per_beat,
                 end_strokes_per_beat,
-            } => {}
+            } => {
+                todo!()
+            }
         }
     }
 }
@@ -149,21 +165,17 @@ pub fn create_beat_script(songs: Vec<Beats>, stroke_type: StrokeType) -> FunScri
     let mut actions = vec![];
 
     let mut state = 0;
-    let mut offset = 0.0;
-    for beats in songs {
-        let mut beat_state = BeatState::new(beats.offsets, stroke_type);
-        while let Some(beat) = beat_state.next_offset() {
-            let position = ((beat + offset) * 1000.0).round() as u32;
+    let mut beat_state = BeatState::new(songs, stroke_type);
+    while let Some(beat) = beat_state.next_offset() {
+        let position = (beat * 1000.0).round() as u32;
+        info!("beat at {position}ms with pos {state}");
 
-            let action = FSPoint {
-                pos: state,
-                at: position,
-            };
-            actions.push(action);
-            state = if state == 0 { 100 } else { 0 };
-        }
-
-        offset += beats.length;
+        let action = FSPoint {
+            pos: state,
+            at: position,
+        };
+        actions.push(action);
+        state = if state == 0 { 100 } else { 0 };
     }
 
     let version = env!("CARGO_PKG_VERSION");
@@ -244,14 +256,15 @@ impl<'a> ScriptBuilder<'a> {
 
 #[cfg(test)]
 mod test {
+    use clip_mash_types::Beats;
+    use tracing_test::traced_test;
+
+    use super::StrokeType;
     use crate::service::funscript::create_beat_script;
 
-    #[tokio::test]
-    async fn test_create_beat_script() {
-        use clip_mash_types::Beats;
-
-        use super::StrokeType;
-
+    #[traced_test]
+    #[test]
+    fn test_create_beat_script() {
         let beats = vec![
             Beats {
                 length: 1.0,

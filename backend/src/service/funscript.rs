@@ -108,6 +108,75 @@ impl Default for FunScript {
     }
 }
 
+struct BeatState {
+    beat_offsets: Vec<f32>,
+
+    stroke_type: StrokeType,
+}
+
+impl BeatState {
+    pub fn new(mut offsets: Vec<f32>, stroke_type: StrokeType) -> Self {
+        offsets.reverse();
+        Self {
+            beat_offsets: offsets,
+            stroke_type,
+        }
+    }
+
+    pub fn next_offset(&mut self) -> Option<f32> {
+        if self.beat_offsets.is_empty() {
+            return None;
+        }
+
+        match self.stroke_type {
+            StrokeType::EveryNth { n } => {
+                let offset = self.beat_offsets.pop()?;
+                if self.beat_offsets.len() % n == 0 {
+                    Some(offset)
+                } else {
+                    self.next_offset()
+                }
+            }
+            StrokeType::Accellerate {
+                start_strokes_per_beat,
+                end_strokes_per_beat,
+            } => {}
+        }
+    }
+}
+
+pub fn create_beat_script(songs: Vec<Beats>, stroke_type: StrokeType) -> FunScript {
+    let mut actions = vec![];
+
+    let mut state = 0;
+    let mut offset = 0.0;
+    for beats in songs {
+        let mut beat_state = BeatState::new(beats.offsets, stroke_type);
+        while let Some(beat) = beat_state.next_offset() {
+            let position = ((beat + offset) * 1000.0).round() as u32;
+
+            let action = FSPoint {
+                pos: state,
+                at: position,
+            };
+            actions.push(action);
+            state = if state == 0 { 100 } else { 0 };
+        }
+
+        offset += beats.length;
+    }
+
+    let version = env!("CARGO_PKG_VERSION");
+    FunScript {
+        actions,
+        metadata: Some(OFSMetadata {
+            creator: format!("clip-mash v{}", version),
+            ..Default::default()
+        }),
+        ..Default::default()
+    }
+}
+
 pub struct ScriptBuilder<'a> {
     api: &'a StashApi,
 }
@@ -115,37 +184,6 @@ pub struct ScriptBuilder<'a> {
 impl<'a> ScriptBuilder<'a> {
     pub fn new(api: &'a StashApi) -> Self {
         Self { api }
-    }
-
-    pub fn create_beat_script(&self, songs: &[Beats], stroke_type: StrokeType) -> FunScript {
-        let mut actions = vec![];
-
-        let mut state = 0;
-        let mut offset = 0.0;
-        for beats in songs {
-            for beat in &beats.offsets {
-                let position = ((beat + offset) * 1000.0).round() as u32;
-
-                let action = FSPoint {
-                    pos: state,
-                    at: position,
-                };
-                actions.push(action);
-                state = if state == 0 { 100 } else { 0 };
-            }
-
-            offset += beats.length;
-        }
-
-        let version = env!("CARGO_PKG_VERSION");
-        FunScript {
-            actions,
-            metadata: Some(OFSMetadata {
-                creator: format!("clip-mash v{}", version),
-                ..Default::default()
-            }),
-            ..Default::default()
-        }
     }
 
     pub async fn combine_scripts(&self, clips: Vec<(Video, Clip)>) -> Result<FunScript> {
@@ -206,16 +244,13 @@ impl<'a> ScriptBuilder<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::data::stash_api::StashApi;
+    use crate::service::funscript::create_beat_script;
 
     #[tokio::test]
     async fn test_create_beat_script() {
         use clip_mash_types::Beats;
 
-        use super::{ScriptBuilder, StrokeType};
-
-        let api = StashApi::load_config().await.unwrap();
-        let builder = ScriptBuilder::new(&api);
+        use super::StrokeType;
 
         let beats = vec![
             Beats {
@@ -228,7 +263,7 @@ mod test {
             },
         ];
 
-        let script = builder.create_beat_script(&beats, StrokeType::EveryNth { n: 1 });
+        let script = create_beat_script(beats, StrokeType::EveryNth { n: 1 });
 
         assert_eq!(script.actions.len(), 7);
         assert_eq!(script.actions[0].pos, 0);

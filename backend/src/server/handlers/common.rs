@@ -26,7 +26,7 @@ use crate::server::error::AppError;
 use crate::server::handlers::get_streams;
 use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::directories::FolderType;
-use crate::service::funscript::{FunScript, ScriptBuilder};
+use crate::service::funscript::{self, FunScript, ScriptBuilder};
 use crate::service::generator;
 use crate::service::music::{self, MusicDownloadService};
 use crate::service::stash_config::Config;
@@ -175,14 +175,12 @@ pub async fn get_beat_funscript(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateBeatFunscriptBody>,
 ) -> Result<Json<FunScript>, AppError> {
-    let stash_api = StashApi::load_config().await?;
-    let script_builder = ScriptBuilder::new(&stash_api);
     let songs = state.database.get_songs(&body.song_ids).await?;
     let beats: Vec<Beats> = songs
         .into_iter()
         .filter_map(|s| s.beats.and_then(|b| serde_json::from_str(&b).ok()))
         .collect();
-    let script = script_builder.create_beat_script(&beats, body.stroke_type);
+    let script = funscript::create_beat_script(beats, body.stroke_type);
 
     Ok(Json(script))
 }

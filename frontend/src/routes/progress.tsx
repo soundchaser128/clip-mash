@@ -94,7 +94,9 @@ function Progress() {
     const songIds = state.data.songs?.map((s) => s.songId) || []
     const data = {
       songIds,
-      strokeType: "everyOtherBeat",
+      strokeType: {
+        everyNth: {n: 1},
+      },
     } satisfies CreateBeatFunscriptBody
     const response = await fetch("/api/funscript/beat", {
       method: "POST",

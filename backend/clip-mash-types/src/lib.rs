@@ -461,9 +461,21 @@ pub enum StrokeType {
     EveryNth { n: usize },
     /// Steadily accellerates the beat from `start_strokes_per_beat` to `end_strokes_per_beat`
     Accellerate {
-        start_strokes_per_beat: usize,
-        end_strokes_per_beat: usize,
+        start_strokes_per_beat: f32,
+        end_strokes_per_beat: f32,
     },
+}
+
+impl StrokeType {
+    pub fn initial_accelleration(&self) -> Option<f32> {
+        match self {
+            Self::Accellerate {
+                start_strokes_per_beat,
+                ..
+            } => Some(*start_strokes_per_beat),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, TypeDef)]

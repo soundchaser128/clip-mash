@@ -113,6 +113,7 @@ struct BeatState {
     stroke_type: StrokeType,
     song_index: usize,
     offset: f32,
+    current_acceleration: f32,
 }
 
 impl BeatState {
@@ -126,6 +127,7 @@ impl BeatState {
             stroke_type,
             song_index: 0,
             offset: 0.0,
+            current_acceleration: stroke_type.initial_accelleration().unwrap_or(1.0),
         }
     }
 
@@ -155,6 +157,7 @@ impl BeatState {
                 start_strokes_per_beat,
                 end_strokes_per_beat,
             } => {
+                
                 todo!()
             }
         }

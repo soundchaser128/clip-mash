@@ -113,7 +113,7 @@ struct BeatState {
     stroke_type: StrokeType,
     song_index: usize,
     offset: f32,
-    current_acceleration: f32,
+    total_duration: f32,
 }
 
 impl BeatState {
@@ -121,17 +121,18 @@ impl BeatState {
         for song in &mut songs {
             song.offsets.reverse();
         }
+        let total_duration = songs.iter().map(|s| s.length).sum();
 
         Self {
             songs,
             stroke_type,
             song_index: 0,
             offset: 0.0,
-            current_acceleration: stroke_type.initial_accelleration().unwrap_or(1.0),
+            total_duration,
         }
     }
 
-    pub fn next_offset(&mut self) -> Option<f32> {
+    pub fn next_offset(&mut self) -> Option<Vec<f32>> {
         if self.song_index == self.songs.len() - 1 && self.songs[self.song_index].offsets.is_empty()
         {
             return None;
@@ -148,7 +149,7 @@ impl BeatState {
                 let song = &mut self.songs[self.song_index];
                 let beat = song.offsets.pop()?;
                 if song.offsets.len() % n == 0 {
-                    Some(beat + self.offset)
+                    Some(vec![beat + self.offset])
                 } else {
                     self.next_offset()
                 }
@@ -157,8 +158,34 @@ impl BeatState {
                 start_strokes_per_beat,
                 end_strokes_per_beat,
             } => {
-                
-                todo!()
+                // lerp between start and end strokes per beat based on the percentage of the whole video
+                let song = &mut self.songs[self.song_index];
+                let percentage = (self.offset + song.offsets.last().unwrap()) / self.total_duration;
+                let strokes_per_beat = start_strokes_per_beat
+                    + (end_strokes_per_beat - start_strokes_per_beat) * percentage;
+                dbg!(strokes_per_beat);
+                if strokes_per_beat >= 1.0 {
+                    let beat = song.offsets.pop()?;
+                    let rounded = strokes_per_beat.round() as usize;
+
+                    if song.offsets.len() % rounded == 0 {
+                        Some(vec![beat + self.offset])
+                    } else {
+                        self.next_offset()
+                    }
+                } else {
+                    let num_beats = (1.0 / strokes_per_beat).round() as usize;
+                    let beat = song.offsets.pop()?;
+                    let beat_after = song.offsets.last()?;
+                    let beat_duration = beat_after - beat;
+                    let beats = (0..num_beats)
+                        .map(|i| {
+                            let percentage = i as f32 / num_beats as f32;
+                            (beat + (beat_duration * percentage)) + self.offset
+                        })
+                        .collect();
+                    Some(beats)
+                }
             }
         }
     }
@@ -169,16 +196,18 @@ pub fn create_beat_script(songs: Vec<Beats>, stroke_type: StrokeType) -> FunScri
 
     let mut state = 0;
     let mut beat_state = BeatState::new(songs, stroke_type);
-    while let Some(beat) = beat_state.next_offset() {
-        let position = (beat * 1000.0).round() as u32;
-        info!("beat at {position}ms with pos {state}");
+    while let Some(beats) = beat_state.next_offset() {
+        for beat in beats {
+            let position = (beat * 1000.0).round() as u32;
+            info!("beat at {position}ms with pos {state}");
 
-        let action = FSPoint {
-            pos: state,
-            at: position,
-        };
-        actions.push(action);
-        state = if state == 0 { 100 } else { 0 };
+            let action = FSPoint {
+                pos: state,
+                at: position,
+            };
+            actions.push(action);
+            state = if state == 0 { 100 } else { 0 };
+        }
     }
 
     let version = env!("CARGO_PKG_VERSION");
@@ -267,7 +296,7 @@ mod test {
 
     #[traced_test]
     #[test]
-    fn test_create_beat_script() {
+    fn test_create_beat_script_basic() {
         let beats = vec![
             Beats {
                 length: 1.0,
@@ -302,5 +331,32 @@ mod test {
 
         assert_eq!(script.actions[6].pos, 0);
         assert_eq!(script.actions[6].at, 3000);
+    }
+
+    #[traced_test]
+    #[test]
+    fn test_create_beat_script_accellerate() {
+        let len1 = 8.0_f32;
+        let len2 = 12.0_f32;
+        let beats = vec![
+            Beats {
+                length: len1,
+                offsets: (0..(len1 as usize)).map(|i| i as f32).collect(),
+            },
+            Beats {
+                length: len2,
+                offsets: (0..(len2 as usize)).map(|i| i as f32).collect(),
+            },
+        ];
+
+        let script = create_beat_script(
+            beats,
+            StrokeType::Accellerate {
+                start_strokes_per_beat: 1.0,
+                end_strokes_per_beat: 0.25,
+            },
+        );
+
+        // dbg!(script);
     }
 }

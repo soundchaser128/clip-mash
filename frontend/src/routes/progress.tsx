@@ -90,10 +90,6 @@ function Progress() {
     }
   }
 
-  const onOpenVideosFolder = async () => {
-    await fetch("/api/directory/open?folder=videos")
-  }
-
   const totalDuration = state.data.clips!.reduce(
     (duration, clip) => duration + (clip.range[1] - clip.range[0]),
     0,
@@ -144,42 +140,35 @@ function Progress() {
 
       {finished && (
         <div className="flex flex-col gap-6">
-          <h1 className="text-5xl font-bold">🎉 Success!</h1>
-          <div className="flex flex-col">
-            <p className="font-light self-start mb-1">
-              Download the finished compilation
-            </p>
-            <a
-              href={`/api/download?fileName=${encodeURIComponent(
-                finalFileName,
-              )}`}
-              className="btn btn-success btn-lg"
-              download
-            >
-              <HiArrowDown className="w-6 h-6 mr-2" />
-              Download
-            </a>
-          </div>
-
-          <div className="flex flex-col">
-            <p className="font-light self-start mb-1">Open the videos folder</p>
-            <button
-              className="btn btn-success btn-lg"
-              onClick={onOpenVideosFolder}
-            >
-              <HiOutlineFolder className="w-6 h-6 mr-2" />
-              Open
-            </button>
-          </div>
-
-          <div className="flex flex-col">
-            <p className="font-light self-start mb-1">
-              Create a FunScript file (optional)
-            </p>
-            <Link className="btn btn-success btn-lg" to="/stash/funscript">
-              <HiCodeBracket className="w-6 h-6 mr-2" />
-              Craete funscript
-            </Link>
+          <h1 className="text-5xl font-bold text-center">🎉 Success!</h1>
+          <p>
+            You can now download the finished compilation.{" "}
+            {interactive && "You can also create a funscript file."}
+          </p>
+          <div className="flex flex-row gap-12 w-full">
+            <div className="flex flex-col">
+              <a
+                href={`/api/download?fileName=${encodeURIComponent(
+                  finalFileName,
+                )}`}
+                className="btn btn-success btn-lg w-64"
+                download
+              >
+                <HiArrowDown className="w-6 h-6 mr-2" />
+                Download video
+              </a>
+            </div>
+            {interactive && (
+              <div className="flex flex-col">
+                <Link
+                  className="btn btn-primary btn-lg w-64"
+                  to="/stash/funscript"
+                >
+                  <HiCodeBracket className="w-6 h-6 mr-2" />
+                  Craete funscript
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

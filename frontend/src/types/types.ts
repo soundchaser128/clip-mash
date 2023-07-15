@@ -84,6 +84,7 @@ interface CommonFormState {
   videoCodec?: VideoCodec
   videoQuality?: VideoQuality
   encodingEffort?: EncodingEffort
+  finalFileName?: string
 }
 
 export interface InitialFormState extends CommonFormState {

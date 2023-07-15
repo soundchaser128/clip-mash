@@ -51,6 +51,7 @@ import MarkersPage from "./routes/local/markers"
 import {resetForm} from "./routes/actions"
 import DownloadVideosPage from "./routes/local/download"
 import useNotification from "./hooks/useNotification"
+import FunscriptPage from "./routes/funscript"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -260,6 +261,10 @@ const router = createBrowserRouter([
             path: "music",
             element: <Music />,
             loader: musicLoader,
+          },
+          {
+            path: "funscript",
+            element: <FunscriptPage />,
           },
         ],
       },

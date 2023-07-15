@@ -11,6 +11,8 @@ import {formatSeconds} from "../helpers"
 import {CreateBeatFunscriptBody, Progress} from "../types.generated"
 import useNotification from "../hooks/useNotification"
 import Toast from "../components/Toast"
+import {updateForm} from "./actions"
+import {Link} from "react-router-dom"
 
 class RingBuffer<T> {
   buffer: T[]
@@ -38,15 +40,14 @@ type CreateVideoBody = Omit<FormState, "songs"> & {
 }
 
 function Progress() {
-  const {state} = useStateMachine()
+  const {state, actions} = useStateMachine({updateForm})
   const [progress, setProgress] = useState<Progress>()
   const [times, setTimes] = useState<RingBuffer<number>>(new RingBuffer(5))
 
   const eta = times.buffer.reduce((sum, time) => sum + time, 0) / times.size
   const [finished, setFinished] = useState(false)
   const [finalFileName, setFinalFileName] = useState("")
-  const downloadLink = useRef<HTMLAnchorElement>(null)
-  const [creatingScript, setCreatingScript] = useState(false)
+
   const fileName = state.data.fileName || `Compilation [${state.data.id}].mp4`
   const sendNotification = useNotification()
   const numSongs = state.data.songs?.length || 0
@@ -72,6 +73,9 @@ function Progress() {
     if (response.ok) {
       const fileName = await response.text()
       setFinalFileName(fileName)
+      actions.updateForm({
+        finalFileName: fileName,
+      })
       const es = new EventSource("/api/progress")
       es.onmessage = (event) => {
         const data = JSON.parse(event.data) as Progress
@@ -84,60 +88,6 @@ function Progress() {
         setTimes((buf) => buf.push(data.etaSeconds))
       }
     }
-  }
-
-  const onCreateBeatFunscript = async (
-    e: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    e.preventDefault()
-    setCreatingScript(true)
-    const songIds = state.data.songs?.map((s) => s.songId) || []
-    const data = {
-      songIds,
-      strokeType: {
-        accellerate: {
-          start_strokes_per_beat: 3.0,
-          end_strokes_per_beat: 1.0 / 3.0,
-        },
-      },
-    } satisfies CreateBeatFunscriptBody
-    const response = await fetch("/api/funscript/beat", {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: {"content-type": "application/json"},
-    })
-    const script = await response.blob()
-    const file = finalFileName.replace(".mp4", ".funscript")
-    const downloadUrl = URL.createObjectURL(script)
-    if (downloadLink.current) {
-      downloadLink.current.href = downloadUrl
-      downloadLink.current.download = file
-      downloadLink.current.click()
-    }
-    setCreatingScript(false)
-  }
-
-  const onDownloadFunscript = async (
-    e: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    e.preventDefault()
-    setCreatingScript(true)
-    const body = JSON.stringify(state.data)
-    const response = await fetch("/api/funscript/combined", {
-      method: "POST",
-      body,
-      headers: {"content-type": "application/json"},
-    })
-
-    const script = await response.blob()
-    const file = finalFileName.replace(".mp4", ".funscript")
-    const downloadUrl = URL.createObjectURL(script)
-    if (downloadLink.current) {
-      downloadLink.current.href = downloadUrl
-      downloadLink.current.download = file
-      downloadLink.current.click()
-    }
-    setCreatingScript(false)
   }
 
   const onOpenVideosFolder = async () => {
@@ -211,65 +161,6 @@ function Progress() {
             </a>
           </div>
 
-          {interactive && (
-            <Toast type="info" dismissable>
-              This compilation is interactive. You can use e.g.{" "}
-              <a
-                href="https://beta.funscript.io/"
-                target="_blank"
-                rel="noreferrer"
-                className="link"
-              >
-                Funplayer
-              </a>{" "}
-              to play it alongside the video in your browser, with supported
-              toys like the{" "}
-              <a
-                href="https://www.thehandy.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="link"
-              >
-                Handy
-              </a>
-              .
-              <br />
-              Make sure to take a look at the generated file before playing it.
-              It might contain awkward sections or abrupt changes in speed.
-            </Toast>
-          )}
-          {numSongs > 0 && (
-            <div>
-              <p className="font-light self-start mb-1">
-                Generate beat-based .funscript file
-              </p>
-              <button
-                onClick={onCreateBeatFunscript}
-                className="btn btn-success btn-lg"
-                disabled={creatingScript}
-              >
-                <HiCodeBracket className="w-6 h-6 mr-2" />
-                Beat-based funscript
-              </button>
-            </div>
-          )}
-          {state.data.interactive && (
-            <div>
-              <p className="font-light self-start mb-1">
-                Generate combined .funscript file
-              </p>
-              <button
-                onClick={onDownloadFunscript}
-                className="btn btn-success btn-lg"
-                disabled={creatingScript}
-              >
-                <HiCodeBracket className="w-6 h-6 mr-2" />
-                Combined funscript
-              </button>
-            </div>
-          )}
-
-          <a className="hidden" ref={downloadLink} />
           <div className="flex flex-col">
             <p className="font-light self-start mb-1">Open the videos folder</p>
             <button
@@ -279,6 +170,16 @@ function Progress() {
               <HiOutlineFolder className="w-6 h-6 mr-2" />
               Open
             </button>
+          </div>
+
+          <div className="flex flex-col">
+            <p className="font-light self-start mb-1">
+              Create a FunScript file (optional)
+            </p>
+            <Link className="btn btn-success btn-lg" to="/stash/funscript">
+              <HiCodeBracket className="w-6 h-6 mr-2" />
+              Craete funscript
+            </Link>
           </div>
         </div>
       )}

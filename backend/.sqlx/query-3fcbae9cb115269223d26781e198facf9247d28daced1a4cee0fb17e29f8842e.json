@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO songs (url, file_path, duration, beats) \n             VALUES ($1, $2, $3, $4)\n             RETURNING rowid",
+  "describe": {
+    "columns": [
+      {
+        "name": "rowid",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "3fcbae9cb115269223d26781e198facf9247d28daced1a4cee0fb17e29f8842e"
+}

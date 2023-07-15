@@ -1,16 +1,9 @@
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::process::Output;
-use std::time::Duration;
-#[cfg(not(test))]
-use std::time::Instant;
 
 use camino::Utf8Path;
-use clip_mash_types::Progress;
-use float_cmp::approx_eq;
 use lazy_static::lazy_static;
-#[cfg(test)]
-use mock_instant::Instant;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, SeedableRng};
@@ -93,87 +86,15 @@ pub fn format_duration(seconds: f64) -> String {
     format!("{:02}:{:02}", minutes, seconds)
 }
 
-pub struct ProgressTracker {
-    work_total: f64,
-    work_done: f64,
-    started_at: Instant,
-    message: String,
-}
-
-impl Default for ProgressTracker {
-    fn default() -> Self {
-        ProgressTracker {
-            work_done: 0.0,
-            started_at: Instant::now(),
-            work_total: 0.0,
-            message: String::new(),
-        }
-    }
-}
-
-impl ProgressTracker {
-    #[cfg(test)]
-    pub fn new(work_todo: f64) -> Self {
-        ProgressTracker {
-            work_done: 0.0,
-            started_at: Instant::now(),
-            work_total: work_todo,
-            message: String::new(),
-        }
-    }
-
-    pub fn reset(&mut self, work_todo: f64) {
-        self.work_done = 0.0;
-        self.started_at = Instant::now();
-        self.work_total = work_todo;
-        self.message = String::new();
-    }
-
-    /// Increment work done by a given amonut.
-    pub fn inc_work_done_by(&mut self, units: f64, message: &str) {
-        self.work_done += units;
-        self.message = message.into();
-    }
-
-    pub fn eta(&self) -> Duration {
-        if self.work_done == 0.0 || self.work_total == 0.0 || self.work_total <= self.work_done {
-            return Duration::ZERO;
-        }
-        let work_not_done = self.work_total - self.work_done;
-        let not_done_to_done_ratio = work_not_done / self.work_done;
-        let seconds_since_start = Instant::now() - self.started_at;
-        let eta_seconds = not_done_to_done_ratio * seconds_since_start.as_secs_f64();
-
-        assert!(
-            eta_seconds.is_finite(),
-            "eta_seconds is NaN or infinite: {}",
-            eta_seconds
-        );
-
-        Duration::from_secs_f64(eta_seconds)
-    }
-
-    pub fn progress(&self) -> Progress {
-        Progress {
-            items_finished: self.work_done,
-            items_total: self.work_total,
-            eta_seconds: self.eta().as_secs_f64(),
-            done: self.work_total != 0.0
-                && approx_eq!(f64, self.work_done, self.work_total, epsilon = 0.01),
-            message: self.message.clone(),
-        }
-    }
+pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
+    a + (b - a) * t
 }
 
 #[cfg(test)]
 mod test {
-    use std::time::Duration;
-
-    use float_cmp::assert_approx_eq;
-    use mock_instant::MockClock;
     use regex::Regex;
 
-    use super::{add_api_key, expect_file_name, format_duration, generate_id, ProgressTracker};
+    use super::{add_api_key, expect_file_name, format_duration, generate_id};
 
     #[test]
     #[cfg(not(windows))]
@@ -202,28 +123,6 @@ mod test {
         let id = generate_id();
         let regex = Regex::new("[a-z]+-[a-z]+-[a-z]+").unwrap();
         assert!(regex.is_match(&id));
-    }
-
-    #[test]
-    fn test_progress_tracker_eta() {
-        let mut tracker = ProgressTracker::new(100.0);
-        tracker.inc_work_done_by(10.0, "");
-        MockClock::advance(Duration::from_secs(1));
-        assert_eq!(10.0, tracker.progress().items_finished);
-        assert_eq!(9.0, tracker.eta().as_secs_f64());
-
-        MockClock::advance(Duration::from_secs(2));
-        tracker.inc_work_done_by(10.0, "");
-
-        let eta = tracker.eta().as_secs_f64();
-        assert!(eta >= 12.0);
-
-        MockClock::advance(Duration::from_secs(5));
-        tracker.inc_work_done_by(80.0, "");
-
-        let eta = tracker.eta().as_secs_f64();
-        assert_approx_eq!(f64, eta, 0.0, ulps = 2);
-        assert!(tracker.progress().done);
     }
 
     #[test]

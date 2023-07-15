@@ -7,6 +7,7 @@ use tracing::{info, warn};
 use super::Video;
 use crate::data::stash_api::StashApi;
 use crate::service::VideoInfo;
+use crate::util::lerp;
 use crate::Result;
 
 // Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
@@ -122,7 +123,7 @@ impl BeatState {
             song.offsets.reverse();
         }
         let total_duration = songs.iter().map(|s| s.length).sum();
-
+        info!("total duration: {}", total_duration);
         Self {
             songs,
             stroke_type,
@@ -160,10 +161,15 @@ impl BeatState {
             } => {
                 // lerp between start and end strokes per beat based on the percentage of the whole video
                 let song = &mut self.songs[self.song_index];
-                let percentage = (self.offset + song.offsets.last().unwrap()) / self.total_duration;
-                let strokes_per_beat = start_strokes_per_beat
-                    + (end_strokes_per_beat - start_strokes_per_beat) * percentage;
-                dbg!(strokes_per_beat);
+                let position = self.offset + song.offsets.last().unwrap();
+                let percentage = position / self.total_duration;
+                let strokes_per_beat =
+                    lerp(start_strokes_per_beat, end_strokes_per_beat, percentage);
+                info!(
+                    "at {}% of the song, strokes per beat: {}",
+                    percentage * 100.0,
+                    strokes_per_beat
+                );
                 if strokes_per_beat >= 1.0 {
                     let beat = song.offsets.pop()?;
                     let rounded = strokes_per_beat.round() as usize;
@@ -176,14 +182,17 @@ impl BeatState {
                 } else {
                     let num_beats = (1.0 / strokes_per_beat).round() as usize;
                     let beat = song.offsets.pop()?;
-                    let beat_after = song.offsets.last()?;
-                    let beat_duration = beat_after - beat;
+                    let beat_after =
+                        song.offsets.last().copied().or_else(|| {
+                            self.songs.get(self.song_index + 1).map(|s| s.offsets[0])
+                        })?;
                     let beats = (0..num_beats)
                         .map(|i| {
                             let percentage = i as f32 / num_beats as f32;
-                            (beat + (beat_duration * percentage)) + self.offset
+                            lerp(beat, beat_after, percentage) + self.offset
                         })
                         .collect();
+                    info!("beats: {:?}", beats);
                     Some(beats)
                 }
             }
@@ -349,14 +358,12 @@ mod test {
             },
         ];
 
-        let script = create_beat_script(
+        let _script = create_beat_script(
             beats,
             StrokeType::Accellerate {
                 start_strokes_per_beat: 1.0,
                 end_strokes_per_beat: 0.25,
             },
         );
-
-        // dbg!(script);
     }
 }

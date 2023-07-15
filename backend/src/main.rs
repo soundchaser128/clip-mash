@@ -14,6 +14,7 @@ use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
 
 mod data;
+mod progress;
 mod server;
 mod service;
 mod util;

@@ -14,8 +14,9 @@ use super::directories::Directories;
 use super::Marker;
 use crate::data::database::DbSong;
 use crate::data::stash_api::StashMarker;
+use crate::progress::ProgressTracker;
 use crate::service::MarkerInfo;
-use crate::util::{commandline_error, debug_output, format_duration, generate_id, ProgressTracker};
+use crate::util::{commandline_error, debug_output, format_duration, generate_id};
 use crate::Result;
 
 lazy_static::lazy_static! {

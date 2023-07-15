@@ -95,7 +95,10 @@ function Progress() {
     const data = {
       songIds,
       strokeType: {
-        everyNth: {n: 1},
+        accellerate: {
+          start_strokes_per_beat: 3.0,
+          end_strokes_per_beat: 1.0 / 3.0,
+        },
       },
     } satisfies CreateBeatFunscriptBody
     const response = await fetch("/api/funscript/beat", {

@@ -1,6 +1,6 @@
 import {format, formatDuration, getTime, parse} from "date-fns"
-import {SelectedMarker} from "./types.generated"
-import {FormState} from "./types/types"
+import {SelectedMarker} from "./types/types.generated"
+import {FormState} from "./types/form-state"
 import {scaleSequential} from "d3-scale"
 import {interpolatePlasma} from "d3-scale-chromatic"
 

@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {useNavigate} from "react-router-dom"
-import {FormStage, LocalFilesFormStage} from "../types/types"
+import {FormStage, LocalFilesFormStage} from "../types/form-state"
 import {updateForm} from "../routes/actions"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
@@ -17,7 +17,7 @@ import {
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
 import {formatSeconds, sumDurations} from "../helpers"
-import {MarkerDto, SelectedMarker} from "../types.generated"
+import {MarkerDto, SelectedMarker} from "../types/types.generated"
 import JumpToTop from "./JumpToTop"
 
 interface Props {

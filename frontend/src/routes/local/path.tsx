@@ -1,5 +1,5 @@
 import {HiCheck} from "react-icons/hi2"
-import {StateHelpers} from "../../types/types"
+import {StateHelpers} from "../../types/form-state"
 import {useStateMachine} from "little-state-machine"
 import invariant from "tiny-invariant"
 import {useNavigate} from "react-router-dom"

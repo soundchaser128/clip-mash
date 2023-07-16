@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useNavigate} from "react-router-dom"
-import {FormStage} from "../types/types"
+import {FormStage} from "../types/form-state"
 import {updateForm} from "./actions"
 import {HiFilm, HiTag, HiUser} from "react-icons/hi2"
 import {getUrl} from "./stash/filter/root"

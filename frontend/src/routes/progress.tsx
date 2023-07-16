@@ -1,16 +1,10 @@
 import {useStateMachine} from "little-state-machine"
-import {useRef, useState} from "react"
-import {
-  HiArrowDown,
-  HiCodeBracket,
-  HiOutlineFolder,
-  HiRocketLaunch,
-} from "react-icons/hi2"
-import {FormState} from "../types/types"
+import {useState} from "react"
+import {HiArrowDown, HiCodeBracket, HiRocketLaunch} from "react-icons/hi2"
+import {FormState} from "../types/form-state"
 import {formatSeconds} from "../helpers"
-import {CreateBeatFunscriptBody, Progress} from "../types.generated"
+import {Progress} from "../types/types.generated"
 import useNotification from "../hooks/useNotification"
-import Toast from "../components/Toast"
 import {updateForm} from "./actions"
 import {Link} from "react-router-dom"
 

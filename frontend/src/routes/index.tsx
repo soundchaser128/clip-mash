@@ -1,9 +1,10 @@
 import {useStateMachine} from "little-state-machine"
 import {useLoaderData, useNavigate} from "react-router-dom"
 import {updateForm} from "./actions"
-import {FormStage, LocalFilesFormStage, VideoSource} from "../types/types"
+import {VideoSource} from "../types/types"
 import Layout from "../components/Layout"
 import {HiArchiveBox, HiComputerDesktop} from "react-icons/hi2"
+import {FormStage, LocalFilesFormStage} from "../types/form-state"
 
 export default function InitialRoot() {
   const id = useLoaderData() as string

@@ -4,7 +4,7 @@ import {
   MarkerDto,
   UpdateMarker,
   VideoDto,
-} from "../../types.generated"
+} from "../../types/types.generated"
 import {parseTimestamp} from "../../helpers"
 import {JsonError} from "../../types/types"
 

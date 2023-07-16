@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import React, {useMemo, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
-import {FormStage} from "../types/types"
+import {FormStage} from "../types/form-state"
 import {updateForm} from "./actions"
 import {
   HiBackward,
@@ -20,7 +20,7 @@ import {
   getSegmentTextColor,
   pluralize,
 } from "../helpers"
-import {Clip, ClipOrder} from "../types.generated"
+import {Clip, ClipOrder} from "../types/types.generated"
 import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
 import Modal from "../components/Modal"

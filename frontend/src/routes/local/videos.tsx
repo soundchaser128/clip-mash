@@ -1,11 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import invariant from "tiny-invariant"
-import {
-  VideoWithMarkers,
-  StateHelpers,
-  LocalFilesFormStage,
-  Page,
-} from "../../types/types"
+import {VideoWithMarkers, Page} from "../../types/types"
 import {
   HiAdjustmentsVertical,
   HiArrowDownTray,
@@ -33,9 +28,10 @@ import {
 import {formatSeconds} from "../../helpers"
 import clsx from "clsx"
 import {createNewMarker} from "./api"
-import {ListVideoDto} from "../../types.generated"
+import {ListVideoDto} from "../../types/types.generated"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
+import {LocalFilesFormStage, StateHelpers} from "../../types/form-state"
 
 export const loader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)

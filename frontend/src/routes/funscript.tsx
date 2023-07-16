@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useRef, useState} from "react"
-import {CreateBeatFunscriptBody} from "../types.generated"
+import {CreateBeatFunscriptBody} from "../types/types.generated"
 import {HiCodeBracket} from "react-icons/hi2"
 
 const FunscriptPage = () => {

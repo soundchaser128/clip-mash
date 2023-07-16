@@ -2,12 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import Field from "../components/Field"
 import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
-import {
-  ClipStrategy,
-  FormStage,
-  LocalFilesFormStage,
-  StateHelpers,
-} from "../types/types"
+import {ClipStrategy} from "../types/types"
 import React, {useCallback, useRef, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds, sumDurations} from "../helpers"
@@ -23,10 +18,11 @@ import {Updater, useImmer} from "use-immer"
 import {useDrag, useDrop} from "react-dnd"
 import type {Identifier, XYCoord} from "dnd-core"
 import clsx from "clsx"
-import {SongDto} from "../types.generated"
+import {SongDto} from "../types/types.generated"
 import HelpModal from "../components/HelpModal"
 import useNotification from "../hooks/useNotification"
 import Loader from "../components/Loader"
+import {FormStage, LocalFilesFormStage, StateHelpers} from "../types/form-state"
 
 interface Inputs {
   musicUrl: string

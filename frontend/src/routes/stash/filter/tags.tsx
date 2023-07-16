@@ -1,7 +1,7 @@
 import {LoaderFunction, useOutletContext} from "react-router-dom"
 import {Context} from "./root"
-import {Tag} from "../../../types/types"
 import useFilteredData from "../../../hooks/useFilteredData"
+import {TagDto} from "../../../types/types.generated"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/stash/tags")
@@ -10,7 +10,7 @@ export const loader: LoaderFunction = async () => {
 
 function Tags() {
   const {onCheckboxChange, selection, query} = useOutletContext<Context>()
-  const tags = useFilteredData<Tag>({
+  const tags = useFilteredData<TagDto>({
     query,
     keys: ["name"],
   })

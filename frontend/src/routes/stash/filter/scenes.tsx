@@ -12,7 +12,7 @@ import Rating from "../../../components/Rating"
 import {LoaderFunction, useOutletContext} from "react-router-dom"
 import {Context} from "./root"
 import useFilteredData from "../../../hooks/useFilteredData"
-import {StashScene} from "../../../types.generated"
+import {StashScene} from "../../../types/types.generated"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/stash/scenes")

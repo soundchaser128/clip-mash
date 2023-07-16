@@ -1,8 +1,8 @@
 import {LoaderFunction, useLoaderData} from "react-router-dom"
-import {FormStage, StateHelpers} from "../../types/types"
+import {FormStage, StateHelpers} from "../../types/form-state"
 import invariant from "tiny-invariant"
 import {getFormState} from "../../helpers"
-import {MarkerDto} from "../../types.generated"
+import {MarkerDto} from "../../types/types.generated"
 import MarkerPage from "../../components/MarkerPage"
 
 interface Data {

@@ -3,8 +3,8 @@ import {HiOutlineHeart, HiVideoCamera, HiStar, HiTag} from "react-icons/hi2"
 import Rating from "../../../components/Rating"
 import {Context} from "./root"
 import {LoaderFunction, useOutletContext} from "react-router-dom"
-import {Performer} from "../../../types/types"
 import useFilteredData from "../../../hooks/useFilteredData"
+import {PerformerDto} from "../../../types/types.generated"
 
 export const loader: LoaderFunction = async () => {
   const response = await fetch("/api/stash/performers")
@@ -13,7 +13,7 @@ export const loader: LoaderFunction = async () => {
 
 function Performers() {
   const {onCheckboxChange, selection, query} = useOutletContext<Context>()
-  const performers = useFilteredData<Performer>({
+  const performers = useFilteredData<PerformerDto>({
     query,
     keys: ["name", "tags"],
   })

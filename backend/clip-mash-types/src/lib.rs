@@ -459,17 +459,17 @@ pub struct UpdateMarker {
 pub enum StrokeType {
     /// Creates a stroke every `n` beats
     EveryNth { n: usize },
-    /// Steadily accellerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat`
-    Accellerate {
+    /// Steadily accelerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat`
+    Accelerate {
         start_strokes_per_beat: f32,
         end_strokes_per_beat: f32,
     },
 }
 
 impl StrokeType {
-    pub fn initial_accelleration(&self) -> Option<f32> {
+    pub fn initial_acceleration(&self) -> Option<f32> {
         match self {
-            Self::Accellerate {
+            Self::Accelerate {
                 start_strokes_per_beat,
                 ..
             } => Some(*start_strokes_per_beat),

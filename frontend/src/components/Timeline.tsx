@@ -1,6 +1,4 @@
 import clsx from "clsx"
-import {set} from "date-fns"
-import {useState} from "react"
 import useDraggable from "../hooks/useDraggable"
 
 interface Item {

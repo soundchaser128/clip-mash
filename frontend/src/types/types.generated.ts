@@ -166,8 +166,8 @@ export type StrokeType =
     }
   | {
       /**
-       * Steadily accellerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat`
+       * Steadily accelerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat`
        */
-      accellerate: {start_strokes_per_beat: F32; end_strokes_per_beat: F32}
+      accelerate: {start_strokes_per_beat: F32; end_strokes_per_beat: F32}
     }
 export type CreateBeatFunscriptBody = {songIds: I64[]; strokeType: StrokeType}

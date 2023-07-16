@@ -155,7 +155,7 @@ impl BeatState {
                     self.next_offset()
                 }
             }
-            StrokeType::Accellerate {
+            StrokeType::Accelerate {
                 start_strokes_per_beat,
                 end_strokes_per_beat,
             } => {
@@ -344,7 +344,7 @@ mod test {
 
     #[traced_test]
     #[test]
-    fn test_create_beat_script_accellerate() {
+    fn test_create_beat_script_accelerate() {
         let len1 = 8.0_f32;
         let len2 = 12.0_f32;
         let beats = vec![
@@ -360,7 +360,7 @@ mod test {
 
         let _script = create_beat_script(
             beats,
-            StrokeType::Accellerate {
+            StrokeType::Accelerate {
                 start_strokes_per_beat: 1.0,
                 end_strokes_per_beat: 0.25,
             },

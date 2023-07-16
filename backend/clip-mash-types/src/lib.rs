@@ -457,9 +457,9 @@ pub struct UpdateMarker {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, TypeDef)]
 #[serde(rename_all = "camelCase")]
 pub enum StrokeType {
-    /// Creates a beat every `n` beats
+    /// Creates a stroke every `n` beats
     EveryNth { n: usize },
-    /// Steadily accellerates the beat from `start_strokes_per_beat` to `end_strokes_per_beat`
+    /// Steadily accellerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat`
     Accellerate {
         start_strokes_per_beat: f32,
         end_strokes_per_beat: f32,

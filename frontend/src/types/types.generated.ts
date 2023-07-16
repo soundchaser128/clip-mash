@@ -160,13 +160,13 @@ export type UpdateMarker = {rowid: I64; start: F64; end: F64; title: string}
 export type StrokeType =
   | {
       /**
-       * Creates a beat every `n` beats
+       * Creates a stroke every `n` beats
        */
       everyNth: {n: Usize}
     }
   | {
       /**
-       * Steadily accellerates the beat from `start_strokes_per_beat` to `end_strokes_per_beat`
+       * Steadily accellerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat`
        */
       accellerate: {start_strokes_per_beat: F32; end_strokes_per_beat: F32}
     }

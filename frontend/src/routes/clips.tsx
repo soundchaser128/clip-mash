@@ -478,12 +478,8 @@ function PreviewClips() {
     navigate("/stash/progress")
   }
 
-  const onVideoTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (
-    event,
-  ) => {
-    const endTimestamp = currentClip.range[1]
-    const currentTime = event.currentTarget.currentTime
-    if (Math.abs(endTimestamp - currentTime) <= 0.5 && autoPlay) {
+  const onEnded = () => {
+    if (autoPlay) {
       setCurrentClipIndex((c) => (c + 1) % clips.length)
     }
   }
@@ -569,7 +565,7 @@ function PreviewClips() {
           src={clipUrl}
           muted={videoMuted}
           autoPlay={autoPlay}
-          onTimeUpdate={onVideoTimeUpdate}
+          onEnded={onEnded}
           ref={videoRef}
         />
         <div className="flex flex-col px-4 py-2 w-1/4 bg-base-200 justify-between">
@@ -649,12 +645,6 @@ function PreviewClips() {
           )}
         </div>
       </div>
-
-      <Timeline
-        clips={clips}
-        currentClipIndex={currentClipIndex}
-        setCurrentClipIndex={setCurrentClipIndex}
-      />
     </>
   )
 }

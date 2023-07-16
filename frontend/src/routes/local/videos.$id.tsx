@@ -186,13 +186,11 @@ export default function EditVideoModal() {
   return (
     <Modal isOpen onClose={onClose}>
       <div className="flex gap-2">
-        <video
-          className="w-2/3 max-h-[90vh]"
-          muted
-          controls
+        <Timeline
           src={`/api/local/video/${video.id.id}/file`}
-          ref={videoRef}
-          onLoadedMetadata={onMetadataLoaded}
+          length={video.duration}
+          items={timelineItems}
+          autoPlay={false}
         />
         <div className="flex flex-col w-1/3 justify-between">
           {formMode !== "hidden" && (
@@ -398,13 +396,6 @@ export default function EditVideoModal() {
           </div>
         </div>
       </div>
-      <Timeline length={video.duration} items={timelineItems} />
-      {/* <SegmentedBar
-        length={video.duration}
-        items={}
-        onItemClick={(item, index) => onShowForm(markers[index])}
-        selectedIndex={editedMarker ? markers.indexOf(editedMarker) : undefined}
-      /> */}
     </Modal>
   )
 }

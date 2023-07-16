@@ -1,12 +1,19 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
-import {HiArrowDown, HiCodeBracket, HiRocketLaunch} from "react-icons/hi2"
+import {
+  HiArrowDown,
+  HiCodeBracket,
+  HiHeart,
+  HiRocketLaunch,
+} from "react-icons/hi2"
 import {FormState} from "../types/form-state"
 import {formatSeconds} from "../helpers"
 import {Progress} from "../types/types.generated"
 import useNotification from "../hooks/useNotification"
 import {updateForm} from "./actions"
 import {Link} from "react-router-dom"
+import clsx from "clsx"
+import ExternalLink from "../components/ExternalLink"
 
 class RingBuffer<T> {
   buffer: T[]
@@ -90,7 +97,7 @@ function Progress() {
   )
 
   return (
-    <div className="mt-8 max-w-lg w-full self-center flex flex-col items-center">
+    <div className="mt-2 w-full self-center flex flex-col items-center">
       {!progress && !finished && (
         <>
           <div className="mb-8">
@@ -136,7 +143,7 @@ function Progress() {
         <div className="flex flex-col gap-6">
           <h1 className="text-5xl font-bold text-center">🎉 Success!</h1>
           <p>
-            You can now download the finished compilation.{" "}
+            You can now download the finished compilation!{" "}
             {interactive && (
               <>
                 You can also create a <code>.funscript</code> file for use with
@@ -144,13 +151,19 @@ function Progress() {
               </>
             )}
           </p>
-          <div className="flex flex-row gap-4 w-full">
+          <div
+            className={clsx(
+              "grid gap-2 w-full",
+              interactive && "grid-cols-3",
+              !interactive && "grid-cols-2",
+            )}
+          >
             <div className="flex flex-col">
               <a
                 href={`/api/download?fileName=${encodeURIComponent(
                   finalFileName,
                 )}`}
-                className="btn btn-success btn-lg w-64"
+                className="btn btn-success btn-lg"
                 download
               >
                 <HiArrowDown className="w-6 h-6 mr-2" />
@@ -159,15 +172,21 @@ function Progress() {
             </div>
             {interactive && (
               <div className="flex flex-col">
-                <Link
-                  className="btn btn-primary btn-lg w-64"
-                  to="/stash/funscript"
-                >
+                <Link className="btn btn-primary btn-lg" to="/stash/funscript">
                   <HiCodeBracket className="w-6 h-6 mr-2" />
                   Create funscript
                 </Link>
               </div>
             )}
+            <div className="flex flex-col">
+              <ExternalLink
+                href="https://ko-fi.com/soundchaser128"
+                className="btn btn-lg btn-secondary"
+              >
+                <HiHeart className="w-6 h-6 mr-2" />
+                Support the developer
+              </ExternalLink>
+            </div>
           </div>
         </div>
       )}

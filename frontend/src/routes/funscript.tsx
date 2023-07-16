@@ -2,6 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import {useRef, useState} from "react"
 import {CreateBeatFunscriptBody} from "../types/types.generated"
 import {HiCodeBracket} from "react-icons/hi2"
+import ExternalLink from "../components/ExternalLink"
 
 const FunscriptPage = () => {
   const {state} = useStateMachine()
@@ -71,14 +72,9 @@ const FunscriptPage = () => {
         <p>
           <code>.funscript</code> files are used by computer-connected sex toys
           like{" "}
-          <a
-            href="https://www.thehandy.com/"
-            className="link link-primary"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <ExternalLink href="https://www.thehandy.com/">
             the Handy
-          </a>{" "}
+          </ExternalLink>{" "}
           to sync their actions to a video.
         </p>
         <p>
@@ -89,22 +85,15 @@ const FunscriptPage = () => {
         </p>
         <p>
           You can use apps like{" "}
-          <a
-            href="https://beta.funscript.io/app/play"
-            className="link link-primary"
-            rel="noreferrer"
-            target="_blank"
-          >
+          <ExternalLink href="https://beta.funscript.io/app/play">
             funscript.io
-          </a>{" "}
+          </ExternalLink>{" "}
           to run the script alongside the video.
         </p>
       </div>
       <div className="self-center mt-4 flex flex-col gap-6">
         <div>
-          <p className="font-light self-start mb-1">
-            Generate beat-based .funscript file
-          </p>
+          <p className="self-start mb-1">Generate beat-based .funscript file</p>
           <button
             onClick={onCreateBeatFunscript}
             className="btn btn-success btn-lg w-full"
@@ -116,9 +105,7 @@ const FunscriptPage = () => {
         </div>
 
         <div>
-          <p className="font-light self-start mb-1">
-            Generate combined .funscript file
-          </p>
+          <p className="self-start mb-1">Generate combined .funscript file</p>
           <button
             onClick={onDownloadFunscript}
             className="btn btn-success btn-lg w-full"

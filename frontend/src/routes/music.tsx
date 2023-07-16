@@ -23,6 +23,7 @@ import HelpModal from "../components/HelpModal"
 import useNotification from "../hooks/useNotification"
 import Loader from "../components/Loader"
 import {FormStage, LocalFilesFormStage, StateHelpers} from "../types/form-state"
+import ExternalLink from "../components/ExternalLink"
 
 interface Inputs {
   musicUrl: string
@@ -211,14 +212,7 @@ const SongsTable: React.FC<SongsTableProps> = ({
               <td>{song.fileName}</td>
               <td>{formatSeconds(song.duration, "short")}</td>
               <td>
-                <a
-                  href={song.url}
-                  target="_blank"
-                  className="link"
-                  rel="noreferrer"
-                >
-                  {song.url}
-                </a>
+                <ExternalLink href={song.url}>{song.url}</ExternalLink>
               </td>
               <td>{calcBPM(song)}</td>
               <td>

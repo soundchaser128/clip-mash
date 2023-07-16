@@ -2,6 +2,7 @@ import clsx from "clsx"
 import {useCallback, useState} from "react"
 import {useForm} from "react-hook-form"
 import {useLoaderData, useNavigate} from "react-router-dom"
+import ExternalLink from "../../components/ExternalLink"
 
 interface Inputs {
   stashUrl: string
@@ -103,15 +104,8 @@ function ConfigPage() {
           <label className="label">
             <span className="label-text-alt">
               Navigate to{" "}
-              <a
-                className="link"
-                href={settingsPage}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {settingsPage}
-              </a>{" "}
-              to retrieve your API key.
+              <ExternalLink href={settingsPage}>{settingsPage}</ExternalLink> to
+              retrieve your API key.
             </span>
           </label>
         </div>

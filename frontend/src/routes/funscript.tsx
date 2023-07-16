@@ -67,62 +67,67 @@ const FunscriptPage = () => {
   }
   return (
     <>
-      <div>
-        This compilation is interactive. You can use e.g.{" "}
-        <a
-          href="https://beta.funscript.io/"
-          target="_blank"
-          rel="noreferrer"
-          className="link"
-        >
-          Funplayer
-        </a>{" "}
-        to play it alongside the video in your browser, with supported toys like
-        the{" "}
-        <a
-          href="https://www.thehandy.com/"
-          target="_blank"
-          rel="noreferrer"
-          className="link"
-        >
-          Handy
-        </a>
-        .
-        <br />
-        Make sure to take a look at the generated file before playing it. It
-        might contain awkward sections or abrupt changes in speed.
+      <div className="mt-4 max-w-2xl self-center flex flex-col gap-2">
+        <p>
+          <code>.funscript</code> files are used by computer-connected sex toys
+          like{" "}
+          <a
+            href="https://www.thehandy.com/"
+            className="link link-primary"
+            target="_blank"
+            rel="noreferrer"
+          >
+            the Handy
+          </a>{" "}
+          to sync their actions to a video.
+        </p>
+        <p>
+          You can generate a beat-based funscript if the compilation had music
+          added to it, or, if the source videos have <code>.funscript</code>{" "}
+          files stored next to them, you can generate a file that combines the
+          actions of the included videos.
+        </p>
+        <p>
+          You can use apps like{" "}
+          <a
+            href="https://beta.funscript.io/app/play"
+            className="link link-primary"
+            rel="noreferrer"
+            target="_blank"
+          >
+            funscript.io
+          </a>{" "}
+          to run the script alongside the video.
+        </p>
       </div>
-      <div className="self-center mt-4 flex flex-col gap-4">
-        {numSongs > 0 && (
-          <div>
-            <p className="font-light self-start mb-1">
-              Generate beat-based .funscript file
-            </p>
-            <button
-              onClick={onCreateBeatFunscript}
-              className="btn btn-success btn-lg"
-              disabled={creatingScript}
-            >
-              <HiCodeBracket className="w-6 h-6 mr-2" />
-              Beat-based funscript
-            </button>
-          </div>
-        )}
-        {state.data.interactive && (
-          <div>
-            <p className="font-light self-start mb-1">
-              Generate combined .funscript file
-            </p>
-            <button
-              onClick={onDownloadFunscript}
-              className="btn btn-success btn-lg"
-              disabled={creatingScript}
-            >
-              <HiCodeBracket className="w-6 h-6 mr-2" />
-              Combined funscript
-            </button>
-          </div>
-        )}
+      <div className="self-center mt-4 flex flex-col gap-6">
+        <div>
+          <p className="font-light self-start mb-1">
+            Generate beat-based .funscript file
+          </p>
+          <button
+            onClick={onCreateBeatFunscript}
+            className="btn btn-success btn-lg w-full"
+            disabled={creatingScript || numSongs === 0}
+          >
+            <HiCodeBracket className="w-6 h-6 mr-2" />
+            Beat-based funscript
+          </button>
+        </div>
+
+        <div>
+          <p className="font-light self-start mb-1">
+            Generate combined .funscript file
+          </p>
+          <button
+            onClick={onDownloadFunscript}
+            className="btn btn-success btn-lg w-full"
+            disabled={creatingScript || !state.data.interactive}
+          >
+            <HiCodeBracket className="w-6 h-6 mr-2" />
+            Combined funscript
+          </button>
+        </div>
       </div>
 
       <a className="hidden" ref={downloadLink} />

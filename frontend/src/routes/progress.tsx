@@ -137,9 +137,14 @@ function Progress() {
           <h1 className="text-5xl font-bold text-center">🎉 Success!</h1>
           <p>
             You can now download the finished compilation.{" "}
-            {interactive && "You can also create a funscript file."}
+            {interactive && (
+              <>
+                You can also create a <code>.funscript</code> file for use with
+                sex toys.
+              </>
+            )}
           </p>
-          <div className="flex flex-row gap-12 w-full">
+          <div className="flex flex-row gap-4 w-full">
             <div className="flex flex-col">
               <a
                 href={`/api/download?fileName=${encodeURIComponent(
@@ -159,7 +164,7 @@ function Progress() {
                   to="/stash/funscript"
                 >
                   <HiCodeBracket className="w-6 h-6 mr-2" />
-                  Craete funscript
+                  Create funscript
                 </Link>
               </div>
             )}

@@ -52,7 +52,7 @@ impl VideoService {
         let entries = self.gather_files(path.as_ref().to_owned(), recurse).await?;
         debug!("found files {entries:?} (recurse = {recurse})");
         for path in entries {
-            if path.extension() == Some("mp4") {
+            if path.extension() == Some("mp4") || path.extension() == Some("m4v") {
                 let video_exists = self
                     .database
                     .get_video_by_path(path.as_str())

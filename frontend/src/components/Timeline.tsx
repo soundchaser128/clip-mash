@@ -1,5 +1,6 @@
 import clsx from "clsx"
-import useDraggable from "../hooks/useDraggable"
+import React, {useRef} from "react"
+import Draggable from "react-draggable"
 
 interface Item {
   label: string
@@ -36,26 +37,30 @@ const Ticks = ({length}: {length: number}) => {
   return <div className="w-full relative">{ticks}</div>
 }
 
-interface DraggableHandleProps {
-  position: "left" | "right"
-}
-
-function DraggableHandle({position}: DraggableHandleProps) {
-  const {x, y, isDragging, handleMouseDown} = useDraggable({axis: "x"})
-  console.log({x, y})
+const Segment = ({
+  width,
+  offset,
+  children,
+}: {
+  width: number
+  offset: number
+  children: React.ReactNode
+}) => {
+  const ref = useRef<HTMLDivElement>(null)
 
   return (
-    <span
-      onMouseDown={handleMouseDown}
-      className={clsx(
-        "cursor-grab transition absolute h-10 top-0 w-4 hover:opacity-100 opacity-40 bg-black z-20",
-        position === "left" && "rounded-r-xl left-0",
-        position === "right" && "rounded-l-xl right-0",
-      )}
-      style={{
-        left: `${x}px`,
-      }}
-    />
+    <Draggable nodeRef={ref} axis="x">
+      <div
+        ref={ref}
+        className="absolute h-10 bg-slate-200 hover:bg-slate-300 text-black text-xs flex flex-col items-center justify-center text-center border-x-2 border-slate-500"
+        style={{
+          width: `${width}%`,
+          left: `${offset}%`,
+        }}
+      >
+        {children}
+      </div>
+    </Draggable>
   )
 }
 
@@ -65,28 +70,19 @@ const Segments = ({items, length}: {items: Item[]; length: number}) => {
     const offset = (item.offset / length) * 100
 
     return (
-      <div
-        key={index}
-        className="absolute h-10 bg-slate-200 hover:bg-slate-300 text-black text-xs flex flex-col items-center justify-center text-center border-x-2 border-slate-500"
-        style={{
-          width: `${widthPercent}%`,
-          left: `${offset}%`,
-        }}
-      >
-        {/* <DraggableHandle position="left" /> */}
+      <Segment key={index} width={widthPercent} offset={offset}>
         {item.label}
-        {/* <DraggableHandle position="right" /> */}
-      </div>
+      </Segment>
     )
   })
 
-  return <div className="w-full bg-slate-50">{segments}</div>
+  return <div className="w-full bg-slate-50 h-10">{segments}</div>
 }
 
 const Timeline: React.FC<Props> = ({length, items, src}) => {
   return (
-    <div className="relative overflow-hidden h-20 mt-4 flex flex-col shrink-0">
-      <video className="w-2/3 max-h-[90vh]" muted controls src={src} />
+    <div className="relative mt-4 flex flex-col shrink-0">
+      <video className="w-full max-h-[90vh]" muted controls src={src} />
       <Segments items={items} length={length} />
       <Ticks length={length} />
     </div>

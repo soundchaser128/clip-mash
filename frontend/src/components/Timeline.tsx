@@ -34,8 +34,11 @@ const Ticks = ({length}: {length: number}) => {
     }
   }
 
-  return <div className="w-full relative">{ticks}</div>
+  return <div className="w-full relative h-10">{ticks}</div>
 }
+
+const segmentStyles =
+  "absolute h-10 bg-slate-200 hover:bg-slate-300 text-black text-xs flex flex-col items-center justify-center text-center border-x-2 border-slate-500"
 
 const Segment = ({
   width,
@@ -47,12 +50,21 @@ const Segment = ({
   children: React.ReactNode
 }) => {
   const ref = useRef<HTMLDivElement>(null)
+  const [dragging, setDragging] = React.useState(false)
+
+  const onStart = () => {
+    setDragging(true)
+  }
+
+  const onStop = () => {
+    setDragging(false)
+  }
 
   return (
-    <Draggable nodeRef={ref} axis="x">
+    <Draggable onStart={onStart} onStop={onStop} nodeRef={ref} axis="x">
       <div
         ref={ref}
-        className="absolute h-10 bg-slate-200 hover:bg-slate-300 text-black text-xs flex flex-col items-center justify-center text-center border-x-2 border-slate-500"
+        className={clsx(segmentStyles, dragging && "opacity-75")}
         style={{
           width: `${width}%`,
           left: `${offset}%`,
@@ -81,8 +93,8 @@ const Segments = ({items, length}: {items: Item[]; length: number}) => {
 
 const Timeline: React.FC<Props> = ({length, items, src}) => {
   return (
-    <div className="relative mt-4 flex flex-col shrink-0">
-      <video className="w-full max-h-[90vh]" muted controls src={src} />
+    <div className="relative mt-4 flex flex-col shrink-0 w-2/3">
+      <video className="max-h-[90vh]" muted controls src={src} />
       <Segments items={items} length={length} />
       <Ticks length={length} />
     </div>

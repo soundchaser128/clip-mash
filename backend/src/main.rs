@@ -110,7 +110,11 @@ async fn main() -> Result<()> {
         .route("/version", get(handlers::common::get_version))
         .route("/clips", post(handlers::common::fetch_clips))
         .route("/create", post(handlers::common::create_video))
-        .route("/progress", get(handlers::common::get_progress))
+        .route(
+            "/progress/stream",
+            get(handlers::common::get_progress_stream),
+        )
+        .route("/progress/info", get(handlers::common::get_progress_info))
         .route("/download", get(handlers::common::download_video))
         .route(
             "/funscript/combined",

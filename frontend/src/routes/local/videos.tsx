@@ -144,18 +144,19 @@ export default function ListVideos() {
           </button>
         )}
       </div>
-
-      <div className="w-full flex justify-between">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Filter..."
-            className="input input-primary w-full lg:w-96"
-            value={filter}
-            onChange={onFilterChange}
-          />
+      {!noVideos && (
+        <div className="w-full flex justify-between">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Filter..."
+              className="input input-primary w-full lg:w-96"
+              value={filter}
+              onChange={onFilterChange}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {noVideos && (
         <div className="flex flex-col items-center justify-center mt-8">

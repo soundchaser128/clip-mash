@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import {useState} from "react"
+import {useEffect, useState} from "react"
 import {
   HiArrowDown,
   HiCodeBracket,
@@ -54,6 +54,20 @@ function Progress() {
   const numSongs = state.data.songs?.length || 0
   const interactive = numSongs > 0 || state.data.interactive
 
+  useEffect(() => {
+    fetch("/api/progress/info")
+      .then((res) => {
+        if (res.ok) {
+          return res.json()
+        } else {
+          throw new Error("Failed to fetch progress info")
+        }
+      })
+      .then((json) => {
+        setProgress(json)
+      })
+  }, [])
+
   const onSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
 
@@ -77,7 +91,7 @@ function Progress() {
       actions.updateForm({
         finalFileName: fileName,
       })
-      const es = new EventSource("/api/progress")
+      const es = new EventSource("/api/progress/stream")
       es.onmessage = (event) => {
         const data = JSON.parse(event.data) as Progress
         if (data.done) {

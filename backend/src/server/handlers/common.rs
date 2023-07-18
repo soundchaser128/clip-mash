@@ -103,7 +103,7 @@ pub async fn create_video(
 }
 
 #[axum::debug_handler]
-pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
+pub async fn get_progress_stream() -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
     let stream = futures::StreamExt::flat_map(stream::repeat_with(generator::get_progress), |f| {
         f.into_stream()
     });
@@ -119,6 +119,12 @@ pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::
         .throttle(Duration::from_millis(250));
 
     Sse::new(stream).keep_alive(KeepAlive::default())
+}
+
+#[axum::debug_handler]
+pub async fn get_progress_info() -> Json<Progress> {
+    let progress = generator::get_progress().await;
+    Json(progress)
 }
 
 #[derive(Deserialize)]

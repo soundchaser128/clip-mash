@@ -12,6 +12,7 @@ pub struct ProgressTracker {
     work_done: f64,
     started_at: Instant,
     message: String,
+    running: bool,
 }
 
 impl Default for ProgressTracker {
@@ -21,6 +22,7 @@ impl Default for ProgressTracker {
             started_at: Instant::now(),
             work_total: 0.0,
             message: String::new(),
+            running: false,
         }
     }
 }
@@ -33,6 +35,7 @@ impl ProgressTracker {
             started_at: Instant::now(),
             work_total: work_todo,
             message: String::new(),
+            running: false,
         }
     }
 
@@ -41,12 +44,14 @@ impl ProgressTracker {
         self.started_at = Instant::now();
         self.work_total = work_todo;
         self.message = String::new();
+        self.running = false;
     }
 
     /// Increment work done by a given amonut.
     pub fn inc_work_done_by(&mut self, units: f64, message: &str) {
         self.work_done += units;
         self.message = message.into();
+        self.running = true;
     }
 
     pub fn eta(&self) -> Duration {

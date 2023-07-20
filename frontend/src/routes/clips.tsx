@@ -1,7 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import React, {useMemo, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
-import {FormStage} from "../types/form-state"
 import {updateForm} from "./actions"
 import {
   HiBackward,
@@ -20,11 +19,12 @@ import {
   getSegmentTextColor,
   pluralize,
 } from "../helpers"
-import {Clip, ClipOrder} from "../types/types.generated"
 import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
 import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
+import {Clip, ClipOrder} from "../types/types.generated"
+import { FormStage } from "../types/form-state"
 
 interface ClipState {
   included: boolean
@@ -478,8 +478,12 @@ function PreviewClips() {
     navigate("/stash/progress")
   }
 
-  const onEnded = () => {
-    if (autoPlay) {
+  const onVideoTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (
+    event,
+  ) => {
+    const endTimestamp = currentClip.range[1]
+    const currentTime = event.currentTarget.currentTime
+    if (Math.abs(endTimestamp - currentTime) <= 0.5 && autoPlay) {
       setCurrentClipIndex((c) => (c + 1) % clips.length)
     }
   }
@@ -565,7 +569,7 @@ function PreviewClips() {
           src={clipUrl}
           muted={videoMuted}
           autoPlay={autoPlay}
-          onEnded={onEnded}
+          onTimeUpdate={onVideoTimeUpdate}
           ref={videoRef}
         />
         <div className="flex flex-col px-4 py-2 w-1/4 bg-base-200 justify-between">
@@ -645,6 +649,12 @@ function PreviewClips() {
           )}
         </div>
       </div>
+
+      <Timeline
+        clips={clips}
+        currentClipIndex={currentClipIndex}
+        setCurrentClipIndex={setCurrentClipIndex}
+      />
     </>
   )
 }

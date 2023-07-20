@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import {useEffect, useState} from "react"
+import {useEffect, useRef, useState} from "react"
 import {
   HiArrowDown,
   HiCodeBracket,
@@ -53,6 +53,26 @@ function Progress() {
   const sendNotification = useNotification()
   const numSongs = state.data.songs?.length || 0
   const interactive = numSongs > 0 || state.data.interactive
+  const eventSource = useRef<EventSource>()
+
+  const handleProgress = (data: Progress) => {
+    if (data.done) {
+      setFinished(true)
+      eventSource.current?.close()
+      sendNotification("Success", "Video generation finished!")
+    }
+    setProgress(data)
+    setTimes((buf) => buf.push(data.etaSeconds))
+  }
+
+  const openEventSource = () => {
+    const es = new EventSource("/api/progress/stream")
+    es.onmessage = (event) => {
+      const data = JSON.parse(event.data) as Progress
+      handleProgress(data)
+    }
+    return es
+  }
 
   useEffect(() => {
     fetch("/api/progress/info")
@@ -64,8 +84,16 @@ function Progress() {
         }
       })
       .then((json) => {
-        setProgress(json)
+        const progress = json as Progress
+        if (progress.itemsTotal > 0) {
+          handleProgress(progress)
+          eventSource.current = openEventSource()
+        }
       })
+
+    return () => {
+      eventSource.current?.close()
+    }
   }, [])
 
   const onSubmit = async (e: React.MouseEvent) => {
@@ -91,17 +119,7 @@ function Progress() {
       actions.updateForm({
         finalFileName: fileName,
       })
-      const es = new EventSource("/api/progress/stream")
-      es.onmessage = (event) => {
-        const data = JSON.parse(event.data) as Progress
-        if (data.done) {
-          setFinished(true)
-          es.close()
-          sendNotification("Success", "Video generation finished!")
-        }
-        setProgress(data)
-        setTimes((buf) => buf.push(data.etaSeconds))
-      }
+      eventSource.current = openEventSource()
     }
   }
 
@@ -141,15 +159,18 @@ function Progress() {
             value={progress?.itemsFinished}
             max={progress?.itemsTotal}
           />
-          <p>
-            <strong>{formatSeconds(progress.itemsFinished, "short")}</strong> /{" "}
-            <strong>{formatSeconds(progress.itemsTotal, "short")}</strong> of
-            the compilation finished
-          </p>
-          <p>
-            Estimated time remaining: <strong>{formatSeconds(eta)}</strong>
-          </p>
-          <p>{progress.message}</p>
+
+          <section className="text-center">
+            <p>
+              <strong>{formatSeconds(progress.itemsFinished, "short")}</strong>{" "}
+              / <strong>{formatSeconds(progress.itemsTotal, "short")}</strong>{" "}
+              of the compilation finished
+            </p>
+            <p>
+              Estimated time remaining: <strong>{formatSeconds(eta)}</strong>
+            </p>
+            <p>{progress.message}</p>
+          </section>
         </div>
       )}
 

@@ -98,7 +98,10 @@ async fn main() -> Result<()> {
         .route("/video/marker", post(handlers::local::create_new_marker))
         .route("/video/marker", put(handlers::local::update_marker))
         .route("/video/marker/:id", delete(handlers::local::delete_marker))
-        .route("/video/marker/:id/split", post(handlers::local::split_marker))
+        .route(
+            "/video/marker/:id/split",
+            post(handlers::local::split_marker),
+        )
         .route(
             "/video/marker/:id/preview",
             get(handlers::local::get_marker_preview),

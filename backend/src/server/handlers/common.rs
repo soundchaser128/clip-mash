@@ -108,7 +108,8 @@ pub async fn get_progress_stream() -> Sse<impl Stream<Item = Result<Event, serde
         f.into_stream()
     });
     let stream = stream
-        .take_while(|p| !p.done)
+        .take_while(|p| p.is_some())
+        .filter_map(|o| o)
         .chain(futures::stream::once(async {
             Progress {
                 done: true,
@@ -122,7 +123,7 @@ pub async fn get_progress_stream() -> Sse<impl Stream<Item = Result<Event, serde
 }
 
 #[axum::debug_handler]
-pub async fn get_progress_info() -> Json<Progress> {
+pub async fn get_progress_info() -> Json<Option<Progress>> {
     let progress = generator::get_progress().await;
     Json(progress)
 }

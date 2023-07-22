@@ -68,8 +68,8 @@ function Progress() {
   const openEventSource = () => {
     const es = new EventSource("/api/progress/stream")
     es.onmessage = (event) => {
-      const data = JSON.parse(event.data) as Progress
-      handleProgress(data)
+      const data = JSON.parse(event.data) as Progress | null
+      data && handleProgress(data)
     }
     return es
   }
@@ -84,16 +84,16 @@ function Progress() {
         }
       })
       .then((json) => {
-        const progress = json as Progress
-        if (progress.itemsTotal > 0) {
+        const progress = json as Progress | null
+        if (progress && progress.itemsTotal > 0) {
           handleProgress(progress)
           eventSource.current = openEventSource()
         }
       })
 
-    return () => {
-      eventSource.current?.close()
-    }
+    // return () => {
+    //   eventSource.current?.close()
+    // }
   }, [])
 
   const onSubmit = async (e: React.MouseEvent) => {

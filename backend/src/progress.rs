@@ -47,16 +47,20 @@ impl ProgressTracker {
         self.running = false;
     }
 
-    /// Increment work done by a given amonut.
+    /// Increment work done by a given amount.
     pub fn inc_work_done_by(&mut self, units: f64, message: &str) {
         self.work_done += units;
         self.message = message.into();
         self.running = true;
     }
 
-    pub fn eta(&self) -> Duration {
-        if self.work_done == 0.0 || self.work_total == 0.0 || self.work_total <= self.work_done {
-            return Duration::ZERO;
+    pub fn eta(&self) -> Option<Duration> {
+        if self.work_done == 0.0
+            || self.work_total == 0.0
+            || self.work_total <= self.work_done
+            || self.running
+        {
+            return None;
         }
         let work_not_done = self.work_total - self.work_done;
         let not_done_to_done_ratio = work_not_done / self.work_done;
@@ -69,17 +73,21 @@ impl ProgressTracker {
             eta_seconds
         );
 
-        Duration::from_secs_f64(eta_seconds)
+        Some(Duration::from_secs_f64(eta_seconds))
     }
 
-    pub fn progress(&self) -> Progress {
-        Progress {
-            items_finished: self.work_done,
-            items_total: self.work_total,
-            eta_seconds: self.eta().as_secs_f64(),
-            done: self.work_total != 0.0
-                && approx_eq!(f64, self.work_done, self.work_total, epsilon = 0.01),
-            message: self.message.clone(),
+    pub fn progress(&self) -> Option<Progress> {
+        if self.running {
+            Some(Progress {
+                items_finished: self.work_done,
+                items_total: self.work_total,
+                eta_seconds: self.eta().unwrap_or(Duration::ZERO).as_secs_f64(),
+                done: self.work_total != 0.0
+                    && approx_eq!(f64, self.work_done, self.work_total, epsilon = 0.01),
+                message: self.message.clone(),
+            })
+        } else {
+            None
         }
     }
 }
@@ -98,20 +106,21 @@ mod test {
         let mut tracker = ProgressTracker::new(100.0);
         tracker.inc_work_done_by(10.0, "");
         MockClock::advance(Duration::from_secs(1));
-        assert_eq!(10.0, tracker.progress().items_finished);
-        assert_eq!(9.0, tracker.eta().as_secs_f64());
+        let progress = tracker.progress().unwrap();
+        assert_eq!(10.0, progress.items_finished);
+        assert_eq!(9.0, progress.eta_seconds);
 
         MockClock::advance(Duration::from_secs(2));
         tracker.inc_work_done_by(10.0, "");
 
-        let eta = tracker.eta().as_secs_f64();
+        let eta = tracker.eta().unwrap().as_secs_f64();
         assert!(eta >= 12.0);
 
         MockClock::advance(Duration::from_secs(5));
         tracker.inc_work_done_by(80.0, "");
 
-        let eta = tracker.eta().as_secs_f64();
+        let eta = tracker.eta().unwrap().as_secs_f64();
         assert_approx_eq!(f64, eta, 0.0, ulps = 2);
-        assert!(tracker.progress().done);
+        assert!(tracker.progress().unwrap().done);
     }
 }

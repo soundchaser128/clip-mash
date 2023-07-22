@@ -66,7 +66,7 @@ pub fn find_stream_url(marker: &Marker) -> &str {
     }
 }
 
-pub async fn get_progress() -> Progress {
+pub async fn get_progress() -> Option<Progress> {
     let locked = PROGRESS.lock().await;
     locked.progress()
 }

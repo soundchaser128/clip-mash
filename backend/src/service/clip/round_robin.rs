@@ -1,4 +1,5 @@
 use clip_mash_types::{Clip, PmvClipOptions, RoundRobinClipOptions};
+use float_cmp::approx_eq;
 use rand::rngs::StdRng;
 use tracing::info;
 
@@ -86,7 +87,7 @@ impl ClipPicker for RoundRobinClipPicker {
         let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
         if let Some(song_duration) = song_duration {
             assert!(
-                clips_duration >= song_duration,
+                approx_eq!(f64, clips_duration, song_duration) || clips_duration >= song_duration,
                 "clips duration {} must be greater or equal to song duration {}",
                 clips_duration,
                 song_duration

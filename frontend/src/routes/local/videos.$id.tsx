@@ -11,6 +11,7 @@ import {
   HiPencilSquare,
   HiChevronLeft,
   HiChevronRight,
+  HiPlay,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
 import {formatSeconds, isBetween, parseTimestamp} from "../../helpers"
@@ -82,11 +83,7 @@ export default function EditVideoModal() {
   const markerEnd = watch("end")
 
   const currentItemIndex = markers.findIndex((m) =>
-    isBetween(
-      time,
-      m.start,
-      m.end || videoDuration!,
-    ),
+    isBetween(time, m.start, m.end || videoDuration!),
   )
 
   const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (e) => {
@@ -182,9 +179,10 @@ export default function EditVideoModal() {
     setVideoDuration(duration)
   }
 
-  const setVideoPosition = (position: number) => {
+  const onPlayMarker = (position: number) => {
     if (videoRef.current) {
       videoRef.current.currentTime = position
+      videoRef.current.play()
     }
   }
 
@@ -234,24 +232,11 @@ export default function EditVideoModal() {
               <div className="flex w-full items-baseline justify-between">
                 <button
                   type="button"
-                  onClick={() => setVideoPosition(parseTimestamp(markerStart))}
-                  className="btn btn-secondary"
+                  className="btn btn-success"
+                  onClick={() => onPlayMarker(parseTimestamp(markerStart))}
                 >
-                  <HiChevronLeft className="mr-2" />
-                  Go to start
-                </button>
-                Navigate
-                <button
-                  type="button"
-                  onClick={() =>
-                    typeof markerEnd !== "undefined" &&
-                    setVideoPosition(parseTimestamp(markerEnd))
-                  }
-                  className="btn btn-secondary"
-                  disabled={typeof markerEnd === "undefined"}
-                >
-                  Go to end
-                  <HiChevronRight className="ml-2" />
+                  <HiPlay className="mr-2" />
+                  Play
                 </button>
               </div>
               <div className="form-control">
@@ -367,11 +352,18 @@ export default function EditVideoModal() {
                         type="range"
                         min="0"
                         max="100"
-                        className="range range-secondary range-sm w-72 mb-2"
+                        className="range range-sm w-full"
                         step="5"
                         value={threshold}
                         onChange={(e) => setThreshold(e.target.valueAsNumber)}
                       />
+                      <div className="w-full flex justify-between text-xs px-2 mb-4">
+                        <span>0</span>
+                        <span className="font-bold">
+                          {Math.round(threshold)}
+                        </span>
+                        <span>100</span>
+                      </div>
                       <button
                         onClick={onDetectMarkers}
                         className="btn btn-secondary"
@@ -454,7 +446,9 @@ export default function EditVideoModal() {
           offset: marker.start,
         }))}
         onItemClick={(item, index) => onShowForm(markers[index])}
-        selectedIndex={editedMarker ? markers.indexOf(editedMarker) : currentItemIndex}
+        selectedIndex={
+          editedMarker ? markers.indexOf(editedMarker) : currentItemIndex
+        }
         fadeInactiveItems
       />
     </Modal>

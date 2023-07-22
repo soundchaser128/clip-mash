@@ -16,11 +16,11 @@ import {useImmer} from "use-immer"
 import {formatSeconds, parseTimestamp} from "../../helpers"
 import Modal from "../../components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
-import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
 import {createNewMarker, updateMarker} from "./api"
 import {SegmentedBar} from "../../components/SegmentedBar"
 import Loader from "../../components/Loader"
+import {MarkerDto} from "../../types/types.generated"
 
 interface Inputs {
   id?: number

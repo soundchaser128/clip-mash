@@ -135,7 +135,7 @@ impl Database {
         let markers = sqlx::query_as!(DbMarker, "
         SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
         FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
-        ORDER BY m.rowid DESC")
+        ORDER BY v.file_path ASC")
         .fetch_all(&self.pool)
         .await?;
         Ok(markers)
@@ -372,6 +372,41 @@ impl Database {
         Ok(marker)
     }
 
+    pub async fn split_marker(&self, id: i64, split_time: f64) -> Result<Vec<DbMarker>> {
+        let marker = self.get_marker(id).await?;
+        let new_marker_1 = CreateMarker {
+            video_id: marker.video_id.clone(),
+            start: marker.start_time,
+            end: split_time,
+            title: marker.title.clone(),
+            index_within_video: marker.index_within_video,
+            preview_image_path: None,
+            video_interactive: marker.interactive,
+        };
+
+        let new_marker_2 = CreateMarker {
+            video_id: marker.video_id.clone(),
+            start: split_time,
+            end: marker.end_time,
+            title: marker.title,
+            index_within_video: marker.index_within_video + 1,
+            preview_image_path: None,
+            video_interactive: marker.interactive,
+        };
+
+        self.create_new_marker(new_marker_1).await?;
+        self.create_new_marker(new_marker_2).await?;
+
+        self.delete_marker(marker.rowid.expect("marker must have rowid"))
+            .await?;
+
+        let video = self
+            .get_video_with_markers(&marker.video_id)
+            .await?
+            .expect("video for marker must exist");
+        Ok(video.markers)
+    }
+
     pub async fn delete_marker(&self, id: i64) -> Result<()> {
         sqlx::query!("DELETE FROM markers WHERE rowid = $1", id)
             .execute(&self.pool)
@@ -445,6 +480,7 @@ impl Database {
         let query = query
             .map(|q| format!("%{q}%"))
             .unwrap_or_else(|| "%".to_string());
+        info!("using query '{}'", query);
         let count = sqlx::query_scalar!(
             "SELECT COUNT(*) FROM local_videos WHERE file_path LIKE $1",
             query
@@ -650,7 +686,7 @@ impl Database {
 #[cfg(test)]
 mod test {
     use clip_mash_types::{PageParameters, UpdateMarker};
-    use sqlx::SqlitePool;
+    use sqlx::{Sqlite, SqlitePool};
 
     use crate::data::database::{CreateMarker, Database};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_with_file_name};
@@ -811,5 +847,27 @@ mod test {
         assert_eq!(result.title, title);
         assert_eq!(result.end_time, 15.0);
         assert_eq!(result.start_time, 5.0);
+    }
+
+    #[sqlx::test]
+    async fn test_split_marker(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        let marker = persist_marker(&database, &video.id, 0, 0.0, 15.0, false)
+            .await
+            .unwrap();
+        let result = database
+            .split_marker(marker.rowid.unwrap(), 5.0)
+            .await
+            .unwrap();
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].start_time, 0.0);
+        assert_eq!(result[0].end_time, 5.0);
+        assert_eq!(result[1].start_time, 5.0);
+        assert_eq!(result[1].end_time, 15.0);
+
+        let all_markers = database.get_all_markers().await.unwrap();
+        assert_eq!(all_markers.len(), 2);
     }
 }

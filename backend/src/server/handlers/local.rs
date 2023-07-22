@@ -193,6 +193,37 @@ pub async fn delete_marker(
 }
 
 #[derive(Deserialize)]
+pub struct SplitMarkerQuery {
+    pub time: f64,
+}
+
+#[axum::debug_handler]
+pub async fn split_marker(
+    Path(id): Path<i64>,
+    Query(SplitMarkerQuery { time }): Query<SplitMarkerQuery>,
+    state: State<Arc<AppState>>,
+) -> Result<Json<Vec<MarkerDto>>, AppError> {
+    info!("splitting marker {id} att time {time}");
+    let mut new_markers = state.database.split_marker(id, time).await?;
+
+    let preview_generator: PreviewGenerator = state.0.clone().into();
+    for marker in &mut new_markers {
+        if marker.marker_preview_image.is_none() {
+            let path = preview_generator
+                .generate_preview(&marker.video_id, &marker.file_path, marker.start_time)
+                .await?;
+            marker.marker_preview_image = Some(path.to_string());
+            state
+                .database
+                .set_marker_preview_image(marker.rowid.unwrap(), path.as_str())
+                .await?;
+        }
+    }
+
+    Ok(Json(new_markers.into_iter().map(From::from).collect()))
+}
+
+#[derive(Deserialize)]
 pub struct DownloadVideoQuery {
     pub url: Url,
 }

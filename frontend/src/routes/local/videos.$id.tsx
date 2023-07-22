@@ -75,15 +75,32 @@ export default function EditVideoModal() {
   const [videoDuration, setVideoDuration] = useState<number>()
   const [editedMarker, setEditedMarker] = useState<MarkerDto>()
   const [loading, setLoading] = useState(false)
+  const [threshold, setThreshold] = useState(40)
+  const [time, setTime] = useState(0)
 
   const markerStart = watch("start")
   const markerEnd = watch("end")
 
+  const currentItemIndex = markers.findIndex((m) =>
+    isBetween(
+      time,
+      m.start,
+      m.end || videoDuration!,
+    ),
+  )
+
+  const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (e) => {
+    setTime(e.currentTarget.currentTime)
+  }
+
   const onDetectMarkers = async () => {
     setLoading(true)
-    const result = await fetch(`/api/local/video/${video.id.id}/markers`, {
-      method: "POST",
-    })
+    const result = await fetch(
+      `/api/local/video/${video.id.id}/markers?threshold=${threshold / 100}`,
+      {
+        method: "POST",
+      },
+    )
     if (result.ok) {
       const data = (await result.json()) as MarkerDto[]
       setMarkers(markers.concat(data))
@@ -176,24 +193,20 @@ export default function EditVideoModal() {
     navigate(-1)
   }
 
-  const onSplitMarker = () => {
+  const onSplitMarker = async () => {
     const currentTime = videoRef.current?.currentTime || 0
     const currentMarker = markers.find((m) =>
       isBetween(currentTime, m.start, m.end),
     )
     if (currentMarker) {
-      const marker1 = {
-        ...currentMarker,
-        end: currentTime,
+      const response = await fetch(
+        `/api/local/video/marker/${currentMarker.id.id}/split?time=${currentTime}`,
+        {method: "POST"},
+      )
+      if (response.ok) {
+        const data = (await response.json()) as MarkerDto[]
+        setMarkers(data)
       }
-      const marker2 = {
-        ...currentMarker,
-        start: currentTime,
-      }
-      setMarkers((draft) => {
-        const idx = draft.findIndex((m) => m.id.id === currentMarker.id.id)
-        draft.splice(idx, 1, marker1, marker2)
-      })
     }
   }
 
@@ -207,6 +220,7 @@ export default function EditVideoModal() {
           src={`/api/local/video/${video.id.id}/file`}
           ref={videoRef}
           onLoadedMetadata={onMetadataLoaded}
+          onTimeUpdate={onTimeUpdate}
         />
         <div className="flex flex-col w-1/3 justify-between">
           {formMode !== "hidden" && (
@@ -343,13 +357,29 @@ export default function EditVideoModal() {
                       You can try letting ClipMash detect markers for you or add
                       them manually.
                     </p>
-                    <button
-                      onClick={onDetectMarkers}
-                      className="btn btn-secondary"
-                    >
-                      <HiPlus className="mr-2" />
-                      Detect markers
-                    </button>
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">
+                          Marker detection threshold (lower means more markers)
+                        </span>
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        className="range range-secondary range-sm w-72 mb-2"
+                        step="5"
+                        value={threshold}
+                        onChange={(e) => setThreshold(e.target.valueAsNumber)}
+                      />
+                      <button
+                        onClick={onDetectMarkers}
+                        className="btn btn-secondary"
+                      >
+                        <HiPlus className="mr-2" />
+                        Detect markers
+                      </button>
+                    </div>
                   </div>
                 )}
                 {loading && (
@@ -424,7 +454,8 @@ export default function EditVideoModal() {
           offset: marker.start,
         }))}
         onItemClick={(item, index) => onShowForm(markers[index])}
-        selectedIndex={editedMarker ? markers.indexOf(editedMarker) : undefined}
+        selectedIndex={editedMarker ? markers.indexOf(editedMarker) : currentItemIndex}
+        fadeInactiveItems
       />
     </Modal>
   )

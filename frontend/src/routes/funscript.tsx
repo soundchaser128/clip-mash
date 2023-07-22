@@ -7,7 +7,6 @@ import ExternalLink from "../components/ExternalLink"
 const FunscriptPage = () => {
   const {state} = useStateMachine()
   const numSongs = state.data.songs?.length || 0
-  const interactive = numSongs > 0 || state.data.interactive
 
   const downloadLink = useRef<HTMLAnchorElement>(null)
   const [creatingScript, setCreatingScript] = useState(false)
@@ -22,7 +21,7 @@ const FunscriptPage = () => {
     const data = {
       songIds,
       strokeType: {
-        accellerate: {
+        accelerate: {
           start_strokes_per_beat: 3.0,
           end_strokes_per_beat: 1.0 / 3.0,
         },

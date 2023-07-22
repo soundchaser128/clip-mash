@@ -24,7 +24,7 @@ import {ClipsLoaderData} from "./loaders"
 import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
 import {Clip, ClipOrder} from "../types/types.generated"
-import { FormStage } from "../types/form-state"
+import {FormStage} from "../types/form-state"
 
 interface ClipState {
   included: boolean

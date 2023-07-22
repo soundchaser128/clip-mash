@@ -117,6 +117,7 @@ const Card: React.FC<CardProps> = ({id, text, index, moveCard, className}) => {
     item: () => {
       return {id, index}
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     collect: (monitor: any) => ({
       isDragging: monitor.isDragging(),
     }),

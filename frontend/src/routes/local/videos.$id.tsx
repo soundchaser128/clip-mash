@@ -16,12 +16,11 @@ import {useImmer} from "use-immer"
 import {formatSeconds, parseTimestamp} from "../../helpers"
 import Modal from "../../components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
-import {MarkerDto} from "../../types/types.generated"
+import {MarkerDto} from "../../types.generated"
 import TimestampInput from "../../components/TimestampInput"
 import {createNewMarker, updateMarker} from "./api"
 import {SegmentedBar} from "../../components/SegmentedBar"
 import Loader from "../../components/Loader"
-import Timeline from "../../components/Timeline"
 
 interface Inputs {
   id?: number
@@ -177,20 +176,16 @@ export default function EditVideoModal() {
     navigate(-1)
   }
 
-  const timelineItems = markers.map((marker) => ({
-    label: marker.primaryTag,
-    length: marker.end - marker.start,
-    offset: marker.start,
-  }))
-
   return (
     <Modal isOpen onClose={onClose}>
       <div className="flex gap-2">
-        <Timeline
+        <video
+          className="w-2/3 max-h-[90vh]"
+          muted
+          controls
           src={`/api/local/video/${video.id.id}/file`}
-          length={video.duration}
-          items={timelineItems}
-          autoPlay={false}
+          ref={videoRef}
+          onLoadedMetadata={onMetadataLoaded}
         />
         <div className="flex flex-col w-1/3 justify-between">
           {formMode !== "hidden" && (
@@ -396,6 +391,16 @@ export default function EditVideoModal() {
           </div>
         </div>
       </div>
+      <SegmentedBar
+        length={video.duration}
+        items={markers.map((marker) => ({
+          label: marker.primaryTag,
+          length: marker.end - marker.start,
+          offset: marker.start,
+        }))}
+        onItemClick={(item, index) => onShowForm(markers[index])}
+        selectedIndex={editedMarker ? markers.indexOf(editedMarker) : undefined}
+      />
     </Modal>
   )
 }

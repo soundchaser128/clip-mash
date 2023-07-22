@@ -112,3 +112,11 @@ export function pluralize(
 ): string {
   return count === 1 ? word : `${word}s`
 }
+
+export function isBetween(
+  value: number,
+  lower: number,
+  upper: number,
+): boolean {
+  return value >= lower && value <= upper
+}

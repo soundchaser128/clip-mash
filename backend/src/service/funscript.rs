@@ -2,7 +2,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use clip_mash_types::{Beats, Clip, StrokeType};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 use super::Video;
 use crate::data::stash_api::StashApi;
@@ -165,7 +165,7 @@ impl BeatState {
                 let percentage = position / self.total_duration;
                 let strokes_per_beat =
                     lerp(start_strokes_per_beat, end_strokes_per_beat, percentage);
-                info!(
+                debug!(
                     "at {}% of the song, strokes per beat: {}",
                     percentage * 100.0,
                     strokes_per_beat
@@ -192,7 +192,7 @@ impl BeatState {
                             lerp(beat, beat_after, percentage) + self.offset
                         })
                         .collect();
-                    info!("beats: {:?}", beats);
+                    debug!("beats: {:?}", beats);
                     Some(beats)
                 }
             }
@@ -208,7 +208,7 @@ pub fn create_beat_script(songs: Vec<Beats>, stroke_type: StrokeType) -> FunScri
     while let Some(beats) = beat_state.next_offset() {
         for beat in beats {
             let position = (beat * 1000.0).round() as u32;
-            info!("beat at {position}ms with pos {state}");
+            debug!("beat at {position}ms with pos {state}");
 
             let action = FSPoint {
                 pos: state,

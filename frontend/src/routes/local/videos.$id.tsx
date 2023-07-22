@@ -13,7 +13,7 @@ import {
   HiChevronRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
-import {formatSeconds, parseTimestamp} from "../../helpers"
+import {formatSeconds, isBetween, parseTimestamp} from "../../helpers"
 import Modal from "../../components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import TimestampInput from "../../components/TimestampInput"
@@ -174,6 +174,27 @@ export default function EditVideoModal() {
   const onClose = () => {
     revalidator.revalidate()
     navigate(-1)
+  }
+
+  const onSplitMarker = () => {
+    const currentTime = videoRef.current?.currentTime || 0
+    const currentMarker = markers.find((m) =>
+      isBetween(currentTime, m.start, m.end),
+    )
+    if (currentMarker) {
+      const marker1 = {
+        ...currentMarker,
+        end: currentTime,
+      }
+      const marker2 = {
+        ...currentMarker,
+        start: currentTime,
+      }
+      setMarkers((draft) => {
+        const idx = draft.findIndex((m) => m.id.id === currentMarker.id.id)
+        draft.splice(idx, 1, marker1, marker2)
+      })
+    }
   }
 
   return (
@@ -378,6 +399,10 @@ export default function EditVideoModal() {
                 >
                   <HiTag className="w-4 h-4 mr-2" />
                   Add new marker
+                </button>
+                <button onClick={onSplitMarker} className="btn btn-secondary">
+                  <HiTag className="w-4 h-4 mr-2" />
+                  Split marker
                 </button>
               </div>
             ) : (

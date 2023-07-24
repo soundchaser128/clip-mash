@@ -9,8 +9,6 @@ import {
   HiTag,
   HiCheck,
   HiPencilSquare,
-  HiChevronLeft,
-  HiChevronRight,
   HiPlay,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
@@ -80,7 +78,6 @@ export default function EditVideoModal() {
   const [time, setTime] = useState(0)
 
   const markerStart = watch("start")
-  const markerEnd = watch("end")
 
   const currentItemIndex = markers.findIndex((m) =>
     isBetween(time, m.start, m.end || videoDuration!),

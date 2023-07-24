@@ -20,7 +20,7 @@ use crate::util::{commandline_error, debug_output, format_duration, generate_id}
 use crate::Result;
 
 lazy_static::lazy_static! {
-    static ref PROGRESS: Mutex<ProgressTracker> = Default::default();
+    static ref PROGRESS: Mutex<Option<ProgressTracker>> = Default::default();
 }
 
 #[derive(Debug)]
@@ -68,7 +68,7 @@ pub fn find_stream_url(marker: &Marker) -> &str {
 
 pub async fn get_progress() -> Option<Progress> {
     let locked = PROGRESS.lock().await;
-    locked.progress()
+    locked.as_ref().map(|p| p.progress())
 }
 
 fn get_clip_file_name(

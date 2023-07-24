@@ -395,9 +395,18 @@ pub struct NewId {
 }
 
 #[derive(Deserialize, Debug, Clone, Copy, TypeDef)]
+#[serde(rename_all = "camelCase")]
+pub enum SortDirection {
+    Asc,
+    Desc,
+}
+
+#[derive(Deserialize, Debug, Clone, TypeDef)]
 pub struct PageParameters {
     pub page: Option<usize>,
     pub size: Option<usize>,
+    pub sort: Option<String>,
+    pub dir: Option<SortDirection>,
 }
 
 impl PageParameters {
@@ -420,6 +429,20 @@ impl PageParameters {
 
     pub fn page(&self) -> i64 {
         self.page.map(|p| p as i64).unwrap_or(Self::DEFAULT_PAGE)
+    }
+
+    pub fn sort(&self, default: &str) -> String {
+        let sort = self.sort.as_deref().unwrap_or(default);
+        let direction = self.direction();
+        format!("{} {}", sort, direction)
+    }
+
+    fn direction(&self) -> &str {
+        let dir = self.dir.unwrap_or(SortDirection::Asc);
+        match dir {
+            SortDirection::Asc => "ASC",
+            SortDirection::Desc => "DESC",
+        }
     }
 }
 

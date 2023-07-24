@@ -139,7 +139,13 @@ export type SongDto = {
   beats: F32[]
 }
 export type NewId = {id: string}
-export type PageParameters = {page: Usize | null; size: Usize | null}
+export type SortDirection = "asc" | "desc"
+export type PageParameters = {
+  page: Usize | null
+  size: Usize | null
+  sort: string | null
+  dir: SortDirection | null
+}
 export type Progress = {
   itemsFinished: F64
   itemsTotal: F64

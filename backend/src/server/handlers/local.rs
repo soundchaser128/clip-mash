@@ -116,7 +116,7 @@ pub async fn list_videos(
     state: State<Arc<AppState>>,
 ) -> Result<Json<Page<ListVideoDto>>, AppError> {
     info!("handling list_videos request with page {page:?} and query {query:?}");
-    let (videos, size) = state.database.list_videos(query.as_deref(), page).await?;
+    let (videos, size) = state.database.list_videos(query.as_deref(), &page).await?;
     Ok(Json(Page::new(videos, size, page)))
 }
 

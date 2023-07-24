@@ -475,7 +475,7 @@ impl Database {
     pub async fn list_videos(
         &self,
         query: Option<&str>,
-        params: PageParameters,
+        params: &PageParameters,
     ) -> Result<(Vec<ListVideoDto>, usize)> {
         let query = query
             .map(|q| format!("%{q}%"))
@@ -489,16 +489,19 @@ impl Database {
         .await?;
         let limit = params.limit();
         let offset = params.offset();
+        let sort = params.sort("file_path");
+
         let mut records = sqlx::query!(
             "SELECT *, m.rowid AS rowid 
             FROM local_videos v 
             LEFT JOIN markers m ON v.id = m.video_id 
             WHERE v.file_path LIKE $1 AND v.rowid IN 
                 (SELECT rowid FROM local_videos WHERE file_path LIKE $1 LIMIT $2 OFFSET $3)
-            ORDER BY file_path ASC",
+            ORDER BY $4",
             query,
             limit,
             offset,
+            sort,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -686,7 +689,7 @@ impl Database {
 
 #[cfg(test)]
 mod test {
-    use clip_mash_types::{PageParameters, UpdateMarker};
+    use clip_mash_types::{PageParameters, SortDirection, UpdateMarker};
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
@@ -795,8 +798,10 @@ mod test {
         let page = PageParameters {
             page: Some(0),
             size: Some(10),
+            sort: Some("file_path".into()),
+            dir: Some(SortDirection::Asc),
         };
-        let (result, total) = database.list_videos(None, page).await.unwrap();
+        let (result, total) = database.list_videos(None, &page).await.unwrap();
         assert_eq!(45, total);
         assert_eq!(10, result.len());
     }
@@ -826,14 +831,16 @@ mod test {
         let page = PageParameters {
             page: Some(0),
             size: Some(10),
+            sort: Some("file_path".into()),
+            dir: Some(SortDirection::Asc),
         };
-        let (result, total) = database.list_videos(Some("sexy"), page).await.unwrap();
+        let (result, total) = database.list_videos(Some("sexy"), &page).await.unwrap();
         assert_eq!(10, total);
         assert_eq!(10, result.len());
         let file_name = &result[0].video.file_name;
         assert_eq!(file_name, "sexy.mp4");
 
-        let (result, total) = database.list_videos(Some("cool"), page).await.unwrap();
+        let (result, total) = database.list_videos(Some("cool"), &page).await.unwrap();
         assert_eq!(5, total);
         assert_eq!(5, result.len());
         let file_name = &result[0].video.file_name;

@@ -110,12 +110,6 @@ pub async fn get_progress_stream() -> Sse<impl Stream<Item = Result<Event, serde
     let stream = stream
         .take_while(|p| p.is_some())
         .filter_map(|o| o)
-        .chain(futures::stream::once(async {
-            Progress {
-                done: true,
-                ..Progress::default()
-            }
-        }))
         .map(|p| Event::default().json_data(p))
         .throttle(Duration::from_millis(250));
 

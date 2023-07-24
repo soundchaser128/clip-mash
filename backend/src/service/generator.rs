@@ -212,17 +212,19 @@ impl CompilationGenerator {
 
     async fn initialize_progress(&self, total_items: f64) {
         let mut progress = PROGRESS.lock().await;
-        progress.reset(total_items);
+        progress.replace(ProgressTracker::new(total_items));
     }
 
     async fn increase_progress(&self, seconds: f64, message: &str) {
         let mut progress = PROGRESS.lock().await;
-        progress.inc_work_done_by(seconds, message);
+        if let Some(progress) = progress.as_mut() {
+            progress.inc_work_done_by(seconds, message);
+        }
     }
 
     async fn reset_progress(&self) {
         let mut progress = PROGRESS.lock().await;
-        progress.reset(0.0);
+        progress.take();
         info!("reset progress to default");
     }
 

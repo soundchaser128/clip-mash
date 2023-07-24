@@ -14,19 +14,7 @@ pub struct ProgressTracker {
     message: String,
 }
 
-impl Default for ProgressTracker {
-    fn default() -> Self {
-        ProgressTracker {
-            work_done: 0.0,
-            started_at: Instant::now(),
-            work_total: 0.0,
-            message: String::new(),
-        }
-    }
-}
-
 impl ProgressTracker {
-    #[cfg(test)]
     pub fn new(work_todo: f64) -> Self {
         ProgressTracker {
             work_done: 0.0,
@@ -34,13 +22,6 @@ impl ProgressTracker {
             work_total: work_todo,
             message: String::new(),
         }
-    }
-
-    pub fn reset(&mut self, work_todo: f64) {
-        self.work_done = 0.0;
-        self.started_at = Instant::now();
-        self.work_total = work_todo;
-        self.message = String::new();
     }
 
     /// Increment work done by a given amount.

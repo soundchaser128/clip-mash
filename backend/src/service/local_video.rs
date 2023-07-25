@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use tokio::task::spawn_blocking;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 use url::Url;
 use walkdir::WalkDir;
 
@@ -61,7 +61,12 @@ impl VideoService {
                 info!("video at path {path} exists: {video_exists}");
                 if !video_exists {
                     let interactive = path.with_extension("funscript").is_file();
-                    let ffprobe = ffprobe(&path, &self.ffmpeg_location).await?;
+                    let ffprobe = ffprobe(&path, &self.ffmpeg_location).await;
+                    if let Err(e) = ffprobe {
+                        warn!("skipping video {path} because ffprobe failed with error {e}");
+                        continue;
+                    }
+                    let ffprobe = ffprobe.unwrap();
                     let duration = ffprobe.duration();
                     let id = generate_id();
                     let preview_generator = PreviewGenerator::new(

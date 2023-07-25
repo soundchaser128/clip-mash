@@ -8,7 +8,6 @@ import {
   HiChevronRight,
   HiClock,
   HiFolder,
-  HiPlus,
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
@@ -27,7 +26,6 @@ import {
 } from "react-router-dom"
 import {formatSeconds} from "../../helpers"
 import clsx from "clsx"
-import {createNewMarker} from "./api"
 import {ListVideoDto} from "../../types/types.generated"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
@@ -76,32 +74,6 @@ export default function ListVideos() {
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value)
     debouncedSetQuery(e.target.value.trim())
-  }
-
-  const onAddFullVideo = async (video: VideoWithMarkers) => {
-    const duration = video.video.duration
-    const result = await createNewMarker(
-      video.video,
-      {
-        start: 0.0,
-        end: duration,
-        title: "Untitled",
-      },
-      duration,
-      0,
-    )
-
-    if (result.isOk) {
-      const marker = result.unwrap()
-      setVideos((draft) => {
-        const video = draft.find((v) => v.video.id.id === marker.videoId.id)
-        invariant(video)
-        video.markers.push(marker)
-      })
-    } else {
-      const error = result.error
-      console.error(error)
-    }
   }
 
   const onNextStage = () => {
@@ -221,17 +193,7 @@ export default function ListVideos() {
                 </li>
               </ul>
               <div className="card-actions justify-between grow items-end">
-                <button
-                  disabled={
-                    video.markers.length > 0 || video.video.duration <= 0
-                  }
-                  onClick={() => onAddFullVideo(video)}
-                  className="btn btn-sm btn-secondary"
-                >
-                  <HiPlus className="w-4 h-4" />
-                  Add entire video
-                </button>
-
+                <span />
                 <button
                   className="btn btn-sm btn-primary"
                   onClick={() => onOpenModal(video)}

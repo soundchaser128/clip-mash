@@ -205,6 +205,28 @@ export default function EditVideoModal() {
     }
   }
 
+  const onAddFullVideo = async () => {
+    const duration = video.duration
+    const result = await createNewMarker(
+      video,
+      {
+        start: 0.0,
+        end: duration,
+        title: "Untitled",
+      },
+      duration,
+      0,
+    )
+
+    if (result.isOk) {
+      const marker = result.unwrap()
+      setMarkers([marker])
+    } else {
+      const error = result.error
+      console.error(error)
+    }
+  }
+
   return (
     <Modal isOpen onClose={onClose}>
       <div className="flex gap-2">
@@ -334,11 +356,23 @@ export default function EditVideoModal() {
               <div className="overflow-x-auto">
                 {markers.length === 0 && !loading && (
                   <div className="flex flex-col gap-2 h-full w-full justify-center items-center">
-                    <span className="text-lg">No markers yet.</span>
-                    <p className="text-sm">
-                      You can try letting ClipMash detect markers for you or add
-                      them manually.
-                    </p>
+                    <span className="text-lg mb-4">No markers yet.</span>
+                    <div className="text-start flex flex-col gap-1">
+                      <p>
+                        You can let ClipMash detect markers by detecting scene
+                        changes (cuts in the video) by clicking &quot;Detect
+                        markers&quot; below.
+                      </p>
+                      <p>
+                        You can alternatively add a single marker for the entire
+                        video if you don&apos;t care where it gets split into
+                        clips.
+                      </p>
+                      <p>
+                        Or, you create markers manually by clicking &quot;Add
+                        new marker&quot;.
+                      </p>
+                    </div>
                     <div className="form-control">
                       <label className="label">
                         <span className="label-text">
@@ -369,6 +403,12 @@ export default function EditVideoModal() {
                         Detect markers
                       </button>
                     </div>
+                    <button
+                      className="btn btn-secondary "
+                      onClick={onAddFullVideo}
+                    >
+                      Add entire video
+                    </button>
                   </div>
                 )}
                 {loading && (

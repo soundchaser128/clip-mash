@@ -10,6 +10,7 @@ import {
   HiCheck,
   HiPencilSquare,
   HiPlay,
+  HiSquaresPlus,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
 import {formatSeconds, isBetween, parseTimestamp} from "../../helpers"
@@ -355,60 +356,58 @@ export default function EditVideoModal() {
               <h2 className="text-xl font-bold mb-2">Markers</h2>
               <div className="overflow-x-auto">
                 {markers.length === 0 && !loading && (
-                  <div className="flex flex-col gap-2 h-full w-full justify-center items-center">
-                    <span className="text-lg mb-4">No markers yet.</span>
-                    <div className="text-start flex flex-col gap-1">
-                      <p>
+                  <div className="flex flex-col h-full gap-6">
+                    <div className="flex flex-col bg-slate-200 p-2 rounded-lg">
+                      <p className="">
                         You can let ClipMash detect markers by detecting scene
                         changes (cuts in the video) by clicking &quot;Detect
                         markers&quot; below.
                       </p>
-                      <p>
-                        You can alternatively add a single marker for the entire
-                        video if you don&apos;t care where it gets split into
-                        clips.
-                      </p>
-                      <p>
-                        Or, you create markers manually by clicking &quot;Add
-                        new marker&quot;.
-                      </p>
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text">
-                          Marker detection threshold (lower means more markers)
-                        </span>
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        className="range range-sm w-full"
-                        step="5"
-                        value={threshold}
-                        onChange={(e) => setThreshold(e.target.valueAsNumber)}
-                      />
-                      <div className="w-full flex justify-between text-xs px-2 mb-4">
-                        <span>0</span>
-                        <span className="font-bold">
-                          {Math.round(threshold)}
-                        </span>
-                        <span>100</span>
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">
+                            Marker detection threshold (lower means more
+                            markers)
+                          </span>
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          className="range range-sm w-full"
+                          step="5"
+                          value={threshold}
+                          onChange={(e) => setThreshold(e.target.valueAsNumber)}
+                        />
+                        <div className="w-full flex justify-between text-xs px-2 mb-4">
+                          <span>0</span>
+                          <span className="font-bold">
+                            {Math.round(threshold)}
+                          </span>
+                          <span>100</span>
+                        </div>
                       </div>
                       <button
                         onClick={onDetectMarkers}
-                        className="btn btn-secondary"
+                        className="btn btn-secondary self-end"
                       >
-                        <HiPlus className="mr-2" />
+                        <HiSquaresPlus className="mr-2" />
                         Detect markers
                       </button>
                     </div>
-                    <button
-                      className="btn btn-secondary "
-                      onClick={onAddFullVideo}
-                    >
-                      Add entire video
-                    </button>
+                    <div className="flex flex-col bg-slate-200 p-2 rounded-lg">
+                      <p className="mb-2">
+                        You can add a single marker for the entire video if you
+                        don&apos;t care where it gets split into clips.
+                      </p>
+                      <button
+                        className="btn btn-secondary self-end"
+                        onClick={onAddFullVideo}
+                      >
+                        <HiPlus className="mr-2" />
+                        Add entire video
+                      </button>
+                    </div>
                   </div>
                 )}
                 {loading && (
@@ -459,7 +458,11 @@ export default function EditVideoModal() {
                   <HiTag className="w-4 h-4 mr-2" />
                   Add new marker
                 </button>
-                <button onClick={onSplitMarker} className="btn btn-secondary">
+                <button
+                  disabled={markers.length === 0}
+                  onClick={onSplitMarker}
+                  className="btn btn-secondary"
+                >
                   <HiTag className="w-4 h-4 mr-2" />
                   Split marker
                 </button>

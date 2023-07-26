@@ -357,7 +357,7 @@ export default function EditVideoModal() {
               <div className="overflow-x-auto">
                 {markers.length === 0 && !loading && (
                   <div className="flex flex-col h-full gap-6">
-                    <div className="flex flex-col bg-slate-200 p-2 rounded-lg">
+                    <div className="flex flex-col bg-slate-200 p-2 rounded-lg items-center">
                       <p className="">
                         You can let ClipMash detect markers by detecting scene
                         changes (cuts in the video) by clicking &quot;Detect
@@ -389,19 +389,19 @@ export default function EditVideoModal() {
                       </div>
                       <button
                         onClick={onDetectMarkers}
-                        className="btn btn-secondary self-end"
+                        className="btn btn-secondary"
                       >
                         <HiSquaresPlus className="mr-2" />
                         Detect markers
                       </button>
                     </div>
-                    <div className="flex flex-col bg-slate-200 p-2 rounded-lg">
+                    <div className="flex flex-col bg-slate-200 p-2 rounded-lg items-center">
                       <p className="mb-2">
                         You can add a single marker for the entire video if you
                         don&apos;t care where it gets split into clips.
                       </p>
                       <button
-                        className="btn btn-secondary self-end"
+                        className="btn btn-secondary"
                         onClick={onAddFullVideo}
                       >
                         <HiPlus className="mr-2" />

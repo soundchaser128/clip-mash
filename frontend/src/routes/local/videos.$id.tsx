@@ -31,6 +31,64 @@ interface Inputs {
 
 type FormMode = "hidden" | "create" | "edit"
 
+function CreateMarkerButtons({
+  onDetectMarkers,
+  onAddFullVideo,
+  threshold,
+  setThreshold,
+}: {
+  onDetectMarkers: () => void
+  onAddFullVideo: () => void
+  threshold: number
+  setThreshold: (value: number) => void
+}) {
+  return (
+    <div className="flex flex-col h-full gap-6">
+      <div className="flex flex-col bg-slate-200 p-2 rounded-lg items-center">
+        <p className="">
+          You can let ClipMash detect markers by detecting scene changes (cuts
+          in the video) by clicking &quot;Detect markers&quot; below.
+        </p>
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">
+              Marker detection threshold (lower means more markers)
+            </span>
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            className="range range-sm w-full"
+            step="5"
+            value={threshold}
+            onChange={(e) => setThreshold(e.target.valueAsNumber)}
+          />
+          <div className="w-full flex justify-between text-xs px-2 mb-4">
+            <span>0</span>
+            <span className="font-bold">{Math.round(threshold)}</span>
+            <span>100</span>
+          </div>
+        </div>
+        <button onClick={onDetectMarkers} className="btn btn-secondary">
+          <HiSquaresPlus className="mr-2" />
+          Detect markers
+        </button>
+      </div>
+      <div className="flex flex-col bg-slate-200 p-2 rounded-lg items-center">
+        <p className="mb-2">
+          You can add a single marker for the entire video if you don&apos;t
+          care where it gets split into clips.
+        </p>
+        <button className="btn btn-secondary" onClick={onAddFullVideo}>
+          <HiPlus className="mr-2" />
+          Add entire video
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function EditVideoModal() {
   const navigate = useNavigate()
   const {video, markers: videoMarkers} = useLoaderData() as VideoWithMarkers
@@ -356,59 +414,12 @@ export default function EditVideoModal() {
               <h2 className="text-xl font-bold mb-2">Markers</h2>
               <div className="overflow-x-auto">
                 {markers.length === 0 && !loading && (
-                  <div className="flex flex-col h-full gap-6">
-                    <div className="flex flex-col bg-slate-200 p-2 rounded-lg items-center">
-                      <p className="">
-                        You can let ClipMash detect markers by detecting scene
-                        changes (cuts in the video) by clicking &quot;Detect
-                        markers&quot; below.
-                      </p>
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">
-                            Marker detection threshold (lower means more
-                            markers)
-                          </span>
-                        </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          className="range range-sm w-full"
-                          step="5"
-                          value={threshold}
-                          onChange={(e) => setThreshold(e.target.valueAsNumber)}
-                        />
-                        <div className="w-full flex justify-between text-xs px-2 mb-4">
-                          <span>0</span>
-                          <span className="font-bold">
-                            {Math.round(threshold)}
-                          </span>
-                          <span>100</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={onDetectMarkers}
-                        className="btn btn-secondary"
-                      >
-                        <HiSquaresPlus className="mr-2" />
-                        Detect markers
-                      </button>
-                    </div>
-                    <div className="flex flex-col bg-slate-200 p-2 rounded-lg items-center">
-                      <p className="mb-2">
-                        You can add a single marker for the entire video if you
-                        don&apos;t care where it gets split into clips.
-                      </p>
-                      <button
-                        className="btn btn-secondary"
-                        onClick={onAddFullVideo}
-                      >
-                        <HiPlus className="mr-2" />
-                        Add entire video
-                      </button>
-                    </div>
-                  </div>
+                  <CreateMarkerButtons
+                    onDetectMarkers={onDetectMarkers}
+                    onAddFullVideo={onAddFullVideo}
+                    threshold={threshold}
+                    setThreshold={setThreshold}
+                  />
                 )}
                 {loading && (
                   <Loader className="h-full">Detecting markers...</Loader>

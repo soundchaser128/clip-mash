@@ -18,7 +18,7 @@ import Modal from "../../components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import TimestampInput from "../../components/TimestampInput"
 import {createNewMarker, updateMarker} from "./api"
-import {SegmentedBar} from "../../components/SegmentedBar"
+import Timeline from "../../components/Timeline"
 import Loader from "../../components/Loader"
 import {MarkerDto} from "../../types/types.generated"
 
@@ -43,11 +43,11 @@ function CreateMarkerButtons({
   setThreshold: (value: number) => void
 }) {
   return (
-    <div className="flex flex-col h-full gap-6">
-      <div className="flex flex-col bg-slate-200 p-2 rounded-lg items-center">
+    <div className="flex flex-col h-full gap-6 items-center">
+      <div className="flex flex-col bg-slate-200 p-2 rounded-lg w-96">
         <p className="">
-          You can let ClipMash detect markers by detecting scene changes (cuts
-          in the video) by clicking &quot;Detect markers&quot; below.
+          Detect markers by detecting scene changes (cuts in the video). Might
+          not be fully accurate. It does not work very well for PoV videos.
         </p>
         <div className="form-control">
           <label className="label">
@@ -75,11 +75,8 @@ function CreateMarkerButtons({
           Detect markers
         </button>
       </div>
-      <div className="flex flex-col bg-slate-200 p-2 rounded-lg items-center">
-        <p className="mb-2">
-          You can add a single marker for the entire video if you don&apos;t
-          care where it gets split into clips.
-        </p>
+      <div className="flex flex-col bg-slate-200 p-2 rounded-lg w-96">
+        <p className="mb-2">Add a single marker that spans the entire video.</p>
         <button className="btn btn-secondary" onClick={onAddFullVideo}>
           <HiPlus className="mr-2" />
           Add entire video
@@ -422,7 +419,9 @@ export default function EditVideoModal() {
                   />
                 )}
                 {loading && (
-                  <Loader className="h-full">Detecting markers...</Loader>
+                  <Loader className="h-full w-full justify-center">
+                    Detecting markers...
+                  </Loader>
                 )}
                 {markers.length > 0 && (
                   <table className="table table-compact w-full">
@@ -489,7 +488,7 @@ export default function EditVideoModal() {
           </div>
         </div>
       </div>
-      <SegmentedBar
+      <Timeline
         length={video.duration}
         items={markers.map((marker) => ({
           label: marker.primaryTag,
@@ -501,6 +500,7 @@ export default function EditVideoModal() {
           editedMarker ? markers.indexOf(editedMarker) : currentItemIndex
         }
         fadeInactiveItems
+        time={time}
       />
     </Modal>
   )

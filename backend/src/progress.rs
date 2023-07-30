@@ -54,7 +54,8 @@ impl ProgressTracker {
             items_total: self.work_total,
             eta_seconds: self.eta().as_secs_f64(),
             done: self.work_total != 0.0
-                && approx_eq!(f64, self.work_done, self.work_total, epsilon = 0.01),
+                && (approx_eq!(f64, self.work_done, self.work_total, epsilon = 0.01)
+                    || self.work_done >= self.work_total),
             message: self.message.clone(),
         }
     }

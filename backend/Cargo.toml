@@ -41,6 +41,7 @@ webbrowser = "0.8.10"
 youtube_dl = { version = "0.8.1", features = ["tokio", "downloader"] }
 url = { version = "2.4.0", features = ["serde"] }
 float-cmp = "0.9.0"
+aide = { version = "0.11.0", features = ["redoc", "axum", "axum-extra", "macros"] }
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.39"

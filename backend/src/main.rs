@@ -57,6 +57,12 @@ async fn main() -> Result<()> {
     let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
     info!("using ffmpeg at {ffmpeg_location:?}");
 
+    aide::gen::on_error(|error| {
+        tracing::error!("failed to generate OpenAPI spec: {:?}", error);
+    });
+
+    aide::gen::extract_schemas(true);
+
     service::stash_config::init(&directories).await;
 
     let generator = CompilationGenerator::new(directories.clone(), &ffmpeg_location).await?;

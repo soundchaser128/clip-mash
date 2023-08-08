@@ -3,15 +3,11 @@ name = "clip-mash"
 version = "0.14.0"
 edition = "2021"
 
-[workspace]
-members = ["clip-mash-types"]
-
 [dependencies]
 aubio = { version = "0.2.1", features = ["builtin"] }
 axum = { version = "0.6.19", features = ["macros", "multipart"] }
 camino = { version = "1.1.6", features = ["serde1"] }
 color-eyre = "0.6.2"
-clip-mash-types = { path = "clip-mash-types" }
 directories = "5.0.1"
 futures = "0.3.28"
 graphql_client = "0.13.0"
@@ -41,7 +37,10 @@ webbrowser = "0.8.10"
 youtube_dl = { version = "0.8.1", features = ["tokio", "downloader"] }
 url = { version = "2.4.0", features = ["serde"] }
 float-cmp = "0.9.0"
-aide = { version = "0.11.0", features = ["redoc", "axum", "axum-extra", "macros"] }
+utoipa = { version = "3.4.4", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "3.1.5", features = ["axum"] }
+utoipa-redoc = { version = "0.1.0", features = ["axum"] }
+utoipa-rapidoc = { version = "0.1.0", features = ["axum"] }
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.39"
@@ -60,4 +59,3 @@ mock_instant = "0.3.1"
 
 [build-dependencies]
 typescript-type-def = "0.5.7"
-clip-mash-types = { path = "clip-mash-types" }

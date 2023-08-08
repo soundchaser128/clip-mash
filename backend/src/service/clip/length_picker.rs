@@ -1,12 +1,12 @@
 use std::fmt::Debug;
 
-use clip_mash_types::{Beats, MeasureCount, PmvClipOptions};
 use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
 use rand::Rng;
 use tracing::info;
 
 use super::MIN_DURATION;
+use crate::server::types::{Beats, MeasureCount, PmvClipOptions};
 
 #[derive(Debug)]
 pub struct RandomizedClipLengthPicker<'a> {
@@ -181,10 +181,10 @@ impl<'a> ClipLengthPicker<'a> {
 mod test {
     use std::collections::HashSet;
 
-    use clip_mash_types::{Beats, MeasureCount};
     use ordered_float::OrderedFloat;
     use tracing_test::traced_test;
 
+    use crate::server::types::{Beats, MeasureCount};
     use crate::service::clip::length_picker::{RandomizedClipLengthPicker, SongClipLengthPicker};
     use crate::service::fixtures;
     use crate::util::create_seeded_rng;

@@ -1,9 +1,6 @@
 use std::ffi::OsStr;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use clip_mash_types::{
-    Clip, EncodingEffort, Progress, VideoCodec, VideoId, VideoQuality, VideoResolution,
-};
 use futures::lock::Mutex;
 use itertools::Itertools;
 use tokio::process::Command;
@@ -15,6 +12,9 @@ use super::Marker;
 use crate::data::database::DbSong;
 use crate::data::stash_api::StashMarker;
 use crate::progress::ProgressTracker;
+use crate::server::types::{
+    Clip, EncodingEffort, Progress, VideoCodec, VideoId, VideoQuality, VideoResolution,
+};
 use crate::service::MarkerInfo;
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
 use crate::Result;

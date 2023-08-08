@@ -4,7 +4,6 @@ use std::sync::Arc;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
-use clip_mash_types::*;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tracing::{debug, info};
@@ -13,6 +12,7 @@ use crate::data::stash_api::{FilterMode, StashApi};
 use crate::server::dtos::StashSceneWrapper;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
+use crate::server::types::*;
 use crate::service::stash_config::Config;
 use crate::util::add_api_key;
 
@@ -105,10 +105,17 @@ pub struct ConfigQuery {
     api_key: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/stash/health",
+    responses(
+        (status = 200, description = "Get status of the Stash server", body = String)
+    )
+)]
 #[axum::debug_handler]
 pub async fn get_health(
     Query(ConfigQuery { url, api_key }): Query<ConfigQuery>,
-) -> Result<Json<String>, AppError> {
+) -> Result<impl IntoResponse, AppError> {
     let api = StashApi::new(&url, &api_key);
     let result = api.health().await?;
     Ok(Json(result))

@@ -1,8 +1,0 @@
-[package]
-name = "clip-mash-types"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-serde = { version = "1.0.174", features = ["derive"] }
-typescript-type-def = "0.5.7"

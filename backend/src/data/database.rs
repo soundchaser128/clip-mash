@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use clip_mash_types::{Beats, CreateMarker, ListVideoDto, PageParameters, UpdateMarker};
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -9,6 +8,7 @@ use sqlx::{FromRow, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::{info, warn};
 
+use crate::server::types::{Beats, CreateMarker, ListVideoDto, PageParameters, UpdateMarker};
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::music;
 use crate::Result;
@@ -689,11 +689,11 @@ impl Database {
 
 #[cfg(test)]
 mod test {
-    use clip_mash_types::{PageParameters, SortDirection, UpdateMarker};
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
     use crate::data::database::{CreateMarker, Database};
+    use crate::server::types::{PageParameters, SortDirection, UpdateMarker};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_with_file_name};
     use crate::util::generate_id;
 

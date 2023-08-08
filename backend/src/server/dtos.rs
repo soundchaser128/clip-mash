@@ -1,10 +1,10 @@
 use camino::Utf8Path;
-use clip_mash_types::*;
 use serde::Serialize;
 
 use crate::data::database::{DbMarker, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashMarker;
+use crate::server::types::*;
 use crate::service::{Video, VideoInfo};
 use crate::util::{add_api_key, expect_file_name};
 

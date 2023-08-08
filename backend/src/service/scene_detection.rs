@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use clip_mash_types::{CreateMarker, MarkerDto};
 use color_eyre::eyre::bail;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -8,6 +7,7 @@ use tracing::{debug, info};
 
 use super::commands::ffmpeg::{Ffmpeg, FfmpegLocation};
 use crate::server::handlers::AppState;
+use crate::server::types::{CreateMarker, MarkerDto};
 use crate::service::preview_image::PreviewGenerator;
 use crate::Result;
 

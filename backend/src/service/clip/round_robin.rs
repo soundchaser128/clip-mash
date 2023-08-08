@@ -1,10 +1,10 @@
-use clip_mash_types::{Clip, PmvClipOptions, RoundRobinClipOptions};
 use float_cmp::approx_eq;
 use rand::rngs::StdRng;
 use tracing::info;
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
+use crate::server::types::{Clip, PmvClipOptions, RoundRobinClipOptions};
 use crate::service::clip::state::{MarkerState, MarkerStateInfo};
 use crate::service::clip::MIN_DURATION;
 use crate::service::Marker;
@@ -108,12 +108,12 @@ impl ClipPicker for RoundRobinClipPicker {
 
 #[cfg(test)]
 mod test {
-    use clip_mash_types::{
-        Beats, MeasureCount, PmvClipOptions, RoundRobinClipOptions, SongClipOptions,
-    };
     use float_cmp::assert_approx_eq;
     use tracing_test::traced_test;
 
+    use crate::server::types::{
+        Beats, MeasureCount, PmvClipOptions, RoundRobinClipOptions, SongClipOptions,
+    };
     use crate::service::clip::round_robin::RoundRobinClipPicker;
     use crate::service::clip::ClipPicker;
     use crate::service::fixtures;

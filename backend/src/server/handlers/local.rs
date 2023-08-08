@@ -5,9 +5,6 @@ use axum::body::Body;
 use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
-use clip_mash_types::{
-    CreateMarker, ListVideoDto, MarkerDto, PageParameters, UpdateMarker, VideoDto,
-};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tower::ServiceExt;
@@ -17,6 +14,9 @@ use url::Url;
 use crate::server::dtos::Page;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
+use crate::server::types::{
+    CreateMarker, ListVideoDto, MarkerDto, PageParameters, UpdateMarker, VideoDto,
+};
 use crate::service::local_video::VideoService;
 use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;

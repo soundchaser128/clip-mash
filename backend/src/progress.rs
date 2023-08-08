@@ -2,10 +2,11 @@ use std::time::Duration;
 #[cfg(not(test))]
 use std::time::Instant;
 
-use clip_mash_types::Progress;
 use float_cmp::approx_eq;
 #[cfg(test)]
 use mock_instant::Instant;
+
+use crate::server::types::Progress;
 
 pub struct ProgressTracker {
     work_total: f64,

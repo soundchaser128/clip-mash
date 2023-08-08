@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 use std::time::Instant;
 
-use clip_mash_types::{Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use itertools::Itertools;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
@@ -9,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use super::Marker;
+use crate::server::types::{Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use crate::service::clip::equal_len::EqualLengthClipPicker;
 use crate::service::clip::round_robin::RoundRobinClipPicker;
 use crate::service::clip::sort::{ClipSorter, RandomClipSorter, SceneOrderClipSorter};
@@ -164,14 +164,14 @@ impl ClipService {
 
 #[cfg(test)]
 mod tests {
-    use clip_mash_types::{
-        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, PmvClipOptions,
-        RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
-    };
     use float_cmp::assert_approx_eq;
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
+    use crate::server::types::{
+        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, PmvClipOptions,
+        RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
+    };
     use crate::service::clip::sort::ClipSorter;
     use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
     use crate::service::fixtures::{create_marker_video_id, create_marker_with_loops};

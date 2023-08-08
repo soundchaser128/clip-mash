@@ -1,11 +1,11 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use clip_mash_types::{Beats, Clip, StrokeType};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{debug, info, warn};
 
 use super::Video;
 use crate::data::stash_api::StashApi;
+use crate::server::types::{Beats, Clip, StrokeType};
 use crate::service::VideoInfo;
 use crate::util::lerp;
 use crate::Result;
@@ -297,10 +297,10 @@ impl<'a> ScriptBuilder<'a> {
 
 #[cfg(test)]
 mod test {
-    use clip_mash_types::Beats;
     use tracing_test::traced_test;
 
     use super::StrokeType;
+    use crate::server::types::Beats;
     use crate::service::funscript::create_beat_script;
 
     #[traced_test]

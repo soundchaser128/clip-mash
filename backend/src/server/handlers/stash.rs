@@ -7,6 +7,7 @@ use axum::Json;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tracing::{debug, info};
+use utoipa::IntoParams;
 
 use crate::data::stash_api::{FilterMode, StashApi};
 use crate::server::dtos::StashSceneWrapper;
@@ -98,7 +99,7 @@ pub async fn fetch_scenes() -> Result<Json<Vec<StashScene>>, AppError> {
     Ok(Json(videos))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigQuery {
     url: String,
@@ -108,8 +109,10 @@ pub struct ConfigQuery {
 #[utoipa::path(
     get,
     path = "/api/stash/health",
+    params(ConfigQuery),
     responses(
-        (status = 200, description = "Get status of the Stash server", body = String)
+        (status = 200, description = "Stash server is reachable and API key is valid", body = String),
+        (status = 500, description = "Stash server is not reachable or API key is invalid", body = String),
     )
 )]
 #[axum::debug_handler]

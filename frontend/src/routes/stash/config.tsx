@@ -69,8 +69,8 @@ function ConfigPage() {
 
   return (
     <section className="py-4 flex flex-col">
-      <h1 className="text-5xl font-bold mb-4 text-center">
-        Configuration setup
+      <h1 className="text-5xl text-brand font-bold mb-4 text-center">
+        Stash configuration setup
       </h1>
       <form
         onSubmit={handleSubmit(onSubmit)}

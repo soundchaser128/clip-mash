@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 aubio = { version = "0.2.1", features = ["builtin"] }
-axum = { version = "0.6.19", features = ["macros", "multipart"] }
+axum = { version = "0.6.20", features = ["macros", "multipart"] }
 camino = { version = "1.1.6", features = ["serde1"] }
 color-eyre = "0.6.2"
 directories = "5.0.1"
@@ -18,13 +18,13 @@ lazy_static = "1.4.0"
 opener = "0.6.1"
 ordered-float = "3.7.0"
 rand = "0.8.5"
-regex = "1.9.1"
+regex = "1.9.3"
 reqwest = { version = "0.11.18", features = ["json"] }
 sanitise-file-name = "1.0.0"
-serde = { version = "1.0.174", features = ["derive"] }
-serde_json = "1.0.103"
+serde = { version = "1.0.183", features = ["derive"] }
+serde_json = "1.0.104"
 sqlx = { version = "0.7.1", features = ["runtime-tokio",  "sqlite"] }
-tokio = { version = "1.29.1", features = ["full"] }
+tokio = { version = "1.30.0", features = ["full"] }
 tokio-stream = "0.1.14"
 tokio-util = { version = "0.7.8", features = ["io"] }
 tower = "0.4.13"
@@ -43,7 +43,7 @@ utoipa-redoc = { version = "0.1.0", features = ["axum"] }
 utoipa-rapidoc = { version = "0.1.0", features = ["axum"] }
 
 [target.'cfg(unix)'.dependencies]
-tar = "0.4.39"
+tar = "0.4.40"
 xz2 = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]

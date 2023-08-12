@@ -1,8 +1,8 @@
 import {useStateMachine} from "little-state-machine"
-import {useNavigate} from "react-router-dom"
+import {Link, useNavigate} from "react-router-dom"
 import {FormStage} from "../types/form-state"
 import {updateForm} from "./actions"
-import {HiFilm, HiTag, HiUser} from "react-icons/hi2"
+import {HiCog, HiFilm, HiTag, HiUser} from "react-icons/hi2"
 import {getUrl} from "./stash/filter/root"
 
 function SelectMode() {
@@ -51,6 +51,14 @@ function SelectMode() {
             Scenes
           </button>
         </div>
+
+        <Link
+          to="/stash/config"
+          className="btn btn-sm btn-secondary self-center"
+        >
+          <HiCog className="mr-1" />
+          Stash settings
+        </Link>
       </div>
     </section>
   )

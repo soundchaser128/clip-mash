@@ -173,6 +173,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/stash/config",
+        loader: configLoader,
         element: <ConfigPage />,
       },
       {

@@ -120,6 +120,13 @@ function Progress() {
         finalFileName: fileName,
       })
       eventSource.current = openEventSource()
+      setProgress({
+        itemsFinished: 0,
+        etaSeconds: 0,
+        done: false,
+        itemsTotal: state.data.clips!.length,
+        message: "Starting..."
+      })
     }
   }
 

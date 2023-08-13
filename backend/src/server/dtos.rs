@@ -1,5 +1,6 @@
 use camino::Utf8Path;
 use serde::Serialize;
+use utoipa::ToSchema;
 
 use crate::data::database::{DbMarker, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
@@ -144,9 +145,10 @@ impl<'a> From<StashSceneWrapper<'a>> for StashScene {
     }
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct Page<T: Serialize> {
+#[aliases(ListVideoDtoPage = Page<ListVideoDto>)]
+pub struct Page<T: Serialize + ToSchema<'static>> {
     pub content: Vec<T>,
     pub total_items: usize,
     pub page_number: usize,
@@ -154,7 +156,7 @@ pub struct Page<T: Serialize> {
     pub total_pages: usize,
 }
 
-impl<T: Serialize> Page<T> {
+impl<T: Serialize + ToSchema<'static>> Page<T> {
     pub fn new(content: Vec<T>, size: usize, page: PageParameters) -> Self {
         let page_number = page.page.unwrap_or(PageParameters::DEFAULT_PAGE as usize);
         let page_size = page.size.unwrap_or(PageParameters::DEFAULT_SIZE as usize);

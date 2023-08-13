@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -11,7 +12,7 @@ pub enum ClipOrder {
     NoOp,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum VideoSource {
     Stash,
@@ -42,7 +43,7 @@ impl Clip {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type", content = "id")]
 pub enum MarkerId {
     LocalFile(i64),
@@ -67,7 +68,7 @@ impl fmt::Display for MarkerId {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type", content = "id")]
 pub enum VideoId {
     LocalFile(String),
@@ -120,7 +121,7 @@ pub struct PerformerDto {
     pub favorite: bool,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkerDto {
     pub id: MarkerId,
@@ -138,7 +139,7 @@ pub struct MarkerDto {
     pub index_within_video: usize,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct VideoDto {
     pub id: VideoId,
@@ -270,7 +271,7 @@ pub struct ClipsResponse {
     pub beat_offsets: Option<Vec<f32>>,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ListVideoDto {
     pub video: VideoDto,

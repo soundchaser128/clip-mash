@@ -10,6 +10,7 @@ use serde::Deserialize;
 use tower::ServiceExt;
 use tracing::{info, warn};
 use url::Url;
+use utoipa::{IntoParams, ToSchema};
 
 use crate::server::dtos::Page;
 use crate::server::error::AppError;
@@ -86,17 +87,25 @@ pub async fn get_marker_preview(
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct AddNewVideosBody {
     path: String,
     recurse: bool,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/local/video",
+    request_body = AddNewVideosBody,
+    responses(
+        (status = 204, description = "Videos were successfully added", body = ()),
+    )
+)]
 pub async fn add_new_videos(
     state: State<Arc<AppState>>,
     Json(body): Json<AddNewVideosBody>,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<StatusCode, AppError> {
     let video_service: VideoService = state.0.clone().into();
     video_service
         .add_new_videos(body.path, body.recurse)
@@ -104,11 +113,19 @@ pub async fn add_new_videos(
     Ok(StatusCode::NO_CONTENT)
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
 pub struct VideoSearchQuery {
     pub query: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/local/video",
+    params(VideoSearchQuery),
+    responses(
+        (status = 200, description = "Lists all videos with given query", body = ListVideoDtoPage),
+    )
+)]
 #[axum::debug_handler]
 pub async fn list_videos(
     Query(page): Query<PageParameters>,

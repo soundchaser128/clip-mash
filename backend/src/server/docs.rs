@@ -3,7 +3,7 @@ use utoipa::OpenApi;
 use super::dtos::ListVideoDtoPage;
 use super::handlers::local::AddNewVideosBody;
 use super::types::*;
-use crate::server::handlers::{stash, common, local};
+use crate::server::handlers::{common, local, stash};
 
 #[derive(OpenApi)]
 #[openapi(

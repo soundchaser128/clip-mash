@@ -125,7 +125,7 @@ function Progress() {
         etaSeconds: 0,
         done: false,
         itemsTotal: state.data.clips!.length,
-        message: "Starting..."
+        message: "Starting...",
       })
     }
   }

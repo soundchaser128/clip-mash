@@ -16,6 +16,7 @@ use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
 use url::Url;
+use utoipa::IntoParams;
 
 use super::AppState;
 use crate::data::database::DbSong;
@@ -32,6 +33,14 @@ use crate::service::music::{self, MusicDownloadService};
 use crate::service::stash_config::Config;
 use crate::util::{expect_file_name, generate_id};
 
+#[utoipa::path(
+    post,
+    path = "/api/clips",
+    request_body = CreateClipsBody,
+    responses(
+        (status = 200, description = "The newly created marker", body = ClipsResponse),
+    )
+)]
 #[axum::debug_handler]
 pub async fn fetch_clips(
     State(state): State<Arc<AppState>>,
@@ -82,6 +91,14 @@ async fn create_video_inner(
     Ok(())
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/create",
+    request_body = CreateVideoBody,
+    responses(
+        (status = 200, description = "The file name of the video to be created (returns immediately)", body = String),
+    )
+)]
 #[axum::debug_handler]
 pub async fn create_video(
     state: State<Arc<AppState>>,
@@ -116,18 +133,33 @@ pub async fn get_progress_stream() -> Sse<impl Stream<Item = Result<Event, serde
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/progress/info",
+    responses(
+        (status = 200, description = "The current progress of video creation, or null if it is finished", body = Progress),
+    )
+)]
 #[axum::debug_handler]
 pub async fn get_progress_info() -> Json<Option<Progress>> {
     let progress = generator::get_progress().await;
     Json(progress)
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 pub struct FilenameQuery {
     file_name: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/download",
+    params(FilenameQuery),
+    responses(
+        (status = 200, description = "Download the finished video", body = Vec<u8>),
+    )
+)]
 #[axum::debug_handler]
 pub async fn download_video(
     state: State<Arc<AppState>>,

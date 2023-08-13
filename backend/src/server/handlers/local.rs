@@ -160,6 +160,14 @@ fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str>
     errors
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/local/video/marker",
+    request_body = CreateMarker,
+    responses(
+        (status = 200, description = "The newly created marker", body = MarkerDto),
+    )
+)]
 #[axum::debug_handler]
 pub async fn create_new_marker(
     state: State<Arc<AppState>>,
@@ -261,6 +269,17 @@ pub struct DetectMarkersQuery {
     pub threshold: Option<f64>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/local/video/{id}/markers",
+    params(
+        ("id" = String, Path, description = "The ID of the video to detect markers for"),
+        ("threshold" = Option<f64>, Query, description = "The threshold for the marker detection (from 0.0 to 1.0)")
+    ),
+    responses(
+        (status = 200, description = "All newly created markers", body = Vec<MarkerDto>),
+    )
+)]
 #[axum::debug_handler]
 pub async fn detect_markers(
     Path(id): Path<String>,

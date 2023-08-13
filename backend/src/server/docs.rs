@@ -2,7 +2,7 @@ use utoipa::OpenApi;
 
 use super::dtos::ListVideoDtoPage;
 use super::handlers::local::AddNewVideosBody;
-use super::types::{ListVideoDto, MarkerDto, MarkerId, VideoDto, VideoId, VideoSource};
+use super::types::*;
 use crate::server::handlers;
 
 #[derive(OpenApi)]
@@ -11,6 +11,12 @@ use crate::server::handlers;
         handlers::stash::get_health,
         handlers::local::add_new_videos,
         handlers::local::list_videos,
+        handlers::local::detect_markers,
+        handlers::local::create_new_marker,
+        handlers::common::fetch_clips,
+        handlers::common::create_video,
+        handlers::common::get_progress_info,
+        handlers::common::download_video,
     ),
     components(
         schemas(
@@ -22,6 +28,31 @@ use crate::server::handlers;
             MarkerId,
             VideoId,
             VideoSource,
+            CreateClipsBody,
+            ClipsResponse,
+            ClipOrder,
+            ClipOptions,
+            SelectedMarker,
+            Clip,
+            ClipPickerOptions,
+            RoundRobinClipOptions,
+            WeightedRandomClipOptions,
+            EqualLengthClipOptions,
+            RoundRobinClipOptions,
+            WeightedRandomClipOptions,
+            EqualLengthClipOptions,
+            PmvClipOptions,
+            RandomizedClipOptions,
+            SongClipOptions,
+            MeasureCount,
+            Beats,
+            CreateVideoBody,
+            EncodingEffort,
+            VideoResolution,
+            VideoCodec,
+            VideoQuality,
+            Progress,
+            CreateMarker,
         )
     ),
     tags(

@@ -416,6 +416,7 @@ impl CompilationGenerator {
         info!("finished assembling video, result at {destination}");
         self.increase_progress(1.0, "Compiling clips together")
             .await;
+        self.reset_progress().await;
         Ok(destination)
     }
 }

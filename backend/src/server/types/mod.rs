@@ -4,7 +4,7 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum ClipOrder {
     Random,
@@ -20,7 +20,7 @@ pub enum VideoSource {
     DownloadedLocalFile,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Clip {
     pub source: VideoSource,
@@ -151,7 +151,7 @@ pub struct VideoDto {
     pub duration: f64,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SelectedMarker {
     pub id: MarkerId,
@@ -163,21 +163,21 @@ pub struct SelectedMarker {
     pub loops: usize,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RandomizedClipOptions {
     pub base_duration: f64,
     pub divisors: Vec<f64>,
 }
 
-#[derive(Deserialize, Debug, Clone, Copy, Serialize)]
+#[derive(Deserialize, Debug, Clone, Copy, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum MeasureCount {
     Fixed { count: usize },
     Random { min: usize, max: usize },
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SongClipOptions {
     pub beats_per_measure: usize,
@@ -185,21 +185,21 @@ pub struct SongClipOptions {
     pub songs: Vec<Beats>,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum PmvClipOptions {
     Randomized(RandomizedClipOptions),
     Songs(SongClipOptions),
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ClipOptions {
     pub clip_picker: ClipPickerOptions,
     pub order: ClipOrder,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum ClipPickerOptions {
     RoundRobin(RoundRobinClipOptions),
@@ -231,14 +231,14 @@ impl ClipPickerOptions {
     }
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RoundRobinClipOptions {
     pub length: f64,
     pub clip_lengths: PmvClipOptions,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct WeightedRandomClipOptions {
     pub weights: Vec<(String, f64)>,
@@ -246,14 +246,14 @@ pub struct WeightedRandomClipOptions {
     pub clip_lengths: PmvClipOptions,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct EqualLengthClipOptions {
     pub clip_duration: f64,
     pub divisors: Vec<f64>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateClipsBody {
     pub clip_order: ClipOrder,
@@ -262,7 +262,7 @@ pub struct CreateClipsBody {
     pub clips: ClipOptions,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ClipsResponse {
     pub clips: Vec<Clip>,
@@ -278,7 +278,7 @@ pub struct ListVideoDto {
     pub markers: Vec<MarkerDto>,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize, ToSchema)]
 pub enum VideoResolution {
     #[serde(rename = "720")]
     SevenTwenty,
@@ -308,7 +308,7 @@ impl fmt::Display for VideoResolution {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Copy)]
+#[derive(Deserialize, Debug, Clone, Copy, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum VideoCodec {
     Av1,
@@ -326,7 +326,7 @@ impl fmt::Display for VideoCodec {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Copy)]
+#[derive(Deserialize, Debug, Clone, Copy, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum VideoQuality {
     Low,
@@ -335,7 +335,7 @@ pub enum VideoQuality {
     Lossless,
 }
 
-#[derive(Deserialize, Debug, Clone, Copy)]
+#[derive(Deserialize, Debug, Clone, Copy, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum EncodingEffort {
     Low,
@@ -343,7 +343,7 @@ pub enum EncodingEffort {
     High,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateVideoBody {
     pub file_name: String,
@@ -372,7 +372,7 @@ pub struct StashScene {
     pub marker_count: usize,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Beats {
     pub offsets: Vec<f32>,
     pub length: f32,
@@ -446,7 +446,7 @@ impl PageParameters {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Default, Clone, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Progress {
     pub items_finished: f64,
@@ -456,7 +456,7 @@ pub struct Progress {
     pub message: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateMarker {
     pub video_id: String,

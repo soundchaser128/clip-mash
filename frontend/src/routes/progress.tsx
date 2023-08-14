@@ -96,6 +96,11 @@ function Progress() {
     // }
   }, [])
 
+  const totalDuration = state.data.clips!.reduce(
+    (duration, clip) => duration + (clip.range[1] - clip.range[0]),
+    0,
+  )
+
   const onSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
 
@@ -124,16 +129,11 @@ function Progress() {
         itemsFinished: 0,
         etaSeconds: 0,
         done: false,
-        itemsTotal: state.data.clips!.length,
+        itemsTotal: totalDuration,
         message: "Starting...",
       })
     }
   }
-
-  const totalDuration = state.data.clips!.reduce(
-    (duration, clip) => duration + (clip.range[1] - clip.range[0]),
-    0,
-  )
 
   return (
     <div className="mt-2 w-full self-center flex flex-col items-center">

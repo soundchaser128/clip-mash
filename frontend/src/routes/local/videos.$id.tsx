@@ -1,5 +1,5 @@
 import {VideoWithMarkers} from "../../types/types"
-import {useRef, useState} from "react"
+import React, {useRef, useState} from "react"
 import {useForm, FieldErrors} from "react-hook-form"
 import {
   HiClock,
@@ -21,6 +21,12 @@ import {createNewMarker, updateMarker} from "./api"
 import Timeline from "../../components/Timeline"
 import Loader from "../../components/Loader"
 import {MarkerDto} from "../../types/types.generated"
+
+const Box: React.FC<{children: React.ReactNode}> = ({children}) => (
+  <div className="flex flex-col bg-slate-100 py-4 px-6 rounded-lg w-2/3">
+    {children}
+  </div>
+)
 
 interface Inputs {
   id?: number
@@ -44,7 +50,7 @@ function CreateMarkerButtons({
 }) {
   return (
     <div className="flex flex-col h-full gap-6 items-center">
-      <div className="flex flex-col bg-slate-200 p-2 rounded-lg w-96">
+      <Box>
         <p className="">
           Detect markers by detecting scene changes (cuts in the video). Might
           not be fully accurate. It does not work very well for PoV videos.
@@ -74,14 +80,14 @@ function CreateMarkerButtons({
           <HiSquaresPlus className="mr-2" />
           Detect markers
         </button>
-      </div>
-      <div className="flex flex-col bg-slate-200 p-2 rounded-lg w-96">
+      </Box>
+      <Box>
         <p className="mb-2">Add a single marker that spans the entire video.</p>
         <button className="btn btn-secondary" onClick={onAddFullVideo}>
           <HiPlus className="mr-2" />
           Add entire video
         </button>
-      </div>
+      </Box>
     </div>
   )
 }
@@ -408,7 +414,7 @@ export default function EditVideoModal() {
 
           {formMode === "hidden" && (
             <div>
-              <h2 className="text-xl font-bold mb-2">Markers</h2>
+              <h2 className="text-3xl font-bold mb-4">Markers</h2>
               <div className="overflow-x-auto">
                 {markers.length === 0 && !loading && (
                   <CreateMarkerButtons

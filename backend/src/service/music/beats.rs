@@ -3,11 +3,11 @@ use std::time::Instant;
 
 use aubio::{OnsetMode, Smpl, Tempo};
 use camino::{Utf8Path, Utf8PathBuf};
-use clip_mash_types::Beats;
 use color_eyre::eyre::eyre;
 use hound::WavReader;
 use tracing::info;
 
+use crate::server::types::Beats;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::util::commandline_error;
 use crate::Result as AppResult;

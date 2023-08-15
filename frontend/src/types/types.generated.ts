@@ -139,7 +139,13 @@ export type SongDto = {
   beats: F32[]
 }
 export type NewId = {id: string}
-export type PageParameters = {page: Usize | null; size: Usize | null}
+export type SortDirection = "asc" | "desc"
+export type PageParameters = {
+  page: Usize | null
+  size: Usize | null
+  sort: string | null
+  dir: SortDirection | null
+}
 export type Progress = {
   itemsFinished: F64
   itemsTotal: F64
@@ -157,3 +163,17 @@ export type CreateMarker = {
   videoInteractive: boolean
 }
 export type UpdateMarker = {rowid: I64; start: F64; end: F64; title: string}
+export type StrokeType =
+  | {
+      /**
+       * Creates a stroke every `n` beats
+       */
+      everyNth: {n: Usize}
+    }
+  | {
+      /**
+       * Steadily accelerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat`
+       */
+      accelerate: {start_strokes_per_beat: F32; end_strokes_per_beat: F32}
+    }
+export type CreateBeatFunscriptBody = {songIds: I64[]; strokeType: StrokeType}

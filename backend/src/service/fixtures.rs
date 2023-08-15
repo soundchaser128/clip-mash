@@ -1,6 +1,5 @@
 use std::sync::atomic::{AtomicI64, Ordering};
 
-use clip_mash_types::{Beats, CreateMarker};
 use fake::faker::filesystem::en::FilePath;
 use fake::faker::lorem::en::{Sentence, Word};
 use fake::{Fake, Faker};
@@ -8,6 +7,7 @@ use lazy_static::lazy_static;
 
 use super::Marker;
 use crate::data::database::{Database, DbMarker, DbVideo, LocalVideoSource};
+use crate::server::types::{Beats, CreateMarker};
 use crate::service::{MarkerId, MarkerInfo, VideoId};
 use crate::util::generate_id;
 use crate::Result;

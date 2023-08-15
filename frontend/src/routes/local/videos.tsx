@@ -1,11 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import invariant from "tiny-invariant"
-import {
-  VideoWithMarkers,
-  StateHelpers,
-  LocalFilesFormStage,
-  Page,
-} from "../../types/types"
+import {VideoWithMarkers, Page} from "../../types/types"
 import {
   HiAdjustmentsVertical,
   HiArrowDownTray,
@@ -13,7 +8,6 @@ import {
   HiChevronRight,
   HiClock,
   HiFolder,
-  HiPlus,
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
@@ -32,10 +26,10 @@ import {
 } from "react-router-dom"
 import {formatSeconds} from "../../helpers"
 import clsx from "clsx"
-import {createNewMarker} from "./api"
-import {ListVideoDto} from "../../types.generated"
+import {ListVideoDto} from "../../types/types.generated"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
+import {LocalFilesFormStage, StateHelpers} from "../../types/form-state"
 
 export const loader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
@@ -82,32 +76,6 @@ export default function ListVideos() {
     debouncedSetQuery(e.target.value.trim())
   }
 
-  const onAddFullVideo = async (video: VideoWithMarkers) => {
-    const duration = video.video.duration
-    const result = await createNewMarker(
-      video.video,
-      {
-        start: 0.0,
-        end: duration,
-        title: "Untitled",
-      },
-      duration,
-      0,
-    )
-
-    if (result.isOk) {
-      const marker = result.unwrap()
-      setVideos((draft) => {
-        const video = draft.find((v) => v.video.id.id === marker.videoId.id)
-        invariant(video)
-        video.markers.push(marker)
-      })
-    } else {
-      const error = result.error
-      console.error(error)
-    }
-  }
-
   const onNextStage = () => {
     const interactive = videos
       .filter((v) => v.markers.length > 0)
@@ -148,18 +116,19 @@ export default function ListVideos() {
           </button>
         )}
       </div>
-
-      <div className="w-full flex justify-between">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Filter..."
-            className="input input-primary w-full lg:w-96"
-            value={filter}
-            onChange={onFilterChange}
-          />
+      {!noVideos && (
+        <div className="w-full flex justify-between">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Filter..."
+              className="input input-primary w-full lg:w-96"
+              value={filter}
+              onChange={onFilterChange}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {noVideos && (
         <div className="flex flex-col items-center justify-center mt-8">
@@ -224,17 +193,7 @@ export default function ListVideos() {
                 </li>
               </ul>
               <div className="card-actions justify-between grow items-end">
-                <button
-                  disabled={
-                    video.markers.length > 0 || video.video.duration <= 0
-                  }
-                  onClick={() => onAddFullVideo(video)}
-                  className="btn btn-sm btn-secondary"
-                >
-                  <HiPlus className="w-4 h-4" />
-                  Add entire video
-                </button>
-
+                <span />
                 <button
                   className="btn btn-sm btn-primary"
                   onClick={() => onOpenModal(video)}

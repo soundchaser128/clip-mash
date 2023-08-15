@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
-use typescript_type_def::TypeDef;
+use utoipa::ToSchema;
 
-#[derive(Clone, Copy, Debug, Deserialize, TypeDef, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum ClipOrder {
     Random,
@@ -12,7 +12,7 @@ pub enum ClipOrder {
     NoOp,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TypeDef)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum VideoSource {
     Stash,
@@ -20,7 +20,7 @@ pub enum VideoSource {
     DownloadedLocalFile,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TypeDef)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Clip {
     pub source: VideoSource,
@@ -43,7 +43,7 @@ impl Clip {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, TypeDef)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type", content = "id")]
 pub enum MarkerId {
     LocalFile(i64),
@@ -68,7 +68,7 @@ impl fmt::Display for MarkerId {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord, TypeDef)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type", content = "id")]
 pub enum VideoId {
     LocalFile(String),
@@ -101,7 +101,7 @@ impl fmt::Display for VideoId {
     }
 }
 
-#[derive(Serialize, Debug, TypeDef)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TagDto {
     pub name: String,
@@ -109,7 +109,7 @@ pub struct TagDto {
     pub marker_count: i64,
 }
 
-#[derive(Serialize, Debug, TypeDef)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct PerformerDto {
     pub id: String,
@@ -121,7 +121,7 @@ pub struct PerformerDto {
     pub favorite: bool,
 }
 
-#[derive(Serialize, Debug, TypeDef)]
+#[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkerDto {
     pub id: MarkerId,
@@ -139,7 +139,7 @@ pub struct MarkerDto {
     pub index_within_video: usize,
 }
 
-#[derive(Serialize, Debug, TypeDef)]
+#[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct VideoDto {
     pub id: VideoId,
@@ -151,7 +151,7 @@ pub struct VideoDto {
     pub duration: f64,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SelectedMarker {
     pub id: MarkerId,
@@ -163,21 +163,21 @@ pub struct SelectedMarker {
     pub loops: usize,
 }
 
-#[derive(Deserialize, Debug, TypeDef, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RandomizedClipOptions {
     pub base_duration: f64,
     pub divisors: Vec<f64>,
 }
 
-#[derive(Deserialize, Debug, TypeDef, Clone, Copy, Serialize)]
+#[derive(Deserialize, Debug, Clone, Copy, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum MeasureCount {
     Fixed { count: usize },
     Random { min: usize, max: usize },
 }
 
-#[derive(Deserialize, Debug, TypeDef, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SongClipOptions {
     pub beats_per_measure: usize,
@@ -185,21 +185,21 @@ pub struct SongClipOptions {
     pub songs: Vec<Beats>,
 }
 
-#[derive(Deserialize, Debug, TypeDef, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum PmvClipOptions {
     Randomized(RandomizedClipOptions),
     Songs(SongClipOptions),
 }
 
-#[derive(Deserialize, Serialize, Debug, TypeDef)]
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ClipOptions {
     pub clip_picker: ClipPickerOptions,
     pub order: ClipOrder,
 }
 
-#[derive(Deserialize, Debug, TypeDef, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum ClipPickerOptions {
     RoundRobin(RoundRobinClipOptions),
@@ -231,14 +231,14 @@ impl ClipPickerOptions {
     }
 }
 
-#[derive(Deserialize, Debug, TypeDef, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RoundRobinClipOptions {
     pub length: f64,
     pub clip_lengths: PmvClipOptions,
 }
 
-#[derive(Deserialize, Debug, TypeDef, Serialize)]
+#[derive(Deserialize, Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct WeightedRandomClipOptions {
     pub weights: Vec<(String, f64)>,
@@ -246,14 +246,14 @@ pub struct WeightedRandomClipOptions {
     pub clip_lengths: PmvClipOptions,
 }
 
-#[derive(Deserialize, Serialize, Debug, TypeDef)]
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct EqualLengthClipOptions {
     pub clip_duration: f64,
     pub divisors: Vec<f64>,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateClipsBody {
     pub clip_order: ClipOrder,
@@ -262,7 +262,7 @@ pub struct CreateClipsBody {
     pub clips: ClipOptions,
 }
 
-#[derive(Serialize, Debug, TypeDef)]
+#[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ClipsResponse {
     pub clips: Vec<Clip>,
@@ -271,14 +271,14 @@ pub struct ClipsResponse {
     pub beat_offsets: Option<Vec<f32>>,
 }
 
-#[derive(Serialize, Debug, TypeDef)]
+#[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ListVideoDto {
     pub video: VideoDto,
     pub markers: Vec<MarkerDto>,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, TypeDef)]
+#[derive(Debug, Clone, Copy, Deserialize, ToSchema)]
 pub enum VideoResolution {
     #[serde(rename = "720")]
     SevenTwenty,
@@ -308,7 +308,7 @@ impl fmt::Display for VideoResolution {
     }
 }
 
-#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[derive(Deserialize, Debug, Clone, Copy, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum VideoCodec {
     Av1,
@@ -326,7 +326,7 @@ impl fmt::Display for VideoCodec {
     }
 }
 
-#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[derive(Deserialize, Debug, Clone, Copy, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum VideoQuality {
     Low,
@@ -335,7 +335,7 @@ pub enum VideoQuality {
     Lossless,
 }
 
-#[derive(Deserialize, Debug, TypeDef, Clone, Copy)]
+#[derive(Deserialize, Debug, Clone, Copy, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum EncodingEffort {
     Low,
@@ -343,7 +343,7 @@ pub enum EncodingEffort {
     High,
 }
 
-#[derive(Deserialize, Debug, TypeDef)]
+#[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateVideoBody {
     pub file_name: String,
@@ -358,7 +358,7 @@ pub struct CreateVideoBody {
     pub encoding_effort: EncodingEffort,
 }
 
-#[derive(Serialize, Debug, TypeDef)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct StashScene {
     pub id: String,
@@ -372,13 +372,13 @@ pub struct StashScene {
     pub marker_count: usize,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypeDef)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Beats {
     pub offsets: Vec<f32>,
     pub length: f32,
 }
 
-#[derive(Serialize, TypeDef)]
+#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SongDto {
     pub song_id: i64,
@@ -388,16 +388,25 @@ pub struct SongDto {
     pub beats: Vec<f32>,
 }
 
-#[derive(Serialize, TypeDef)]
+#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NewId {
     pub id: String,
 }
 
-#[derive(Deserialize, Debug, Clone, Copy, TypeDef)]
+#[derive(Deserialize, Debug, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum SortDirection {
+    Asc,
+    Desc,
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct PageParameters {
     pub page: Option<usize>,
     pub size: Option<usize>,
+    pub sort: Option<String>,
+    pub dir: Option<SortDirection>,
 }
 
 impl PageParameters {
@@ -421,9 +430,23 @@ impl PageParameters {
     pub fn page(&self) -> i64 {
         self.page.map(|p| p as i64).unwrap_or(Self::DEFAULT_PAGE)
     }
+
+    pub fn sort(&self, default: &str) -> String {
+        let sort = self.sort.as_deref().unwrap_or(default);
+        let direction = self.direction();
+        format!("{} {}", sort, direction)
+    }
+
+    fn direction(&self) -> &str {
+        let dir = self.dir.unwrap_or(SortDirection::Asc);
+        match dir {
+            SortDirection::Asc => "ASC",
+            SortDirection::Desc => "DESC",
+        }
+    }
 }
 
-#[derive(Debug, Default, Clone, Serialize, TypeDef)]
+#[derive(Debug, Default, Clone, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Progress {
     pub items_finished: f64,
@@ -433,7 +456,7 @@ pub struct Progress {
     pub message: String,
 }
 
-#[derive(Debug, Clone, Deserialize, TypeDef)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateMarker {
     pub video_id: String,
@@ -445,7 +468,7 @@ pub struct CreateMarker {
     pub video_interactive: bool,
 }
 
-#[derive(Debug, Clone, Deserialize, TypeDef)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateMarker {
     pub rowid: i64,
@@ -454,23 +477,33 @@ pub struct UpdateMarker {
     pub title: String,
 }
 
-pub type Api = (
-    StashScene,
-    CreateVideoBody,
-    CreateClipsBody,
-    ListVideoDto,
-    ClipsResponse,
-    VideoDto,
-    MarkerDto,
-    PerformerDto,
-    TagDto,
-    SongDto,
-    NewId,
-    PageParameters,
-    Progress,
-    CreateMarker,
-    UpdateMarker,
-);
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum StrokeType {
+    /// Creates a stroke every `n` beats
+    EveryNth { n: usize },
+    /// Steadily accelerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat`
+    Accelerate {
+        start_strokes_per_beat: f32,
+        end_strokes_per_beat: f32,
+    },
+}
 
-#[cfg(test)]
-mod tests {}
+impl StrokeType {
+    pub fn initial_acceleration(&self) -> Option<f32> {
+        match self {
+            Self::Accelerate {
+                start_strokes_per_beat,
+                ..
+            } => Some(*start_strokes_per_beat),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateBeatFunscriptBody {
+    pub song_ids: Vec<i64>,
+    pub stroke_type: StrokeType,
+}

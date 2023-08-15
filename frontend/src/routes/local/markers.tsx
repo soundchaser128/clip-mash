@@ -1,7 +1,7 @@
 import {useLoaderData} from "react-router-dom"
-import {MarkerDto} from "../../types.generated"
+import {MarkerDto} from "../../types/types.generated"
 import MarkerPage from "../../components/MarkerPage"
-import {LocalFilesFormStage} from "../../types/types"
+import {LocalFilesFormStage} from "../../types/form-state"
 
 export default function LocalMarkersPage() {
   const data = useLoaderData() as MarkerDto[]

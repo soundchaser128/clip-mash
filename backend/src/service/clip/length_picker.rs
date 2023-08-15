@@ -1,12 +1,12 @@
 use std::fmt::Debug;
 
-use clip_mash_types::{Beats, MeasureCount, PmvClipOptions};
 use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
 use rand::Rng;
-use tracing::info;
+use tracing::{debug, info};
 
 use super::MIN_DURATION;
+use crate::server::types::{Beats, MeasureCount, PmvClipOptions};
 
 #[derive(Debug)]
 pub struct RandomizedClipLengthPicker<'a> {
@@ -102,7 +102,7 @@ impl<'a> Iterator for SongClipLengthPicker<'a> {
     type Item = f64;
 
     fn next(&mut self) -> Option<Self::Item> {
-        info!(
+        debug!(
             "state: song_index = {}, beat_index = {}",
             self.song_index, self.beat_index
         );
@@ -126,8 +126,8 @@ impl<'a> Iterator for SongClipLengthPicker<'a> {
         let end = beats[next_beat_index];
         let duration = (end - start) as f64;
 
-        info!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds ({duration} seconds long)");
-        info!(
+        debug!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds ({duration} seconds long)");
+        debug!(
             "next beat index: {}, number of beats: {}",
             next_beat_index,
             beats.len()
@@ -181,10 +181,10 @@ impl<'a> ClipLengthPicker<'a> {
 mod test {
     use std::collections::HashSet;
 
-    use clip_mash_types::{Beats, MeasureCount};
     use ordered_float::OrderedFloat;
     use tracing_test::traced_test;
 
+    use crate::server::types::{Beats, MeasureCount};
     use crate::service::clip::length_picker::{RandomizedClipLengthPicker, SongClipLengthPicker};
     use crate::service::fixtures;
     use crate::util::create_seeded_rng;

@@ -1,9 +1,9 @@
-use clip_mash_types::{Clip, EqualLengthClipOptions};
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use tracing::info;
 
 use super::ClipPicker;
+use crate::server::types::{Clip, EqualLengthClipOptions};
 use crate::service::clip::MIN_DURATION;
 use crate::service::Marker;
 

@@ -11,7 +11,9 @@ use crate::Result;
 #[derive(Debug, Deserialize, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub enum FolderType {
-    Videos,
+    TempVideo,
+    CompilationVideo,
+    DownloadedVideo,
     Music,
     Database,
     Config,
@@ -34,7 +36,13 @@ impl Directories {
             dirs: Arc::new(dirs),
         };
 
-        for directory in &[dirs.preview_image_dir(), dirs.music_dir(), dirs.video_dir()] {
+        for directory in &[
+            dirs.preview_image_dir(),
+            dirs.music_dir(),
+            dirs.compilation_video_dir(),
+            dirs.temp_video_dir(),
+            dirs.downloaded_video_dir(),
+        ] {
             fs::create_dir_all(directory)?;
         }
 
@@ -45,10 +53,12 @@ impl Directories {
 
     pub fn get(&self, ty: FolderType) -> Utf8PathBuf {
         match ty {
-            FolderType::Videos => self.video_dir(),
+            FolderType::TempVideo => self.temp_video_dir(),
+            FolderType::CompilationVideo => self.compilation_video_dir(),
             FolderType::Music => self.music_dir(),
             FolderType::Database => self.database_file(),
             FolderType::Config => self.config_dir().to_owned(),
+            FolderType::DownloadedVideo => self.downloaded_video_dir(),
         }
     }
 
@@ -76,19 +86,31 @@ impl Directories {
         self.cache_dir().join("music")
     }
 
-    pub fn video_dir(&self) -> Utf8PathBuf {
-        self.cache_dir().join("videos")
+    pub fn temp_video_dir(&self) -> Utf8PathBuf {
+        self.cache_dir().join("videos").join("clips")
+    }
+
+    pub fn compilation_video_dir(&self) -> Utf8PathBuf {
+        self.cache_dir().join("videos").join("finished")
     }
 
     pub fn database_file(&self) -> Utf8PathBuf {
         self.data_dir().join("videos.sqlite3")
     }
 
+    pub fn downloaded_video_dir(&self) -> Utf8PathBuf {
+        self.cache_dir().join("videos").join("downloaded")
+    }
+
     pub fn info(&self) {
         info!("config directory: {}", self.config_dir());
         info!("cache directory: {}", self.cache_dir());
         info!("music directory: {}", self.music_dir());
-        info!("video directory: {}", self.video_dir());
+        info!(
+            "compilation video directory: {}",
+            self.compilation_video_dir()
+        );
+        info!("temporary video directory: {}", self.temp_video_dir());
         info!("database file: {}", self.database_file());
     }
 
@@ -96,7 +118,7 @@ impl Directories {
     pub async fn cleanup_videos(&self) -> Result<()> {
         use tokio::fs;
 
-        let mut stream = fs::read_dir(self.video_dir()).await?;
+        let mut stream = fs::read_dir(self.temp_video_dir()).await?;
         while let Some(file) = stream.next_entry().await? {
             let path = Utf8PathBuf::from_path_buf(file.path()).expect("path must be utf-8");
             if let Some("mp4") = path.extension() {

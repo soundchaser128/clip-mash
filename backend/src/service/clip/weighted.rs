@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 
-use clip_mash_types::{Clip, WeightedRandomClipOptions};
 use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::rngs::StdRng;
 use tracing::info;
 
 use super::ClipPicker;
+use crate::server::types::{Clip, WeightedRandomClipOptions};
 use crate::service::clip::length_picker::ClipLengthPicker;
 use crate::service::clip::state::{MarkerState, MarkerStateInfo};
 use crate::service::Marker;
@@ -112,15 +112,15 @@ impl ClipPicker for WeightedRandomClipPicker {
 mod tests {
     use std::collections::HashSet;
 
-    use clip_mash_types::{
-        PmvClipOptions, RandomizedClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
-    };
     use float_cmp::assert_approx_eq;
     use itertools::Itertools;
     use rand::Rng;
     use tracing_test::traced_test;
 
     use super::validate_options;
+    use crate::server::types::{
+        PmvClipOptions, RandomizedClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
+    };
     use crate::service::clip::round_robin::RoundRobinClipPicker;
     use crate::service::clip::weighted::WeightedRandomClipPicker;
     use crate::service::clip::ClipPicker;

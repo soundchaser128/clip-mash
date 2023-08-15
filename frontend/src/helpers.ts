@@ -1,6 +1,6 @@
 import {format, formatDuration, getTime, parse} from "date-fns"
-import {SelectedMarker} from "./types.generated"
-import {FormState} from "./types/types"
+import {SelectedMarker} from "./types/types.generated"
+import {FormState} from "./types/form-state"
 import {scaleSequential} from "d3-scale"
 import {interpolatePlasma} from "d3-scale-chromatic"
 
@@ -69,7 +69,11 @@ export function formatSeconds(
       {format: ["hours", "minutes", "seconds"]},
     )
   } else {
-    return format(duration * 1000, "mm:ss")
+    if (date.getUTCHours() > 0) {
+      return format(date, "HH:mm:ss")
+    } else {
+      return format(date, "mm:ss")
+    }
   }
 }
 
@@ -107,4 +111,12 @@ export function pluralize(
   count: number | undefined | null,
 ): string {
   return count === 1 ? word : `${word}s`
+}
+
+export function isBetween(
+  value: number,
+  lower: number,
+  upper: number,
+): boolean {
+  return value >= lower && value <= upper
 }

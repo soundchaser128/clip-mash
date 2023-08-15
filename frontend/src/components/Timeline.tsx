@@ -13,14 +13,16 @@ interface Props {
   onItemClick: (item: Item, index: number) => void
   selectedIndex?: number
   fadeInactiveItems?: boolean
+  time?: number
 }
 
-export const SegmentedBar: React.FC<Props> = ({
+const Timeline: React.FC<Props> = ({
   items,
   onItemClick,
   selectedIndex,
   fadeInactiveItems,
   length,
+  time,
 }) => {
   const styles = items.map((item, index) => {
     const backgroundColor = getSegmentColor(index, items.length)
@@ -37,7 +39,14 @@ export const SegmentedBar: React.FC<Props> = ({
   })
 
   return (
-    <div className="flex h-10 mt-2 gap-0.5 relative w-full">
+    <div className="flex h-10 mt-2 gap-0.5 relative w-full bg-slate-100">
+      {typeof time === "number" && (
+        <span
+          style={{left: `${(time / length) * 100}%`}}
+          className="top-0 absolute py-2 bg-black w-0.5 bg-opacity-75 h-9 z-10"
+        />
+      )}
+
       {items.map((item, index) => {
         const style = styles[index]
         return (
@@ -61,3 +70,5 @@ export const SegmentedBar: React.FC<Props> = ({
     </div>
   )
 }
+
+export default Timeline

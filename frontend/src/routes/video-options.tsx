@@ -6,7 +6,7 @@ import {
   FormState,
   LocalFilesFormStage,
   StateHelpers,
-} from "../types/types"
+} from "../types/form-state"
 import {updateForm} from "./actions"
 import {HiChevronRight} from "react-icons/hi2"
 

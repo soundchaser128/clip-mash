@@ -1,7 +1,6 @@
 import {LoaderFunction, json} from "react-router-dom"
 import {getFormState} from "../helpers"
 import invariant from "tiny-invariant"
-import {FormState, StateHelpers} from "../types/types"
 import {
   Clip,
   ClipPickerOptions,
@@ -11,7 +10,8 @@ import {
   PmvClipOptions,
   SongDto,
   VideoDto,
-} from "../types.generated"
+} from "../types/types.generated"
+import {FormState, StateHelpers} from "../types/form-state"
 
 export const configLoader: LoaderFunction = async () => {
   const response = await fetch("/api/stash/config")

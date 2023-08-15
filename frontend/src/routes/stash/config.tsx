@@ -2,6 +2,7 @@ import clsx from "clsx"
 import {useCallback, useState} from "react"
 import {useForm} from "react-hook-form"
 import {useLoaderData, useNavigate} from "react-router-dom"
+import ExternalLink from "../../components/ExternalLink"
 
 interface Inputs {
   stashUrl: string
@@ -68,8 +69,8 @@ function ConfigPage() {
 
   return (
     <section className="py-4 flex flex-col">
-      <h1 className="text-5xl font-bold mb-4 text-center">
-        Configuration setup
+      <h1 className="text-5xl text-brand font-bold mb-4 text-center">
+        Stash configuration setup
       </h1>
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -103,15 +104,8 @@ function ConfigPage() {
           <label className="label">
             <span className="label-text-alt">
               Navigate to{" "}
-              <a
-                className="link"
-                href={settingsPage}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {settingsPage}
-              </a>{" "}
-              to retrieve your API key.
+              <ExternalLink href={settingsPage}>{settingsPage}</ExternalLink> to
+              retrieve your API key.
             </span>
           </label>
         </div>

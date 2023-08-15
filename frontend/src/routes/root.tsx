@@ -8,16 +8,16 @@ import {
 } from "react-router-dom"
 import {HiXMark} from "react-icons/hi2"
 import {resetForm} from "./actions"
+import Layout from "../components/Layout"
+import {getUrl} from "./stash/filter/root"
+import Steps from "../components/Steps"
 import {
   FormStage,
   LocalFilesFormStage,
   LocalVideosFormState,
   StashFormState,
   StateHelpers,
-} from "../types/types"
-import Layout from "../components/Layout"
-import {getUrl} from "./stash/filter/root"
-import Steps from "../components/Steps"
+} from "../types/form-state"
 
 const StashSteps: React.FC<{state: StashFormState}> = ({state}) => {
   return (
@@ -129,7 +129,7 @@ const RootLayout: React.FC = () => {
     if (!configExists && isStashMode) {
       navigate("/stash/config")
     }
-  }, [configExists, isStashMode])
+  }, [configExists, isStashMode, navigate])
 
   return (
     <Layout isLoading={isLoading}>

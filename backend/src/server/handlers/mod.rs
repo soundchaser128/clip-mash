@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
-use clip_mash_types::VideoId;
 use reqwest::Url;
 
 use crate::data::database::Database;
+use crate::server::types::VideoId;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;

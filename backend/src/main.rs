@@ -7,13 +7,19 @@ use axum::routing::{delete, get, post, put};
 use axum::Router;
 use color_eyre::Report;
 use tracing::{info, warn};
+use utoipa::OpenApi;
+use utoipa_rapidoc::RapiDoc;
+use utoipa_redoc::{Redoc, Servable};
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::data::database::Database;
+use crate::server::docs::ApiDoc;
 use crate::server::handlers::AppState;
 use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
 
 mod data;
+mod progress;
 mod server;
 mod service;
 mod util;
@@ -98,6 +104,10 @@ async fn main() -> Result<()> {
         .route("/video/marker", put(handlers::local::update_marker))
         .route("/video/marker/:id", delete(handlers::local::delete_marker))
         .route(
+            "/video/marker/:id/split",
+            post(handlers::local::split_marker),
+        )
+        .route(
             "/video/marker/:id/preview",
             get(handlers::local::get_marker_preview),
         )
@@ -109,9 +119,24 @@ async fn main() -> Result<()> {
         .route("/version", get(handlers::common::get_version))
         .route("/clips", post(handlers::common::fetch_clips))
         .route("/create", post(handlers::common::create_video))
-        .route("/progress", get(handlers::common::get_progress))
+        .route(
+            "/progress/stream",
+            get(handlers::common::get_progress_stream),
+        )
+        .route("/progress/info", get(handlers::common::get_progress_info))
+        .route(
+            "/finished-videos",
+            get(handlers::common::list_finished_videos),
+        )
         .route("/download", get(handlers::common::download_video))
-        .route("/funscript", post(handlers::common::get_funscript))
+        .route(
+            "/funscript/combined",
+            post(handlers::common::get_combined_funscript),
+        )
+        .route(
+            "/funscript/beat",
+            post(handlers::common::get_beat_funscript),
+        )
         .route("/song", get(handlers::common::list_songs))
         .route("/song/:id/stream", get(handlers::common::stream_song))
         .route("/song/download", post(handlers::common::download_music))
@@ -121,6 +146,11 @@ async fn main() -> Result<()> {
         .route("/id", get(handlers::common::get_new_id));
 
     let app = Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
+        // There is no need to create `RapiDoc::with_openapi` because the OpenApi is served
+        // via SwaggerUi instead we only make rapidoc to point to the existing doc.
+        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"))
         .nest("/api", api_routes)
         .fallback_service(static_files::service())
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))

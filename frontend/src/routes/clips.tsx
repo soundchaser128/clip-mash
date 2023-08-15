@@ -1,7 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import React, {useMemo, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
-import {FormStage} from "../types/types"
 import {updateForm} from "./actions"
 import {
   HiBackward,
@@ -20,11 +19,12 @@ import {
   getSegmentTextColor,
   pluralize,
 } from "../helpers"
-import {Clip, ClipOrder} from "../types.generated"
 import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
 import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
+import {Clip, ClipOrder} from "../types/types.generated"
+import {FormStage} from "../types/form-state"
 
 interface ClipState {
   included: boolean

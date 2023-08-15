@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use tokio::task::spawn_blocking;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 use url::Url;
 use walkdir::WalkDir;
 
@@ -52,7 +52,7 @@ impl VideoService {
         let entries = self.gather_files(path.as_ref().to_owned(), recurse).await?;
         debug!("found files {entries:?} (recurse = {recurse})");
         for path in entries {
-            if path.extension() == Some("mp4") {
+            if path.extension() == Some("mp4") || path.extension() == Some("m4v") {
                 let video_exists = self
                     .database
                     .get_video_by_path(path.as_str())
@@ -61,7 +61,12 @@ impl VideoService {
                 info!("video at path {path} exists: {video_exists}");
                 if !video_exists {
                     let interactive = path.with_extension("funscript").is_file();
-                    let ffprobe = ffprobe(&path, &self.ffmpeg_location).await?;
+                    let ffprobe = ffprobe(&path, &self.ffmpeg_location).await;
+                    if let Err(e) = ffprobe {
+                        warn!("skipping video {path} because ffprobe failed with error {e}");
+                        continue;
+                    }
+                    let ffprobe = ffprobe.unwrap();
                     let duration = ffprobe.duration();
                     let id = generate_id();
                     let preview_generator = PreviewGenerator::new(
@@ -94,7 +99,7 @@ impl VideoService {
         let options = YtDlpOptions {
             url,
             extract_audio: false,
-            destination: FolderType::Videos,
+            destination: FolderType::DownloadedVideo,
         };
         let result = downloader.run(&options, &self.ffmpeg_location).await?;
         Ok((result.generated_id, result.downloaded_file))

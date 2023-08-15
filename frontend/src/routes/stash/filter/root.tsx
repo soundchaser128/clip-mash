@@ -2,20 +2,15 @@ import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {HiChevronRight} from "react-icons/hi2"
 import {useNavigate, Outlet} from "react-router-dom"
-import {
-  FormStage,
-  Performer,
-  SelectMode,
-  StateHelpers,
-  Tag,
-} from "../../../types/types"
 import {updateForm} from "../../actions"
 import invariant from "tiny-invariant"
-import {StashScene} from "../../../types.generated"
+import {PerformerDto, StashScene, TagDto} from "../../../types/types.generated"
+import {SelectMode} from "../../../types/types"
+import {FormStage, StateHelpers} from "../../../types/form-state"
 
 export interface Data {
-  performers: Performer[]
-  tags: Tag[]
+  performers: PerformerDto[]
+  tags: TagDto[]
   scenes: StashScene[]
 }
 

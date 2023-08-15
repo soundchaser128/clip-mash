@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use clip_mash_types::{Beats, CreateMarker, ListVideoDto, PageParameters, UpdateMarker};
 use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -9,6 +8,7 @@ use sqlx::{FromRow, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::{info, warn};
 
+use crate::server::types::{Beats, CreateMarker, ListVideoDto, PageParameters, UpdateMarker};
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::music;
 use crate::Result;
@@ -135,7 +135,7 @@ impl Database {
         let markers = sqlx::query_as!(DbMarker, "
         SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
         FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
-        ORDER BY m.rowid DESC")
+        ORDER BY v.file_path ASC")
         .fetch_all(&self.pool)
         .await?;
         Ok(markers)
@@ -372,6 +372,41 @@ impl Database {
         Ok(marker)
     }
 
+    pub async fn split_marker(&self, id: i64, split_time: f64) -> Result<Vec<DbMarker>> {
+        let marker = self.get_marker(id).await?;
+        let new_marker_1 = CreateMarker {
+            video_id: marker.video_id.clone(),
+            start: marker.start_time,
+            end: split_time,
+            title: marker.title.clone(),
+            index_within_video: marker.index_within_video,
+            preview_image_path: None,
+            video_interactive: marker.interactive,
+        };
+
+        let new_marker_2 = CreateMarker {
+            video_id: marker.video_id.clone(),
+            start: split_time,
+            end: marker.end_time,
+            title: marker.title,
+            index_within_video: marker.index_within_video + 1,
+            preview_image_path: None,
+            video_interactive: marker.interactive,
+        };
+
+        self.create_new_marker(new_marker_1).await?;
+        self.create_new_marker(new_marker_2).await?;
+
+        self.delete_marker(marker.rowid.expect("marker must have rowid"))
+            .await?;
+
+        let video = self
+            .get_video_with_markers(&marker.video_id)
+            .await?
+            .expect("video for marker must exist");
+        Ok(video.markers)
+    }
+
     pub async fn delete_marker(&self, id: i64) -> Result<()> {
         sqlx::query!("DELETE FROM markers WHERE rowid = $1", id)
             .execute(&self.pool)
@@ -380,13 +415,16 @@ impl Database {
     }
 
     pub async fn persist_song(&self, song: CreateSong) -> Result<DbSong> {
+        let beats = serde_json::to_string(&song.beats)?;
+
         let rowid = sqlx::query_scalar!(
-            "INSERT INTO songs (url, file_path, duration) 
-             VALUES ($1, $2, $3)
+            "INSERT INTO songs (url, file_path, duration, beats) 
+             VALUES ($1, $2, $3, $4)
              RETURNING rowid",
             song.url,
             song.file_path,
-            song.duration
+            song.duration,
+            beats,
         )
         .fetch_one(&self.pool)
         .await?;
@@ -437,11 +475,12 @@ impl Database {
     pub async fn list_videos(
         &self,
         query: Option<&str>,
-        params: PageParameters,
+        params: &PageParameters,
     ) -> Result<(Vec<ListVideoDto>, usize)> {
         let query = query
             .map(|q| format!("%{q}%"))
             .unwrap_or_else(|| "%".to_string());
+        info!("using query '{}'", query);
         let count = sqlx::query_scalar!(
             "SELECT COUNT(*) FROM local_videos WHERE file_path LIKE $1",
             query
@@ -450,15 +489,19 @@ impl Database {
         .await?;
         let limit = params.limit();
         let offset = params.offset();
+        let sort = params.sort("file_path");
+
         let mut records = sqlx::query!(
             "SELECT *, m.rowid AS rowid 
             FROM local_videos v 
             LEFT JOIN markers m ON v.id = m.video_id 
-            WHERE v.file_path LIKE $1 AND v.rowid IN (SELECT rowid FROM local_videos LIMIT $2 OFFSET $3)
-            ORDER BY file_path ASC",
+            WHERE v.file_path LIKE $1 AND v.rowid IN 
+                (SELECT rowid FROM local_videos WHERE file_path LIKE $1 LIMIT $2 OFFSET $3)
+            ORDER BY $4",
             query,
             limit,
             offset,
+            sort,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -646,10 +689,11 @@ impl Database {
 
 #[cfg(test)]
 mod test {
-    use clip_mash_types::{PageParameters, UpdateMarker};
     use sqlx::SqlitePool;
+    use tracing_test::traced_test;
 
     use crate::data::database::{CreateMarker, Database};
+    use crate::server::types::{PageParameters, SortDirection, UpdateMarker};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_with_file_name};
     use crate::util::generate_id;
 
@@ -754,36 +798,51 @@ mod test {
         let page = PageParameters {
             page: Some(0),
             size: Some(10),
+            sort: Some("file_path".into()),
+            dir: Some(SortDirection::Asc),
         };
-        let (result, total) = database.list_videos(None, page).await.unwrap();
+        let (result, total) = database.list_videos(None, &page).await.unwrap();
         assert_eq!(45, total);
         assert_eq!(10, result.len());
     }
 
     #[sqlx::test]
+    #[traced_test]
     async fn test_list_videos_search(pool: SqlitePool) {
         let database = Database::with_pool(pool);
 
-        persist_video_with_file_name(&database, "/some/path/sexy.mp4")
-            .await
-            .unwrap();
-        persist_video_with_file_name(&database, "/other/path/cool.mp4")
-            .await
-            .unwrap();
+        for _ in 0..45 {
+            persist_video(&database).await.unwrap();
+        }
+        for i in 0..10 {
+            let path = format!("/some/path/{i}/sexy.mp4");
+            persist_video_with_file_name(&database, &path)
+                .await
+                .unwrap();
+        }
+
+        for i in 0..5 {
+            let path = format!("/some/path/{i}/cool.mp4");
+            persist_video_with_file_name(&database, &path)
+                .await
+                .unwrap();
+        }
 
         let page = PageParameters {
             page: Some(0),
             size: Some(10),
+            sort: Some("file_path".into()),
+            dir: Some(SortDirection::Asc),
         };
-        let (result, total) = database.list_videos(Some("sexy"), page).await.unwrap();
-        assert_eq!(1, total);
-        assert_eq!(1, result.len());
+        let (result, total) = database.list_videos(Some("sexy"), &page).await.unwrap();
+        assert_eq!(10, total);
+        assert_eq!(10, result.len());
         let file_name = &result[0].video.file_name;
         assert_eq!(file_name, "sexy.mp4");
 
-        let (result, total) = database.list_videos(Some("cool"), page).await.unwrap();
-        assert_eq!(1, total);
-        assert_eq!(1, result.len());
+        let (result, total) = database.list_videos(Some("cool"), &page).await.unwrap();
+        assert_eq!(5, total);
+        assert_eq!(5, result.len());
         let file_name = &result[0].video.file_name;
         assert_eq!(file_name, "cool.mp4");
     }
@@ -808,5 +867,27 @@ mod test {
         assert_eq!(result.title, title);
         assert_eq!(result.end_time, 15.0);
         assert_eq!(result.start_time, 5.0);
+    }
+
+    #[sqlx::test]
+    async fn test_split_marker(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        let marker = persist_marker(&database, &video.id, 0, 0.0, 15.0, false)
+            .await
+            .unwrap();
+        let result = database
+            .split_marker(marker.rowid.unwrap(), 5.0)
+            .await
+            .unwrap();
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].start_time, 0.0);
+        assert_eq!(result[0].end_time, 5.0);
+        assert_eq!(result[1].start_time, 5.0);
+        assert_eq!(result[1].end_time, 15.0);
+
+        let all_markers = database.get_all_markers().await.unwrap();
+        assert_eq!(all_markers.len(), 2);
     }
 }

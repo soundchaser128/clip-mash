@@ -1,10 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
-use clip_mash_types::*;
 use color_eyre::eyre::bail;
 
 use super::database::{Database, DbSong};
 use super::stash_api::StashApi;
+use crate::server::types::*;
 use crate::service::clip::CreateClipsOptions;
 use crate::service::generator::CompilationOptions;
 use crate::service::stash_config::Config;

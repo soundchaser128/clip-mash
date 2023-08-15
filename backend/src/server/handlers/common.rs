@@ -7,7 +7,7 @@ use axum::extract::{Multipart, Path, Query, State};
 use axum::response::sse::{Event, KeepAlive};
 use axum::response::{IntoResponse, Sse};
 use axum::Json;
-use clip_mash_types::*;
+use camino::Utf8PathBuf;
 use color_eyre::eyre::eyre;
 use color_eyre::Report;
 use futures::stream::{self, Stream};
@@ -17,6 +17,7 @@ use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
 use url::Url;
+use utoipa::IntoParams;
 
 use super::AppState;
 use crate::data::database::DbSong;
@@ -24,14 +25,23 @@ use crate::data::service::DataService;
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::get_streams;
+use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::directories::FolderType;
-use crate::service::funscript::{FunScript, ScriptBuilder};
+use crate::service::funscript::{self, FunScript, ScriptBuilder};
 use crate::service::generator;
 use crate::service::music::{self, MusicDownloadService};
 use crate::service::stash_config::Config;
 use crate::util::{expect_file_name, generate_id};
 
+#[utoipa::path(
+    post,
+    path = "/api/clips",
+    request_body = CreateClipsBody,
+    responses(
+        (status = 200, description = "The newly created marker", body = ClipsResponse),
+    )
+)]
 #[axum::debug_handler]
 pub async fn fetch_clips(
     State(state): State<Arc<AppState>>,
@@ -82,6 +92,14 @@ async fn create_video_inner(
     Ok(())
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/create",
+    request_body = CreateVideoBody,
+    responses(
+        (status = 200, description = "The file name of the video to be created (returns immediately)", body = String),
+    )
+)]
 #[axum::debug_handler]
 pub async fn create_video(
     state: State<Arc<AppState>>,
@@ -103,30 +121,46 @@ pub async fn create_video(
 }
 
 #[axum::debug_handler]
-pub async fn get_progress() -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
+pub async fn get_progress_stream() -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
     let stream = futures::StreamExt::flat_map(stream::repeat_with(generator::get_progress), |f| {
         f.into_stream()
     });
     let stream = stream
-        .take_while(|p| !p.done)
-        .chain(futures::stream::once(async {
-            Progress {
-                done: true,
-                ..Progress::default()
-            }
-        }))
+        .take_while(|p| p.is_some())
+        .filter_map(|o| o)
         .map(|p| Event::default().json_data(p))
         .throttle(Duration::from_millis(250));
 
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
-#[derive(Deserialize)]
+#[utoipa::path(
+    post,
+    path = "/api/progress/info",
+    responses(
+        (status = 200, description = "The current progress of video creation, or null if it is finished", body = Progress),
+    )
+)]
+#[axum::debug_handler]
+pub async fn get_progress_info() -> Json<Option<Progress>> {
+    let progress = generator::get_progress().await;
+    Json(progress)
+}
+
+#[derive(Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 pub struct FilenameQuery {
     file_name: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/download",
+    params(FilenameQuery),
+    responses(
+        (status = 200, description = "Download the finished video", body = Vec<u8>),
+    )
+)]
 #[axum::debug_handler]
 pub async fn download_video(
     state: State<Arc<AppState>>,
@@ -136,7 +170,7 @@ pub async fn download_video(
     use axum::response::AppendHeaders;
 
     info!("downloading video '{file_name}'");
-    let path = state.directories.video_dir().join(&file_name);
+    let path = state.directories.compilation_video_dir().join(&file_name);
     let file = tokio::fs::File::open(path).await?;
     let stream = ReaderStream::new(file);
     let content_disposition = format!("attachment; filename=\"{}\"", file_name);
@@ -157,7 +191,7 @@ pub struct CreateFunscriptBody {
 }
 
 #[axum::debug_handler]
-pub async fn get_funscript(
+pub async fn get_combined_funscript(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateFunscriptBody>,
 ) -> Result<Json<FunScript>, AppError> {
@@ -166,6 +200,21 @@ pub async fn get_funscript(
     let service = DataService::new(state.database.clone()).await;
     let clips = service.convert_clips(body.clips).await?;
     let script = script_builder.combine_scripts(clips).await?;
+
+    Ok(Json(script))
+}
+
+#[axum::debug_handler]
+pub async fn get_beat_funscript(
+    State(state): State<Arc<AppState>>,
+    Json(body): Json<CreateBeatFunscriptBody>,
+) -> Result<Json<FunScript>, AppError> {
+    let songs = state.database.get_songs(&body.song_ids).await?;
+    let beats: Vec<Beats> = songs
+        .into_iter()
+        .filter_map(|s| s.beats.and_then(|b| serde_json::from_str(&b).ok()))
+        .collect();
+    let script = funscript::create_beat_script(beats, body.stroke_type);
 
     Ok(Json(script))
 }
@@ -267,17 +316,7 @@ pub async fn open_folder(
     state: State<Arc<AppState>>,
 ) -> Result<(), AppError> {
     info!("opening folder {folder:?}");
-    let path = match folder {
-        FolderType::Videos => state.directories.video_dir(),
-        FolderType::Music => state.directories.music_dir(),
-        FolderType::Database => state
-            .directories
-            .database_file()
-            .parent()
-            .expect("database must be in a folder")
-            .to_owned(),
-        FolderType::Config => state.directories.config_dir().to_owned(),
-    };
+    let path = state.directories.get(folder);
 
     opener::open(path).map_err(Report::from)?;
 
@@ -319,4 +358,23 @@ pub struct Version {
 pub async fn get_version() -> Json<Version> {
     let version = env!("CARGO_PKG_VERSION");
     Json(Version { version })
+}
+
+#[axum::debug_handler]
+pub async fn list_finished_videos(
+    state: State<Arc<AppState>>,
+) -> Result<Json<Vec<String>>, AppError> {
+    use tokio::fs;
+
+    let root = state.directories.compilation_video_dir();
+    let mut read_dir = fs::read_dir(root).await?;
+    let mut file_names = Vec::new();
+    while let Some(entry) = read_dir.next_entry().await? {
+        let path = Utf8PathBuf::from_path_buf(entry.path()).expect("must be utf-8 path");
+        if let Some(name) = path.file_name() {
+            file_names.push(name.to_string());
+        }
+    }
+
+    Ok(Json(file_names))
 }

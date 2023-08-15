@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive\n        FROM markers m INNER JOIN local_videos v ON m.video_id = v.id\n        ORDER BY m.rowid DESC",
+  "query": "\n        SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive\n        FROM markers m INNER JOIN local_videos v ON m.video_id = v.id\n        ORDER BY v.file_path ASC",
   "describe": {
     "columns": [
       {
@@ -53,7 +53,7 @@
       "Right": 0
     },
     "nullable": [
-      false,
+      true,
       false,
       false,
       false,
@@ -64,5 +64,5 @@
       false
     ]
   },
-  "hash": "baaf8159827f43819d958aae83540854ae69f2d6836b8ded7d26d697f82f6563"
+  "hash": "838ccf041fc269c985959d106c31ff2e4144c2c4fbeac9cf595be494a12f33d5"
 }

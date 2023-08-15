@@ -91,9 +91,9 @@ function Progress() {
         }
       })
 
-    // return () => {
-    //   eventSource.current?.close()
-    // }
+    return () => {
+      eventSource.current?.close()
+    }
   }, [])
 
   const totalDuration = state.data.clips!.reduce(

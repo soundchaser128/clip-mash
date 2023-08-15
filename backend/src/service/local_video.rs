@@ -99,7 +99,7 @@ impl VideoService {
         let options = YtDlpOptions {
             url,
             extract_audio: false,
-            destination: FolderType::Videos,
+            destination: FolderType::DownloadedVideo,
         };
         let result = downloader.run(&options, &self.ffmpeg_location).await?;
         Ok((result.generated_id, result.downloaded_file))

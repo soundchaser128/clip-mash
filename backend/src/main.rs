@@ -124,6 +124,10 @@ async fn main() -> Result<()> {
             get(handlers::common::get_progress_stream),
         )
         .route("/progress/info", get(handlers::common::get_progress_info))
+        .route(
+            "/finished-videos",
+            get(handlers::common::list_finished_videos),
+        )
         .route("/download", get(handlers::common::download_video))
         .route(
             "/funscript/combined",

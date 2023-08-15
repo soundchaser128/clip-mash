@@ -7,6 +7,7 @@ use axum::extract::{Multipart, Path, Query, State};
 use axum::response::sse::{Event, KeepAlive};
 use axum::response::{IntoResponse, Sse};
 use axum::Json;
+use camino::Utf8PathBuf;
 use color_eyre::eyre::eyre;
 use color_eyre::Report;
 use futures::stream::{self, Stream};
@@ -169,7 +170,7 @@ pub async fn download_video(
     use axum::response::AppendHeaders;
 
     info!("downloading video '{file_name}'");
-    let path = state.directories.video_dir().join(&file_name);
+    let path = state.directories.compilation_video_dir().join(&file_name);
     let file = tokio::fs::File::open(path).await?;
     let stream = ReaderStream::new(file);
     let content_disposition = format!("attachment; filename=\"{}\"", file_name);
@@ -315,17 +316,7 @@ pub async fn open_folder(
     state: State<Arc<AppState>>,
 ) -> Result<(), AppError> {
     info!("opening folder {folder:?}");
-    let path = match folder {
-        FolderType::Videos => state.directories.video_dir(),
-        FolderType::Music => state.directories.music_dir(),
-        FolderType::Database => state
-            .directories
-            .database_file()
-            .parent()
-            .expect("database must be in a folder")
-            .to_owned(),
-        FolderType::Config => state.directories.config_dir().to_owned(),
-    };
+    let path = state.directories.get(folder);
 
     opener::open(path).map_err(Report::from)?;
 
@@ -367,4 +358,23 @@ pub struct Version {
 pub async fn get_version() -> Json<Version> {
     let version = env!("CARGO_PKG_VERSION");
     Json(Version { version })
+}
+
+#[axum::debug_handler]
+pub async fn list_finished_videos(
+    state: State<Arc<AppState>>,
+) -> Result<Json<Vec<String>>, AppError> {
+    use tokio::fs;
+
+    let root = state.directories.compilation_video_dir();
+    let mut read_dir = fs::read_dir(root).await?;
+    let mut file_names = Vec::new();
+    while let Some(entry) = read_dir.next_entry().await? {
+        let path = Utf8PathBuf::from_path_buf(entry.path()).expect("must be utf-8 path");
+        if let Some(name) = path.file_name() {
+            file_names.push(name.to_string());
+        }
+    }
+
+    Ok(Json(file_names))
 }

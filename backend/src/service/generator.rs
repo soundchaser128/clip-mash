@@ -118,7 +118,7 @@ impl CompilationGenerator {
 
         let output = Command::new(self.ffmpeg_path.as_str())
             .args(args)
-            .current_dir(self.directories.video_dir())
+            .current_dir(self.directories.temp_video_dir())
             .output()
             .await?;
         if !output.status.success() {
@@ -233,7 +233,7 @@ impl CompilationGenerator {
         self.reset_progress().await;
         let total_duration = clips.iter().map(|c| c.duration()).sum();
         self.initialize_progress(total_duration).await;
-        let video_dir = self.directories.video_dir();
+        let video_dir = self.directories.temp_video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
 
         let total = clips.len();
@@ -336,7 +336,7 @@ impl CompilationGenerator {
         options: &CompilationOptions,
         clips: Vec<Utf8PathBuf>,
     ) -> Result<Utf8PathBuf> {
-        let video_dir = self.directories.video_dir();
+        let video_dir = self.directories.temp_video_dir();
         let file_name = &options.file_name;
         info!(
             "assembling {} clips into video with file name '{}'",
@@ -349,7 +349,7 @@ impl CompilationGenerator {
             .collect();
         let file_content = lines.join("\n");
         tokio::fs::write(video_dir.join("clips.txt"), file_content).await?;
-        let destination = video_dir.join(file_name);
+        let destination = self.directories.compilation_video_dir().join(file_name);
 
         let music_volume = options.music_volume;
         let original_volume = 1.0 - options.music_volume;
@@ -367,7 +367,7 @@ impl CompilationGenerator {
                 "clips.txt",
                 "-c",
                 "copy",
-                file_name,
+                destination.as_str(),
             ]
             .into_iter()
             .map(From::from)
@@ -404,7 +404,7 @@ impl CompilationGenerator {
                 "aac",
                 "-b:a",
                 "128k",
-                file_name,
+                destination.as_str(),
             ]
             .into_iter()
             .map(From::from)

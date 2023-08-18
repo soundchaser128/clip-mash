@@ -1,6 +1,7 @@
 import clsx from "clsx"
 import Footer from "./Footer"
 import {useRouteLoaderData} from "react-router-dom"
+import ThemeSwitch from "./ThemeSwitch"
 
 interface Props {
   children: React.ReactNode
@@ -19,6 +20,7 @@ const Layout: React.FC<Props> = ({children, isLoading}) => {
     <div className={clsx(styles.root, isLoading && "opacity-25")}>
       <main className={styles.main}>{children}</main>
       <Footer version={version} />
+      <ThemeSwitch />
     </div>
   )
 }

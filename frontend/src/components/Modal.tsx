@@ -46,7 +46,7 @@ const Modal: React.FC<Props> = ({
         <div
           data-testid="modal-content"
           className={clsx(
-            "bg-white rounded-lg p-4 flex flex-col overflow-y-auto max-h-[95vh]",
+            "bg-base-100 rounded-lg p-4 flex flex-col overflow-y-auto max-h-[95vh]",
             className,
           )}
         >

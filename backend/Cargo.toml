@@ -9,6 +9,7 @@ axum = { version = "0.6.20", features = ["macros", "multipart"] }
 camino = { version = "1.1.6", features = ["serde1"] }
 color-eyre = "0.6.2"
 directories = "5.0.1"
+float-cmp = "0.9.0"
 futures = "0.3.28"
 graphql_client = "0.13.0"
 hound = "3.5.0"
@@ -32,15 +33,14 @@ tower-http = { version = "0.4.3", features = ["fs"] }
 tracing = "0.1.37"
 tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+url = { version = "2.4.0", features = ["serde"] }
+utoipa = { version = "3.4.4", features = ["axum_extras"] }
+utoipa-rapidoc = { version = "0.1.0", features = ["axum"] }
+utoipa-redoc = { version = "0.1.0", features = ["axum"] }
+utoipa-swagger-ui = { version = "3.1.5", features = ["axum"] }
 walkdir = "2.3.3"
 webbrowser = "0.8.10"
-youtube_dl = { version = "0.8.1", features = ["tokio", "downloader"] }
-url = { version = "2.4.0", features = ["serde"] }
-float-cmp = "0.9.0"
-utoipa = { version = "3.4.4", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "3.1.5", features = ["axum"] }
-utoipa-redoc = { version = "0.1.0", features = ["axum"] }
-utoipa-rapidoc = { version = "0.1.0", features = ["axum"] }
+youtube_dl = { version = "0.9.0-pre.1", features = ["tokio", "downloader-native-tls"] }
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.40"

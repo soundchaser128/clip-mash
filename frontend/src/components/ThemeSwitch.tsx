@@ -1,10 +1,11 @@
-import {useEffect, useState} from "react"
+import {useEffect} from "react"
 import {HiMoon, HiSun} from "react-icons/hi2"
+import useLocalStorage from "../hooks/useLocalStorage"
 
 type Theme = "clip-mash-dark" | "clip-mash-light"
 
 const ThemeSwitch = () => {
-  const [theme, setTheme] = useState<Theme>("clip-mash-dark")
+  const [theme, setTheme] = useLocalStorage<Theme>("theme", "clip-mash-light")
 
   const toggleTheme = () => {
     if (theme === "clip-mash-dark") {

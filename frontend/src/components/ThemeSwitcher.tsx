@@ -4,7 +4,7 @@ import useLocalStorage from "../hooks/useLocalStorage"
 
 type Theme = "clip-mash-dark" | "clip-mash-light"
 
-const ThemeSwitch = () => {
+const ThemeSwitcher = () => {
   const [theme, setTheme] = useLocalStorage<Theme>("theme", "clip-mash-light")
 
   const toggleTheme = () => {
@@ -33,4 +33,4 @@ const ThemeSwitch = () => {
   )
 }
 
-export default ThemeSwitch
+export default ThemeSwitcher

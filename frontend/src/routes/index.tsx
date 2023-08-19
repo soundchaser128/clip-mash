@@ -33,13 +33,13 @@ export default function InitialRoot() {
         <div className="hero-content self-center">
           <div className="max-w-md flex flex-col">
             <img src="/logo.png" className="w-40 self-center" />
-            <p className="mt-2 text-lg text-center text-gray-500">
+            <p className="mt-2 text-lg text-center opacity-60">
               ClipMash helps you create video compilations.
             </p>
 
             <div className="text-lg mb-4">
               <h2 className="font-bold mt-4">Choose video source</h2>
-              <p className="text-gray-500">
+              <p className="opacity-60">
                 You can either use files on your disk or connect to a{" "}
                 <a href="https://stashapp.cc" className="link link-primary">
                   Stash

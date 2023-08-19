@@ -5,6 +5,7 @@ import {useNavigate} from "react-router"
 import useNotification from "../../hooks/useNotification"
 import Loader from "../../components/Loader"
 import {useState} from "react"
+import {pluralize} from "../../helpers"
 
 type Inputs = {urls: string}
 
@@ -70,7 +71,11 @@ const DownloadVideosPage: React.FC = () => {
   }
 
   if (isSubmitting) {
-    return <Loader>Downloading {videoCount} videos.</Loader>
+    return (
+      <Loader className="self-center">
+        Downloading {videoCount} {pluralize("video", videoCount)}...
+      </Loader>
+    )
   }
 
   return (

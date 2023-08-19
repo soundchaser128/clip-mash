@@ -8,6 +8,7 @@
 - chore: Split up videos folder into downloaded videos, generated clip fragments and finished compilations
 - chore: Removed typescript interface generation, to be replaced by OpenAPI-generated client (WIP)
 - fix: A song's detected beats weren't being persisted to the database in some cases
+- feat: Add dark mode
 
 ## 0.14.0
 - feat: Auotmated marker creation by detecting scene changes

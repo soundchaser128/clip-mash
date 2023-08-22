@@ -21,7 +21,7 @@ const HelpModal: React.FC<Props> = ({children}) => {
         isOpen={open}
         onClose={() => setOpen(false)}
       >
-        <div className="text-gray-600 self-start">{children}</div>
+        <div className="self-start">{children}</div>
         <button onClick={() => setOpen(false)} className="btn self-end mt-6">
           Close
         </button>

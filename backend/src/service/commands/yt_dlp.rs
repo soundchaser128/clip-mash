@@ -72,10 +72,7 @@ impl YtDlp {
         let dir = base_dir.join(&id);
 
         let mut youtube_dl = YoutubeDl::new(options.url.as_str());
-        youtube_dl
-            .youtube_dl_path(yt_dlp_path)
-            .download(true)
-            .output_directory(dir.as_str());
+        youtube_dl.youtube_dl_path(yt_dlp_path);
 
         if options.extract_audio {
             youtube_dl.extract_audio(true);
@@ -88,7 +85,7 @@ impl YtDlp {
                 .extra_arg(path.as_str());
         }
 
-        youtube_dl.run_async().await?;
+        youtube_dl.download_to_async(&dir).await?;
 
         let mut iterator = fs::read_dir(dir).await?;
         let entry = iterator.next_entry().await?;

@@ -174,7 +174,8 @@ function Progress() {
               of the compilation finished
             </p>
             <p>
-              Estimated time remaining: <strong>{Math.round(eta)} seconds</strong>
+              Estimated time remaining:{" "}
+              <strong>{Math.round(eta)} seconds</strong>
             </p>
             <p>{progress.message}</p>
           </section>

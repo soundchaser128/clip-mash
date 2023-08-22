@@ -423,10 +423,12 @@ impl PageParameters {
             .unwrap_or(Self::DEFAULT_PAGE)
     }
 
+    #[allow(unused)]
     pub fn size(&self) -> i64 {
         self.size.map(|s| s as i64).unwrap_or(Self::DEFAULT_SIZE)
     }
 
+    #[allow(unused)]
     pub fn page(&self) -> i64 {
         self.page.map(|p| p as i64).unwrap_or(Self::DEFAULT_PAGE)
     }
@@ -490,6 +492,7 @@ pub enum StrokeType {
 }
 
 impl StrokeType {
+    #[allow(unused)]
     pub fn initial_acceleration(&self) -> Option<f32> {
         match self {
             Self::Accelerate {

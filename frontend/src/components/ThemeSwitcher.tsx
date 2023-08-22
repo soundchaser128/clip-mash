@@ -21,7 +21,7 @@ const ThemeSwitcher = () => {
 
   return (
     <button
-      className="btn shadow-lg btn-circle absolute bottom-6 right-6"
+      className="btn btn-circle btn-md fixed left-4 bottom-4 shadow-lg"
       onClick={toggleTheme}
     >
       {theme === "clip-mash-dark" ? (

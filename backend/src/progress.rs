@@ -13,15 +13,17 @@ pub struct ProgressTracker {
     work_done: f64,
     started_at: Instant,
     message: String,
+    video_id: String,
 }
 
 impl ProgressTracker {
-    pub fn new(work_todo: f64) -> Self {
+    pub fn new(video_id: String, work_todo: f64) -> Self {
         ProgressTracker {
             work_done: 0.0,
             started_at: Instant::now(),
             work_total: work_todo,
             message: String::new(),
+            video_id,
         }
     }
 
@@ -53,11 +55,12 @@ impl ProgressTracker {
         Progress {
             items_finished: self.work_done,
             items_total: self.work_total,
-            eta_seconds: self.eta().as_secs_f64(),
+            eta_seconds: Some(self.eta().as_secs_f64()),
             done: self.work_total != 0.0
                 && (approx_eq!(f64, self.work_done, self.work_total, epsilon = 0.01)
                     || self.work_done >= self.work_total),
             message: self.message.clone(),
+            video_id: self.video_id.clone(),
         }
     }
 }
@@ -73,12 +76,12 @@ mod test {
 
     #[test]
     fn test_progress_tracker_eta() {
-        let mut tracker = ProgressTracker::new(100.0);
+        let mut tracker = ProgressTracker::new("1234".into(), 100.0);
         tracker.inc_work_done_by(10.0, "");
         MockClock::advance(Duration::from_secs(1));
         let progress = tracker.progress();
         assert_eq!(10.0, progress.items_finished);
-        assert_eq!(9.0, progress.eta_seconds);
+        assert_eq!(9.0, progress.eta_seconds.unwrap());
 
         MockClock::advance(Duration::from_secs(2));
         tracker.inc_work_done_by(10.0, "");

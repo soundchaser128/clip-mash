@@ -15,6 +15,7 @@ use futures::FutureExt;
 use serde::{Deserialize, Serialize};
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
+use tracing::span::Id;
 use tracing::{debug, error, info};
 use url::Url;
 use utoipa::IntoParams;
@@ -121,17 +122,22 @@ pub async fn create_video(
 }
 
 #[axum::debug_handler]
-pub async fn get_progress_stream() -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
-    let stream = futures::StreamExt::flat_map(stream::repeat_with(generator::get_progress), |f| {
-        f.into_stream()
-    });
-    let stream = stream
-        .take_while(|p| p.is_some())
-        .filter_map(|o| o)
-        .map(|p| Event::default().json_data(p))
-        .throttle(Duration::from_millis(250));
+pub async fn get_progress_stream(
+    Path(id): Path<String>,
+    state: State<Arc<AppState>>,
+) -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
+    Sse::new(stream::empty()).keep_alive(KeepAlive::default())
+    // let stream = futures::StreamExt::flat_map(
+    //     stream::repeat_with(|| state.database.get_progress(&id)),
+    //     |f| f.into_stream(),
+    // );
+    // let stream = stream
+    //     .take_while(|p| p.ok(())
+    //     .filter_map(|o| o)
+    //     .map(|p| Event::default().json_data(p))
+    //     .throttle(Duration::from_millis(250));
 
-    Sse::new(stream).keep_alive(KeepAlive::default())
+    // Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
 #[utoipa::path(
@@ -142,8 +148,9 @@ pub async fn get_progress_stream() -> Sse<impl Stream<Item = Result<Event, serde
     )
 )]
 #[axum::debug_handler]
-pub async fn get_progress_info() -> Json<Option<Progress>> {
-    let progress = generator::get_progress().await;
+pub async fn get_progress_info(Path(id): Path<String>, state: State<Arc<AppState>>) -> Json<Option<Progress>> {
+    // let progress = generator::get_progress(&id).await;
+    let progress = state.database.get_progress(&id).await?;
     Json(progress)
 }
 

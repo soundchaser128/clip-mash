@@ -1,7 +1,6 @@
 use std::ffi::OsStr;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use futures::lock::Mutex;
 use itertools::Itertools;
 use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
@@ -18,10 +17,6 @@ use crate::server::types::{
 use crate::service::MarkerInfo;
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
 use crate::Result;
-
-lazy_static::lazy_static! {
-    static ref PROGRESS: Mutex<Option<ProgressTracker>> = Default::default();
-}
 
 #[derive(Debug)]
 pub struct CompilationOptions {
@@ -64,11 +59,6 @@ pub fn find_stream_url(marker: &Marker) -> &str {
         MarkerInfo::Stash { marker } => find_stash_stream_url(marker),
         MarkerInfo::LocalFile { marker } => &marker.file_path,
     }
-}
-
-pub async fn get_progress() -> Option<Progress> {
-    let locked = PROGRESS.lock().await;
-    locked.as_ref().map(|p| p.progress())
 }
 
 fn get_clip_file_name(
@@ -211,21 +201,24 @@ impl CompilationGenerator {
     }
 
     async fn initialize_progress(&self, total_items: f64) {
-        let mut progress = PROGRESS.lock().await;
-        progress.replace(ProgressTracker::new(total_items));
+        // let mut progress = PROGRESS.lock().await;
+        // progress.replace(ProgressTracker::new(total_items));
+        todo!()
     }
 
     async fn increase_progress(&self, seconds: f64, message: &str) {
-        let mut progress = PROGRESS.lock().await;
-        if let Some(progress) = progress.as_mut() {
-            progress.inc_work_done_by(seconds, message);
-        }
+        // let mut progress = PROGRESS.lock().await;
+        // if let Some(progress) = progress.as_mut() {
+        //     progress.inc_work_done_by(seconds, message);
+        // }
+        todo!()
     }
 
     async fn reset_progress(&self) {
-        let mut progress = PROGRESS.lock().await;
-        progress.take();
-        info!("reset progress to default");
+        // let mut progress = PROGRESS.lock().await;
+        // progress.take();
+        // info!("reset progress to default");
+        todo!()
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {

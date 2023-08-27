@@ -8,7 +8,9 @@ use sqlx::{FromRow, SqlitePool};
 use tokio::task::spawn_blocking;
 use tracing::{info, warn};
 
-use crate::server::types::{Beats, CreateMarker, ListVideoDto, PageParameters, UpdateMarker};
+use crate::server::types::{
+    Beats, CreateMarker, ListVideoDto, PageParameters, Progress, UpdateMarker,
+};
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::music;
 use crate::Result;
@@ -679,6 +681,53 @@ impl Database {
             "UPDATE markers SET marker_preview_image = $1 WHERE rowid = $2",
             preview_image,
             id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn get_progress(&self, video_id: &str) -> Result<Progress> {
+        sqlx::query_as!(
+            Progress,
+            "SELECT * FROM progress WHERE video_id = $1",
+            video_id
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(From::from)
+    }
+
+    pub async fn insert_progress(
+        &self,
+        video_id: &str,
+        items_total: f64,
+        message: &str,
+    ) -> Result<()> {
+        sqlx::query!(
+            "INSERT INTO progress (video_id, items_total, items_finished, message, done)
+             VALUES ($1, $2, 0, $3, false)",
+            video_id,
+            items_total,
+            message
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn update_progress(
+        &self,
+        video_id: &str,
+        progress: f64,
+        message: &str,
+    ) -> Result<()> {
+        sqlx::query!(
+            "UPDATE progress SET items_finished = $1, message = $2 WHERE video_id = $3",
+            progress,
+            message,
+            video_id,
         )
         .execute(&self.pool)
         .await?;

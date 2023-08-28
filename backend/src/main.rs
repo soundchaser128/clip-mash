@@ -123,7 +123,10 @@ async fn main() -> Result<()> {
             "/progress/:id/stream",
             get(handlers::common::get_progress_stream),
         )
-        .route("/progress/:id/info", get(handlers::common::get_progress_info))
+        .route(
+            "/progress/:id/info",
+            get(handlers::common::get_progress_info),
+        )
         .route(
             "/finished-videos",
             get(handlers::common::list_finished_videos),

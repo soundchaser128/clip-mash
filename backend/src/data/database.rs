@@ -1,6 +1,7 @@
 use std::str::FromStr;
+use std::time::Duration;
 
-use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
+use futures::{future, Stream, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
@@ -688,13 +689,14 @@ impl Database {
         Ok(())
     }
 
-    pub async fn get_progress(&self, video_id: &str) -> Result<Progress> {
+    pub async fn get_progress(&self, video_id: impl Into<String>) -> Result<Option<Progress>> {
+        let video_id = video_id.into();
         sqlx::query_as!(
             Progress,
             "SELECT * FROM progress WHERE video_id = $1",
             video_id
         )
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
         .map_err(From::from)
     }

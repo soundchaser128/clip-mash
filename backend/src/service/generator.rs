@@ -1,4 +1,5 @@
 use std::ffi::OsStr;
+use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
@@ -10,6 +11,7 @@ use super::directories::Directories;
 use super::Marker;
 use crate::data::database::{Database, DbSong};
 use crate::data::stash_api::StashMarker;
+use crate::helpers::estimator::Estimator;
 use crate::server::types::{
     Clip, EncodingEffort, VideoCodec, VideoId, VideoQuality, VideoResolution,
 };
@@ -213,9 +215,15 @@ impl CompilationGenerator {
         Ok(())
     }
 
-    async fn increase_progress(&self, video_id: &str, seconds: f64, message: &str) -> Result<()> {
+    async fn increase_progress(
+        &self,
+        video_id: &str,
+        seconds: f64,
+        eta: f64,
+        message: &str,
+    ) -> Result<()> {
         self.database
-            .update_progress(video_id, seconds, message)
+            .update_progress(video_id, seconds, eta, message)
             .await?;
         Ok(())
     }
@@ -226,6 +234,7 @@ impl CompilationGenerator {
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
+        let mut estimator = Estimator::new(Instant::now());
         let clips = &options.clips;
         let total_duration = clips.iter().map(|c| c.duration()).sum();
         self.initialize_progress(&options.video_id, total_duration)
@@ -235,6 +244,7 @@ impl CompilationGenerator {
 
         let total = clips.len();
         let mut paths = vec![];
+        let mut completed = 0.0;
         for (index, clip) in clips.into_iter().enumerate() {
             let Clip {
                 range: (start, end),
@@ -279,7 +289,13 @@ impl CompilationGenerator {
                 format_duration(*start),
                 format_duration(*end)
             );
-            self.increase_progress(&options.video_id, clip.duration(), &message)
+            completed += clip.duration();
+            estimator.record(completed as u64, Instant::now());
+
+            let steps_per_second = estimator.steps_per_second(Instant::now());
+            let eta = (total_duration - completed) / steps_per_second;
+
+            self.increase_progress(&options.video_id, clip.duration(), eta, &message)
                 .await?;
             paths.push(out_file);
         }
@@ -323,7 +339,7 @@ impl CompilationGenerator {
             return commandline_error(self.ffmpeg_path.as_str(), output);
         }
 
-        self.increase_progress(video_id, 1.0, "Stitching together songs")
+        self.increase_progress(video_id, 1.0, 0.0, "Stitching together songs")
             .await?;
 
         Ok(destination)
@@ -412,7 +428,7 @@ impl CompilationGenerator {
         self.ffmpeg(args).await?;
 
         info!("finished assembling video, result at {destination}");
-        self.increase_progress(&options.video_id, 1.0, "Compiling clips together")
+        self.increase_progress(&options.video_id, 1.0, 0.0, "Compiling clips together")
             .await?;
         self.finish_progress(&options.video_id).await?;
         Ok(destination)

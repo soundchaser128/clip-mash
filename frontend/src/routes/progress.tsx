@@ -15,27 +15,6 @@ import {Link} from "react-router-dom"
 import clsx from "clsx"
 import ExternalLink from "../components/ExternalLink"
 
-class RingBuffer<T> {
-  buffer: T[]
-  size: number
-
-  constructor(size: number) {
-    this.buffer = []
-    this.size = size
-  }
-
-  get(index: number) {
-    return this.buffer[index]
-  }
-
-  push(item: T): RingBuffer<T> {
-    const buffer = [item, ...this.buffer].slice(0, this.size)
-    const ringBuffer = new RingBuffer<T>(this.size)
-    ringBuffer.buffer = buffer
-    return ringBuffer
-  }
-}
-
 type CreateVideoBody = Omit<FormState, "songs"> & {
   songIds: number[]
 }
@@ -43,9 +22,7 @@ type CreateVideoBody = Omit<FormState, "songs"> & {
 function Progress() {
   const {state, actions} = useStateMachine({updateForm})
   const [progress, setProgress] = useState<Progress>()
-  const [times, setTimes] = useState<RingBuffer<number>>(new RingBuffer(5))
 
-  const eta = times.buffer.reduce((sum, time) => sum + time, 0) / times.size
   const [finished, setFinished] = useState(false)
   const [finalFileName, setFinalFileName] = useState("")
 
@@ -64,7 +41,6 @@ function Progress() {
       sendNotification("Success", "Video generation finished!")
     }
     setProgress(data)
-    setTimes((buf) => buf.push(data.etaSeconds))
   }
 
   const openEventSource = () => {
@@ -177,7 +153,7 @@ function Progress() {
             </p>
             <p>
               Estimated time remaining:{" "}
-              <strong>{Math.round(eta)} seconds</strong>
+              <strong>{Math.round(progress.etaSeconds)} seconds</strong>
             </p>
             <p>{progress.message}</p>
           </section>

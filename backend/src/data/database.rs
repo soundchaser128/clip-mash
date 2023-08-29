@@ -722,12 +722,14 @@ impl Database {
         &self,
         video_id: &str,
         progress_inc: f64,
+        eta: f64,
         message: &str,
     ) -> Result<()> {
         sqlx::query!(
-            "UPDATE progress SET items_finished = items_finished + $1, message = $2 WHERE video_id = $3",
+            "UPDATE progress SET items_finished = items_finished + $1, message = $2, eta_seconds = $3 WHERE video_id = $4",
             progress_inc,
             message,
+            eta,
             video_id,
         )
         .execute(&self.pool)

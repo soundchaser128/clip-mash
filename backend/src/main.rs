@@ -19,9 +19,11 @@ use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
 
 mod data;
+mod helpers;
 mod server;
 mod service;
-mod util;
+
+pub use helpers::util;
 
 pub type Result<T> = std::result::Result<T, Report>;
 

@@ -362,7 +362,6 @@ dependencies = [
  "sqlx",
  "tar",
  "tokio",
- "tokio-stream",
  "tokio-util",
  "tower",
  "tower-http",

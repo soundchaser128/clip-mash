@@ -124,17 +124,14 @@ pub async fn get_progress_stream(
     State(state): State<Arc<AppState>>,
 ) -> Sse<impl Stream<Item = Result<Event, AppError>>> {
     use async_stream::try_stream;
-    use futures::pin_mut;
 
     let stream = try_stream! {
         let state = state.clone();
-        while let Some(progress) = state.database.get_progress(id).await? {
+        while let Some(progress) = state.database.get_progress(id.clone()).await? {
             yield Event::default().json_data(progress).unwrap();
             tokio::time::sleep(Duration::from_millis(250)).await;
         }
     };
-
-    pin_mut!(stream);
 
     Sse::new(stream).keep_alive(KeepAlive::default())
 }

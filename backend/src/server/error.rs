@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::io;
+use std::{fmt, io};
 
 use axum::response::{IntoResponse, Response};
 use axum::Json;
@@ -7,21 +7,12 @@ use reqwest::StatusCode;
 use serde_json::json;
 use tracing::error;
 
-type StdError = Box<dyn std::error::Error>;
-
 #[derive(Debug)]
 pub enum AppError {
-    Generic(StdError),
     Io(io::Error),
     Report(color_eyre::Report),
     StatusCode(StatusCode),
     Validation(HashMap<&'static str, &'static str>),
-}
-
-impl From<StdError> for AppError {
-    fn from(value: StdError) -> Self {
-        AppError::Generic(value)
-    }
 }
 
 impl From<io::Error> for AppError {
@@ -45,7 +36,6 @@ impl IntoResponse for AppError {
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
         let error_message = match self {
-            AppError::Generic(e) => json!(e.to_string()),
             AppError::Io(e) => json!(format!("io error: {e}")),
             AppError::Report(e) => json!(e.to_string()),
             AppError::StatusCode(s) => json!(s.to_string()),
@@ -59,3 +49,16 @@ impl IntoResponse for AppError {
         (status_code, body).into_response()
     }
 }
+
+impl fmt::Display for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AppError::Io(e) => write!(f, "io error: {}", e),
+            AppError::Report(e) => write!(f, "{}", e),
+            AppError::StatusCode(s) => write!(f, "status code: {}", s),
+            AppError::Validation(map) => write!(f, "validation error: {:?}", map),
+        }
+    }
+}
+
+impl std::error::Error for AppError {}

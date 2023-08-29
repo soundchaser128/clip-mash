@@ -49,13 +49,14 @@ function Progress() {
   const [finished, setFinished] = useState(false)
   const [finalFileName, setFinalFileName] = useState("")
 
-  const fileName = state.data.fileName || `Compilation [${state.data.videoId}].mp4`
+  const fileName =
+    state.data.fileName || `Compilation [${state.data.videoId}].mp4`
   const sendNotification = useNotification()
   const numSongs = state.data.songs?.length || 0
   const interactive = numSongs > 0 || state.data.interactive
   const eventSource = useRef<EventSource>()
   const {videoId} = state.data
-  
+
   const handleProgress = (data: Progress) => {
     if (data.done) {
       setFinished(true)

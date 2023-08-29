@@ -458,6 +458,7 @@ pub struct Progress {
     pub done: bool,
     pub eta_seconds: Option<f64>,
     pub message: String,
+    pub timestamp: String,
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]

@@ -707,8 +707,8 @@ impl Database {
         message: &str,
     ) -> Result<()> {
         sqlx::query!(
-            "INSERT INTO progress (video_id, items_total, items_finished, message, done)
-             VALUES ($1, $2, 0, $3, false)",
+            "INSERT INTO progress (video_id, items_total, items_finished, message, done, timestamp)
+             VALUES ($1, $2, 0, $3, false, CURRENT_TIMESTAMP)",
             video_id,
             items_total,
             message
@@ -746,6 +746,15 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
+        Ok(())
+    }
+
+    pub async fn cleanup_progress(&self) -> Result<()> {
+        sqlx::query!(
+            "DELETE FROM progress WHERE done = true AND timestamp < datetime('now', '-7 day')"
+        )
+        .execute(&self.pool)
+        .await?;
         Ok(())
     }
 }

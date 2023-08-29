@@ -32,6 +32,11 @@
         "name": "eta_seconds",
         "ordinal": 5,
         "type_info": "Float"
+      },
+      {
+        "name": "timestamp",
+        "ordinal": 6,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -43,7 +48,8 @@
       false,
       false,
       false,
-      true
+      true,
+      false
     ]
   },
   "hash": "cd8bc1fcda3d9aaaab18fe0cac0f086603964d6ecaecf23336724ae94ea4548f"

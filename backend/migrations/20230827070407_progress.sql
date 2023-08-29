@@ -5,5 +5,6 @@ CREATE TABLE progress (
     done BOOLEAN NOT NULL,
     "message" VARCHAR NOT NULL,
     eta_seconds DOUBLE PRECISION,
+    "timestamp" VARCHAR NOT NULL,
     PRIMARY KEY (video_id)
 )

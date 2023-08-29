@@ -1,7 +1,6 @@
 use std::str::FromStr;
-use std::time::Duration;
 
-use futures::{future, Stream, StreamExt, TryFutureExt, TryStreamExt};
+use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
@@ -722,14 +721,25 @@ impl Database {
     pub async fn update_progress(
         &self,
         video_id: &str,
-        progress: f64,
+        progress_inc: f64,
         message: &str,
     ) -> Result<()> {
         sqlx::query!(
-            "UPDATE progress SET items_finished = $1, message = $2 WHERE video_id = $3",
-            progress,
+            "UPDATE progress SET items_finished = items_finished + $1, message = $2 WHERE video_id = $3",
+            progress_inc,
             message,
             video_id,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn finish_progress(&self, video_id: &str) -> Result<()> {
+        sqlx::query!(
+            "UPDATE progress SET done = true, message = 'Finished!' WHERE video_id = $1",
+            video_id
         )
         .execute(&self.pool)
         .await?;

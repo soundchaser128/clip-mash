@@ -346,6 +346,7 @@ pub enum EncodingEffort {
 #[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateVideoBody {
+    pub video_id: String,
     pub file_name: String,
     pub clips: Vec<Clip>,
     pub selected_markers: Vec<SelectedMarker>,

@@ -1,5 +1,5 @@
 CREATE TABLE progress (
-    video_id VARCHAR NOT NULL REFERENCES local_videos (id),
+    video_id VARCHAR NOT NULL,
     items_finished DOUBLE PRECISION NOT NULL,
     items_total DOUBLE PRECISION NOT NULL,
     done BOOLEAN NOT NULL,

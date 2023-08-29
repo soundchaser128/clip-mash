@@ -33,7 +33,7 @@ export enum LocalFilesFormStage {
 export type FormState = LocalVideosFormState | StashFormState | InitialFormState
 
 interface CommonFormState {
-  id?: string
+  videoId?: string
   videos?: VideoWithMarkers[]
   recurse?: boolean
   clipOrder?: ClipOrder

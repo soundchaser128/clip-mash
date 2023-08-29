@@ -19,7 +19,6 @@ use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
 
 mod data;
-mod progress;
 mod server;
 mod service;
 mod util;
@@ -64,9 +63,10 @@ async fn main() -> Result<()> {
 
     service::stash_config::init(&directories).await;
 
-    let generator = CompilationGenerator::new(directories.clone(), &ffmpeg_location).await?;
     let database_file = directories.database_file();
     let database = Database::new(database_file.as_str()).await?;
+    let generator =
+        CompilationGenerator::new(directories.clone(), &ffmpeg_location, database.clone()).await?;
     migrations::run_async(
         database.clone(),
         directories.clone(),

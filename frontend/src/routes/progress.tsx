@@ -49,12 +49,13 @@ function Progress() {
   const [finished, setFinished] = useState(false)
   const [finalFileName, setFinalFileName] = useState("")
 
-  const fileName = state.data.fileName || `Compilation [${state.data.id}].mp4`
+  const fileName = state.data.fileName || `Compilation [${state.data.videoId}].mp4`
   const sendNotification = useNotification()
   const numSongs = state.data.songs?.length || 0
   const interactive = numSongs > 0 || state.data.interactive
   const eventSource = useRef<EventSource>()
-
+  const {videoId} = state.data
+  
   const handleProgress = (data: Progress) => {
     if (data.done) {
       setFinished(true)
@@ -66,7 +67,7 @@ function Progress() {
   }
 
   const openEventSource = () => {
-    const es = new EventSource("/api/progress/stream")
+    const es = new EventSource(`/api/progress/${videoId}/stream`)
     es.onmessage = (event) => {
       const data = JSON.parse(event.data) as Progress | null
       data && handleProgress(data)
@@ -75,7 +76,7 @@ function Progress() {
   }
 
   useEffect(() => {
-    fetch("/api/progress/info")
+    fetch(`/api/progress/${videoId}/info`)
       .then((res) => {
         if (res.ok) {
           return res.json()

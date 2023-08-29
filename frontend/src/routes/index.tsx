@@ -14,7 +14,7 @@ export default function InitialRoot() {
   const onNextStage = (mode: VideoSource) => {
     const update = {
       source: mode,
-      id,
+      videoId: id,
       stage:
         mode === "localFile"
           ? LocalFilesFormStage.ListVideos

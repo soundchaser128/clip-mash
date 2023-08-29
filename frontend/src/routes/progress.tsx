@@ -24,7 +24,7 @@ function Progress() {
   const [progress, setProgress] = useState<Progress>()
 
   const [finished, setFinished] = useState(false)
-  const [finalFileName, setFinalFileName] = useState("")
+  const [finalFileName, setFinalFileName] = useState(state.data.finalFileName || "")
 
   const fileName =
     state.data.fileName || `Compilation [${state.data.videoId}].mp4`

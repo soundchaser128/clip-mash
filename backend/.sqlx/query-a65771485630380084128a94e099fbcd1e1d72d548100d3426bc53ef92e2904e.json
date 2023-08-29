@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE progress SET items_finished = items_finished + $1, message = $2, eta_seconds = $3 WHERE video_id = $4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "a65771485630380084128a94e099fbcd1e1d72d548100d3426bc53ef92e2904e"
+}

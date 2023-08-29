@@ -750,6 +750,7 @@ impl Database {
     }
 
     pub async fn cleanup_progress(&self) -> Result<()> {
+        info!("deleting all progress entries older than 7 days");
         sqlx::query!(
             "DELETE FROM progress WHERE done = true AND timestamp < datetime('now', '-7 day')"
         )

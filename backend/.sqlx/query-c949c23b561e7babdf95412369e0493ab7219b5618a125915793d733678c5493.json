@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO progress (video_id, items_total, items_finished, message, done)\n             VALUES ($1, $2, 0, $3, false)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "c949c23b561e7babdf95412369e0493ab7219b5618a125915793d733678c5493"
+}

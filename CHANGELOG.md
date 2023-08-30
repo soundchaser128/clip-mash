@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.15.0
 - feat: Add beat-based funscript generator
 - feat: Allow splitting markers
 - feat: Add OpenAPI docs (WIP)

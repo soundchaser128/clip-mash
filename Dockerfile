@@ -5,27 +5,15 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
+FROM rust:latest AS builder
 WORKDIR /app
-
-FROM chef AS planner
+COPY --from=node /app/dist ./frontend/dist
 COPY . .
-RUN cd /app/backend && cargo chef prepare --recipe-path recipe.json
+RUN cd backend && cargo build --release
 
-FROM chef AS builder 
-COPY --from=planner /app/backend/recipe.json recipe.json
-# Build dependencies - this is the caching Docker layer!
-
-RUN cargo chef cook --release --recipe-path recipe.json
-# Build application
-COPY . .
-COPY --from=node /app/dist /app/frontend/dist
-RUN cargo build --release
-
-# We do not need the Rust toolchain to run the binary!
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
-COPY --from=builder /app/target/release/clip-mash /app
+COPY --from=builder /app/backend/target/release/clip-mash /app
+RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 EXPOSE 5173
-RUN ls -la /app
 CMD ["/app/clip-mash"]

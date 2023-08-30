@@ -24,7 +24,7 @@ RUN cd backend && cargo build --release
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
 COPY --from=builder /app/backend/target/release/clip-mash /app
-RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y nscd libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 EXPOSE 5174
 
 ENV CLIP_MASH_BASE_DIR=/app/data

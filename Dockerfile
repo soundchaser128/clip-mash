@@ -15,5 +15,5 @@ FROM debian:bookworm-slim AS runtime
 WORKDIR /app
 COPY --from=builder /app/backend/target/release/clip-mash /app
 RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
-EXPOSE 5173
-CMD ["/app/clip-mash"]
+EXPOSE 5174
+CMD ["/app/clip-mash", "0.0.0.0"]

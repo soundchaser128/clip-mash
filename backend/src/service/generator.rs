@@ -101,6 +101,7 @@ impl CompilationGenerator {
         database: Database,
     ) -> Result<Self> {
         let ffmpeg_path = ffmpeg_location.ffmpeg();
+        info!("using ffmpeg at {ffmpeg_path}");
         Ok(CompilationGenerator {
             directories,
             ffmpeg_path,
@@ -111,7 +112,7 @@ impl CompilationGenerator {
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {
         if enabled!(Level::DEBUG) {
             let string = args.iter().map(|s| s.as_ref().to_string_lossy()).join(" ");
-            debug!("running command 'ffmpeg {}'", string);
+            debug!("running command '{} {}'", self.ffmpeg_path, string);
         }
 
         let output = Command::new(self.ffmpeg_path.as_str())

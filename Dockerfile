@@ -26,4 +26,12 @@ WORKDIR /app
 COPY --from=builder /app/backend/target/release/clip-mash /app
 RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 EXPOSE 5174
+
+ENV CLIP_MASH_BASE_DIR=/app/data
+ENV TINI_VERSION v0.19.0
+
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
+
 CMD ["/app/clip-mash", "0.0.0.0"]

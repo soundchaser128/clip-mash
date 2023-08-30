@@ -19,19 +19,85 @@ pub enum FolderType {
     Config,
 }
 
+trait DirectorySupplier {
+    fn cache_dir(&self) -> &Utf8Path;
+    fn config_dir(&self) -> &Utf8Path;
+    fn data_dir(&self) -> &Utf8Path;
+}
+
+impl DirectorySupplier for ProjectDirs {
+    fn cache_dir(&self) -> &Utf8Path {
+        Utf8Path::from_path(self.cache_dir()).expect("path must be utf-8")
+    }
+
+    fn config_dir(&self) -> &Utf8Path {
+        Utf8Path::from_path(self.config_dir()).expect("path must be utf-8")
+    }
+
+    fn data_dir(&self) -> &Utf8Path {
+        Utf8Path::from_path(self.data_dir()).expect("path must be utf-8")
+    }
+}
+
+struct EnvDirectorySupplier {
+    cache_dir: Utf8PathBuf,
+    config_dir: Utf8PathBuf,
+    data_dir: Utf8PathBuf,
+}
+
+impl EnvDirectorySupplier {
+    pub fn new(base_dir: String) -> Self {
+        let base_dir = Utf8PathBuf::from(base_dir);
+
+        Self {
+            cache_dir: base_dir.join("cache"),
+            config_dir: base_dir.join("config"),
+            data_dir: base_dir.join("data"),
+        }
+    }
+}
+
+impl DirectorySupplier for EnvDirectorySupplier {
+    fn cache_dir(&self) -> &Utf8Path {
+        &self.cache_dir
+    }
+
+    fn config_dir(&self) -> &Utf8Path {
+        &self.config_dir
+    }
+
+    fn data_dir(&self) -> &Utf8Path {
+        &self.data_dir
+    }
+}
+
 #[derive(Clone)]
 pub struct Directories {
-    dirs: Arc<ProjectDirs>,
+    dirs: Arc<Box<dyn DirectorySupplier + 'static + Send + Sync>>,
 }
+
+const ENV_VAR: &'static str = "CLIP_MASH_BASE_DIR";
 
 impl Directories {
     pub fn new() -> Result<Self> {
-        let dirs = ProjectDirs::from("xyz", "soundchaser128", "stash-compilation-maker")
-            .expect("could not determine config path");
+        let dirs: Box<dyn DirectorySupplier + Send + Sync> = match std::env::var(ENV_VAR) {
+            Ok(value) => {
+                info!(
+                    "using base directory from environment variable {}: {}",
+                    ENV_VAR, value
+                );
+                Box::new(EnvDirectorySupplier::new(value))
+            }
+            Err(_) => Box::new(
+                ProjectDirs::from("xyz", "soundchaser128", "stash-compilation-maker")
+                    .expect("could not determine config path"),
+            ),
+        };
 
         for directory in &[dirs.config_dir(), dirs.cache_dir(), dirs.data_dir()] {
             fs::create_dir_all(directory)?;
         }
+
         let dirs = Directories {
             dirs: Arc::new(dirs),
         };
@@ -63,15 +129,15 @@ impl Directories {
     }
 
     pub fn config_dir(&self) -> &Utf8Path {
-        Utf8Path::from_path(self.dirs.config_dir()).expect("path must be utf-8")
+        self.dirs.config_dir()
     }
 
     pub fn cache_dir(&self) -> &Utf8Path {
-        Utf8Path::from_path(self.dirs.cache_dir()).expect("path must be utf-8")
+        self.dirs.cache_dir()
     }
 
     pub fn data_dir(&self) -> &Utf8Path {
-        Utf8Path::from_path(self.dirs.data_dir()).expect("path must be utf-8")
+        self.dirs.data_dir()
     }
 
     pub fn preview_image_dir(&self) -> Utf8PathBuf {

@@ -10,10 +10,8 @@ use axum::Json;
 use camino::Utf8PathBuf;
 use color_eyre::eyre::eyre;
 use color_eyre::Report;
-use futures::stream::{self, Stream};
-use futures::FutureExt;
+use futures::stream::Stream;
 use serde::{Deserialize, Serialize};
-use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
 use url::Url;
@@ -29,7 +27,6 @@ use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::directories::FolderType;
 use crate::service::funscript::{self, FunScript, ScriptBuilder};
-use crate::service::generator;
 use crate::service::music::{self, MusicDownloadService};
 use crate::service::stash_config::Config;
 use crate::util::{expect_file_name, generate_id};
@@ -121,15 +118,19 @@ pub async fn create_video(
 }
 
 #[axum::debug_handler]
-pub async fn get_progress_stream() -> Sse<impl Stream<Item = Result<Event, serde_json::Error>>> {
-    let stream = futures::StreamExt::flat_map(stream::repeat_with(generator::get_progress), |f| {
-        f.into_stream()
-    });
-    let stream = stream
-        .take_while(|p| p.is_some())
-        .filter_map(|o| o)
-        .map(|p| Event::default().json_data(p))
-        .throttle(Duration::from_millis(250));
+pub async fn get_progress_stream(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> Sse<impl Stream<Item = Result<Event, AppError>>> {
+    use async_stream::try_stream;
+
+    let stream = try_stream! {
+        let state = state.clone();
+        while let Some(progress) = state.database.get_progress(id.clone()).await? {
+            yield Event::default().json_data(progress).unwrap();
+            tokio::time::sleep(Duration::from_millis(250)).await;
+        }
+    };
 
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
@@ -142,9 +143,12 @@ pub async fn get_progress_stream() -> Sse<impl Stream<Item = Result<Event, serde
     )
 )]
 #[axum::debug_handler]
-pub async fn get_progress_info() -> Json<Option<Progress>> {
-    let progress = generator::get_progress().await;
-    Json(progress)
+pub async fn get_progress_info(
+    Path(id): Path<String>,
+    state: State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let progress = state.database.get_progress(&id).await?;
+    Ok(Json(progress))
 }
 
 #[derive(Deserialize, IntoParams)]

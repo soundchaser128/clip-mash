@@ -15,27 +15,6 @@ import {Link} from "react-router-dom"
 import clsx from "clsx"
 import ExternalLink from "../components/ExternalLink"
 
-class RingBuffer<T> {
-  buffer: T[]
-  size: number
-
-  constructor(size: number) {
-    this.buffer = []
-    this.size = size
-  }
-
-  get(index: number) {
-    return this.buffer[index]
-  }
-
-  push(item: T): RingBuffer<T> {
-    const buffer = [item, ...this.buffer].slice(0, this.size)
-    const ringBuffer = new RingBuffer<T>(this.size)
-    ringBuffer.buffer = buffer
-    return ringBuffer
-  }
-}
-
 type CreateVideoBody = Omit<FormState, "songs"> & {
   songIds: number[]
 }
@@ -43,17 +22,19 @@ type CreateVideoBody = Omit<FormState, "songs"> & {
 function Progress() {
   const {state, actions} = useStateMachine({updateForm})
   const [progress, setProgress] = useState<Progress>()
-  const [times, setTimes] = useState<RingBuffer<number>>(new RingBuffer(5))
 
-  const eta = times.buffer.reduce((sum, time) => sum + time, 0) / times.size
   const [finished, setFinished] = useState(false)
-  const [finalFileName, setFinalFileName] = useState("")
+  const [finalFileName, setFinalFileName] = useState(
+    state.data.finalFileName || "",
+  )
 
-  const fileName = state.data.fileName || `Compilation [${state.data.id}].mp4`
+  const fileName =
+    state.data.fileName || `Compilation [${state.data.videoId}].mp4`
   const sendNotification = useNotification()
   const numSongs = state.data.songs?.length || 0
   const interactive = numSongs > 0 || state.data.interactive
   const eventSource = useRef<EventSource>()
+  const {videoId} = state.data
 
   const handleProgress = (data: Progress) => {
     if (data.done) {
@@ -62,11 +43,10 @@ function Progress() {
       sendNotification("Success", "Video generation finished!")
     }
     setProgress(data)
-    setTimes((buf) => buf.push(data.etaSeconds))
   }
 
   const openEventSource = () => {
-    const es = new EventSource("/api/progress/stream")
+    const es = new EventSource(`/api/progress/${videoId}/stream`)
     es.onmessage = (event) => {
       const data = JSON.parse(event.data) as Progress | null
       data && handleProgress(data)
@@ -75,7 +55,7 @@ function Progress() {
   }
 
   useEffect(() => {
-    fetch("/api/progress/info")
+    fetch(`/api/progress/${videoId}/info`)
       .then((res) => {
         if (res.ok) {
           return res.json()
@@ -175,7 +155,7 @@ function Progress() {
             </p>
             <p>
               Estimated time remaining:{" "}
-              <strong>{Math.round(eta)} seconds</strong>
+              <strong>{Math.round(progress.etaSeconds)} seconds</strong>
             </p>
             <p>{progress.message}</p>
           </section>

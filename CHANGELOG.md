@@ -9,6 +9,9 @@
 - chore: Removed typescript interface generation, to be replaced by OpenAPI-generated client (WIP)
 - fix: A song's detected beats weren't being persisted to the database in some cases
 - feat: Add dark mode
+- feat: Added Dockerfile and published generated image to `ghcr.io/soundchaser128/clip-mash`
+- refactor: Change progress endpoints to require the ID of the generated video and store the progress in the database
+- feat: Improve ETA calculations
 
 ## 0.14.0
 - feat: Auotmated marker creation by detecting scene changes

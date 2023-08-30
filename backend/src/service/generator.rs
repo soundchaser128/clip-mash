@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
+use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use futures::lock::Mutex;
 use itertools::Itertools;
 use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
@@ -9,22 +9,19 @@ use tracing::{debug, enabled, info, Level};
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::Marker;
-use crate::data::database::DbSong;
+use crate::data::database::{Database, DbSong};
 use crate::data::stash_api::StashMarker;
-use crate::progress::ProgressTracker;
+use crate::helpers::estimator::Estimator;
 use crate::server::types::{
-    Clip, EncodingEffort, Progress, VideoCodec, VideoId, VideoQuality, VideoResolution,
+    Clip, EncodingEffort, VideoCodec, VideoId, VideoQuality, VideoResolution,
 };
 use crate::service::MarkerInfo;
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
 use crate::Result;
 
-lazy_static::lazy_static! {
-    static ref PROGRESS: Mutex<Option<ProgressTracker>> = Default::default();
-}
-
 #[derive(Debug)]
 pub struct CompilationOptions {
+    pub video_id: String,
     pub clips: Vec<Clip>,
     pub markers: Vec<Marker>,
     pub output_resolution: VideoResolution,
@@ -66,11 +63,6 @@ pub fn find_stream_url(marker: &Marker) -> &str {
     }
 }
 
-pub async fn get_progress() -> Option<Progress> {
-    let locked = PROGRESS.lock().await;
-    locked.as_ref().map(|p| p.progress())
-}
-
 fn get_clip_file_name(
     video_id: &VideoId,
     start: f64,
@@ -99,14 +91,20 @@ struct CreateClip<'a> {
 pub struct CompilationGenerator {
     directories: Directories,
     ffmpeg_path: Utf8PathBuf,
+    database: Database,
 }
 
 impl CompilationGenerator {
-    pub async fn new(directories: Directories, ffmpeg_location: &FfmpegLocation) -> Result<Self> {
+    pub async fn new(
+        directories: Directories,
+        ffmpeg_location: &FfmpegLocation,
+        database: Database,
+    ) -> Result<Self> {
         let ffmpeg_path = ffmpeg_location.ffmpeg();
         Ok(CompilationGenerator {
             directories,
             ffmpeg_path,
+            database,
         })
     }
 
@@ -210,34 +208,43 @@ impl CompilationGenerator {
         self.ffmpeg(args).await
     }
 
-    async fn initialize_progress(&self, total_items: f64) {
-        let mut progress = PROGRESS.lock().await;
-        progress.replace(ProgressTracker::new(total_items));
+    async fn initialize_progress(&self, video_id: &str, total_items: f64) -> Result<()> {
+        self.database
+            .insert_progress(video_id, total_items, "Starting...")
+            .await?;
+        Ok(())
     }
 
-    async fn increase_progress(&self, seconds: f64, message: &str) {
-        let mut progress = PROGRESS.lock().await;
-        if let Some(progress) = progress.as_mut() {
-            progress.inc_work_done_by(seconds, message);
-        }
+    async fn increase_progress(
+        &self,
+        video_id: &str,
+        seconds: f64,
+        eta: f64,
+        message: &str,
+    ) -> Result<()> {
+        self.database
+            .update_progress(video_id, seconds, eta, message)
+            .await?;
+        Ok(())
     }
 
-    async fn reset_progress(&self) {
-        let mut progress = PROGRESS.lock().await;
-        progress.take();
-        info!("reset progress to default");
+    async fn finish_progress(&self, video_id: &str) -> Result<()> {
+        self.database.finish_progress(video_id).await?;
+        Ok(())
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
+        let mut estimator = Estimator::new(Instant::now());
         let clips = &options.clips;
-        self.reset_progress().await;
         let total_duration = clips.iter().map(|c| c.duration()).sum();
-        self.initialize_progress(total_duration).await;
+        self.initialize_progress(&options.video_id, total_duration)
+            .await?;
         let video_dir = self.directories.temp_video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
 
         let total = clips.len();
         let mut paths = vec![];
+        let mut completed = 0.0;
         for (index, clip) in clips.into_iter().enumerate() {
             let Clip {
                 range: (start, end),
@@ -282,14 +289,21 @@ impl CompilationGenerator {
                 format_duration(*start),
                 format_duration(*end)
             );
-            self.increase_progress(clip.duration(), &message).await;
+            completed += clip.duration();
+            estimator.record(completed as u64, Instant::now());
+
+            let steps_per_second = estimator.steps_per_second(Instant::now());
+            let eta = (total_duration - completed) / steps_per_second;
+
+            self.increase_progress(&options.video_id, clip.duration(), eta, &message)
+                .await?;
             paths.push(out_file);
         }
 
         Ok(paths)
     }
 
-    async fn concat_songs(&self, songs: &[DbSong]) -> Result<Utf8PathBuf> {
+    async fn concat_songs(&self, songs: &[DbSong], video_id: &str) -> Result<Utf8PathBuf> {
         let file_name = format!("{}.aac", generate_id());
         let music_dir = self.directories.music_dir();
 
@@ -325,8 +339,8 @@ impl CompilationGenerator {
             return commandline_error(self.ffmpeg_path.as_str(), output);
         }
 
-        self.increase_progress(1.0, "Stitching together songs")
-            .await;
+        self.increase_progress(video_id, 1.0, 0.0, "Stitching together songs")
+            .await?;
 
         Ok(destination)
     }
@@ -374,7 +388,7 @@ impl CompilationGenerator {
             .collect()
         } else {
             let audio_path = if options.songs.len() >= 2 {
-                self.concat_songs(&options.songs).await?
+                self.concat_songs(&options.songs, &options.video_id).await?
             } else {
                 options.songs[0].file_path.clone().into()
             };
@@ -414,9 +428,9 @@ impl CompilationGenerator {
         self.ffmpeg(args).await?;
 
         info!("finished assembling video, result at {destination}");
-        self.increase_progress(1.0, "Compiling clips together")
-            .await;
-        self.reset_progress().await;
+        self.increase_progress(&options.video_id, 1.0, 0.0, "Compiling clips together")
+            .await?;
+        self.finish_progress(&options.video_id).await?;
         Ok(destination)
     }
 }

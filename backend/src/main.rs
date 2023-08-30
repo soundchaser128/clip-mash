@@ -19,10 +19,11 @@ use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
 
 mod data;
-mod progress;
+mod helpers;
 mod server;
 mod service;
-mod util;
+
+pub use helpers::util;
 
 pub type Result<T> = std::result::Result<T, Report>;
 
@@ -64,9 +65,10 @@ async fn main() -> Result<()> {
 
     service::stash_config::init(&directories).await;
 
-    let generator = CompilationGenerator::new(directories.clone(), &ffmpeg_location).await?;
     let database_file = directories.database_file();
     let database = Database::new(database_file.as_str()).await?;
+    let generator =
+        CompilationGenerator::new(directories.clone(), &ffmpeg_location, database.clone()).await?;
     migrations::run_async(
         database.clone(),
         directories.clone(),
@@ -120,10 +122,13 @@ async fn main() -> Result<()> {
         .route("/clips", post(handlers::common::fetch_clips))
         .route("/create", post(handlers::common::create_video))
         .route(
-            "/progress/stream",
+            "/progress/:id/stream",
             get(handlers::common::get_progress_stream),
         )
-        .route("/progress/info", get(handlers::common::get_progress_info))
+        .route(
+            "/progress/:id/info",
+            get(handlers::common::get_progress_info),
+        )
         .route(
             "/finished-videos",
             get(handlers::common::list_finished_videos),

@@ -39,6 +39,7 @@ impl Migrator {
     }
 
     async fn set_video_durations(&self) -> Result<()> {
+        info!("setting video durations if necessary");
         let videos = self
             .database
             .get_videos(AllVideosFilter::NoVideoDuration)
@@ -61,6 +62,7 @@ impl Migrator {
     }
 
     async fn generate_video_preview_images(&self) -> Result<()> {
+        info!("generating video preview images if necessary");
         let preview_generator =
             PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
         let videos = self
@@ -88,6 +90,7 @@ impl Migrator {
     }
 
     async fn generate_marker_preview_images(&self) -> Result<()> {
+        info!("generating marker preview images if necessary");
         let preview_generator =
             PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
         let markers = self.database.get_markers_without_preview_images().await?;
@@ -114,15 +117,18 @@ impl Migrator {
     }
 
     pub async fn run(&self) -> Result<()> {
-        info!("running migrations if necessary...");
+        info!("running migrations");
         let start = Instant::now();
 
-        self.database
-            .generate_all_beats(self.ffmpeg_location.clone())
-            .await?;
-        self.set_video_durations().await?;
-        self.generate_video_preview_images().await?;
-        self.generate_marker_preview_images().await?;
+        futures::try_join!(
+            self.database
+                .generate_all_beats(self.ffmpeg_location.clone()),
+            self.set_video_durations(),
+            self.generate_video_preview_images(),
+            self.generate_marker_preview_images(),
+            self.database.cleanup_progress(),
+        )?;
+
         let elapsed = start.elapsed();
         info!("running migrations took {elapsed:?}");
 

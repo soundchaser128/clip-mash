@@ -63,7 +63,15 @@ pub async fn get_video_preview(
 
     let video = state.database.get_video(&id).await?;
     if let Some(preview_image) = video.and_then(|v| v.video_preview_image) {
-        let result = ServeFile::new(preview_image).oneshot(request).await;
+        let mut result = ServeFile::new(preview_image)
+            .oneshot(request)
+            .await
+            .unwrap();
+        result.headers_mut().insert(
+            "Cache-Control",
+            "public, max-age=31536000, immutable".parse().unwrap(),
+        );
+
         Ok(result)
     } else {
         Err(AppError::StatusCode(StatusCode::NOT_FOUND))

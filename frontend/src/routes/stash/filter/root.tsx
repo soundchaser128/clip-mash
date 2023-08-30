@@ -60,7 +60,7 @@ function SelectCriteria() {
       stage: FormStage.SelectMarkers,
       selectedIds: selection,
       selectedMarkers: undefined,
-      fileName: `${fileName} [${state.data.id}].mp4`,
+      fileName: `${fileName} [${state.data.videoId!}].mp4`,
       includeAll,
     })
     navigate("/stash/markers")

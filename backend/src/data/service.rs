@@ -121,6 +121,7 @@ impl DataService {
         let songs = self.resolve_songs(&body.song_ids).await?;
 
         Ok(CompilationOptions {
+            video_id: body.video_id,
             clips: body.clips,
             markers: self.convert_selected_markers(body.selected_markers).await?,
             output_resolution: body.output_resolution,

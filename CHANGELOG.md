@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 0.15.1
+- fix(docker): ffmpeg wasn't working when the input source was a URL that had to be DNS resolved
+
 ## 0.15.0
 - feat: Add beat-based funscript generator
 - feat: Allow splitting markers

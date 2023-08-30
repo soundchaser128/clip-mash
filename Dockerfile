@@ -5,10 +5,20 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-FROM rust:latest AS builder
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
 WORKDIR /app
-COPY --from=node /app/dist ./frontend/dist
+
+FROM chef AS planner
 COPY . .
+RUN cd backend && cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder 
+COPY --from=planner /app/backend/recipe.json ./backend/recipe.json
+# Build dependencies - this is the caching Docker layer!
+RUN cd backend && cargo chef cook --release --recipe-path recipe.json
+# Build application
+COPY . .
+COPY --from=node /app/dist ./frontend/dist
 RUN cd backend && cargo build --release
 
 FROM debian:bookworm-slim AS runtime

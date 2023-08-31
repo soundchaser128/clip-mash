@@ -23,7 +23,7 @@ import Loader from "../../components/Loader"
 import {MarkerDto} from "../../types/types.generated"
 
 const Box: React.FC<{children: React.ReactNode}> = ({children}) => (
-  <div className="flex flex-col bg-slate-100 py-4 px-6 rounded-lg w-2/3">
+  <div className="flex flex-col bg-base-200 py-4 px-6 rounded-lg w-2/3">
     {children}
   </div>
 )

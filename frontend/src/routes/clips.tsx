@@ -330,7 +330,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
       <h2 className="text-xl font-bold">Settings</h2>
       {!isPmv && (
         <>
-          <div className="w-full flex justify-between mb-4">
+          <div className="w-full flex justify-between mb-4 mt-2">
             <div className="btn-group">
               <button
                 disabled={!canUndo}

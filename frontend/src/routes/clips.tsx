@@ -3,6 +3,8 @@ import React, {useMemo, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {updateForm} from "./actions"
 import {
+  HiArrowUturnLeft,
+  HiArrowUturnRight,
   HiBackward,
   HiCheck,
   HiChevronRight,
@@ -10,6 +12,7 @@ import {
   HiForward,
   HiPause,
   HiPlay,
+  HiTrash,
 } from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
@@ -25,6 +28,7 @@ import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
 import {Clip, ClipOrder} from "../types/types.generated"
 import {FormStage} from "../types/form-state"
+import useUndo from "use-undo"
 
 interface ClipState {
   included: boolean
@@ -272,11 +276,25 @@ interface Inputs {
   measureCountRandomEnd: number
 }
 
-const ClipSettingsForm: React.FC<{
+interface SettingsFormProps {
   initialValues: Inputs
   clips: Clip[]
   onRemoveClip: () => void
-}> = ({initialValues, clips, onRemoveClip}) => {
+  onUndo: () => void
+  onRedo: () => void
+  canUndo: boolean
+  canRedo: boolean
+}
+
+const ClipSettingsForm: React.FC<SettingsFormProps> = ({
+  initialValues,
+  clips,
+  onRemoveClip,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
+}) => {
   const {register, handleSubmit, watch} = useForm<Inputs>({
     defaultValues: initialValues,
   })
@@ -313,13 +331,31 @@ const ClipSettingsForm: React.FC<{
       {!isPmv && (
         <>
           <div className="w-full flex justify-between mb-4">
-            <span />
+            <div className="btn-group">
+              <button
+                disabled={!canUndo}
+                onClick={onUndo}
+                type="button"
+                className="btn btn-sm btn-ghost btn-square"
+              >
+                <HiArrowUturnLeft />
+              </button>
+              <button
+                disabled={!canRedo}
+                onClick={onRedo}
+                type="button"
+                className="btn btn-sm btn-ghost btn-square"
+              >
+                <HiArrowUturnRight />
+              </button>
+            </div>
+
             <button
               onClick={onRemoveClip}
               type="button"
-              className="btn btn-error"
+              className="btn btn-sm btn-error"
             >
-              Remove clip
+              <HiTrash />
             </button>
           </div>
           <div className="form-control">
@@ -458,17 +494,19 @@ const ClipSettingsForm: React.FC<{
 }
 
 function PreviewClips() {
-  const loaderData = useLoaderData() as ClipsLoaderData
-  const streams = loaderData.streams
   const {actions, state} = useStateMachine({updateForm})
+  const loaderData = useLoaderData() as ClipsLoaderData
+  const initialClips = state.data.clips || loaderData.clips
+  const streams = loaderData.streams
   const songs = state.data.songs ?? []
-  const [clips, setClips] = useImmer(
-    loaderData.clips.map((clip) => ({clip, included: true})),
+  const [clipsState, {set: setClips, undo, redo, canUndo, canRedo}] = useUndo(
+    initialClips.map((clip) => ({clip, included: true})),
   )
+  const clips = clipsState.present.filter((c) => c.included)
 
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
-  const currentClip = clips.filter((c) => c.included)[currentClipIndex].clip
+  const currentClip = clips[currentClipIndex].clip
   const streamUrl = streams[currentClip.videoId.id]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
   const navigate = useNavigate()
@@ -477,9 +515,10 @@ function PreviewClips() {
   const currentMarker = state.data.selectedMarkers?.find(
     (m) => currentClip.markerId.id === m.id.id,
   )
-  const totalLength = clips
-    .filter((c) => c.included)
-    .reduce((len, {clip}) => len + (clip.range[1] - clip.range[0]), 0)
+  const totalLength = clips.reduce(
+    (len, {clip}) => len + (clip.range[1] - clip.range[0]),
+    0,
+  )
   const [withMusic, setWithMusic] = useState(false)
   const [videoMuted, setVideoMuted] = useState(true)
   const isPmv = state.data.songs && state.data.songs.length >= 1
@@ -488,7 +527,7 @@ function PreviewClips() {
   const onNextStage = () => {
     actions.updateForm({
       stage: FormStage.Wait,
-      clips: clips.filter((c) => c.included).map((c) => c.clip),
+      clips: clips.map((c) => c.clip),
     })
     navigate("/stash/progress")
   }
@@ -526,9 +565,12 @@ function PreviewClips() {
   }
 
   const onRemoveClip = () => {
-    setClips((draft) => {
-      draft[currentClipIndex].included = false
-    })
+    setClips(
+      clips.map(({clip}, i) => ({
+        clip: clip,
+        included: i !== currentClipIndex,
+      })),
+    )
   }
 
   return (
@@ -617,6 +659,10 @@ function PreviewClips() {
                   : 4,
               measureCountType: state.data.cutAfterMeasures?.type || "fixed",
             }}
+            onUndo={undo}
+            onRedo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
           />
 
           <div className="btn-group justify-center">
@@ -673,7 +719,7 @@ function PreviewClips() {
       </div>
 
       <Timeline
-        clips={clips.filter((c) => c.included)}
+        clips={clips}
         currentClipIndex={currentClipIndex}
         setCurrentClipIndex={setCurrentClipIndex}
       />

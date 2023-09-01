@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import React, {useMemo, useState} from "react"
+import React, {useEffect, useMemo, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {updateForm} from "./actions"
 import {
@@ -190,6 +190,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
         className={clsx("btn btn-secondary", className)}
       >
@@ -484,7 +485,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
       <div className="flex w-full justify-between items-center mt-4">
         <WeightsModal clips={clips} />
 
-        <button className="btn btn-primary">
+        <button type="submit" className="btn btn-primary">
           <HiCheck className="mr-2" />
           Apply
         </button>
@@ -494,9 +495,15 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
 }
 
 function PreviewClips() {
+  const revalidator = useRevalidator()
+  const [wasRevalidated, setWasRevalidated] = useState(false)
+
   const {actions, state} = useStateMachine({updateForm})
   const loaderData = useLoaderData() as ClipsLoaderData
-  const initialClips = state.data.clips || loaderData.clips
+  const initialClips = wasRevalidated
+    ? loaderData.clips
+    : state.data.clips || loaderData.clips
+  console.log({wasRevalidated, initialClips})
   const streams = loaderData.streams
   const songs = state.data.songs ?? []
   const [clipsState, {set: setClips, undo, redo, canUndo, canRedo}] = useUndo(
@@ -523,6 +530,12 @@ function PreviewClips() {
   const [videoMuted, setVideoMuted] = useState(true)
   const isPmv = state.data.songs && state.data.songs.length >= 1
   const [songIndex, setSongIndex] = useState(0)
+
+  useEffect(() => {
+    if (revalidator.state === "loading") {
+      setWasRevalidated(true)
+    }
+  }, [revalidator.state])
 
   const onNextStage = () => {
     actions.updateForm({
@@ -667,6 +680,7 @@ function PreviewClips() {
 
           <div className="btn-group justify-center">
             <button
+              type="button"
               className="btn btn-square btn-lg"
               onClick={() => setCurrentClipIndex((i) => i - 1)}
               disabled={currentClipIndex === 0}
@@ -674,6 +688,7 @@ function PreviewClips() {
               <HiBackward />
             </button>
             <button
+              type="button"
               className={clsx(
                 "btn btn-square btn-lg",
                 autoPlay ? "btn-warning" : "btn-success",
@@ -683,6 +698,7 @@ function PreviewClips() {
               {autoPlay ? <HiPause /> : <HiPlay />}
             </button>
             <button
+              type="button"
               className="btn btn-square btn-lg"
               onClick={() => setCurrentClipIndex((i) => i + 1)}
               disabled={currentClipIndex >= clips.length - 1}

@@ -302,7 +302,11 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
   }
 
   if (loading) {
-    return <Loader>Downloading song and detecting beats.</Loader>
+    return (
+      <Loader className="self-center">
+        Downloading song and detecting beats.
+      </Loader>
+    )
   }
 
   return (

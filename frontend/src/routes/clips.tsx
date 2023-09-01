@@ -272,10 +272,11 @@ interface Inputs {
   measureCountRandomEnd: number
 }
 
-const ClipSettingsForm: React.FC<{initialValues: Inputs; clips: Clip[]}> = ({
-  initialValues,
-  clips,
-}) => {
+const ClipSettingsForm: React.FC<{
+  initialValues: Inputs
+  clips: Clip[]
+  onRemoveClip: () => void
+}> = ({initialValues, clips, onRemoveClip}) => {
   const {register, handleSubmit, watch} = useForm<Inputs>({
     defaultValues: initialValues,
   })
@@ -309,9 +310,18 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs; clips: Clip[]}> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
       <h2 className="text-xl font-bold">Settings</h2>
-      <WeightsModal className="my-4" clips={clips} />
       {!isPmv && (
         <>
+          <div className="w-full flex justify-between mb-4">
+            <span />
+            <button
+              onClick={onRemoveClip}
+              type="button"
+              className="btn btn-error"
+            >
+              Remove clip
+            </button>
+          </div>
           <div className="form-control">
             <label className="label cursor-pointer">
               <span className="label-text mr-2">
@@ -435,10 +445,14 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs; clips: Clip[]}> = ({
           {...register("seed")}
         />
       </div>
-      <button className="btn btn-primary self-end mt-4">
-        <HiCheck className="mr-2" />
-        Apply
-      </button>
+      <div className="flex w-full justify-between items-center mt-4">
+        <WeightsModal clips={clips} />
+
+        <button className="btn btn-primary">
+          <HiCheck className="mr-2" />
+          Apply
+        </button>
+      </div>
     </form>
   )
 }
@@ -448,11 +462,13 @@ function PreviewClips() {
   const streams = loaderData.streams
   const {actions, state} = useStateMachine({updateForm})
   const songs = state.data.songs ?? []
-  const clips = loaderData.clips.map((clip) => ({clip, included: true}))
+  const [clips, setClips] = useImmer(
+    loaderData.clips.map((clip) => ({clip, included: true})),
+  )
 
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
-  const currentClip = clips[currentClipIndex].clip
+  const currentClip = clips.filter((c) => c.included)[currentClipIndex].clip
   const streamUrl = streams[currentClip.videoId.id]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
   const navigate = useNavigate()
@@ -461,10 +477,9 @@ function PreviewClips() {
   const currentMarker = state.data.selectedMarkers?.find(
     (m) => currentClip.markerId.id === m.id.id,
   )
-  const totalLength = clips.reduce(
-    (len, {clip}) => len + (clip.range[1] - clip.range[0]),
-    0,
-  )
+  const totalLength = clips
+    .filter((c) => c.included)
+    .reduce((len, {clip}) => len + (clip.range[1] - clip.range[0]), 0)
   const [withMusic, setWithMusic] = useState(false)
   const [videoMuted, setVideoMuted] = useState(true)
   const isPmv = state.data.songs && state.data.songs.length >= 1
@@ -508,6 +523,12 @@ function PreviewClips() {
     }
 
     setAutoPlay(!autoPlay)
+  }
+
+  const onRemoveClip = () => {
+    setClips((draft) => {
+      draft[currentClipIndex].included = false
+    })
   }
 
   return (
@@ -575,6 +596,7 @@ function PreviewClips() {
         <div className="flex flex-col px-4 py-2 w-1/4 bg-base-200 justify-between">
           <ClipSettingsForm
             clips={clips.map((c) => c.clip)}
+            onRemoveClip={onRemoveClip}
             initialValues={{
               clipDuration: state.data.clipDuration || 30,
               clipOrder: state.data.clipOrder || "scene-order",
@@ -651,7 +673,7 @@ function PreviewClips() {
       </div>
 
       <Timeline
-        clips={clips}
+        clips={clips.filter((c) => c.included)}
         currentClipIndex={currentClipIndex}
         setCurrentClipIndex={setCurrentClipIndex}
       />

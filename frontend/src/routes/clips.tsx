@@ -528,8 +528,6 @@ function PreviewClips() {
   const initialClips = wasRevalidated
     ? loaderData.clips
     : state.data.clips || loaderData.clips
-  // FIXME
-  console.log({wasRevalidated, initialClips})
   const streams = loaderData.streams
   const songs = state.data.songs ?? []
   const [clipsState, {set: setClips, undo, redo, canUndo, canRedo}] = useUndo(
@@ -562,6 +560,12 @@ function PreviewClips() {
       setWasRevalidated(true)
     }
   }, [revalidator.state])
+
+  useEffect(() => {
+    if (wasRevalidated && revalidator.state === "idle") {
+      setClips(initialClips.map((clip) => ({clip, included: true})))
+    }
+  }, [initialClips, revalidator.state, setClips, wasRevalidated])
 
   const onNextStage = () => {
     actions.updateForm({

@@ -396,11 +396,13 @@ impl Database {
             video_interactive: marker.interactive,
         };
 
-        self.create_new_marker(new_marker_1).await?;
-        self.create_new_marker(new_marker_2).await?;
+        let rowid = marker.rowid.expect("marker must have rowid");
 
-        self.delete_marker(marker.rowid.expect("marker must have rowid"))
-            .await?;
+        futures::try_join!(
+            self.create_new_marker(new_marker_1),
+            self.create_new_marker(new_marker_2),
+            self.delete_marker(rowid),
+        )?;
 
         let video = self
             .get_video_with_markers(&marker.video_id)

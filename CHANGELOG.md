@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+# 0.16.1
 - fix: add tooltips, don't run onSubmit when shifting clips around
 
 ## 0.16.0

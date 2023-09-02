@@ -17,6 +17,7 @@ import {
 import clsx from "clsx"
 import {useRef} from "react"
 import {
+  clamp,
   formatSeconds,
   getSegmentColor,
   getSegmentTextColor,
@@ -29,6 +30,7 @@ import {useImmer} from "use-immer"
 import {Clip, ClipOrder} from "../types/types.generated"
 import {FormStage} from "../types/form-state"
 import useUndo from "use-undo"
+import {produce} from "immer"
 
 interface ClipState {
   included: boolean
@@ -285,6 +287,9 @@ interface SettingsFormProps {
   onRedo: () => void
   canUndo: boolean
   canRedo: boolean
+  onShiftClips: (direction: "left" | "right") => void
+  canShiftLeft: boolean
+  canShiftRight: boolean
 }
 
 const ClipSettingsForm: React.FC<SettingsFormProps> = ({
@@ -295,6 +300,9 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   onRedo,
   canUndo,
   canRedo,
+  onShiftClips,
+  canShiftLeft,
+  canShiftRight,
 }) => {
   const {register, handleSubmit, watch} = useForm<Inputs>({
     defaultValues: initialValues,
@@ -348,6 +356,23 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
                 className="btn btn-sm btn-ghost btn-square"
               >
                 <HiArrowUturnRight />
+              </button>
+            </div>
+
+            <div className="btn-group">
+              <button
+                disabled={!canShiftLeft}
+                onClick={() => onShiftClips("left")}
+                className="btn btn-sm btn-ghost"
+              >
+                <HiBackward />
+              </button>
+              <button
+                disabled={!canShiftRight}
+                onClick={() => onShiftClips("right")}
+                className="btn btn-sm btn-ghost"
+              >
+                <HiForward />
               </button>
             </div>
 
@@ -503,6 +528,7 @@ function PreviewClips() {
   const initialClips = wasRevalidated
     ? loaderData.clips
     : state.data.clips || loaderData.clips
+  // FIXME
   console.log({wasRevalidated, initialClips})
   const streams = loaderData.streams
   const songs = state.data.songs ?? []
@@ -584,6 +610,19 @@ function PreviewClips() {
         included: i !== currentClipIndex,
       })),
     )
+    setCurrentClipIndex(clamp(currentClipIndex, 0, clips.length - 2))
+  }
+
+  const onShiftClips = (direction: "left" | "right") => {
+    const indexToSwap =
+      direction === "left" ? currentClipIndex - 1 : currentClipIndex + 1
+    const newClips = produce(clips, (draft) => {
+      const temp = draft[currentClipIndex]
+      draft[currentClipIndex] = draft[indexToSwap]
+      draft[indexToSwap] = temp
+    })
+    setClips(newClips)
+    setCurrentClipIndex(indexToSwap)
   }
 
   return (
@@ -676,6 +715,9 @@ function PreviewClips() {
             onRedo={redo}
             canUndo={canUndo}
             canRedo={canRedo}
+            onShiftClips={onShiftClips}
+            canShiftLeft={currentClipIndex > 0}
+            canShiftRight={currentClipIndex < clips.length - 1}
           />
 
           <div className="btn-group justify-center">

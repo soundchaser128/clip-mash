@@ -68,7 +68,7 @@ function ConfigPage() {
   }, [urlValue, apiKeyValue])
 
   return (
-    <section className="py-4 flex flex-col">
+    <section className="py-4 flex flex-col min-h-screen">
       <h1 className="text-5xl text-primary font-bold mb-4 text-center">
         Stash configuration setup
       </h1>

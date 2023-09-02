@@ -945,17 +945,18 @@ mod test {
     }
 
     #[sqlx::test]
+    #[traced_test]
     async fn test_split_marker(pool: SqlitePool) {
         let database = Database::with_pool(pool);
         let video = persist_video(&database).await.unwrap();
         let marker = persist_marker(&database, &video.id, 0, 0.0, 15.0, false)
             .await
             .unwrap();
+        tracing::info!("inserted marker: {:?}", marker);
         let result = database
             .split_marker(marker.rowid.unwrap(), 5.0)
             .await
             .unwrap();
-
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].start_time, 0.0);
         assert_eq!(result[0].end_time, 5.0);

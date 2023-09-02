@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- feat: allow removing and rearranging clips (unless the video has its cuts synced to music)
 
 ## 0.15.1
 - fix(docker): ffmpeg wasn't working when the input source was a URL that had to be DNS resolved

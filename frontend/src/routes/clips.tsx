@@ -1,8 +1,10 @@
 import {useStateMachine} from "little-state-machine"
-import React, {useMemo, useState} from "react"
+import React, {useEffect, useMemo, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {updateForm} from "./actions"
 import {
+  HiArrowUturnLeft,
+  HiArrowUturnRight,
   HiBackward,
   HiCheck,
   HiChevronRight,
@@ -10,10 +12,12 @@ import {
   HiForward,
   HiPause,
   HiPlay,
+  HiTrash,
 } from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
 import {
+  clamp,
   formatSeconds,
   getSegmentColor,
   getSegmentTextColor,
@@ -25,6 +29,8 @@ import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
 import {Clip, ClipOrder} from "../types/types.generated"
 import {FormStage} from "../types/form-state"
+import useUndo from "use-undo"
+import {produce} from "immer"
 
 interface ClipState {
   included: boolean
@@ -186,6 +192,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
         className={clsx("btn btn-secondary", className)}
       >
@@ -272,9 +279,32 @@ interface Inputs {
   measureCountRandomEnd: number
 }
 
-const ClipSettingsForm: React.FC<{initialValues: Inputs; clips: Clip[]}> = ({
+interface SettingsFormProps {
+  initialValues: Inputs
+  clips: Clip[]
+  onRemoveClip: () => void
+  onUndo: () => void
+  onRedo: () => void
+  canUndo: boolean
+  canRedo: boolean
+  onShiftClips: (direction: "left" | "right") => void
+  canShiftLeft: boolean
+  canShiftRight: boolean
+  confirmBeforeSubmit: boolean
+}
+
+const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   initialValues,
   clips,
+  onRemoveClip,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
+  onShiftClips,
+  canShiftLeft,
+  canShiftRight,
+  confirmBeforeSubmit,
 }) => {
   const {register, handleSubmit, watch} = useForm<Inputs>({
     defaultValues: initialValues,
@@ -287,6 +317,14 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs; clips: Clip[]}> = ({
   const isPmv = state.data.songs?.length !== 0
 
   const onSubmit = (values: Inputs) => {
+    if (
+      confirmBeforeSubmit &&
+      !window.confirm(
+        "You have made manual changes to the clips, this would reset them. Are you sure you want to re-generate the clips?",
+      )
+    ) {
+      return
+    }
     actions.updateForm({
       clipDuration: values.clipDuration,
       clipOrder: values.clipOrder,
@@ -309,9 +347,54 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs; clips: Clip[]}> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
       <h2 className="text-xl font-bold">Settings</h2>
-      <WeightsModal className="my-4" clips={clips} />
       {!isPmv && (
         <>
+          <div className="w-full flex justify-between mb-4 mt-2">
+            <div className="btn-group">
+              <button
+                disabled={!canUndo}
+                onClick={onUndo}
+                type="button"
+                className="btn btn-sm btn-ghost btn-square"
+              >
+                <HiArrowUturnLeft />
+              </button>
+              <button
+                disabled={!canRedo}
+                onClick={onRedo}
+                type="button"
+                className="btn btn-sm btn-ghost btn-square"
+              >
+                <HiArrowUturnRight />
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="btn-group">
+                <button
+                  disabled={!canShiftLeft}
+                  onClick={() => onShiftClips("left")}
+                  className="btn btn-sm btn-ghost"
+                >
+                  <HiBackward />
+                </button>
+                <button
+                  disabled={!canShiftRight}
+                  onClick={() => onShiftClips("right")}
+                  className="btn btn-sm btn-ghost"
+                >
+                  <HiForward />
+                </button>
+              </div>
+              <button
+                onClick={onRemoveClip}
+                type="button"
+                className="btn btn-sm btn-error"
+              >
+                <HiTrash />
+              </button>
+            </div>
+          </div>
           <div className="form-control">
             <label className="label cursor-pointer">
               <span className="label-text mr-2">
@@ -435,20 +518,33 @@ const ClipSettingsForm: React.FC<{initialValues: Inputs; clips: Clip[]}> = ({
           {...register("seed")}
         />
       </div>
-      <button className="btn btn-primary self-end mt-4">
-        <HiCheck className="mr-2" />
-        Apply
-      </button>
+      <div className="flex w-full justify-between items-center mt-4">
+        <WeightsModal clips={clips} />
+
+        <button type="submit" className="btn btn-primary">
+          <HiCheck className="mr-2" />
+          Apply
+        </button>
+      </div>
     </form>
   )
 }
 
 function PreviewClips() {
-  const loaderData = useLoaderData() as ClipsLoaderData
-  const streams = loaderData.streams
+  const revalidator = useRevalidator()
+  const [wasRevalidated, setWasRevalidated] = useState(false)
+
   const {actions, state} = useStateMachine({updateForm})
+  const loaderData = useLoaderData() as ClipsLoaderData
+  const initialClips = wasRevalidated
+    ? loaderData.clips
+    : state.data.clips || loaderData.clips
+  const streams = loaderData.streams
   const songs = state.data.songs ?? []
-  const clips = loaderData.clips.map((clip) => ({clip, included: true}))
+  const [clipsState, {set: setClips, undo, redo, canUndo, canRedo}] = useUndo(
+    initialClips.map((clip) => ({clip, included: true})),
+  )
+  const clips = clipsState.present.filter((c) => c.included)
 
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
@@ -470,10 +566,22 @@ function PreviewClips() {
   const isPmv = state.data.songs && state.data.songs.length >= 1
   const [songIndex, setSongIndex] = useState(0)
 
+  useEffect(() => {
+    if (revalidator.state === "loading") {
+      setWasRevalidated(true)
+    }
+  }, [revalidator.state])
+
+  useEffect(() => {
+    if (wasRevalidated && revalidator.state === "idle") {
+      setClips(initialClips.map((clip) => ({clip, included: true})))
+    }
+  }, [initialClips, revalidator.state, setClips, wasRevalidated])
+
   const onNextStage = () => {
     actions.updateForm({
       stage: FormStage.Wait,
-      clips: clips.filter((c) => c.included).map((c) => c.clip),
+      clips: clips.map((c) => c.clip),
     })
     navigate("/stash/progress")
   }
@@ -510,10 +618,32 @@ function PreviewClips() {
     setAutoPlay(!autoPlay)
   }
 
+  const onRemoveClip = () => {
+    setClips(
+      clips.map(({clip}, i) => ({
+        clip: clip,
+        included: i !== currentClipIndex,
+      })),
+    )
+    setCurrentClipIndex(clamp(currentClipIndex, 0, clips.length - 2))
+  }
+
+  const onShiftClips = (direction: "left" | "right") => {
+    const indexToSwap =
+      direction === "left" ? currentClipIndex - 1 : currentClipIndex + 1
+    const newClips = produce(clips, (draft) => {
+      const temp = draft[currentClipIndex]
+      draft[currentClipIndex] = draft[indexToSwap]
+      draft[indexToSwap] = temp
+    })
+    setClips(newClips)
+    setCurrentClipIndex(indexToSwap)
+  }
+
   return (
     <>
       <div className="mb-4 grid grid-cols-3">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-opacity-80">
           Preview the clips included in the final compilation. You can change
           the settings for clip generation and apply to see changes instantly.
           The number and color of the timeline segment identify the video it
@@ -575,6 +705,7 @@ function PreviewClips() {
         <div className="flex flex-col px-4 py-2 w-1/4 bg-base-200 justify-between">
           <ClipSettingsForm
             clips={clips.map((c) => c.clip)}
+            onRemoveClip={onRemoveClip}
             initialValues={{
               clipDuration: state.data.clipDuration || 30,
               clipOrder: state.data.clipOrder || "scene-order",
@@ -595,10 +726,19 @@ function PreviewClips() {
                   : 4,
               measureCountType: state.data.cutAfterMeasures?.type || "fixed",
             }}
+            onUndo={undo}
+            onRedo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onShiftClips={onShiftClips}
+            canShiftLeft={currentClipIndex > 0}
+            canShiftRight={currentClipIndex < clips.length - 1}
+            confirmBeforeSubmit={clipsState.past.length > 0}
           />
 
           <div className="btn-group justify-center">
             <button
+              type="button"
               className="btn btn-square btn-lg"
               onClick={() => setCurrentClipIndex((i) => i - 1)}
               disabled={currentClipIndex === 0}
@@ -606,6 +746,7 @@ function PreviewClips() {
               <HiBackward />
             </button>
             <button
+              type="button"
               className={clsx(
                 "btn btn-square btn-lg",
                 autoPlay ? "btn-warning" : "btn-success",
@@ -615,6 +756,7 @@ function PreviewClips() {
               {autoPlay ? <HiPause /> : <HiPlay />}
             </button>
             <button
+              type="button"
               className="btn btn-square btn-lg"
               onClick={() => setCurrentClipIndex((i) => i + 1)}
               disabled={currentClipIndex >= clips.length - 1}

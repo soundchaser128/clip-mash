@@ -290,6 +290,7 @@ interface SettingsFormProps {
   onShiftClips: (direction: "left" | "right") => void
   canShiftLeft: boolean
   canShiftRight: boolean
+  confirmBeforeSubmit: boolean
 }
 
 const ClipSettingsForm: React.FC<SettingsFormProps> = ({
@@ -303,6 +304,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   onShiftClips,
   canShiftLeft,
   canShiftRight,
+  confirmBeforeSubmit,
 }) => {
   const {register, handleSubmit, watch} = useForm<Inputs>({
     defaultValues: initialValues,
@@ -315,6 +317,14 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const isPmv = state.data.songs?.length !== 0
 
   const onSubmit = (values: Inputs) => {
+    if (
+      confirmBeforeSubmit &&
+      !window.confirm(
+        "You have made manual changes to the clips, this would reset them. Are you sure you want to re-generate the clips?",
+      )
+    ) {
+      return
+    }
     actions.updateForm({
       clipDuration: values.clipDuration,
       clipOrder: values.clipOrder,
@@ -359,30 +369,31 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
               </button>
             </div>
 
-            <div className="btn-group">
+            <div className="flex gap-2">
+              <div className="btn-group">
+                <button
+                  disabled={!canShiftLeft}
+                  onClick={() => onShiftClips("left")}
+                  className="btn btn-sm btn-ghost"
+                >
+                  <HiBackward />
+                </button>
+                <button
+                  disabled={!canShiftRight}
+                  onClick={() => onShiftClips("right")}
+                  className="btn btn-sm btn-ghost"
+                >
+                  <HiForward />
+                </button>
+              </div>
               <button
-                disabled={!canShiftLeft}
-                onClick={() => onShiftClips("left")}
-                className="btn btn-sm btn-ghost"
+                onClick={onRemoveClip}
+                type="button"
+                className="btn btn-sm btn-error"
               >
-                <HiBackward />
-              </button>
-              <button
-                disabled={!canShiftRight}
-                onClick={() => onShiftClips("right")}
-                className="btn btn-sm btn-ghost"
-              >
-                <HiForward />
+                <HiTrash />
               </button>
             </div>
-
-            <button
-              onClick={onRemoveClip}
-              type="button"
-              className="btn btn-sm btn-error"
-            >
-              <HiTrash />
-            </button>
           </div>
           <div className="form-control">
             <label className="label cursor-pointer">
@@ -632,7 +643,7 @@ function PreviewClips() {
   return (
     <>
       <div className="mb-4 grid grid-cols-3">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-opacity-80">
           Preview the clips included in the final compilation. You can change
           the settings for clip generation and apply to see changes instantly.
           The number and color of the timeline segment identify the video it
@@ -722,6 +733,7 @@ function PreviewClips() {
             onShiftClips={onShiftClips}
             canShiftLeft={currentClipIndex > 0}
             canShiftRight={currentClipIndex < clips.length - 1}
+            confirmBeforeSubmit={clipsState.past.length > 0}
           />
 
           <div className="btn-group justify-center">

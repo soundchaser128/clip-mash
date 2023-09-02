@@ -350,49 +350,61 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
       {!isPmv && (
         <>
           <div className="w-full flex justify-between mb-4 mt-2">
-            <div className="btn-group">
-              <button
-                disabled={!canUndo}
-                onClick={onUndo}
-                type="button"
-                className="btn btn-sm btn-ghost btn-square"
-              >
-                <HiArrowUturnLeft />
-              </button>
-              <button
-                disabled={!canRedo}
-                onClick={onRedo}
-                type="button"
-                className="btn btn-sm btn-ghost btn-square"
-              >
-                <HiArrowUturnRight />
-              </button>
+            <div className="join">
+              <div className="tooltip" data-tip="Undo">
+                <button
+                  disabled={!canUndo}
+                  onClick={onUndo}
+                  type="button"
+                  className="join-item btn btn-sm btn-ghost btn-square"
+                >
+                  <HiArrowUturnLeft />
+                </button>
+              </div>
+              <div className="tooltip" data-tip="Redo">
+                <button
+                  disabled={!canRedo}
+                  onClick={onRedo}
+                  type="button"
+                  className="join-item btn btn-sm btn-ghost btn-square"
+                >
+                  <HiArrowUturnRight />
+                </button>
+              </div>
             </div>
 
             <div className="flex gap-2">
-              <div className="btn-group">
+              <div className="join">
+                <div className="tooltip" data-tip="Move clip left">
+                  <button
+                    disabled={!canShiftLeft}
+                    onClick={() => onShiftClips("left")}
+                    className="btn btn-sm btn-ghost join-item"
+                    type="button"
+                  >
+                    <HiBackward />
+                  </button>
+                </div>
+                <div className="tooltip" data-tip="Move clip right">
+                  <button
+                    disabled={!canShiftRight}
+                    onClick={() => onShiftClips("right")}
+                    className="btn btn-sm btn-ghost join-item"
+                    type="button"
+                  >
+                    <HiForward />
+                  </button>
+                </div>
+              </div>
+              <div className="tooltip" data-tip="Delete current clip">
                 <button
-                  disabled={!canShiftLeft}
-                  onClick={() => onShiftClips("left")}
-                  className="btn btn-sm btn-ghost"
+                  onClick={onRemoveClip}
+                  type="button"
+                  className="btn btn-sm btn-error"
                 >
-                  <HiBackward />
-                </button>
-                <button
-                  disabled={!canShiftRight}
-                  onClick={() => onShiftClips("right")}
-                  className="btn btn-sm btn-ghost"
-                >
-                  <HiForward />
+                  <HiTrash />
                 </button>
               </div>
-              <button
-                onClick={onRemoveClip}
-                type="button"
-                className="btn btn-sm btn-error"
-              >
-                <HiTrash />
-              </button>
             </div>
           </div>
           <div className="form-control">

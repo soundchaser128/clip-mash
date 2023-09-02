@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- fix: add tooltips, don't run onSubmit when shifting clips around
 
 ## 0.16.0
 - feat: allow removing and rearranging clips (unless the video has its cuts synced to music)

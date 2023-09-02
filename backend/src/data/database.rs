@@ -966,4 +966,52 @@ mod test {
         let all_markers = database.get_all_markers().await.unwrap();
         assert_eq!(all_markers.len(), 2);
     }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn test_insert_progress(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video_id = generate_id();
+        let items_total = 100.0;
+        let message = "Some message";
+        database
+            .insert_progress(&video_id, items_total, message)
+            .await
+            .unwrap();
+        let result = database.get_progress(&video_id).await.unwrap().unwrap();
+        assert_eq!(result.items_total, items_total);
+        assert_eq!(result.items_finished, 0.0);
+        assert_eq!(result.message, message);
+        assert_eq!(result.done, false);
+        assert_eq!(result.eta_seconds, None);
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn test_update_progress(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video_id = generate_id();
+        let items_total = 100.0;
+        let message = "Starting...";
+        database
+            .insert_progress(&video_id, items_total, message)
+            .await
+            .unwrap();
+
+        database
+            .update_progress(&video_id, 10.0, 60.0, "Encoding videos")
+            .await
+            .unwrap();
+
+        let progress = database.get_progress(&video_id).await.unwrap().unwrap();
+        assert_eq!(progress.items_finished, 10.0);
+        assert_eq!(progress.eta_seconds, Some(60.0));
+        assert_eq!(progress.message, "Encoding videos");
+        assert_eq!(progress.done, false);
+
+        database.finish_progress(&video_id).await.unwrap();
+
+        let progress = database.get_progress(&video_id).await.unwrap().unwrap();
+        assert_eq!(progress.done, true);
+    }
 }

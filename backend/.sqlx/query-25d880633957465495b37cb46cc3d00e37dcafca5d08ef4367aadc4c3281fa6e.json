@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, file_path, interactive, source, duration, video_preview_image FROM local_videos WHERE id = $1",
+  "query": "SELECT * FROM videos WHERE duration = -1.0",
   "describe": {
     "columns": [
       {
@@ -32,10 +32,15 @@
         "name": "video_preview_image",
         "ordinal": 5,
         "type_info": "Text"
+      },
+      {
+        "name": "stash_scene_id",
+        "ordinal": 6,
+        "type_info": "Int64"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 0
     },
     "nullable": [
       false,
@@ -43,8 +48,9 @@
       false,
       false,
       false,
+      true,
       true
     ]
   },
-  "hash": "8721a49cb2e517c3e40c17d39e4d06cb90edad62c68bbdcc871ed5ea9d1106eb"
+  "hash": "25d880633957465495b37cb46cc3d00e37dcafca5d08ef4367aadc4c3281fa6e"
 }

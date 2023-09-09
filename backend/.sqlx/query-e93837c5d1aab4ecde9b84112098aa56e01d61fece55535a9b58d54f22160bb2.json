@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT COUNT(*) FROM local_videos WHERE file_path LIKE $1",
+  "query": "SELECT COUNT(*) FROM videos WHERE file_path LIKE $1",
   "describe": {
     "columns": [
       {
@@ -16,5 +16,5 @@
       false
     ]
   },
-  "hash": "4d8f99e89666fe48d689be301e6f228176858220a7579b53d35d9e04e3794461"
+  "hash": "e93837c5d1aab4ecde9b84112098aa56e01d61fece55535a9b58d54f22160bb2"
 }

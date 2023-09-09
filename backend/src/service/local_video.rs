@@ -84,6 +84,7 @@ impl VideoService {
                         source: LocalVideoSource::Folder,
                         duration: duration.unwrap_or_default(),
                         video_preview_image: Some(image_path.to_string()),
+                        stash_scene_id: None,
                     };
                     info!("inserting new video {video:#?}");
                     self.database.persist_video(video.clone()).await?;
@@ -121,6 +122,7 @@ impl VideoService {
             source: LocalVideoSource::Download,
             duration: duration.unwrap_or_default(),
             video_preview_image: Some(image_path.to_string()),
+            stash_scene_id: None,
         };
         info!("persisting downloaded video {video:#?}");
         self.database.persist_video(video.clone()).await?;

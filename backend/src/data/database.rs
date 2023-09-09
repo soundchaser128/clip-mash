@@ -43,6 +43,7 @@ pub struct DbVideo {
     pub source: LocalVideoSource,
     pub duration: f64,
     pub video_preview_image: Option<String>,
+    pub stash_scene_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
@@ -112,7 +113,7 @@ impl Database {
     pub async fn get_video(&self, id: &str) -> Result<Option<DbVideo>> {
         let video = sqlx::query_as!(
             DbVideo,
-            "SELECT id, file_path, interactive, source, duration, video_preview_image FROM local_videos WHERE id = $1",
+            "SELECT * FROM videos WHERE id = $1",
             id
         )
         .fetch_optional(&self.pool)
@@ -124,7 +125,7 @@ impl Database {
         let marker = sqlx::query_as!(
             DbMarker,
             "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
-                FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
+                FROM markers m INNER JOIN videos v ON m.video_id = v.id
                 WHERE m.rowid = $1",
             id
         )
@@ -136,7 +137,7 @@ impl Database {
     pub async fn get_all_markers(&self) -> Result<Vec<DbMarker>> {
         let markers = sqlx::query_as!(DbMarker, "
         SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
-        FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
+        FROM markers m INNER JOIN videos v ON m.video_id = v.id
         ORDER BY v.file_path ASC")
         .fetch_all(&self.pool)
         .await?;
@@ -145,7 +146,7 @@ impl Database {
 
     pub async fn get_video_by_path(&self, path: &str) -> Result<Option<LocalVideoWithMarkers>> {
         let records = sqlx::query!(
-            "SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.file_path = $1",
+            "SELECT *, m.rowid AS rowid FROM videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.file_path = $1",
             path,
         )
         .fetch_all(&self.pool)
@@ -161,6 +162,7 @@ impl Database {
                 source: records[0].source.clone().into(),
                 duration: records[0].duration,
                 video_preview_image: records[0].video_preview_image.clone(),
+                stash_scene_id: records[0].stash_scene_id,
             };
             let markers = records
                 .into_iter()
@@ -207,7 +209,7 @@ impl Database {
 
     pub async fn get_video_with_markers(&self, id: &str) -> Result<Option<LocalVideoWithMarkers>> {
         let records = sqlx::query!(
-            "SELECT *, m.rowid AS rowid FROM local_videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.id = $1",
+            "SELECT *, m.rowid AS rowid FROM videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.id = $1",
             id,
         )
         .fetch_all(&self.pool)
@@ -223,6 +225,7 @@ impl Database {
                 source: records[0].source.clone().into(),
                 duration: records[0].duration,
                 video_preview_image: records[0].video_preview_image.clone(),
+                stash_scene_id: records[0].stash_scene_id,
             };
             let markers = records
                 .into_iter()
@@ -270,14 +273,14 @@ impl Database {
     pub async fn get_videos(&self, filter: AllVideosFilter) -> Result<Vec<DbVideo>> {
         let query = match filter {
             AllVideosFilter::NoVideoDuration => {
-                sqlx::query_as!(DbVideo, "SELECT * FROM local_videos WHERE duration = -1.0")
+                sqlx::query_as!(DbVideo, "SELECT * FROM videos WHERE duration = -1.0")
                     .fetch_all(&self.pool)
                     .await
             }
             AllVideosFilter::NoPreviewImage => {
                 sqlx::query_as!(
                     DbVideo,
-                    "SELECT * FROM local_videos WHERE video_preview_image IS NULL"
+                    "SELECT * FROM videos WHERE video_preview_image IS NULL"
                 )
                 .fetch_all(&self.pool)
                 .await
@@ -290,7 +293,7 @@ impl Database {
         sqlx::query_as!(
             DbMarker,
             "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
-            FROM markers m INNER JOIN local_videos v ON m.video_id = v.id
+            FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.marker_preview_image IS NULL"
         )
             .fetch_all(&self.pool)
@@ -300,7 +303,7 @@ impl Database {
 
     pub async fn persist_video(&self, video: DbVideo) -> Result<()> {
         sqlx::query!(
-            "INSERT INTO local_videos (id, file_path, interactive, source, duration, video_preview_image) VALUES ($1, $2, $3, $4, $5, $6)",
+            "INSERT INTO videos (id, file_path, interactive, source, duration, video_preview_image) VALUES ($1, $2, $3, $4, $5, $6)",
             video.id,
             video.file_path,
             video.interactive,
@@ -486,7 +489,7 @@ impl Database {
             .unwrap_or_else(|| "%".to_string());
         info!("using query '{}'", query);
         let count = sqlx::query_scalar!(
-            "SELECT COUNT(*) FROM local_videos WHERE file_path LIKE $1",
+            "SELECT COUNT(*) FROM videos WHERE file_path LIKE $1",
             query
         )
         .fetch_one(&self.pool)
@@ -497,10 +500,10 @@ impl Database {
 
         let mut records = sqlx::query!(
             "SELECT *, m.rowid AS rowid 
-            FROM local_videos v 
+            FROM videos v 
             LEFT JOIN markers m ON v.id = m.video_id 
             WHERE v.file_path LIKE $1 AND v.rowid IN 
-                (SELECT rowid FROM local_videos WHERE file_path LIKE $1 LIMIT $2 OFFSET $3)
+                (SELECT rowid FROM videos WHERE file_path LIKE $1 LIMIT $2 OFFSET $3)
             ORDER BY $4",
             query,
             limit,
@@ -525,6 +528,7 @@ impl Database {
                     source: group[0].source.clone().into(),
                     duration: group[0].duration,
                     video_preview_image: group[0].video_preview_image.clone(),
+                    stash_scene_id: group[0].stash_scene_id,
                 };
                 let markers: Vec<_> = group
                     .into_iter()
@@ -656,7 +660,7 @@ impl Database {
 
     pub async fn set_video_duration(&self, id: &str, duration: f64) -> Result<()> {
         sqlx::query!(
-            "UPDATE local_videos SET duration = $1 WHERE id = $2",
+            "UPDATE videos SET duration = $1 WHERE id = $2",
             duration,
             id
         )
@@ -668,7 +672,7 @@ impl Database {
 
     pub async fn set_video_preview_image(&self, id: &str, preview_image: &str) -> Result<()> {
         sqlx::query!(
-            "UPDATE local_videos SET video_preview_image = $1 WHERE id = $2",
+            "UPDATE videos SET video_preview_image = $1 WHERE id = $2",
             preview_image,
             id
         )

@@ -78,13 +78,14 @@ impl MusicDownloadService {
     }
 
     pub async fn download_song(&self, url: Url) -> Result<DbSong> {
-        let existing_song = self.db.get_song_by_url(url.as_str()).await?;
+        let existing_song = self.db.music.get_song_by_url(url.as_str()).await?;
         if let Some(mut song) = existing_song {
             if Utf8Path::new(&song.file_path).is_file() {
                 Ok(song)
             } else {
                 let downloaded_song = self.download_to_file(url.clone()).await?;
                 self.db
+                    .music
                     .update_song_file_path(
                         song.rowid.expect("must have rowid"),
                         downloaded_song.path.as_str(),
@@ -98,6 +99,7 @@ impl MusicDownloadService {
             let beats = music::detect_beats(&downloaded_song.path, &self.ffmpeg_location).ok();
             let result = self
                 .db
+                .music
                 .persist_song(CreateSong {
                     duration: downloaded_song.duration,
                     file_path: downloaded_song.path.to_string(),
@@ -125,6 +127,7 @@ impl MusicDownloadService {
 
         let result = self
             .db
+            .music
             .persist_song(CreateSong {
                 duration: ffprobe_result.format.duration().unwrap_or_default(),
                 file_path: path.to_string(),
@@ -165,6 +168,7 @@ mod test {
         assert!(path.is_file());
 
         let from_database = database
+            .music
             .get_song_by_url(url.as_str())
             .await
             .unwrap()
@@ -179,6 +183,7 @@ mod test {
         assert!(path.is_file());
 
         let from_database = database
+            .music
             .get_song_by_url(url.as_str())
             .await
             .unwrap()

@@ -44,7 +44,7 @@ pub async fn get_video_file(
 ) -> Result<impl IntoResponse, AppError> {
     use tower_http::services::ServeFile;
 
-    let video = state.database.get_video(&id).await?;
+    let video = state.database.videos.get_video(&id).await?;
     if let Some(video) = video {
         let result = ServeFile::new(video.file_path).oneshot(request).await;
         Ok(result)
@@ -61,7 +61,7 @@ pub async fn get_video_preview(
 ) -> Result<impl IntoResponse, AppError> {
     use tower_http::services::ServeFile;
 
-    let video = state.database.get_video(&id).await?;
+    let video = state.database.videos.get_video(&id).await?;
     if let Some(preview_image) = video.and_then(|v| v.video_preview_image) {
         let mut result = ServeFile::new(preview_image)
             .oneshot(request)
@@ -141,7 +141,11 @@ pub async fn list_videos(
     state: State<Arc<AppState>>,
 ) -> Result<Json<Page<ListVideoDto>>, AppError> {
     info!("handling list_videos request with page {page:?} and query {query:?}");
-    let (videos, size) = state.database.list_videos(query.as_deref(), &page).await?;
+    let (videos, size) = state
+        .database
+        .videos
+        .list_videos(query.as_deref(), &page)
+        .await?;
     Ok(Json(Page::new(videos, size, page)))
 }
 
@@ -152,7 +156,7 @@ pub struct ListMarkersQuery {
 
 #[axum::debug_handler]
 pub async fn list_markers(state: State<Arc<AppState>>) -> Result<Json<Vec<MarkerDto>>, AppError> {
-    let markers = state.database.get_all_markers().await?;
+    let markers = state.database.markers.get_all_markers().await?;
     let markers = markers.into_iter().map(From::from).collect();
     Ok(Json(markers))
 }
@@ -187,13 +191,13 @@ pub async fn create_new_marker(
     } else {
         info!("saving marker {marker:?} to the database");
 
-        if let Some(video) = state.database.get_video(&marker.video_id).await? {
+        if let Some(video) = state.database.videos.get_video(&marker.video_id).await? {
             let preview_generator: PreviewGenerator = state.0.clone().into();
             let preview_image = preview_generator
                 .generate_preview(&video.id, &video.file_path, video.duration / 2.0)
                 .await?;
             marker.preview_image_path = Some(preview_image.to_string());
-            let marker = state.database.create_new_marker(marker).await?;
+            let marker = state.database.markers.create_new_marker(marker).await?;
 
             Ok(Json(marker.into()))
         } else {
@@ -210,7 +214,7 @@ pub async fn update_marker(
 ) -> Result<Json<MarkerDto>, AppError> {
     info!("updating marker with {marker:?}");
 
-    let marker = state.database.update_marker(marker).await?;
+    let marker = state.database.markers.update_marker(marker).await?;
     Ok(Json(marker.into()))
 }
 
@@ -220,7 +224,7 @@ pub async fn delete_marker(
     state: State<Arc<AppState>>,
 ) -> Result<(), AppError> {
     info!("deleting marker {id}");
-    state.database.delete_marker(id).await?;
+    state.database.markers.delete_marker(id).await?;
 
     Ok(())
 }

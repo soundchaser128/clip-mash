@@ -136,7 +136,7 @@ impl DataService {
     }
 
     async fn resolve_songs(&self, song_ids: &[i64]) -> Result<Vec<DbSong>> {
-        self.db.get_songs(song_ids).await
+        self.db.music.get_songs(song_ids).await
     }
 
     pub async fn convert_clip_options(&self, body: CreateClipsBody) -> Result<CreateClipsOptions> {

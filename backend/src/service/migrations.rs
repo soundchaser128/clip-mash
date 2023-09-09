@@ -79,6 +79,7 @@ impl Migrator {
             match preview_image {
                 Ok(path) => {
                     self.database
+                        .videos
                         .set_video_preview_image(&video.id, path.as_str())
                         .await?
                 }
@@ -130,11 +131,12 @@ impl Migrator {
 
         futures::try_join!(
             self.database
+                .music
                 .generate_all_beats(self.ffmpeg_location.clone()),
             self.set_video_durations(),
             self.generate_video_preview_images(),
             self.generate_marker_preview_images(),
-            self.database.cleanup_progress(),
+            self.database.progress.cleanup_progress(),
         )?;
 
         let elapsed = start.elapsed();

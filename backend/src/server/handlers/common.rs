@@ -126,7 +126,7 @@ pub async fn get_progress_stream(
 
     let stream = try_stream! {
         let state = state.clone();
-        while let Some(progress) = state.database.get_progress(id.clone()).await? {
+        while let Some(progress) = state.database.progress.get_progress(id.clone()).await? {
             yield Event::default().json_data(progress).unwrap();
             tokio::time::sleep(Duration::from_millis(250)).await;
         }
@@ -147,7 +147,7 @@ pub async fn get_progress_info(
     Path(id): Path<String>,
     state: State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    let progress = state.database.get_progress(&id).await?;
+    let progress = state.database.progress.get_progress(&id).await?;
     Ok(Json(progress))
 }
 
@@ -213,7 +213,7 @@ pub async fn get_beat_funscript(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateBeatFunscriptBody>,
 ) -> Result<Json<FunScript>, AppError> {
-    let songs = state.database.get_songs(&body.song_ids).await?;
+    let songs = state.database.music.get_songs(&body.song_ids).await?;
     let beats: Vec<Beats> = songs
         .into_iter()
         .filter_map(|s| s.beats.and_then(|b| serde_json::from_str(&b).ok()))
@@ -273,7 +273,7 @@ pub async fn stream_song(
     use tower::ServiceExt;
     use tower_http::services::ServeFile;
 
-    let song = state.database.get_song(song_id).await?;
+    let song = state.database.music.get_song(song_id).await?;
     let result = ServeFile::new(song.file_path).oneshot(request).await;
     Ok(result)
 }
@@ -301,6 +301,7 @@ pub async fn list_songs(
 ) -> Result<Json<Vec<SongDto>>, AppError> {
     let songs = state
         .database
+        .music
         .list_songs()
         .await?
         .into_iter()
@@ -332,13 +333,14 @@ pub async fn get_beats(
     Path(song_id): Path<i64>,
     state: State<Arc<AppState>>,
 ) -> Result<Json<Beats>, AppError> {
-    let beats = match state.database.fetch_beats(song_id).await? {
+    let beats = match state.database.music.fetch_beats(song_id).await? {
         Some(beats) => beats,
         None => {
-            let song = state.database.get_song(song_id).await?;
+            let song = state.database.music.get_song(song_id).await?;
             let beats = music::detect_beats(&song.file_path, &state.ffmpeg_location)?;
             state
                 .database
+                .music
                 .persist_beats(song.rowid.unwrap(), &beats)
                 .await?;
             beats

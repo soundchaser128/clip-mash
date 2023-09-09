@@ -107,6 +107,7 @@ pub async fn find_and_persist_markers(
             .await?;
         let db_marker = state
             .database
+            .markers
             .create_new_marker(CreateMarker {
                 video_id: video.id.clone(),
                 title: "Untitled".to_string(),

@@ -211,6 +211,7 @@ impl CompilationGenerator {
 
     async fn initialize_progress(&self, video_id: &str, total_items: f64) -> Result<()> {
         self.database
+            .progress
             .insert_progress(video_id, total_items, "Starting...")
             .await?;
         Ok(())
@@ -224,13 +225,14 @@ impl CompilationGenerator {
         message: &str,
     ) -> Result<()> {
         self.database
+            .progress
             .update_progress(video_id, seconds, eta, message)
             .await?;
         Ok(())
     }
 
     async fn finish_progress(&self, video_id: &str) -> Result<()> {
-        self.database.finish_progress(video_id).await?;
+        self.database.progress.finish_progress(video_id).await?;
         Ok(())
     }
 

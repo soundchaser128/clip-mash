@@ -55,6 +55,7 @@ impl VideoService {
             if path.extension() == Some("mp4") || path.extension() == Some("m4v") {
                 let video_exists = self
                     .database
+                    .videos
                     .get_video_by_path(path.as_str())
                     .await?
                     .is_some();

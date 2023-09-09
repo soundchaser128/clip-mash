@@ -606,7 +606,7 @@ pub async fn persist_marker(
         preview_image_path: None,
         video_interactive,
     };
-    db.create_new_marker(marker).await
+    db.markers.create_new_marker(marker).await
 }
 
 pub fn songs() -> Vec<Beats> {

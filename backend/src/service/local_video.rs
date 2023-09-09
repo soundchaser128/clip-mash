@@ -87,7 +87,7 @@ impl VideoService {
                         stash_scene_id: None,
                     };
                     info!("inserting new video {video:#?}");
-                    self.database.persist_video(video.clone()).await?;
+                    self.database.videos.persist_video(video.clone()).await?;
                 }
             }
         }
@@ -125,7 +125,7 @@ impl VideoService {
             stash_scene_id: None,
         };
         info!("persisting downloaded video {video:#?}");
-        self.database.persist_video(video.clone()).await?;
+        self.database.videos.persist_video(video.clone()).await?;
         Ok(video)
     }
 }

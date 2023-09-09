@@ -42,6 +42,7 @@ impl Migrator {
         info!("setting video durations if necessary");
         let videos = self
             .database
+            .videos
             .get_videos(AllVideosFilter::NoVideoDuration)
             .await?;
         for video in videos {
@@ -51,6 +52,7 @@ impl Migrator {
             } else if let Ok(ffprobe) = ffprobe(&video.file_path, &self.ffmpeg_location).await {
                 let duration = ffprobe.duration().unwrap_or_default();
                 self.database
+                    .videos
                     .set_video_duration(&video.id, duration)
                     .await?;
             } else {
@@ -67,6 +69,7 @@ impl Migrator {
             PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
         let videos = self
             .database
+            .videos
             .get_videos(AllVideosFilter::NoPreviewImage)
             .await?;
         for video in videos {
@@ -106,6 +109,7 @@ impl Migrator {
                 match preview_image {
                     Ok(path) => {
                         self.database
+                            .markers
                             .set_marker_preview_image(marker.rowid.unwrap(), path.as_str())
                             .await?;
                     }

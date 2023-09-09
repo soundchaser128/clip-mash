@@ -237,7 +237,14 @@ pub async fn split_marker(
     state: State<Arc<AppState>>,
 ) -> Result<Json<Vec<MarkerDto>>, AppError> {
     info!("splitting marker {id} att time {time}");
-    let mut new_markers = state.database.split_marker(id, time).await?;
+    let video_id = state.database.markers.split_marker(id, time).await?;
+    let mut new_markers = state
+        .database
+        .videos
+        .get_video_with_markers(&video_id)
+        .await?
+        .expect("markers must exist")
+        .markers;
 
     let preview_generator: PreviewGenerator = state.0.clone().into();
     for marker in &mut new_markers {
@@ -248,6 +255,7 @@ pub async fn split_marker(
             marker.marker_preview_image = Some(path.to_string());
             state
                 .database
+                .markers
                 .set_marker_preview_image(marker.rowid.unwrap(), path.as_str())
                 .await?;
         }

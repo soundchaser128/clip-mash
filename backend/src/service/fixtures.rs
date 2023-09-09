@@ -571,7 +571,7 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
         video_preview_image: None,
         stash_scene_id: None,
     };
-    db.persist_video(expected.clone()).await?;
+    db.videos.persist_video(expected.clone()).await?;
     Ok(expected)
 }
 
@@ -585,7 +585,7 @@ pub async fn persist_video_with_file_name(db: &Database, name: &str) -> Result<D
         video_preview_image: None,
         stash_scene_id: None,
     };
-    db.persist_video(video.clone()).await?;
+    db.videos.persist_video(video.clone()).await?;
     Ok(video)
 }
 

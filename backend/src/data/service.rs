@@ -46,7 +46,7 @@ impl DataService {
     pub async fn fetch_video(&self, id: &VideoId) -> Result<Video> {
         match id {
             VideoId::LocalFile(id) => {
-                let video = self.db.get_video(id).await?;
+                let video = self.db.videos.get_video(id).await?;
                 if let Some(video) = video {
                     Ok(video.into())
                 } else {

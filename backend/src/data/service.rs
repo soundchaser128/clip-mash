@@ -30,7 +30,7 @@ impl DataService {
     ) -> Result<MarkerInfo> {
         match id {
             MarkerId::LocalFile(id) => {
-                let marker = self.db.get_marker(*id).await?;
+                let marker = self.db.markers.get_marker(*id).await?;
                 Ok(MarkerInfo::LocalFile { marker })
             }
             MarkerId::Stash(marker_id) => {

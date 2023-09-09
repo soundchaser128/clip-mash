@@ -91,8 +91,7 @@ pub async fn find_and_persist_markers(
     threshold: f64,
     state: Arc<AppState>,
 ) -> Result<Vec<MarkerDto>> {
-    // let threshold = threshold.unwrap_or(0.4);
-    let video = state.database.get_video(video_id).await?;
+    let video = state.database.videos.get_video(video_id).await?;
     if video.is_none() {
         bail!("no video found for id {}", video_id);
     }

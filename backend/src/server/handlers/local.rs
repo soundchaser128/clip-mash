@@ -27,7 +27,7 @@ pub async fn get_video(
     Path(id): Path<String>,
     state: State<Arc<AppState>>,
 ) -> Result<Json<ListVideoDto>, AppError> {
-    let video = state.database.get_video_with_markers(&id).await?;
+    let video = state.database.videos.get_video_with_markers(&id).await?;
     if let Some(video) = video {
         let dto = video.into();
         Ok(Json(dto))
@@ -86,7 +86,7 @@ pub async fn get_marker_preview(
 ) -> Result<impl IntoResponse, AppError> {
     use tower_http::services::ServeFile;
 
-    let marker = state.database.get_marker(id).await?;
+    let marker = state.database.markers.get_marker(id).await?;
     if let Some(preview_image) = marker.marker_preview_image {
         let result = ServeFile::new(preview_image).oneshot(request).await;
         Ok(result)

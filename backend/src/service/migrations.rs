@@ -93,7 +93,11 @@ impl Migrator {
         info!("generating marker preview images if necessary");
         let preview_generator =
             PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
-        let markers = self.database.get_markers_without_preview_images().await?;
+        let markers = self
+            .database
+            .markers
+            .get_markers_without_preview_images()
+            .await?;
         for marker in markers {
             if marker.marker_preview_image.is_none() {
                 let preview_image = preview_generator

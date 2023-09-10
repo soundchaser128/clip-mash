@@ -1,26 +1,22 @@
 use utoipa::OpenApi;
 
 use super::dtos::ListVideoDtoPage;
-use super::handlers::local::AddNewVideosBody;
 use super::types::*;
-use crate::server::handlers::{common, local, stash};
+use crate::server::handlers::{library, progress, project};
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        stash::get_health,
-        local::add_new_videos,
-        local::list_videos,
-        local::detect_markers,
-        local::create_new_marker,
-        common::fetch_clips,
-        common::create_video,
-        common::get_progress_info,
-        common::download_video,
+        library::list_videos,
+        library::detect_markers,
+        library::create_new_marker,
+        project::fetch_clips,
+        project::create_video,
+        progress::get_progress_info,
+        project::download_video,
     ),
     components(
         schemas(
-            AddNewVideosBody,
             ListVideoDtoPage,
             ListVideoDto,
             MarkerDto,

@@ -9,18 +9,46 @@ use reqwest::StatusCode;
 use serde::Deserialize;
 use tower::ServiceExt;
 use tracing::{info, warn};
-use url::Url;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::server::dtos::Page;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
-use crate::server::types::{
-    CreateMarker, ListVideoDto, MarkerDto, PageParameters, UpdateMarker, VideoDto,
-};
-use crate::service::local_video::VideoService;
+use crate::server::types::{CreateMarker, ListVideoDto, MarkerDto, PageParameters, UpdateMarker};
 use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;
+
+#[derive(Deserialize, IntoParams)]
+pub struct VideoSearchQuery {
+    pub query: Option<String>,
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/local/video",
+    params(VideoSearchQuery),
+    responses(
+        (status = 200, description = "Lists all videos with given query", body = ListVideoDtoPage),
+    )
+)]
+#[axum::debug_handler]
+pub async fn list_videos(
+    Query(page): Query<PageParameters>,
+    Query(VideoSearchQuery { query }): Query<VideoSearchQuery>,
+    state: State<Arc<AppState>>,
+) -> Result<Json<Page<ListVideoDto>>, AppError> {
+    info!("handling list_videos request with page {page:?} and query {query:?}");
+    let (videos, size) = state
+        .database
+        .videos
+        .list_videos(query.as_deref(), &page)
+        .await?;
+    Ok(Json(Page::new(videos, size, page)))
+}
+
+pub async fn add_new_videos() -> impl IntoResponse {
+    todo!()
+}
 
 #[axum::debug_handler]
 pub async fn get_video(
@@ -34,6 +62,34 @@ pub async fn get_video(
     } else {
         Err(AppError::StatusCode(StatusCode::NOT_FOUND))
     }
+}
+
+#[derive(Deserialize)]
+pub struct DetectMarkersQuery {
+    pub threshold: Option<f64>,
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/local/video/{id}/markers",
+    params(
+        ("id" = String, Path, description = "The ID of the video to detect markers for"),
+        ("threshold" = Option<f64>, Query, description = "The threshold for the marker detection (from 0.0 to 1.0)")
+    ),
+    responses(
+        (status = 200, description = "All newly created markers", body = Vec<MarkerDto>),
+    )
+)]
+#[axum::debug_handler]
+pub async fn detect_markers(
+    Path(id): Path<String>,
+    Query(DetectMarkersQuery { threshold }): Query<DetectMarkersQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<MarkerDto>>, AppError> {
+    let created_markers =
+        scene_detection::find_and_persist_markers(&id, threshold.unwrap_or(0.4), state.clone())
+            .await?;
+    Ok(Json(created_markers))
 }
 
 #[axum::debug_handler]
@@ -93,60 +149,6 @@ pub async fn get_marker_preview(
     } else {
         Err(AppError::StatusCode(StatusCode::NOT_FOUND))
     }
-}
-
-#[derive(Deserialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct AddNewVideosBody {
-    path: String,
-    recurse: bool,
-}
-
-#[utoipa::path(
-    post,
-    path = "/api/local/video",
-    request_body = AddNewVideosBody,
-    responses(
-        (status = 204, description = "Videos were successfully added", body = ()),
-    )
-)]
-pub async fn add_new_videos(
-    state: State<Arc<AppState>>,
-    Json(body): Json<AddNewVideosBody>,
-) -> Result<StatusCode, AppError> {
-    let video_service: VideoService = state.0.clone().into();
-    video_service
-        .add_new_videos(body.path, body.recurse)
-        .await?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-#[derive(Deserialize, IntoParams)]
-pub struct VideoSearchQuery {
-    pub query: Option<String>,
-}
-
-#[utoipa::path(
-    get,
-    path = "/api/local/video",
-    params(VideoSearchQuery),
-    responses(
-        (status = 200, description = "Lists all videos with given query", body = ListVideoDtoPage),
-    )
-)]
-#[axum::debug_handler]
-pub async fn list_videos(
-    Query(page): Query<PageParameters>,
-    Query(VideoSearchQuery { query }): Query<VideoSearchQuery>,
-    state: State<Arc<AppState>>,
-) -> Result<Json<Page<ListVideoDto>>, AppError> {
-    info!("handling list_videos request with page {page:?} and query {query:?}");
-    let (videos, size) = state
-        .database
-        .videos
-        .list_videos(query.as_deref(), &page)
-        .await?;
-    Ok(Json(Page::new(videos, size, page)))
 }
 
 #[derive(Deserialize)]
@@ -266,48 +268,4 @@ pub async fn split_marker(
     }
 
     Ok(Json(new_markers.into_iter().map(From::from).collect()))
-}
-
-#[derive(Deserialize)]
-pub struct DownloadVideoQuery {
-    pub url: Url,
-}
-
-#[axum::debug_handler]
-pub async fn download_video(
-    Query(DownloadVideoQuery { url }): Query<DownloadVideoQuery>,
-    state: State<Arc<AppState>>,
-) -> Result<Json<VideoDto>, AppError> {
-    let service = VideoService::from(state.0);
-    let (video_id, path) = service.download_video(url).await?;
-    let db_video = service.persist_downloaded_video(video_id, path).await?;
-    Ok(Json(db_video.into()))
-}
-
-#[derive(Deserialize)]
-pub struct DetectMarkersQuery {
-    pub threshold: Option<f64>,
-}
-
-#[utoipa::path(
-    get,
-    path = "/api/local/video/{id}/markers",
-    params(
-        ("id" = String, Path, description = "The ID of the video to detect markers for"),
-        ("threshold" = Option<f64>, Query, description = "The threshold for the marker detection (from 0.0 to 1.0)")
-    ),
-    responses(
-        (status = 200, description = "All newly created markers", body = Vec<MarkerDto>),
-    )
-)]
-#[axum::debug_handler]
-pub async fn detect_markers(
-    Path(id): Path<String>,
-    Query(DetectMarkersQuery { threshold }): Query<DetectMarkersQuery>,
-    State(state): State<Arc<AppState>>,
-) -> Result<Json<Vec<MarkerDto>>, AppError> {
-    let created_markers =
-        scene_detection::find_and_persist_markers(&id, threshold.unwrap_or(0.4), state.clone())
-            .await?;
-    Ok(Json(created_markers))
 }

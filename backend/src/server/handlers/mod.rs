@@ -9,9 +9,11 @@ use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
 use crate::service::stash_config::Config;
 
-pub mod common;
-pub mod local;
-pub mod stash;
+pub mod library;
+pub mod music;
+pub mod progress;
+pub mod project;
+pub mod version;
 
 pub struct AppState {
     pub generator: CompilationGenerator,

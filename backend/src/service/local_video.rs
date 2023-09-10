@@ -11,6 +11,7 @@ use walkdir::WalkDir;
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use crate::data::database::{Database, DbVideo, VideoSource};
+use crate::data::stash_api::StashApi;
 use crate::server::handlers::AppState;
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
@@ -23,26 +24,26 @@ use crate::Result;
 pub enum AddVideosRequest {
     Local { path: Utf8PathBuf, recurse: bool },
     Download { urls: Vec<Url> },
-    Stash { scene_ids: Vec<String> },
+    Stash { scene_ids: Vec<i64> },
 }
 
 pub struct VideoService {
     database: Database,
     directories: Directories,
     ffmpeg_location: FfmpegLocation,
-}
-
-impl From<Arc<AppState>> for VideoService {
-    fn from(value: Arc<AppState>) -> Self {
-        VideoService {
-            database: value.database.clone(),
-            directories: value.directories.clone(),
-            ffmpeg_location: value.ffmpeg_location.clone(),
-        }
-    }
+    stash_api: StashApi,
 }
 
 impl VideoService {
+    pub async fn new(state: AppState) -> Result<Self> {
+        Ok(VideoService {
+            database: state.database.clone(),
+            directories: state.directories.clone(),
+            ffmpeg_location: state.ffmpeg_location.clone(),
+            stash_api: StashApi::load_config().await?,
+        })
+    }
+
     async fn gather_files(&self, path: Utf8PathBuf, recurse: bool) -> Result<Vec<Utf8PathBuf>> {
         spawn_blocking(move || {
             let files = WalkDir::new(path)
@@ -146,6 +147,21 @@ impl VideoService {
         Ok(video)
     }
 
+    async fn persist_stash_video(&self, stash_scene_id: i64) -> Result<DbVideo> {
+        let video = DbVideo {
+            id: generate_id(),
+            // TODO lol
+            file_path: format!("stash://{}", stash_scene_id),
+            interactive: false,
+            source: VideoSource::Stash,
+            duration: 0.0,
+            video_preview_image: None,
+            stash_scene_id: Some(stash_scene_id),
+        };
+
+        todo!()
+    }
+
     pub async fn add_videos(&self, request: AddVideosRequest) -> Result<Vec<DbVideo>> {
         match request {
             AddVideosRequest::Local { path, recurse } => {
@@ -159,8 +175,14 @@ impl VideoService {
 
                 futures.await
             }
-            AddVideosRequest::Stash { scene_ids: _ } => {
-                todo!()
+            AddVideosRequest::Stash { scene_ids } => {
+                let futures = future::try_join_all(
+                    scene_ids
+                        .into_iter()
+                        .map(|scene_id| async move { self.persist_stash_video(scene_id).await }),
+                );
+
+                futures.await
             }
         }
     }

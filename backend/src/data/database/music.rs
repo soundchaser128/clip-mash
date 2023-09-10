@@ -10,11 +10,11 @@ use crate::service::music;
 use crate::Result;
 
 #[derive(Debug, Clone)]
-pub struct SongsDatabase {
+pub struct MusicDatabase {
     pool: SqlitePool,
 }
 
-impl SongsDatabase {
+impl MusicDatabase {
     pub fn new(pool: SqlitePool) -> Self {
         Self { pool }
     }

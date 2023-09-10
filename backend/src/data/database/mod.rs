@@ -7,14 +7,14 @@ use tracing::warn;
 
 use self::markers::MarkersDatabase;
 use self::progress::ProgressDatabase;
-use self::songs::SongsDatabase;
+use self::music::MusicDatabase;
 use self::videos::VideosDatabase;
 use crate::server::types::{Beats, Progress};
 use crate::Result;
 
 mod markers;
 mod progress;
-mod songs;
+mod music;
 mod videos;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
@@ -95,7 +95,7 @@ pub struct Database {
     pub videos: VideosDatabase,
     pub markers: MarkersDatabase,
     pub progress: ProgressDatabase,
-    pub music: SongsDatabase,
+    pub music: MusicDatabase,
 }
 
 impl Database {
@@ -110,7 +110,7 @@ impl Database {
         Ok(Database {
             markers: MarkersDatabase::new(pool.clone()),
             progress: ProgressDatabase::new(pool.clone()),
-            music: SongsDatabase::new(pool.clone()),
+            music: MusicDatabase::new(pool.clone()),
             videos: VideosDatabase::new(pool),
         })
     }
@@ -120,7 +120,7 @@ impl Database {
         Database {
             markers: MarkersDatabase::new(pool.clone()),
             progress: ProgressDatabase::new(pool.clone()),
-            music: SongsDatabase::new(pool.clone()),
+            music: MusicDatabase::new(pool.clone()),
             videos: VideosDatabase::new(pool),
         }
     }

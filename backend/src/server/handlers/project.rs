@@ -12,6 +12,7 @@ use tracing::{debug, error, info};
 use utoipa::IntoParams;
 
 use super::AppState;
+use crate::data::database::VideoSource;
 use crate::data::service::DataService;
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;

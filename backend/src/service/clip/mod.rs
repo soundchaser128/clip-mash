@@ -168,9 +168,10 @@ mod tests {
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
+    use crate::data::database::VideoSource;
     use crate::server::types::{
         Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, PmvClipOptions,
-        RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
+        RandomizedClipOptions, RoundRobinClipOptions,
     };
     use crate::service::clip::sort::ClipSorter;
     use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
@@ -292,7 +293,7 @@ mod tests {
                 index_within_video: 0,
                 marker_id: MarkerId::LocalFile(1),
                 range: (0.0, 9.0),
-                source: VideoSource::LocalFile,
+                source: VideoSource::Folder,
                 video_id: VideoId::LocalFile("video".into()),
             },
             Clip {
@@ -300,7 +301,7 @@ mod tests {
                 index_within_video: 0,
                 marker_id: MarkerId::LocalFile(2),
                 range: (1.0, 12.0),
-                source: VideoSource::LocalFile,
+                source: VideoSource::Folder,
                 video_id: VideoId::LocalFile("video".into()),
             },
         ];

@@ -4,20 +4,14 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use crate::data::database::VideoSource;
+
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum ClipOrder {
     Random,
     SceneOrder,
     NoOp,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub enum VideoSource {
-    Stash,
-    LocalFile,
-    DownloadedLocalFile,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
@@ -78,7 +72,7 @@ pub enum VideoId {
 impl VideoId {
     pub fn source(&self) -> VideoSource {
         match self {
-            VideoId::LocalFile(_) => VideoSource::LocalFile,
+            VideoId::LocalFile(_) => todo!(),
             VideoId::Stash(_) => VideoSource::Stash,
         }
     }

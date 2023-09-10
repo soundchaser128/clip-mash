@@ -9,7 +9,7 @@ use reqwest::StatusCode;
 use serde::Deserialize;
 use tower::ServiceExt;
 use tracing::{info, warn};
-use utoipa::{IntoParams, ToSchema};
+use utoipa::IntoParams;
 
 use crate::server::dtos::Page;
 use crate::server::error::AppError;

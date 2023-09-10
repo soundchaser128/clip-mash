@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::{FromRow, SqlitePool};
 use tracing::warn;
+use utoipa::ToSchema;
 
 use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
@@ -17,21 +18,23 @@ mod music;
 mod progress;
 mod videos;
 
-#[derive(Debug, Clone, Copy, sqlx::Type)]
+#[derive(Debug, Clone, Copy, sqlx::Type, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
 #[sqlx(rename_all = "lowercase")]
-pub enum LocalVideoSource {
+pub enum VideoSource {
     Folder,
     Download,
+    Stash,
 }
 
-impl From<String> for LocalVideoSource {
+impl From<String> for VideoSource {
     fn from(value: String) -> Self {
         match value.as_str() {
             "folder" => Self::Folder,
             "download" => Self::Download,
+            "stash" => Self::Stash,
             other => {
-                warn!("unknown enum constant {other}, falling back to LocalVideoSource::Folder");
-                LocalVideoSource::Folder
+                warn!("unknown enum constant {other}, falling back to VideoSource::Folder");
+                VideoSource::Folder
             }
         }
     }
@@ -42,7 +45,7 @@ pub struct DbVideo {
     pub id: String,
     pub file_path: String,
     pub interactive: bool,
-    pub source: LocalVideoSource,
+    pub source: VideoSource,
     pub duration: f64,
     pub video_preview_image: Option<String>,
     pub stash_scene_id: Option<i64>,

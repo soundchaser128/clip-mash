@@ -2,7 +2,7 @@ use camino::Utf8Path;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::data::database::{DbMarker, DbVideo, LocalVideoSource, LocalVideoWithMarkers};
+use crate::data::database::{DbMarker, DbVideo, LocalVideoWithMarkers, VideoSource};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashMarker;
 use crate::server::types::*;
@@ -84,10 +84,7 @@ impl From<DbVideo> for VideoDto {
             performers: vec![],
             interactive: value.interactive,
             file_name: expect_file_name(&value.file_path),
-            source: match value.source {
-                LocalVideoSource::Folder => VideoSource::LocalFile,
-                LocalVideoSource::Download => VideoSource::DownloadedLocalFile,
-            },
+            source: value.source,
             duration: value.duration,
         }
     }
@@ -104,10 +101,7 @@ impl From<Video> for VideoDto {
             interactive: value.interactive,
             source: match value.info {
                 VideoInfo::Stash { .. } => VideoSource::Stash,
-                VideoInfo::LocalFile { video } => match video.source {
-                    LocalVideoSource::Folder => VideoSource::LocalFile,
-                    LocalVideoSource::Download => VideoSource::DownloadedLocalFile,
-                },
+                VideoInfo::LocalFile { video } => video.source,
             },
             duration,
         }

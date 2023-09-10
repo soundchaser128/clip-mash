@@ -109,6 +109,11 @@ async fn main() -> Result<()> {
         .route("/marker", put(handlers::library::update_marker))
         // delete local marker
         .route("/marker/:id", delete(handlers::library::delete_marker))
+        // get the generated preview image for a marker
+        .route(
+            "/marker/:id/preview",
+            get(handlers::library::get_marker_preview),
+        )
         // split local marker
         .route("/marker/:id/split", post(handlers::library::split_marker));
 

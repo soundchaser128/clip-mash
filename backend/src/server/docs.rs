@@ -23,7 +23,6 @@ use crate::server::handlers::{library, progress, project};
             VideoDto,
             MarkerId,
             VideoId,
-            VideoSource,
             CreateClipsBody,
             ClipsResponse,
             ClipOrder,

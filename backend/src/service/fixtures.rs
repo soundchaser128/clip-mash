@@ -6,7 +6,7 @@ use fake::{Fake, Faker};
 use lazy_static::lazy_static;
 
 use super::Marker;
-use crate::data::database::{Database, DbMarker, DbVideo, LocalVideoSource};
+use crate::data::database::{Database, DbMarker, DbVideo, VideoSource};
 use crate::server::types::{Beats, CreateMarker};
 use crate::service::{MarkerId, MarkerInfo, VideoId};
 use crate::util::generate_id;
@@ -566,12 +566,12 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
         ),
         id: generate_id(),
         interactive: false,
-        source: LocalVideoSource::Folder,
+        source: VideoSource::Folder,
         duration: 50.0,
         video_preview_image: None,
         stash_scene_id: None,
     };
-    db.videos.persist_video(expected.clone()).await?;
+    db.videos.persist_video(&expected).await?;
     Ok(expected)
 }
 
@@ -580,12 +580,12 @@ pub async fn persist_video_with_file_name(db: &Database, name: &str) -> Result<D
         file_path: name.to_string(),
         id: generate_id(),
         interactive: false,
-        source: LocalVideoSource::Folder,
+        source: VideoSource::Folder,
         duration: 50.0,
         video_preview_image: None,
         stash_scene_id: None,
     };
-    db.videos.persist_video(video.clone()).await?;
+    db.videos.persist_video(&video).await?;
     Ok(video)
 }
 

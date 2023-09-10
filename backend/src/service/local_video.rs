@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
+use futures::future;
+use serde::Deserialize;
 use tokio::task::spawn_blocking;
 use tracing::{debug, info, warn};
 use url::Url;
@@ -8,13 +10,21 @@ use walkdir::WalkDir;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
-use crate::data::database::{Database, DbVideo, LocalVideoSource};
+use crate::data::database::{Database, DbVideo, VideoSource};
 use crate::server::handlers::AppState;
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
 use crate::util::generate_id;
 use crate::Result;
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", tag = "type")]
+pub enum AddVideosRequest {
+    Local { path: Utf8PathBuf, recurse: bool },
+    Download { urls: Vec<Url> },
+    Stash { scene_ids: Vec<String> },
+}
 
 pub struct VideoService {
     database: Database,
@@ -48,8 +58,13 @@ impl VideoService {
         .await?
     }
 
-    pub async fn add_new_videos(&self, path: impl AsRef<Utf8Path>, recurse: bool) -> Result<()> {
+    async fn add_new_local_videos(
+        &self,
+        path: impl AsRef<Utf8Path>,
+        recurse: bool,
+    ) -> Result<Vec<DbVideo>> {
         let entries = self.gather_files(path.as_ref().to_owned(), recurse).await?;
+        let mut videos = vec![];
         debug!("found files {entries:?} (recurse = {recurse})");
         for path in entries {
             if path.extension() == Some("mp4") || path.extension() == Some("m4v") {
@@ -82,20 +97,21 @@ impl VideoService {
                         id,
                         file_path: path.to_string(),
                         interactive,
-                        source: LocalVideoSource::Folder,
+                        source: VideoSource::Folder,
                         duration: duration.unwrap_or_default(),
                         video_preview_image: Some(image_path.to_string()),
                         stash_scene_id: None,
                     };
                     info!("inserting new video {video:#?}");
-                    self.database.videos.persist_video(video.clone()).await?;
+                    self.database.videos.persist_video(&video).await?;
+                    videos.push(video);
                 }
             }
         }
-        Ok(())
+        Ok(videos)
     }
 
-    pub async fn download_video(&self, url: Url) -> Result<(String, Utf8PathBuf)> {
+    async fn download_video(&self, url: Url) -> Result<(String, Utf8PathBuf)> {
         info!("downloading video {url}");
         let downloader = YtDlp::new(self.directories.clone());
         let options = YtDlpOptions {
@@ -107,7 +123,7 @@ impl VideoService {
         Ok((result.generated_id, result.downloaded_file))
     }
 
-    pub async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
+    async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
         let ffprobe = ffprobe(&path, &self.ffmpeg_location).await?;
         let duration = ffprobe.duration();
         let preview_generator =
@@ -120,13 +136,32 @@ impl VideoService {
             id,
             file_path: path.as_str().to_string(),
             interactive: false,
-            source: LocalVideoSource::Download,
+            source: VideoSource::Download,
             duration: duration.unwrap_or_default(),
             video_preview_image: Some(image_path.to_string()),
             stash_scene_id: None,
         };
         info!("persisting downloaded video {video:#?}");
-        self.database.videos.persist_video(video.clone()).await?;
+        self.database.videos.persist_video(&video).await?;
         Ok(video)
+    }
+
+    pub async fn add_videos(&self, request: AddVideosRequest) -> Result<Vec<DbVideo>> {
+        match request {
+            AddVideosRequest::Local { path, recurse } => {
+                self.add_new_local_videos(path, recurse).await
+            }
+            AddVideosRequest::Download { urls } => {
+                let futures = future::try_join_all(urls.into_iter().map(|url| async move {
+                    let (id, path) = self.download_video(url).await?;
+                    self.persist_downloaded_video(id, path).await
+                }));
+
+                futures.await
+            }
+            AddVideosRequest::Stash { scene_ids: _ } => {
+                todo!()
+            }
+        }
     }
 }

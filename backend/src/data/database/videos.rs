@@ -168,7 +168,7 @@ impl VideosDatabase {
         query.map_err(From::from)
     }
 
-    pub async fn persist_video(&self, video: DbVideo) -> Result<()> {
+    pub async fn persist_video(&self, video: &DbVideo) -> Result<()> {
         sqlx::query!(
             "INSERT INTO videos (id, file_path, interactive, source, duration, video_preview_image) VALUES ($1, $2, $3, $4, $5, $6)",
             video.id,

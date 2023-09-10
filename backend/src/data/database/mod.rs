@@ -6,15 +6,15 @@ use sqlx::{FromRow, SqlitePool};
 use tracing::warn;
 
 use self::markers::MarkersDatabase;
-use self::progress::ProgressDatabase;
 use self::music::MusicDatabase;
+use self::progress::ProgressDatabase;
 use self::videos::VideosDatabase;
 use crate::server::types::{Beats, Progress};
 use crate::Result;
 
 mod markers;
-mod progress;
 mod music;
+mod progress;
 mod videos;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]

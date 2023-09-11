@@ -7,6 +7,6 @@ cargo run &
 cd ..
 sleep 2
 curl localhost:5174/api-docs/openapi.json > api-docs.json
-openapi-generator-cli generate -g typescript-fetch -i api-docs.json -o typescript-client
+openapi-generator-cli generate -g typescript-fetch -i api-docs.json -o frontend/src/api
 rm api-docs.json
 kill %1

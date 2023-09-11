@@ -18,7 +18,6 @@ import {
   Link,
   LoaderFunction,
   Outlet,
-  json,
   useLoaderData,
   useNavigate,
   useNavigation,
@@ -30,19 +29,16 @@ import {ListVideoDto} from "../../types/types.generated"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
 import {LocalFilesFormStage, StateHelpers} from "../../types/form-state"
+import {listVideos} from "../../api"
 
 export const loader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
   const query = url.searchParams
   query.set("size", "18")
-  const response = await fetch(`/api/local/video?${query.toString()}`)
-  if (response.ok) {
-    const data = await response.json()
-    return json(data)
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/local/video"}, {status: 500})
-  }
+  const object = Object.fromEntries(query.entries())
+  const videos = await listVideos(object)
+
+  return videos
 }
 
 export default function ListVideos() {
@@ -158,7 +154,7 @@ export default function ListVideos() {
             <figure>
               <img
                 className="aspect-[16/9] object-cover w-full"
-                src={`/api/local/video/${video.video.id.id}/preview`}
+                src={`/api/library/video/${video.video.id.id}/preview`}
               />
             </figure>
             <div className="card-body">

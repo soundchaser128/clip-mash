@@ -18,6 +18,10 @@ export type DetectMarkersParams = {
 
 export type ListVideosParams = {
   query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
 }
 
 export type SplitMarkerParams = {
@@ -146,6 +150,14 @@ export type StrokeTypeOneOf = {
   /** Creates a stroke every `n` beats */
   everyNth: StrokeTypeOneOfEveryNth
 }
+
+export type SortDirection = (typeof SortDirection)[keyof typeof SortDirection]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const SortDirection = {
+  asc: "asc",
+  desc: "desc",
+} as const
 
 export interface SongClipOptions {
   beatsPerMeasure: number
@@ -363,6 +375,11 @@ export interface CreateBeatFunscriptBody {
   strokeType: StrokeType
 }
 
+export interface Config {
+  apiKey: string
+  stashUrl: string
+}
+
 export type ClipsResponseStreams = {[key: string]: string}
 
 export interface ClipsResponse {
@@ -543,16 +560,10 @@ export const deleteMarker = (id: number) => {
   })
 }
 
-export const splitMarker = (
-  id: number,
-  updateMarker: UpdateMarker,
-  params: SplitMarkerParams,
-) => {
+export const splitMarker = (id: number, params: SplitMarkerParams) => {
   return customInstance<MarkerDto[]>({
     url: `/api/library/marker/${id}/split`,
     method: "post",
-    headers: {"Content-Type": "application/json"},
-    data: updateMarker,
     params,
   })
 }
@@ -577,7 +588,7 @@ export const addNewVideos = (addVideosRequest: AddVideosRequest) => {
 export const getVideo = (id: string) => {
   return customInstance<ListVideoDto>({
     url: `/api/library/video/${id}`,
-    method: "post",
+    method: "get",
   })
 }
 
@@ -590,7 +601,7 @@ export const detectMarkers = (id: string, params?: DetectMarkersParams) => {
 }
 
 export const getProgressInfo = () => {
-  return customInstance<Progress>({url: `/api/progress/info`, method: "post"})
+  return customInstance<Progress>({url: `/api/progress/info`, method: "get"})
 }
 
 export const fetchClips = (createClipsBody: CreateClipsBody) => {
@@ -646,6 +657,10 @@ export const getNewId = () => {
   return customInstance<NewId>({url: `/api/project/id`, method: "get"})
 }
 
+export const getConfig = () => {
+  return customInstance<Config>({url: `/api/stash/config`, method: "get"})
+}
+
 type AwaitedInput<T> = PromiseLike<T> | T
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never
@@ -694,3 +709,4 @@ export type GetCombinedFunscriptResult = NonNullable<
   Awaited<ReturnType<typeof getCombinedFunscript>>
 >
 export type GetNewIdResult = NonNullable<Awaited<ReturnType<typeof getNewId>>>
+export type GetConfigResult = NonNullable<Awaited<ReturnType<typeof getConfig>>>

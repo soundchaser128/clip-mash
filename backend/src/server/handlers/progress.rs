@@ -29,7 +29,7 @@ pub async fn get_progress_stream(
 }
 
 #[utoipa::path(
-    post,
+    get,
     path = "/api/progress/info",
     responses(
         (status = 200, description = "The current progress of video creation, or null if it is finished", body = Progress),

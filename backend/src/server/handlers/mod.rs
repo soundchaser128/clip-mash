@@ -13,6 +13,7 @@ pub mod library;
 pub mod music;
 pub mod progress;
 pub mod project;
+pub mod stash;
 pub mod version;
 
 pub struct AppState {

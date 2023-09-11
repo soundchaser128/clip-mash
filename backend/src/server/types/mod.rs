@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 use crate::data::database::VideoSource;
 
@@ -389,14 +389,14 @@ pub struct NewId {
     pub id: String,
 }
 
-#[derive(Deserialize, Debug, Clone, Copy)]
+#[derive(Deserialize, Debug, Clone, Copy, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum SortDirection {
     Asc,
     Desc,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, IntoParams)]
 pub struct PageParameters {
     pub page: Option<usize>,
     pub size: Option<usize>,

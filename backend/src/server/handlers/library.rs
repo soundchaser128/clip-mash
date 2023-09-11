@@ -29,7 +29,7 @@ pub struct VideoSearchQuery {
 #[utoipa::path(
     get,
     path = "/api/library/video",
-    params(VideoSearchQuery),
+    params(VideoSearchQuery, PageParameters),
     responses(
         (status = 200, description = "Lists all videos with given query", body = ListVideoDtoPage),
     )
@@ -74,7 +74,7 @@ pub async fn add_new_videos(
 }
 
 #[utoipa::path(
-    post,
+    get,
     path = "/api/library/video/{id}",
     params(
         ("id" = String, Path, description = "The ID of the video to fetch")
@@ -301,7 +301,6 @@ pub struct SplitMarkerQuery {
         ("id" = i64, Path, description = "The ID of the marker to split"),
         ("time" = f64, Query, description = "The time to split the marker at")
     ),
-    request_body = UpdateMarker,
     responses(
         (status = 200, description = "Split a marker at the specified timestamp", body = Vec<MarkerDto>),
     )

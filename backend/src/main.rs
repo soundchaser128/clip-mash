@@ -135,9 +135,12 @@ async fn main() -> Result<()> {
         )
         .route("/download", get(handlers::project::download_video));
 
+    let stash_routes = Router::new().route("/config", get(handlers::stash::get_config));
+
     let api_routes = Router::new()
         .nest("/project", project_routes)
         .nest("/library", library_routes)
+        .nest("/stash", stash_routes)
         .route("/version", get(handlers::version::get_version))
         .route(
             "/progress/:id/stream",

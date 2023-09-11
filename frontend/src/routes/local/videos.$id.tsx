@@ -20,7 +20,8 @@ import TimestampInput from "../../components/TimestampInput"
 import {createNewMarker, updateMarker} from "./api"
 import Timeline from "../../components/Timeline"
 import Loader from "../../components/Loader"
-import {MarkerDto} from "../../types/types.generated"
+import {MarkerDto, splitMarker} from "../../api"
+import {detectMarkers} from "../../api"
 
 const Box: React.FC<{children: React.ReactNode}> = ({children}) => (
   <div className="flex flex-col bg-base-200 py-4 px-6 rounded-lg w-2/3">
@@ -151,17 +152,11 @@ export default function EditVideoModal() {
 
   const onDetectMarkers = async () => {
     setLoading(true)
-    const result = await fetch(
-      `/api/local/video/${video.id.id}/markers?threshold=${threshold / 100}`,
-      {
-        method: "POST",
-      },
-    )
-    if (result.ok) {
-      const data = (await result.json()) as MarkerDto[]
-      setMarkers(markers.concat(data))
-    }
 
+    const data = await detectMarkers(video.id.id, {
+      threshold: threshold / 100,
+    })
+    setMarkers(markers.concat(data))
     setLoading(false)
   }
 
@@ -256,14 +251,16 @@ export default function EditVideoModal() {
       isBetween(currentTime, m.start, m.end),
     )
     if (currentMarker) {
-      const response = await fetch(
-        `/api/local/video/marker/${currentMarker.id.id}/split?time=${currentTime}`,
-        {method: "POST"},
-      )
-      if (response.ok) {
-        const data = (await response.json()) as MarkerDto[]
-        setMarkers(data)
-      }
+      const data = await splitMarker(currentMarker.id.id, {})
+
+      // const response = await fetch(
+      //   `/api/local/video/marker/${currentMarker.id.id}/split?time=${currentTime}`,
+      //   {method: "POST"},
+      // )
+      // if (response.ok) {
+      //   const data = (await response.json()) as MarkerDto[]
+      //   setMarkers(data)
+      // }
     }
   }
 
@@ -296,7 +293,7 @@ export default function EditVideoModal() {
           className="w-2/3 max-h-[90vh]"
           muted
           controls
-          src={`/api/local/video/${video.id.id}/file`}
+          src={`/api/library/video/${video.id.id}/file`}
           ref={videoRef}
           onLoadedMetadata={onMetadataLoaded}
           onTimeUpdate={onTimeUpdate}

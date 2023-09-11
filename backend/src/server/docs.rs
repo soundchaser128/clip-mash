@@ -4,7 +4,8 @@ use super::dtos::ListVideoDtoPage;
 use super::handlers::project::CreateFunscriptBody;
 use super::types::*;
 use crate::data::database::VideoSource;
-use crate::server::handlers::{library, progress, project};
+use crate::server::handlers::{library, progress, project, stash};
+use crate::service::stash_config::Config;
 use crate::service::video::AddVideosRequest;
 
 #[derive(OpenApi)]
@@ -26,6 +27,7 @@ use crate::service::video::AddVideosRequest;
         project::get_beat_funscript,
         project::get_combined_funscript,
         project::get_new_id,
+        stash::get_config,
     ),
     components(
         schemas(
@@ -67,6 +69,8 @@ use crate::service::video::AddVideosRequest;
             UpdateMarker,
             AddVideosRequest,
             NewId,
+            Config,
+            SortDirection,
         )
     ),
     tags(

@@ -6,23 +6,15 @@ import {
   ClipPickerOptions,
   ClipsResponse,
   CreateClipsBody,
-  NewId,
   PmvClipOptions,
   SongDto,
   VideoDto,
 } from "../types/types.generated"
 import {FormState, StateHelpers} from "../types/form-state"
-import {getNewId} from "../api"
+import {getConfig, getNewId, getVideo} from "../api"
 
 export const configLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/stash/config")
-  if (response.ok) {
-    const config = await response.json()
-    return config
-  } else {
-    const error = await response.text()
-    throw json({error, request: "/api/stash/config"}, {status: 500})
-  }
+  return await getConfig()
 }
 
 const getClipLengths = (state: FormState): PmvClipOptions => {
@@ -157,14 +149,8 @@ export const newIdLoader: LoaderFunction = async () => {
 
 export const videoDetailsLoader: LoaderFunction = async ({params}) => {
   const {id} = params
-  const response = await fetch(`/api/local/video/${id}`)
-  if (response.ok) {
-    const data = await response.json()
-    return data
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: `/api/video/${id}`}, {status: 500})
-  }
+  const data = await getVideo(id!)
+  return data
 }
 
 export const musicLoader: LoaderFunction = async () => {

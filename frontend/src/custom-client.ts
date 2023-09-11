@@ -14,7 +14,12 @@ export const customInstance = async <T>({
   responseType?: string
   headers?: Record<string, string>
 }): Promise<T> => {
-  const response = await fetch(`${url}` + new URLSearchParams(params), {
+  let fullUrl = url
+  if (params) {
+    fullUrl += "?" + new URLSearchParams(params)
+  }
+
+  const response = await fetch(fullUrl, {
     method,
     ...(data ? {body: JSON.stringify(data)} : {}),
   })

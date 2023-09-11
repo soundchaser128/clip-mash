@@ -158,7 +158,7 @@ impl VideoService {
                 source: VideoSource::Stash,
                 duration: scene.files[0].duration,
                 // TODO
-                video_preview_image: None,
+                video_preview_image: Some(self.stash_api.get_screenshot_url(&scene.id)),
                 stash_scene_id: Some(scene.id.parse().unwrap()),
             })
             .collect();
@@ -167,7 +167,7 @@ impl VideoService {
             self.database.videos.persist_video(&video).await?;
         }
 
-        todo!()
+        Ok(videos)
     }
 
     pub async fn add_videos(&self, request: AddVideosRequest) -> Result<Vec<DbVideo>> {

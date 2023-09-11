@@ -461,6 +461,11 @@ impl StashApi {
         let performers = response.data.unwrap();
         Ok(performers.find_performers.performers)
     }
+
+    pub fn get_screenshot_url(&self, id: &str) -> String {
+        let url = format!("{}/scene/{}/screenshot", self.api_url, id);
+        add_api_key(&url, &self.api_key)
+    }
 }
 
 #[cfg(test)]

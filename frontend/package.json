@@ -13,7 +13,8 @@
     "type-check": "tsc",
     "type-check:watch": "tsc --watch",
     "lint": "eslint .",
-    "test": "vitest"
+    "test": "vitest",
+    "generate": "orval --config ./orval.config.ts"
   },
   "dependencies": {
     "@badrap/result": "^0.2.13",
@@ -57,6 +58,7 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "jsdom": "^22.1.0",
+    "orval": "^6.17.0",
     "postcss": "^8.4.28",
     "prettier": "^3.0.2",
     "tailwindcss": "^3.3.3",

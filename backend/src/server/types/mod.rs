@@ -383,7 +383,7 @@ pub struct SongDto {
     pub beats: Vec<f32>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct NewId {
     pub id: String,

@@ -25,6 +25,7 @@ use crate::service::video::AddVideosRequest;
         project::fetch_clips,
         project::get_beat_funscript,
         project::get_combined_funscript,
+        project::get_new_id,
     ),
     components(
         schemas(
@@ -65,6 +66,7 @@ use crate::service::video::AddVideosRequest;
             CreateFunscriptBody,
             UpdateMarker,
             AddVideosRequest,
+            NewId,
         )
     ),
     tags(

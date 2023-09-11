@@ -12,6 +12,7 @@ import {
   VideoDto,
 } from "../types/types.generated"
 import {FormState, StateHelpers} from "../types/form-state"
+import {getNewId} from "../api"
 
 export const configLoader: LoaderFunction = async () => {
   const response = await fetch("/api/stash/config")
@@ -144,14 +145,8 @@ export const localMarkerLoader: LoaderFunction = async ({request}) => {
 }
 
 export const loadNewId = async () => {
-  const response = await fetch("/api/id")
-  if (response.ok) {
-    const data = (await response.json()) as NewId
-    return data.id
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/id"}, {status: 500})
-  }
+  const data = await getNewId()
+  return data.id
 }
 
 export const newIdLoader: LoaderFunction = async () => {

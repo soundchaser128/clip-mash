@@ -1,3 +1,5 @@
+import {json} from "react-router-dom"
+
 export const customInstance = async <T>({
   url,
   method,
@@ -17,7 +19,12 @@ export const customInstance = async <T>({
     ...(data ? {body: JSON.stringify(data)} : {}),
   })
 
-  return response.json()
+  if (response.ok) {
+    return response.json()
+  } else {
+    const text = await response.text()
+    throw json({error: text, request: url}, {status: response.status})
+  }
 }
 
 export default customInstance

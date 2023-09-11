@@ -217,6 +217,10 @@ export type PmvClipOptionsOneOf = RandomizedClipOptions &
 
 export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
 
+export interface NewId {
+  id: string
+}
+
 export type MeasureCountOneOfThreeType =
   (typeof MeasureCountOneOfThreeType)[keyof typeof MeasureCountOneOfThreeType]
 
@@ -231,6 +235,11 @@ export type MeasureCountOneOfThree = {
   type: MeasureCountOneOfThreeType
 }
 
+export type MeasureCountOneOf = {
+  count: number
+  type: MeasureCountOneOfType
+}
+
 export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
 
 export type MeasureCountOneOfType =
@@ -240,11 +249,6 @@ export type MeasureCountOneOfType =
 export const MeasureCountOneOfType = {
   fixed: "fixed",
 } as const
-
-export type MeasureCountOneOf = {
-  count: number
-  type: MeasureCountOneOfType
-}
 
 export type MarkerIdOneOfThreeType =
   (typeof MarkerIdOneOfThreeType)[keyof typeof MarkerIdOneOfThreeType]
@@ -638,6 +642,10 @@ export const getCombinedFunscript = (
   })
 }
 
+export const getNewId = () => {
+  return customInstance<NewId>({url: `/api/project/id`, method: "get"})
+}
+
 type AwaitedInput<T> = PromiseLike<T> | T
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never
@@ -685,3 +693,4 @@ export type GetBeatFunscriptResult = NonNullable<
 export type GetCombinedFunscriptResult = NonNullable<
   Awaited<ReturnType<typeof getCombinedFunscript>>
 >
+export type GetNewIdResult = NonNullable<Awaited<ReturnType<typeof getNewId>>>

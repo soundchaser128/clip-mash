@@ -128,6 +128,13 @@ pub async fn list_finished_videos(
     Ok(Json(file_names))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/project/id",
+    responses(
+        (status = 200, description = "Generate a new ID", body = NewId),
+    )
+)]
 #[axum::debug_handler]
 pub async fn get_new_id() -> Json<NewId> {
     let id = generate_id();

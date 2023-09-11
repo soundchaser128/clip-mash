@@ -72,7 +72,7 @@ pub enum VideoId {
 impl VideoId {
     pub fn source(&self) -> VideoSource {
         match self {
-            VideoId::LocalFile(_) => todo!(),
+            VideoId::LocalFile(_) => VideoSource::Folder,
             VideoId::Stash(_) => VideoSource::Stash,
         }
     }

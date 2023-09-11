@@ -35,7 +35,7 @@ pub struct VideoService {
 }
 
 impl VideoService {
-    pub async fn new(state: AppState) -> Result<Self> {
+    pub async fn new(state: Arc<AppState>) -> Result<Self> {
         Ok(VideoService {
             database: state.database.clone(),
             directories: state.directories.clone(),
@@ -147,17 +147,25 @@ impl VideoService {
         Ok(video)
     }
 
-    async fn persist_stash_video(&self, stash_scene_id: i64) -> Result<DbVideo> {
-        let video = DbVideo {
-            id: generate_id(),
-            // TODO lol
-            file_path: format!("stash://{}", stash_scene_id),
-            interactive: false,
-            source: VideoSource::Stash,
-            duration: 0.0,
-            video_preview_image: None,
-            stash_scene_id: Some(stash_scene_id),
-        };
+    async fn persist_stash_video(&self, scene_ids: Vec<i64>) -> Result<Vec<DbVideo>> {
+        let scenes = self.stash_api.find_scenes_by_ids(scene_ids).await?;
+        let videos: Vec<_> = scenes
+            .into_iter()
+            .map(|scene| DbVideo {
+                id: generate_id(),
+                file_path: scene.files[0].basename.clone(),
+                interactive: scene.interactive,
+                source: VideoSource::Stash,
+                duration: scene.files[0].duration,
+                // TODO
+                video_preview_image: None,
+                stash_scene_id: Some(scene.id.parse().unwrap()),
+            })
+            .collect();
+
+        for video in &videos {
+            self.database.videos.persist_video(&video).await?;
+        }
 
         todo!()
     }
@@ -175,15 +183,7 @@ impl VideoService {
 
                 futures.await
             }
-            AddVideosRequest::Stash { scene_ids } => {
-                let futures = future::try_join_all(
-                    scene_ids
-                        .into_iter()
-                        .map(|scene_id| async move { self.persist_stash_video(scene_id).await }),
-                );
-
-                futures.await
-            }
+            AddVideosRequest::Stash { scene_ids } => self.persist_stash_video(scene_ids).await,
         }
     }
 }

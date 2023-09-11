@@ -3,12 +3,12 @@ pub mod commands;
 pub mod directories;
 pub mod funscript;
 pub mod generator;
-pub mod local_video;
 pub mod migrations;
 pub mod music;
 pub mod preview_image;
 pub mod scene_detection;
 pub mod stash_config;
+pub mod video;
 
 #[cfg(test)]
 pub mod fixtures;

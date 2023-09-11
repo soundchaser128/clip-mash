@@ -14,9 +14,12 @@ use utoipa::IntoParams;
 use crate::server::dtos::Page;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
-use crate::server::types::{CreateMarker, ListVideoDto, MarkerDto, PageParameters, UpdateMarker};
+use crate::server::types::{
+    CreateMarker, ListVideoDto, MarkerDto, PageParameters, UpdateMarker, VideoDto,
+};
 use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;
+use crate::service::video::{AddVideosRequest, VideoService};
 
 #[derive(Deserialize, IntoParams)]
 pub struct VideoSearchQuery {
@@ -46,8 +49,20 @@ pub async fn list_videos(
     Ok(Json(Page::new(videos, size, page)))
 }
 
-pub async fn add_new_videos() -> impl IntoResponse {
-    todo!()
+#[axum::debug_handler]
+pub async fn add_new_videos(
+    State(state): State<Arc<AppState>>,
+    Json(request): Json<AddVideosRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let video_service = VideoService::new(state).await?;
+    let new_videos: Vec<_> = video_service
+        .add_videos(request)
+        .await?
+        .into_iter()
+        .map(|v| VideoDto::from(v))
+        .collect();
+
+    Ok(Json(new_videos))
 }
 
 #[axum::debug_handler]

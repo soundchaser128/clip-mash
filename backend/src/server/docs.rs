@@ -1,19 +1,30 @@
 use utoipa::OpenApi;
 
 use super::dtos::ListVideoDtoPage;
+use super::handlers::project::CreateFunscriptBody;
 use super::types::*;
+use crate::data::database::VideoSource;
 use crate::server::handlers::{library, progress, project};
+use crate::service::video::AddVideosRequest;
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        library::list_videos,
-        library::detect_markers,
+        library::add_new_videos,
         library::create_new_marker,
-        project::fetch_clips,
-        project::create_video,
+        library::delete_marker,
+        library::detect_markers,
+        library::get_video,
+        library::list_markers,
+        library::list_videos,
+        library::split_marker,
+        library::update_marker,
         progress::get_progress_info,
+        project::create_video,
         project::download_video,
+        project::fetch_clips,
+        project::get_beat_funscript,
+        project::get_combined_funscript,
     ),
     components(
         schemas(
@@ -48,6 +59,12 @@ use crate::server::handlers::{library, progress, project};
             VideoQuality,
             Progress,
             CreateMarker,
+            VideoSource,
+            CreateBeatFunscriptBody,
+            StrokeType,
+            CreateFunscriptBody,
+            UpdateMarker,
+            AddVideosRequest,
         )
     ),
     tags(

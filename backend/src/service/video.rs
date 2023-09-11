@@ -6,6 +6,7 @@ use serde::Deserialize;
 use tokio::task::spawn_blocking;
 use tracing::{debug, info, warn};
 use url::Url;
+use utoipa::ToSchema;
 use walkdir::WalkDir;
 
 use super::commands::ffmpeg::FfmpegLocation;
@@ -19,11 +20,11 @@ use crate::service::preview_image::PreviewGenerator;
 use crate::util::generate_id;
 use crate::Result;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum AddVideosRequest {
-    Local { path: Utf8PathBuf, recurse: bool },
-    Download { urls: Vec<Url> },
+    Local { path: String, recurse: bool },
+    Download { urls: Vec<String> },
     Stash { scene_ids: Vec<i64> },
 }
 
@@ -177,7 +178,7 @@ impl VideoService {
             }
             AddVideosRequest::Download { urls } => {
                 let futures = future::try_join_all(urls.into_iter().map(|url| async move {
-                    let (id, path) = self.download_video(url).await?;
+                    let (id, path) = self.download_video(url.parse()?).await?;
                     self.persist_downloaded_video(id, path).await
                 }));
 

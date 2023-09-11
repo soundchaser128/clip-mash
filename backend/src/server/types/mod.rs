@@ -467,7 +467,7 @@ pub struct CreateMarker {
     pub video_interactive: bool,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateMarker {
     pub rowid: i64,
@@ -476,7 +476,7 @@ pub struct UpdateMarker {
     pub title: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum StrokeType {
     /// Creates a stroke every `n` beats
@@ -501,7 +501,7 @@ impl StrokeType {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateBeatFunscriptBody {
     pub song_ids: Vec<i64>,

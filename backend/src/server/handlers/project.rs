@@ -9,7 +9,7 @@ use camino::Utf8PathBuf;
 use serde::Deserialize;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
-use utoipa::IntoParams;
+use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
 use crate::data::database::VideoSource;
@@ -25,7 +25,7 @@ use crate::util::generate_id;
 
 #[utoipa::path(
     post,
-    path = "/api/clips",
+    path = "/api/project/clips",
     request_body = CreateClipsBody,
     responses(
         (status = 200, description = "The newly created marker", body = ClipsResponse),
@@ -83,7 +83,7 @@ async fn create_video_inner(
 
 #[utoipa::path(
     post,
-    path = "/api/create",
+    path = "/api/project/create",
     request_body = CreateVideoBody,
     responses(
         (status = 200, description = "The file name of the video to be created (returns immediately)", body = String),
@@ -142,7 +142,7 @@ pub struct FilenameQuery {
 
 #[utoipa::path(
     get,
-    path = "/api/download",
+    path = "/api/project/download",
     params(FilenameQuery),
     responses(
         (status = 200, description = "Download the finished video", body = Vec<u8>),
@@ -171,12 +171,20 @@ pub async fn download_video(
     Ok((headers, body))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct CreateFunscriptBody {
     pub clips: Vec<Clip>,
     pub source: VideoSource,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/project/funscript/combined",
+    request_body = CreateFunscriptBody,
+    responses(
+        (status = 200, description = "Create a funscript by combining the funscripts from the videos", body = Vec<u8>),
+    )
+)]
 #[axum::debug_handler]
 pub async fn get_combined_funscript(
     State(state): State<Arc<AppState>>,
@@ -191,6 +199,14 @@ pub async fn get_combined_funscript(
     Ok(Json(script))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/project/funscript/beat",
+    request_body = CreateBeatFunscriptBody,
+    responses(
+        (status = 200, description = "Create a funscript from the beats of the music", body = Vec<u8>),
+    )
+)]
 #[axum::debug_handler]
 pub async fn get_beat_funscript(
     State(state): State<Arc<AppState>>,

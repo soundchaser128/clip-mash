@@ -28,7 +28,7 @@ pub struct VideoSearchQuery {
 
 #[utoipa::path(
     get,
-    path = "/api/local/video",
+    path = "/api/library/video",
     params(VideoSearchQuery),
     responses(
         (status = 200, description = "Lists all videos with given query", body = ListVideoDtoPage),
@@ -49,6 +49,14 @@ pub async fn list_videos(
     Ok(Json(Page::new(videos, size, page)))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/library/video",
+    request_body = AddVideosRequest,
+    responses(
+        (status = 200, description = "Add new videos", body = Vec<VideoDto>),
+    )
+)]
 #[axum::debug_handler]
 pub async fn add_new_videos(
     State(state): State<Arc<AppState>>,
@@ -65,6 +73,16 @@ pub async fn add_new_videos(
     Ok(Json(new_videos))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/library/video/{id}",
+    params(
+        ("id" = String, Path, description = "The ID of the video to fetch")
+    ),
+    responses(
+        (status = 200, description = "Get details for a video", body = ListVideoDto),
+    )
+)]
 #[axum::debug_handler]
 pub async fn get_video(
     Path(id): Path<String>,
@@ -85,8 +103,8 @@ pub struct DetectMarkersQuery {
 }
 
 #[utoipa::path(
-    get,
-    path = "/api/local/video/{id}/markers",
+    post,
+    path = "/api/library/video/{id}/detect-markers",
     params(
         ("id" = String, Path, description = "The ID of the video to detect markers for"),
         ("threshold" = Option<f64>, Query, description = "The threshold for the marker detection (from 0.0 to 1.0)")
@@ -171,6 +189,13 @@ pub struct ListMarkersQuery {
     pub ids: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/library/marker/",
+    responses(
+        (status = 200, description = "List markers", body = Vec<MarkerDto>),
+    )
+)]
 #[axum::debug_handler]
 pub async fn list_markers(state: State<Arc<AppState>>) -> Result<Json<Vec<MarkerDto>>, AppError> {
     let markers = state.database.markers.get_all_markers().await?;
@@ -191,10 +216,10 @@ fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str>
 
 #[utoipa::path(
     post,
-    path = "/api/local/video/marker",
+    path = "/api/library/marker",
     request_body = CreateMarker,
     responses(
-        (status = 200, description = "The newly created marker", body = MarkerDto),
+        (status = 200, description = "Create a new marker", body = MarkerDto),
     )
 )]
 #[axum::debug_handler]
@@ -224,6 +249,14 @@ pub async fn create_new_marker(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/library/marker",
+    request_body = UpdateMarker,
+    responses(
+        (status = 200, description = "Updates a marker", body = MarkerDto),
+    )
+)]
 #[axum::debug_handler]
 pub async fn update_marker(
     state: State<Arc<AppState>>,
@@ -235,6 +268,16 @@ pub async fn update_marker(
     Ok(Json(marker.into()))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/library/marker/{id}",
+    params(
+        ("id" = i64, Path, description = "The ID of the marker to delete"),
+    ),
+    responses(
+        (status = 200, description = "Deletes the given marker", body = ()),
+    )
+)]
 #[axum::debug_handler]
 pub async fn delete_marker(
     Path(id): Path<i64>,
@@ -251,6 +294,18 @@ pub struct SplitMarkerQuery {
     pub time: f64,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/library/marker/{id}/split",
+    params(
+        ("id" = i64, Path, description = "The ID of the marker to split"),
+        ("time" = f64, Query, description = "The time to split the marker at")
+    ),
+    request_body = UpdateMarker,
+    responses(
+        (status = 200, description = "Split a marker at the specified timestamp", body = Vec<MarkerDto>),
+    )
+)]
 #[axum::debug_handler]
 pub async fn split_marker(
     Path(id): Path<i64>,

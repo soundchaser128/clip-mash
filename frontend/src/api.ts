@@ -528,6 +528,13 @@ export type AddVideosRequest =
   | AddVideosRequestOneOfThree
   | AddVideosRequestOneOfFive
 
+export const listMarkers = () => {
+  return customInstance<MarkerDto[]>({
+    url: `/api/library/marker`,
+    method: "get",
+  })
+}
+
 export const createNewMarker = (createMarker: CreateMarker) => {
   return customInstance<MarkerDto>({
     url: `/api/library/marker`,
@@ -543,13 +550,6 @@ export const updateMarker = (updateMarker: UpdateMarker) => {
     method: "put",
     headers: {"Content-Type": "application/json"},
     data: updateMarker,
-  })
-}
-
-export const listMarkers = () => {
-  return customInstance<MarkerDto[]>({
-    url: `/api/library/marker/`,
-    method: "get",
   })
 }
 
@@ -639,6 +639,7 @@ export const getBeatFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
+    data: createBeatFunscriptBody,
   })
 }
 
@@ -650,6 +651,7 @@ export const getCombinedFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
+    data: createFunscriptBody,
   })
 }
 
@@ -665,14 +667,14 @@ type AwaitedInput<T> = PromiseLike<T> | T
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never
 
+export type ListMarkersResult = NonNullable<
+  Awaited<ReturnType<typeof listMarkers>>
+>
 export type CreateNewMarkerResult = NonNullable<
   Awaited<ReturnType<typeof createNewMarker>>
 >
 export type UpdateMarkerResult = NonNullable<
   Awaited<ReturnType<typeof updateMarker>>
->
-export type ListMarkersResult = NonNullable<
-  Awaited<ReturnType<typeof listMarkers>>
 >
 export type DeleteMarkerResult = NonNullable<
   Awaited<ReturnType<typeof deleteMarker>>

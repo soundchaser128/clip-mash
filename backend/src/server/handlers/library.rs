@@ -191,7 +191,7 @@ pub struct ListMarkersQuery {
 
 #[utoipa::path(
     get,
-    path = "/api/library/marker/",
+    path = "/api/library/marker",
     responses(
         (status = 200, description = "List markers", body = Vec<MarkerDto>),
     )

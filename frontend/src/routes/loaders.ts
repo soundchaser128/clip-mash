@@ -11,7 +11,7 @@ import {
   VideoDto,
 } from "../types/types.generated"
 import {FormState, StateHelpers} from "../types/form-state"
-import {getConfig, getNewId, getVideo} from "../api"
+import {getConfig, getNewId, getVideo, listMarkers} from "../api"
 
 export const configLoader: LoaderFunction = async () => {
   return await getConfig()
@@ -121,19 +121,11 @@ export const clipsLoader: LoaderFunction = async () => {
   }
 }
 
-export const localMarkerLoader: LoaderFunction = async ({request}) => {
+export const localMarkerLoader: LoaderFunction = async () => {
   const formState = getFormState()!
   invariant(StateHelpers.isLocalFiles(formState))
-  const params = new URL(request.url).search
-
-  const response = await fetch(`/api/local/video/marker${params}`)
-  if (response.ok) {
-    const json = await response.json()
-    return json
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/local/video/marker"}, {status: 500})
-  }
+  const markers = listMarkers()
+  return markers
 }
 
 export const loadNewId = async () => {

@@ -246,7 +246,7 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
                 )}
                 {videoPreview !== marker.id.id && (
                   <img
-                    src={marker.screenshotUrl || undefined}
+                    src={`/api/library/marker/${marker.id.id}/preview`}
                     className="aspect-[16/9] object-cover object-top w-full"
                   />
                 )}

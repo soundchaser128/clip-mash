@@ -251,16 +251,8 @@ export default function EditVideoModal() {
       isBetween(currentTime, m.start, m.end),
     )
     if (currentMarker) {
-      const data = await splitMarker(currentMarker.id.id, {})
-
-      // const response = await fetch(
-      //   `/api/local/video/marker/${currentMarker.id.id}/split?time=${currentTime}`,
-      //   {method: "POST"},
-      // )
-      // if (response.ok) {
-      //   const data = (await response.json()) as MarkerDto[]
-      //   setMarkers(data)
-      // }
+      const data = await splitMarker(currentMarker.id.id, {time: currentTime})
+      setMarkers(data)
     }
   }
 

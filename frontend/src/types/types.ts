@@ -1,4 +1,4 @@
-import {MarkerDto, VideoDto} from "./types.generated"
+import {MarkerDto, VideoDto} from "../api"
 
 export type SelectMode = "tags" | "performers" | "scenes"
 

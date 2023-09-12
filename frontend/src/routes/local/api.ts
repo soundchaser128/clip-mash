@@ -1,12 +1,14 @@
 import {Result} from "@badrap/result"
+import {parseTimestamp} from "../../helpers"
+import {JsonError} from "../../types/types"
 import {
   CreateMarker,
   MarkerDto,
   UpdateMarker,
   VideoDto,
-} from "../../types/types.generated"
-import {parseTimestamp} from "../../helpers"
-import {JsonError} from "../../types/types"
+  createNewMarker,
+  updateMarker as updateMarkerApi,
+} from "../../api"
 
 export interface MarkerInputs {
   title: string
@@ -14,7 +16,7 @@ export interface MarkerInputs {
   end?: string | number
 }
 
-export async function createNewMarker(
+export async function createMarker(
   videoDto: VideoDto,
   marker: MarkerInputs,
   duration: number,
@@ -22,7 +24,6 @@ export async function createNewMarker(
 ): Promise<Result<MarkerDto, JsonError>> {
   const start = Math.max(parseTimestamp(marker.start), 0)
   const end = Math.min(parseTimestamp(marker.end!), duration)
-
   const payload = {
     start,
     end,
@@ -33,16 +34,11 @@ export async function createNewMarker(
     videoInteractive: videoDto.interactive,
   } satisfies CreateMarker
 
-  const response = await fetch("/api/local/video/marker", {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: {"Content-Type": "application/json"},
-  })
-  if (response.ok) {
-    const marker = (await response.json()) as MarkerDto
+  try {
+    const marker = await createNewMarker(payload)
     return Result.ok(marker)
-  } else {
-    const error = (await response.json()) as JsonError
+  } catch (e) {
+    const error = e as JsonError
     return Result.err(error)
   }
 }
@@ -58,16 +54,11 @@ export async function updateMarker(
     title: marker.title.trim(),
   } satisfies UpdateMarker
 
-  const response = await fetch("/api/local/video/marker", {
-    method: "PUT",
-    body: JSON.stringify(payload),
-    headers: {"Content-Type": "application/json"},
-  })
-  if (response.ok) {
-    const marker = (await response.json()) as MarkerDto
+  try {
+    const marker = await updateMarkerApi(payload)
     return Result.ok(marker)
-  } else {
-    const error = (await response.json()) as JsonError
+  } catch (e) {
+    const error = e as JsonError
     return Result.err(error)
   }
 }

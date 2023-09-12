@@ -17,7 +17,7 @@ import {formatSeconds, isBetween, parseTimestamp} from "../../helpers"
 import Modal from "../../components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import TimestampInput from "../../components/TimestampInput"
-import {createNewMarker, updateMarker} from "./api"
+import {createMarker, updateMarker} from "./api"
 import Timeline from "../../components/Timeline"
 import Loader from "../../components/Loader"
 import {MarkerDto, splitMarker} from "../../api"
@@ -172,7 +172,7 @@ export default function EditVideoModal() {
 
     const result =
       formMode === "create"
-        ? await createNewMarker(video, values, videoDuration!, index)
+        ? await createMarker(video, values, videoDuration!, index)
         : await updateMarker(editedMarker!.id.id, values)
 
     if (result.isOk) {
@@ -258,7 +258,7 @@ export default function EditVideoModal() {
 
   const onAddFullVideo = async () => {
     const duration = video.duration
-    const result = await createNewMarker(
+    const result = await createMarker(
       video,
       {
         start: 0.0,

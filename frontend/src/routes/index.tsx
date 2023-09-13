@@ -3,7 +3,7 @@ import {useLoaderData, useNavigate} from "react-router-dom"
 import {updateForm} from "./actions"
 import {VideoSource} from "../types/types"
 import Layout from "../components/Layout"
-import {HiArchiveBox, HiComputerDesktop} from "react-icons/hi2"
+import {HiComputerDesktop} from "react-icons/hi2"
 import {FormStage, LocalFilesFormStage} from "../types/form-state"
 
 export default function InitialRoot() {
@@ -36,33 +36,13 @@ export default function InitialRoot() {
             <p className="mt-2 text-lg text-center opacity-60">
               ClipMash helps you create video compilations.
             </p>
-
-            <div className="text-lg mb-4">
-              <h2 className="font-bold mt-4">Choose video source</h2>
-              <p className="opacity-60">
-                You can either use files on your disk or connect to a{" "}
-                <a href="https://stashapp.cc" className="link link-primary">
-                  Stash
-                </a>{" "}
-                instance.
-              </p>
-            </div>
-
             <div className="self-center btn-group">
-              <button
-                onClick={() => onNextStage("stash")}
-                className="btn btn-lg btn-primary w-52"
-              >
-                <HiArchiveBox className="mr-2 w-6 h-6" />
-                Stash
-              </button>
-
               <button
                 className="btn btn-lg btn-secondary w-52"
                 onClick={() => onNextStage("localFile")}
               >
                 <HiComputerDesktop className="mr-2 w-6 h-6" />
-                Local files
+                Start
               </button>
             </div>
           </div>

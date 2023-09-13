@@ -16,14 +16,6 @@ export type DetectMarkersParams = {
   threshold?: number | null
 }
 
-export type ListVideosParams = {
-  query?: string | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
-
 export type SplitMarkerParams = {
   /**
    * The time to split the marker at
@@ -83,6 +75,8 @@ export type VideoIdOneOfThree = {
   type: VideoIdOneOfThreeType
 }
 
+export type VideoId = VideoIdOneOf | VideoIdOneOfThree
+
 export type VideoIdOneOfType =
   (typeof VideoIdOneOfType)[keyof typeof VideoIdOneOfType]
 
@@ -95,8 +89,6 @@ export type VideoIdOneOf = {
   id: string
   type: VideoIdOneOfType
 }
-
-export type VideoId = VideoIdOneOf | VideoIdOneOfThree
 
 export interface VideoDto {
   duration: number
@@ -137,8 +129,6 @@ export type StrokeTypeOneOfThree = {
   accelerate: StrokeTypeOneOfThreeAccelerate
 }
 
-export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
-
 /**
  * Creates a stroke every `n` beats
  */
@@ -151,6 +141,8 @@ export type StrokeTypeOneOf = {
   everyNth: StrokeTypeOneOfEveryNth
 }
 
+export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
+
 export type SortDirection = (typeof SortDirection)[keyof typeof SortDirection]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
@@ -158,6 +150,22 @@ export const SortDirection = {
   asc: "asc",
   desc: "desc",
 } as const
+
+export type ListVideosParams = {
+  query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
+export interface SongDto {
+  beats: number[]
+  duration: number
+  fileName: string
+  songId: number
+  url: string
+}
 
 export interface SongClipOptions {
   beatsPerMeasure: number

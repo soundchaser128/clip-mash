@@ -71,6 +71,7 @@ use crate::service::video::AddVideosRequest;
             NewId,
             Config,
             SortDirection,
+            SongDto,
         )
     ),
     tags(

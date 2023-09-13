@@ -5,11 +5,12 @@ import {
   MarkerDto,
   MeasureCount,
   SelectedMarker,
-  SongDto,
   VideoCodec,
   VideoQuality,
-} from "./types.generated"
+} from "../api"
 import {ClipStrategy, SelectMode, VideoWithMarkers} from "./types"
+// FIXME
+import {SongDto} from "./types.generated"
 
 export enum FormStage {
   SelectMode = 1,

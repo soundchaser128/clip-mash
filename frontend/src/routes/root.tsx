@@ -19,53 +19,6 @@ import {
   StateHelpers,
 } from "../types/form-state"
 
-const StashSteps: React.FC<{state: StashFormState}> = ({state}) => {
-  return (
-    <Steps
-      currentStage={state.stage}
-      steps={[
-        {
-          stage: FormStage.SelectMode,
-          link: "/stash/mode",
-          content: "Choose mode",
-        },
-        {
-          stage: FormStage.SelectCriteria,
-          link: state.selectMode ? getUrl(state.selectMode) : "",
-          content: state.selectMode
-            ? `Select ${state.selectMode}`
-            : "Select criteria",
-        },
-        {
-          stage: FormStage.SelectMarkers,
-          link: "/stash/markers",
-          content: "Select markers",
-        },
-        {
-          stage: FormStage.Music,
-          link: "/stash/music",
-          content: "Music options",
-        },
-        {
-          stage: FormStage.VideoOptions,
-          link: "/stash/video-options",
-          content: "Video options",
-        },
-        {
-          stage: FormStage.PreviewClips,
-          link: "/stash/clips",
-          content: "Preview clips",
-        },
-        {
-          stage: FormStage.Wait,
-          link: "/stash/progress",
-          content: "Create video",
-        },
-      ]}
-    />
-  )
-}
-
 const LocalFileSteps: React.FC<{state: LocalVideosFormState}> = ({state}) => {
   return (
     <Steps
@@ -106,7 +59,7 @@ const LocalFileSteps: React.FC<{state: LocalVideosFormState}> = ({state}) => {
   )
 }
 
-const RootLayout: React.FC = () => {
+const AssistantLayout: React.FC = () => {
   const {actions, state} = useStateMachine({resetForm})
   const onReset = () => {
     if (
@@ -143,7 +96,6 @@ const RootLayout: React.FC = () => {
             Reset
           </button>
         </div>
-        {StateHelpers.isStash(state.data) && <StashSteps state={state.data} />}
         {StateHelpers.isLocalFiles(state.data) && (
           <LocalFileSteps state={state.data} />
         )}
@@ -153,4 +105,4 @@ const RootLayout: React.FC = () => {
   )
 }
 
-export default RootLayout
+export default AssistantLayout

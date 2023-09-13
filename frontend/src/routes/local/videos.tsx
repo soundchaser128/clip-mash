@@ -8,6 +8,7 @@ import {
   HiChevronRight,
   HiClock,
   HiFolder,
+  HiPlus,
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
@@ -25,7 +26,7 @@ import {
 } from "react-router-dom"
 import {formatSeconds} from "../../helpers"
 import clsx from "clsx"
-import {ListVideoDto} from "../../types/types.generated"
+import {ListVideoDto} from "../../api"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
 import {LocalFilesFormStage, StateHelpers} from "../../types/form-state"
@@ -90,13 +91,9 @@ export default function ListVideos() {
       <Outlet />
       <div className="my-4 grid grid-cols-3 items-center">
         <div className="flex gap-2">
-          <Link to="download" className="btn btn-primary">
-            <HiArrowDownTray className="mr-2" />
-            Download videos
-          </Link>
-          <Link to="/local/path" className="btn btn-primary">
-            <HiFolder className="mr-2" />
-            Add folder with videos
+          <Link to="add" className="btn btn-accent">
+            <HiPlus className="mr-2" />
+            Add videos
           </Link>
         </div>
         <span className="text-center">
@@ -178,9 +175,7 @@ export default function ListVideos() {
                 <li>
                   <HiArrowDownTray className="inline mr-2" />
                   Source:{" "}
-                  {video.video.source === "downloadedLocalFile"
-                    ? "Downloaded"
-                    : "Folder"}
+                  {video.video.source === "Download" ? "Downloaded" : "Folder"}
                 </li>
                 <li>
                   <HiClock className="inline mr-2" />

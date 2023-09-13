@@ -9,7 +9,7 @@ import {
   PmvClipOptions,
   SongDto,
   VideoDto,
-} from "../types/types.generated"
+} from "../api"
 import {FormState, StateHelpers} from "../types/form-state"
 import {getConfig, getNewId, getVideo, listMarkers} from "../api"
 
@@ -41,6 +41,7 @@ const getClipSettings = (state: FormState): ClipPickerOptions => {
   if (state.clipStrategy === "weightedRandom") {
     return {
       type: "weightedRandom",
+      // @ts-expect-error form state needs to align with this
       weights: state.clipWeights!,
       clipLengths: getClipLengths(state),
       length:

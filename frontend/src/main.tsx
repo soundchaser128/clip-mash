@@ -8,6 +8,7 @@ import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
   isRouteErrorResponse,
+  Link,
   Outlet,
   RouterProvider,
   ScrollRestoration,
@@ -32,7 +33,7 @@ import SelectSource from "./routes"
 import SelectMode from "./routes/select-mode"
 import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
 import EditVideoModal from "./routes/local/videos.$id"
-import StashRoot from "./routes/root"
+import AssistantLayout from "./routes/root"
 import Layout from "./components/Layout"
 import Music from "./routes/music"
 import ConfigPage from "./routes/stash/config"
@@ -158,6 +159,15 @@ const NotificationPermission = () => {
   )
 }
 
+const HomePage = () => {
+  return (
+    <div>
+      <h1>ClipMash</h1>
+      <Link to="/create">Start!</Link>
+    </div>
+  )
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -168,104 +178,15 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <SelectSource />,
-        loader: newIdLoader,
+        element: <HomePage />,
       },
       {
-        path: "/stash/config",
-        loader: configLoader,
-        element: <ConfigPage />,
-      },
-      {
-        path: "local",
-        element: <StashRoot />,
+        path: "/create",
+        element: <AssistantLayout />,
         children: [
           {
-            path: "path",
-            element: <SelectVideoPath />,
-          },
-          {
-            path: "videos/download",
-            element: <DownloadVideosPage />,
-          },
-          {
-            path: "videos",
-            element: <ListVideos />,
-            loader: listVideosLoader,
-          },
-          {
-            path: "videos/:id",
-            element: <EditVideoModal />,
-            loader: videoDetailsLoader,
-          },
-          {
-            path: "markers",
-            element: <MarkersPage />,
-            loader: localMarkerLoader,
-          },
-          {
-            path: "options",
-            element: <VideoOptions />,
-          },
-        ],
-      },
-      {
-        path: "stash",
-        element: <StashRoot />,
-        loader: configLoader,
-        children: [
-          {
-            path: "mode",
-            element: <SelectMode />,
-          },
-          {
-            path: "filter",
-            element: <SelectCriteria />,
-            id: "select-root",
-            children: [
-              {
-                path: "performers",
-                element: <Performers />,
-                loader: performerLoader,
-              },
-              {
-                path: "tags",
-                element: <Tags />,
-                loader: tagsLoader,
-              },
-              {
-                path: "scenes",
-                element: <Scenes />,
-                loader: scenesLoader,
-              },
-            ],
-          },
-          {
-            path: "markers",
-            element: <SelectMarkers />,
-            loader: markerLoader,
-          },
-          {
-            path: "clips",
-            element: <PreviewClips />,
-            loader: clipsLoader,
-          },
-          {
-            path: "video-options",
-            element: <VideoOptions />,
-          },
-          {
-            path: "progress",
-            element: <Progress />,
-          },
-          {
-            path: "music",
-            element: <Music />,
-            loader: musicLoader,
-          },
-          {
-            path: "funscript",
-            element: <FunscriptPage />,
+            index: true,
+            element: <SelectSource />,
           },
         ],
       },

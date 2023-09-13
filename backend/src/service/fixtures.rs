@@ -4,6 +4,8 @@ use fake::faker::filesystem::en::FilePath;
 use fake::faker::lorem::en::{Sentence, Word};
 use fake::{Fake, Faker};
 use lazy_static::lazy_static;
+use wiremock::matchers::{body_string, method, path};
+use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;
 use crate::data::database::{Database, DbMarker, DbVideo, VideoSource};
@@ -11,6 +13,31 @@ use crate::server::types::{Beats, CreateMarker};
 use crate::service::{MarkerId, MarkerInfo, VideoId};
 use crate::util::generate_id;
 use crate::Result;
+
+pub struct GraphQlMatcher<'a> {
+    query: &'a str,
+}
+
+pub fn graphql_query(query: &str) -> GraphQlMatcher {
+    GraphQlMatcher { query }
+}
+
+impl<'a> Match for GraphQlMatcher<'a> {
+    fn matches(&self, request: &wiremock::Request) -> bool {
+        // request.body
+        todo!()
+    }
+}
+
+pub async fn stash_mock_server() -> MockServer {
+    let server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/graphql"))
+        .and(graphql_query("findScenes"));
+
+    server
+}
 
 pub fn markers() -> Vec<Marker> {
     vec![

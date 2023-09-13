@@ -1,7 +1,4 @@
 import {HiCheck} from "react-icons/hi2"
-import {StateHelpers} from "../../types/form-state"
-import {useStateMachine} from "little-state-machine"
-import invariant from "tiny-invariant"
 import {useNavigate} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {useState} from "react"
@@ -14,11 +11,8 @@ interface Inputs {
 }
 
 export default function SelectVideos() {
-  const {state} = useStateMachine()
-  invariant(StateHelpers.isLocalFiles(state.data))
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
-
   const {register, handleSubmit} = useForm<Inputs>({})
 
   const onSubmit = async (values: Inputs) => {

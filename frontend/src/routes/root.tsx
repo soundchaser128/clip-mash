@@ -1,11 +1,6 @@
 import {useStateMachine} from "little-state-machine"
-import React, {useEffect} from "react"
-import {
-  Outlet,
-  useLoaderData,
-  useNavigate,
-  useNavigation,
-} from "react-router-dom"
+import React from "react"
+import {Outlet, useNavigate, useNavigation} from "react-router-dom"
 import {HiXMark} from "react-icons/hi2"
 import {resetForm} from "./actions"
 import Layout from "../components/Layout"

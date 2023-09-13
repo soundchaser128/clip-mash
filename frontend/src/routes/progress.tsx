@@ -8,7 +8,7 @@ import {
 } from "react-icons/hi2"
 import {FormState} from "../types/form-state"
 import {formatSeconds} from "../helpers"
-import {Progress} from "../types/types.generated"
+import {Progress} from "../api"
 import useNotification from "../hooks/useNotification"
 import {updateForm} from "./actions"
 import {Link} from "react-router-dom"
@@ -111,6 +111,8 @@ function Progress() {
         done: false,
         itemsTotal: totalDuration,
         message: "Starting...",
+        timestamp: Date.now().toString(),
+        videoId: state.data.videoId!,
       })
     }
   }
@@ -155,7 +157,7 @@ function Progress() {
             </p>
             <p>
               Estimated time remaining:{" "}
-              <strong>{Math.round(progress.etaSeconds)} seconds</strong>
+              <strong>{Math.round(progress.etaSeconds || 0)} seconds</strong>
             </p>
             <p>{progress.message}</p>
           </section>

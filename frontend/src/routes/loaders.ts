@@ -1,4 +1,4 @@
-import {LoaderFunction, json} from "react-router-dom"
+import {LoaderFunction} from "react-router-dom"
 import {getFormState} from "../helpers"
 import {
   Clip,
@@ -109,7 +109,7 @@ export const clipsLoader: LoaderFunction = async () => {
   return {
     ...data,
     videos,
-  } //  satisfies ClipsLoaderData
+  } // satisfies ClipsLoaderData
 }
 
 export const localMarkerLoader: LoaderFunction = async () => {
@@ -117,15 +117,9 @@ export const localMarkerLoader: LoaderFunction = async () => {
   return markers
 }
 
-export const loadNewId = async () => {
+export const newIdLoader: LoaderFunction = async () => {
   const data = await getNewId()
   return data.id
-}
-
-export const newIdLoader: LoaderFunction = async () => {
-  const id = await loadNewId()
-
-  return id
 }
 
 export const videoDetailsLoader: LoaderFunction = async ({params}) => {

@@ -3,7 +3,7 @@ import {
   StateMachineProvider,
   useStateMachine,
 } from "little-state-machine"
-import React from "react"
+import React, {useEffect} from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
@@ -12,37 +12,22 @@ import {
   Outlet,
   RouterProvider,
   ScrollRestoration,
+  useLoaderData,
   useNavigate,
   useRouteError,
 } from "react-router-dom"
 import "./index.css"
-import SelectCriteria from "./routes/stash/filter/root"
-import SelectMarkers, {
-  loader as markerLoader,
-} from "./routes/stash/select-markers"
 import VideoOptions from "./routes/video-options"
 import Progress from "./routes/progress"
 import PreviewClips from "./routes/clips"
-import Performers, {
-  loader as performerLoader,
-} from "./routes/stash/filter/performers"
-import Tags, {loader as tagsLoader} from "./routes/stash/filter/tags"
-import Scenes, {loader as scenesLoader} from "./routes/stash/filter/scenes"
-import SelectVideoPath from "./routes/local/path"
-import SelectSource from "./routes"
-import SelectMode from "./routes/select-mode"
 import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
-import EditVideoModal from "./routes/local/videos.$id"
 import CreateLayout from "./routes/root"
 import Layout from "./components/Layout"
 import Music from "./routes/music"
-import ConfigPage from "./routes/stash/config"
 import {
-  configLoader,
   clipsLoader,
   localMarkerLoader,
   newIdLoader,
-  videoDetailsLoader,
   musicLoader,
   versionLoader,
 } from "./routes/loaders"
@@ -52,7 +37,6 @@ import MarkersPage from "./routes/local/markers"
 import {resetForm, updateForm} from "./routes/actions"
 import AddVideosPage from "./routes/local/download"
 import useNotification from "./hooks/useNotification"
-import FunscriptPage from "./routes/funscript"
 import {HiRocketLaunch} from "react-icons/hi2"
 import {FormStage} from "./types/form-state"
 
@@ -150,7 +134,7 @@ const ErrorBoundary = () => {
   )
 }
 
-const NotificationPermission = () => {
+const Init = () => {
   useNotification()
 
   return (
@@ -162,7 +146,13 @@ const NotificationPermission = () => {
 }
 
 const HomePage = () => {
+  const videoId = useLoaderData() as string
   const {actions} = useStateMachine({updateForm})
+
+  useEffect(() => {
+    actions.updateForm({videoId})
+  }, [])
+
   const onNext = () => {
     actions.updateForm({
       stage: FormStage.ListVideos,
@@ -199,13 +189,14 @@ const router = createBrowserRouter([
   {
     path: "/",
     errorElement: <ErrorBoundary />,
-    element: <NotificationPermission />,
+    element: <Init />,
     id: "root",
     loader: versionLoader,
     children: [
       {
         index: true,
         element: <HomePage />,
+        loader: newIdLoader,
       },
       {
         element: <CreateLayout />,

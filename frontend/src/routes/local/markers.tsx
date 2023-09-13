@@ -1,5 +1,5 @@
 import {useLoaderData} from "react-router-dom"
-import {MarkerDto} from "../../types/types.generated"
+import {MarkerDto} from "../../api"
 import MarkerPage from "../../components/MarkerPage"
 import {FormStage} from "../../types/form-state"
 

@@ -7,6 +7,7 @@ import {
   VideoCodec,
   VideoQuality,
   SongDto,
+  MarkerDto,
 } from "../api"
 import {ClipStrategy, VideoWithMarkers} from "./types"
 
@@ -23,6 +24,7 @@ export enum FormStage {
 export interface FormState {
   stage: FormStage
   videoId?: string
+  markers?: MarkerDto[]
   videos?: VideoWithMarkers[]
   recurse?: boolean
   clipOrder?: ClipOrder

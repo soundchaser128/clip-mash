@@ -27,7 +27,7 @@ import {useForm} from "react-hook-form"
 import {ClipsLoaderData} from "./loaders"
 import Modal from "../components/Modal"
 import {useImmer} from "use-immer"
-import {Clip, ClipOrder} from "../types/types.generated"
+import {Clip, ClipOrder} from "../api"
 import {FormStage} from "../types/form-state"
 import useUndo from "use-undo"
 import {produce} from "immer"
@@ -595,7 +595,7 @@ function PreviewClips() {
       stage: FormStage.Wait,
       clips: clips.map((c) => c.clip),
     })
-    navigate("/stash/progress")
+    navigate("/generate")
   }
 
   const onVideoTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (

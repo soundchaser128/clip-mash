@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
 import {useNavigate} from "react-router-dom"
-import {FormStage, LocalFilesFormStage} from "../types/form-state"
+import {FormStage} from "../types/form-state"
 import {updateForm} from "../routes/actions"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
@@ -17,7 +17,7 @@ import {
 } from "react-icons/hi2"
 import useFuse from "../hooks/useFuse"
 import {formatSeconds, sumDurations} from "../helpers"
-import {MarkerDto, SelectedMarker} from "../types/types.generated"
+import {MarkerDto, SelectedMarker} from "../api"
 import JumpToTop from "./JumpToTop"
 
 interface Props {
@@ -25,7 +25,7 @@ interface Props {
     markers: MarkerDto[]
   }
   withPerformers?: boolean
-  nextStage: FormStage | LocalFilesFormStage
+  nextStage: FormStage
 }
 
 const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
@@ -112,7 +112,7 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
       markers: data.markers,
       interactive: hasInteractiveScenes,
     })
-    navigate("/stash/music")
+    navigate("/music")
   }
 
   const onLimitDuration = () => {

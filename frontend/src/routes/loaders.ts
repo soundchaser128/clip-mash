@@ -1,6 +1,5 @@
 import {LoaderFunction, json} from "react-router-dom"
 import {getFormState} from "../helpers"
-import invariant from "tiny-invariant"
 import {
   Clip,
   ClipPickerOptions,
@@ -9,6 +8,7 @@ import {
   PmvClipOptions,
   SongDto,
   VideoDto,
+  fetchClips,
 } from "../api"
 import {FormState} from "../types/form-state"
 import {getConfig, getNewId, getVideo, listMarkers} from "../api"
@@ -99,27 +99,17 @@ export const clipsLoader: LoaderFunction = async () => {
     },
   } satisfies CreateClipsBody
 
-  const response = await fetch("/api/clips", {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: {"content-type": "application/json"},
+  const data: ClipsResponse = await fetchClips(body)
+
+  const videos: Record<string, VideoDto> = {}
+  data.videos.forEach((s) => {
+    videos[s.id.id] = s
   })
-  if (response.ok) {
-    const data: ClipsResponse = await response.json()
 
-    const videos: Record<string, VideoDto> = {}
-    data.videos.forEach((s) => {
-      videos[s.id.id] = s
-    })
-
-    return {
-      ...data,
-      videos,
-    } // satisfies ClipsLoaderData
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/clips"}, {status: 500})
-  }
+  return {
+    ...data,
+    videos,
+  } //  satisfies ClipsLoaderData
 }
 
 export const localMarkerLoader: LoaderFunction = async () => {

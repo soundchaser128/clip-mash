@@ -1,5 +1,5 @@
 import {format, formatDuration, getTime, parse} from "date-fns"
-import {SelectedMarker} from "./types/types.generated"
+import {SelectedMarker} from "./api"
 import {FormState} from "./types/form-state"
 import {scaleSequential} from "d3-scale"
 import {interpolatePlasma} from "d3-scale-chromatic"
@@ -40,7 +40,7 @@ export function getSegmentTextColor(color: string): string {
 type DurationFormat = "long" | "short"
 
 export function formatSeconds(
-  input: number | [number, number] | undefined,
+  input: number | [number, number] | number[] | undefined,
   durationFormat: DurationFormat = "long",
 ): string {
   let duration = 0

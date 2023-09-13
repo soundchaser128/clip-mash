@@ -49,8 +49,8 @@ import {
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import MarkersPage from "./routes/local/markers"
-import {resetForm} from "./routes/actions"
-import DownloadVideosPage from "./routes/local/download"
+import {resetForm, updateForm} from "./routes/actions"
+import AddVideosPage from "./routes/local/download"
 import useNotification from "./hooks/useNotification"
 import FunscriptPage from "./routes/funscript"
 import {HiRocketLaunch} from "react-icons/hi2"
@@ -162,6 +162,13 @@ const NotificationPermission = () => {
 }
 
 const HomePage = () => {
+  const {actions} = useStateMachine({updateForm})
+  const onNext = () => {
+    actions.updateForm({
+      stage: FormStage.ListVideos,
+    })
+  }
+
   return (
     <Layout>
       <div className="hero">
@@ -173,8 +180,9 @@ const HomePage = () => {
             </p>
             <div className="self-center btn-group">
               <Link
+                onClick={onNext}
                 className="btn btn-lg btn-primary w-52 mt-4"
-                to="/create/library"
+                to="/library"
               >
                 <HiRocketLaunch className="mr-2 w-6 h-6" />
                 Start
@@ -200,13 +208,39 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: "/create",
         element: <CreateLayout />,
         children: [
           {
             path: "library",
             element: <ListVideos />,
             loader: listVideosLoader,
+          },
+          {
+            path: "library/add",
+            element: <AddVideosPage />,
+          },
+          {
+            path: "markers",
+            element: <MarkersPage />,
+            loader: localMarkerLoader,
+          },
+          {
+            path: "music",
+            element: <Music />,
+            loader: musicLoader,
+          },
+          {
+            path: "video-options",
+            element: <VideoOptions />,
+          },
+          {
+            path: "clips",
+            element: <PreviewClips />,
+            loader: clipsLoader,
+          },
+          {
+            path: "generate",
+            element: <Progress />,
           },
         ],
       },

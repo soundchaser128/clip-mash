@@ -1,5 +1,4 @@
 import {useStateMachine} from "little-state-machine"
-import invariant from "tiny-invariant"
 import {VideoWithMarkers, Page} from "../../types/types"
 import {
   HiAdjustmentsVertical,
@@ -82,7 +81,7 @@ export default function ListVideos() {
       interactive,
       selectedMarkers: undefined,
     })
-    navigate("/local/markers")
+    navigate("/markers")
   }
 
   return (

@@ -1,6 +1,5 @@
 import {LoaderFunction, useLoaderData} from "react-router-dom"
-import {FormStage, StateHelpers} from "../../types/form-state"
-import invariant from "tiny-invariant"
+import {FormStage} from "../../types/form-state"
 import {getFormState} from "../../helpers"
 import {MarkerDto} from "../../types/types.generated"
 import MarkerPage from "../../components/MarkerPage"
@@ -12,7 +11,6 @@ interface Data {
 export const loader: LoaderFunction = async () => {
   const state = getFormState()
   if (state) {
-    invariant(StateHelpers.isStash(state))
     const params = new URLSearchParams()
     params.set("selectedIds", state.selectedIds!.join(","))
     params.set("mode", state.selectMode!)

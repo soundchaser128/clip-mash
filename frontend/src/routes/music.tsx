@@ -22,7 +22,7 @@ import {SongDto} from "../types/types.generated"
 import HelpModal from "../components/HelpModal"
 import useNotification from "../hooks/useNotification"
 import Loader from "../components/Loader"
-import {FormStage, LocalFilesFormStage, StateHelpers} from "../types/form-state"
+import {FormStage} from "../types/form-state"
 import ExternalLink from "../components/ExternalLink"
 
 interface Inputs {
@@ -447,9 +447,7 @@ export default function Music() {
   }
 
   const onNextStage = () => {
-    const nextStage = StateHelpers.isLocalFiles(state.data)
-      ? LocalFilesFormStage.VideoOptions
-      : FormStage.VideoOptions
+    const nextStage = FormStage.VideoOptions
 
     actions.updateForm({
       stage: nextStage,
@@ -459,7 +457,7 @@ export default function Music() {
       clipStrategy: formValues.clipStrategy,
     })
 
-    navigate("/stash/video-options")
+    navigate("/video-options")
   }
 
   return (

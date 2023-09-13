@@ -1,11 +1,6 @@
 import {json} from "react-router-dom"
 
-export const customInstance = async <T>({
-  url,
-  method,
-  params,
-  data,
-}: {
+interface Params {
   url: string
   method: "get" | "post" | "put" | "delete" | "patch"
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,7 +8,15 @@ export const customInstance = async <T>({
   data?: unknown
   responseType?: string
   headers?: Record<string, string>
-}): Promise<T> => {
+}
+
+export const customInstance = async <T>({
+  url,
+  method,
+  params,
+  data,
+  headers,
+}: Params): Promise<T> => {
   let fullUrl = url
   if (params) {
     fullUrl += "?" + new URLSearchParams(params)
@@ -21,7 +24,8 @@ export const customInstance = async <T>({
 
   const response = await fetch(fullUrl, {
     method,
-    ...(data ? {body: JSON.stringify(data)} : {}),
+    body: data ? JSON.stringify(data) : undefined,
+    headers,
   })
 
   if (response.ok) {

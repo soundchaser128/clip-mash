@@ -33,7 +33,7 @@ import SelectSource from "./routes"
 import SelectMode from "./routes/select-mode"
 import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
 import EditVideoModal from "./routes/local/videos.$id"
-import AssistantLayout from "./routes/root"
+import CreateLayout from "./routes/root"
 import Layout from "./components/Layout"
 import Music from "./routes/music"
 import ConfigPage from "./routes/stash/config"
@@ -53,6 +53,8 @@ import {resetForm} from "./routes/actions"
 import DownloadVideosPage from "./routes/local/download"
 import useNotification from "./hooks/useNotification"
 import FunscriptPage from "./routes/funscript"
+import {HiRocketLaunch} from "react-icons/hi2"
+import {FormStage} from "./types/form-state"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -161,10 +163,27 @@ const NotificationPermission = () => {
 
 const HomePage = () => {
   return (
-    <div>
-      <h1>ClipMash</h1>
-      <Link to="/create">Start!</Link>
-    </div>
+    <Layout>
+      <div className="hero">
+        <div className="hero-content self-center">
+          <div className="max-w-md flex flex-col">
+            <img src="/logo.png" className="w-40 self-center" />
+            <p className="mt-2 text-lg text-center opacity-60">
+              ClipMash helps you create video compilations.
+            </p>
+            <div className="self-center btn-group">
+              <Link
+                className="btn btn-lg btn-primary w-52 mt-4"
+                to="/create/library"
+              >
+                <HiRocketLaunch className="mr-2 w-6 h-6" />
+                Start
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
   )
 }
 
@@ -182,11 +201,12 @@ const router = createBrowserRouter([
       },
       {
         path: "/create",
-        element: <AssistantLayout />,
+        element: <CreateLayout />,
         children: [
           {
-            index: true,
-            element: <SelectSource />,
+            path: "library",
+            element: <ListVideos />,
+            loader: listVideosLoader,
           },
         ],
       },
@@ -197,7 +217,7 @@ const router = createBrowserRouter([
 createStore(
   {
     data: {
-      source: undefined,
+      stage: FormStage.Start,
     },
   },
   {

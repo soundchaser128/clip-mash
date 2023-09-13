@@ -4,7 +4,7 @@ import {updateForm} from "./actions"
 import {VideoSource} from "../types/types"
 import Layout from "../components/Layout"
 import {HiComputerDesktop} from "react-icons/hi2"
-import {FormStage, LocalFilesFormStage} from "../types/form-state"
+import {FormStage} from "../types/form-state"
 
 export default function InitialRoot() {
   const id = useLoaderData() as string
@@ -13,15 +13,10 @@ export default function InitialRoot() {
   const {actions} = useStateMachine({updateForm})
   const onNextStage = (mode: VideoSource) => {
     const update = {
-      source: mode,
       videoId: id,
-      stage:
-        mode === "localFile"
-          ? LocalFilesFormStage.ListVideos
-          : FormStage.SelectMode,
+      stage: FormStage.ListVideos,
     }
 
-    // @ts-expect-error meh
     actions.updateForm(update)
 
     navigate(mode === "localFile" ? "/local/videos" : "/stash/mode")

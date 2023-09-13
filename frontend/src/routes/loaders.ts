@@ -10,7 +10,7 @@ import {
   SongDto,
   VideoDto,
 } from "../api"
-import {FormState, StateHelpers} from "../types/form-state"
+import {FormState} from "../types/form-state"
 import {getConfig, getNewId, getVideo, listMarkers} from "../api"
 
 export const configLoader: LoaderFunction = async () => {
@@ -123,8 +123,6 @@ export const clipsLoader: LoaderFunction = async () => {
 }
 
 export const localMarkerLoader: LoaderFunction = async () => {
-  const formState = getFormState()!
-  invariant(StateHelpers.isLocalFiles(formState))
   const markers = listMarkers()
   return markers
 }

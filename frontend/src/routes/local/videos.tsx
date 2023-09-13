@@ -29,8 +29,8 @@ import clsx from "clsx"
 import {ListVideoDto} from "../../api"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
-import {LocalFilesFormStage, StateHelpers} from "../../types/form-state"
 import {listVideos} from "../../api"
+import {FormStage} from "../../types/form-state"
 
 export const loader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
@@ -43,8 +43,7 @@ export const loader: LoaderFunction = async ({request}) => {
 }
 
 export default function ListVideos() {
-  const {state, actions} = useStateMachine({updateForm})
-  invariant(StateHelpers.isLocalFiles(state.data))
+  const {actions} = useStateMachine({updateForm})
   const initialVideos = useLoaderData() as Page<ListVideoDto>
   const [videos, setVideos] = useImmer<ListVideoDto[]>(initialVideos.content)
   const navigate = useNavigate()
@@ -79,7 +78,7 @@ export default function ListVideos() {
       .some((v) => v.video.interactive)
 
     actions.updateForm({
-      stage: LocalFilesFormStage.SelectMarkers,
+      stage: FormStage.SelectMarkers,
       interactive,
       selectedMarkers: undefined,
     })

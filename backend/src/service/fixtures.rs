@@ -8,8 +8,7 @@ use graphql_parser::query::{Definition, OperationDefinition};
 use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde_json::Value;
-use url::form_urlencoded::parse;
-use wiremock::matchers::{body_string, method, path};
+use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;

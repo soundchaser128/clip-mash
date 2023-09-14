@@ -1,9 +1,14 @@
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicI64, Ordering};
 
 use fake::faker::filesystem::en::FilePath;
 use fake::faker::lorem::en::{Sentence, Word};
 use fake::{Fake, Faker};
+use graphql_parser::query::{Definition, OperationDefinition};
 use lazy_static::lazy_static;
+use serde::Deserialize;
+use serde_json::Value;
+use url::form_urlencoded::parse;
 use wiremock::matchers::{body_string, method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
@@ -14,18 +19,36 @@ use crate::service::{MarkerId, MarkerInfo, VideoId};
 use crate::util::generate_id;
 use crate::Result;
 
-pub struct GraphQlMatcher<'a> {
+#[derive(Debug, Deserialize)]
+struct GraphQlQuery {
+    query: String,
+    variables: Option<HashMap<String, Value>>,
+}
+
+pub struct GraphQlQueryMatcher<'a> {
     query: &'a str,
 }
 
-pub fn graphql_query(query: &str) -> GraphQlMatcher {
-    GraphQlMatcher { query }
+pub fn graphql_query(query: &str) -> GraphQlQueryMatcher {
+    GraphQlQueryMatcher { query }
 }
 
-impl<'a> Match for GraphQlMatcher<'a> {
+impl<'a> Match for GraphQlQueryMatcher<'a> {
     fn matches(&self, request: &wiremock::Request) -> bool {
-        // request.body
-        todo!()
+        let query: GraphQlQuery =
+            serde_json::from_slice(&request.body).expect("failed to parse query json");
+        let document = graphql_parser::parse_query::<&str>(&query.query)
+            .expect("failed to parse graphql query");
+
+        for def in document.definitions {
+            if let Definition::Operation(OperationDefinition::Query(query)) = def {
+                if query.name == Some(self.query) {
+                    return true;
+                }
+            }
+        }
+
+        false
     }
 }
 
@@ -34,7 +57,10 @@ pub async fn stash_mock_server() -> MockServer {
 
     Mock::given(method("POST"))
         .and(path("/graphql"))
-        .and(graphql_query("findScenes"));
+        .and(graphql_query("FindScenesQuery"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
 
     server
 }

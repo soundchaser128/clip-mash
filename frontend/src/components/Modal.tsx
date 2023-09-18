@@ -1,4 +1,5 @@
 import clsx from "clsx"
+import {useHotkeys} from "react-hotkeys-hook"
 import {HiXMark} from "react-icons/hi2"
 
 interface Props {
@@ -21,6 +22,8 @@ const Modal: React.FC<Props> = ({
   function handleClose() {
     onClose && onClose()
   }
+
+  useHotkeys("esc", handleClose, [isOpen])
 
   if (!isOpen) {
     return null

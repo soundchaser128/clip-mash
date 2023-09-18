@@ -63,7 +63,7 @@ export default function ListVideos() {
   }, [initialVideos, setVideos])
 
   const onOpenModal = ({video}: VideoWithMarkers) => {
-    navigate(`/local/videos/${video.id.id}`)
+    navigate(`/library/${video.id.id}/markers`)
   }
 
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {

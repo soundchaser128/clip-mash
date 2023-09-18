@@ -30,15 +30,19 @@ import {
   newIdLoader,
   musicLoader,
   versionLoader,
+  videoDetailsLoader,
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import MarkersPage from "./routes/local/markers"
 import {resetForm, updateForm} from "./routes/actions"
-import AddVideosPage from "./routes/local/download"
+import AddVideosPage from "./routes/local/add-videos"
 import useNotification from "./hooks/useNotification"
 import {HiRocketLaunch} from "react-icons/hi2"
 import {FormStage} from "./types/form-state"
+import EditVideoModal from "./routes/local/videos.$id"
+import DownloadVideosPage from "./routes/local/download"
+import SelectVideos from "./routes/local/path"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -205,11 +209,21 @@ const router = createBrowserRouter([
             path: "library",
             element: <ListVideos />,
             loader: listVideosLoader,
+            children: [
+              {
+                path: ":id/markers",
+                element: <EditVideoModal />,
+                loader: videoDetailsLoader,
+              },
+            ],
           },
           {
             path: "library/add",
             element: <AddVideosPage />,
           },
+          {path: "library/add/download", element: <DownloadVideosPage />},
+          {path: "library/add/folder", element: <SelectVideos />},
+          {path: "library/add/stash", element: <div>Stash</div>},
           {
             path: "markers",
             element: <MarkersPage />,

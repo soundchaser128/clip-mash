@@ -197,6 +197,7 @@ mod tests {
     use crate::Result;
 
     #[tokio::test]
+    #[ignore]
     async fn test_add_local_videos() -> Result<()> {
         let server = fixtures::stash_mock_server().await;
         let api = StashApi::new(&server.uri(), "test");

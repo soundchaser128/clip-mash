@@ -43,6 +43,7 @@ import {FormStage} from "./types/form-state"
 import EditVideoModal from "./routes/local/videos.$id"
 import DownloadVideosPage from "./routes/local/download"
 import SelectVideos from "./routes/local/path"
+import AddStashVideoPage from "./routes/local/stash"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -223,7 +224,7 @@ const router = createBrowserRouter([
           },
           {path: "library/add/download", element: <DownloadVideosPage />},
           {path: "library/add/folder", element: <SelectVideos />},
-          {path: "library/add/stash", element: <div>Stash</div>},
+          {path: "library/add/stash", element: <AddStashVideoPage />},
           {
             path: "markers",
             element: <MarkersPage />,

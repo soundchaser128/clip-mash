@@ -78,6 +78,12 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
     })
   }
 
+  const onCheckboxToggle = (id: number) => {
+    setSelection((draft) => {
+      draft[id].selected = !draft[id].selected
+    })
+  }
+
   const onDeselectAll = () => {
     setSelection((draft) => {
       Object.values(draft).forEach((e) => {
@@ -247,7 +253,8 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
                 {videoPreview !== marker.id.id && (
                   <img
                     src={`/api/library/marker/${marker.id.id}/preview`}
-                    className="aspect-[16/9] object-cover object-top w-full"
+                    className="aspect-[16/9] object-cover object-top w-full cursor-pointer"
+                    onClick={() => onCheckboxToggle(marker.id.id)}
                   />
                 )}
               </figure>

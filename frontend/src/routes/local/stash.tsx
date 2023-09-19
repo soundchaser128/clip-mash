@@ -8,13 +8,15 @@ import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../api"
 
 const AddStashVideoPage: React.FC = () => {
   const [search, setSearchParams] = useSearchParams({query: ""})
-  const [query, setQuery] = useState(search.get("query") || "")
+  const [query, setQuery] = useState<string>(search.get("query") || "")
   const {videos: data, config} = useLoaderData() as StashLoaderData
   const revalidator = useRevalidator()
 
   useEffect(() => {
-    setSearchParams({query})
-  }, [query])
+    if (query) {
+      setSearchParams({query})
+    }
+  }, [query, setSearchParams])
 
   const onAddVideo = async (video: StashVideoDto) => {
     const body: AddVideosRequest = {

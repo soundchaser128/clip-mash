@@ -6,7 +6,6 @@ import {
   ClipsResponse,
   Config,
   CreateClipsBody,
-  ListVideoDtoPage,
   PmvClipOptions,
   SongDto,
   StashVideoDtoPage,

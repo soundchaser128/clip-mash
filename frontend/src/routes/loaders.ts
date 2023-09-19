@@ -4,7 +4,6 @@ import {
   Clip,
   ClipPickerOptions,
   ClipsResponse,
-  Config,
   CreateClipsBody,
   PmvClipOptions,
   SongDto,
@@ -14,11 +13,7 @@ import {
   listStashVideos,
 } from "../api"
 import {FormState} from "../types/form-state"
-import {getConfig, getNewId, getVideo, listMarkers} from "../api"
-
-export const configLoader: LoaderFunction = async () => {
-  return await getConfig()
-}
+import {getNewId, getVideo, listMarkers} from "../api"
 
 const getClipLengths = (state: FormState): PmvClipOptions => {
   if (state.songs && state.songs.length) {
@@ -143,10 +138,7 @@ export const versionLoader: LoaderFunction = async () => {
   return data.version
 }
 
-export interface StashLoaderData {
-  videos: StashVideoDtoPage
-  config: Config
-}
+export type StashLoaderData = StashVideoDtoPage
 
 export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
@@ -156,7 +148,6 @@ export const stashVideoLoader: LoaderFunction = async ({request}) => {
     page: Number(url.searchParams.get("page")) || 1,
     size: 18,
   })
-  const config = await getConfig()
 
-  return {videos, config} satisfies StashLoaderData
+  return videos
 }

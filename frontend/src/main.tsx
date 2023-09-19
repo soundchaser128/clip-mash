@@ -45,6 +45,7 @@ import EditVideoModal from "./routes/local/videos.$id"
 import DownloadVideosPage from "./routes/local/download"
 import SelectVideos from "./routes/local/path"
 import AddStashVideoPage from "./routes/local/stash"
+import {ConfigProvider} from "./hooks/useConfig"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -274,7 +275,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <StateMachineProvider>
       <DndProvider backend={HTML5Backend}>
-        <RouterProvider router={router} />
+        <ConfigProvider>
+          <RouterProvider router={router} />
+        </ConfigProvider>
       </DndProvider>
     </StateMachineProvider>
   </React.StrictMode>,

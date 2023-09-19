@@ -20,8 +20,19 @@ import TimestampInput from "../../components/TimestampInput"
 import {createMarker, updateMarker} from "./api"
 import Timeline from "../../components/Timeline"
 import Loader from "../../components/Loader"
-import {MarkerDto, splitMarker} from "../../api"
+import {Config, MarkerDto, VideoDto, splitMarker} from "../../api"
 import {detectMarkers} from "../../api"
+import {useConfig} from "../../hooks/useConfig"
+
+function getVideoUrl(video: VideoDto, config: Config): string {
+  if (video.source === "Stash" && config) {
+    return `${config.stashUrl}/scene/${video.stashSceneId!}/stream?apikey=${
+      config.apiKey
+    }`
+  } else {
+    return `/api/library/video/${video.id.id}/file`
+  }
+}
 
 const Box: React.FC<{children: React.ReactNode}> = ({children}) => (
   <div className="flex flex-col bg-base-200 py-4 px-6 rounded-lg w-2/3">
@@ -139,6 +150,7 @@ export default function EditVideoModal() {
   const [loading, setLoading] = useState(false)
   const [threshold, setThreshold] = useState(40)
   const [time, setTime] = useState(0)
+  const config = useConfig()
 
   const markerStart = watch("start")
 
@@ -285,7 +297,7 @@ export default function EditVideoModal() {
           className="w-2/3 max-h-[90vh]"
           muted
           controls
-          src={`/api/library/video/${video.id.id}/file`}
+          src={getVideoUrl(video, config)}
           ref={videoRef}
           onLoadedMetadata={onMetadataLoaded}
           onTimeUpdate={onTimeUpdate}

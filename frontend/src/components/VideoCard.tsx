@@ -19,7 +19,9 @@ interface Props {
 
 function getPreview(video: VideoDto, config?: Config): string {
   if (video.source === "Stash" && config) {
-    return `${config.stashUrl}/scene/${video.id.id}/screenshot?apikey=${config.apiKey}`
+    return `${config.stashUrl}/scene/${video.stashSceneId!}/screenshot?apikey=${
+      config.apiKey
+    }`
   } else {
     return `/api/library/video/${video.id.id}/preview`
   }

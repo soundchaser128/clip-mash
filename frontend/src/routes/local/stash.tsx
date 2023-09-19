@@ -5,12 +5,14 @@ import {StashLoaderData} from "../loaders"
 import Pagination from "../../components/Pagination"
 import {HiPlus} from "react-icons/hi2"
 import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../api"
+import {useConfig} from "../../hooks/useConfig"
 
 const AddStashVideoPage: React.FC = () => {
   const [search, setSearchParams] = useSearchParams()
   const [query, setQuery] = useState<string>(search.get("query") || "")
-  const {videos: data, config} = useLoaderData() as StashLoaderData
+  const data = useLoaderData() as StashLoaderData
   const revalidator = useRevalidator()
+  const config = useConfig()
 
   useEffect(() => {
     if (query) {

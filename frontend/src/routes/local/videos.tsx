@@ -19,6 +19,7 @@ import debounce from "lodash.debounce"
 import {listVideos} from "../../api"
 import {FormStage} from "../../types/form-state"
 import VideoCard from "../../components/VideoCard"
+import {useConfig} from "../../hooks/useConfig"
 
 export const loader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
@@ -36,6 +37,7 @@ export default function ListVideos() {
   const [videos, setVideos] = useImmer<ListVideoDto[]>(initialVideos.content)
   const navigate = useNavigate()
   const navigation = useNavigation()
+  const config = useConfig()
   const isLoading = navigation.state === "loading"
   const [params, setParams] = useSearchParams()
   const [filter, setFilter] = useState(params.get("query") ?? "")
@@ -131,6 +133,7 @@ export default function ListVideos() {
           <VideoCard
             key={video.video.id.id}
             video={video}
+            stashConfig={config}
             actionChildren={
               <>
                 <span />

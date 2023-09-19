@@ -472,14 +472,11 @@ mod test {
         assert_eq!(20, count);
 
         let ids: Vec<_> = (0..20).collect();
-        let results = database.videos.has_stash_scene_ids(&ids).await.unwrap();
-        assert_eq!(results.len(), 20);
-        for idx in 0..20 {
-            if idx < 5 {
-                assert_eq!(true, results[idx])
-            } else {
-                assert_eq!(false, results[idx])
-            }
-        }
+        let results = database.videos.get_stash_scene_ids(&ids).await.unwrap();
+        assert_eq!(results.len(), 5);
+
+        let mut results: Vec<_> = results.into_iter().collect();
+        results.sort();
+        assert_eq!(results, vec![0, 1, 2, 3, 4]);
     }
 }

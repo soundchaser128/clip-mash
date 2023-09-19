@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use itertools::Itertools;
 use sqlx::{QueryBuilder, Row, SqlitePool};
 use tracing::info;
@@ -333,27 +335,27 @@ impl VideosDatabase {
         Ok(())
     }
 
-    pub async fn has_stash_scene_ids(&self, stash_ids: &[i64]) -> Result<Vec<bool>> {
+    /// Find videos in the database matching the given stash IDs
+    pub async fn get_stash_scene_ids(&self, stash_ids: &[i64]) -> Result<HashSet<i64>> {
         let mut query_builder =
-            QueryBuilder::new("SELECT stash_scene_id, id FROM videos WHERE stash_scene_id IN (");
+            QueryBuilder::new("SELECT stash_scene_id FROM videos WHERE stash_scene_id IN (");
         let mut list = query_builder.separated(",");
         for id in stash_ids {
             list.push_bind(id);
         }
         list.push_unseparated(") ");
-        info!("sql: {}", query_builder.sql());
 
         let query = query_builder.build();
         let rows = query.fetch_all(&self.pool).await?;
-        info!("found {} rows", rows.len());
-        let mut bools = vec![false; stash_ids.len()];
-        for (idx, row) in rows.into_iter().enumerate() {
+
+        let mut result = HashSet::new();
+        for row in rows {
             let stash_id = row.get::<Option<i64>, _>(0);
-            let video_id = row.get::<String, _>(1);
-            info!("video_id: {}, stash_id: {:?}", video_id, stash_id);
-            bools[idx] = stash_id.is_some();
+            if let Some(id) = stash_id {
+                result.insert(id);
+            }
         }
 
-        Ok(bools)
+        Ok(result)
     }
 }

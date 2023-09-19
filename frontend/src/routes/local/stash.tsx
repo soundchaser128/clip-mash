@@ -60,7 +60,13 @@ const AddStashVideoPage: React.FC = () => {
                   className="btn btn-sm btn-success"
                   disabled={video.existsInDatabase}
                 >
-                  {video.existsInDatabase ? "Added" : <><HiPlus /> Add</>}
+                  {video.existsInDatabase ? (
+                    "Added"
+                  ) : (
+                    <>
+                      <HiPlus /> Add
+                    </>
+                  )}
                 </button>
               </>
             }

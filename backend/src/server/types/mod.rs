@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::data::database::VideoSource;
-use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "kebab-case")]

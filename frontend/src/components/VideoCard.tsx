@@ -32,7 +32,6 @@ const VideoCard: React.FC<Props> = ({video, stashConfig, actionChildren}) => {
         "card card-compact shadow-xl bg-base-200",
         video.markers.length > 0 && "ring-4 ring-green-500",
       )}
-      key={video.video.id.id}
     >
       <figure>
         <img
@@ -41,7 +40,9 @@ const VideoCard: React.FC<Props> = ({video, stashConfig, actionChildren}) => {
         />
       </figure>
       <div className="card-body">
-        <h2 className="card-title">{video.video.fileName}</h2>
+        <h2 className="card-title">
+          {video.video.title || video.video.fileName}
+        </h2>
         <ul className="flex flex-col gap-2 self-start">
           <li>
             <HiAdjustmentsVertical className="inline mr-2" />

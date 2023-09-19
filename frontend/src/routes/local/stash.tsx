@@ -1,18 +1,28 @@
 import React, {useEffect, useState} from "react"
 import {useLoaderData, useSearchParams} from "react-router-dom"
-import {ListVideoDtoPage} from "../../api"
 import VideoCard from "../../components/VideoCard"
+import {StashLoaderData} from "../loaders"
+import Pagination from "../../components/Pagination"
+import {HiPlus} from "react-icons/hi2"
+import {AddVideosRequest, VideoDto, addNewVideos} from "../../api"
 
 const AddStashVideoPage: React.FC = () => {
   const [search, setSearchParams] = useSearchParams({query: ""})
   const [query, setQuery] = useState(search.get("query") || "")
-
-  const data = useLoaderData() as ListVideoDtoPage
-  console.log(data)
+  const {videos: data, config} = useLoaderData() as StashLoaderData
 
   useEffect(() => {
     setSearchParams({query})
   }, [query])
+
+  const onAddVideo = async (video: VideoDto) => {
+    const body: AddVideosRequest = {
+      type: "stash",
+      scene_ids: [parseInt(video.id.id)],
+    }
+
+    await addNewVideos(body)
+  }
 
   return (
     <>
@@ -34,11 +44,29 @@ const AddStashVideoPage: React.FC = () => {
           />
         </div>
       </section>
-      <section>
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
         {data.content.map((video) => (
-          <VideoCard key={video.video.id.id} video={video} />
+          <VideoCard
+            key={video.video.id.id}
+            video={video}
+            stashConfig={config}
+            actionChildren={
+              <>
+                <span />
+                <button
+                  onClick={() => onAddVideo(video.video)}
+                  className="btn btn-sm btn-success"
+                >
+                  <HiPlus />
+                  Add to library
+                </button>
+              </>
+            }
+          />
         ))}
       </section>
+
+      <Pagination totalPages={data.totalPages} currentPage={data.pageNumber} />
     </>
   )
 }

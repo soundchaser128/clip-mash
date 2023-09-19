@@ -48,6 +48,13 @@ impl Video {
             VideoInfo::LocalFile { video } => video.duration,
         }
     }
+
+    pub fn stash_scene_id(&self) -> Option<i64> {
+        match &self.info {
+            VideoInfo::Stash { scene } => Some(scene.id.parse().unwrap()),
+            VideoInfo::LocalFile { video } => video.stash_scene_id,
+        }
+    }
 }
 
 impl From<DbVideo> for Video {

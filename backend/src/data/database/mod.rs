@@ -149,7 +149,7 @@ mod test {
 
     use crate::data::database::Database;
     use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
-    use crate::service::fixtures::{persist_marker, persist_video, persist_video_with_file_name};
+    use crate::service::fixtures::{persist_marker, persist_video, persist_video_fn};
     use crate::util::generate_id;
 
     #[sqlx::test]
@@ -283,16 +283,20 @@ mod test {
         }
         for i in 0..10 {
             let path = format!("/some/path/{i}/sexy.mp4");
-            persist_video_with_file_name(&database, &path)
-                .await
-                .unwrap();
+            persist_video_fn(&database, |v| {
+                v.file_path = path;
+            })
+            .await
+            .unwrap();
         }
 
         for i in 0..5 {
             let path = format!("/some/path/{i}/cool.mp4");
-            persist_video_with_file_name(&database, &path)
-                .await
-                .unwrap();
+            persist_video_fn(&database, |v| {
+                v.file_path = path;
+            })
+            .await
+            .unwrap();
         }
 
         let page = PageParameters {
@@ -442,5 +446,40 @@ mod test {
             .unwrap()
             .unwrap();
         assert_eq!(progress.done, true);
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    fn test_has_stash_scene_ids(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        for idx in 0..20 {
+            persist_video_fn(&database, |v| {
+                if idx < 5 {
+                    v.stash_scene_id = Some(idx);
+                }
+            })
+            .await
+            .unwrap();
+        }
+
+        let params = PageParameters {
+            dir: None,
+            page: Some(0),
+            size: Some(100),
+            sort: None,
+        };
+        let (_videos, count) = database.videos.list_videos(None, &params).await.unwrap();
+        assert_eq!(20, count);
+
+        let ids: Vec<_> = (0..20).collect();
+        let results = database.videos.has_stash_scene_ids(&ids).await.unwrap();
+        assert_eq!(results.len(), 20);
+        for idx in 0..20 {
+            if idx < 5 {
+                assert_eq!(true, results[idx])
+            } else {
+                assert_eq!(false, results[idx])
+            }
+        }
     }
 }

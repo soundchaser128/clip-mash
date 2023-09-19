@@ -8,6 +8,7 @@ use graphql_parser::query::{Definition, OperationDefinition};
 use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde_json::Value;
+use tracing::info;
 use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
@@ -633,7 +634,7 @@ pub fn create_marker_with_loops(
 }
 
 pub async fn persist_video(db: &Database) -> Result<DbVideo> {
-    let expected = CreateVideo {
+    let video = CreateVideo {
         file_path: format!(
             "{}/{}",
             Word().fake::<String>(),
@@ -647,12 +648,19 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
         stash_scene_id: None,
     };
 
-    db.videos.persist_video(&expected).await
+    db.videos.persist_video(&video).await
 }
 
-pub async fn persist_video_with_file_name(db: &Database, name: &str) -> Result<DbVideo> {
-    let video = CreateVideo {
-        file_path: name.to_string(),
+pub async fn persist_video_fn<F: FnOnce(&mut CreateVideo)>(
+    db: &Database,
+    before_insert: F,
+) -> Result<DbVideo> {
+    let mut video = CreateVideo {
+        file_path: format!(
+            "{}/{}",
+            Word().fake::<String>(),
+            FilePath().fake::<String>()
+        ),
         id: generate_id(),
         interactive: false,
         source: VideoSource::Folder,
@@ -660,7 +668,8 @@ pub async fn persist_video_with_file_name(db: &Database, name: &str) -> Result<D
         video_preview_image: None,
         stash_scene_id: None,
     };
-
+    before_insert(&mut video);
+    info!("inserting video {:#?}", video);
     db.videos.persist_video(&video).await
 }
 

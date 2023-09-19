@@ -4,7 +4,9 @@ import {
   Clip,
   ClipPickerOptions,
   ClipsResponse,
+  Config,
   CreateClipsBody,
+  ListVideoDtoPage,
   PmvClipOptions,
   SongDto,
   VideoDto,
@@ -141,11 +143,20 @@ export const versionLoader: LoaderFunction = async () => {
   return data.version
 }
 
+export interface StashLoaderData {
+  videos: ListVideoDtoPage
+  config: Config
+}
+
 export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
   const query = url.searchParams.get("query")
   const videos = await listStashVideos({
     query,
+    page: Number(url.searchParams.get("page")) || 1,
+    size: 18,
   })
-  return videos
+  const config = await getConfig()
+
+  return {videos, config} satisfies StashLoaderData
 }

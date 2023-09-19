@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use sqlx::SqlitePool;
+use sqlx::{QueryBuilder, Row, SqlitePool};
 use tracing::info;
 
 use super::{AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers};
@@ -179,8 +179,8 @@ impl VideosDatabase {
     pub async fn persist_video(&self, video: &CreateVideo) -> Result<DbVideo> {
         let inserted = sqlx::query!(
             "INSERT INTO videos 
-            (id, file_path, interactive, source, duration, video_preview_image) 
-            VALUES ($1, $2, $3, $4, $5, $6)
+            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING video_created_on",
             video.id,
             video.file_path,
@@ -188,6 +188,7 @@ impl VideosDatabase {
             video.source,
             video.duration,
             video.video_preview_image,
+            video.stash_scene_id,
         )
         .fetch_one(&self.pool)
         .await?;
@@ -330,5 +331,29 @@ impl VideosDatabase {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn has_stash_scene_ids(&self, stash_ids: &[i64]) -> Result<Vec<bool>> {
+        let mut query_builder =
+            QueryBuilder::new("SELECT stash_scene_id, id FROM videos WHERE stash_scene_id IN (");
+        let mut list = query_builder.separated(",");
+        for id in stash_ids {
+            list.push_bind(id);
+        }
+        list.push_unseparated(") ");
+        info!("sql: {}", query_builder.sql());
+
+        let query = query_builder.build();
+        let rows = query.fetch_all(&self.pool).await?;
+        info!("found {} rows", rows.len());
+        let mut bools = vec![false; stash_ids.len()];
+        for (idx, row) in rows.into_iter().enumerate() {
+            let stash_id = row.get::<Option<i64>, _>(0);
+            let video_id = row.get::<String, _>(1);
+            info!("video_id: {}, stash_id: {:?}", video_id, stash_id);
+            bools[idx] = stash_id.is_some();
+        }
+
+        Ok(bools)
     }
 }

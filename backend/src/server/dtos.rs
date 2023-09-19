@@ -59,7 +59,8 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
         let file = value.files.get(0).expect("must have at least one file");
 
         VideoDto {
-            id: VideoId::Stash(value.id),
+            id: VideoId::Stash(value.id.clone()),
+            stash_scene_id: Some(value.id.parse().expect("invalid scene id")),
             title: value
                 .title
                 .or(value.files.get(0).map(|m| m.basename.clone()))
@@ -77,6 +78,7 @@ impl From<DbVideo> for VideoDto {
     fn from(value: DbVideo) -> Self {
         VideoDto {
             id: VideoId::LocalFile(value.id),
+            stash_scene_id: value.stash_scene_id,
             title: Utf8Path::new(&value.file_path)
                 .file_name()
                 .map(From::from)
@@ -93,9 +95,11 @@ impl From<DbVideo> for VideoDto {
 impl From<Video> for VideoDto {
     fn from(value: Video) -> Self {
         let duration = value.duration();
+        let stash_scene_id = value.stash_scene_id();
         VideoDto {
             id: value.id,
             title: value.title,
+            stash_scene_id,
             performers: value.performers,
             file_name: value.file_name,
             interactive: value.interactive,

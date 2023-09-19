@@ -144,6 +144,7 @@ pub struct VideoDto {
     pub interactive: bool,
     pub source: VideoSource,
     pub duration: f64,
+    pub stash_scene_id: Option<i64>,
 }
 
 #[derive(Deserialize, Debug, ToSchema)]

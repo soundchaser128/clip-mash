@@ -1,16 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {VideoWithMarkers, Page} from "../../types/types"
-import {
-  HiAdjustmentsVertical,
-  HiArrowDownTray,
-  HiCheck,
-  HiChevronRight,
-  HiClock,
-  HiFolder,
-  HiPlus,
-  HiTag,
-  HiXMark,
-} from "react-icons/hi2"
+import {HiChevronRight, HiFolder, HiPlus, HiTag, HiXMark} from "react-icons/hi2"
 import {useEffect, useState} from "react"
 import {useImmer} from "use-immer"
 import {updateForm} from "../actions"
@@ -23,8 +13,6 @@ import {
   useNavigation,
   useSearchParams,
 } from "react-router-dom"
-import {formatSeconds} from "../../helpers"
-import clsx from "clsx"
 import {ListVideoDto} from "../../api"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
@@ -140,15 +128,28 @@ export default function ListVideos() {
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
         {videos.map((video) => (
-          <VideoCard key={video.video.id.id} video={video} />
+          <VideoCard
+            key={video.video.id.id}
+            video={video}
+            actionChildren={
+              <>
+                <span />
+                <button
+                  onClick={() => onOpenModal(video)}
+                  className="btn btn-sm btn-primary"
+                >
+                  <HiTag className="w-4 h-4 mr-2" />
+                  Markers
+                </button>
+              </>
+            }
+          />
         ))}
       </section>
 
       <Pagination
         totalPages={initialVideos.totalPages}
         currentPage={initialVideos.pageNumber}
-        prevLink={{search: `?page=${initialVideos.pageNumber - 1}`}}
-        nextLink={{search: `?page=${initialVideos.pageNumber + 1}`}}
       />
     </>
   )

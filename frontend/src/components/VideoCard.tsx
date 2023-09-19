@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import {ListVideoDto} from "../api"
+import {Config, ListVideoDto, VideoDto} from "../api"
 import {
   HiAdjustmentsVertical,
   HiArrowDownTray,
@@ -9,13 +9,23 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import {formatSeconds} from "../helpers"
+import React from "react"
 
 interface Props {
   video: ListVideoDto
+  stashConfig?: Config
+  actionChildren?: React.ReactNode
 }
 
-const VideoCard: React.FC<Props> = ({video}) => {
-  // onClick={() => onOpenModal(video)}
+function getPreview(video: VideoDto, config?: Config): string {
+  if (video.source === "Stash" && config) {
+    return `${config.stashUrl}/scene/${video.id.id}/screenshot?apikey=${config.apiKey}`
+  } else {
+    return `/api/library/video/${video.id.id}/preview`
+  }
+}
+
+const VideoCard: React.FC<Props> = ({video, stashConfig, actionChildren}) => {
   return (
     <article
       className={clsx(
@@ -27,7 +37,7 @@ const VideoCard: React.FC<Props> = ({video}) => {
       <figure>
         <img
           className="aspect-[16/9] object-cover w-full"
-          src={`/api/library/video/${video.video.id.id}/preview`}
+          src={getPreview(video.video, stashConfig)}
         />
       </figure>
       <div className="card-body">
@@ -58,11 +68,7 @@ const VideoCard: React.FC<Props> = ({video}) => {
           </li>
         </ul>
         <div className="card-actions justify-between grow items-end">
-          <span />
-          <button className="btn btn-sm btn-primary">
-            <HiTag className="w-4 h-4 mr-2" />
-            Markers
-          </button>
+          {actionChildren}
         </div>
       </div>
     </article>

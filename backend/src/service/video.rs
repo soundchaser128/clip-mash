@@ -194,14 +194,13 @@ impl VideoService {
 #[cfg(test)]
 mod tests {
 
-    use crate::data::stash_api::StashApi;
     use crate::service::fixtures;
     use crate::Result;
 
     #[tokio::test]
     #[ignore]
     async fn test_add_local_videos() -> Result<()> {
-        let server = fixtures::stash_mock_server().await;
+        let _server = fixtures::stash_mock_server().await;
 
         Ok(())
     }

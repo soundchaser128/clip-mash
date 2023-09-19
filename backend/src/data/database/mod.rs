@@ -49,6 +49,18 @@ pub struct DbVideo {
     pub duration: f64,
     pub video_preview_image: Option<String>,
     pub stash_scene_id: Option<i64>,
+    pub video_created_on: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateVideo {
+    pub id: String,
+    pub file_path: String,
+    pub interactive: bool,
+    pub source: VideoSource,
+    pub duration: f64,
+    pub video_preview_image: Option<String>,
+    pub stash_scene_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
@@ -62,6 +74,7 @@ pub struct DbMarker {
     pub index_within_video: i64,
     pub marker_preview_image: Option<String>,
     pub interactive: bool,
+    pub marker_created_on: String,
 }
 
 #[derive(Debug)]

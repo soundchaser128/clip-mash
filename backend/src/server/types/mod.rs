@@ -428,14 +428,14 @@ impl PageParameters {
         self.page.map(|p| p as i64).unwrap_or(Self::DEFAULT_PAGE)
     }
 
-    pub fn sort(&self, default: &str) -> String {
-        let sort = self.sort.as_deref().unwrap_or(default);
-        let direction = self.direction();
+    pub fn sort(&self, default_col: &str, default_direction: SortDirection) -> String {
+        let sort = self.sort.as_deref().unwrap_or(default_col);
+        let direction = self.direction(default_direction);
         format!("{} {}", sort, direction)
     }
 
-    fn direction(&self) -> &str {
-        let dir = self.dir.unwrap_or(SortDirection::Asc);
+    fn direction(&self, default: SortDirection) -> &str {
+        let dir = self.dir.unwrap_or(default);
         match dir {
             SortDirection::Asc => "ASC",
             SortDirection::Desc => "DESC",

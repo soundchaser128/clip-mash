@@ -2,8 +2,8 @@ use itertools::Itertools;
 use sqlx::SqlitePool;
 use tracing::info;
 
-use super::{AllVideosFilter, DbMarker, DbVideo, LocalVideoWithMarkers};
-use crate::server::types::{ListVideoDto, PageParameters};
+use super::{AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers};
+use crate::server::types::{ListVideoDto, PageParameters, SortDirection};
 use crate::Result;
 
 #[derive(Clone)]
@@ -42,6 +42,7 @@ impl VideosDatabase {
                 duration: records[0].duration,
                 video_preview_image: records[0].video_preview_image.clone(),
                 stash_scene_id: records[0].stash_scene_id,
+                video_created_on: records[0].video_created_on.clone(),
             };
             let markers = records
                 .into_iter()
@@ -56,6 +57,7 @@ impl VideosDatabase {
                         r.index_within_video,
                         r.marker_preview_image,
                         r.interactive,
+                        r.marker_created_on,
                     ) {
                         (
                             Some(video_id),
@@ -67,6 +69,7 @@ impl VideosDatabase {
                             Some(index),
                             marker_preview_image,
                             interactive,
+                            Some(marker_created_on),
                         ) => Some(DbMarker {
                             rowid,
                             title,
@@ -76,7 +79,8 @@ impl VideosDatabase {
                             file_path,
                             index_within_video: index,
                             marker_preview_image,
-                            interactive: interactive,
+                            interactive,
+                            marker_created_on,
                         }),
                         _ => None,
                     }
@@ -105,6 +109,7 @@ impl VideosDatabase {
                 duration: records[0].duration,
                 video_preview_image: records[0].video_preview_image.clone(),
                 stash_scene_id: records[0].stash_scene_id,
+                video_created_on: records[0].video_created_on.clone(),
             };
             let markers = records
                 .into_iter()
@@ -119,6 +124,7 @@ impl VideosDatabase {
                         r.index_within_video,
                         r.marker_preview_image,
                         r.interactive,
+                        r.marker_created_on,
                     ) {
                         (
                             Some(video_id),
@@ -130,6 +136,7 @@ impl VideosDatabase {
                             Some(index),
                             marker_preview_image,
                             interactive,
+                            Some(marker_created_on),
                         ) => Some(DbMarker {
                             rowid,
                             title,
@@ -140,6 +147,7 @@ impl VideosDatabase {
                             index_within_video: index,
                             marker_preview_image,
                             interactive,
+                            marker_created_on,
                         }),
                         _ => None,
                     }
@@ -168,9 +176,12 @@ impl VideosDatabase {
         query.map_err(From::from)
     }
 
-    pub async fn persist_video(&self, video: &DbVideo) -> Result<()> {
-        sqlx::query!(
-            "INSERT INTO videos (id, file_path, interactive, source, duration, video_preview_image) VALUES ($1, $2, $3, $4, $5, $6)",
+    pub async fn persist_video(&self, video: &CreateVideo) -> Result<DbVideo> {
+        let inserted = sqlx::query!(
+            "INSERT INTO videos 
+            (id, file_path, interactive, source, duration, video_preview_image) 
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING video_created_on",
             video.id,
             video.file_path,
             video.interactive,
@@ -178,9 +189,19 @@ impl VideosDatabase {
             video.duration,
             video.video_preview_image,
         )
-        .execute(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
-        Ok(())
+
+        Ok(DbVideo {
+            id: video.id.clone(),
+            file_path: video.file_path.clone(),
+            interactive: video.interactive,
+            source: video.source.clone(),
+            duration: video.duration,
+            video_preview_image: video.video_preview_image.clone(),
+            stash_scene_id: video.stash_scene_id,
+            video_created_on: inserted.video_created_on,
+        })
     }
 
     pub async fn list_videos(
@@ -198,7 +219,7 @@ impl VideosDatabase {
                 .await?;
         let limit = params.limit();
         let offset = params.offset();
-        let sort = params.sort("file_path");
+        let sort = params.sort("created_on", SortDirection::Desc);
 
         let mut records = sqlx::query!(
             "SELECT *, m.rowid AS rowid 
@@ -206,7 +227,7 @@ impl VideosDatabase {
             LEFT JOIN markers m ON v.id = m.video_id 
             WHERE v.file_path LIKE $1 AND v.rowid IN 
                 (SELECT rowid FROM videos WHERE file_path LIKE $1 LIMIT $2 OFFSET $3)
-            ORDER BY $4",
+            ORDER BY $4 DESC",
             query,
             limit,
             offset,
@@ -231,6 +252,7 @@ impl VideosDatabase {
                     duration: group[0].duration,
                     video_preview_image: group[0].video_preview_image.clone(),
                     stash_scene_id: group[0].stash_scene_id,
+                    video_created_on: group[0].video_created_on.clone(),
                 };
                 let markers: Vec<_> = group
                     .into_iter()
@@ -245,6 +267,7 @@ impl VideosDatabase {
                             r.index_within_video,
                             r.marker_preview_image,
                             r.interactive,
+                            r.marker_created_on,
                         ) {
                             (
                                 video_id,
@@ -256,6 +279,7 @@ impl VideosDatabase {
                                 index,
                                 marker_preview_image,
                                 interactive,
+                                marker_created_on,
                             ) => Some(
                                 DbMarker {
                                     rowid: Some(rowid),
@@ -267,6 +291,7 @@ impl VideosDatabase {
                                     index_within_video: index,
                                     marker_preview_image,
                                     interactive,
+                                    marker_created_on,
                                 }
                                 .into(),
                             ),

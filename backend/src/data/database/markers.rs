@@ -18,7 +18,7 @@ impl MarkersDatabase {
     pub async fn get_marker(&self, id: i64) -> Result<DbMarker> {
         let marker = sqlx::query_as!(
             DbMarker,
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive, m.marker_created_on
                 FROM markers m INNER JOIN videos v ON m.video_id = v.id
                 WHERE m.rowid = $1",
             id
@@ -31,7 +31,7 @@ impl MarkersDatabase {
     pub async fn get_markers_without_preview_images(&self) -> Result<Vec<DbMarker>> {
         sqlx::query_as!(
             DbMarker,
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
+            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive, m.marker_created_on
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.marker_preview_image IS NULL"
         )
@@ -41,11 +41,11 @@ impl MarkersDatabase {
     }
 
     pub async fn create_new_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
-        let new_id = sqlx::query_scalar!(
+        let inserted_value = sqlx::query!(
             "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video, marker_preview_image) 
                 VALUES ($1, $2, $3, $4, $5, $6) 
                 ON CONFLICT DO UPDATE SET start_time = excluded.start_time, end_time = excluded.end_time, title = excluded.title
-                RETURNING rowid",
+                RETURNING rowid, marker_created_on",
                 marker.video_id,
                 marker.start,
                 marker.end,
@@ -57,7 +57,7 @@ impl MarkersDatabase {
         .await?;
 
         let marker = DbMarker {
-            rowid: Some(new_id),
+            rowid: Some(inserted_value.rowid),
             start_time: marker.start,
             end_time: marker.end,
             title: marker.title,
@@ -66,6 +66,7 @@ impl MarkersDatabase {
             index_within_video: marker.index_within_video,
             marker_preview_image: marker.preview_image_path,
             interactive: marker.video_interactive,
+            marker_created_on: inserted_value.marker_created_on,
         };
 
         info!("newly updated or inserted marker: {marker:?}");
@@ -96,6 +97,7 @@ impl MarkersDatabase {
             marker_preview_image: record.marker_preview_image,
             // not needed for updating I think
             interactive: false,
+            marker_created_on: record.marker_created_on,
         };
 
         Ok(marker)
@@ -143,7 +145,7 @@ impl MarkersDatabase {
 
     pub async fn get_all_markers(&self) -> Result<Vec<DbMarker>> {
         let markers = sqlx::query_as!(DbMarker, "
-            SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive
+            SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive, m.marker_created_on
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             ORDER BY v.file_path ASC")
         .fetch_all(&self.pool)

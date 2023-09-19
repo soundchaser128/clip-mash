@@ -6,10 +6,9 @@ import useNotification from "../../hooks/useNotification"
 import Loader from "../../components/Loader"
 import {useState} from "react"
 import {pluralize} from "../../helpers"
+import {AddVideosRequest, addNewVideos} from "../../api"
 
 type Inputs = {urls: string}
-
-type JsonError = {error: string}
 
 const splitRegex = /\s+|\n/
 
@@ -47,25 +46,18 @@ const DownloadVideosPage: React.FC = () => {
     if (errors.length > 0) {
       setError("urls", {message: errors.join("\n")})
     } else {
-      const promises = urls.map((url) => {
-        return fetch(
-          `/api/local/video/download?url=${encodeURIComponent(url)}`,
-          {method: "POST"},
-        )
-      })
-      const responses = await Promise.all(promises)
-      const errors = []
-      for (const response of responses) {
-        if (!response.ok) {
-          const json = (await response.json()) as JsonError
-          errors.push(json.error)
-        }
+      const body: AddVideosRequest = {
+        type: "download",
+        urls,
       }
+
+      await addNewVideos(body)
+
       if (errors.length > 0) {
         setError("urls", {message: errors.join("\n")})
       } else {
         sendNotification("Success", "Video downloads finished!")
-        navigate("/local/videos")
+        navigate("/library/videos")
       }
     }
   }

@@ -12,7 +12,7 @@ use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;
-use crate::data::database::{Database, DbMarker, DbVideo, VideoSource};
+use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource};
 use crate::server::types::{Beats, CreateMarker};
 use crate::service::{MarkerId, MarkerInfo, VideoId};
 use crate::util::generate_id;
@@ -86,6 +86,7 @@ pub fn markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -108,6 +109,7 @@ pub fn markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -130,6 +132,7 @@ pub fn markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -152,6 +155,7 @@ pub fn markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -174,6 +178,7 @@ pub fn markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -196,6 +201,7 @@ pub fn markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -218,6 +224,7 @@ pub fn markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -240,6 +247,7 @@ pub fn markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -262,6 +270,7 @@ pub fn markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -284,6 +293,7 @@ pub fn markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -311,6 +321,7 @@ pub fn other_markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -333,6 +344,7 @@ pub fn other_markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -355,6 +367,7 @@ pub fn other_markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -377,6 +390,7 @@ pub fn other_markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -399,6 +413,7 @@ pub fn other_markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -421,6 +436,7 @@ pub fn other_markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -443,6 +459,7 @@ pub fn other_markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -465,6 +482,7 @@ pub fn other_markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -487,6 +505,7 @@ pub fn other_markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -509,6 +528,7 @@ pub fn other_markers() -> Vec<Marker> {
                     index_within_video: 0,
                     marker_preview_image: None,
                     interactive: false,
+                    marker_created_on: Default::default(),
                 },
             },
         },
@@ -541,6 +561,7 @@ pub fn create_marker(title: &str, start_time: f64, end_time: f64, index: usize) 
                 index_within_video: index as i64,
                 marker_preview_image: None,
                 interactive: false,
+                marker_created_on: Default::default(),
             },
         },
     }
@@ -572,6 +593,7 @@ pub fn create_marker_video_id(
                 index_within_video: index as i64,
                 marker_preview_image: None,
                 interactive: false,
+                marker_created_on: Default::default(),
             },
         },
     }
@@ -604,13 +626,14 @@ pub fn create_marker_with_loops(
                 index_within_video: index as i64,
                 marker_preview_image: None,
                 interactive: false,
+                marker_created_on: Default::default(),
             },
         },
     }
 }
 
 pub async fn persist_video(db: &Database) -> Result<DbVideo> {
-    let expected = DbVideo {
+    let expected = CreateVideo {
         file_path: format!(
             "{}/{}",
             Word().fake::<String>(),
@@ -623,12 +646,12 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
         video_preview_image: None,
         stash_scene_id: None,
     };
-    db.videos.persist_video(&expected).await?;
-    Ok(expected)
+
+    db.videos.persist_video(&expected).await
 }
 
 pub async fn persist_video_with_file_name(db: &Database, name: &str) -> Result<DbVideo> {
-    let video = DbVideo {
+    let video = CreateVideo {
         file_path: name.to_string(),
         id: generate_id(),
         interactive: false,
@@ -637,8 +660,8 @@ pub async fn persist_video_with_file_name(db: &Database, name: &str) -> Result<D
         video_preview_image: None,
         stash_scene_id: None,
     };
-    db.videos.persist_video(&video).await?;
-    Ok(video)
+
+    db.videos.persist_video(&video).await
 }
 
 pub async fn persist_marker(

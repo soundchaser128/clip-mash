@@ -11,7 +11,7 @@ use walkdir::WalkDir;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
-use crate::data::database::{Database, DbVideo, VideoSource};
+use crate::data::database::{CreateVideo, Database, DbVideo, VideoSource};
 use crate::data::stash_api::StashApi;
 use crate::server::handlers::AppState;
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
@@ -95,7 +95,7 @@ impl VideoService {
                         .generate_preview(&id, &path, duration.map_or(0.0, |d| d / 2.0))
                         .await?;
 
-                    let video = DbVideo {
+                    let create_video = CreateVideo {
                         id,
                         file_path: path.to_string(),
                         interactive,
@@ -104,8 +104,8 @@ impl VideoService {
                         video_preview_image: Some(image_path.to_string()),
                         stash_scene_id: None,
                     };
-                    info!("inserting new video {video:#?}");
-                    self.database.videos.persist_video(&video).await?;
+                    info!("inserting new video {create_video:#?}");
+                    let video = self.database.videos.persist_video(&create_video).await?;
                     videos.push(video);
                 }
             }
@@ -134,7 +134,7 @@ impl VideoService {
             .generate_preview(&id, &path, duration.map_or(0.0, |d| d / 2.0))
             .await?;
 
-        let video = DbVideo {
+        let video = CreateVideo {
             id,
             file_path: path.as_str().to_string(),
             interactive: false,
@@ -144,15 +144,15 @@ impl VideoService {
             stash_scene_id: None,
         };
         info!("persisting downloaded video {video:#?}");
-        self.database.videos.persist_video(&video).await?;
-        Ok(video)
+
+        self.database.videos.persist_video(&video).await
     }
 
     async fn persist_stash_video(&self, scene_ids: Vec<i64>) -> Result<Vec<DbVideo>> {
         let scenes = self.stash_api.find_scenes_by_ids(scene_ids).await?;
-        let videos: Vec<_> = scenes
+        let create_videos: Vec<_> = scenes
             .into_iter()
-            .map(|scene| DbVideo {
+            .map(|scene| CreateVideo {
                 id: generate_id(),
                 file_path: scene.files[0].basename.clone(),
                 interactive: scene.interactive,
@@ -164,8 +164,10 @@ impl VideoService {
             })
             .collect();
 
-        for video in &videos {
-            self.database.videos.persist_video(&video).await?;
+        let mut videos = vec![];
+        for request in &create_videos {
+            let result = self.database.videos.persist_video(&request).await?;
+            videos.push(result);
         }
 
         Ok(videos)
@@ -202,7 +204,7 @@ mod tests {
         let server = fixtures::stash_mock_server().await;
         let api = StashApi::new(&server.uri(), "test");
         let result = api.find_scenes().await?;
-        
+
         Ok(())
     }
 }

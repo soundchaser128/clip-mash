@@ -18,17 +18,20 @@ const AddVideosPage = () => {
         </p>
       </div>
       <div className="self-center flex gap-1">
-        <Link to="/library/add/download" className="btn btn-primary btn-lg">
+        <Link
+          to="/library/add/download"
+          className="btn btn-primary btn-lg w-48"
+        >
           <HiArrowDownTray />
           Download
         </Link>
 
-        <Link to="/library/add/folder" className="btn btn-primary btn-lg">
+        <Link to="/library/add/folder" className="btn btn-primary btn-lg w-48">
           <HiFolder />
           Folder
         </Link>
 
-        <Link to="/library/add/stash" className="btn btn-primary btn-lg">
+        <Link to="/library/add/stash" className="btn btn-primary btn-lg w-48">
           <HiArchiveBox />
           Stash
         </Link>

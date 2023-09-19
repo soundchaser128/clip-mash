@@ -4,7 +4,7 @@ interface Params {
   url: string
   method: "get" | "post" | "put" | "delete" | "patch"
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  params?: any
+  params?: Record<string, any>
   data?: unknown
   responseType?: string
   headers?: Record<string, string>
@@ -19,7 +19,12 @@ export const customInstance = async <T>({
 }: Params): Promise<T> => {
   let fullUrl = url
   if (params) {
-    fullUrl += "?" + new URLSearchParams(params)
+    const filtered = Object.entries(params).filter(
+      ([, value]) => value !== "" && value !== null && value !== undefined,
+    )
+    const search = new URLSearchParams(filtered)
+
+    fullUrl += "?" + search.toString()
   }
 
   const response = await fetch(fullUrl, {

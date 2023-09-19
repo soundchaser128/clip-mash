@@ -6,6 +6,7 @@ import {Link, To, useSearchParams} from "react-router-dom"
 interface PaginationProps {
   currentPage: number
   totalPages: number
+  startIndex?: 0 | 1
 }
 
 function setParam(
@@ -18,9 +19,13 @@ function setParam(
   return {search: `?${params.toString()}`}
 }
 
-const Pagination: React.FC<PaginationProps> = ({currentPage, totalPages}) => {
+const Pagination: React.FC<PaginationProps> = ({
+  currentPage,
+  totalPages,
+  startIndex = 0,
+}) => {
   const hasNextPage = currentPage < totalPages - 1
-  const hasPreviousPage = currentPage > 0
+  const hasPreviousPage = currentPage > startIndex
   const [searchParams] = useSearchParams()
   const nextLink: To = setParam(
     searchParams,
@@ -51,7 +56,8 @@ const Pagination: React.FC<PaginationProps> = ({currentPage, totalPages}) => {
         Previous
       </Link>
       <span>
-        Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+        Page <strong>{startIndex === 0 ? currentPage + 1 : currentPage}</strong>{" "}
+        of <strong>{totalPages}</strong>
       </span>
       <Link
         to={nextLink}

@@ -64,9 +64,10 @@ pub async fn list_stash_videos(
     Query(VideoSearchQuery { query }): Query<VideoSearchQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Page<StashVideoDto>>, AppError> {
-    info!("handling list_stash_videos request");
+    info!("listing stash videos with page {page:?} and query {query:?}");
     let stash_api = StashApi::load_config().await?;
     let (stash_videos, count) = stash_api.find_scenes(&page, query).await?;
+    info!("found {} stash videos", stash_videos.len());
     let ids: Vec<i64> = stash_videos
         .iter()
         .map(|v| v.id.parse().expect("stash id must be numeric"))

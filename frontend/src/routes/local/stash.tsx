@@ -7,14 +7,17 @@ import {HiPlus} from "react-icons/hi2"
 import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../api"
 
 const AddStashVideoPage: React.FC = () => {
-  const [search, setSearchParams] = useSearchParams({query: ""})
+  const [search, setSearchParams] = useSearchParams()
   const [query, setQuery] = useState<string>(search.get("query") || "")
   const {videos: data, config} = useLoaderData() as StashLoaderData
   const revalidator = useRevalidator()
 
   useEffect(() => {
     if (query) {
-      setSearchParams({query})
+      setSearchParams((prev) => {
+        prev.set("query", query)
+        return prev
+      })
     }
   }, [query, setSearchParams])
 
@@ -76,7 +79,11 @@ const AddStashVideoPage: React.FC = () => {
         ))}
       </section>
 
-      <Pagination totalPages={data.totalPages} currentPage={data.pageNumber} />
+      <Pagination
+        totalPages={data.totalPages}
+        currentPage={data.pageNumber}
+        startIndex={1}
+      />
     </>
   )
 }

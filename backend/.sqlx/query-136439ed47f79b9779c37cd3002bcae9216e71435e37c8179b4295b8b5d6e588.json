@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT *, m.rowid AS rowid \n            FROM videos v \n            LEFT JOIN markers m ON v.id = m.video_id \n            WHERE v.file_path LIKE $1 AND v.rowid IN \n                (SELECT rowid FROM videos WHERE file_path LIKE $1 LIMIT $2 OFFSET $3)\n            ORDER BY $4",
+  "query": "SELECT *, m.rowid AS rowid \n            FROM videos v \n            LEFT JOIN markers m ON v.id = m.video_id \n            WHERE v.file_path LIKE $1 AND v.rowid IN \n                (SELECT rowid FROM videos WHERE file_path LIKE $1 LIMIT $2 OFFSET $3)\n            ORDER BY $4 DESC",
   "describe": {
     "columns": [
       {
@@ -39,38 +39,48 @@
         "type_info": "Int64"
       },
       {
-        "name": "video_id",
+        "name": "video_created_on",
         "ordinal": 7,
         "type_info": "Text"
       },
       {
-        "name": "start_time",
+        "name": "video_id",
         "ordinal": 8,
-        "type_info": "Float"
+        "type_info": "Text"
       },
       {
-        "name": "end_time",
+        "name": "start_time",
         "ordinal": 9,
         "type_info": "Float"
       },
       {
-        "name": "title",
+        "name": "end_time",
         "ordinal": 10,
+        "type_info": "Float"
+      },
+      {
+        "name": "title",
+        "ordinal": 11,
         "type_info": "Text"
       },
       {
         "name": "index_within_video",
-        "ordinal": 11,
+        "ordinal": 12,
         "type_info": "Int64"
       },
       {
         "name": "marker_preview_image",
-        "ordinal": 12,
+        "ordinal": 13,
+        "type_info": "Text"
+      },
+      {
+        "name": "marker_created_on",
+        "ordinal": 14,
         "type_info": "Text"
       },
       {
         "name": "rowid",
-        "ordinal": 13,
+        "ordinal": 15,
         "type_info": "Int64"
       }
     ],
@@ -90,9 +100,11 @@
       false,
       false,
       false,
+      false,
       true,
+      false,
       true
     ]
   },
-  "hash": "286400872acaedadd90f9dc40df01ae5b45348ea5b7562763059b1724c237c2e"
+  "hash": "136439ed47f79b9779c37cd3002bcae9216e71435e37c8179b4295b8b5d6e588"
 }

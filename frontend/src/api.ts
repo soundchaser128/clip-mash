@@ -91,6 +91,8 @@ export type VideoIdOneOfThree = {
   type: VideoIdOneOfThreeType
 }
 
+export type VideoId = VideoIdOneOf | VideoIdOneOfThree
+
 export type VideoIdOneOfType =
   (typeof VideoIdOneOfType)[keyof typeof VideoIdOneOfType]
 
@@ -104,8 +106,6 @@ export type VideoIdOneOf = {
   type: VideoIdOneOfType
 }
 
-export type VideoId = VideoIdOneOf | VideoIdOneOfThree
-
 export interface VideoDto {
   duration: number
   fileName: string
@@ -113,6 +113,7 @@ export interface VideoDto {
   interactive: boolean
   performers: string[]
   source: VideoSource
+  stashSceneId?: number | null
   title: string
 }
 
@@ -145,8 +146,6 @@ export type StrokeTypeOneOfThree = {
   accelerate: StrokeTypeOneOfThreeAccelerate
 }
 
-export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
-
 /**
  * Creates a stroke every `n` beats
  */
@@ -157,6 +156,28 @@ export type StrokeTypeOneOfEveryNth = {
 export type StrokeTypeOneOf = {
   /** Creates a stroke every `n` beats */
   everyNth: StrokeTypeOneOfEveryNth
+}
+
+export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
+
+export interface StashVideoDto {
+  duration: number
+  existsInDatabase: boolean
+  fileName: string
+  id: VideoId
+  interactive: boolean
+  performers: string[]
+  source: VideoSource
+  stashSceneId?: number | null
+  title: string
+}
+
+export interface StashVideoDtoPage {
+  content: StashVideoDto[]
+  pageNumber: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
 }
 
 export type SortDirection = (typeof SortDirection)[keyof typeof SortDirection]
@@ -228,6 +249,8 @@ export type PmvClipOptionsOneOfFourAllOf = {
 export type PmvClipOptionsOneOfFour = SongClipOptions &
   PmvClipOptionsOneOfFourAllOf
 
+export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
+
 export type PmvClipOptionsOneOfAllOfType =
   (typeof PmvClipOptionsOneOfAllOfType)[keyof typeof PmvClipOptionsOneOfAllOfType]
 
@@ -242,8 +265,6 @@ export type PmvClipOptionsOneOfAllOf = {
 
 export type PmvClipOptionsOneOf = RandomizedClipOptions &
   PmvClipOptionsOneOfAllOf
-
-export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
 
 export interface NewId {
   id: string
@@ -602,7 +623,7 @@ export const addNewVideos = (addVideosRequest: AddVideosRequest) => {
 }
 
 export const listStashVideos = (params?: ListStashVideosParams) => {
-  return customInstance<ListVideoDtoPage>({
+  return customInstance<StashVideoDtoPage>({
     url: `/api/library/video/stash`,
     method: "get",
     params,

@@ -9,6 +9,7 @@ import {
   ListVideoDtoPage,
   PmvClipOptions,
   SongDto,
+  StashVideoDtoPage,
   VideoDto,
   fetchClips,
   listStashVideos,
@@ -144,7 +145,7 @@ export const versionLoader: LoaderFunction = async () => {
 }
 
 export interface StashLoaderData {
-  videos: ListVideoDtoPage
+  videos: StashVideoDtoPage
   config: Config
 }
 

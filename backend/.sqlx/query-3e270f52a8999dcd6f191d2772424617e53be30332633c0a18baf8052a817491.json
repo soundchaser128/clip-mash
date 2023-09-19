@@ -32,6 +32,11 @@
         "name": "marker_preview_image",
         "ordinal": 5,
         "type_info": "Text"
+      },
+      {
+        "name": "marker_created_on",
+        "ordinal": 6,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -43,7 +48,8 @@
       false,
       false,
       false,
-      true
+      true,
+      false
     ]
   },
   "hash": "3e270f52a8999dcd6f191d2772424617e53be30332633c0a18baf8052a817491"

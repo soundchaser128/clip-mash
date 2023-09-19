@@ -16,7 +16,8 @@ use crate::server::dtos::Page;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::server::types::{
-    CreateMarker, ListVideoDto, MarkerDto, PageParameters, UpdateMarker, VideoDto,
+    CreateMarker, ListVideoDto, MarkerDto, PageParameters, StashVideoDto, UpdateMarker, VideoDto,
+    VideoId,
 };
 use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;
@@ -55,7 +56,7 @@ pub async fn list_videos(
     path = "/api/library/video/stash",
     params(VideoSearchQuery, PageParameters),
     responses(
-        (status = 200, description = "Lists all videos in Stash with given query", body = ListVideoDtoPage),
+        (status = 200, description = "Lists all videos in Stash with given query", body = StashVideoDtoPage),
     )
 )]
 #[axum::debug_handler]
@@ -63,7 +64,7 @@ pub async fn list_stash_videos(
     Query(page): Query<PageParameters>,
     Query(VideoSearchQuery { query }): Query<VideoSearchQuery>,
     State(state): State<Arc<AppState>>,
-) -> Result<Json<Page<ListVideoDto>>, AppError> {
+) -> Result<Json<Page<StashVideoDto>>, AppError> {
     info!("handling list_stash_videos request");
     let stash_api = StashApi::load_config().await?;
     let (videos, count) = stash_api.find_scenes(&page, query).await?;
@@ -71,8 +72,15 @@ pub async fn list_stash_videos(
         .iter()
         .map(|v| v.id.parse().expect("stash id must be numeric"))
         .collect();
-    let videos: Vec<_> = videos.into_iter().map(From::from).collect();
-    let _scenes_in_database = state.database.videos.has_stash_scene_ids(&ids).await?;
+    let scenes_in_database = state.database.videos.has_stash_scene_ids(&ids).await?;
+    let videos: Vec<_> = videos
+        .into_iter()
+        .zip(scenes_in_database)
+        .map(|(v, exists)| {
+            let video_dto = VideoDto::from(v);
+            StashVideoDto::from(video_dto, exists)
+        })
+        .collect();
 
     Ok(Json(Page::new(videos, count, page)))
 }

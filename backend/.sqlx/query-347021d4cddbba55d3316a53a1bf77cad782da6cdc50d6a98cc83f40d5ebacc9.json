@@ -39,38 +39,48 @@
         "type_info": "Int64"
       },
       {
-        "name": "video_id",
+        "name": "video_created_on",
         "ordinal": 7,
         "type_info": "Text"
       },
       {
-        "name": "start_time",
+        "name": "video_id",
         "ordinal": 8,
-        "type_info": "Float"
+        "type_info": "Text"
       },
       {
-        "name": "end_time",
+        "name": "start_time",
         "ordinal": 9,
         "type_info": "Float"
       },
       {
-        "name": "title",
+        "name": "end_time",
         "ordinal": 10,
+        "type_info": "Float"
+      },
+      {
+        "name": "title",
+        "ordinal": 11,
         "type_info": "Text"
       },
       {
         "name": "index_within_video",
-        "ordinal": 11,
+        "ordinal": 12,
         "type_info": "Int64"
       },
       {
         "name": "marker_preview_image",
-        "ordinal": 12,
+        "ordinal": 13,
+        "type_info": "Text"
+      },
+      {
+        "name": "marker_created_on",
+        "ordinal": 14,
         "type_info": "Text"
       },
       {
         "name": "rowid",
-        "ordinal": 13,
+        "ordinal": 15,
         "type_info": "Int64"
       }
     ],
@@ -84,6 +94,8 @@
       false,
       false,
       true,
+      true,
+      false,
       true,
       true,
       true,

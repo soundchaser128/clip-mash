@@ -73,6 +73,7 @@ use crate::service::video::AddVideosRequest;
             Config,
             SortDirection,
             SongDto,
+            StashVideoDto,
         )
     ),
     tags(

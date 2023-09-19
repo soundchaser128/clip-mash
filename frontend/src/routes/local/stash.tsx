@@ -1,27 +1,29 @@
 import React, {useEffect, useState} from "react"
-import {useLoaderData, useSearchParams} from "react-router-dom"
+import {useLoaderData, useRevalidator, useSearchParams} from "react-router-dom"
 import VideoCard from "../../components/VideoCard"
 import {StashLoaderData} from "../loaders"
 import Pagination from "../../components/Pagination"
 import {HiPlus} from "react-icons/hi2"
-import {AddVideosRequest, VideoDto, addNewVideos} from "../../api"
+import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../api"
 
 const AddStashVideoPage: React.FC = () => {
   const [search, setSearchParams] = useSearchParams({query: ""})
   const [query, setQuery] = useState(search.get("query") || "")
   const {videos: data, config} = useLoaderData() as StashLoaderData
+  const revalidator = useRevalidator()
 
   useEffect(() => {
     setSearchParams({query})
   }, [query])
 
-  const onAddVideo = async (video: VideoDto) => {
+  const onAddVideo = async (video: StashVideoDto) => {
     const body: AddVideosRequest = {
       type: "stash",
       scene_ids: [parseInt(video.id.id)],
     }
 
     await addNewVideos(body)
+    revalidator.revalidate()
   }
 
   return (
@@ -47,18 +49,18 @@ const AddStashVideoPage: React.FC = () => {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
         {data.content.map((video) => (
           <VideoCard
-            key={video.video.id.id}
-            video={video}
+            key={video.id.id}
+            video={{video, markers: []}}
             stashConfig={config}
             actionChildren={
               <>
                 <span />
                 <button
-                  onClick={() => onAddVideo(video.video)}
+                  onClick={() => onAddVideo(video)}
                   className="btn btn-sm btn-success"
+                  disabled={video.existsInDatabase}
                 >
-                  <HiPlus />
-                  Add to library
+                  {video.existsInDatabase ? "Added" : <><HiPlus /> Add</>}
                 </button>
               </>
             }

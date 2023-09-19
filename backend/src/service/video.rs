@@ -154,7 +154,7 @@ impl VideoService {
             .into_iter()
             .map(|scene| CreateVideo {
                 id: generate_id(),
-                file_path: scene.files[0].basename.clone(),
+                file_path: format!("{}_{}", scene.id, scene.files[0].basename),
                 interactive: scene.interactive,
                 source: VideoSource::Stash,
                 duration: scene.files[0].duration,

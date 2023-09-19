@@ -37,6 +37,11 @@
         "name": "stash_scene_id",
         "ordinal": 6,
         "type_info": "Int64"
+      },
+      {
+        "name": "video_created_on",
+        "ordinal": 7,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -49,7 +54,8 @@
       false,
       false,
       true,
-      true
+      true,
+      false
     ]
   },
   "hash": "b6077c8c516efc7c7b45a41fc28978df792f9e5b5b1f0b1a7289020f71f448d4"

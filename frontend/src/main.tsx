@@ -31,6 +31,7 @@ import {
   musicLoader,
   versionLoader,
   videoDetailsLoader,
+  stashVideoLoader,
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
@@ -224,7 +225,11 @@ const router = createBrowserRouter([
           },
           {path: "library/add/download", element: <DownloadVideosPage />},
           {path: "library/add/folder", element: <SelectVideos />},
-          {path: "library/add/stash", element: <AddStashVideoPage />},
+          {
+            path: "library/add/stash",
+            element: <AddStashVideoPage />,
+            loader: stashVideoLoader,
+          },
           {
             path: "markers",
             element: <MarkersPage />,

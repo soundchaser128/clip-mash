@@ -1,7 +1,18 @@
-import React, {useState} from "react"
+import React, {useEffect, useState} from "react"
+import {useLoaderData, useSearchParams} from "react-router-dom"
+import {ListVideoDtoPage} from "../../api"
+import VideoCard from "../../components/VideoCard"
 
 const AddStashVideoPage: React.FC = () => {
-  const [query, setQuery] = useState("")
+  const [search, setSearchParams] = useSearchParams({query: ""})
+  const [query, setQuery] = useState(search.get("query") || "")
+
+  const data = useLoaderData() as ListVideoDtoPage
+  console.log(data)
+
+  useEffect(() => {
+    setSearchParams({query})
+  }, [query])
 
   return (
     <>
@@ -18,8 +29,15 @@ const AddStashVideoPage: React.FC = () => {
             type="text"
             className="input input-bordered w-96"
             placeholder="Enter query..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
           />
         </div>
+      </section>
+      <section>
+        {data.content.map((video) => (
+          <VideoCard key={video.video.id.id} video={video} />
+        ))}
       </section>
     </>
   )

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::data::database::VideoSource;
+use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "kebab-case")]
@@ -133,7 +134,7 @@ pub struct MarkerDto {
     pub index_within_video: usize,
 }
 
-#[derive(Serialize, Debug, ToSchema)]
+#[derive(Serialize, Debug, ToSchema, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct VideoDto {
     pub id: VideoId,
@@ -270,6 +271,35 @@ pub struct ClipsResponse {
 pub struct ListVideoDto {
     pub video: VideoDto,
     pub markers: Vec<MarkerDto>,
+}
+
+impl From<FindScenesQueryFindScenesScenes> for ListVideoDto {
+    fn from(value: FindScenesQueryFindScenesScenes) -> Self {
+        let scene = VideoDto::from(value.clone());
+        ListVideoDto {
+            video: scene.clone(),
+            markers: value
+                .scene_markers
+                .into_iter()
+                .enumerate()
+                .map(|(idx, marker)| MarkerDto {
+                    id: MarkerId::Stash(marker.id.parse().unwrap()),
+                    video_id: VideoId::Stash(value.id.clone()),
+                    primary_tag: marker.primary_tag.name,
+                    stream_url: marker.stream,
+                    start: marker.seconds,
+                    end: 0.0,
+                    scene_title: Some(scene.title.clone()),
+                    performers: scene.performers.clone(),
+                    file_name: Some(scene.file_name.clone()),
+                    scene_interactive: scene.interactive,
+                    tags: marker.tags.into_iter().map(|t| t.name).collect(),
+                    screenshot_url: Some(marker.screenshot),
+                    index_within_video: idx,
+                })
+                .collect(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, ToSchema)]

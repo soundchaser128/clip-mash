@@ -9,6 +9,7 @@ import {
   SongDto,
   VideoDto,
   fetchClips,
+  listStashVideos,
 } from "../api"
 import {FormState} from "../types/form-state"
 import {getConfig, getNewId, getVideo, listMarkers} from "../api"
@@ -138,4 +139,13 @@ export const versionLoader: LoaderFunction = async () => {
   const response = await fetch("/api/version")
   const data = (await response.json()) as {version: string}
   return data.version
+}
+
+export const stashVideoLoader: LoaderFunction = async ({request}) => {
+  const url = new URL(request.url)
+  const query = url.searchParams.get("query")
+  const videos = await listStashVideos({
+    query,
+  })
+  return videos
 }

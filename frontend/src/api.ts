@@ -16,6 +16,22 @@ export type DetectMarkersParams = {
   threshold?: number | null
 }
 
+export type ListStashVideosParams = {
+  query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
+export type ListVideosParams = {
+  query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
 export type SplitMarkerParams = {
   /**
    * The time to split the marker at
@@ -75,8 +91,6 @@ export type VideoIdOneOfThree = {
   type: VideoIdOneOfThreeType
 }
 
-export type VideoId = VideoIdOneOf | VideoIdOneOfThree
-
 export type VideoIdOneOfType =
   (typeof VideoIdOneOfType)[keyof typeof VideoIdOneOfType]
 
@@ -89,6 +103,8 @@ export type VideoIdOneOf = {
   id: string
   type: VideoIdOneOfType
 }
+
+export type VideoId = VideoIdOneOf | VideoIdOneOfThree
 
 export interface VideoDto {
   duration: number
@@ -129,6 +145,8 @@ export type StrokeTypeOneOfThree = {
   accelerate: StrokeTypeOneOfThreeAccelerate
 }
 
+export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
+
 /**
  * Creates a stroke every `n` beats
  */
@@ -141,8 +159,6 @@ export type StrokeTypeOneOf = {
   everyNth: StrokeTypeOneOfEveryNth
 }
 
-export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
-
 export type SortDirection = (typeof SortDirection)[keyof typeof SortDirection]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
@@ -150,14 +166,6 @@ export const SortDirection = {
   asc: "asc",
   desc: "desc",
 } as const
-
-export type ListVideosParams = {
-  query?: string | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
 
 export interface SongDto {
   beats: number[]
@@ -255,13 +263,6 @@ export type MeasureCountOneOfThree = {
   type: MeasureCountOneOfThreeType
 }
 
-export type MeasureCountOneOf = {
-  count: number
-  type: MeasureCountOneOfType
-}
-
-export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
-
 export type MeasureCountOneOfType =
   (typeof MeasureCountOneOfType)[keyof typeof MeasureCountOneOfType]
 
@@ -269,6 +270,13 @@ export type MeasureCountOneOfType =
 export const MeasureCountOneOfType = {
   fixed: "fixed",
 } as const
+
+export type MeasureCountOneOf = {
+  count: number
+  type: MeasureCountOneOfType
+}
+
+export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
 
 export type MarkerIdOneOfThreeType =
   (typeof MarkerIdOneOfThreeType)[keyof typeof MarkerIdOneOfThreeType]
@@ -593,6 +601,14 @@ export const addNewVideos = (addVideosRequest: AddVideosRequest) => {
   })
 }
 
+export const listStashVideos = (params?: ListStashVideosParams) => {
+  return customInstance<ListVideoDtoPage>({
+    url: `/api/library/video/stash`,
+    method: "get",
+    params,
+  })
+}
+
 export const getVideo = (id: string) => {
   return customInstance<ListVideoDto>({
     url: `/api/library/video/${id}`,
@@ -647,7 +663,6 @@ export const getBeatFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
-    data: createBeatFunscriptBody,
   })
 }
 
@@ -659,7 +674,6 @@ export const getCombinedFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
-    data: createFunscriptBody,
   })
 }
 
@@ -695,6 +709,9 @@ export type ListVideosResult = NonNullable<
 >
 export type AddNewVideosResult = NonNullable<
   Awaited<ReturnType<typeof addNewVideos>>
+>
+export type ListStashVideosResult = NonNullable<
+  Awaited<ReturnType<typeof listStashVideos>>
 >
 export type GetVideoResult = NonNullable<Awaited<ReturnType<typeof getVideo>>>
 export type DetectMarkersResult = NonNullable<

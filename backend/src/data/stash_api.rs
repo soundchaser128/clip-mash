@@ -19,6 +19,7 @@ use self::find_scenes_query::{
     FindScenesQueryFindScenesScenesSceneStreams,
 };
 use self::find_tags_query::FindTagsQueryFindTagsTags;
+use crate::server::types::PageParameters;
 use crate::service::funscript::FunScript;
 use crate::service::stash_config::Config;
 use crate::util::add_api_key;
@@ -260,8 +261,17 @@ impl StashApi {
         Ok(serde_json::to_string(&status)?)
     }
 
-    pub async fn find_scenes(&self) -> Result<Vec<FindScenesQueryFindScenesScenes>> {
-        let variables = find_scenes_query::Variables { scene_ids: None };
+    pub async fn find_scenes(
+        &self,
+        page: &PageParameters,
+        query: Option<String>,
+    ) -> Result<(Vec<FindScenesQueryFindScenesScenes>, usize)> {
+        let variables = find_scenes_query::Variables {
+            page_size: page.size(),
+            page: page.page(),
+            query,
+            scene_ids: None,
+        };
         let request_body = FindScenesQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
         let response = self
@@ -273,9 +283,9 @@ impl StashApi {
             .await?
             .error_for_status()?;
         let response: Response<find_scenes_query::ResponseData> = response.json().await?;
-        let scenes = response.data.unwrap().find_scenes.scenes;
+        let response = response.data.unwrap().find_scenes;
 
-        Ok(scenes)
+        Ok((response.scenes, response.count as usize))
     }
 
     pub async fn get_marker(&self, video_id: &str, marker_id: i64) -> Result<StashMarker> {
@@ -302,6 +312,9 @@ impl StashApi {
     ) -> Result<Vec<FindScenesQueryFindScenesScenes>> {
         let variables = find_scenes_query::Variables {
             scene_ids: Some(ids),
+            query: None,
+            page: 0,
+            page_size: -1,
         };
         let request_body = FindScenesQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);

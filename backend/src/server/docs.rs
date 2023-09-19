@@ -20,6 +20,7 @@ use crate::service::video::AddVideosRequest;
         library::list_videos,
         library::split_marker,
         library::update_marker,
+        library::list_stash_videos,
         progress::get_progress_info,
         project::create_video,
         project::download_video,

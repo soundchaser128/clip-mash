@@ -87,6 +87,8 @@ async fn main() -> Result<()> {
         .route("/video", get(handlers::library::list_videos))
         // add new videos either via stash, local or url
         .route("/video", post(handlers::library::add_new_videos))
+        // list videos on stash
+        .route("/video/stash", get(handlers::library::list_stash_videos))
         // get details on a single video
         .route("/video/:id", get(handlers::library::get_video))
         // detect markers in a video

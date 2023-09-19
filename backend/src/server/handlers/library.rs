@@ -11,6 +11,7 @@ use tower::ServiceExt;
 use tracing::{info, warn};
 use utoipa::IntoParams;
 
+use crate::data::stash_api::StashApi;
 use crate::server::dtos::Page;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -47,6 +48,27 @@ pub async fn list_videos(
         .list_videos(query.as_deref(), &page)
         .await?;
     Ok(Json(Page::new(videos, size, page)))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/library/video/stash",
+    params(VideoSearchQuery, PageParameters),
+    responses(
+        (status = 200, description = "Lists all videos in Stash with given query", body = ListVideoDtoPage),
+    )
+)]
+#[axum::debug_handler]
+pub async fn list_stash_videos(
+    Query(page): Query<PageParameters>,
+    Query(VideoSearchQuery { query }): Query<VideoSearchQuery>,
+) -> Result<Json<Page<ListVideoDto>>, AppError> {
+    info!("handling list_stash_videos request");
+    let stash_api = StashApi::load_config().await?;
+    let (videos, count) = stash_api.find_scenes(&page, query).await?;
+    let videos = videos.into_iter().map(From::from).collect();
+
+    Ok(Json(Page::new(videos, count, page)))
 }
 
 #[utoipa::path(

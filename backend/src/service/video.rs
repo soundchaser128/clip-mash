@@ -202,8 +202,6 @@ mod tests {
     #[ignore]
     async fn test_add_local_videos() -> Result<()> {
         let server = fixtures::stash_mock_server().await;
-        let api = StashApi::new(&server.uri(), "test");
-        let result = api.find_scenes().await?;
 
         Ok(())
     }

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT *, m.rowid AS rowid \n            FROM videos v \n            LEFT JOIN markers m ON v.id = m.video_id \n            WHERE v.file_path LIKE $1 AND v.rowid IN \n                (SELECT rowid FROM videos WHERE file_path LIKE $1 LIMIT $2 OFFSET $3)\n            ORDER BY $4 DESC",
+  "query": "SELECT *, m.rowid AS rowid \n            FROM videos v \n            LEFT JOIN markers m ON v.id = m.video_id \n            WHERE v.file_path LIKE $1 AND v.rowid IN \n                (SELECT rowid FROM videos WHERE file_path LIKE $1 OR video_title LIKE $1 OR video_tags LIKE $1 LIMIT $2 OFFSET $3)\n            ORDER BY $4 DESC",
   "describe": {
     "columns": [
       {
@@ -44,43 +44,53 @@
         "type_info": "Text"
       },
       {
-        "name": "video_id",
+        "name": "video_title",
         "ordinal": 8,
         "type_info": "Text"
       },
       {
-        "name": "start_time",
+        "name": "video_tags",
         "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_id",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "start_time",
+        "ordinal": 11,
         "type_info": "Float"
       },
       {
         "name": "end_time",
-        "ordinal": 10,
+        "ordinal": 12,
         "type_info": "Float"
       },
       {
         "name": "title",
-        "ordinal": 11,
-        "type_info": "Text"
-      },
-      {
-        "name": "index_within_video",
-        "ordinal": 12,
-        "type_info": "Int64"
-      },
-      {
-        "name": "marker_preview_image",
         "ordinal": 13,
         "type_info": "Text"
       },
       {
-        "name": "marker_created_on",
+        "name": "index_within_video",
         "ordinal": 14,
+        "type_info": "Int64"
+      },
+      {
+        "name": "marker_preview_image",
+        "ordinal": 15,
+        "type_info": "Text"
+      },
+      {
+        "name": "marker_created_on",
+        "ordinal": 16,
         "type_info": "Text"
       },
       {
         "name": "rowid",
-        "ordinal": 15,
+        "ordinal": 17,
         "type_info": "Int64"
       }
     ],
@@ -96,6 +106,8 @@
       true,
       true,
       false,
+      true,
+      true,
       false,
       false,
       false,
@@ -106,5 +118,5 @@
       true
     ]
   },
-  "hash": "136439ed47f79b9779c37cd3002bcae9216e71435e37c8179b4295b8b5d6e588"
+  "hash": "7c0f2a0c33d47fd16e90be1e604eaeeb0a6bcc76c67b7d6d0cbe120624151cbf"
 }

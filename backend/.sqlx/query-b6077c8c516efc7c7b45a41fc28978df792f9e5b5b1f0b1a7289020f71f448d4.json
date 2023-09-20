@@ -42,6 +42,16 @@
         "name": "video_created_on",
         "ordinal": 7,
         "type_info": "Text"
+      },
+      {
+        "name": "video_title",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_tags",
+        "ordinal": 9,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -55,7 +65,9 @@
       false,
       true,
       true,
-      false
+      false,
+      true,
+      true
     ]
   },
   "hash": "b6077c8c516efc7c7b45a41fc28978df792f9e5b5b1f0b1a7289020f71f448d4"

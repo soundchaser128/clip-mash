@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO videos \n            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags) \n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n            RETURNING video_created_on",
+  "describe": {
+    "columns": [
+      {
+        "name": "video_created_on",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "db2ed8011d1149dd8efd6981e6d4745c42bd68226ff02b398132bb23d375f531"
+}

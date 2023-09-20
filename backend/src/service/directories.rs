@@ -76,7 +76,7 @@ pub struct Directories {
     dirs: Arc<Box<dyn DirectorySupplier + 'static + Send + Sync>>,
 }
 
-const ENV_VAR: &'static str = "CLIP_MASH_BASE_DIR";
+const ENV_VAR: &str = "CLIP_MASH_BASE_DIR";
 
 impl Directories {
     pub fn new() -> Result<Self> {

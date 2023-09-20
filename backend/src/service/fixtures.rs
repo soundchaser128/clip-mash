@@ -22,6 +22,7 @@ use crate::Result;
 #[derive(Debug, Deserialize)]
 struct GraphQlQuery {
     query: String,
+    #[allow(unused)]
     variables: Option<HashMap<String, Value>>,
 }
 

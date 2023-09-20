@@ -3,7 +3,6 @@ use std::sync::Arc;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
-use reqwest::StatusCode;
 use serde::Deserialize;
 use tracing::info;
 use utoipa::IntoParams;

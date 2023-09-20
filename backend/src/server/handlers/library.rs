@@ -67,7 +67,7 @@ pub async fn list_stash_videos(
 ) -> Result<Json<Page<StashVideoDto>>, AppError> {
     info!("listing stash videos with page {page:?} and query {query:?}");
     let stash_api = StashApi::load_config_or_fail().await;
-    if let Err(e) = stash_api {
+    if let Err(_) = stash_api {
         info!("no stash config found, returning empty page");
         return Ok(Json(Page::empty()));
     }

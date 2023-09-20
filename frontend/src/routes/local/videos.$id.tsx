@@ -24,7 +24,7 @@ import {Config, MarkerDto, VideoDto, splitMarker} from "../../api"
 import {detectMarkers} from "../../api"
 import {useConfig} from "../../hooks/useConfig"
 
-function getVideoUrl(video: VideoDto, config: Config): string {
+function getVideoUrl(video: VideoDto, config?: Config): string {
   if (video.source === "Stash" && config) {
     return `${config.stashUrl}/scene/${video.stashSceneId!}/stream?apikey=${
       config.apiKey

@@ -157,12 +157,24 @@ impl<'a> From<StashSceneWrapper<'a>> for StashScene {
 #[derive(Serialize, Debug, Clone, ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[aliases(ListVideoDtoPage = Page<ListVideoDto>, StashVideoDtoPage = Page<StashVideoDto>)]
-pub struct Page<T: Serialize + ToSchema<'static>> {
+pub struct Page<T> {
     pub content: Vec<T>,
     pub total_items: usize,
     pub page_number: usize,
     pub page_size: usize,
     pub total_pages: usize,
+}
+
+impl<T> Page<T> {
+    pub fn empty() -> Self {
+        Page {
+            content: vec![],
+            total_items: 0,
+            page_number: 0,
+            page_size: 0,
+            total_pages: 0,
+        }
+    }
 }
 
 impl<T: Serialize + ToSchema<'static>> Page<T> {

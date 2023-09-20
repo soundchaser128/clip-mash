@@ -46,6 +46,7 @@ import DownloadVideosPage from "./routes/local/download"
 import SelectVideos from "./routes/local/path"
 import AddStashVideoPage from "./routes/local/stash"
 import {ConfigProvider} from "./hooks/useConfig"
+import StashConfigPage from "./routes/stash-config"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -208,6 +209,10 @@ const router = createBrowserRouter([
       {
         element: <CreateLayout />,
         children: [
+          {
+            path: "stash/config",
+            element: <StashConfigPage />,
+          },
           {
             path: "library",
             element: <ListVideos />,

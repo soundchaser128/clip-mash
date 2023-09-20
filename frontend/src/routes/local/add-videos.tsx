@@ -6,7 +6,7 @@ const AddVideosPage = () => {
     <>
       <h1 className="text-3xl font-bold text-center mb-4">Add Videos</h1>
       <div className="max-w-xl self-center">
-        <p className="mb-6">
+        <div className="mb-6">
           You can add videos from different sources:
           <ul className="list-disc list-inside">
             <li>
@@ -15,7 +15,7 @@ const AddVideosPage = () => {
             <li>Scan a local folder for video files</li>
             <li>Connect to your Stash instance to add files from there.</li>
           </ul>
-        </p>
+        </div>
       </div>
       <div className="self-center flex gap-1">
         <Link

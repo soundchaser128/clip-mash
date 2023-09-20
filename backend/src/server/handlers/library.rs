@@ -66,7 +66,12 @@ pub async fn list_stash_videos(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Page<StashVideoDto>>, AppError> {
     info!("listing stash videos with page {page:?} and query {query:?}");
-    let stash_api = StashApi::load_config().await?;
+    let stash_api = StashApi::load_config_or_fail().await;
+    if let Err(e) = stash_api {
+        info!("no stash config found, returning empty page");
+        return Ok(Json(Page::empty()));
+    }
+    let stash_api = stash_api.unwrap();
     let (stash_videos, count) = stash_api.find_scenes(&page, query).await?;
     info!("found {} stash videos", stash_videos.len());
     let ids: Vec<i64> = stash_videos

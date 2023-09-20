@@ -29,6 +29,8 @@ use crate::service::video::AddVideosRequest;
         project::get_combined_funscript,
         project::get_new_id,
         stash::get_config,
+        stash::get_health,
+        stash::set_config,
     ),
     components(
         schemas(

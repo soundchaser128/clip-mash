@@ -240,6 +240,14 @@ impl StashApi {
         Ok(StashApi::new(&config.stash_url, &config.api_key))
     }
 
+    pub async fn load_config_or_fail() -> Result<Self> {
+        if let Ok(config) = Config::get().await {
+            Ok(StashApi::new(&config.stash_url, &config.api_key))
+        } else {
+            bail!("no stash config found")
+        }
+    }
+
     pub fn from_config(config: &Config) -> Self {
         StashApi::new(&config.stash_url, &config.api_key)
     }

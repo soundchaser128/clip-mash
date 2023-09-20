@@ -116,10 +116,7 @@ export default function ListVideos() {
         <div className="flex flex-col items-center justify-center mt-8">
           <HiFolder className="text-8xl" />
           <h1 className="text-xl">No videos found</h1>
-          <Link to="add" className="btn btn-accent">
-            <HiPlus className="mr-2" />
-            Add videos
-          </Link>
+          <p>Add some videos with the button above!</p>
         </div>
       )}
 

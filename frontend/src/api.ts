@@ -5,6 +5,13 @@
  * OpenAPI spec version: 0.16.1
  */
 import {customInstance} from "./custom-client"
+export type GetHealthParams = {
+  url: string
+  apiKey: string
+}
+
+export type SetConfig204 = unknown | null
+
 export type DownloadVideoParams = {
   fileName: string
 }
@@ -275,6 +282,8 @@ export interface NewId {
   id: string
 }
 
+export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
+
 export type MeasureCountOneOfThreeType =
   (typeof MeasureCountOneOfThreeType)[keyof typeof MeasureCountOneOfThreeType]
 
@@ -288,8 +297,6 @@ export type MeasureCountOneOfThree = {
   min: number
   type: MeasureCountOneOfThreeType
 }
-
-export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
 
 export type MeasureCountOneOfType =
   (typeof MeasureCountOneOfType)[keyof typeof MeasureCountOneOfType]
@@ -711,6 +718,23 @@ export const getConfig = () => {
   return customInstance<Config>({url: `/api/stash/config`, method: "get"})
 }
 
+export const setConfig = (config: Config) => {
+  return customInstance<SetConfig204>({
+    url: `/api/stash/config`,
+    method: "post",
+    headers: {"Content-Type": "application/json"},
+    data: config,
+  })
+}
+
+export const getHealth = (params: GetHealthParams) => {
+  return customInstance<string>({
+    url: `/api/stash/health`,
+    method: "get",
+    params,
+  })
+}
+
 type AwaitedInput<T> = PromiseLike<T> | T
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never
@@ -763,3 +787,5 @@ export type GetCombinedFunscriptResult = NonNullable<
 >
 export type GetNewIdResult = NonNullable<Awaited<ReturnType<typeof getNewId>>>
 export type GetConfigResult = NonNullable<Awaited<ReturnType<typeof getConfig>>>
+export type SetConfigResult = NonNullable<Awaited<ReturnType<typeof setConfig>>>
+export type GetHealthResult = NonNullable<Awaited<ReturnType<typeof getHealth>>>

@@ -1,5 +1,10 @@
 import React, {useCallback, useEffect, useState} from "react"
-import {useLoaderData, useRevalidator, useSearchParams} from "react-router-dom"
+import {
+  useLoaderData,
+  useNavigate,
+  useRevalidator,
+  useSearchParams,
+} from "react-router-dom"
 import VideoCard from "../../components/VideoCard"
 import {StashLoaderData} from "../loaders"
 import Pagination from "../../components/Pagination"
@@ -14,6 +19,13 @@ const AddStashVideoPage: React.FC = () => {
   const data = useLoaderData() as StashLoaderData
   const revalidator = useRevalidator()
   const config = useConfig()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!config) {
+      navigate("/stash/config")
+    }
+  }, [config, navigate])
 
   const setParams = useCallback(
     (query: string | undefined) => {

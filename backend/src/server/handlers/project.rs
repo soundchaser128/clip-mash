@@ -6,7 +6,7 @@ use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
 use camino::Utf8PathBuf;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
 use utoipa::{IntoParams, ToSchema};
@@ -81,19 +81,25 @@ async fn create_video_inner(
     Ok(())
 }
 
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectCreateResponse {
+    pub final_file_name: String,
+}
+
 #[utoipa::path(
     post,
     path = "/api/project/create",
     request_body = CreateVideoBody,
     responses(
-        (status = 200, description = "The file name of the video to be created (returns immediately)", body = String),
+        (status = 200, description = "The file name of the video to be created (returns immediately)", body = ProjectCreateResponse),
     )
 )]
 #[axum::debug_handler]
 pub async fn create_video(
     state: State<Arc<AppState>>,
     Json(mut body): Json<CreateVideoBody>,
-) -> String {
+) -> Json<ProjectCreateResponse> {
     use sanitise_file_name::sanitise;
 
     body.file_name = sanitise(&body.file_name);
@@ -106,7 +112,9 @@ pub async fn create_video(
         }
     });
 
-    file_name
+    Json(ProjectCreateResponse {
+        final_file_name: file_name,
+    })
 }
 
 #[axum::debug_handler]

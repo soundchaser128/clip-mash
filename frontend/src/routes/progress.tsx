@@ -6,18 +6,13 @@ import {
   HiHeart,
   HiRocketLaunch,
 } from "react-icons/hi2"
-import {FormState} from "../types/form-state"
 import {formatSeconds} from "../helpers"
-import {Progress} from "../api"
+import {CreateVideoBody, Progress, createVideo} from "../api"
 import useNotification from "../hooks/useNotification"
 import {updateForm} from "./actions"
 import {Link} from "react-router-dom"
 import clsx from "clsx"
 import ExternalLink from "../components/ExternalLink"
-
-type CreateVideoBody = Omit<FormState, "songs"> & {
-  songIds: number[]
-}
 
 function Progress() {
   const {state, actions} = useStateMachine({updateForm})
@@ -84,37 +79,36 @@ function Progress() {
   const onSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
 
-    const songIds = state.data.songs?.map((s) => s.songId) || []
     const data = {
-      ...state.data,
+      clips: state.data.clips!,
       fileName,
-      songIds,
+      songIds: state.data.songs?.map((s) => s.songId) || [],
+      videoId: state.data.videoId!,
+      encodingEffort: state.data.encodingEffort!,
+      outputFps: state.data.outputFps!,
+      outputResolution: state.data.outputResolution!,
+      selectedMarkers: state.data.selectedMarkers!,
+      videoCodec: state.data.videoCodec!,
+      videoQuality: state.data.videoQuality!,
+      musicVolume: state.data.musicVolume,
     } satisfies CreateVideoBody
 
-    const body = JSON.stringify(data)
-    const response = await fetch("/api/create", {
-      method: "POST",
-      body,
-      headers: {"content-type": "application/json"},
+    const response = await createVideo(data)
+    setFinalFileName(response.finalFileName)
+    actions.updateForm({
+      fileName: response.finalFileName,
     })
 
-    if (response.ok) {
-      const fileName = await response.text()
-      setFinalFileName(fileName)
-      actions.updateForm({
-        finalFileName: fileName,
-      })
-      eventSource.current = openEventSource()
-      setProgress({
-        itemsFinished: 0,
-        etaSeconds: 0,
-        done: false,
-        itemsTotal: totalDuration,
-        message: "Starting...",
-        timestamp: Date.now().toString(),
-        videoId: state.data.videoId!,
-      })
-    }
+    eventSource.current = openEventSource()
+    setProgress({
+      itemsFinished: 0,
+      etaSeconds: 0,
+      done: false,
+      itemsTotal: totalDuration,
+      message: "Starting...",
+      timestamp: Date.now().toString(),
+      videoId: state.data.videoId!,
+    })
   }
 
   return (
@@ -185,7 +179,7 @@ function Progress() {
           >
             <div className="flex flex-col">
               <a
-                href={`/api/download?fileName=${encodeURIComponent(
+                href={`/api/project/download?fileName=${encodeURIComponent(
                   finalFileName,
                 )}`}
                 className="btn btn-success btn-lg"

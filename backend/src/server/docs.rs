@@ -1,7 +1,7 @@
 use utoipa::OpenApi;
 
 use super::dtos::ListVideoDtoPage;
-use super::handlers::project::CreateFunscriptBody;
+use super::handlers::project::{CreateFunscriptBody, ProjectCreateResponse};
 use super::types::*;
 use crate::data::database::VideoSource;
 use crate::server::handlers::{library, progress, project, stash};
@@ -74,6 +74,7 @@ use crate::service::video::AddVideosRequest;
             SortDirection,
             SongDto,
             StashVideoDto,
+            ProjectCreateResponse
         )
     ),
     tags(

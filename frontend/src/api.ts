@@ -114,6 +114,7 @@ export interface VideoDto {
   performers: string[]
   source: VideoSource
   stashSceneId?: number | null
+  tags?: string[] | null
   title: string
 }
 
@@ -214,14 +215,13 @@ export interface SelectedMarker {
   videoId: VideoId
 }
 
-export interface RoundRobinClipOptions {
-  clipLengths: PmvClipOptions
-  length: number
-}
-
 export interface RandomizedClipOptions {
   baseDuration: number
   divisors: number[]
+}
+
+export interface ProjectCreateResponse {
+  finalFileName: string
 }
 
 export interface Progress {
@@ -250,6 +250,11 @@ export type PmvClipOptionsOneOfFour = SongClipOptions &
   PmvClipOptionsOneOfFourAllOf
 
 export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
+
+export interface RoundRobinClipOptions {
+  clipLengths: PmvClipOptions
+  length: number
+}
 
 export type PmvClipOptionsOneOfAllOfType =
   (typeof PmvClipOptionsOneOfAllOfType)[keyof typeof PmvClipOptionsOneOfAllOfType]
@@ -284,6 +289,8 @@ export type MeasureCountOneOfThree = {
   type: MeasureCountOneOfThreeType
 }
 
+export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
+
 export type MeasureCountOneOfType =
   (typeof MeasureCountOneOfType)[keyof typeof MeasureCountOneOfType]
 
@@ -296,8 +303,6 @@ export type MeasureCountOneOf = {
   count: number
   type: MeasureCountOneOfType
 }
-
-export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
 
 export type MarkerIdOneOfThreeType =
   (typeof MarkerIdOneOfThreeType)[keyof typeof MarkerIdOneOfThreeType]
@@ -659,7 +664,7 @@ export const fetchClips = (createClipsBody: CreateClipsBody) => {
 }
 
 export const createVideo = (createVideoBody: CreateVideoBody) => {
-  return customInstance<string>({
+  return customInstance<ProjectCreateResponse>({
     url: `/api/project/create`,
     method: "post",
     headers: {"Content-Type": "application/json"},
@@ -684,7 +689,6 @@ export const getBeatFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
-    data: createBeatFunscriptBody,
   })
 }
 
@@ -696,7 +700,6 @@ export const getCombinedFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
-    data: createFunscriptBody,
   })
 }
 

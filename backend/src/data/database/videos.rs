@@ -237,7 +237,7 @@ impl VideosDatabase {
             FROM videos v 
             LEFT JOIN markers m ON v.id = m.video_id 
             WHERE v.file_path LIKE $1 AND v.rowid IN 
-                (SELECT rowid FROM videos WHERE file_path LIKE $1 LIMIT $2 OFFSET $3)
+                (SELECT rowid FROM videos WHERE file_path LIKE $1 OR video_title LIKE $1 OR video_tags LIKE $1 LIMIT $2 OFFSET $3)
             ORDER BY $4 DESC",
             query,
             limit,

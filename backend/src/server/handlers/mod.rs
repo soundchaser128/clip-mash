@@ -23,6 +23,7 @@ pub struct AppState {
     pub ffmpeg_location: FfmpegLocation,
 }
 
+// TODO make this work with local files that are stored on Stash
 pub fn get_streams(
     video_ids: HashSet<VideoId>,
     config: &Config,

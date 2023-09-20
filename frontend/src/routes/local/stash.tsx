@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react"
+import React, {useCallback, useEffect, useState} from "react"
 import {useLoaderData, useRevalidator, useSearchParams} from "react-router-dom"
 import VideoCard from "../../components/VideoCard"
 import {StashLoaderData} from "../loaders"
@@ -6,6 +6,7 @@ import Pagination from "../../components/Pagination"
 import {HiPlus} from "react-icons/hi2"
 import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../api"
 import {useConfig} from "../../hooks/useConfig"
+import debounce from "lodash.debounce"
 
 const AddStashVideoPage: React.FC = () => {
   const [search, setSearchParams] = useSearchParams()
@@ -14,14 +15,25 @@ const AddStashVideoPage: React.FC = () => {
   const revalidator = useRevalidator()
   const config = useConfig()
 
+  const setParams = useCallback(
+    (query: string | undefined) => {
+      if (query) {
+        setSearchParams({query})
+      }
+    },
+    [setSearchParams],
+  )
+
   useEffect(() => {
-    if (query) {
-      setSearchParams((prev) => {
-        prev.set("query", query)
-        return prev
-      })
-    }
-  }, [query, setSearchParams])
+    setParams(query)
+  }, [setParams, query])
+
+  const debouncedSetQuery = debounce(setParams, 500)
+
+  const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value)
+    debouncedSetQuery(e.target.value.trim())
+  }
 
   const onAddVideo = async (video: StashVideoDto) => {
     const body: AddVideosRequest = {
@@ -55,7 +67,7 @@ const AddStashVideoPage: React.FC = () => {
             className="input input-bordered input-primary w-96"
             placeholder="Filter..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={onFilterChange}
           />
         </div>
         <button className="btn btn-success" onClick={onAddEntirePage}>

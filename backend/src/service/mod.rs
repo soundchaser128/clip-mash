@@ -69,6 +69,7 @@ impl From<DbVideo> for Video {
             interactive: value.interactive,
             title: value
                 .video_title
+                .clone()
                 .unwrap_or_else(|| expect_file_name(&value.file_path)),
             info: VideoInfo::LocalFile { video: value },
             file_name,
@@ -79,6 +80,7 @@ impl From<DbVideo> for Video {
 
 impl From<FindScenesQueryFindScenesScenes> for Video {
     fn from(value: FindScenesQueryFindScenesScenes) -> Self {
+        let tags = value.tags.clone().into_iter().map(|t| t.name).collect();
         Video {
             id: VideoId::Stash(value.id.clone()),
             interactive: value.interactive,
@@ -101,7 +103,7 @@ impl From<FindScenesQueryFindScenesScenes> for Video {
             info: VideoInfo::Stash {
                 scene: Box::new(value),
             },
-            tags: Some(value.tags.into_iter().map(|t| t.name).collect()),
+            tags: Some(tags),
         }
     }
 }

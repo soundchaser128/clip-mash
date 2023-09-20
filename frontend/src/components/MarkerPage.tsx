@@ -21,7 +21,6 @@ import {MarkerDto, SelectedMarker} from "../api"
 import JumpToTop from "./JumpToTop"
 
 function getPreview(marker: MarkerDto) {
-  console.log(marker)
   if (marker.screenshotUrl?.includes("stash")) {
     return marker.screenshotUrl
   } else {

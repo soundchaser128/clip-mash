@@ -3,6 +3,7 @@ import {useNavigate} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {useState} from "react"
 import Loader from "../../components/Loader"
+import {addNewVideos} from "../../api"
 
 interface Inputs {
   path: string
@@ -17,22 +18,12 @@ export default function SelectVideos() {
 
   const onSubmit = async (values: Inputs) => {
     setSubmitting(true)
-    const response = await fetch("/api/local/video", {
-      method: "POST",
-      body: JSON.stringify({
-        path: values.path,
-        recurse: values.recurse,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
+    await addNewVideos({
+      type: "local",
+      path: values.path,
+      recurse: values.recurse,
     })
-    if (response.ok) {
-      navigate("/local/videos")
-    } else {
-      const text = await response.text()
-      console.error("request failed", text)
-    }
+    navigate("/library")
   }
 
   return (

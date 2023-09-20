@@ -20,6 +20,7 @@ use crate::server::types::{
 };
 use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;
+use crate::service::stash_config::Config;
 use crate::service::video::{AddVideosRequest, VideoService};
 
 #[derive(Deserialize, IntoParams)]
@@ -100,8 +101,9 @@ pub async fn add_new_videos(
     Json(request): Json<AddVideosRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let video_service = VideoService::new(state).await?;
+    let api_key = Config::get().await.map(|c| c.api_key).ok();
     let new_videos: Vec<_> = video_service
-        .add_videos(request)
+        .add_videos(request, api_key.as_deref())
         .await?
         .into_iter()
         .map(|v| VideoDto::from(v))

@@ -143,7 +143,7 @@ pub struct StashMarker {
 }
 
 impl StashMarker {
-    fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Self> {
+    pub fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Self> {
         let duration = scene
             .files
             .iter()

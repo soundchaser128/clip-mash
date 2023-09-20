@@ -20,6 +20,15 @@ import {formatSeconds, sumDurations} from "../helpers"
 import {MarkerDto, SelectedMarker} from "../api"
 import JumpToTop from "./JumpToTop"
 
+function getPreview(marker: MarkerDto) {
+  console.log(marker)
+  if (marker.screenshotUrl?.includes("stash")) {
+    return marker.screenshotUrl
+  } else {
+    return `/api/library/marker/${marker.id.id}/preview`
+  }
+}
+
 interface Props {
   data: {
     markers: MarkerDto[]
@@ -252,7 +261,7 @@ const SelectMarkers: React.FC<Props> = ({data, withPerformers, nextStage}) => {
                 )}
                 {videoPreview !== marker.id.id && (
                   <img
-                    src={`/api/library/marker/${marker.id.id}/preview`}
+                    src={getPreview(marker)}
                     className="aspect-[16/9] object-cover object-top w-full cursor-pointer"
                     onClick={() => onCheckboxToggle(marker.id.id)}
                   />

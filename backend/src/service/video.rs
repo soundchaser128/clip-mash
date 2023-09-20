@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
+use color_eyre::eyre::bail;
 use futures::future;
 use serde::Deserialize;
 use tokio::task::spawn_blocking;
@@ -12,8 +13,9 @@ use walkdir::WalkDir;
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use crate::data::database::{CreateVideo, Database, DbVideo, VideoSource};
-use crate::data::stash_api::StashApi;
+use crate::data::stash_api::{StashApi, StashMarker};
 use crate::server::handlers::AppState;
+use crate::server::types::CreateMarker;
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
@@ -148,8 +150,22 @@ impl VideoService {
         self.database.videos.persist_video(&video).await
     }
 
-    async fn persist_stash_video(&self, scene_ids: Vec<i64>) -> Result<Vec<DbVideo>> {
+    async fn persist_stash_video(
+        &self,
+        scene_ids: Vec<i64>,
+        api_key: Option<&str>,
+    ) -> Result<Vec<DbVideo>> {
+        if api_key.is_none() {
+            bail!("api key must be provided")
+        }
+        let api_key = api_key.unwrap();
+
         let scenes = self.stash_api.find_scenes_by_ids(scene_ids).await?;
+        let stash_markers: Vec<_> = scenes
+            .iter()
+            .flat_map(|s| StashMarker::from_scene(s.clone(), api_key))
+            .collect();
+
         let create_videos: Vec<_> = scenes
             .into_iter()
             .map(|scene| CreateVideo {
@@ -158,7 +174,6 @@ impl VideoService {
                 interactive: scene.interactive,
                 source: VideoSource::Stash,
                 duration: scene.files[0].duration,
-                // TODO
                 video_preview_image: Some(self.stash_api.get_screenshot_url(&scene.id)),
                 stash_scene_id: Some(scene.id.parse().unwrap()),
             })
@@ -170,10 +185,35 @@ impl VideoService {
             videos.push(result);
         }
 
+        for marker in stash_markers {
+            let scene_id: i64 = marker.scene_id.parse()?;
+            let video = videos
+                .iter()
+                .find(|v| v.stash_scene_id == Some(scene_id))
+                .expect("video must exist");
+            let create_marker = CreateMarker {
+                video_id: video.id.clone(),
+                start: marker.start,
+                end: marker.end,
+                title: marker.primary_tag,
+                index_within_video: marker.index_within_video as i64,
+                preview_image_path: Some(marker.screenshot_url),
+                video_interactive: video.interactive,
+            };
+            self.database
+                .markers
+                .create_new_marker(create_marker)
+                .await?;
+        }
+
         Ok(videos)
     }
 
-    pub async fn add_videos(&self, request: AddVideosRequest) -> Result<Vec<DbVideo>> {
+    pub async fn add_videos(
+        &self,
+        request: AddVideosRequest,
+        stash_api_key: Option<&str>,
+    ) -> Result<Vec<DbVideo>> {
         match request {
             AddVideosRequest::Local { path, recurse } => {
                 self.add_new_local_videos(path, recurse).await
@@ -186,7 +226,9 @@ impl VideoService {
 
                 futures.await
             }
-            AddVideosRequest::Stash { scene_ids } => self.persist_stash_video(scene_ids).await,
+            AddVideosRequest::Stash { scene_ids } => {
+                self.persist_stash_video(scene_ids, stash_api_key).await
+            }
         }
     }
 }

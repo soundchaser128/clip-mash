@@ -6,6 +6,7 @@ use crate::data::database::{DbMarker, DbVideo, LocalVideoWithMarkers, VideoSourc
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashMarker;
 use crate::server::types::*;
+use crate::service::video::TAG_SEPARATOR;
 use crate::service::{Video, VideoInfo};
 use crate::util::{add_api_key, expect_file_name};
 
@@ -70,24 +71,33 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
             interactive: value.interactive,
             source: VideoSource::Stash,
             duration: file.duration,
+            tags: Some(value.tags.into_iter().map(|t| t.name).collect()),
         }
     }
 }
 
 impl From<DbVideo> for VideoDto {
     fn from(value: DbVideo) -> Self {
+        let title = value.video_title.unwrap_or_else(|| {
+            Utf8Path::new(&value.file_path)
+                .file_name()
+                .map(From::from)
+                .unwrap_or_default()
+        });
+        let tags = value
+            .video_tags
+            .map(|s| s.split(TAG_SEPARATOR).map(From::from).collect());
+
         VideoDto {
             id: VideoId::LocalFile(value.id),
             stash_scene_id: value.stash_scene_id,
-            title: Utf8Path::new(&value.file_path)
-                .file_name()
-                .map(From::from)
-                .unwrap_or_default(),
+            title,
             performers: vec![],
             interactive: value.interactive,
             file_name: expect_file_name(&value.file_path),
             source: value.source,
             duration: value.duration,
+            tags,
         }
     }
 }
@@ -108,6 +118,7 @@ impl From<Video> for VideoDto {
                 VideoInfo::LocalFile { video } => video.source,
             },
             duration,
+            tags: value.tags,
         }
     }
 }

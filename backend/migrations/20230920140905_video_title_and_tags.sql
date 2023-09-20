@@ -1,0 +1,2 @@
+ALTER TABLE videos ADD COLUMN video_title VARCHAR;
+ALTER TABLE videos ADD COLUMN video_tags VARCHAR;

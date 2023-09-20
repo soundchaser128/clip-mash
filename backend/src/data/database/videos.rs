@@ -45,6 +45,8 @@ impl VideosDatabase {
                 video_preview_image: records[0].video_preview_image.clone(),
                 stash_scene_id: records[0].stash_scene_id,
                 video_created_on: records[0].video_created_on.clone(),
+                video_tags: records[0].video_tags.clone(),
+                video_title: records[0].video_title.clone(),
             };
             let markers = records
                 .into_iter()
@@ -112,6 +114,8 @@ impl VideosDatabase {
                 video_preview_image: records[0].video_preview_image.clone(),
                 stash_scene_id: records[0].stash_scene_id,
                 video_created_on: records[0].video_created_on.clone(),
+                video_tags: records[0].video_tags.clone(),
+                video_title: records[0].video_title.clone(),
             };
             let markers = records
                 .into_iter()
@@ -181,8 +185,8 @@ impl VideosDatabase {
     pub async fn persist_video(&self, video: &CreateVideo) -> Result<DbVideo> {
         let inserted = sqlx::query!(
             "INSERT INTO videos 
-            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING video_created_on",
             video.id,
             video.file_path,
@@ -191,6 +195,8 @@ impl VideosDatabase {
             video.duration,
             video.video_preview_image,
             video.stash_scene_id,
+            video.title,
+            video.tags,
         )
         .fetch_one(&self.pool)
         .await?;
@@ -204,6 +210,8 @@ impl VideosDatabase {
             video_preview_image: video.video_preview_image.clone(),
             stash_scene_id: video.stash_scene_id,
             video_created_on: inserted.video_created_on,
+            video_tags: video.tags.clone(),
+            video_title: video.title.clone(),
         })
     }
 
@@ -256,6 +264,8 @@ impl VideosDatabase {
                     video_preview_image: group[0].video_preview_image.clone(),
                     stash_scene_id: group[0].stash_scene_id,
                     video_created_on: group[0].video_created_on.clone(),
+                    video_tags: group[0].video_tags.clone(),
+                    video_title: group[0].video_title.clone(),
                 };
                 let markers: Vec<_> = group
                     .into_iter()

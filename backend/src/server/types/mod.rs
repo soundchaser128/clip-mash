@@ -4,7 +4,7 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::VideoSource;
+use crate::{data::database::VideoSource, service::video::TAG_SEPARATOR};
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "kebab-case")]
@@ -144,6 +144,7 @@ pub struct VideoDto {
     pub source: VideoSource,
     pub duration: f64,
     pub stash_scene_id: Option<i64>,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Debug, ToSchema, Clone)]

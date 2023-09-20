@@ -11,6 +11,7 @@ use self::music::MusicDatabase;
 use self::progress::ProgressDatabase;
 use self::videos::VideosDatabase;
 use crate::server::types::{Beats, Progress};
+use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
 
 mod markers;
@@ -50,6 +51,16 @@ pub struct DbVideo {
     pub video_preview_image: Option<String>,
     pub stash_scene_id: Option<i64>,
     pub video_created_on: String,
+    pub video_title: Option<String>,
+    pub video_tags: Option<String>,
+}
+
+impl DbVideo {
+    pub fn tags(&self) -> Option<Vec<String>> {
+        self.video_tags
+            .clone()
+            .map(|s| s.split(TAG_SEPARATOR).map(|s| s.to_string()).collect())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -61,6 +72,8 @@ pub struct CreateVideo {
     pub duration: f64,
     pub video_preview_image: Option<String>,
     pub stash_scene_id: Option<i64>,
+    pub title: Option<String>,
+    pub tags: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]

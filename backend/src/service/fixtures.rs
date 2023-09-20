@@ -646,6 +646,8 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
         duration: 50.0,
         video_preview_image: None,
         stash_scene_id: None,
+        title: Some(Word().fake::<String>()),
+        tags: Some(Word().fake::<String>()),
     };
 
     db.videos.persist_video(&video).await
@@ -667,6 +669,8 @@ pub async fn persist_video_fn<F: FnOnce(&mut CreateVideo)>(
         duration: 50.0,
         video_preview_image: None,
         stash_scene_id: None,
+        title: Some(Word().fake::<String>()),
+        tags: Some(Word().fake::<String>()),
     };
     before_insert(&mut video);
     info!("inserting video {:#?}", video);

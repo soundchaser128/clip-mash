@@ -35,6 +35,7 @@ pub enum VideoInfo {
 pub struct Video {
     pub id: VideoId,
     pub title: String,
+    pub tags: Option<Vec<String>>,
     pub interactive: bool,
     pub file_name: String,
     pub performers: Vec<String>,
@@ -60,11 +61,15 @@ impl Video {
 impl From<DbVideo> for Video {
     fn from(value: DbVideo) -> Self {
         let file_name = expect_file_name(&value.file_path);
+        let tags = value.tags();
 
         Video {
             id: VideoId::LocalFile(value.id.clone()),
+            tags,
             interactive: value.interactive,
-            title: file_name.clone(),
+            title: value
+                .video_title
+                .unwrap_or_else(|| expect_file_name(&value.file_path)),
             info: VideoInfo::LocalFile { video: value },
             file_name,
             performers: vec![],
@@ -96,6 +101,7 @@ impl From<FindScenesQueryFindScenesScenes> for Video {
             info: VideoInfo::Stash {
                 scene: Box::new(value),
             },
+            tags: Some(value.tags.into_iter().map(|t| t.name).collect()),
         }
     }
 }

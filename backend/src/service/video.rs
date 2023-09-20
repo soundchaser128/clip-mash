@@ -3,6 +3,7 @@ use std::sync::Arc;
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
 use futures::future;
+use itertools::Itertools;
 use serde::Deserialize;
 use tokio::task::spawn_blocking;
 use tracing::{debug, info, warn};
@@ -21,6 +22,8 @@ use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
 use crate::util::generate_id;
 use crate::Result;
+
+pub const TAG_SEPARATOR: &str = ";";
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
@@ -105,6 +108,8 @@ impl VideoService {
                         duration: duration.unwrap_or_default(),
                         video_preview_image: Some(image_path.to_string()),
                         stash_scene_id: None,
+                        title: None,
+                        tags: None,
                     };
                     info!("inserting new video {create_video:#?}");
                     let video = self.database.videos.persist_video(&create_video).await?;
@@ -144,6 +149,8 @@ impl VideoService {
             duration: duration.unwrap_or_default(),
             video_preview_image: Some(image_path.to_string()),
             stash_scene_id: None,
+            title: None,
+            tags: None,
         };
         info!("persisting downloaded video {video:#?}");
 
@@ -170,12 +177,20 @@ impl VideoService {
             .into_iter()
             .map(|scene| CreateVideo {
                 id: generate_id(),
-                file_path: format!("{}_{}", scene.id, scene.files[0].basename),
+                file_path: self.stash_api.get_stream_url(&scene.id),
                 interactive: scene.interactive,
                 source: VideoSource::Stash,
                 duration: scene.files[0].duration,
                 video_preview_image: Some(self.stash_api.get_screenshot_url(&scene.id)),
                 stash_scene_id: Some(scene.id.parse().unwrap()),
+                title: scene.title,
+                tags: Some(
+                    scene
+                        .tags
+                        .iter()
+                        .map(|t| t.name.as_str())
+                        .join(TAG_SEPARATOR),
+                ),
             })
             .collect();
 

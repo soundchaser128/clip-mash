@@ -33,25 +33,34 @@ const AddStashVideoPage: React.FC = () => {
     revalidator.revalidate()
   }
 
+  const onAddEntirePage = async () => {
+    const body: AddVideosRequest = {
+      type: "stash",
+      scene_ids: data.content.map((video) => parseInt(video.id.id)),
+    }
+
+    await addNewVideos(body)
+    revalidator.revalidate()
+  }
+
   return (
     <>
       <h1 className="text-3xl text-center font-bold mb-4">
         Add videos from Stash
       </h1>
-      <section className="flex max-w-xl self-center">
+      <section className="flex justify-between w-full">
         <div className="form-control">
-          <label className="label">
-            <span className="label-text">Search for videos</span>
-          </label>
           <input
-            required
             type="text"
-            className="input input-bordered w-96"
-            placeholder="Enter query..."
+            className="input input-bordered input-primary w-96"
+            placeholder="Filter..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
+        <button className="btn btn-success" onClick={onAddEntirePage}>
+          <HiPlus /> Add entire page
+        </button>
       </section>
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
         {data.content.map((video) => (

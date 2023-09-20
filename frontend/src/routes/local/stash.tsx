@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useState} from "react"
 import {
+  Link,
   useLoaderData,
   useNavigate,
   useRevalidator,
@@ -8,7 +9,7 @@ import {
 import VideoCard from "../../components/VideoCard"
 import {StashLoaderData} from "../loaders"
 import Pagination from "../../components/Pagination"
-import {HiPlus} from "react-icons/hi2"
+import {HiChevronLeft, HiPlus} from "react-icons/hi2"
 import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../api"
 import {useConfig} from "../../hooks/useConfig"
 import debounce from "lodash.debounce"
@@ -30,7 +31,11 @@ const AddStashVideoPage: React.FC = () => {
   const setParams = useCallback(
     (query: string | undefined) => {
       if (query) {
-        setSearchParams({query})
+        setSearchParams((prev) => {
+          const params = new URLSearchParams(prev)
+          params.set("query", query)
+          return params
+        })
       }
     },
     [setSearchParams],
@@ -69,9 +74,16 @@ const AddStashVideoPage: React.FC = () => {
 
   return (
     <>
-      <h1 className="text-3xl text-center font-bold mb-4">
-        Add videos from Stash
-      </h1>
+      <div className="grid grid-cols-3 items-baseline">
+        <Link to="/library" className="flex items-center text-sm link">
+          <HiChevronLeft className="mr-1 inline" />
+          Back
+        </Link>
+
+        <h1 className="text-3xl text-center font-bold mb-4">
+          Add videos from Stash
+        </h1>
+      </div>
       <section className="flex justify-between w-full">
         <div className="form-control">
           <input

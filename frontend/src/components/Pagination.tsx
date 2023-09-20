@@ -24,7 +24,8 @@ const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   startIndex = 0,
 }) => {
-  const hasNextPage = currentPage < totalPages - 1
+  const hasNextPage =
+    startIndex === 1 ? currentPage < totalPages : currentPage < totalPages - 1
   const hasPreviousPage = currentPage > startIndex
   const [searchParams] = useSearchParams()
   const nextLink: To = setParam(

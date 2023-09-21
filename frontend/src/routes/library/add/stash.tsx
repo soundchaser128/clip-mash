@@ -6,12 +6,12 @@ import {
   useRevalidator,
   useSearchParams,
 } from "react-router-dom"
-import VideoCard from "../../components/VideoCard"
-import {StashLoaderData} from "../loaders"
-import Pagination from "../../components/Pagination"
+import VideoCard from "../../../components/VideoCard"
+import {StashLoaderData} from "../../loaders"
+import Pagination from "../../../components/Pagination"
 import {HiChevronLeft, HiPlus} from "react-icons/hi2"
-import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../api"
-import {useConfig} from "../../hooks/useConfig"
+import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../../api"
+import {useConfig} from "../../../hooks/useConfig"
 import debounce from "lodash.debounce"
 
 const AddStashVideoPage: React.FC = () => {

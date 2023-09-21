@@ -1,12 +1,12 @@
 import {useForm} from "react-hook-form"
-import Field from "../../components/Field"
+import Field from "../../../components/Field"
 import {HiArrowDownTray, HiXMark} from "react-icons/hi2"
 import {useNavigate} from "react-router"
-import useNotification from "../../hooks/useNotification"
-import Loader from "../../components/Loader"
+import useNotification from "../../../hooks/useNotification"
+import Loader from "../../../components/Loader"
 import {useState} from "react"
-import {pluralize} from "../../helpers"
-import {AddVideosRequest, addNewVideos} from "../../api"
+import {pluralize} from "../../../helpers"
+import {AddVideosRequest, addNewVideos} from "../../../api"
 
 type Inputs = {urls: string}
 

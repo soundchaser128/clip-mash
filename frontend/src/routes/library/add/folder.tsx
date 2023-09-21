@@ -2,8 +2,8 @@ import {HiCheck} from "react-icons/hi2"
 import {useNavigate} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {useState} from "react"
-import Loader from "../../components/Loader"
-import {addNewVideos} from "../../api"
+import Loader from "../../../components/Loader"
+import {addNewVideos} from "../../../api"
 
 interface Inputs {
   path: string

@@ -696,6 +696,7 @@ export const getBeatFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
+    data: createBeatFunscriptBody,
   })
 }
 
@@ -707,6 +708,7 @@ export const getCombinedFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
+    data: createFunscriptBody,
   })
 }
 

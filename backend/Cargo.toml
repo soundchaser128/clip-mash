@@ -13,32 +13,32 @@ directories = "5.0.1"
 float-cmp = "0.9.0"
 futures = "0.3.28"
 graphql_client = "0.13.0"
-hound = "3.5.0"
+hound = "3.5.1"
 include_dir = "0.7.3"
 itertools = "0.11.0"
 lazy_static = "1.4.0"
 opener = "0.6.1"
-ordered-float = "3.9.0"
+ordered-float = "4.1.0"
 rand = "0.8.5"
-regex = "1.9.3"
-reqwest = { version = "0.11.18", features = ["json"] }
+regex = "1.9.5"
+reqwest = { version = "0.11.20", features = ["json"] }
 sanitise-file-name = "1.0.0"
-serde = { version = "1.0.185", features = ["derive"] }
-serde_json = "1.0.105"
-sqlx = { version = "0.7.1", features = ["runtime-tokio",  "sqlite"] }
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.107"
+sqlx = { version = "0.7.2", features = ["runtime-tokio",  "sqlite"] }
 tokio = { version = "1.32.0", features = ["full"] }
-tokio-util = { version = "0.7.8", features = ["io"] }
+tokio-util = { version = "0.7.9", features = ["io"] }
 tower = "0.4.13"
-tower-http = { version = "0.4.3", features = ["fs"] }
+tower-http = { version = "0.4.4", features = ["fs"] }
 tracing = "0.1.37"
 tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
-url = { version = "2.4.0", features = ["serde"] }
+url = { version = "2.4.1", features = ["serde"] }
 utoipa = { version = "3.5.0", features = ["axum_extras"] }
 utoipa-rapidoc = { version = "0.1.0", features = ["axum"] }
 utoipa-redoc = { version = "0.1.0", features = ["axum"] }
 utoipa-swagger-ui = { version = "3.1.5", features = ["axum"] }
-walkdir = "2.3.3"
+walkdir = "2.4.0"
 webbrowser = "0.8.11"
 youtube_dl = { version = "0.9.0", features = ["tokio", "downloader-native-tls"] }
 
@@ -53,7 +53,7 @@ zip = "0.6.6"
 opt-level = 3
 
 [dev-dependencies]
-fake = "2.7.0"
+fake = "2.8.0"
 tracing-test = "0.2.4"
 mock_instant = "0.3.1"
 graphql-parser = "0.4.0"

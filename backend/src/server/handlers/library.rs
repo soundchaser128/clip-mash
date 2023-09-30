@@ -236,15 +236,24 @@ pub struct ListMarkersQuery {
 #[utoipa::path(
     get,
     path = "/api/library/marker",
+    params(VideoSearchQuery, PageParameters),
     responses(
         (status = 200, description = "List markers", body = Vec<MarkerDto>),
     )
 )]
 #[axum::debug_handler]
-pub async fn list_markers(state: State<Arc<AppState>>) -> Result<Json<Vec<MarkerDto>>, AppError> {
-    let markers = state.database.markers.get_all_markers().await?;
+pub async fn list_markers(
+    Query(page): Query<PageParameters>,
+    Query(VideoSearchQuery { query }): Query<VideoSearchQuery>,
+    state: State<Arc<AppState>>,
+) -> Result<Json<Page<MarkerDto>>, AppError> {
+    let (markers, count) = state
+        .database
+        .markers
+        .list_markers(query.as_deref(), &page)
+        .await?;
     let markers = markers.into_iter().map(From::from).collect();
-    Ok(Json(markers))
+    Ok(Json(Page::new(markers, count as usize, page)))
 }
 
 fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str> {

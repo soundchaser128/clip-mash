@@ -223,14 +223,13 @@ impl VideosDatabase {
         let query = query
             .map(|q| format!("%{q}%"))
             .unwrap_or_else(|| "%".to_string());
-        info!("using query '{}'", query);
         let count =
-            sqlx::query_scalar!("SELECT COUNT(*) FROM videos WHERE file_path LIKE $1", query)
+            sqlx::query_scalar!("SELECT COUNT(*) FROM videos WHERE file_path LIKE $1 OR video_title LIKE $1 OR video_tags LIKE $1", query)
                 .fetch_one(&self.pool)
                 .await?;
         let limit = params.limit();
         let offset = params.offset();
-        let sort = params.sort("created_on", SortDirection::Desc);
+        let sort = params.sort("video_created_on", SortDirection::Desc);
 
         let mut records = sqlx::query!(
             "SELECT *, m.rowid AS rowid 

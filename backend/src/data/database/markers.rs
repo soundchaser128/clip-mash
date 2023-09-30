@@ -2,7 +2,7 @@ use sqlx::SqlitePool;
 use tracing::info;
 
 use super::DbMarker;
-use crate::server::types::{CreateMarker, UpdateMarker};
+use crate::server::types::{CreateMarker, PageParameters, UpdateMarker, SortDirection};
 use crate::Result;
 
 #[derive(Debug, Clone)]
@@ -151,6 +151,42 @@ impl MarkersDatabase {
         .fetch_all(&self.pool)
         .await?;
         Ok(markers)
+    }
+
+    pub async fn list_markers(
+        &self,
+        query: Option<&str>,
+        params: &PageParameters,
+    ) -> Result<(Vec<DbMarker>, i64)> {
+        let query = query
+            .map(|q| format!("%{q}%"))
+            .unwrap_or_else(|| "%".to_string());
+        let count = sqlx::query_scalar!(
+            "SELECT COUNT(*) FROM markers WHERE title LIKE $1",
+            query
+        )
+        .fetch_one(&self.pool)
+        .await?;
+        let limit = params.limit();
+        let offset = params.offset();
+        let sort = params.sort("marker_created_on", SortDirection::Desc);
+
+        let markers = sqlx::query_as!(DbMarker,
+            "SELECT *, rowid FROM markers m
+            WHERE m.title LIKE $1
+            ORDER BY $2
+            LIMIT $3
+            OFFSET $4
+        ",
+            query,
+            sort,
+            limit,
+            offset
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok((markers, count))
     }
 
     pub async fn set_marker_preview_image(&self, id: i64, preview_image: &str) -> Result<()> {

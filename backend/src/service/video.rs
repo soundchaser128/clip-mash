@@ -78,9 +78,8 @@ impl VideoService {
                 let video_exists = self
                     .database
                     .videos
-                    .get_video_by_path(path.as_str())
-                    .await?
-                    .is_some();
+                    .video_exists_by_path(path.as_str())
+                    .await?;
                 info!("video at path {path} exists: {video_exists}");
                 if !video_exists {
                     let interactive = path.with_extension("funscript").is_file();

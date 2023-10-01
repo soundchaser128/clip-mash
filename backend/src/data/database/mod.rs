@@ -83,11 +83,25 @@ pub struct DbMarker {
     pub start_time: f64,
     pub end_time: f64,
     pub title: String,
+    pub index_within_video: i64,
+    pub marker_preview_image: Option<String>,
+    pub marker_created_on: String,
+}
+
+// TODO better name
+#[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
+pub struct DbMarkerWithVideo {
+    pub rowid: Option<i64>,
+    pub video_id: String,
+    pub start_time: f64,
+    pub end_time: f64,
+    pub title: String,
     pub file_path: String,
     pub index_within_video: i64,
     pub marker_preview_image: Option<String>,
     pub interactive: bool,
     pub marker_created_on: String,
+    pub video_title: Option<String>,
 }
 
 #[derive(Debug)]
@@ -256,17 +270,13 @@ mod test {
     #[sqlx::test]
     async fn test_get_video_by_path(pool: SqlitePool) {
         let database = Database::with_pool(pool);
-        let expected = persist_video(&database).await.unwrap();
-        let result = database
+        let inserted = persist_video(&database).await.unwrap();
+        let exists = database
             .videos
-            .get_video_by_path(&expected.file_path)
+            .video_exists_by_path(&inserted.file_path)
             .await
-            .unwrap()
             .unwrap();
-        assert_eq!(result.video.id, expected.id);
-        assert_eq!(result.video.file_path, expected.file_path);
-        assert_eq!(result.video.interactive, expected.interactive);
-        assert_eq!(result.markers.len(), 0);
+        assert_eq!(true, exists);
     }
 
     #[sqlx::test]

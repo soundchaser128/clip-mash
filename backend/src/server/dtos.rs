@@ -2,7 +2,7 @@ use camino::Utf8Path;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::data::database::{DbMarker, DbVideo, LocalVideoWithMarkers, VideoSource};
+use crate::data::database::{DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers, VideoSource};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashMarker;
 use crate::server::types::*;
@@ -30,8 +30,8 @@ impl From<StashMarker> for MarkerDto {
     }
 }
 
-impl From<DbMarker> for MarkerDto {
-    fn from(value: DbMarker) -> Self {
+impl From<DbMarkerWithVideo> for MarkerDto {
+    fn from(value: DbMarkerWithVideo) -> Self {
         MarkerDto {
             id: MarkerId::LocalFile(value.rowid.expect("marker must have a rowid")),
             start: value.start_time,
@@ -42,7 +42,7 @@ impl From<DbMarker> for MarkerDto {
             performers: vec![],
             primary_tag: value.title,
             scene_interactive: value.interactive,
-            scene_title: None,
+            scene_title: value.video_title,
             stream_url: format!("/api/local/video/{}/file", value.video_id),
             tags: vec![],
             screenshot_url: Some(format!(
@@ -125,9 +125,14 @@ impl From<Video> for VideoDto {
 
 impl From<LocalVideoWithMarkers> for ListVideoDto {
     fn from(value: LocalVideoWithMarkers) -> Self {
+        let db_video = value.video.clone();
         ListVideoDto {
             video: value.video.into(),
-            markers: value.markers.into_iter().map(From::from).collect(),
+            markers: value
+                .markers
+                .into_iter()
+                .map(|m| MarkerDto::from_db(m, &db_video))
+                .collect(),
         }
     }
 }

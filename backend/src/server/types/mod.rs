@@ -4,7 +4,8 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::VideoSource;
+use crate::data::database::{DbMarker, DbVideo, VideoSource};
+use crate::util::expect_file_name;
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "kebab-case")]
@@ -131,6 +132,26 @@ pub struct MarkerDto {
     pub tags: Vec<String>,
     pub screenshot_url: Option<String>,
     pub index_within_video: usize,
+}
+
+impl MarkerDto {
+    pub fn from_db(marker: DbMarker, video: &DbVideo) -> Self {
+        MarkerDto {
+            id: MarkerId::LocalFile(marker.rowid.expect("marker must have rowid")),
+            video_id: VideoId::LocalFile(video.id.clone()),
+            primary_tag: marker.title,
+            stream_url: format!("/api/local/video/{}/file", video.id),
+            start: marker.start_time,
+            end: marker.end_time,
+            scene_title: video.video_title.clone(),
+            performers: vec![],
+            file_name: Some(expect_file_name(&video.file_path)),
+            scene_interactive: video.interactive,
+            tags: video.tags().unwrap_or_default(),
+            screenshot_url: marker.marker_preview_image,
+            index_within_video: marker.index_within_video as usize,
+        }
+    }
 }
 
 #[derive(Serialize, Debug, ToSchema, Clone)]

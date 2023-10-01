@@ -316,7 +316,7 @@ pub async fn create_new_marker(
             marker.preview_image_path = Some(preview_image.to_string());
             let marker = state.database.markers.create_new_marker(marker).await?;
 
-            Ok(Json(marker.into()))
+            Ok(Json(MarkerDto::from_db(marker, &video)))
         } else {
             warn!("No video found for marker {marker:?}, returning 404");
             Err(AppError::StatusCode(StatusCode::NOT_FOUND))
@@ -340,7 +340,13 @@ pub async fn update_marker(
     info!("updating marker with {marker:?}");
 
     let marker = state.database.markers.update_marker(marker).await?;
-    Ok(Json(marker.into()))
+    let video = state
+        .database
+        .videos
+        .get_video(&marker.video_id)
+        .await?
+        .expect("video for marker must exist");
+    Ok(Json(MarkerDto::from_db(marker, &video)))
 }
 
 #[utoipa::path(
@@ -357,11 +363,12 @@ pub async fn update_marker(
 pub async fn delete_marker(
     Path(id): Path<i64>,
     state: State<Arc<AppState>>,
-) -> Result<(), AppError> {
+) -> Result<Json<&'static str>, AppError> {
+    // TODO delete preview image as well
     info!("deleting marker {id}");
     state.database.markers.delete_marker(id).await?;
 
-    Ok(())
+    Ok(Json("OK"))
 }
 
 #[derive(Deserialize)]
@@ -388,19 +395,20 @@ pub async fn split_marker(
 ) -> Result<Json<Vec<MarkerDto>>, AppError> {
     info!("splitting marker {id} att time {time}");
     let video_id = state.database.markers.split_marker(id, time).await?;
-    let mut new_markers = state
+    let data = state
         .database
         .videos
         .get_video_with_markers(&video_id)
         .await?
-        .expect("markers must exist")
-        .markers;
+        .expect("markers must exist");
 
+    let mut new_markers = data.markers;
     let preview_generator: PreviewGenerator = state.0.clone().into();
+    let file_path = data.video.file_path.clone();
     for marker in &mut new_markers {
         if marker.marker_preview_image.is_none() {
             let path = preview_generator
-                .generate_preview(&marker.video_id, &marker.file_path, marker.start_time)
+                .generate_preview(&marker.video_id, &file_path, marker.start_time)
                 .await?;
             marker.marker_preview_image = Some(path.to_string());
             state
@@ -411,5 +419,10 @@ pub async fn split_marker(
         }
     }
 
-    Ok(Json(new_markers.into_iter().map(From::from).collect()))
+    Ok(Json(
+        new_markers
+            .into_iter()
+            .map(|m| MarkerDto::from_db(m, &data.video))
+            .collect(),
+    ))
 }

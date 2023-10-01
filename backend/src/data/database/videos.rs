@@ -6,7 +6,9 @@ use itertools::Itertools;
 use sqlx::{QueryBuilder, Row, SqlitePool};
 use tracing::info;
 
-use super::{AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers};
+use super::{
+    AllVideosFilter, CreateVideo, DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers,
+};
 use crate::server::types::{ListVideoDto, PageParameters, SortDirection};
 use crate::Result;
 
@@ -27,73 +29,12 @@ impl VideosDatabase {
         Ok(video)
     }
 
-    pub async fn get_video_by_path(&self, path: &str) -> Result<Option<LocalVideoWithMarkers>> {
-        let records = sqlx::query!(
-            "SELECT *, m.rowid AS rowid FROM videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.file_path = $1",
-            path,
-        )
-        .fetch_all(&self.pool)
-        .await?;
+    pub async fn video_exists_by_path(&self, path: &str) -> Result<bool> {
+        let records = sqlx::query!("SELECT * FROM videos v WHERE v.file_path = $1", path,)
+            .fetch_all(&self.pool)
+            .await?;
 
-        if records.is_empty() {
-            Ok(None)
-        } else {
-            let video = DbVideo {
-                id: records[0].id.clone(),
-                file_path: records[0].file_path.clone(),
-                interactive: records[0].interactive,
-                source: records[0].source.clone().into(),
-                duration: records[0].duration,
-                video_preview_image: records[0].video_preview_image.clone(),
-                stash_scene_id: records[0].stash_scene_id,
-                video_created_on: records[0].video_created_on.clone(),
-                video_tags: records[0].video_tags.clone(),
-                video_title: records[0].video_title.clone(),
-            };
-            let markers = records
-                .into_iter()
-                .filter_map(|r| {
-                    match (
-                        r.video_id,
-                        r.start_time,
-                        r.end_time,
-                        r.title,
-                        r.rowid,
-                        r.file_path,
-                        r.index_within_video,
-                        r.marker_preview_image,
-                        r.interactive,
-                        r.marker_created_on,
-                    ) {
-                        (
-                            Some(video_id),
-                            Some(start_time),
-                            Some(end_time),
-                            Some(title),
-                            rowid,
-                            file_path,
-                            Some(index),
-                            marker_preview_image,
-                            interactive,
-                            Some(marker_created_on),
-                        ) => Some(DbMarker {
-                            rowid,
-                            title,
-                            video_id,
-                            start_time,
-                            end_time,
-                            file_path,
-                            index_within_video: index,
-                            marker_preview_image,
-                            interactive,
-                            marker_created_on,
-                        }),
-                        _ => None,
-                    }
-                })
-                .collect();
-            Ok(Some(LocalVideoWithMarkers { video, markers }))
-        }
+        Ok(!records.is_empty())
     }
 
     pub async fn get_video_with_markers(&self, id: &str) -> Result<Option<LocalVideoWithMarkers>> {
@@ -128,10 +69,8 @@ impl VideosDatabase {
                         r.end_time,
                         r.title,
                         r.rowid,
-                        r.file_path,
                         r.index_within_video,
                         r.marker_preview_image,
-                        r.interactive,
                         r.marker_created_on,
                     ) {
                         (
@@ -140,10 +79,8 @@ impl VideosDatabase {
                             Some(end_time),
                             Some(title),
                             rowid,
-                            file_path,
                             Some(index),
                             marker_preview_image,
-                            interactive,
                             Some(marker_created_on),
                         ) => Some(DbMarker {
                             rowid,
@@ -151,10 +88,8 @@ impl VideosDatabase {
                             video_id,
                             start_time,
                             end_time,
-                            file_path,
                             index_within_video: index,
                             marker_preview_image,
-                            interactive,
                             marker_created_on,
                         }),
                         _ => None,
@@ -315,7 +250,7 @@ impl VideosDatabase {
                                 interactive,
                                 marker_created_on,
                             ) => Some(
-                                DbMarker {
+                                DbMarkerWithVideo {
                                     rowid: Some(rowid),
                                     title,
                                     video_id,
@@ -326,6 +261,7 @@ impl VideosDatabase {
                                     marker_preview_image,
                                     interactive,
                                     marker_created_on,
+                                    video_title: video.video_title.clone(),
                                 }
                                 .into(),
                             ),

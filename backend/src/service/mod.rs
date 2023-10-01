@@ -15,7 +15,7 @@ pub mod fixtures;
 
 use serde::{Deserialize, Serialize};
 
-use crate::data::database::{DbMarker, DbVideo};
+use crate::data::database::{DbMarkerWithVideo, DbVideo};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashMarker;
 use crate::server::types::{MarkerId, VideoId};
@@ -111,7 +111,7 @@ impl From<FindScenesQueryFindScenesScenes> for Video {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MarkerInfo {
     Stash { marker: StashMarker },
-    LocalFile { marker: DbMarker },
+    LocalFile { marker: DbMarkerWithVideo },
 }
 
 impl MarkerInfo {

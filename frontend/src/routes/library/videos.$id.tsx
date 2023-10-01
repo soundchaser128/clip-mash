@@ -20,7 +20,7 @@ import TimestampInput from "../../components/TimestampInput"
 import {createMarker, updateMarker} from "./api"
 import Timeline from "../../components/Timeline"
 import Loader from "../../components/Loader"
-import {Config, MarkerDto, VideoDto, splitMarker} from "../../api"
+import {Config, MarkerDto, VideoDto, deleteMarker, splitMarker} from "../../api"
 import {detectMarkers} from "../../api"
 import {useConfig} from "../../hooks/useConfig"
 
@@ -232,7 +232,7 @@ export default function EditVideoModal() {
       const idx = draft.findIndex((m) => m.id.id === toRemove.id)
       draft.splice(idx, 1)
     })
-    await fetch(`/api/local/video/marker/${toRemove.id}`, {method: "DELETE"})
+    await deleteMarker(toRemove.id)
     setFormMode("hidden")
   }
 

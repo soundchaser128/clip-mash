@@ -1,7 +1,7 @@
 use sqlx::SqlitePool;
 use tracing::info;
 
-use super::DbMarker;
+use super::{DbMarker, DbMarkerWithVideo};
 use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
 use crate::Result;
 
@@ -15,12 +15,15 @@ impl MarkersDatabase {
         Self { pool }
     }
 
-    pub async fn get_marker(&self, id: i64) -> Result<DbMarker> {
+    pub async fn get_marker(&self, id: i64) -> Result<DbMarkerWithVideo> {
         let marker = sqlx::query_as!(
-            DbMarker,
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive, m.marker_created_on
-                FROM markers m INNER JOIN videos v ON m.video_id = v.id
-                WHERE m.rowid = $1",
+            DbMarkerWithVideo,
+            "SELECT 
+                m.rowid, m.title, m.video_id, v.file_path, m.start_time, 
+                m.end_time, m.index_within_video, m.marker_preview_image, 
+                v.interactive, m.marker_created_on, v.video_title
+            FROM markers m INNER JOIN videos v ON m.video_id = v.id
+            WHERE m.rowid = $1",
             id
         )
         .fetch_one(&self.pool)
@@ -28,16 +31,19 @@ impl MarkersDatabase {
         Ok(marker)
     }
 
-    pub async fn get_markers_without_preview_images(&self) -> Result<Vec<DbMarker>> {
+    pub async fn get_markers_without_preview_images(&self) -> Result<Vec<DbMarkerWithVideo>> {
         sqlx::query_as!(
-            DbMarker,
-            "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive, m.marker_created_on
+            DbMarkerWithVideo,
+            "SELECT 
+                m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, 
+                m.index_within_video, m.marker_preview_image, v.interactive, 
+                m.marker_created_on, v.video_title
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.marker_preview_image IS NULL"
         )
-            .fetch_all(&self.pool)
-            .await
-            .map_err(From::from)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(From::from)
     }
 
     pub async fn create_new_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
@@ -62,10 +68,8 @@ impl MarkersDatabase {
             end_time: marker.end,
             title: marker.title,
             video_id: marker.video_id,
-            file_path: "not-needed".to_string(),
             index_within_video: marker.index_within_video,
             marker_preview_image: marker.preview_image_path,
-            interactive: marker.video_interactive,
             marker_created_on: inserted_value.marker_created_on,
         };
 
@@ -92,11 +96,8 @@ impl MarkersDatabase {
             start_time: update.start,
             end_time: update.end,
             title: record.title,
-            file_path: "not-needed".to_string(),
             index_within_video: record.index_within_video,
             marker_preview_image: record.marker_preview_image,
-            // not needed for updating I think
-            interactive: false,
             marker_created_on: record.marker_created_on,
         };
 
@@ -144,11 +145,17 @@ impl MarkersDatabase {
     }
 
     #[cfg(test)]
-    pub async fn get_all_markers(&self) -> Result<Vec<DbMarker>> {
-        let markers = sqlx::query_as!(DbMarker, "
-            SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive, m.marker_created_on
+    pub async fn get_all_markers(&self) -> Result<Vec<DbMarkerWithVideo>> {
+        let markers = sqlx::query_as!(
+            DbMarkerWithVideo,
+            "
+            SELECT 
+                m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, 
+                m.index_within_video, m.marker_preview_image, v.interactive, 
+                m.marker_created_on, v.video_title
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
-            ORDER BY v.file_path ASC")
+            ORDER BY v.file_path ASC"
+        )
         .fetch_all(&self.pool)
         .await?;
         Ok(markers)
@@ -158,7 +165,8 @@ impl MarkersDatabase {
         &self,
         query: Option<&str>,
         params: &PageParameters,
-    ) -> Result<(Vec<DbMarker>, i64)> {
+    ) -> Result<(Vec<DbMarkerWithVideo>, i64)> {
+        info!("fetching markers with query {query:?} and page {params:?}");
         let query = query
             .map(|q| format!("%{q}%"))
             .unwrap_or_else(|| "%".to_string());
@@ -168,13 +176,12 @@ impl MarkersDatabase {
         let limit = params.limit();
         let offset = params.offset();
         let sort = params.sort("marker_created_on", SortDirection::Desc);
-        info!("fetching markers with query: {}", query);
 
         let markers = sqlx::query_as!(
-            DbMarker,
+            DbMarkerWithVideo,
             "SELECT m.video_id, m.rowid, m.start_time, m.end_time, 
                     m.title, v.file_path, m.index_within_video, m.marker_preview_image, 
-                    v.interactive, m.marker_created_on
+                    v.interactive, m.marker_created_on, v.video_title
             FROM markers m
             INNER JOIN videos v ON m.video_id = v.id
             WHERE m.title LIKE $1
@@ -189,6 +196,7 @@ impl MarkersDatabase {
         )
         .fetch_all(&self.pool)
         .await?;
+        info!("found markers {markers:#?}");
 
         Ok((markers, count.into()))
     }

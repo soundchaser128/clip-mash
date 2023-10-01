@@ -100,8 +100,8 @@ pub async fn find_and_persist_markers(
     let markers = detect_markers(timestamps, video.duration);
 
     let mut created_markers = vec![];
+    let preview_generator: PreviewGenerator = state.clone().into();
     for (index, marker) in markers.into_iter().enumerate() {
-        let preview_generator: PreviewGenerator = state.clone().into();
         let preview_image = preview_generator
             .generate_preview(&video.id, &video.file_path, marker.start)
             .await?;
@@ -119,7 +119,7 @@ pub async fn find_and_persist_markers(
             })
             .await?;
         info!("created marker {db_marker:?}");
-        created_markers.push(db_marker.into());
+        created_markers.push(MarkerDto::from_db(db_marker, &video));
     }
     Ok(created_markers)
 }

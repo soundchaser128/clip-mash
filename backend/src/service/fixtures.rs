@@ -13,7 +13,9 @@ use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;
-use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource};
+use crate::data::database::{
+    CreateVideo, Database, DbMarker, DbMarkerWithVideo, DbVideo, VideoSource,
+};
 use crate::server::types::{Beats, CreateMarker};
 use crate::service::{MarkerId, MarkerInfo, VideoId};
 use crate::util::generate_id;
@@ -77,7 +79,7 @@ pub fn markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("go8DbGFE".into()),
             title: "Blowjob".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(1),
                     video_id: "go8DbGFE".into(),
                     start_time: 0.0,
@@ -89,6 +91,7 @@ pub fn markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -101,7 +104,7 @@ pub fn markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("Rtdyb1xW".into()),
             title: "Blowjob".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(2),
                     video_id: "Rtdyb1xW".into(),
                     start_time: 19.178596,
@@ -112,6 +115,7 @@ pub fn markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -124,7 +128,7 @@ pub fn markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("ejS9HLKF".into()),
             title: "Doggy Style".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(3),
                     video_id: "ejS9HLKF".into(),
                     start_time: 0.0,
@@ -135,6 +139,7 @@ pub fn markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -147,7 +152,7 @@ pub fn markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("D2FF-fJW".into()),
             title: "Doggy Style".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(10),
                     video_id: "D2FF-fJW".into(),
                     start_time: 0.0,
@@ -158,6 +163,7 @@ pub fn markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -170,7 +176,7 @@ pub fn markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("fZB8OPxc".into()),
             title: "Blowjob".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(7),
                     video_id: "fZB8OPxc".into(),
                     start_time: 0.0,
@@ -181,6 +187,7 @@ pub fn markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -193,7 +200,7 @@ pub fn markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("EqF5ShQY".into()),
             title: "Cowgirl".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(4),
                     video_id: "EqF5ShQY".into(),
                     start_time: 0.0,
@@ -204,6 +211,7 @@ pub fn markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -216,7 +224,7 @@ pub fn markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("6P3h5aSl".into()),
             title: "Cowgirl".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(9),
                     video_id: "6P3h5aSl".into(),
                     start_time: 0.0,
@@ -227,6 +235,7 @@ pub fn markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -239,7 +248,7 @@ pub fn markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("peso3Tzd".into()),
             title: "Cowgirl".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(5),
                     video_id: "peso3Tzd".into(),
                     start_time: 0.0,
@@ -250,6 +259,7 @@ pub fn markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -262,7 +272,7 @@ pub fn markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("MJxGMsjP".into()),
             title: "Blowjob".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(6),
                     video_id: "MJxGMsjP".into(),
                     start_time: 0.0,
@@ -273,6 +283,7 @@ pub fn markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -285,7 +296,7 @@ pub fn markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("mCg07LPG".into()),
             title: "Reverse Cowgirl".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(8),
                     video_id: "mCg07LPG".into(),
                     start_time: 0.0,
@@ -296,6 +307,7 @@ pub fn markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -313,7 +325,7 @@ pub fn other_markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("2H0r8zLH".into()),
             title: "Handjiob".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(5),
                     video_id: "2H0r8zLH".into(),
                     start_time: 0.0,
@@ -324,6 +336,7 @@ pub fn other_markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -336,7 +349,7 @@ pub fn other_markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("PxTxOTfX".into()),
             title: "Doggy Style".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(2),
                     video_id: "PxTxOTfX".into(),
                     start_time: 0.0,
@@ -347,6 +360,7 @@ pub fn other_markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -359,7 +373,7 @@ pub fn other_markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("R43ZTr0w".into()),
             title: "Sideways".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(6),
                     video_id: "R43ZTr0w".into(),
                     start_time: 0.0,
@@ -370,6 +384,7 @@ pub fn other_markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -382,7 +397,7 @@ pub fn other_markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("R_fDbo2f".into()),
             title: "Mating Press".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(4),
                     video_id: "R_fDbo2f".into(),
                     start_time: 14.43444,
@@ -393,6 +408,7 @@ pub fn other_markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -405,7 +421,7 @@ pub fn other_markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("RrTBwBZG".into()),
             title: "Cowgirl".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(1),
                     video_id: "RrTBwBZG".into(),
                     start_time: 0.0,
@@ -416,6 +432,7 @@ pub fn other_markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -428,7 +445,7 @@ pub fn other_markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("ZZtG7qbI".into()),
             title: "Doggy Style".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(7),
                     video_id: "ZZtG7qbI".into(),
                     start_time: 0.0,
@@ -439,6 +456,7 @@ pub fn other_markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -451,7 +469,7 @@ pub fn other_markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("bJTtKsIe".into()),
             title: "Missionary".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(9),
                     video_id: "bJTtKsIe".into(),
                     start_time: 0.0,
@@ -462,6 +480,7 @@ pub fn other_markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -474,7 +493,7 @@ pub fn other_markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("rDxeypDY".into()),
             title: "Cowgirl".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(3),
                     video_id: "rDxeypDY".into(),
                     start_time: 0.0,
@@ -485,6 +504,7 @@ pub fn other_markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -497,7 +517,7 @@ pub fn other_markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("wkjHYedN".into()),
             title: "Sex".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(10),
                     video_id: "wkjHYedN".into(),
                     start_time: 0.0,
@@ -508,6 +528,7 @@ pub fn other_markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -520,7 +541,7 @@ pub fn other_markers() -> Vec<Marker> {
             video_id: VideoId::LocalFile("yObK_Z7p".into()),
             title: "Sideways".into(),
             info: MarkerInfo::LocalFile {
-                marker: DbMarker {
+                marker: DbMarkerWithVideo {
                     rowid: Some(8),
                     video_id: "yObK_Z7p".into(),
                     start_time: 0.0,
@@ -531,6 +552,7 @@ pub fn other_markers() -> Vec<Marker> {
                     marker_preview_image: None,
                     interactive: false,
                     marker_created_on: Default::default(),
+                    video_title: None,
                 },
             },
         },
@@ -553,7 +575,7 @@ pub fn create_marker(title: &str, start_time: f64, end_time: f64, index: usize) 
         video_id: VideoId::LocalFile(generate_id()),
         title: title.to_string(),
         info: MarkerInfo::LocalFile {
-            marker: DbMarker {
+            marker: DbMarkerWithVideo {
                 start_time,
                 end_time,
                 rowid: None,
@@ -564,6 +586,7 @@ pub fn create_marker(title: &str, start_time: f64, end_time: f64, index: usize) 
                 marker_preview_image: None,
                 interactive: false,
                 marker_created_on: Default::default(),
+                video_title: None,
             },
         },
     }
@@ -585,7 +608,7 @@ pub fn create_marker_video_id(
         video_id: VideoId::LocalFile(video_id.to_string()),
         title: Faker.fake(),
         info: MarkerInfo::LocalFile {
-            marker: DbMarker {
+            marker: DbMarkerWithVideo {
                 end_time,
                 start_time,
                 rowid: None,
@@ -596,6 +619,7 @@ pub fn create_marker_video_id(
                 marker_preview_image: None,
                 interactive: false,
                 marker_created_on: Default::default(),
+                video_title: None,
             },
         },
     }
@@ -618,7 +642,7 @@ pub fn create_marker_with_loops(
         video_id: VideoId::LocalFile(video_id.to_string()),
         title: Faker.fake(),
         info: MarkerInfo::LocalFile {
-            marker: DbMarker {
+            marker: DbMarkerWithVideo {
                 end_time,
                 start_time,
                 rowid: None,
@@ -629,6 +653,7 @@ pub fn create_marker_with_loops(
                 marker_preview_image: None,
                 interactive: false,
                 marker_created_on: Default::default(),
+                video_title: None,
             },
         },
     }

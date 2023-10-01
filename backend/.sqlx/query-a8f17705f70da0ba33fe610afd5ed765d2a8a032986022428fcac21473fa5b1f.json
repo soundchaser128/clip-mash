@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive, m.marker_created_on\n            FROM markers m INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.marker_preview_image IS NULL",
+  "query": "SELECT \n                m.rowid, m.title, m.video_id, v.file_path, m.start_time, \n                m.end_time, m.index_within_video, m.marker_preview_image, \n                v.interactive, m.marker_created_on, v.video_title\n            FROM markers m INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.rowid = $1",
   "describe": {
     "columns": [
       {
@@ -52,10 +52,15 @@
         "name": "marker_created_on",
         "ordinal": 9,
         "type_info": "Text"
+      },
+      {
+        "name": "video_title",
+        "ordinal": 10,
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
@@ -67,8 +72,9 @@
       false,
       true,
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "e77c547727069cdffc4033f7966fd4e4ff374464b4a0875cd15864c31e76ac9a"
+  "hash": "a8f17705f70da0ba33fe610afd5ed765d2a8a032986022428fcac21473fa5b1f"
 }

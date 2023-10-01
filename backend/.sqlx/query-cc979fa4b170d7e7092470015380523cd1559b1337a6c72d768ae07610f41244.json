@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT *, m.rowid AS rowid FROM videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.file_path = $1",
+  "query": "SELECT * FROM videos v WHERE v.file_path = $1",
   "describe": {
     "columns": [
       {
@@ -52,46 +52,6 @@
         "name": "video_tags",
         "ordinal": 9,
         "type_info": "Text"
-      },
-      {
-        "name": "video_id",
-        "ordinal": 10,
-        "type_info": "Text"
-      },
-      {
-        "name": "start_time",
-        "ordinal": 11,
-        "type_info": "Float"
-      },
-      {
-        "name": "end_time",
-        "ordinal": 12,
-        "type_info": "Float"
-      },
-      {
-        "name": "title",
-        "ordinal": 13,
-        "type_info": "Text"
-      },
-      {
-        "name": "index_within_video",
-        "ordinal": 14,
-        "type_info": "Int64"
-      },
-      {
-        "name": "marker_preview_image",
-        "ordinal": 15,
-        "type_info": "Text"
-      },
-      {
-        "name": "marker_created_on",
-        "ordinal": 16,
-        "type_info": "Text"
-      },
-      {
-        "name": "rowid",
-        "ordinal": 17,
-        "type_info": "Int64"
       }
     ],
     "parameters": {
@@ -107,16 +67,8 @@
       true,
       false,
       true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
       true
     ]
   },
-  "hash": "f31b1057c0b9d1f3ae312c84a2820db958b0880941239489b592f9251b068056"
+  "hash": "cc979fa4b170d7e7092470015380523cd1559b1337a6c72d768ae07610f41244"
 }

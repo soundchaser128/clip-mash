@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) FROM videos WHERE file_path LIKE $1 OR video_title LIKE $1 OR video_tags LIKE $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "COUNT(*)",
+        "ordinal": 0,
+        "type_info": "Int"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "837b39b85f7ce1c7960f4b47cb84090ebf3392321e6c39859e3ac5fc6c1883b3"
+}

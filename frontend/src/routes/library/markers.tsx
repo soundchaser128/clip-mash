@@ -13,7 +13,6 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import {MarkerDto, MarkerDtoPage, SelectedMarker} from "../../api"
-import useFuse from "../../hooks/useFuse"
 import {updateForm} from "../actions"
 import {formatSeconds, sumDurations} from "../../helpers"
 import {FormStage} from "../../types/form-state"

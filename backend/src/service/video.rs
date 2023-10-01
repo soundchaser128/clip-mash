@@ -247,8 +247,8 @@ impl VideoService {
         }
     }
 
-    pub async fn cleanup_videos(&self) -> Result<()> {
-        todo!()
+    pub async fn cleanup_videos(&self) -> Result<u32> {
+        self.database.videos.cleanup_videos().await
     }
 }
 

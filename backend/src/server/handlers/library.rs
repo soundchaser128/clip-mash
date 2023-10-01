@@ -6,10 +6,10 @@ use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
 use reqwest::StatusCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tower::ServiceExt;
 use tracing::{info, warn};
-use utoipa::IntoParams;
+use utoipa::{IntoParams, ToSchema};
 
 use crate::data::stash_api::StashApi;
 use crate::server::dtos::Page;
@@ -117,13 +117,26 @@ pub async fn add_new_videos(
     Ok(Json(new_videos))
 }
 
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct VideoCleanupResponse {
+    pub deleted_count: u32,
+}
+
 #[axum::debug_handler]
+#[utoipa::path(
+    post,
+    path = "/api/library/video/cleanup",
+    responses(
+        (status = 200, description = "Delete unused videos", body = VideoCleanupResponse),
+    )
+)]
 pub async fn cleanup_videos(
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     let video_service = VideoService::new(state).await?;
-    video_service.cleanup_videos().await?;
-    Ok(())
+    let deleted_count = video_service.cleanup_videos().await?;
+    Ok(Json(VideoCleanupResponse { deleted_count }))
 }
 
 #[utoipa::path(

@@ -142,6 +142,10 @@ export const VideoCodec = {
   h265: "h265",
 } as const
 
+export interface VideoCleanupResponse {
+  deletedCount: number
+}
+
 export interface UpdateMarker {
   end: number
   rowid: number
@@ -162,6 +166,8 @@ export type StrokeTypeOneOfThree = {
   accelerate: StrokeTypeOneOfThreeAccelerate
 }
 
+export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
+
 /**
  * Creates a stroke every `n` beats
  */
@@ -173,8 +179,6 @@ export type StrokeTypeOneOf = {
   /** Creates a stroke every `n` beats */
   everyNth: StrokeTypeOneOfEveryNth
 }
-
-export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
 
 export interface StashVideoDto {
   duration: number
@@ -230,6 +234,11 @@ export interface SelectedMarker {
   videoId: VideoId
 }
 
+export interface RoundRobinClipOptions {
+  clipLengths: PmvClipOptions
+  length: number
+}
+
 export interface RandomizedClipOptions {
   baseDuration: number
   divisors: number[]
@@ -249,6 +258,8 @@ export interface Progress {
   videoId: string
 }
 
+export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
+
 export type PmvClipOptionsOneOfFourAllOfType =
   (typeof PmvClipOptionsOneOfFourAllOfType)[keyof typeof PmvClipOptionsOneOfFourAllOfType]
 
@@ -263,13 +274,6 @@ export type PmvClipOptionsOneOfFourAllOf = {
 
 export type PmvClipOptionsOneOfFour = SongClipOptions &
   PmvClipOptionsOneOfFourAllOf
-
-export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
-
-export interface RoundRobinClipOptions {
-  clipLengths: PmvClipOptions
-  length: number
-}
 
 export type PmvClipOptionsOneOfAllOfType =
   (typeof PmvClipOptionsOneOfAllOfType)[keyof typeof PmvClipOptionsOneOfAllOfType]
@@ -290,8 +294,6 @@ export interface NewId {
   id: string
 }
 
-export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
-
 export type MeasureCountOneOfThreeType =
   (typeof MeasureCountOneOfThreeType)[keyof typeof MeasureCountOneOfThreeType]
 
@@ -305,6 +307,8 @@ export type MeasureCountOneOfThree = {
   min: number
   type: MeasureCountOneOfThreeType
 }
+
+export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
 
 export type MeasureCountOneOfType =
   (typeof MeasureCountOneOfType)[keyof typeof MeasureCountOneOfType]
@@ -651,6 +655,13 @@ export const addNewVideos = (addVideosRequest: AddVideosRequest) => {
   })
 }
 
+export const cleanupVideos = () => {
+  return customInstance<VideoCleanupResponse>({
+    url: `/api/library/video/cleanup`,
+    method: "post",
+  })
+}
+
 export const listStashVideos = (params?: ListStashVideosParams) => {
   return customInstance<StashVideoDtoPage>({
     url: `/api/library/video/stash`,
@@ -776,6 +787,9 @@ export type ListVideosResult = NonNullable<
 >
 export type AddNewVideosResult = NonNullable<
   Awaited<ReturnType<typeof addNewVideos>>
+>
+export type CleanupVideosResult = NonNullable<
+  Awaited<ReturnType<typeof cleanupVideos>>
 >
 export type ListStashVideosResult = NonNullable<
   Awaited<ReturnType<typeof listStashVideos>>

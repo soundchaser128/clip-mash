@@ -1,6 +1,7 @@
 use utoipa::OpenApi;
 
 use super::dtos::{ListVideoDtoPage, MarkerDtoPage, StashVideoDtoPage};
+use super::handlers::library::VideoCleanupResponse;
 use super::handlers::project::{CreateFunscriptBody, ProjectCreateResponse};
 use super::types::*;
 use crate::data::database::VideoSource;
@@ -21,6 +22,7 @@ use crate::service::video::AddVideosRequest;
         library::split_marker,
         library::update_marker,
         library::list_stash_videos,
+        library::cleanup_videos,
         progress::get_progress_info,
         project::create_video,
         project::download_video,
@@ -78,7 +80,8 @@ use crate::service::video::AddVideosRequest;
             SortDirection,
             SongDto,
             StashVideoDto,
-            ProjectCreateResponse
+            ProjectCreateResponse,
+            VideoCleanupResponse,
         )
     ),
     tags(

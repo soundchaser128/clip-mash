@@ -1,4 +1,4 @@
-import {format, formatDuration, getTime, parse} from "date-fns"
+import {format, formatDuration} from "date-fns"
 import {SelectedMarker} from "./api"
 import {FormState} from "./types/form-state"
 import {scaleSequential} from "d3-scale"
@@ -70,6 +70,7 @@ export function formatSeconds(
     )
   } else {
     if (date.getUTCHours() > 0) {
+      date.setUTCHours(date.getUTCHours() - 1)
       return format(date, "HH:mm:ss")
     } else {
       return format(date, "mm:ss")
@@ -79,9 +80,15 @@ export function formatSeconds(
 
 export function parseTimestamp(input: string | number): number {
   if (typeof input === "string") {
-    const date = parse(input, "mm:ss", 0)
-    const millis = getTime(date)
-    return millis / 1000.0
+    let seconds: number
+    if (input.match(/^\d+:\d+:\d+$/)) {
+      const [hh, mm, ss] = input.split(":").map((x) => parseInt(x, 10))
+      seconds = ss + mm * 60 + hh * 60 * 60
+    } else {
+      const [mm, ss] = input.split(":").map((x) => parseInt(x, 10))
+      seconds = ss + mm * 60
+    }
+    return seconds
   } else {
     return input
   }

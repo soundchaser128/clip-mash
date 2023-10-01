@@ -1,6 +1,13 @@
 import {useStateMachine} from "little-state-machine"
 import {VideoWithMarkers, Page} from "../../types/types"
-import {HiChevronRight, HiFolder, HiPlus, HiTag, HiXMark} from "react-icons/hi2"
+import {
+  HiChevronRight,
+  HiFolder,
+  HiPlus,
+  HiTag,
+  HiTrash,
+  HiXMark,
+} from "react-icons/hi2"
 import {useEffect, useState} from "react"
 import {useImmer} from "use-immer"
 import {updateForm} from "../actions"
@@ -11,9 +18,10 @@ import {
   useLoaderData,
   useNavigate,
   useNavigation,
+  useRevalidator,
   useSearchParams,
 } from "react-router-dom"
-import {ListVideoDto} from "../../api"
+import {ListVideoDto, cleanupVideos} from "../../api"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
 import {listVideos} from "../../api"
@@ -43,6 +51,7 @@ export default function ListVideos() {
   const [filter, setFilter] = useState(params.get("query") ?? "")
   const noVideos = videos.length === 0 && !filter && !isLoading
   const noVideosForFilter = videos.length === 0 && filter && !isLoading
+  const revalidator = useRevalidator()
 
   const setQuery = (query: string) => {
     setParams({query})
@@ -75,6 +84,18 @@ export default function ListVideos() {
     navigate("/markers")
   }
 
+  const onCleanupVideos = async () => {
+    if (
+      confirm(
+        "This will delete all videos from the database that can no longer be found on disk. Are you sure?",
+      )
+    ) {
+      const {deletedCount} = await cleanupVideos()
+      alert(`${deletedCount} videos deleted.`)
+      revalidator.revalidate()
+    }
+  }
+
   return (
     <>
       <Outlet />
@@ -84,6 +105,12 @@ export default function ListVideos() {
             <HiPlus className="mr-2" />
             Add videos
           </Link>
+          {videos.length > 0 && (
+            <button onClick={onCleanupVideos} className="btn btn-error">
+              <HiTrash className="mr-2" />
+              Clean up
+            </button>
+          )}
         </div>
         <span className="text-center">
           Found <strong>{initialVideos.totalItems}</strong> videos.

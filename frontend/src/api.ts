@@ -23,22 +23,6 @@ export type DetectMarkersParams = {
   threshold?: number | null
 }
 
-export type ListStashVideosParams = {
-  query?: string | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
-
-export type ListVideosParams = {
-  query?: string | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
-
 export type SplitMarkerParams = {
   /**
    * The time to split the marker at
@@ -47,14 +31,6 @@ export type SplitMarkerParams = {
 }
 
 export type DeleteMarker200 = unknown | null
-
-export type ListMarkersParams = {
-  query?: string | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
 
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
 
@@ -93,38 +69,10 @@ export const VideoQuality = {
   lossless: "lossless",
 } as const
 
-export type VideoIdOneOfThreeType =
-  (typeof VideoIdOneOfThreeType)[keyof typeof VideoIdOneOfThreeType]
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const VideoIdOneOfThreeType = {
-  stash: "stash",
-} as const
-
-export type VideoIdOneOfThree = {
-  id: string
-  type: VideoIdOneOfThreeType
-}
-
-export type VideoId = VideoIdOneOf | VideoIdOneOfThree
-
-export type VideoIdOneOfType =
-  (typeof VideoIdOneOfType)[keyof typeof VideoIdOneOfType]
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const VideoIdOneOfType = {
-  localFile: "localFile",
-} as const
-
-export type VideoIdOneOf = {
-  id: string
-  type: VideoIdOneOfType
-}
-
 export interface VideoDto {
   duration: number
   fileName: string
-  id: VideoId
+  id: string
   interactive: boolean
   performers: string[]
   source: VideoSource
@@ -184,7 +132,7 @@ export interface StashVideoDto {
   duration: number
   existsInDatabase: boolean
   fileName: string
-  id: VideoId
+  id: string
   interactive: boolean
   performers: string[]
   source: VideoSource
@@ -208,6 +156,30 @@ export const SortDirection = {
   desc: "desc",
 } as const
 
+export type ListStashVideosParams = {
+  query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
+export type ListVideosParams = {
+  query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
+export type ListMarkersParams = {
+  query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
 export interface SongDto {
   beats: number[]
   duration: number
@@ -225,13 +197,14 @@ export interface SongClipOptions {
 export type SelectedMarkerSelectedRangeItem = number & number
 
 export interface SelectedMarker {
-  id: MarkerId
+  id: number
   indexWithinVideo: number
   loops: number
   selected?: boolean | null
   selectedRange: SelectedMarkerSelectedRangeItem[]
+  source: VideoSource
   title: string
-  videoId: VideoId
+  videoId: string
 }
 
 export interface RoundRobinClipOptions {
@@ -323,48 +296,21 @@ export type MeasureCountOneOf = {
   type: MeasureCountOneOfType
 }
 
-export type MarkerIdOneOfThreeType =
-  (typeof MarkerIdOneOfThreeType)[keyof typeof MarkerIdOneOfThreeType]
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const MarkerIdOneOfThreeType = {
-  stash: "stash",
-} as const
-
-export type MarkerIdOneOfThree = {
-  id: number
-  type: MarkerIdOneOfThreeType
-}
-
-export type MarkerId = MarkerIdOneOf | MarkerIdOneOfThree
-
-export type MarkerIdOneOfType =
-  (typeof MarkerIdOneOfType)[keyof typeof MarkerIdOneOfType]
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const MarkerIdOneOfType = {
-  localFile: "localFile",
-} as const
-
-export type MarkerIdOneOf = {
-  id: number
-  type: MarkerIdOneOfType
-}
-
 export interface MarkerDto {
   end: number
   fileName?: string | null
-  id: MarkerId
+  id: number
   indexWithinVideo: number
   performers: string[]
   primaryTag: string
   sceneInteractive: boolean
   sceneTitle?: string | null
   screenshotUrl?: string | null
+  source: VideoSource
   start: number
   streamUrl: string
   tags: string[]
-  videoId: VideoId
+  videoId: string
 }
 
 export interface MarkerDtoPage {
@@ -540,11 +486,11 @@ export type ClipRangeItem = number & number
 export interface Clip {
   indexWithinMarker: number
   indexWithinVideo: number
-  markerId: MarkerId
+  markerId: number
   /** Start and endpoint inside the video in seconds. */
   range: ClipRangeItem[]
   source: VideoSource
-  videoId: VideoId
+  videoId: string
 }
 
 export interface Beats {
@@ -724,6 +670,7 @@ export const getBeatFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
+    params: createBeatFunscriptBody,
   })
 }
 
@@ -735,6 +682,7 @@ export const getCombinedFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
+    params: createFunscriptBody,
   })
 }
 

@@ -74,7 +74,7 @@ impl ClipPicker for RoundRobinClipPicker {
                         index_within_video: marker.index_within_video,
                         marker_id: marker.id,
                         range: (start, end),
-                        source: marker.video_id.source(),
+                        source: marker.source,
                         video_id: marker.video_id.clone(),
                     });
                 }

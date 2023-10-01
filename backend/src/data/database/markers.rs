@@ -21,7 +21,7 @@ impl MarkersDatabase {
             "SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, 
                 m.end_time, m.index_within_video, m.marker_preview_image, 
-                v.interactive, m.marker_created_on, v.video_title
+                v.interactive, m.marker_created_on, v.video_title, v.source
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.rowid = $1",
             id
@@ -37,7 +37,7 @@ impl MarkersDatabase {
             "SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, 
                 m.index_within_video, m.marker_preview_image, v.interactive, 
-                m.marker_created_on, v.video_title
+                m.marker_created_on, v.video_title, v.source
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.marker_preview_image IS NULL"
         )
@@ -152,7 +152,7 @@ impl MarkersDatabase {
             SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, 
                 m.index_within_video, m.marker_preview_image, v.interactive, 
-                m.marker_created_on, v.video_title
+                m.marker_created_on, v.video_title, v.source
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             ORDER BY v.file_path ASC"
         )
@@ -181,7 +181,7 @@ impl MarkersDatabase {
             DbMarkerWithVideo,
             "SELECT m.video_id, m.rowid, m.start_time, m.end_time, 
                     m.title, v.file_path, m.index_within_video, m.marker_preview_image, 
-                    v.interactive, m.marker_created_on, v.video_title
+                    v.interactive, m.marker_created_on, v.video_title, v.source
             FROM markers m
             INNER JOIN videos v ON m.video_id = v.id
             WHERE m.title LIKE $1

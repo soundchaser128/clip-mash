@@ -23,48 +23,21 @@ impl DataService {
         Self { db, stash_api: api }
     }
 
-    pub async fn fetch_marker_details(
-        &self,
-        id: &MarkerId,
-        video_id: &VideoId,
-    ) -> Result<MarkerInfo> {
-        match id {
-            MarkerId::LocalFile(id) => {
-                let marker = self.db.markers.get_marker(*id).await?;
-                Ok(MarkerInfo::LocalFile { marker })
-            }
-            MarkerId::Stash(marker_id) => {
-                let marker = self
-                    .stash_api
-                    .get_marker(video_id.as_stash_id(), *marker_id)
-                    .await?;
-                Ok(MarkerInfo::Stash { marker })
-            }
+    pub async fn fetch_marker_details(&self, id: &i64, _video_id: &String) -> Result<MarkerInfo> {
+        let marker = self.db.markers.get_marker(*id).await?;
+        Ok(MarkerInfo::LocalFile { marker })
+    }
+
+    pub async fn fetch_video(&self, id: &String) -> Result<Video> {
+        let video = self.db.videos.get_video(id).await?;
+        if let Some(video) = video {
+            Ok(video.into())
+        } else {
+            bail!("no video found for id {id}")
         }
     }
 
-    pub async fn fetch_video(&self, id: &VideoId) -> Result<Video> {
-        match id {
-            VideoId::LocalFile(id) => {
-                let video = self.db.videos.get_video(id).await?;
-                if let Some(video) = video {
-                    Ok(video.into())
-                } else {
-                    bail!("no video found for id {id}")
-                }
-            }
-            VideoId::Stash(id) => {
-                let id = id.parse()?;
-                let mut scenes = self.stash_api.find_scenes_by_ids(vec![id]).await?;
-                if scenes.len() != 1 {
-                    bail!("found more or fewer than one result for id {id}")
-                }
-                Ok(scenes.remove(0).into())
-            }
-        }
-    }
-
-    pub async fn fetch_videos(&self, ids: &[VideoId]) -> Result<Vec<Video>> {
+    pub async fn fetch_videos(&self, ids: &[String]) -> Result<Vec<Video>> {
         let mut videos = vec![];
         for id in ids {
             videos.push(self.fetch_video(id).await?);
@@ -108,6 +81,7 @@ impl DataService {
                 index_within_video: selected_marker.index_within_video,
                 title,
                 loops: selected_marker.loops,
+                source: selected_marker.source,
             })
         }
 

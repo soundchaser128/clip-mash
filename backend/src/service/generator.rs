@@ -12,9 +12,7 @@ use super::Marker;
 use crate::data::database::{Database, DbSong};
 use crate::data::stash_api::StashMarker;
 use crate::helpers::estimator::Estimator;
-use crate::server::types::{
-    Clip, EncodingEffort, VideoCodec, VideoId, VideoQuality, VideoResolution,
-};
+use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality, VideoResolution};
 use crate::service::MarkerInfo;
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
 use crate::Result;
@@ -64,7 +62,7 @@ pub fn find_stream_url(marker: &Marker) -> &str {
 }
 
 fn get_clip_file_name(
-    video_id: &VideoId,
+    video_id: &String,
     start: f64,
     end: f64,
     codec: VideoCodec,

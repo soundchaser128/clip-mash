@@ -22,7 +22,7 @@ function getPreview(marker: MarkerDto) {
   if (marker.screenshotUrl?.includes("stash")) {
     return marker.screenshotUrl
   } else {
-    return `/api/library/marker/${marker.id.id}/preview`
+    return `/api/library/marker/${marker.id}/preview`
   }
 }
 
@@ -33,9 +33,9 @@ const SelectMarkers: React.FC = () => {
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
       const entries =
-        state.data.selectedMarkers?.map((m) => [m.id.id, m]) ||
+        state.data.selectedMarkers?.map((m) => [m.id, m]) ||
         initialMarkers.content.map((m) => [
-          m.id.id,
+          m.id,
           {
             id: m.id,
             indexWithinVideo: m.indexWithinVideo,
@@ -44,6 +44,8 @@ const SelectMarkers: React.FC = () => {
             selectedRange: [m.start, m.end],
             title: m.primaryTag,
             loops: 1,
+            // TODO
+            source: m.source,
           } satisfies SelectedMarker,
         ])
       return Object.fromEntries(entries)
@@ -104,7 +106,7 @@ const SelectMarkers: React.FC = () => {
   const onNextStage = () => {
     const selectedMarkers = Object.values(selection)
     const hasInteractiveScenes = initialMarkers.content
-      .filter((m) => !!selection[m.id.id])
+      .filter((m) => !!selection[m.id])
       .some((m) => m.sceneInteractive)
 
     actions.updateForm({
@@ -120,7 +122,7 @@ const SelectMarkers: React.FC = () => {
     setSelection((draft) => {
       for (const selectedMarker of Object.values(draft)) {
         const originalMarker = initialMarkers.content.find(
-          (m) => m.id.id === selectedMarker.id.id,
+          (m) => m.id === selectedMarker.id,
         )!
         const start = selectedMarker.selectedRange[0]
         const maxLen =
@@ -232,24 +234,24 @@ const SelectMarkers: React.FC = () => {
       )}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
         {markers.map((marker) => {
-          const selectedMarker = selection[marker.id.id]
+          const selectedMarker = selection[marker.id]
           return (
             <article
-              key={marker.id.id}
+              key={marker.id}
               className={clsx(
                 "card card-compact bg-base-200 shadow-xl",
                 !selectedMarker.selected && "opacity-50",
               )}
             >
               <figure>
-                {videoPreview === marker.id.id && (
+                {videoPreview === marker.id && (
                   <video muted autoPlay src={marker.streamUrl} />
                 )}
-                {videoPreview !== marker.id.id && (
+                {videoPreview !== marker.id && (
                   <img
                     src={getPreview(marker)}
                     className="aspect-[16/9] object-cover object-top w-full cursor-pointer"
-                    onClick={() => onCheckboxToggle(marker.id.id)}
+                    onClick={() => onCheckboxToggle(marker.id)}
                   />
                 )}
               </figure>
@@ -282,8 +284,8 @@ const SelectMarkers: React.FC = () => {
                       }
                       onChange={(e) =>
                         setSelection((draft) => {
-                          const start = draft[marker.id.id].selectedRange[0]
-                          draft[marker.id.id].selectedRange[1] =
+                          const start = draft[marker.id].selectedRange[0]
+                          draft[marker.id].selectedRange[1] =
                             start + e.target.valueAsNumber
                         })
                       }
@@ -304,7 +306,7 @@ const SelectMarkers: React.FC = () => {
                           className="toggle toggle-sm toggle-primary"
                           checked={!!selectedMarker.selected}
                           onChange={(e) =>
-                            onCheckboxChange(marker.id.id, e.target.checked)
+                            onCheckboxChange(marker.id, e.target.checked)
                           }
                         />
                       </label>
@@ -314,9 +316,9 @@ const SelectMarkers: React.FC = () => {
                         <span className="label-text">Video preview</span>
                         <input
                           onChange={(e) =>
-                            onVideoPreviewChange(marker.id.id, e.target.checked)
+                            onVideoPreviewChange(marker.id, e.target.checked)
                           }
-                          checked={videoPreview === marker.id.id}
+                          checked={videoPreview === marker.id}
                           disabled={!selectedMarker.selected}
                           type="checkbox"
                           className="toggle toggle-sm"
@@ -334,7 +336,7 @@ const SelectMarkers: React.FC = () => {
                         value={selectedMarker.loops || 1}
                         disabled={!selectedMarker.selected}
                         onChange={(e) =>
-                          onSetLoops(marker.id.id, e.target.valueAsNumber)
+                          onSetLoops(marker.id, e.target.valueAsNumber)
                         }
                       />
                     </div>

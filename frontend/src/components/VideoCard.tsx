@@ -23,7 +23,7 @@ function getPreview(video: VideoDto, config?: Config): string {
       config.apiKey
     }`
   } else {
-    return `/api/library/video/${video.id.id}/preview`
+    return `/api/library/video/${video.id}/preview`
   }
 }
 

@@ -45,7 +45,7 @@ impl ClipPicker for EqualLengthClipPicker {
                         marker.video_id, marker.title
                     );
                     clips.push(Clip {
-                        source: marker.video_id.source(),
+                        source: marker.source,
                         video_id: marker.video_id.clone(),
                         marker_id: marker.id,
                         range: (start, end),

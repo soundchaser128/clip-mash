@@ -176,7 +176,7 @@ impl VideoService {
             .into_iter()
             .map(|scene| CreateVideo {
                 id: generate_id(),
-                file_path: self.stash_api.get_stream_url(&scene.id),
+                file_path: self.stash_api.get_stream_url(scene.id.parse().unwrap()),
                 interactive: scene.interactive,
                 source: VideoSource::Stash,
                 duration: scene.files[0].duration,

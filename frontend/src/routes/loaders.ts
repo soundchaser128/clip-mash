@@ -101,7 +101,7 @@ export const clipsLoader: LoaderFunction = async () => {
 
   const videos: Record<string, VideoDto> = {}
   data.videos.forEach((s) => {
-    videos[s.id.id] = s
+    videos[s.id] = s
   })
 
   return {

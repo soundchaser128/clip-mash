@@ -13,7 +13,7 @@ use crate::util::{add_api_key, expect_file_name};
 impl From<StashMarker> for MarkerDto {
     fn from(value: StashMarker) -> Self {
         MarkerDto {
-            id: MarkerId::Stash(value.id.parse().unwrap()),
+            id: value.id.parse().unwrap(),
             stream_url: value.stream_url,
             primary_tag: value.primary_tag,
             start: value.start,
@@ -25,7 +25,8 @@ impl From<StashMarker> for MarkerDto {
             tags: value.tags,
             screenshot_url: Some(value.screenshot_url),
             index_within_video: value.index_within_video,
-            video_id: VideoId::Stash(value.scene_id),
+            video_id: value.scene_id,
+            source: VideoSource::Stash,
         }
     }
 }
@@ -33,7 +34,7 @@ impl From<StashMarker> for MarkerDto {
 impl From<DbMarkerWithVideo> for MarkerDto {
     fn from(value: DbMarkerWithVideo) -> Self {
         MarkerDto {
-            id: MarkerId::LocalFile(value.rowid.expect("marker must have a rowid")),
+            id: value.rowid.expect("marker must have a rowid"),
             start: value.start_time,
             end: value.end_time,
             file_name: Utf8Path::new(&value.file_path)
@@ -50,7 +51,8 @@ impl From<DbMarkerWithVideo> for MarkerDto {
                 value.rowid.unwrap()
             )),
             index_within_video: value.index_within_video as usize,
-            video_id: VideoId::LocalFile(value.video_id),
+            video_id: value.video_id,
+            source: value.source,
         }
     }
 }
@@ -60,7 +62,7 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
         let file = value.files.get(0).expect("must have at least one file");
 
         VideoDto {
-            id: VideoId::Stash(value.id.clone()),
+            id: value.id.clone(),
             stash_scene_id: Some(value.id.parse().expect("invalid scene id")),
             title: value
                 .title
@@ -89,7 +91,7 @@ impl From<DbVideo> for VideoDto {
             .map(|s| s.split(TAG_SEPARATOR).map(From::from).collect());
 
         VideoDto {
-            id: VideoId::LocalFile(value.id),
+            id: value.id,
             stash_scene_id: value.stash_scene_id,
             title,
             performers: vec![],

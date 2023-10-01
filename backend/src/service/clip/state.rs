@@ -7,7 +7,6 @@ use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
 use tracing::{debug, info};
 
-use crate::server::types::MarkerId;
 use crate::service::Marker;
 
 #[derive(Debug)]
@@ -43,10 +42,10 @@ impl MarkerState {
     pub fn new(data: Vec<Marker>, mut durations: Vec<f64>, length: f64) -> Self {
         durations.reverse();
         let mut marker_data = data.clone();
-        marker_data.sort_by_key(|m| m.id.inner());
+        marker_data.sort_by_key(|m| m.id);
         let marker_map: HashMap<i64, Vec<MarkerStart>> = marker_data
             .into_iter()
-            .group_by(|m| m.id.inner())
+            .group_by(|m| m.id)
             .into_iter()
             .map(|(id, group)| {
                 (
@@ -72,24 +71,18 @@ impl MarkerState {
         }
     }
 
-    pub fn get(&self, id: &MarkerId) -> Option<&MarkerStart> {
-        let entries = self.data.get(&id.inner())?;
+    pub fn get(&self, id: &i64) -> Option<&MarkerStart> {
+        let entries = self.data.get(&id)?;
         entries.last()
     }
 
-    pub fn update(
-        &mut self,
-        id: &MarkerId,
-        start_time: f64,
-        duration: f64,
-        remaining_duration: f64,
-    ) {
+    pub fn update(&mut self, id: &i64, start_time: f64, duration: f64, remaining_duration: f64) {
         self.durations.pop();
         if remaining_duration > 0.0 {
             self.durations.push(remaining_duration);
         }
         self.total_duration += duration;
-        let entry = self.data.entry(id.inner()).and_modify(|e| {
+        let entry = self.data.entry(*id).and_modify(|e| {
             if let Some(e) = e.last_mut() {
                 e.start_time = start_time;
                 e.index += 1;

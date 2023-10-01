@@ -237,6 +237,7 @@ impl VideosDatabase {
                             r.marker_preview_image,
                             r.interactive,
                             r.marker_created_on,
+                            r.source,
                         ) {
                             (
                                 video_id,
@@ -249,6 +250,7 @@ impl VideosDatabase {
                                 marker_preview_image,
                                 interactive,
                                 marker_created_on,
+                                source,
                             ) => Some(
                                 DbMarkerWithVideo {
                                     rowid: Some(rowid),
@@ -262,6 +264,7 @@ impl VideosDatabase {
                                     interactive,
                                     marker_created_on,
                                     video_title: video.video_title.clone(),
+                                    source: source.parse().unwrap(),
                                 }
                                 .into(),
                             ),

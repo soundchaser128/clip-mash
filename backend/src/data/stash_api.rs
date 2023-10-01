@@ -281,7 +281,7 @@ impl StashApi {
         add_api_key(&url, &self.api_key)
     }
 
-    pub fn get_stream_url(&self, id: &str) -> String {
+    pub fn get_stream_url(&self, id: i64) -> String {
         let url = format!("{}/scene/{}/stream", self.api_url, id);
         add_api_key(&url, &self.api_key)
     }

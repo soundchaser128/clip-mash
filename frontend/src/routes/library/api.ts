@@ -28,7 +28,7 @@ export async function createMarker(
     start,
     end,
     title: marker.title.trim(),
-    videoId: videoDto.id.id,
+    videoId: videoDto.id,
     indexWithinVideo: index,
     previewImagePath: null,
     videoInteractive: videoDto.interactive,

@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use color_eyre::eyre::bail;
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::{FromRow, SqlitePool};
@@ -27,6 +28,20 @@ pub enum VideoSource {
     Stash,
 }
 
+impl FromStr for VideoSource {
+    type Err = color_eyre::Report;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            "folder" => Ok(Self::Folder),
+            "download" => Ok(Self::Download),
+            "stash" => Ok(Self::Stash),
+            other => bail!("unknown enum constant {other} for VideoSource"),
+        }
+    }
+}
+
+// needed for sqlx, I guess?
 impl From<String> for VideoSource {
     fn from(value: String) -> Self {
         match value.as_str() {
@@ -102,6 +117,7 @@ pub struct DbMarkerWithVideo {
     pub interactive: bool,
     pub marker_created_on: String,
     pub video_title: Option<String>,
+    pub source: VideoSource,
 }
 
 #[derive(Debug)]

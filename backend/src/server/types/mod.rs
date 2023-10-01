@@ -19,8 +19,8 @@ pub enum ClipOrder {
 #[serde(rename_all = "camelCase")]
 pub struct Clip {
     pub source: VideoSource,
-    pub video_id: VideoId,
-    pub marker_id: MarkerId,
+    pub video_id: String,
+    pub marker_id: i64,
     /// Start and endpoint inside the video in seconds.
     pub range: (f64, f64),
     pub index_within_video: usize,
@@ -35,64 +35,6 @@ impl Clip {
     pub fn duration(&self) -> f64 {
         let (start, end) = self.range;
         end - start
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, ToSchema)]
-#[serde(rename_all = "camelCase", tag = "type", content = "id")]
-pub enum MarkerId {
-    LocalFile(i64),
-    Stash(i64),
-}
-
-impl MarkerId {
-    pub fn inner(&self) -> i64 {
-        match self {
-            MarkerId::LocalFile(id) => *id,
-            MarkerId::Stash(id) => *id,
-        }
-    }
-}
-
-impl fmt::Display for MarkerId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            MarkerId::LocalFile(id) => write!(f, "{}", id),
-            MarkerId::Stash(id) => write!(f, "{}", id),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord, ToSchema)]
-#[serde(rename_all = "camelCase", tag = "type", content = "id")]
-pub enum VideoId {
-    LocalFile(String),
-    Stash(String),
-}
-
-impl VideoId {
-    pub fn source(&self) -> VideoSource {
-        match self {
-            VideoId::LocalFile(_) => VideoSource::Folder,
-            VideoId::Stash(_) => VideoSource::Stash,
-        }
-    }
-
-    pub fn as_stash_id(&self) -> &str {
-        if let Self::Stash(id) = self {
-            id
-        } else {
-            panic!("this is not a stash ID")
-        }
-    }
-}
-
-impl fmt::Display for VideoId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            VideoId::LocalFile(id) => write!(f, "{}", id),
-            VideoId::Stash(id) => write!(f, "{}", id),
-        }
     }
 }
 
@@ -119,8 +61,8 @@ pub struct PerformerDto {
 #[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkerDto {
-    pub id: MarkerId,
-    pub video_id: VideoId,
+    pub id: i64,
+    pub video_id: String,
     pub primary_tag: String,
     pub stream_url: String,
     pub start: f64,
@@ -132,13 +74,14 @@ pub struct MarkerDto {
     pub tags: Vec<String>,
     pub screenshot_url: Option<String>,
     pub index_within_video: usize,
+    pub source: VideoSource,
 }
 
 impl MarkerDto {
     pub fn from_db(marker: DbMarker, video: &DbVideo) -> Self {
         MarkerDto {
-            id: MarkerId::LocalFile(marker.rowid.expect("marker must have rowid")),
-            video_id: VideoId::LocalFile(video.id.clone()),
+            id: marker.rowid.expect("marker must have rowid"),
+            video_id: video.id.clone(),
             primary_tag: marker.title,
             stream_url: format!("/api/local/video/{}/file", video.id),
             start: marker.start_time,
@@ -150,6 +93,7 @@ impl MarkerDto {
             tags: video.tags().unwrap_or_default(),
             screenshot_url: marker.marker_preview_image,
             index_within_video: marker.index_within_video as usize,
+            source: video.source,
         }
     }
 }
@@ -157,7 +101,7 @@ impl MarkerDto {
 #[derive(Serialize, Debug, ToSchema, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct VideoDto {
-    pub id: VideoId,
+    pub id: String,
     pub title: String,
     pub performers: Vec<String>,
     pub file_name: String,
@@ -171,7 +115,7 @@ pub struct VideoDto {
 #[derive(Serialize, Debug, ToSchema, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct StashVideoDto {
-    pub id: VideoId,
+    pub id: String,
     pub title: String,
     pub performers: Vec<String>,
     pub file_name: String,
@@ -201,13 +145,14 @@ impl StashVideoDto {
 #[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SelectedMarker {
-    pub id: MarkerId,
-    pub video_id: VideoId,
+    pub id: i64,
+    pub video_id: String,
     pub selected_range: (f64, f64),
     pub index_within_video: usize,
     pub selected: Option<bool>,
     pub title: String,
     pub loops: usize,
+    pub source: VideoSource,
 }
 
 #[derive(Deserialize, Debug, Serialize, ToSchema)]

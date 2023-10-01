@@ -15,10 +15,9 @@ pub mod fixtures;
 
 use serde::{Deserialize, Serialize};
 
-use crate::data::database::{DbMarkerWithVideo, DbVideo};
+use crate::data::database::{DbMarkerWithVideo, DbVideo, VideoSource};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashMarker;
-use crate::server::types::{MarkerId, VideoId};
 use crate::util::expect_file_name;
 
 #[derive(Debug, Clone)]
@@ -33,7 +32,7 @@ pub enum VideoInfo {
 
 #[derive(Debug, Clone)]
 pub struct Video {
-    pub id: VideoId,
+    pub id: String,
     pub title: String,
     pub tags: Option<Vec<String>>,
     pub interactive: bool,
@@ -64,7 +63,7 @@ impl From<DbVideo> for Video {
         let tags = value.tags();
 
         Video {
-            id: VideoId::LocalFile(value.id.clone()),
+            id: value.id.clone(),
             tags,
             interactive: value.interactive,
             title: value
@@ -82,7 +81,7 @@ impl From<FindScenesQueryFindScenesScenes> for Video {
     fn from(value: FindScenesQueryFindScenesScenes) -> Self {
         let tags = value.tags.clone().into_iter().map(|t| t.name).collect();
         Video {
-            id: VideoId::Stash(value.id.clone()),
+            id: value.id.clone(),
             interactive: value.interactive,
             file_name: value
                 .files
@@ -115,10 +114,10 @@ pub enum MarkerInfo {
 }
 
 impl MarkerInfo {
-    pub fn video_id(&self) -> VideoId {
+    pub fn video_id(&self) -> String {
         match self {
-            Self::Stash { marker } => VideoId::Stash(marker.scene_id.clone()),
-            Self::LocalFile { marker } => VideoId::LocalFile(marker.video_id.clone()),
+            Self::Stash { marker } => marker.scene_id.clone(),
+            Self::LocalFile { marker } => marker.video_id.clone(),
         }
     }
 
@@ -131,14 +130,15 @@ impl MarkerInfo {
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Marker {
-    pub id: MarkerId,
+    pub id: i64,
     pub start_time: f64,
     pub end_time: f64,
     pub index_within_video: usize,
-    pub video_id: VideoId,
+    pub video_id: String,
     pub title: String,
     pub info: MarkerInfo,
     pub loops: usize,
+    pub source: VideoSource,
 }
 
 impl Marker {

@@ -30,7 +30,7 @@ function getVideoUrl(video: VideoDto, config?: Config): string {
       config.apiKey
     }`
   } else {
-    return `/api/library/video/${video.id.id}/file`
+    return `/api/library/video/${video.id}/file`
   }
 }
 
@@ -165,7 +165,7 @@ export default function EditVideoModal() {
   const onDetectMarkers = async () => {
     setLoading(true)
 
-    const data = await detectMarkers(video.id.id, {
+    const data = await detectMarkers(video.id, {
       threshold: threshold / 100,
     })
     setMarkers(markers.concat(data))
@@ -176,7 +176,7 @@ export default function EditVideoModal() {
     const index =
       formMode === "create"
         ? markers.length
-        : markers.findIndex((m) => m.id.id === editedMarker?.id.id)
+        : markers.findIndex((m) => m.id === editedMarker?.id)
 
     if (index === -1) {
       throw new Error("could not find edited marker's ID in marker array")
@@ -185,7 +185,7 @@ export default function EditVideoModal() {
     const result =
       formMode === "create"
         ? await createMarker(video, values, videoDuration!, index)
-        : await updateMarker(editedMarker!.id.id, values)
+        : await updateMarker(editedMarker!.id, values)
 
     if (result.isOk) {
       const marker = result.unwrap()
@@ -229,10 +229,10 @@ export default function EditVideoModal() {
   const onRemoveMarker = async () => {
     const toRemove = editedMarker!.id
     setMarkers((draft) => {
-      const idx = draft.findIndex((m) => m.id.id === toRemove.id)
+      const idx = draft.findIndex((m) => m.id === toRemove)
       draft.splice(idx, 1)
     })
-    await deleteMarker(toRemove.id)
+    await deleteMarker(toRemove)
     setFormMode("hidden")
   }
 
@@ -263,7 +263,7 @@ export default function EditVideoModal() {
       isBetween(currentTime, m.start, m.end),
     )
     if (currentMarker) {
-      const data = await splitMarker(currentMarker.id.id, {time: currentTime})
+      const data = await splitMarker(currentMarker.id, {time: currentTime})
       setMarkers(data)
     }
   }
@@ -443,7 +443,7 @@ export default function EditVideoModal() {
                     </thead>
                     <tbody>
                       {markers.map((marker, idx) => (
-                        <tr key={marker.id.id}>
+                        <tr key={marker.id}>
                           <td>{idx + 1}</td>
                           <td className="font-bold">{marker.primaryTag}</td>
                           <td>{formatSeconds(marker.start, "short")}</td>

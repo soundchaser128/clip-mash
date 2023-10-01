@@ -56,7 +56,7 @@ const Timeline: React.FC<TimelineProps> = ({
       return `${percent}%`
     })
 
-    const sceneIds = Array.from(new Set(clips.map((c) => c.clip.videoId.id)))
+    const sceneIds = Array.from(new Set(clips.map((c) => c.clip.videoId)))
     sceneIds.sort()
     const sceneColors = new Map()
     sceneIds.forEach((id, index) => {
@@ -78,7 +78,7 @@ const Timeline: React.FC<TimelineProps> = ({
     <div className="flex h-10 mt-2 gap-0.5">
       {segments.map((width, index) => {
         const clip = clips[index].clip
-        const [style, sceneId] = sceneColors.get(clip.videoId.id)
+        const [style, sceneId] = sceneColors.get(clip.videoId)
         return (
           <div
             key={index}
@@ -125,7 +125,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
     }
     for (const clip of clips) {
       const marker = state.data.selectedMarkers?.find(
-        (m) => m.id.id === clip.markerId.id,
+        (m) => m.id === clip.markerId,
       )
       if (marker && marker.title && marker.selected) {
         const count = counts.get(marker.title) ?? {total: 0, current: 0}
@@ -561,13 +561,13 @@ function PreviewClips() {
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
   const currentClip = clips[currentClipIndex].clip
-  const streamUrl = streams[currentClip.videoId.id]
+  const streamUrl = streams[currentClip.videoId]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
   const navigate = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const currentMarker = state.data.selectedMarkers?.find(
-    (m) => currentClip.markerId.id === m.id.id,
+    (m) => currentClip.markerId === m.id,
   )
   const totalLength = clips.reduce(
     (len, {clip}) => len + (clip.range[1] - clip.range[0]),

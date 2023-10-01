@@ -63,7 +63,7 @@ export default function ListVideos() {
   }, [initialVideos, setVideos])
 
   const onOpenModal = ({video}: VideoWithMarkers) => {
-    navigate(`/library/${video.id.id}/markers`)
+    navigate(`/library/${video.id}/markers`)
   }
 
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,7 +158,7 @@ export default function ListVideos() {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
         {videos.map((video) => (
           <VideoCard
-            key={video.video.id.id}
+            key={video.video.id}
             video={video}
             stashConfig={config}
             actionChildren={

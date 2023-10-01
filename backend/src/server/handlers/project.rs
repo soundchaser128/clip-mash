@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use axum::body::StreamBody;
@@ -16,7 +16,6 @@ use crate::data::database::VideoSource;
 use crate::data::service::DataService;
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
-use crate::server::handlers::get_streams;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::funscript::{self, FunScript, ScriptBuilder};
@@ -38,27 +37,50 @@ pub async fn fetch_clips(
 ) -> Result<Json<ClipsResponse>, AppError> {
     let config = Config::get_or_empty().await;
     let service = DataService::new(state.database.clone()).await;
-    let video_ids: HashSet<_> = body.markers.iter().map(|m| m.video_id.clone()).collect();
-    info!("found {} video IDs", video_ids.len());
     let options = service.convert_clip_options(body).await?;
     debug!("clip options: {options:?}");
+    let stash_api = StashApi::from_config(&config);
 
     let clip_service = ClipService::new();
     let ClipsResult {
         beat_offsets,
         clips,
     } = clip_service.arrange_clips(options);
-    let streams = get_streams(video_ids, &config)?;
+
     let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.clone()).collect();
     video_ids.sort();
     video_ids.dedup();
 
-    let videos = service
+    let mut streams = HashMap::new();
+    let videos: Vec<_> = service
         .fetch_videos(&video_ids)
         .await?
         .into_iter()
         .map(From::from)
         .collect();
+
+    for clip in &clips {
+        match clip.source {
+            VideoSource::Folder | VideoSource::Download => {
+                if !streams.contains_key(&clip.video_id) {
+                    let url = format!("/api/library/video/{}/file", clip.video_id);
+                    streams.insert(clip.video_id.clone(), url);
+                }
+            }
+            VideoSource::Stash => {
+                if !streams.contains_key(&clip.video_id) {
+                    let stash_id = videos
+                        .iter()
+                        .find(|v: &&VideoDto| v.id == clip.video_id)
+                        .and_then(|v| v.stash_scene_id);
+                    if let Some(stash_id) = stash_id {
+                        let url = stash_api.get_stream_url(stash_id);
+                        streams.insert(clip.video_id.clone(), url);
+                    }
+                }
+            }
+        }
+    }
 
     let response = ClipsResponse {
         clips,

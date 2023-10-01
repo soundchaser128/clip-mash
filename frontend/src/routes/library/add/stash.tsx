@@ -55,7 +55,7 @@ const AddStashVideoPage: React.FC = () => {
   const onAddVideo = async (video: StashVideoDto) => {
     const body: AddVideosRequest = {
       type: "stash",
-      scene_ids: [parseInt(video.id.id)],
+      scene_ids: [parseInt(video.id)],
     }
 
     await addNewVideos(body)
@@ -67,7 +67,7 @@ const AddStashVideoPage: React.FC = () => {
       type: "stash",
       scene_ids: data.content
         .filter((video) => !video.existsInDatabase)
-        .map((video) => parseInt(video.id.id)),
+        .map((video) => parseInt(video.id)),
     }
 
     await addNewVideos(body)
@@ -103,7 +103,7 @@ const AddStashVideoPage: React.FC = () => {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
         {data.content.map((video) => (
           <VideoCard
-            key={video.id.id}
+            key={video.id}
             video={{video, markers: []}}
             stashConfig={config}
             actionChildren={

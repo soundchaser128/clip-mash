@@ -12,7 +12,7 @@ import {
   HiVideoCamera,
   HiXMark,
 } from "react-icons/hi2"
-import {MarkerDto, SelectedMarker} from "../../api"
+import {MarkerDto, MarkerDtoPage, SelectedMarker} from "../../api"
 import useFuse from "../../hooks/useFuse"
 import {updateForm} from "../actions"
 import {formatSeconds, sumDurations} from "../../helpers"
@@ -28,14 +28,14 @@ function getPreview(marker: MarkerDto) {
 }
 
 const SelectMarkers: React.FC = () => {
-  const initialMarkers = useLoaderData() as MarkerDto[]
+  const initialMarkers = useLoaderData() as MarkerDtoPage
   const {actions, state} = useStateMachine({updateForm})
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
       const entries =
         state.data.selectedMarkers?.map((m) => [m.id.id, m]) ||
-        initialMarkers.map((m) => [
+        initialMarkers.content.map((m) => [
           m.id.id,
           {
             id: m.id,
@@ -53,11 +53,7 @@ const SelectMarkers: React.FC = () => {
   const [filter, setFilter] = useState("")
   const [videoPreview, setVideoPreview] = useState<number>()
   const navigate = useNavigate()
-  const markers = useFuse({
-    items: initialMarkers,
-    query: filter,
-    keys: ["performers", "primaryTag", "sceneTitle", "tags"],
-  })
+  const markers = initialMarkers.content
 
   const [maxMarkerLength, setMaxMarkerLength] = useState<number>()
   const allDisabled = Object.values(selection).every((m) => !m.selected)
@@ -108,14 +104,14 @@ const SelectMarkers: React.FC = () => {
 
   const onNextStage = () => {
     const selectedMarkers = Object.values(selection)
-    const hasInteractiveScenes = initialMarkers
+    const hasInteractiveScenes = initialMarkers.content
       .filter((m) => !!selection[m.id.id])
       .some((m) => m.sceneInteractive)
 
     actions.updateForm({
       stage: FormStage.Music,
       selectedMarkers,
-      markers: initialMarkers,
+      markers: initialMarkers.content,
       interactive: hasInteractiveScenes,
     })
     navigate("/music")
@@ -124,7 +120,7 @@ const SelectMarkers: React.FC = () => {
   const onLimitDuration = () => {
     setSelection((draft) => {
       for (const selectedMarker of Object.values(draft)) {
-        const originalMarker = initialMarkers.find(
+        const originalMarker = initialMarkers.content.find(
           (m) => m.id.id === selectedMarker.id.id,
         )!
         const start = selectedMarker.selectedRange[0]

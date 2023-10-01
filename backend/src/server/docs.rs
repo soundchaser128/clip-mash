@@ -1,6 +1,6 @@
 use utoipa::OpenApi;
 
-use super::dtos::ListVideoDtoPage;
+use super::dtos::{ListVideoDtoPage, MarkerDtoPage, StashVideoDtoPage};
 use super::handlers::project::{CreateFunscriptBody, ProjectCreateResponse};
 use super::types::*;
 use crate::data::database::VideoSource;
@@ -35,6 +35,8 @@ use crate::service::video::AddVideosRequest;
     components(
         schemas(
             ListVideoDtoPage,
+            StashVideoDtoPage,
+            MarkerDtoPage,
             ListVideoDto,
             MarkerDto,
             VideoDto,

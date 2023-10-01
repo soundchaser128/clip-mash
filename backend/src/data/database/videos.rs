@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
+use futures::{Stream, TryStreamExt};
 use itertools::Itertools;
 use sqlx::{QueryBuilder, Row, SqlitePool};
-use tracing::info;
 
 use super::{AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers};
 use crate::server::types::{ListVideoDto, PageParameters, SortDirection};
@@ -180,6 +180,15 @@ impl VideosDatabase {
             }
         };
         query.map_err(From::from)
+    }
+
+    pub fn stream_videos(
+        &self,
+        filter: Option<AllVideosFilter>,
+    ) -> Result<impl Stream<Item = Result<DbVideo>> + '_> {
+        sqlx::query_as("SELECT * FROM videos WHERE source != 'stash'")
+            .fetch(&self.pool)
+            .map_err(From::from)
     }
 
     pub async fn persist_video(&self, video: &CreateVideo) -> Result<DbVideo> {

@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+killall clip-mash || true
+
 cd backend
 cargo build
 cargo run &

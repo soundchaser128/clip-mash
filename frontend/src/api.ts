@@ -48,6 +48,14 @@ export type SplitMarkerParams = {
 
 export type DeleteMarker200 = unknown | null
 
+export type ListMarkersParams = {
+  query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
 
 export interface WeightedRandomClipOptions {
@@ -355,6 +363,14 @@ export interface MarkerDto {
   videoId: VideoId
 }
 
+export interface MarkerDtoPage {
+  content: MarkerDto[]
+  pageNumber: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
+}
+
 export interface ListVideoDto {
   markers: MarkerDto[]
   video: VideoDto
@@ -577,10 +593,11 @@ export type AddVideosRequest =
   | AddVideosRequestOneOfThree
   | AddVideosRequestOneOfFive
 
-export const listMarkers = () => {
-  return customInstance<MarkerDto[]>({
+export const listMarkers = (params?: ListMarkersParams) => {
+  return customInstance<MarkerDtoPage>({
     url: `/api/library/marker`,
     method: "get",
+    params,
   })
 }
 
@@ -696,7 +713,6 @@ export const getBeatFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
-    data: createBeatFunscriptBody,
   })
 }
 
@@ -708,7 +724,6 @@ export const getCombinedFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
-    data: createFunscriptBody,
   })
 }
 

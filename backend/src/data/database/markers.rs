@@ -2,7 +2,7 @@ use sqlx::SqlitePool;
 use tracing::info;
 
 use super::DbMarker;
-use crate::server::types::{CreateMarker, PageParameters, UpdateMarker, SortDirection};
+use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
 use crate::Result;
 
 #[derive(Debug, Clone)]
@@ -143,6 +143,7 @@ impl MarkersDatabase {
         Ok(())
     }
 
+    #[cfg(test)]
     pub async fn get_all_markers(&self) -> Result<Vec<DbMarker>> {
         let markers = sqlx::query_as!(DbMarker, "
             SELECT m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, m.index_within_video, m.marker_preview_image, v.interactive, m.marker_created_on
@@ -161,18 +162,21 @@ impl MarkersDatabase {
         let query = query
             .map(|q| format!("%{q}%"))
             .unwrap_or_else(|| "%".to_string());
-        let count = sqlx::query_scalar!(
-            "SELECT COUNT(*) FROM markers WHERE title LIKE $1",
-            query
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let count = sqlx::query_scalar!("SELECT COUNT(*) FROM markers WHERE title LIKE $1", query)
+            .fetch_one(&self.pool)
+            .await?;
         let limit = params.limit();
         let offset = params.offset();
         let sort = params.sort("marker_created_on", SortDirection::Desc);
+        info!("fetching markers with query: {}", query);
 
-        let markers = sqlx::query_as!(DbMarker,
-            "SELECT *, rowid FROM markers m
+        let markers = sqlx::query_as!(
+            DbMarker,
+            "SELECT m.video_id, m.rowid, m.start_time, m.end_time, 
+                    m.title, v.file_path, m.index_within_video, m.marker_preview_image, 
+                    v.interactive, m.marker_created_on
+            FROM markers m
+            INNER JOIN videos v ON m.video_id = v.id
             WHERE m.title LIKE $1
             ORDER BY $2
             LIMIT $3
@@ -186,7 +190,7 @@ impl MarkersDatabase {
         .fetch_all(&self.pool)
         .await?;
 
-        Ok((markers, count))
+        Ok((markers, count.into()))
     }
 
     pub async fn set_marker_preview_image(&self, id: i64, preview_image: &str) -> Result<()> {

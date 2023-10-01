@@ -117,6 +117,15 @@ pub async fn add_new_videos(
     Ok(Json(new_videos))
 }
 
+#[axum::debug_handler]
+pub async fn cleanup_videos(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let video_service = VideoService::new(state).await?;
+    video_service.cleanup_videos().await?;
+    Ok(())
+}
+
 #[utoipa::path(
     get,
     path = "/api/library/video/{id}",
@@ -238,7 +247,7 @@ pub struct ListMarkersQuery {
     path = "/api/library/marker",
     params(VideoSearchQuery, PageParameters),
     responses(
-        (status = 200, description = "List markers", body = Vec<MarkerDto>),
+        (status = 200, description = "List markers", body = MarkerDtoPage),
     )
 )]
 #[axum::debug_handler]

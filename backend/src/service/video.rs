@@ -246,6 +246,10 @@ impl VideoService {
             }
         }
     }
+
+    pub async fn cleanup_videos(&self) -> Result<()> {
+        todo!()
+    }
 }
 
 #[cfg(test)]

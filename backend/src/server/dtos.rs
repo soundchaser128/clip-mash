@@ -164,7 +164,7 @@ impl<'a> From<StashSceneWrapper<'a>> for StashScene {
 #[derive(Serialize, Debug, Clone, ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[aliases(
-    ListVideoDtoPage = Page<ListVideoDto>, 
+    ListVideoDtoPage = Page<ListVideoDto>,
     StashVideoDtoPage = Page<StashVideoDto>,
     MarkerDtoPage = Page<MarkerDto>,
 )]

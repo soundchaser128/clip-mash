@@ -1,7 +1,7 @@
 import clsx from "clsx"
 import {useCallback, useState} from "react"
 import {useForm} from "react-hook-form"
-import {useLoaderData, useNavigate} from "react-router-dom"
+import {useLoaderData} from "react-router-dom"
 import ExternalLink from "../components/ExternalLink"
 import {getHealth, setConfig} from "../api"
 

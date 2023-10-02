@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use axum::body::StreamBody;
@@ -38,7 +37,6 @@ pub async fn fetch_clips(
     let service = DataService::new(state.database.clone());
     let options = service.convert_clip_options(body).await?;
     debug!("clip options: {options:?}");
-    let stash_api = StashApi::load_config().await;
 
     let clip_service = ClipService::new();
     let ClipsResult {
@@ -57,7 +55,7 @@ pub async fn fetch_clips(
         .map(From::from)
         .collect();
 
-    let stream_service = StreamUrlService::new(state.database.clone(), stash_api);
+    let stream_service = StreamUrlService::new().await;
     let streams = stream_service.get_clip_streams(&clips, &videos);
 
     let response = ClipsResponse {

@@ -11,8 +11,8 @@ use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::streams::StreamUrlService;
 use super::Marker;
-use crate::data::database::{Database, DbSong, VideoSource};
-use crate::data::stash_api::{StashApi, StashMarker};
+use crate::data::database::{Database, DbSong};
+use crate::data::stash_api::StashMarker;
 use crate::helpers::estimator::Estimator;
 use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality, VideoResolution};
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
@@ -102,7 +102,7 @@ impl CompilationGenerator {
     }
 
     async fn prepare_stream_urls(&self, clips: &[Clip]) -> Result<HashMap<String, String>> {
-        let service = StreamUrlService::new(self.database.clone(), StashApi::load_config().await);
+        let service = StreamUrlService::new().await;
         let mut ids: Vec<_> = clips.iter().map(|c| c.video_id.as_str()).collect();
         ids.sort();
         ids.dedup();

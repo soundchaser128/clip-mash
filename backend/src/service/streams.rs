@@ -1,20 +1,17 @@
 use std::collections::HashMap;
 
-use crate::data::database::{Database, VideoSource};
+use crate::data::database::VideoSource;
 use crate::data::stash_api::StashApi;
 use crate::server::types::{Clip, VideoLike};
 
 pub struct StreamUrlService {
-    database: Database,
     stash_api: StashApi,
 }
 
 impl StreamUrlService {
-    pub fn new(database: Database, stash_api: StashApi) -> Self {
-        StreamUrlService {
-            database,
-            stash_api,
-        }
+    pub async fn new() -> Self {
+        let stash_api = StashApi::load_config().await;
+        StreamUrlService { stash_api }
     }
 
     pub fn get_clip_streams<V: VideoLike>(

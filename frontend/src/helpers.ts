@@ -39,6 +39,10 @@ export function getSegmentTextColor(color: string): string {
 
 type DurationFormat = "long" | "short"
 
+function padNumber(n: number): string {
+  return n.toString().padStart(2, "0")
+}
+
 export function formatSeconds(
   input: number | [number, number] | number[] | undefined,
   durationFormat: DurationFormat = "long",
@@ -58,22 +62,24 @@ export function formatSeconds(
     }
   }
 
-  const date = new Date(duration * 1000)
+  const hours = Math.floor(duration / 3600)
+  const minutes = Math.floor((duration % 3600) / 60)
+  const seconds = Math.floor(duration % 60)
+
   if (durationFormat === "long") {
     return formatDuration(
       {
-        hours: date.getUTCHours(),
-        minutes: date.getUTCMinutes(),
-        seconds: date.getUTCSeconds(),
+        hours,
+        minutes,
+        seconds,
       },
       {format: ["hours", "minutes", "seconds"]},
     )
   } else {
-    if (date.getUTCHours() > 0) {
-      date.setUTCHours(date.getUTCHours() - 1)
-      return format(date, "HH:mm:ss")
+    if (hours > 0) {
+      return `${padNumber(hours)}:${padNumber(minutes)}:${padNumber(seconds)}`
     } else {
-      return format(date, "mm:ss")
+      return `${padNumber(minutes)}:${padNumber(seconds)}`
     }
   }
 }

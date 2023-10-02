@@ -167,10 +167,6 @@ impl StashApi {
         }
     }
 
-    pub fn from_config(config: &Config) -> Self {
-        StashApi::new(&config.stash_url, &config.api_key)
-    }
-
     pub async fn health(&self) -> Result<String> {
         let variables = health_check_query::Variables {};
         let request_body = HealthCheckQuery::build_query(variables);

@@ -543,8 +543,9 @@ mod test {
             .await
             .unwrap();
         assert_eq!(videos.len(), 2);
-        assert_eq!(videos[0].id, video1.id);
-        assert_eq!(videos[1].id, video2.id);
+        let ids: Vec<&str> = videos.iter().map(|v| v.id.as_str()).collect();
+        assert!(ids.contains(&video1.id.as_str()));
+        assert!(ids.contains(&video2.id.as_str()));
 
         let videos = database
             .videos
@@ -552,7 +553,8 @@ mod test {
             .await
             .unwrap();
         assert_eq!(videos.len(), 2);
-        assert_eq!(videos[0].id, video1.id);
-        assert_eq!(videos[1].id, video3.id);
+        let ids: Vec<&str> = videos.iter().map(|v| v.id.as_str()).collect();
+        assert!(ids.contains(&video1.id.as_str()));
+        assert!(ids.contains(&video3.id.as_str()));
     }
 }

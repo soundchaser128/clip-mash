@@ -154,9 +154,9 @@ impl StashApi {
         }
     }
 
-    pub async fn load_config() -> Result<Self> {
+    pub async fn load_config() -> Self {
         let config = Config::get_or_empty().await;
-        Ok(StashApi::new(&config.stash_url, &config.api_key))
+        StashApi::new(&config.stash_url, &config.api_key)
     }
 
     pub async fn load_config_or_fail() -> Result<Self> {
@@ -213,24 +213,6 @@ impl StashApi {
         let response = response.data.unwrap().find_scenes;
 
         Ok((response.scenes, response.count as usize))
-    }
-
-    pub async fn get_marker(&self, video_id: &str, marker_id: i64) -> Result<StashMarker> {
-        let mut scenes = self.find_scenes_by_ids(vec![video_id.parse()?]).await?;
-        if scenes.len() != 1 {
-            bail!("found {} scenes for ID {video_id}", scenes.len());
-        }
-        let markers = StashMarker::from_scene(scenes.remove(0), &self.api_key);
-        if markers.is_empty() {
-            bail!("no marker found for video ID {video_id} and marker ID {marker_id}")
-        } else {
-            let string_id = marker_id.to_string();
-            if let Some(marker) = markers.into_iter().find(|m| m.id == string_id) {
-                Ok(marker)
-            } else {
-                bail!("no marker with ID {marker_id} found in scene {video_id}")
-            }
-        }
     }
 
     pub async fn find_scenes_by_ids(

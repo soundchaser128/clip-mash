@@ -13,11 +13,8 @@ use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;
-use crate::data::database::{
-    CreateVideo, Database, DbMarker, DbMarkerWithVideo, DbVideo, VideoSource,
-};
+use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource};
 use crate::server::types::{Beats, CreateMarker};
-use crate::service::MarkerInfo;
 use crate::util::generate_id;
 use crate::Result;
 
@@ -79,23 +76,6 @@ pub fn markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "go8DbGFE".into(),
             title: "Blowjob".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(1),
-                    video_id: "go8DbGFE".into(),
-                    start_time: 0.0,
-                    end_time: 171.7162,
-                    title: "Blowjob".into(),
-                    file_path: "/videos/Resident Evil 3 - Jill Sloppy Blowjob - Bulging Senpai.mp4"
-                        .into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -106,22 +86,6 @@ pub fn markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "Rtdyb1xW".into(),
             title: "Blowjob".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(2),
-                    video_id: "Rtdyb1xW".into(),
-                    start_time: 19.178596,
-                    end_time: 130.772832,
-                    title: "Blowjob".into(),
-                    file_path: "/videos/Black Widow Casting (Full ver.) [3104140].mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -132,22 +96,6 @@ pub fn markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "ejS9HLKF".into(),
             title: "Doggy Style".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(3),
-                    video_id: "ejS9HLKF".into(),
-                    start_time: 0.0,
-                    end_time: 111.389977,
-                    title: "Doggy Style".into(),
-                    file_path: "/videos/[HydraFXX] Tifa x Cloud Halloween (Extended).mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -158,22 +106,6 @@ pub fn markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "D2FF-fJW".into(),
             title: "Doggy Style".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(10),
-                    video_id: "D2FF-fJW".into(),
-                    start_time: 0.0,
-                    end_time: 39.487,
-                    title: "Doggy Style".into(),
-                    file_path: "/videos/[HydraFXX] Widowmaker Riding [4K].mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -184,22 +116,6 @@ pub fn markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "fZB8OPxc".into(),
             title: "Blowjob".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(7),
-                    video_id: "fZB8OPxc".into(),
-                    start_time: 0.0,
-                    end_time: 36.055767,
-                    title: "Blowjob".into(),
-                    file_path: "/videos/[ent duke] Widowmaker HJ.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -210,22 +126,6 @@ pub fn markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "EqF5ShQY".into(),
             title: "Cowgirl".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(4),
-                    video_id: "EqF5ShQY".into(),
-                    start_time: 0.0,
-                    end_time: 57.77,
-                    title: "Cowgirl".into(),
-                    file_path: "/videos/tifa-lockhart-leading-juicyneko_2160p.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -236,22 +136,6 @@ pub fn markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "6P3h5aSl".into(),
             title: "Cowgirl".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(9),
-                    video_id: "6P3h5aSl".into(),
-                    start_time: 0.0,
-                    end_time: 60.996935,
-                    title: "Cowgirl".into(),
-                    file_path: "/videos/4k-dokkaebi-idemi_2160p.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -262,22 +146,6 @@ pub fn markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "peso3Tzd".into(),
             title: "Cowgirl".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(5),
-                    video_id: "peso3Tzd".into(),
-                    start_time: 0.0,
-                    end_time: 34.597007,
-                    title: "Cowgirl".into(),
-                    file_path: "/videos/tifa-spooning-juicyneko_2160p.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -288,22 +156,6 @@ pub fn markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "MJxGMsjP".into(),
             title: "Blowjob".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(6),
-                    video_id: "MJxGMsjP".into(),
-                    start_time: 0.0,
-                    end_time: 137.472,
-                    title: "Blowjob".into(),
-                    file_path: "/videos/testdir/testdir 2/(nagoonimation) Cammy Round 1.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -314,22 +166,6 @@ pub fn markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "mCg07LPG".into(),
             title: "Reverse Cowgirl".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(8),
-                    video_id: "mCg07LPG".into(),
-                    start_time: 0.0,
-                    end_time: 165.368725,
-                    title: "Reverse Cowgirl".into(),
-                    file_path: "/videos/(Hydrafxx) Rachel Amber.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
     ]
 }
@@ -345,22 +181,6 @@ pub fn other_markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "2H0r8zLH".into(),
             title: "Handjiob".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(5),
-                    video_id: "2H0r8zLH".into(),
-                    start_time: 0.0,
-                    end_time: 36.153941,
-                    title: "Handjiob".into(),
-                    file_path: "/videos/[ent duke] Widowmaker HJ.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -371,22 +191,6 @@ pub fn other_markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "PxTxOTfX".into(),
             title: "Doggy Style".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(2),
-                    video_id: "PxTxOTfX".into(),
-                    start_time: 0.0,
-                    end_time: 146.014932,
-                    title: "Doggy Style".into(),
-                    file_path: "/videos/[HydraFXX] Tifa x Cloud Halloween (Extended).mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -397,22 +201,6 @@ pub fn other_markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "R43ZTr0w".into(),
             title: "Sideways".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(6),
-                    video_id: "R43ZTr0w".into(),
-                    start_time: 0.0,
-                    end_time: 61.034,
-                    title: "Sideways".into(),
-                    file_path: "/videos/4k-dokkaebi-idemi_2160p.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -423,22 +211,6 @@ pub fn other_markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "R_fDbo2f".into(),
             title: "Mating Press".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(4),
-                    video_id: "R_fDbo2f".into(),
-                    start_time: 14.43444,
-                    end_time: 130.941,
-                    title: "Mating Press".into(),
-                    file_path: "/videos/yeero d.va hard anal 1080p.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -449,22 +221,6 @@ pub fn other_markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "RrTBwBZG".into(),
             title: "Cowgirl".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(1),
-                    video_id: "RrTBwBZG".into(),
-                    start_time: 0.0,
-                    end_time: 57.126817,
-                    title: "Cowgirl".into(),
-                    file_path: "/videos/tifa-lockhart-leading-juicyneko_2160p.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -475,22 +231,6 @@ pub fn other_markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "ZZtG7qbI".into(),
             title: "Doggy Style".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(7),
-                    video_id: "ZZtG7qbI".into(),
-                    start_time: 0.0,
-                    end_time: 137.472,
-                    title: "Doggy Style".into(),
-                    file_path: "/videos/(nagoonimation) Cammy Round 1.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -501,22 +241,6 @@ pub fn other_markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "bJTtKsIe".into(),
             title: "Missionary".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(9),
-                    video_id: "bJTtKsIe".into(),
-                    start_time: 0.0,
-                    end_time: 162.447575,
-                    title: "Missionary".into(),
-                    file_path: "/videos/mercy's appointment nagoonimation 720p.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -527,22 +251,6 @@ pub fn other_markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "rDxeypDY".into(),
             title: "Cowgirl".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(3),
-                    video_id: "rDxeypDY".into(),
-                    start_time: 0.0,
-                    end_time: 39.487,
-                    title: "Cowgirl".into(),
-                    file_path: "/videos/[HydraFXX] Widowmaker Riding [4K].mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -553,22 +261,6 @@ pub fn other_markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "wkjHYedN".into(),
             title: "Sex".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(10),
-                    video_id: "wkjHYedN".into(),
-                    start_time: 0.0,
-                    end_time: 166.0,
-                    title: "Sex".into(),
-                    file_path: "/videos/(Hydrafxx) Rachel Amber.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
         Marker {
             loops: 1,
@@ -579,22 +271,6 @@ pub fn other_markers() -> Vec<Marker> {
             index_within_video: 0,
             video_id: "yObK_Z7p".into(),
             title: "Sideways".into(),
-            info: MarkerInfo::LocalFile {
-                marker: DbMarkerWithVideo {
-                    rowid: Some(8),
-                    video_id: "yObK_Z7p".into(),
-                    start_time: 0.0,
-                    end_time: 34.597007,
-                    title: "Sideways".into(),
-                    file_path: "/videos/tifa-spooning-juicyneko_2160p.mp4".into(),
-                    index_within_video: 0,
-                    marker_preview_image: None,
-                    interactive: false,
-                    marker_created_on: Default::default(),
-                    video_title: None,
-                    source: VideoSource::Folder,
-                },
-            },
         },
     ]
 }
@@ -615,22 +291,6 @@ pub fn create_marker(title: &str, start_time: f64, end_time: f64, index: usize) 
         video_id: generate_id(),
         source: VideoSource::Folder,
         title: title.to_string(),
-        info: MarkerInfo::LocalFile {
-            marker: DbMarkerWithVideo {
-                start_time,
-                end_time,
-                rowid: None,
-                title: title.to_string(),
-                video_id: Faker.fake(),
-                file_path: FilePath().fake(),
-                index_within_video: index as i64,
-                marker_preview_image: None,
-                interactive: false,
-                marker_created_on: Default::default(),
-                video_title: None,
-                source: VideoSource::Folder,
-            },
-        },
     }
 }
 
@@ -650,22 +310,6 @@ pub fn create_marker_video_id(
         video_id: video_id.to_string(),
         source: VideoSource::Folder,
         title: Faker.fake(),
-        info: MarkerInfo::LocalFile {
-            marker: DbMarkerWithVideo {
-                end_time,
-                start_time,
-                rowid: None,
-                title: Faker.fake(),
-                video_id: video_id.to_string(),
-                file_path: FilePath().fake(),
-                index_within_video: index as i64,
-                marker_preview_image: None,
-                interactive: false,
-                marker_created_on: Default::default(),
-                video_title: None,
-                source: VideoSource::Folder,
-            },
-        },
     }
 }
 
@@ -686,22 +330,6 @@ pub fn create_marker_with_loops(
         video_id: video_id.to_string(),
         source: VideoSource::Folder,
         title: Faker.fake(),
-        info: MarkerInfo::LocalFile {
-            marker: DbMarkerWithVideo {
-                end_time,
-                start_time,
-                rowid: None,
-                title: Faker.fake(),
-                video_id: video_id.to_string(),
-                file_path: FilePath().fake(),
-                index_within_video: index as i64,
-                marker_preview_image: None,
-                interactive: false,
-                marker_created_on: Default::default(),
-                video_title: None,
-                source: VideoSource::Folder,
-            },
-        },
     }
 }
 

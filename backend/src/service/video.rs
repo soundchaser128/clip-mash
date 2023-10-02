@@ -46,7 +46,7 @@ impl VideoService {
             database: state.database.clone(),
             directories: state.directories.clone(),
             ffmpeg_location: state.ffmpeg_location.clone(),
-            stash_api: StashApi::load_config().await?,
+            stash_api: StashApi::load_config().await,
         })
     }
 

@@ -3,29 +3,19 @@ use std::collections::{HashMap, HashSet};
 use color_eyre::eyre::bail;
 
 use super::database::{Database, DbSong};
-use super::stash_api::StashApi;
 use crate::server::types::*;
 use crate::service::clip::CreateClipsOptions;
 use crate::service::generator::CompilationOptions;
-use crate::service::stash_config::Config;
-use crate::service::{Marker, MarkerInfo, Video};
+use crate::service::{Marker, Video};
 use crate::Result;
 
 pub struct DataService {
     db: Database,
-    stash_api: StashApi,
 }
 
 impl DataService {
-    pub async fn new(db: Database) -> Self {
-        let config = Config::get_or_empty().await;
-        let api = StashApi::from_config(&config);
-        Self { db, stash_api: api }
-    }
-
-    pub async fn fetch_marker_details(&self, id: &i64, _video_id: &String) -> Result<MarkerInfo> {
-        let marker = self.db.markers.get_marker(*id).await?;
-        Ok(MarkerInfo::LocalFile { marker })
+    pub fn new(db: Database) -> Self {
+        Self { db }
     }
 
     pub async fn fetch_video(&self, id: &String) -> Result<Video> {
@@ -67,19 +57,13 @@ impl DataService {
 
         for selected_marker in markers {
             let (start_time, end_time) = selected_marker.selected_range;
-            let marker_details: MarkerInfo = self
-                .fetch_marker_details(&selected_marker.id, &selected_marker.video_id)
-                .await?;
-            let video_id = marker_details.video_id().clone();
-            let title = marker_details.title().to_string();
             results.push(Marker {
                 start_time,
                 end_time,
                 id: selected_marker.id,
-                info: marker_details,
-                video_id,
+                video_id: selected_marker.video_id,
                 index_within_video: selected_marker.index_within_video,
-                title,
+                title: selected_marker.title,
                 loops: selected_marker.loops,
                 source: selected_marker.source,
             })

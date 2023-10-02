@@ -19,7 +19,7 @@ use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::funscript::{self, FunScript, ScriptBuilder};
-use crate::service::stash_config::Config;
+use crate::service::streams::StreamUrlService;
 use crate::util::generate_id;
 
 #[utoipa::path(
@@ -35,11 +35,10 @@ pub async fn fetch_clips(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
-    let config = Config::get_or_empty().await;
-    let service = DataService::new(state.database.clone()).await;
+    let service = DataService::new(state.database.clone());
     let options = service.convert_clip_options(body).await?;
     debug!("clip options: {options:?}");
-    let stash_api = StashApi::from_config(&config);
+    let stash_api = StashApi::load_config().await;
 
     let clip_service = ClipService::new();
     let ClipsResult {
@@ -51,7 +50,6 @@ pub async fn fetch_clips(
     video_ids.sort();
     video_ids.dedup();
 
-    let mut streams = HashMap::new();
     let videos: Vec<_> = service
         .fetch_videos(&video_ids)
         .await?
@@ -59,28 +57,8 @@ pub async fn fetch_clips(
         .map(From::from)
         .collect();
 
-    for clip in &clips {
-        match clip.source {
-            VideoSource::Folder | VideoSource::Download => {
-                if !streams.contains_key(&clip.video_id) {
-                    let url = format!("/api/library/video/{}/file", clip.video_id);
-                    streams.insert(clip.video_id.clone(), url);
-                }
-            }
-            VideoSource::Stash => {
-                if !streams.contains_key(&clip.video_id) {
-                    let stash_id = videos
-                        .iter()
-                        .find(|v: &&VideoDto| v.id == clip.video_id)
-                        .and_then(|v| v.stash_scene_id);
-                    if let Some(stash_id) = stash_id {
-                        let url = stash_api.get_stream_url(stash_id);
-                        streams.insert(clip.video_id.clone(), url);
-                    }
-                }
-            }
-        }
-    }
+    let stream_service = StreamUrlService::new(state.database.clone(), stash_api);
+    let streams = stream_service.get_clip_streams(&clips, &videos);
 
     let response = ClipsResponse {
         clips,
@@ -95,7 +73,7 @@ async fn create_video_inner(
     state: State<Arc<AppState>>,
     body: CreateVideoBody,
 ) -> Result<(), AppError> {
-    let service = DataService::new(state.database.clone()).await;
+    let service = DataService::new(state.database.clone());
     let options = service.convert_compilation_options(body).await?;
 
     let clips = state.generator.gather_clips(&options).await?;
@@ -227,9 +205,9 @@ pub async fn get_combined_funscript(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateFunscriptBody>,
 ) -> Result<Json<FunScript>, AppError> {
-    let api = StashApi::load_config().await?;
+    let api = StashApi::load_config().await;
     let script_builder = ScriptBuilder::new(&api);
-    let service = DataService::new(state.database.clone()).await;
+    let service = DataService::new(state.database.clone());
     let clips = service.convert_clips(body.clips).await?;
     let script = script_builder.combine_scripts(clips).await?;
 

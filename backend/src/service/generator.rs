@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::time::Instant;
 
@@ -8,12 +9,12 @@ use tracing::{debug, enabled, info, Level};
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
+use super::streams::StreamUrlService;
 use super::Marker;
-use crate::data::database::{Database, DbSong};
-use crate::data::stash_api::StashMarker;
+use crate::data::database::{Database, DbSong, VideoSource};
+use crate::data::stash_api::{StashApi, StashMarker};
 use crate::helpers::estimator::Estimator;
 use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality, VideoResolution};
-use crate::service::MarkerInfo;
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
 use crate::Result;
 
@@ -32,7 +33,7 @@ pub struct CompilationOptions {
     pub encoding_effort: EncodingEffort,
 }
 
-pub fn find_stash_stream_url(marker: &StashMarker) -> &str {
+fn find_stash_stream_url(marker: &StashMarker) -> &str {
     const LABEL_PRIORITIES: &[&str] = &["Direct stream", "webm", "HLS"];
 
     let streams = &marker.streams;
@@ -52,13 +53,6 @@ pub fn find_stash_stream_url(marker: &StashMarker) -> &str {
         streams[0]
     );
     &streams[0].url
-}
-
-pub fn find_stream_url(marker: &Marker) -> &str {
-    match &marker.info {
-        MarkerInfo::Stash { marker } => find_stash_stream_url(marker),
-        MarkerInfo::LocalFile { marker } => &marker.file_path,
-    }
 }
 
 fn get_clip_file_name(
@@ -105,6 +99,12 @@ impl CompilationGenerator {
             ffmpeg_path,
             database,
         })
+    }
+
+    async fn prepare_stream_urls(&self, clips: &[Clip]) -> HashMap<String, String> {
+        let service = StreamUrlService::new(self.database.clone(), StashApi::load_config().await);
+        let videos = self.database.videos.get_videos_by_ids(&ids).await?;
+        service.get_clip_streams(clips, videos)
     }
 
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {
@@ -242,6 +242,7 @@ impl CompilationGenerator {
             .await?;
         let video_dir = self.directories.temp_video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
+        let stream_urls = self.prepare_stream_urls(clips).await;
 
         let total = clips.len();
         let mut paths = vec![];
@@ -257,7 +258,7 @@ impl CompilationGenerator {
                 .iter()
                 .find(|m| &m.id == marker_id)
                 .expect(&format!("no marker with ID {marker_id} found"));
-            let url = find_stream_url(marker);
+            let url = &stream_urls[&marker.video_id];
             let (width, height) = options.output_resolution.resolution();
             let out_file = video_dir.join(get_clip_file_name(
                 &marker.video_id,

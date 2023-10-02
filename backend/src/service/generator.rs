@@ -101,10 +101,14 @@ impl CompilationGenerator {
         })
     }
 
-    async fn prepare_stream_urls(&self, clips: &[Clip]) -> HashMap<String, String> {
+    async fn prepare_stream_urls(&self, clips: &[Clip]) -> Result<HashMap<String, String>> {
         let service = StreamUrlService::new(self.database.clone(), StashApi::load_config().await);
+        let mut ids: Vec<_> = clips.iter().map(|c| c.video_id.as_str()).collect();
+        ids.sort();
+        ids.dedup();
+
         let videos = self.database.videos.get_videos_by_ids(&ids).await?;
-        service.get_clip_streams(clips, videos)
+        Ok(service.get_clip_streams(clips, &videos))
     }
 
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {
@@ -242,7 +246,7 @@ impl CompilationGenerator {
             .await?;
         let video_dir = self.directories.temp_video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
-        let stream_urls = self.prepare_stream_urls(clips).await;
+        let stream_urls = self.prepare_stream_urls(clips).await?;
 
         let total = clips.len();
         let mut paths = vec![];

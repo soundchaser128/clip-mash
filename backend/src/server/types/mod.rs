@@ -112,6 +112,16 @@ pub struct VideoDto {
     pub tags: Option<Vec<String>>,
 }
 
+impl VideoLike for VideoDto {
+    fn video_id(&self) -> &str {
+        &self.id
+    }
+
+    fn stash_scene_id(&self) -> Option<i64> {
+        self.stash_scene_id
+    }
+}
+
 #[derive(Serialize, Debug, ToSchema, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct StashVideoDto {
@@ -504,4 +514,10 @@ impl StrokeType {
 pub struct CreateBeatFunscriptBody {
     pub song_ids: Vec<i64>,
     pub stroke_type: StrokeType,
+}
+
+pub trait VideoLike {
+    fn video_id(&self) -> &str;
+
+    fn stash_scene_id(&self) -> Option<i64>;
 }

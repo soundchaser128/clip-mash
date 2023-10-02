@@ -11,7 +11,7 @@ use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
 use self::progress::ProgressDatabase;
 use self::videos::VideosDatabase;
-use crate::server::types::{Beats, Progress};
+use crate::server::types::{Beats, Progress, VideoLike};
 use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
 
@@ -75,6 +75,16 @@ impl DbVideo {
         self.video_tags
             .clone()
             .map(|s| s.split(TAG_SEPARATOR).map(|s| s.to_string()).collect())
+    }
+}
+
+impl VideoLike for DbVideo {
+    fn video_id(&self) -> &str {
+        &self.id
+    }
+
+    fn stash_scene_id(&self) -> Option<i64> {
+        self.stash_scene_id
     }
 }
 

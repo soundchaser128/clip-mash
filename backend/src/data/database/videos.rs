@@ -328,4 +328,8 @@ impl VideosDatabase {
 
         Ok(result)
     }
+
+    pub async fn get_videos_by_ids(&self, ids: &[&str]) -> Result<Vec<DbVideo>> {
+        todo!()
+    }
 }

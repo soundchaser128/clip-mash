@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
 use crate::{
-    data::{database::{Database, VideoSource}, stash_api::StashApi},
-    server::types::{Clip, VideoDto},
+    data::{
+        database::{Database, VideoSource},
+        stash_api::StashApi,
+    },
+    server::types::{Clip, VideoDto, VideoLike},
 };
 
 pub struct StreamUrlService {
@@ -18,7 +21,11 @@ impl StreamUrlService {
         }
     }
 
-    pub fn get_clip_streams(&self, clips: &[Clip], videos: &[VideoDto]) -> HashMap<String, String> {
+    pub fn get_clip_streams<V: VideoLike>(
+        &self,
+        clips: &[Clip],
+        videos: &[V],
+    ) -> HashMap<String, String> {
         let mut streams = HashMap::new();
         for clip in clips {
             match clip.source {
@@ -32,8 +39,8 @@ impl StreamUrlService {
                     if !streams.contains_key(&clip.video_id) {
                         let stash_id = videos
                             .iter()
-                            .find(|v: &&VideoDto| v.id == clip.video_id)
-                            .and_then(|v| v.stash_scene_id);
+                            .find(|v| v.video_id() == clip.video_id)
+                            .and_then(|v| v.stash_scene_id());
                         if let Some(stash_id) = stash_id {
                             let url = self.stash_api.get_stream_url(stash_id);
                             streams.insert(clip.video_id.clone(), url);

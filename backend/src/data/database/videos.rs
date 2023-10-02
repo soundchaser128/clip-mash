@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use camino::Utf8Path;
 use futures::TryStreamExt;
 use itertools::Itertools;
-use sqlx::{QueryBuilder, Row, SqlitePool};
+use sqlx::{FromRow, QueryBuilder, Row, SqlitePool};
 use tracing::info;
 
 use super::{
@@ -330,6 +330,17 @@ impl VideosDatabase {
     }
 
     pub async fn get_videos_by_ids(&self, ids: &[&str]) -> Result<Vec<DbVideo>> {
-        todo!()
+        let mut query_builder = QueryBuilder::new("SELECT * FROM videos WHERE id IN (");
+        let mut list = query_builder.separated(",");
+        for id in ids {
+            list.push_bind(id);
+        }
+        list.push_unseparated(") ");
+        query_builder.push(" ORDER BY id DESC");
+
+        let query = query_builder.build();
+        let rows = query.fetch_all(&self.pool).await?;
+        let videos: Vec<_> = rows.iter().flat_map(DbVideo::from_row).collect();
+        Ok(videos)
     }
 }

@@ -1,12 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{
-    data::{
-        database::{Database, VideoSource},
-        stash_api::StashApi,
-    },
-    server::types::{Clip, VideoDto, VideoLike},
-};
+use crate::data::database::{Database, VideoSource};
+use crate::data::stash_api::StashApi;
+use crate::server::types::{Clip, VideoLike};
 
 pub struct StreamUrlService {
     database: Database,

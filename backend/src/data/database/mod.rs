@@ -56,7 +56,7 @@ impl From<String> for VideoSource {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, FromRow)]
 pub struct DbVideo {
     pub id: String,
     pub file_path: String,
@@ -527,5 +527,32 @@ mod test {
         let mut results: Vec<_> = results.into_iter().collect();
         results.sort();
         assert_eq!(results, vec![0, 1, 2, 3, 4]);
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn test_fetch_videos_by_ids(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video1 = persist_video(&database).await.unwrap();
+        let video2 = persist_video(&database).await.unwrap();
+        let video3 = persist_video(&database).await.unwrap();
+
+        let videos = database
+            .videos
+            .get_videos_by_ids(&[&video1.id, &video2.id])
+            .await
+            .unwrap();
+        assert_eq!(videos.len(), 2);
+        assert_eq!(videos[0].id, video1.id);
+        assert_eq!(videos[1].id, video2.id);
+
+        let videos = database
+            .videos
+            .get_videos_by_ids(&[&video1.id, &video3.id])
+            .await
+            .unwrap();
+        assert_eq!(videos.len(), 2);
+        assert_eq!(videos[0].id, video1.id);
+        assert_eq!(videos[1].id, video3.id);
     }
 }

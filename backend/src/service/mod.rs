@@ -8,8 +8,8 @@ pub mod music;
 pub mod preview_image;
 pub mod scene_detection;
 pub mod stash_config;
-pub mod video;
 pub mod streams;
+pub mod video;
 
 #[cfg(test)]
 pub mod fixtures;

@@ -33,19 +33,19 @@ impl VideosDatabase {
 
     pub async fn update_video(&self, id: &str, update: VideoUpdate) -> Result<()> {
         let mut query_builder = QueryBuilder::new("UPDATE videos SET ");
-        let mut list = query_builder.separated(", ");
         if let Some(title) = update.title {
-            list.push("video_title = ");
-            list.push_bind(title);
+            query_builder.push("video_title = ");
+            query_builder.push_bind(title);
         }
         if let Some(tags) = update.tags {
-            list.push("video_tags = ");
-            list.push_bind(tags.join(TAG_SEPARATOR));
+            query_builder.push("video_tags = ");
+            query_builder.push_bind(tags.join(TAG_SEPARATOR));
         }
 
-        list.push(" WHERE id = ");
-        list.push_bind(id);
+        query_builder.push(" WHERE id = ");
+        query_builder.push_bind(id);
 
+        info!("{}", query_builder.sql());
         let query = query_builder.build();
         query.execute(&self.pool).await?;
 

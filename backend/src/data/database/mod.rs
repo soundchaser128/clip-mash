@@ -210,7 +210,7 @@ mod test {
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
-    use crate::data::database::Database;
+    use crate::data::database::{Database, VideoUpdate};
     use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_fn};
     use crate::util::generate_id;
@@ -566,5 +566,29 @@ mod test {
         let ids: Vec<&str> = videos.iter().map(|v| v.id.as_str()).collect();
         assert!(ids.contains(&video1.id.as_str()));
         assert!(ids.contains(&video3.id.as_str()));
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn test_update_video(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        let update = VideoUpdate {
+            title: Some("Some title".into()),
+            tags: Some(vec!["tag1".into(), "tag2".into()]),
+        };
+        database
+            .videos
+            .update_video(&video.id, update)
+            .await
+            .unwrap();
+        let video = database
+            .videos
+            .get_video(&video.id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(video.video_title, Some("Some title".into()));
+        assert_eq!(video.tags(), Some(vec!["tag1".into(), "tag2".into()]));
     }
 }

@@ -634,7 +634,7 @@ export const getVideo = (id: string) => {
 export const updateVideo = (id: string, videoUpdate: VideoUpdate) => {
   return customInstance<UpdateVideo200>({
     url: `/api/library/video/${id}`,
-    method: "patch",
+    method: "put",
     headers: {"Content-Type": "application/json"},
     data: videoUpdate,
   })

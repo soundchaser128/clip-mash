@@ -119,7 +119,7 @@ pub async fn add_new_videos(
 }
 
 #[utoipa::path(
-    patch,
+    put,
     path = "/api/library/video/{id}",
     params(
         ("id" = String, Path, description = "The ID of the video to fetch")

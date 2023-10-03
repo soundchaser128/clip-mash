@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::extract::DefaultBodyLimit;
-use axum::routing::{delete, get, patch, post, put};
+use axum::routing::{delete, get, post, put};
 use axum::Router;
 use color_eyre::Report;
 use tower_http::trace::TraceLayer;
@@ -89,7 +89,7 @@ async fn main() -> Result<()> {
         // add new videos either via stash, local or url
         .route("/video", post(handlers::library::add_new_videos))
         // update video metadata
-        .route("/video/:id", patch(handlers::library::update_video))
+        .route("/video/:id", put(handlers::library::update_video))
         // remove videos that don't exist on disk
         .route("/video/cleanup", post(handlers::library::cleanup_videos))
         // list videos on stash

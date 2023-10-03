@@ -12,7 +12,7 @@ use self::find_scenes_query::{
 };
 use crate::server::types::PageParameters;
 use crate::service::funscript::FunScript;
-use crate::service::stash_config::Config;
+use crate::service::stash_config::StashConfig;
 use crate::util::add_api_key;
 use crate::Result;
 
@@ -55,11 +55,11 @@ impl From<FindScenesQueryFindScenesScenesSceneStreams> for SceneStream {
     }
 }
 
-trait MarkerInfo {
+trait MarkerLike {
     fn start(&self) -> f64;
 }
 
-impl MarkerInfo for &FindScenesQueryFindScenesScenesSceneMarkers {
+impl MarkerLike for &FindScenesQueryFindScenesScenesSceneMarkers {
     fn start(&self) -> f64 {
         self.seconds
     }
@@ -67,7 +67,7 @@ impl MarkerInfo for &FindScenesQueryFindScenesScenesSceneMarkers {
 
 fn compute_end<M>(start: f64, markers: impl IntoIterator<Item = M>, duration: f64) -> f64
 where
-    M: MarkerInfo,
+    M: MarkerLike,
 {
     markers
         .into_iter()
@@ -155,12 +155,12 @@ impl StashApi {
     }
 
     pub async fn load_config() -> Self {
-        let config = Config::get_or_empty().await;
+        let config = StashConfig::get_or_empty().await;
         StashApi::new(&config.stash_url, &config.api_key)
     }
 
     pub async fn load_config_or_fail() -> Result<Self> {
-        if let Ok(config) = Config::get().await {
+        if let Ok(config) = StashConfig::get().await {
             Ok(StashApi::new(&config.stash_url, &config.api_key))
         } else {
             bail!("no stash config found")

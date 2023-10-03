@@ -13,7 +13,6 @@ use utoipa::{IntoParams, ToSchema};
 use super::AppState;
 use crate::data::database::VideoSource;
 use crate::data::service::DataService;
-use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
@@ -203,8 +202,7 @@ pub async fn get_combined_funscript(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateFunscriptBody>,
 ) -> Result<Json<FunScript>, AppError> {
-    let api = StashApi::load_config().await;
-    let script_builder = ScriptBuilder::new(&api);
+    let script_builder = ScriptBuilder::new().await;
     let service = DataService::new(state.database.clone());
     let clips = service.convert_clips(body.clips).await?;
     let script = script_builder.combine_scripts(clips).await?;

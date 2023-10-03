@@ -253,7 +253,6 @@ impl VideoService {
 
 #[cfg(test)]
 mod tests {
-
     use crate::service::fixtures;
     use crate::Result;
 

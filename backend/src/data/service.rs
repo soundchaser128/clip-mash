@@ -2,11 +2,11 @@ use std::collections::{HashMap, HashSet};
 
 use color_eyre::eyre::bail;
 
-use super::database::{Database, DbSong};
+use super::database::{Database, DbSong, DbVideo};
 use crate::server::types::*;
 use crate::service::clip::CreateClipsOptions;
 use crate::service::generator::CompilationOptions;
-use crate::service::{Marker, Video};
+use crate::service::Marker;
 use crate::Result;
 
 pub struct DataService {
@@ -18,7 +18,7 @@ impl DataService {
         Self { db }
     }
 
-    pub async fn fetch_video(&self, id: &String) -> Result<Video> {
+    pub async fn fetch_video(&self, id: &String) -> Result<DbVideo> {
         let video = self.db.videos.get_video(id).await?;
         if let Some(video) = video {
             Ok(video.into())
@@ -27,7 +27,7 @@ impl DataService {
         }
     }
 
-    pub async fn fetch_videos(&self, ids: &[String]) -> Result<Vec<Video>> {
+    pub async fn fetch_videos(&self, ids: &[String]) -> Result<Vec<DbVideo>> {
         let mut videos = vec![];
         for id in ids {
             videos.push(self.fetch_video(id).await?);
@@ -36,7 +36,7 @@ impl DataService {
         Ok(videos)
     }
 
-    pub async fn convert_clips(&self, clips: Vec<Clip>) -> Result<Vec<(Video, Clip)>> {
+    pub async fn convert_clips(&self, clips: Vec<Clip>) -> Result<Vec<(DbVideo, Clip)>> {
         let all_video_ids: HashSet<_> = clips.iter().map(|c| &c.video_id).collect();
         let mut videos = HashMap::new();
         for id in all_video_ids {

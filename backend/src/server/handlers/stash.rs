@@ -10,7 +10,7 @@ use utoipa::IntoParams;
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
-use crate::service::stash_config::Config;
+use crate::service::stash_config::StashConfig;
 
 #[utoipa::path(
     get,
@@ -21,7 +21,7 @@ use crate::service::stash_config::Config;
 )]
 #[axum::debug_handler]
 pub async fn get_config() -> impl IntoResponse {
-    match Config::get().await {
+    match StashConfig::get().await {
         Ok(config) => Json(Some(config)),
         Err(_) => Json(None),
     }
@@ -63,7 +63,7 @@ pub async fn get_health(
 #[axum::debug_handler]
 pub async fn set_config(
     state: State<Arc<AppState>>,
-    Json(config): Json<Config>,
+    Json(config): Json<StashConfig>,
 ) -> Result<Json<&'static str>, AppError> {
     use crate::service::stash_config;
 

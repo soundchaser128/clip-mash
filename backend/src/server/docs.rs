@@ -5,7 +5,7 @@ use super::handlers::project::{CreateFunscriptBody, ProjectCreateResponse};
 use super::types::*;
 use crate::data::database::VideoSource;
 use crate::server::handlers::{library, progress, project, stash};
-use crate::service::stash_config::Config;
+use crate::service::stash_config::StashConfig;
 use crate::service::video::AddVideosRequest;
 
 #[derive(OpenApi)]
@@ -73,7 +73,7 @@ use crate::service::video::AddVideosRequest;
             UpdateMarker,
             AddVideosRequest,
             NewId,
-            Config,
+            StashConfig,
             SortDirection,
             SongDto,
             StashVideoDto,

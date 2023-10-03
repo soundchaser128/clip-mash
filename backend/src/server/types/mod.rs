@@ -11,7 +11,6 @@ use crate::data::database::{
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashMarker;
 use crate::service::video::TAG_SEPARATOR;
-use crate::service::{Video, VideoInfo};
 use crate::util::{add_api_key, expect_file_name};
 
 pub struct StashSceneWrapper<'a> {
@@ -108,26 +107,6 @@ impl Clip {
         let (start, end) = self.range;
         end - start
     }
-}
-
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct TagDto {
-    pub name: String,
-    pub id: String,
-    pub marker_count: i64,
-}
-
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct PerformerDto {
-    pub id: String,
-    pub scene_count: i64,
-    pub name: String,
-    pub image_url: Option<String>,
-    pub tags: Vec<String>,
-    pub rating: Option<i64>,
-    pub favorite: bool,
 }
 
 #[derive(Serialize, Debug, ToSchema)]
@@ -284,27 +263,6 @@ impl From<DbVideo> for VideoDto {
             source: value.source,
             duration: value.duration,
             tags,
-        }
-    }
-}
-
-impl From<Video> for VideoDto {
-    fn from(value: Video) -> Self {
-        let duration = value.duration();
-        let stash_scene_id = value.stash_scene_id();
-        VideoDto {
-            id: value.id,
-            title: value.title,
-            stash_scene_id,
-            performers: value.performers,
-            file_name: value.file_name,
-            interactive: value.interactive,
-            source: match value.info {
-                VideoInfo::Stash { .. } => VideoSource::Stash,
-                VideoInfo::LocalFile { video } => video.source,
-            },
-            duration,
-            tags: value.tags,
         }
     }
 }

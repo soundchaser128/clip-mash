@@ -4,7 +4,7 @@ use color_eyre::eyre::bail;
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::{FromRow, SqlitePool};
-use tracing::warn;
+use tracing::{warn, info};
 use utoipa::ToSchema;
 
 use self::markers::MarkersDatabase;
@@ -185,6 +185,7 @@ impl Database {
 
         let pool = SqlitePool::connect_with(options).await?;
         sqlx::migrate!().run(&pool).await?;
+        info!("ran sqlx migrations");
 
         Ok(Database {
             markers: MarkersDatabase::new(pool.clone()),

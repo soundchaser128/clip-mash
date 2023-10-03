@@ -96,7 +96,7 @@ impl VideoService {
                 duration: duration.unwrap_or_default(),
                 video_preview_image: Some(image_path.to_string()),
                 stash_scene_id: None,
-                title: None,
+                title: Some(path.file_stem().unwrap().to_string()),
                 tags: None,
             };
             info!("inserting new video {create_video:#?}");

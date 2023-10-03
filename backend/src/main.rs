@@ -6,7 +6,6 @@ use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 use color_eyre::Report;
-use tower_http::trace::TraceLayer;
 use tracing::{info, warn};
 use utoipa::OpenApi;
 use utoipa_rapidoc::RapiDoc;
@@ -36,7 +35,7 @@ fn setup_logger() {
     use tracing_subscriber::EnvFilter;
 
     if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "info,tower_http=debug");
+        env::set_var("RUST_LOG", "info");
     }
     let file_appender = tracing_appender::rolling::daily("./logs", "clip-mash.log");
 
@@ -175,7 +174,6 @@ async fn main() -> Result<()> {
         .nest("/api", api_routes)
         .fallback_service(static_files::service())
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
-        .layer(TraceLayer::new_for_http())
         .with_state(state);
 
     let host = env::args().nth(1).unwrap_or_else(|| "[::1]".to_string());

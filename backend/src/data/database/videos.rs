@@ -33,11 +33,17 @@ impl VideosDatabase {
 
     pub async fn update_video(&self, id: &str, update: VideoUpdate) -> Result<()> {
         let mut query_builder = QueryBuilder::new("UPDATE videos SET ");
+        let mut first = true;
         if let Some(title) = update.title {
             query_builder.push("video_title = ");
             query_builder.push_bind(title);
+            first = false;
         }
+
         if let Some(tags) = update.tags {
+            if !first {
+                query_builder.push(", ");
+            }
             query_builder.push("video_tags = ");
             query_builder.push_bind(tags.join(TAG_SEPARATOR));
         }
@@ -203,31 +209,24 @@ impl VideosDatabase {
         query: Option<&str>,
         params: &PageParameters,
     ) -> Result<(Vec<ListVideoDto>, usize)> {
-        let query = query
-            .map(|q| format!("%{q}%"))
-            .unwrap_or_else(|| "%".to_string());
+        let query = query.unwrap_or_default();
         let count =
             sqlx::query_scalar!("SELECT COUNT(*) FROM videos WHERE file_path LIKE $1 OR video_title LIKE $1 OR video_tags LIKE $1", query)
                 .fetch_one(&self.pool)
                 .await?;
         let limit = params.limit();
         let offset = params.offset();
-        let sort = params.sort("video_created_on", SortDirection::Desc);
+        // let sort = params.sort("video_created_on", SortDirection::Desc);
 
-        let mut records = sqlx::query!(
-            "SELECT *, m.rowid AS rowid 
-            FROM videos v 
-            LEFT JOIN markers m ON v.id = m.video_id 
-            WHERE v.file_path LIKE $1 AND v.rowid IN 
-                (SELECT rowid FROM videos WHERE file_path LIKE $1 OR video_title LIKE $1 OR video_tags LIKE $1 LIMIT $2 OFFSET $3)
-            ORDER BY $4 DESC",
-            query,
-            limit,
-            offset,
-            sort,
-        )
-        .fetch_all(&self.pool)
-        .await?;
+        let  mut records = sqlx::query!("
+            SELECT *, m.rowid AS rowid
+            FROM videos v
+            LEFT JOIN markers m ON v.id = m.video_id
+            WHERE v.rowid IN (SELECT rowid FROM videos_fts WHERE videos_fts MATCH $1 LIMIT $2 OFFSET $3)
+        ", query, limit, offset)
+            .fetch_all(&self.pool)
+            .await?;
+
         if records.is_empty() {
             Ok((vec![], count as usize))
         } else {

@@ -10,6 +10,7 @@ import {
 } from "react-icons/hi2"
 import {formatSeconds} from "../helpers"
 import React from "react"
+import EditableText from "./EditableText"
 
 interface Props {
   video: ListVideoDto
@@ -28,6 +29,7 @@ function getPreview(video: VideoDto, config?: Config): string {
 }
 
 const VideoCard: React.FC<Props> = ({video, stashConfig, actionChildren}) => {
+  const tags = video.video.tags?.filter(Boolean) ?? []
   return (
     <article
       className={clsx(
@@ -48,6 +50,17 @@ const VideoCard: React.FC<Props> = ({video, stashConfig, actionChildren}) => {
           {video.video.title || video.video.fileName}
         </h2>
         <ul className="flex flex-col gap-2 self-start">
+          {tags.length > 0 && (
+            <li>
+              <span className="inline-flex flex-wrap gap-y-1 gap-x-0.5 ">
+                {tags.map((tag) => (
+                  <span key={tag} className="badge">
+                    {tag}
+                  </span>
+                ))}
+              </span>
+            </li>
+          )}
           <li>
             <HiAdjustmentsVertical className="inline mr-2" />
             Interactive:{" "}
@@ -65,7 +78,7 @@ const VideoCard: React.FC<Props> = ({video, stashConfig, actionChildren}) => {
           </li>
           <li>
             <HiArrowDownTray className="inline mr-2" />
-            Source: {video.video.source}
+            Source: <strong>{video.video.source}</strong>
           </li>
           <li>
             <HiClock className="inline mr-2" />

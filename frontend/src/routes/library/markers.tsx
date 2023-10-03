@@ -17,6 +17,7 @@ import {updateForm} from "../actions"
 import {formatSeconds, sumDurations} from "../../helpers"
 import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
+import EditableText from "../../components/EditableText"
 
 function getPreview(marker: MarkerDto) {
   if (marker.screenshotUrl?.includes("stash")) {
@@ -258,7 +259,7 @@ const SelectMarkers: React.FC = () => {
 
               <div className="card-body">
                 <h2 className="card-title">
-                  {[marker.primaryTag, ...marker.tags].join(", ")}
+                  <EditableText value={marker.primaryTag} />
                 </h2>
                 <p className="truncate">
                   <strong>

@@ -1,37 +1,37 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT m.video_id, m.rowid, m.start_time, m.end_time, \n                    m.title, v.file_path, m.index_within_video, m.marker_preview_image, \n                    v.interactive, m.marker_created_on, v.video_title\n            FROM markers m\n            INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.title LIKE $1\n            ORDER BY $2\n            LIMIT $3\n            OFFSET $4\n        ",
+  "query": "SELECT \n                m.rowid, m.title, m.video_id, v.file_path, m.start_time, \n                m.end_time, m.index_within_video, m.marker_preview_image, \n                v.interactive, m.marker_created_on, v.video_title, v.source\n            FROM markers m INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.rowid = $1",
   "describe": {
     "columns": [
       {
-        "name": "video_id",
-        "ordinal": 0,
-        "type_info": "Text"
-      },
-      {
         "name": "rowid",
-        "ordinal": 1,
+        "ordinal": 0,
         "type_info": "Int64"
       },
       {
-        "name": "start_time",
-        "ordinal": 2,
-        "type_info": "Float"
-      },
-      {
-        "name": "end_time",
-        "ordinal": 3,
-        "type_info": "Float"
-      },
-      {
         "name": "title",
-        "ordinal": 4,
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_id",
+        "ordinal": 2,
         "type_info": "Text"
       },
       {
         "name": "file_path",
-        "ordinal": 5,
+        "ordinal": 3,
         "type_info": "Text"
+      },
+      {
+        "name": "start_time",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "end_time",
+        "ordinal": 5,
+        "type_info": "Float"
       },
       {
         "name": "index_within_video",
@@ -57,10 +57,15 @@
         "name": "video_title",
         "ordinal": 10,
         "type_info": "Text"
+      },
+      {
+        "name": "source",
+        "ordinal": 11,
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 4
+      "Right": 1
     },
     "nullable": [
       false,
@@ -73,8 +78,9 @@
       true,
       false,
       false,
-      true
+      true,
+      false
     ]
   },
-  "hash": "7cd80e8336af05840b657067332a8675b000c1fa4ad17eb1ab227c3fcf9b2407"
+  "hash": "a45407ba84d2ebb35f06f13d7bc81c3fcecbafdb161dd2fcc60337b7f5e7121a"
 }

@@ -1,37 +1,37 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT \n                m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, \n                m.index_within_video, m.marker_preview_image, v.interactive, \n                m.marker_created_on, v.video_title\n            FROM markers m INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.marker_preview_image IS NULL",
+  "query": "SELECT m.video_id, m.rowid, m.start_time, m.end_time, \n                    m.title, v.file_path, m.index_within_video, m.marker_preview_image, \n                    v.interactive, m.marker_created_on, v.video_title, v.source\n            FROM markers m\n            INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.title LIKE $1\n            ORDER BY $2\n            LIMIT $3\n            OFFSET $4\n        ",
   "describe": {
     "columns": [
       {
-        "name": "rowid",
+        "name": "video_id",
         "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "rowid",
+        "ordinal": 1,
         "type_info": "Int64"
       },
       {
-        "name": "title",
-        "ordinal": 1,
-        "type_info": "Text"
-      },
-      {
-        "name": "video_id",
-        "ordinal": 2,
-        "type_info": "Text"
-      },
-      {
-        "name": "file_path",
-        "ordinal": 3,
-        "type_info": "Text"
-      },
-      {
         "name": "start_time",
-        "ordinal": 4,
+        "ordinal": 2,
         "type_info": "Float"
       },
       {
         "name": "end_time",
-        "ordinal": 5,
+        "ordinal": 3,
         "type_info": "Float"
+      },
+      {
+        "name": "title",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "file_path",
+        "ordinal": 5,
+        "type_info": "Text"
       },
       {
         "name": "index_within_video",
@@ -57,10 +57,15 @@
         "name": "video_title",
         "ordinal": 10,
         "type_info": "Text"
+      },
+      {
+        "name": "source",
+        "ordinal": 11,
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 4
     },
     "nullable": [
       false,
@@ -73,8 +78,9 @@
       true,
       false,
       false,
-      true
+      true,
+      false
     ]
   },
-  "hash": "44c903fa1e38b168d293b7116b84d380fadd933657e25d110b45da6dd9dcdce9"
+  "hash": "a1ad44f32be218fa3ff1f3988dc45eccfd0381b64f964f4c060484617db95c7f"
 }

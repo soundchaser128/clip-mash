@@ -171,6 +171,12 @@ pub struct Database {
     pub music: MusicDatabase,
 }
 
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct VideoUpdate {
+    pub title: Option<String>,
+    pub tags: Option<Vec<String>>,
+}
+
 impl Database {
     pub async fn new(path: &str) -> Result<Self> {
         let options = SqliteConnectOptions::from_str(&format!("sqlite:{path}?mode=rwc"))?

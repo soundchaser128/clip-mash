@@ -21,7 +21,7 @@ import {
   useRevalidator,
   useSearchParams,
 } from "react-router-dom"
-import {ListVideoDto, cleanupVideos} from "../../api"
+import {ListVideoDto, cleanupVideos, updateVideo} from "../../api"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
 import {listVideos} from "../../api"
@@ -97,6 +97,10 @@ export default function ListVideos() {
     }
   }
 
+  const onEditTitle = async (id: string, title: string) => {
+    await updateVideo(id, {title})
+  }
+
   return (
     <>
       <Outlet />
@@ -162,6 +166,7 @@ export default function ListVideos() {
             key={video.video.id}
             video={video}
             stashConfig={config}
+            onEditTitle={(title) => onEditTitle(video.video.id, title)}
             actionChildren={
               <>
                 <span />

@@ -16,7 +16,7 @@ use crate::service::stash_config::StashConfig;
     get,
     path = "/api/stash/config",
     responses(
-        (status = 200, description = "The stash configuration if it exists", body = Config),
+        (status = 200, description = "The stash configuration if it exists", body = StashConfig),
     )
 )]
 #[axum::debug_handler]
@@ -55,7 +55,7 @@ pub async fn get_health(
 #[utoipa::path(
     post,
     path = "/api/stash/config",
-    request_body = Config,
+    request_body = StashConfig,
     responses(
         (status = 204, description = "Stash configuration successfully set", body = ()),
     )

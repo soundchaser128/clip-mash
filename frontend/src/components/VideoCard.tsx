@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import {Config, ListVideoDto, VideoDto} from "../api"
+import {StashConfig, ListVideoDto, VideoDto} from "../api"
 import {
   HiAdjustmentsVertical,
   HiArrowDownTray,
@@ -14,11 +14,12 @@ import EditableText from "./EditableText"
 
 interface Props {
   video: ListVideoDto
-  stashConfig?: Config
+  stashConfig?: StashConfig
   actionChildren?: React.ReactNode
+  onEditTitle: (title: string) => void
 }
 
-function getPreview(video: VideoDto, config?: Config): string {
+function getPreview(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
     return `${config.stashUrl}/scene/${video.stashSceneId!}/screenshot?apikey=${
       config.apiKey
@@ -28,7 +29,12 @@ function getPreview(video: VideoDto, config?: Config): string {
   }
 }
 
-const VideoCard: React.FC<Props> = ({video, stashConfig, actionChildren}) => {
+const VideoCard: React.FC<Props> = ({
+  video,
+  stashConfig,
+  actionChildren,
+  onEditTitle,
+}) => {
   const tags = video.video.tags?.filter(Boolean) ?? []
   return (
     <article
@@ -47,7 +53,10 @@ const VideoCard: React.FC<Props> = ({video, stashConfig, actionChildren}) => {
       </figure>
       <div className="card-body">
         <h2 className="card-title">
-          {video.video.title || video.video.fileName}
+          <EditableText
+            value={video.video.title || video.video.fileName}
+            onSave={onEditTitle}
+          />
         </h2>
         <ul className="flex flex-col gap-2 self-start">
           {tags.length > 0 && (

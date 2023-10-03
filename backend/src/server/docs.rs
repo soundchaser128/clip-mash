@@ -3,7 +3,7 @@ use utoipa::OpenApi;
 use super::handlers::library::VideoCleanupResponse;
 use super::handlers::project::{CreateFunscriptBody, ProjectCreateResponse};
 use super::types::*;
-use crate::data::database::VideoSource;
+use crate::data::database::{VideoSource, VideoUpdate};
 use crate::server::handlers::{library, progress, project, stash};
 use crate::service::stash_config::StashConfig;
 use crate::service::video::AddVideosRequest;
@@ -12,6 +12,7 @@ use crate::service::video::AddVideosRequest;
 #[openapi(
     paths(
         library::add_new_videos,
+        library::update_video,
         library::create_new_marker,
         library::delete_marker,
         library::detect_markers,
@@ -79,6 +80,7 @@ use crate::service::video::AddVideosRequest;
             StashVideoDto,
             ProjectCreateResponse,
             VideoCleanupResponse,
+            VideoUpdate,
         )
     ),
     tags(

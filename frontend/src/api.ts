@@ -23,6 +23,24 @@ export type DetectMarkersParams = {
   threshold?: number | null
 }
 
+export type UpdateVideo200 = unknown | null
+
+export type ListStashVideosParams = {
+  query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
+export type ListVideosParams = {
+  query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
 export type SplitMarkerParams = {
   /**
    * The time to split the marker at
@@ -32,12 +50,25 @@ export type SplitMarkerParams = {
 
 export type DeleteMarker200 = unknown | null
 
+export type ListMarkersParams = {
+  query?: string | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
 
 export interface WeightedRandomClipOptions {
   clipLengths: PmvClipOptions
   length: number
   weights: WeightedRandomClipOptionsWeightsItemItem[][]
+}
+
+export interface VideoUpdate {
+  tags?: string[] | null
+  title?: string | null
 }
 
 export type VideoSource = (typeof VideoSource)[keyof typeof VideoSource]
@@ -72,6 +103,7 @@ export const VideoQuality = {
 export interface VideoDto {
   duration: number
   fileName: string
+  filePath?: string | null
   id: string
   interactive: boolean
   performers: string[]
@@ -148,6 +180,11 @@ export interface StashVideoDtoPage {
   totalPages: number
 }
 
+export interface StashConfig {
+  apiKey: string
+  stashUrl: string
+}
+
 export type SortDirection = (typeof SortDirection)[keyof typeof SortDirection]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
@@ -155,30 +192,6 @@ export const SortDirection = {
   asc: "asc",
   desc: "desc",
 } as const
-
-export type ListStashVideosParams = {
-  query?: string | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
-
-export type ListVideosParams = {
-  query?: string | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
-
-export type ListMarkersParams = {
-  query?: string | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
 
 export interface SongDto {
   beats: number[]
@@ -231,8 +244,6 @@ export interface Progress {
   videoId: string
 }
 
-export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
-
 export type PmvClipOptionsOneOfFourAllOfType =
   (typeof PmvClipOptionsOneOfFourAllOfType)[keyof typeof PmvClipOptionsOneOfFourAllOfType]
 
@@ -248,6 +259,15 @@ export type PmvClipOptionsOneOfFourAllOf = {
 export type PmvClipOptionsOneOfFour = SongClipOptions &
   PmvClipOptionsOneOfFourAllOf
 
+export type PmvClipOptionsOneOfAllOf = {
+  type: PmvClipOptionsOneOfAllOfType
+}
+
+export type PmvClipOptionsOneOf = RandomizedClipOptions &
+  PmvClipOptionsOneOfAllOf
+
+export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
+
 export type PmvClipOptionsOneOfAllOfType =
   (typeof PmvClipOptionsOneOfAllOfType)[keyof typeof PmvClipOptionsOneOfAllOfType]
 
@@ -255,13 +275,6 @@ export type PmvClipOptionsOneOfAllOfType =
 export const PmvClipOptionsOneOfAllOfType = {
   randomized: "randomized",
 } as const
-
-export type PmvClipOptionsOneOfAllOf = {
-  type: PmvClipOptionsOneOfAllOfType
-}
-
-export type PmvClipOptionsOneOf = RandomizedClipOptions &
-  PmvClipOptionsOneOfAllOf
 
 export interface NewId {
   id: string
@@ -388,11 +401,6 @@ export interface CreateClipsBody {
 export interface CreateBeatFunscriptBody {
   songIds: number[]
   strokeType: StrokeType
-}
-
-export interface Config {
-  apiKey: string
-  stashUrl: string
 }
 
 export type ClipsResponseStreams = {[key: string]: string}
@@ -623,6 +631,15 @@ export const getVideo = (id: string) => {
   })
 }
 
+export const updateVideo = (id: string, videoUpdate: VideoUpdate) => {
+  return customInstance<UpdateVideo200>({
+    url: `/api/library/video/${id}`,
+    method: "patch",
+    headers: {"Content-Type": "application/json"},
+    data: videoUpdate,
+  })
+}
+
 export const detectMarkers = (id: string, params?: DetectMarkersParams) => {
   return customInstance<MarkerDto[]>({
     url: `/api/library/video/${id}/detect-markers`,
@@ -670,7 +687,6 @@ export const getBeatFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
-    params: createBeatFunscriptBody,
   })
 }
 
@@ -682,7 +698,6 @@ export const getCombinedFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
-    params: createFunscriptBody,
   })
 }
 
@@ -691,15 +706,15 @@ export const getNewId = () => {
 }
 
 export const getConfig = () => {
-  return customInstance<Config>({url: `/api/stash/config`, method: "get"})
+  return customInstance<StashConfig>({url: `/api/stash/config`, method: "get"})
 }
 
-export const setConfig = (config: Config) => {
+export const setConfig = (stashConfig: StashConfig) => {
   return customInstance<SetConfig204>({
     url: `/api/stash/config`,
     method: "post",
     headers: {"Content-Type": "application/json"},
-    data: config,
+    data: stashConfig,
   })
 }
 
@@ -743,6 +758,9 @@ export type ListStashVideosResult = NonNullable<
   Awaited<ReturnType<typeof listStashVideos>>
 >
 export type GetVideoResult = NonNullable<Awaited<ReturnType<typeof getVideo>>>
+export type UpdateVideoResult = NonNullable<
+  Awaited<ReturnType<typeof updateVideo>>
+>
 export type DetectMarkersResult = NonNullable<
   Awaited<ReturnType<typeof detectMarkers>>
 >

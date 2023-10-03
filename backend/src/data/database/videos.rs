@@ -8,8 +8,10 @@ use tracing::info;
 
 use super::{
     AllVideosFilter, CreateVideo, DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers,
+    VideoUpdate,
 };
 use crate::server::types::{ListVideoDto, PageParameters, SortDirection};
+use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
 
 #[derive(Clone)]
@@ -27,6 +29,27 @@ impl VideosDatabase {
             .fetch_optional(&self.pool)
             .await?;
         Ok(video)
+    }
+
+    pub async fn update_video(&self, id: &str, update: VideoUpdate) -> Result<()> {
+        let mut query_builder = QueryBuilder::new("UPDATE videos SET ");
+        let mut list = query_builder.separated(", ");
+        if let Some(title) = update.title {
+            list.push("video_title = ");
+            list.push_bind(title);
+        }
+        if let Some(tags) = update.tags {
+            list.push("video_tags = ");
+            list.push_bind(tags.join(TAG_SEPARATOR));
+        }
+
+        list.push(" WHERE id = ");
+        list.push_bind(id);
+
+        let query = query_builder.build();
+        query.execute(&self.pool).await?;
+
+        Ok(())
     }
 
     pub async fn video_exists_by_path(&self, path: &str) -> Result<bool> {

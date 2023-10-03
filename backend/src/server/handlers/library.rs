@@ -11,6 +11,7 @@ use tower::ServiceExt;
 use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
 
+use crate::data::database::VideoUpdate;
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -115,6 +116,27 @@ pub async fn add_new_videos(
         .collect();
 
     Ok(Json(new_videos))
+}
+
+#[utoipa::path(
+    patch,
+    path = "/api/library/video/{id}",
+    params(
+        ("id" = String, Path, description = "The ID of the video to fetch")
+    ),
+    request_body = VideoUpdate,
+    responses(
+        (status = 200, description = "Update video metadata", body = ()),
+    )
+)]
+pub async fn update_video(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(body): Json<VideoUpdate>,
+) -> Result<impl IntoResponse, AppError> {
+    state.database.videos.update_video(&id, body).await?;
+
+    Ok(Json("OK"))
 }
 
 #[derive(Serialize, ToSchema)]

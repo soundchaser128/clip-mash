@@ -144,7 +144,7 @@ impl MarkersDatabase {
         Ok(())
     }
 
-    #[cfg(test)]
+    #[allow(unused)]
     pub async fn get_all_markers(&self) -> Result<Vec<DbMarkerWithVideo>> {
         let markers = sqlx::query_as!(
             DbMarkerWithVideo,

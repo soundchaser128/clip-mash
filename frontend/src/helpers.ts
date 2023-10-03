@@ -1,4 +1,4 @@
-import {format, formatDuration} from "date-fns"
+import {formatDuration} from "date-fns"
 import {SelectedMarker} from "./api"
 import {FormState} from "./types/form-state"
 import {scaleSequential} from "d3-scale"

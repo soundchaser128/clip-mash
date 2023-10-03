@@ -12,11 +12,11 @@ use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::data::stash_api::StashApi;
-use crate::server::dtos::Page;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::server::types::{
-    CreateMarker, ListVideoDto, MarkerDto, PageParameters, StashVideoDto, UpdateMarker, VideoDto,
+    CreateMarker, ListVideoDto, MarkerDto, Page, PageParameters, StashVideoDto, UpdateMarker,
+    VideoDto,
 };
 use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;

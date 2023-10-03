@@ -65,6 +65,48 @@ impl VideoService {
         .await?
     }
 
+    async fn add_local_video(&self, path: &Utf8Path) -> Result<Option<DbVideo>> {
+        let video_exists = self
+            .database
+            .videos
+            .video_exists_by_path(path.as_str())
+            .await?;
+        info!("video at path {path} exists: {video_exists}");
+        if !video_exists {
+            let interactive = path.with_extension("funscript").is_file();
+            let ffprobe = ffprobe(&path, &self.ffmpeg_location).await;
+            if let Err(e) = ffprobe {
+                warn!("skipping video {path} because ffprobe failed with error {e}");
+                return Ok(None);
+            }
+            let ffprobe = ffprobe.unwrap();
+            let duration = ffprobe.duration();
+            let id = generate_id();
+            let preview_generator =
+                PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
+            let image_path = preview_generator
+                .generate_preview(&id, &path, duration.map_or(0.0, |d| d / 2.0))
+                .await?;
+
+            let create_video = CreateVideo {
+                id,
+                file_path: path.to_string(),
+                interactive,
+                source: VideoSource::Folder,
+                duration: duration.unwrap_or_default(),
+                video_preview_image: Some(image_path.to_string()),
+                stash_scene_id: None,
+                title: None,
+                tags: None,
+            };
+            info!("inserting new video {create_video:#?}");
+            let video = self.database.videos.persist_video(&create_video).await?;
+            Ok(Some(video))
+        } else {
+            Ok(None)
+        }
+    }
+
     async fn add_new_local_videos(
         &self,
         path: impl AsRef<Utf8Path>,
@@ -75,43 +117,7 @@ impl VideoService {
         debug!("found files {entries:?} (recurse = {recurse})");
         for path in entries {
             if path.extension() == Some("mp4") || path.extension() == Some("m4v") {
-                let video_exists = self
-                    .database
-                    .videos
-                    .video_exists_by_path(path.as_str())
-                    .await?;
-                info!("video at path {path} exists: {video_exists}");
-                if !video_exists {
-                    let interactive = path.with_extension("funscript").is_file();
-                    let ffprobe = ffprobe(&path, &self.ffmpeg_location).await;
-                    if let Err(e) = ffprobe {
-                        warn!("skipping video {path} because ffprobe failed with error {e}");
-                        continue;
-                    }
-                    let ffprobe = ffprobe.unwrap();
-                    let duration = ffprobe.duration();
-                    let id = generate_id();
-                    let preview_generator = PreviewGenerator::new(
-                        self.directories.clone(),
-                        self.ffmpeg_location.clone(),
-                    );
-                    let image_path = preview_generator
-                        .generate_preview(&id, &path, duration.map_or(0.0, |d| d / 2.0))
-                        .await?;
-
-                    let create_video = CreateVideo {
-                        id,
-                        file_path: path.to_string(),
-                        interactive,
-                        source: VideoSource::Folder,
-                        duration: duration.unwrap_or_default(),
-                        video_preview_image: Some(image_path.to_string()),
-                        stash_scene_id: None,
-                        title: None,
-                        tags: None,
-                    };
-                    info!("inserting new video {create_video:#?}");
-                    let video = self.database.videos.persist_video(&create_video).await?;
+                if let Some(video) = self.add_local_video(&path).await? {
                     videos.push(video);
                 }
             }

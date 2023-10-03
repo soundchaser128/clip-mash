@@ -129,6 +129,9 @@ impl VideosDatabase {
             let path = Utf8Path::new(&video.file_path);
             if !path.exists() {
                 info!("video {} does not exist, deleting", video.id);
+                sqlx::query!("DELETE FROM markers WHERE video_id = $1", video.id)
+                    .execute(&self.pool)
+                    .await?;
                 sqlx::query!("DELETE FROM videos WHERE id = $1", video.id)
                     .execute(&self.pool)
                     .await?;

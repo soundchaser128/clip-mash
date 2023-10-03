@@ -39,6 +39,8 @@ const VideoCard: React.FC<Props> = ({video, stashConfig, actionChildren}) => {
         <img
           className="aspect-[16/9] object-cover w-full"
           src={getPreview(video.video, stashConfig)}
+          width={499}
+          height={281}
         />
       </figure>
       <div className="card-body">

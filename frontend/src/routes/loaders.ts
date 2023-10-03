@@ -15,6 +15,8 @@ import {
 import {FormState} from "../types/form-state"
 import {getNewId, getVideo, listMarkers} from "../api"
 
+export const DEFAULT_PAGE_LENGTH = 24
+
 const getClipLengths = (state: FormState): PmvClipOptions => {
   if (state.songs && state.songs.length) {
     return {
@@ -146,7 +148,7 @@ export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const videos = await listStashVideos({
     query,
     page: Number(url.searchParams.get("page")) || 1,
-    size: 18,
+    size: DEFAULT_PAGE_LENGTH,
   })
 
   return videos

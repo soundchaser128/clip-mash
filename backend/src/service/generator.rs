@@ -9,7 +9,7 @@ use tracing::{debug, enabled, info, Level};
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
-use super::streams::StreamUrlService;
+use super::streams::{LocalVideoSource, StreamUrlService};
 use super::Marker;
 use crate::data::database::{Database, DbSong};
 use crate::data::stash_api::StashMarker;
@@ -108,7 +108,7 @@ impl CompilationGenerator {
         ids.dedup();
 
         let videos = self.database.videos.get_videos_by_ids(&ids).await?;
-        Ok(service.get_clip_streams(clips, &videos))
+        Ok(service.get_clip_streams(clips, &videos, LocalVideoSource::File))
     }
 
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {

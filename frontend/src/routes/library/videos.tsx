@@ -28,11 +28,12 @@ import {listVideos} from "../../api"
 import {FormStage} from "../../types/form-state"
 import VideoCard from "../../components/VideoCard"
 import {useConfig} from "../../hooks/useConfig"
+import {DEFAULT_PAGE_LENGTH} from "../loaders"
 
 export const loader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
   const query = url.searchParams
-  query.set("size", "18")
+  query.set("size", DEFAULT_PAGE_LENGTH.toString())
   const object = Object.fromEntries(query.entries())
   const videos = await listVideos(object)
 

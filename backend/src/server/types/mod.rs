@@ -203,6 +203,7 @@ pub struct VideoDto {
     pub title: String,
     pub performers: Vec<String>,
     pub file_name: String,
+    pub file_path: Option<String>,
     pub interactive: bool,
     pub source: VideoSource,
     pub duration: f64,
@@ -218,6 +219,10 @@ impl VideoLike for VideoDto {
     fn stash_scene_id(&self) -> Option<i64> {
         self.stash_scene_id
     }
+
+    fn file_path(&self) -> Option<&str> {
+        self.file_path.as_deref()
+    }
 }
 
 impl From<FindScenesQueryFindScenesScenes> for VideoDto {
@@ -227,6 +232,7 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
         VideoDto {
             id: value.id.clone(),
             stash_scene_id: Some(value.id.parse().expect("invalid scene id")),
+            file_path: None,
             title: value
                 .title
                 .or(value.files.get(0).map(|m| m.basename.clone()))
@@ -263,6 +269,7 @@ impl From<DbVideo> for VideoDto {
             source: value.source,
             duration: value.duration,
             tags,
+            file_path: Some(value.file_path),
         }
     }
 }
@@ -679,4 +686,6 @@ pub trait VideoLike {
     fn video_id(&self) -> &str;
 
     fn stash_scene_id(&self) -> Option<i64>;
+
+    fn file_path(&self) -> Option<&str>;
 }

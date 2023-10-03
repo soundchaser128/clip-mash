@@ -17,7 +17,7 @@ use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::funscript::{self, FunScript, ScriptBuilder};
-use crate::service::streams::StreamUrlService;
+use crate::service::streams::{LocalVideoSource, StreamUrlService};
 use crate::util::generate_id;
 
 #[utoipa::path(
@@ -55,7 +55,7 @@ pub async fn fetch_clips(
         .collect();
 
     let stream_service = StreamUrlService::new().await;
-    let streams = stream_service.get_clip_streams(&clips, &videos);
+    let streams = stream_service.get_clip_streams(&clips, &videos, LocalVideoSource::Url);
 
     let response = ClipsResponse {
         clips,

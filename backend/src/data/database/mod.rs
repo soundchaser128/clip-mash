@@ -86,6 +86,10 @@ impl VideoLike for DbVideo {
     fn stash_scene_id(&self) -> Option<i64> {
         self.stash_scene_id
     }
+
+    fn file_path(&self) -> Option<&str> {
+        Some(self.file_path.as_str())
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -3,38 +3,44 @@ import {useForm} from "react-hook-form"
 import {useNavigate} from "react-router-dom"
 import {FormStage, FormState} from "../types/form-state"
 import {updateForm} from "./actions"
-import {HiChevronRight} from "react-icons/hi2"
+import {HiArrowsRightLeft, HiChevronRight} from "react-icons/hi2"
 
 type Inputs = Pick<
   FormState,
-  | "outputFps"
-  | "outputResolution"
-  | "videoCodec"
-  | "videoQuality"
-  | "encodingEffort"
->
+  "outputFps" | "videoCodec" | "videoQuality" | "encodingEffort"
+> & {outputWidth: number; outputHeight: number}
 
 const defaultOptions: Inputs = {
   outputFps: 30,
-  outputResolution: "720",
   videoCodec: "h264",
   videoQuality: "medium",
   encodingEffort: "medium",
+  outputWidth: 1280,
+  outputHeight: 720,
 }
 
 function VideoOptions() {
   const {actions, state} = useStateMachine({updateForm})
   const navigate = useNavigate()
-  const {register, handleSubmit} = useForm<Inputs>({
+  const {register, handleSubmit, setValue, watch} = useForm<Inputs>({
     defaultValues: {...defaultOptions, ...state.data},
   })
+
+  const width = watch("outputWidth")
+  const height = watch("outputHeight")
 
   const onSubmit = (values: Inputs) => {
     actions.updateForm({
       ...values,
       stage: FormStage.PreviewClips,
+      outputResolution: [values.outputWidth, values.outputHeight],
     })
     navigate("/clips")
+  }
+
+  const onSwapResolutionValues = () => {
+    setValue("outputWidth", height)
+    setValue("outputHeight", width)
   }
 
   return (
@@ -46,17 +52,26 @@ function VideoOptions() {
             <label className="label">
               <span className="label-text">Output resolution</span>
             </label>
-            <select
-              className="select select-bordered"
-              {...register("outputResolution")}
-            >
-              <option disabled value="none">
-                Select resolution
-              </option>
-              <option value="720">1280x720</option>
-              <option value="1080">1920x1080</option>
-              <option value="4K">3840x2160</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                className="input input-bordered"
+                {...register("outputWidth", {valueAsNumber: true})}
+              />
+              <span>x</span>
+              <input
+                type="number"
+                className="input input-bordered"
+                {...register("outputHeight", {valueAsNumber: true})}
+              />
+              <button
+                onClick={onSwapResolutionValues}
+                type="button"
+                className="btn btn-square btn-sm"
+              >
+                <HiArrowsRightLeft />
+              </button>
+            </div>
           </div>
 
           <div className="form-control">

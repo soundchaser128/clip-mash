@@ -78,16 +78,6 @@ export const VideoSource = {
   Stash: "Stash",
 } as const
 
-export type VideoResolution =
-  (typeof VideoResolution)[keyof typeof VideoResolution]
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const VideoResolution = {
-  NUMBER_720: "720",
-  NUMBER_1080: "1080",
-  "4K": "4K",
-} as const
-
 export type VideoQuality = (typeof VideoQuality)[keyof typeof VideoQuality]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
@@ -262,6 +252,10 @@ export type PmvClipOptionsOneOfFourAllOf = {
 export type PmvClipOptionsOneOfFour = SongClipOptions &
   PmvClipOptionsOneOfFourAllOf
 
+export type PmvClipOptionsOneOfAllOf = {
+  type: PmvClipOptionsOneOfAllOfType
+}
+
 export type PmvClipOptionsOneOf = RandomizedClipOptions &
   PmvClipOptionsOneOfAllOf
 
@@ -274,10 +268,6 @@ export type PmvClipOptionsOneOfAllOfType =
 export const PmvClipOptionsOneOfAllOfType = {
   randomized: "randomized",
 } as const
-
-export type PmvClipOptionsOneOfAllOf = {
-  type: PmvClipOptionsOneOfAllOfType
-}
 
 export interface NewId {
   id: string
@@ -364,13 +354,15 @@ export const EncodingEffort = {
   high: "high",
 } as const
 
+export type CreateVideoBodyOutputResolutionItem = number & number
+
 export interface CreateVideoBody {
   clips: Clip[]
   encodingEffort: EncodingEffort
   fileName: string
   musicVolume?: number | null
   outputFps: number
-  outputResolution: VideoResolution
+  outputResolution: CreateVideoBodyOutputResolutionItem[]
   selectedMarkers: SelectedMarker[]
   songIds: number[]
   videoCodec: VideoCodec
@@ -390,7 +382,6 @@ export interface CreateMarker {
 
 export interface CreateFunscriptBody {
   clips: Clip[]
-  source: VideoSource
 }
 
 export interface CreateClipsBody {
@@ -693,10 +684,10 @@ export const getBeatFunscript = (
 ) => {
   return customInstance<Blob>({
     url: `/api/project/funscript/beat`,
-    method: "get",
+    method: "post",
     headers: {"Content-Type": "application/json"},
-    responseType: "blob",
     data: createBeatFunscriptBody,
+    responseType: "blob",
   })
 }
 
@@ -705,10 +696,10 @@ export const getCombinedFunscript = (
 ) => {
   return customInstance<Blob>({
     url: `/api/project/funscript/combined`,
-    method: "get",
+    method: "post",
     headers: {"Content-Type": "application/json"},
-    responseType: "blob",
     data: createFunscriptBody,
+    responseType: "blob",
   })
 }
 

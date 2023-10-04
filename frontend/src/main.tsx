@@ -47,6 +47,7 @@ import SelectVideos from "./routes/library/add/folder"
 import AddStashVideoPage from "./routes/library/add/stash"
 import {ConfigProvider} from "./hooks/useConfig"
 import StashConfigPage from "./routes/stash-config"
+import FunscriptPage from "./routes/funscript"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -273,6 +274,10 @@ const router = createBrowserRouter([
           {
             path: "generate",
             element: <Progress />,
+          },
+          {
+            path: "funscript",
+            element: <FunscriptPage />,
           },
         ],
       },

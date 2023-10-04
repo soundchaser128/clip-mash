@@ -97,7 +97,7 @@ function Progress() {
     const response = await createVideo(data)
     setFinalFileName(response.finalFileName)
     actions.updateForm({
-      fileName: response.finalFileName,
+      finalFileName: response.finalFileName,
     })
 
     eventSource.current = openEventSource()
@@ -192,7 +192,7 @@ function Progress() {
             </div>
             {interactive && (
               <div className="flex flex-col">
-                <Link className="btn btn-primary btn-lg" to="/stash/funscript">
+                <Link className="btn btn-primary btn-lg" to="/funscript">
                   <HiCodeBracket className="w-6 h-6 mr-2" />
                   Create funscript
                 </Link>

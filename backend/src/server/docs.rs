@@ -63,7 +63,6 @@ use crate::service::video::AddVideosRequest;
             Beats,
             CreateVideoBody,
             EncodingEffort,
-            VideoResolution,
             VideoCodec,
             VideoQuality,
             Progress,

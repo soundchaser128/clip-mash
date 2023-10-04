@@ -1,6 +1,10 @@
 import {useStateMachine} from "little-state-machine"
 import {useRef, useState} from "react"
-import {CreateBeatFunscriptBody} from "../api"
+import {
+  CreateBeatFunscriptBody,
+  getBeatFunscript,
+  getCombinedFunscript,
+} from "../api"
 import {HiCodeBracket} from "react-icons/hi2"
 import ExternalLink from "../components/ExternalLink"
 
@@ -27,12 +31,8 @@ const FunscriptPage = () => {
         },
       },
     } satisfies CreateBeatFunscriptBody
-    const response = await fetch("/api/funscript/beat", {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: {"content-type": "application/json"},
-    })
-    const script = await response.blob()
+
+    const script = await getBeatFunscript(data)
     const file = finalFileName.replace(".mp4", ".funscript")
     const downloadUrl = URL.createObjectURL(script)
     if (downloadLink.current) {
@@ -48,14 +48,9 @@ const FunscriptPage = () => {
   ) => {
     e.preventDefault()
     setCreatingScript(true)
-    const body = JSON.stringify(state.data)
-    const response = await fetch("/api/funscript/combined", {
-      method: "POST",
-      body,
-      headers: {"content-type": "application/json"},
+    const script = await getCombinedFunscript({
+      clips: state.data.clips!,
     })
-
-    const script = await response.blob()
     const file = finalFileName.replace(".mp4", ".funscript")
     const downloadUrl = URL.createObjectURL(script)
     if (downloadLink.current) {

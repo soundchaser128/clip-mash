@@ -29,7 +29,7 @@ export interface FormState {
   recurse?: boolean
   clipOrder?: ClipOrder
   clipDuration?: number
-  outputResolution?: "720" | "1080" | "4K"
+  outputResolution?: [number, number]
   outputFps?: number
   selectedMarkers?: SelectedMarker[]
   splitClips?: boolean

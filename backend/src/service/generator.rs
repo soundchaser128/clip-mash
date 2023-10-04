@@ -14,7 +14,7 @@ use super::Marker;
 use crate::data::database::{Database, DbSong};
 use crate::data::stash_api::StashMarker;
 use crate::helpers::estimator::Estimator;
-use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality, VideoResolution};
+use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
 use crate::Result;
 
@@ -23,7 +23,7 @@ pub struct CompilationOptions {
     pub video_id: String,
     pub clips: Vec<Clip>,
     pub markers: Vec<Marker>,
-    pub output_resolution: VideoResolution,
+    pub output_resolution: (u32, u32),
     pub output_fps: u32,
     pub file_name: String,
     pub songs: Vec<DbSong>,
@@ -60,9 +60,9 @@ fn get_clip_file_name(
     start: f64,
     end: f64,
     codec: VideoCodec,
-    resolution: VideoResolution,
+    (x_res, y_res): (u32, u32),
 ) -> String {
-    format!("{video_id}_{start}-{end}-{codec}-{resolution}.mp4")
+    format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}.mp4")
 }
 
 #[derive(Debug)]
@@ -263,7 +263,7 @@ impl CompilationGenerator {
                 .find(|m| &m.id == marker_id)
                 .expect(&format!("no marker with ID {marker_id} found"));
             let url = &stream_urls[&marker.video_id];
-            let (width, height) = options.output_resolution.resolution();
+            let (width, height) = options.output_resolution;
             let out_file = video_dir.join(get_clip_file_name(
                 &marker.video_id,
                 *start,

@@ -11,7 +11,6 @@ use tracing::{debug, error, info};
 use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
-use crate::data::database::VideoSource;
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
@@ -188,11 +187,10 @@ pub async fn download_video(
 #[derive(Deserialize, ToSchema)]
 pub struct CreateFunscriptBody {
     pub clips: Vec<Clip>,
-    pub source: VideoSource,
 }
 
 #[utoipa::path(
-    get,
+    post,
     path = "/api/project/funscript/combined",
     request_body = CreateFunscriptBody,
     responses(
@@ -213,7 +211,7 @@ pub async fn get_combined_funscript(
 }
 
 #[utoipa::path(
-    get,
+    post,
     path = "/api/project/funscript/beat",
     request_body = CreateBeatFunscriptBody,
     responses(

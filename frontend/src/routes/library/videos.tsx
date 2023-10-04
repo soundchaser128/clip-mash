@@ -141,7 +141,7 @@ export default function ListVideos() {
             Found <strong>{initialVideos.totalItems}</strong> videos.
           </p>
           <p>
-            <strong>{state.data.videoIds?.length || "all"}</strong>{" "}
+            <strong>{state.data.videoIds?.length || "All"}</strong>{" "}
             {pluralize("video", state.data.videoIds?.length)} selected.
           </p>
         </div>

@@ -473,36 +473,6 @@ impl VideoDetailsDtoConverter {
     }
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, ToSchema)]
-pub enum VideoResolution {
-    #[serde(rename = "720")]
-    SevenTwenty,
-    #[serde(rename = "1080")]
-    TenEighty,
-    #[serde(rename = "4K")]
-    FourK,
-}
-
-impl VideoResolution {
-    pub fn resolution(&self) -> (u32, u32) {
-        match self {
-            Self::SevenTwenty => (1280, 720),
-            Self::TenEighty => (1920, 1080),
-            Self::FourK => (3840, 2160),
-        }
-    }
-}
-
-impl fmt::Display for VideoResolution {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::SevenTwenty => write!(f, "720"),
-            Self::TenEighty => write!(f, "1080"),
-            Self::FourK => write!(f, "4K"),
-        }
-    }
-}
-
 #[derive(Deserialize, Debug, Clone, Copy, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum VideoCodec {
@@ -545,7 +515,7 @@ pub struct CreateVideoBody {
     pub file_name: String,
     pub clips: Vec<Clip>,
     pub selected_markers: Vec<SelectedMarker>,
-    pub output_resolution: VideoResolution,
+    pub output_resolution: (u32, u32),
     pub output_fps: u32,
     pub song_ids: Vec<i64>,
     pub music_volume: Option<f64>,

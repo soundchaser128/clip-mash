@@ -450,6 +450,47 @@ mod test {
 
     #[sqlx::test]
     #[traced_test]
+    async fn test_list_markers(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        for i in 0..5 {
+            let start = i as f64;
+            persist_marker(&database, &video.id, i, start, start + 5.0, false)
+                .await
+                .unwrap();
+        }
+        let result = database
+            .markers
+            .list_markers(&[video.id.as_str()])
+            .await
+            .unwrap();
+        assert_eq!(5, result.len());
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn test_set_marker_preview_image(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        let marker = persist_marker(&database, &video.id, 0, 0.0, 15.0, false)
+            .await
+            .unwrap();
+        let preview_image_path = "/some/path/to/image.png";
+        database
+            .markers
+            .set_marker_preview_image(marker.rowid.unwrap(), preview_image_path)
+            .await
+            .unwrap();
+        let result = database
+            .markers
+            .get_marker(marker.rowid.unwrap())
+            .await
+            .unwrap();
+        assert_eq!(result.marker_preview_image, Some(preview_image_path.into()));
+    }
+
+    #[sqlx::test]
+    #[traced_test]
     async fn test_insert_progress(pool: SqlitePool) {
         let database = Database::with_pool(pool);
         let video_id = generate_id();
@@ -592,5 +633,15 @@ mod test {
         let video = database.videos.get_video(&video.id).await.unwrap().unwrap();
         assert_eq!(video.video_title, Some("Some title".into()));
         assert_eq!(video.tags(), Some(vec!["tag1".into(), "tag2".into()]));
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn test_delete_video(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await.unwrap();
+        database.videos.delete_video(&video.id).await.unwrap();
+        let video = database.videos.get_video(&video.id).await.unwrap();
+        assert!(video.is_none());
     }
 }

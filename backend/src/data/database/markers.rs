@@ -78,23 +78,47 @@ impl MarkersDatabase {
         Ok(marker)
     }
 
-    pub async fn update_marker(&self, update: UpdateMarker) -> Result<DbMarker> {
-        let record = sqlx::query!(
-            "UPDATE markers SET start_time = $1, end_time = $2, title = $3 WHERE rowid = $4
-            RETURNING *",
-            update.start,
-            update.end,
-            update.title,
-            update.rowid
-        )
-        .fetch_one(&self.pool)
-        .await?;
+    pub async fn update_marker(&self, id: i64, update: UpdateMarker) -> Result<DbMarker> {
+        let mut query_builder = QueryBuilder::new("UPDATE markers SET ");
+        let mut first = true;
+
+        if let Some(start) = update.start {
+            query_builder.push("start_time = ");
+            query_builder.push_bind(start);
+            first = false;
+        }
+
+        if let Some(end) = update.end {
+            if !first {
+                query_builder.push(", ");
+            }
+            query_builder.push("end_time = ");
+            query_builder.push_bind(end);
+        }
+
+        if let Some(title) = update.title {
+            if !first {
+                query_builder.push(", ");
+            }
+            query_builder.push("title = ");
+            query_builder.push_bind(title);
+        }
+
+        query_builder.push(" WHERE rowid = ");
+        query_builder.push_bind(id);
+        query_builder.push(" RETURNING *");
+
+        info!("sql: '{}'", query_builder.sql());
+
+        let query = query_builder.build();
+        let row = query.fetch_one(&self.pool).await?;
+        let record = DbMarker::from_row(&row)?;
 
         let marker = DbMarker {
-            rowid: Some(update.rowid),
+            rowid: Some(id),
             video_id: record.video_id,
-            start_time: update.start,
-            end_time: update.end,
+            start_time: record.start_time,
+            end_time: record.end_time,
             title: record.title,
             index_within_video: record.index_within_video,
             marker_preview_image: record.marker_preview_image,

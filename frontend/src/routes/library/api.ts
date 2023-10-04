@@ -48,7 +48,6 @@ export async function updateMarker(
   marker: MarkerInputs,
 ): Promise<Result<MarkerDto, JsonError>> {
   const payload = {
-    rowid: id,
     start: parseTimestamp(marker.start),
     end: parseTimestamp(marker.end!),
     title: marker.title.trim(),

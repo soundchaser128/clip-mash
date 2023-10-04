@@ -112,7 +112,7 @@ async fn main() -> Result<()> {
         // create new marker for video
         .route("/marker", post(handlers::library::create_new_marker))
         // update local marker
-        .route("/marker", put(handlers::library::update_marker))
+        .route("/marker/:id", put(handlers::library::update_marker))
         // delete local marker
         .route("/marker/:id", delete(handlers::library::delete_marker))
         // get the generated preview image for a marker

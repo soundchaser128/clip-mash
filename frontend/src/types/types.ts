@@ -10,11 +10,6 @@ export type ClipStrategy =
   | "equalLength"
   | "noSplit"
 
-export interface VideoWithMarkers {
-  video: VideoDto
-  markers: MarkerDto[]
-}
-
 export interface JsonError {
   name: "JsonError"
   message: "error"

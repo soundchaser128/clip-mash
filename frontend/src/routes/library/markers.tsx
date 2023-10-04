@@ -18,6 +18,7 @@ import {formatSeconds, sumDurations} from "../../helpers"
 import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
 import EditableText from "../../components/EditableText"
+import {updateMarker} from "../../api"
 
 function getPreview(marker: MarkerDto) {
   if (marker.screenshotUrl?.includes("stash")) {
@@ -155,6 +156,10 @@ const SelectMarkers: React.FC = () => {
     })
   }
 
+  const onUpdateTitle = (id: number, title: string) => {
+    updateMarker(id, {title})
+  }
+
   return (
     <div>
       <JumpToTop />
@@ -259,7 +264,10 @@ const SelectMarkers: React.FC = () => {
 
               <div className="card-body">
                 <h2 className="card-title">
-                  <EditableText value={marker.primaryTag} />
+                  <EditableText
+                    value={marker.primaryTag}
+                    onSave={(title) => onUpdateTitle(marker.id, title)}
+                  />
                 </h2>
                 <p className="truncate">
                   <strong>

@@ -429,13 +429,30 @@ pub struct ClipsResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ListVideoDto {
     pub video: VideoDto,
-    pub markers: Vec<MarkerDto>,
+    pub marker_count: usize,
 }
 
 impl From<LocalVideoWithMarkers> for ListVideoDto {
     fn from(value: LocalVideoWithMarkers) -> Self {
         let db_video = value.video.clone();
         ListVideoDto {
+            video: value.video.into(),
+            marker_count: value.markers.len(),
+        }
+    }
+}
+
+#[derive(Serialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct VideoDetailsDto {
+    pub video: VideoDto,
+    pub markers: Vec<MarkerDto>,
+}
+
+impl From<LocalVideoWithMarkers> for VideoDetailsDto {
+    fn from(value: LocalVideoWithMarkers) -> Self {
+        let db_video = value.video.clone();
+        VideoDetailsDto {
             video: value.video.into(),
             markers: value
                 .markers
@@ -644,10 +661,9 @@ pub struct CreateMarker {
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateMarker {
-    pub rowid: i64,
-    pub start: f64,
-    pub end: f64,
-    pub title: String,
+    pub start: Option<f64>,
+    pub end: Option<f64>,
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, ToSchema)]

@@ -51,7 +51,7 @@ export type SplitMarkerParams = {
 export type DeleteMarker200 = unknown | null
 
 export type ListMarkersParams = {
-  videoIds: string[]
+  videoIds: string
 }
 
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
@@ -109,6 +109,11 @@ export interface VideoDto {
   title: string
 }
 
+export interface VideoDetailsDto {
+  markers: MarkerDto[]
+  video: VideoDto
+}
+
 export type VideoCodec = (typeof VideoCodec)[keyof typeof VideoCodec]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
@@ -123,10 +128,9 @@ export interface VideoCleanupResponse {
 }
 
 export interface UpdateMarker {
-  end: number
-  rowid: number
-  start: number
-  title: string
+  end?: number | null
+  start?: number | null
+  title?: string | null
 }
 
 /**
@@ -331,7 +335,7 @@ export interface MarkerDtoPage {
 }
 
 export interface ListVideoDto {
-  markers: MarkerDto[]
+  markerCount: number
   video: VideoDto
 }
 
@@ -564,9 +568,9 @@ export const createNewMarker = (createMarker: CreateMarker) => {
   })
 }
 
-export const updateMarker = (updateMarker: UpdateMarker) => {
+export const updateMarker = (id: number, updateMarker: UpdateMarker) => {
   return customInstance<MarkerDto>({
-    url: `/api/library/marker`,
+    url: `/api/library/marker/${id}`,
     method: "put",
     headers: {"Content-Type": "application/json"},
     data: updateMarker,
@@ -621,7 +625,7 @@ export const listStashVideos = (params?: ListStashVideosParams) => {
 }
 
 export const getVideo = (id: string) => {
-  return customInstance<ListVideoDto>({
+  return customInstance<VideoDetailsDto>({
     url: `/api/library/video/${id}`,
     method: "get",
   })

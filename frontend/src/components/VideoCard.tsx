@@ -17,6 +17,7 @@ interface Props {
   stashConfig?: StashConfig
   actionChildren?: React.ReactNode
   onEditTitle?: (title: string) => void
+  onImageClick?: (id: string) => void
 }
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
@@ -34,21 +35,26 @@ const VideoCard: React.FC<Props> = ({
   stashConfig,
   actionChildren,
   onEditTitle,
+  onImageClick,
 }) => {
   const tags = video.video.tags?.filter(Boolean) ?? []
   return (
     <article
       className={clsx(
         "card card-compact shadow-xl bg-base-200",
-        video.markers.length > 0 && "ring-4 ring-green-500",
+        video.markerCount > 0 && "ring-4 ring-green-500",
       )}
     >
       <figure>
         <img
-          className="aspect-[16/9] object-cover w-full"
+          className={clsx(
+            "aspect-[16/9] object-cover w-full",
+            onImageClick && "cursor-pointer",
+          )}
           src={getPreview(video.video, stashConfig)}
           width={499}
           height={281}
+          onClick={() => onImageClick && onImageClick(video.video.id)}
         />
       </figure>
       <div className="card-body">
@@ -86,7 +92,7 @@ const VideoCard: React.FC<Props> = ({
           </li>
           <li>
             <HiTag className="inline mr-2" />
-            Markers: <strong>{video.markers.length}</strong>
+            Markers: <strong>{video.markerCount}</strong>
           </li>
           <li>
             <HiArrowDownTray className="inline mr-2" />

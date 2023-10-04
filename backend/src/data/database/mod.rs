@@ -394,12 +394,15 @@ mod test {
             .unwrap();
         let title = marker.title.clone();
         let update = UpdateMarker {
-            title: marker.title,
-            rowid: marker.rowid.unwrap(),
-            start: 5.0,
-            end: 15.0,
+            title: Some(marker.title),
+            start: Some(5.0),
+            end: Some(15.0),
         };
-        database.markers.update_marker(update).await.unwrap();
+        database
+            .markers
+            .update_marker(marker.rowid.unwrap(), update)
+            .await
+            .unwrap();
         let result = database
             .markers
             .get_marker(marker.rowid.unwrap())

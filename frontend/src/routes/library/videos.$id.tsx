@@ -1,4 +1,3 @@
-import {VideoWithMarkers} from "../../types/types"
 import React, {useRef, useState} from "react"
 import {useForm, FieldErrors} from "react-hook-form"
 import {
@@ -26,6 +25,7 @@ import {
   VideoDto,
   deleteMarker,
   splitMarker,
+  VideoDetailsDto,
 } from "../../api"
 import {detectMarkers} from "../../api"
 import {useConfig} from "../../hooks/useConfig"
@@ -112,7 +112,7 @@ function CreateMarkerButtons({
 
 export default function EditVideoModal() {
   const navigate = useNavigate()
-  const {video, markers: videoMarkers} = useLoaderData() as VideoWithMarkers
+  const {video, markers: videoMarkers} = useLoaderData() as VideoDetailsDto
 
   const revalidator = useRevalidator()
   const handleValidation = (values: Inputs) => {

@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import {VideoWithMarkers, Page} from "../../types/types"
+import {Page} from "../../types/types"
 import {
   HiChevronRight,
   HiFolder,
@@ -41,7 +41,7 @@ export const loader: LoaderFunction = async ({request}) => {
 }
 
 export default function ListVideos() {
-  const {actions} = useStateMachine({updateForm})
+  const {state, actions} = useStateMachine({updateForm})
   const initialVideos = useLoaderData() as Page<ListVideoDto>
   const [videos, setVideos] = useImmer<ListVideoDto[]>(initialVideos.content)
   const navigate = useNavigate()
@@ -63,7 +63,7 @@ export default function ListVideos() {
     setVideos(initialVideos.content)
   }, [initialVideos, setVideos])
 
-  const onOpenModal = ({video}: VideoWithMarkers) => {
+  const onOpenModal = ({video}: ListVideoDto) => {
     navigate(`/library/${video.id}/markers`)
   }
 
@@ -74,16 +74,29 @@ export default function ListVideos() {
 
   const onNextStage = () => {
     const interactive = videos
-      .filter((v) => v.markers.length > 0)
+      .filter((v) => v.markerCount > 0)
       .some((v) => v.video.interactive)
 
     actions.updateForm({
       stage: FormStage.SelectMarkers,
       interactive,
       selectedMarkers: undefined,
-      videoIds: videos.map((v) => v.video.id),
     })
     navigate("/markers")
+  }
+
+  const onCheckboxChange = (id: string, selected: boolean) => {
+    const existingIds = state.data.videoIds ?? []
+    const newIds = selected
+      ? [...existingIds, id]
+      : existingIds.filter((v) => v !== id)
+
+    actions.updateForm({videoIds: newIds})
+  }
+
+  const onToggleCheckbox = (id: string) => {
+    const selected = state.data.videoIds?.includes(id) ?? false
+    onCheckboxChange(id, !selected)
   }
 
   const onCleanupVideos = async () => {
@@ -165,12 +178,25 @@ export default function ListVideos() {
         {videos.map((video) => (
           <VideoCard
             key={video.video.id}
+            onImageClick={onToggleCheckbox}
             video={video}
             stashConfig={config}
             onEditTitle={(title) => onEditTitle(video.video.id, title)}
             actionChildren={
               <>
-                <span />
+                <div className="form-control">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">Include</span>
+                    <input
+                      type="checkbox"
+                      className="toggle toggle-sm toggle-primary ml-2"
+                      checked={state.data.videoIds?.includes(video.video.id)}
+                      onChange={(e) =>
+                        onCheckboxChange(video.video.id, e.target.checked)
+                      }
+                    />
+                  </label>
+                </div>
                 <button
                   onClick={() => onOpenModal(video)}
                   className="btn btn-sm btn-primary"

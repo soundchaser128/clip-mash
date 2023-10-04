@@ -81,6 +81,7 @@ use crate::service::video::AddVideosRequest;
             ProjectCreateResponse,
             VideoCleanupResponse,
             VideoUpdate,
+            VideoDetailsDto,
         )
     ),
     tags(

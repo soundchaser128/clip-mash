@@ -17,7 +17,7 @@ use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::server::types::{
     CreateMarker, ListVideoDto, MarkerDto, Page, PageParameters, StashVideoDto, UpdateMarker,
-    VideoDto,
+    VideoDetailsDto, VideoDto,
 };
 use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;
@@ -122,7 +122,7 @@ pub async fn add_new_videos(
     put,
     path = "/api/library/video/{id}",
     params(
-        ("id" = String, Path, description = "The ID of the video to fetch")
+        ("id" = String, Path, description = "The ID of the video to update")
     ),
     request_body = VideoUpdate,
     responses(
@@ -168,14 +168,14 @@ pub async fn cleanup_videos(
         ("id" = String, Path, description = "The ID of the video to fetch")
     ),
     responses(
-        (status = 200, description = "Get details for a video", body = ListVideoDto),
+        (status = 200, description = "Get details for a video", body = VideoDetailsDto),
     )
 )]
 #[axum::debug_handler]
 pub async fn get_video(
     Path(id): Path<String>,
     state: State<Arc<AppState>>,
-) -> Result<Json<ListVideoDto>, AppError> {
+) -> Result<Json<VideoDetailsDto>, AppError> {
     let video = state.database.videos.get_video_with_markers(&id).await?;
     if let Some(video) = video {
         let dto = video.into();
@@ -345,7 +345,10 @@ pub async fn create_new_marker(
 
 #[utoipa::path(
     put,
-    path = "/api/library/marker",
+    path = "/api/library/marker/{id}",
+    params(
+        ("id" = String, Path, description = "The ID of the marker to update")
+    ),
     request_body = UpdateMarker,
     responses(
         (status = 200, description = "Updates a marker", body = MarkerDto),
@@ -354,11 +357,12 @@ pub async fn create_new_marker(
 #[axum::debug_handler]
 pub async fn update_marker(
     state: State<Arc<AppState>>,
+    Path(id): Path<i64>,
     Json(marker): Json<UpdateMarker>,
 ) -> Result<Json<MarkerDto>, AppError> {
     info!("updating marker with {marker:?}");
 
-    let marker = state.database.markers.update_marker(marker).await?;
+    let marker = state.database.markers.update_marker(id, marker).await?;
     let video = state
         .database
         .videos

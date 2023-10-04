@@ -242,24 +242,17 @@ impl VideosDatabase {
             stash_scene_id: Option<i64>,
             video_tags: Option<String>,
             video_title: Option<String>,
-            video_id: String,
-            start_time: f64,
-            end_time: f64,
-            title: String,
-            rowid: Option<i64>,
-            index_within_video: i64,
-            marker_preview_image: Option<String>,
-            marker_created_on: String,
+            marker_count: i64,
         }
 
         let count = self.fetch_count(query).await?;
-        //         let query = query.map(|q| format!("{}'", q));
         info!("count: {} for query {:?}", count, query);
         let limit = params.limit();
         let offset = params.offset();
 
         let mut query_builder = QueryBuilder::new(
-            "SELECT *, m.rowid AS rowid
+            "SELECT v.id, v.file_path, v.interactive, v.duration, v.video_created_on, v.source, v.video_preview_image, 
+                    v.stash_scene_id, v.video_tags, v.video_title, COUNT(m.video_id) AS marker_count
             FROM videos v
             LEFT JOIN markers m ON v.id = m.video_id ",
         );
@@ -270,88 +263,39 @@ impl VideosDatabase {
             query_builder.push_bind(query);
             query_builder.push(") ");
         }
+        query_builder.push("GROUP BY v.id ");
+        query_builder.push("ORDER BY marker_count DESC, v.video_title COLLATE NOCASE ASC ");
         query_builder.push("LIMIT ");
         query_builder.push_bind(limit);
         query_builder.push(" OFFSET ");
         query_builder.push_bind(offset);
 
+        info!("sql: '{}'", query_builder.sql());
+
         let query = query_builder.build();
         let records = query.fetch_all(&self.pool).await?;
-        let mut records: Vec<_> = records.iter().flat_map(|r| Row::from_row(r)).collect();
+        let records: Vec<_> = records.iter().flat_map(|r| Row::from_row(r)).collect();
 
         if records.is_empty() {
             Ok((vec![], count as usize))
         } else {
-            records.sort_by_key(|v| v.id.clone());
-
-            let iter = records.into_iter().group_by(|v| v.id.clone());
             let mut videos = vec![];
-            for (_, group) in &iter {
-                let group: Vec<_> = group.collect();
+            for row in records {
                 let video = DbVideo {
-                    id: group[0].id.clone(),
-                    file_path: group[0].file_path.clone(),
-                    interactive: group[0].interactive,
-                    source: group[0].source.clone().into(),
-                    duration: group[0].duration,
-                    video_preview_image: group[0].video_preview_image.clone(),
-                    stash_scene_id: group[0].stash_scene_id,
-                    video_created_on: group[0].video_created_on.clone(),
-                    video_tags: group[0].video_tags.clone(),
-                    video_title: group[0].video_title.clone(),
+                    id: row.id,
+                    file_path: row.file_path,
+                    interactive: row.interactive,
+                    source: row.source.into(),
+                    duration: row.duration,
+                    video_preview_image: row.video_preview_image,
+                    stash_scene_id: row.stash_scene_id,
+                    video_created_on: row.video_created_on,
+                    video_tags: row.video_tags,
+                    video_title: row.video_title,
                 };
-                let markers: Vec<_> = group
-                    .into_iter()
-                    .filter_map(|r| {
-                        match (
-                            r.video_id,
-                            r.start_time,
-                            r.end_time,
-                            r.title,
-                            r.rowid,
-                            r.file_path,
-                            r.index_within_video,
-                            r.marker_preview_image,
-                            r.interactive,
-                            r.marker_created_on,
-                            r.source,
-                        ) {
-                            (
-                                video_id,
-                                start_time,
-                                end_time,
-                                title,
-                                Some(rowid),
-                                file_path,
-                                index,
-                                marker_preview_image,
-                                interactive,
-                                marker_created_on,
-                                source,
-                            ) => Some(
-                                DbMarkerWithVideo {
-                                    rowid: Some(rowid),
-                                    title,
-                                    video_id,
-                                    start_time,
-                                    end_time,
-                                    file_path,
-                                    index_within_video: index,
-                                    marker_preview_image,
-                                    interactive,
-                                    marker_created_on,
-                                    video_title: video.video_title.clone(),
-                                    source: source.parse().unwrap(),
-                                }
-                                .into(),
-                            ),
-                            _ => None,
-                        }
-                    })
-                    .collect();
                 videos.push(ListVideoDto {
                     video: video.into(),
-                    markers,
+                    marker_count: row.marker_count as usize,
                 })
             }
             Ok((videos, count as usize))

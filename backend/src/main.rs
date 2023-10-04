@@ -109,7 +109,7 @@ async fn main() -> Result<()> {
         )
         // list all markers (paginated, with search)
         .route("/marker", get(handlers::library::list_markers))
-        // create new marker for local video (stash tbd)
+        // create new marker for video
         .route("/marker", post(handlers::library::create_new_marker))
         // update local marker
         .route("/marker", put(handlers::library::update_marker))

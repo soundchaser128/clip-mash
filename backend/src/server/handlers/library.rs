@@ -272,32 +272,29 @@ pub async fn get_marker_preview(
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
 pub struct ListMarkersQuery {
-    pub ids: String,
+    pub video_ids: String,
 }
 
 #[utoipa::path(
     get,
     path = "/api/library/marker",
-    params(VideoSearchQuery, PageParameters),
+    params(ListMarkersQuery),
     responses(
-        (status = 200, description = "List markers", body = MarkerDtoPage),
+        (status = 200, description = "List markers", body = Vec<MarkerDto>),
     )
 )]
 #[axum::debug_handler]
 pub async fn list_markers(
-    Query(page): Query<PageParameters>,
-    Query(VideoSearchQuery { query }): Query<VideoSearchQuery>,
     state: State<Arc<AppState>>,
-) -> Result<Json<Page<MarkerDto>>, AppError> {
-    let (markers, count) = state
-        .database
-        .markers
-        .list_markers(query.as_deref(), &page)
-        .await?;
+    Query(body): Query<ListMarkersQuery>,
+) -> Result<Json<Vec<MarkerDto>>, AppError> {
+    let video_ids: Vec<_> = body.video_ids.split(",").collect();
+    let markers = state.database.markers.list_markers(&video_ids).await?;
     let markers = markers.into_iter().map(From::from).collect();
-    Ok(Json(Page::new(markers, count as usize, page)))
+    Ok(Json(markers))
 }
 
 fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str> {

@@ -25,7 +25,7 @@ export interface FormState {
   stage: FormStage
   videoId?: string
   markers?: MarkerDto[]
-  videos?: VideoWithMarkers[]
+  videoIds?: string[]
   recurse?: boolean
   clipOrder?: ClipOrder
   clipDuration?: number

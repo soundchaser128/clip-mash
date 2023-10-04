@@ -4,7 +4,7 @@ use color_eyre::eyre::bail;
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::{FromRow, SqlitePool};
-use tracing::{warn, info};
+use tracing::{info, warn};
 use utoipa::ToSchema;
 
 use self::markers::MarkersDatabase;
@@ -582,12 +582,7 @@ mod test {
             .update_video(&video.id, update)
             .await
             .unwrap();
-        let video = database
-            .videos
-            .get_video(&video.id)
-            .await
-            .unwrap()
-            .unwrap();
+        let video = database.videos.get_video(&video.id).await.unwrap().unwrap();
         assert_eq!(video.video_title, Some("Some title".into()));
         assert_eq!(video.tags(), Some(vec!["tag1".into(), "tag2".into()]));
     }

@@ -81,6 +81,7 @@ export default function ListVideos() {
       stage: FormStage.SelectMarkers,
       interactive,
       selectedMarkers: undefined,
+      videoIds: videos.map((v) => v.video.id),
     })
     navigate("/markers")
   }

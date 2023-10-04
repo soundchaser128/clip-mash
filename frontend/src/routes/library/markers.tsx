@@ -12,7 +12,7 @@ import {
   HiVideoCamera,
   HiXMark,
 } from "react-icons/hi2"
-import {MarkerDto, MarkerDtoPage, SelectedMarker} from "../../api"
+import {MarkerDto, SelectedMarker} from "../../api"
 import {updateForm} from "../actions"
 import {formatSeconds, sumDurations} from "../../helpers"
 import {FormStage} from "../../types/form-state"
@@ -28,14 +28,14 @@ function getPreview(marker: MarkerDto) {
 }
 
 const SelectMarkers: React.FC = () => {
-  const initialMarkers = useLoaderData() as MarkerDtoPage
+  const initialMarkers = useLoaderData() as MarkerDto[]
   const {actions, state} = useStateMachine({updateForm})
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
       const entries =
         state.data.selectedMarkers?.map((m) => [m.id, m]) ||
-        initialMarkers.content.map((m) => [
+        initialMarkers.map((m) => [
           m.id,
           {
             id: m.id,
@@ -55,7 +55,7 @@ const SelectMarkers: React.FC = () => {
   const [filter, setFilter] = useState("")
   const [videoPreview, setVideoPreview] = useState<number>()
   const navigate = useNavigate()
-  const markers = initialMarkers.content
+  const markers = initialMarkers
 
   const [maxMarkerLength, setMaxMarkerLength] = useState<number>()
   const allDisabled = Object.values(selection).every((m) => !m.selected)
@@ -106,14 +106,14 @@ const SelectMarkers: React.FC = () => {
 
   const onNextStage = () => {
     const selectedMarkers = Object.values(selection)
-    const hasInteractiveScenes = initialMarkers.content
+    const hasInteractiveScenes = initialMarkers
       .filter((m) => !!selection[m.id])
       .some((m) => m.sceneInteractive)
 
     actions.updateForm({
       stage: FormStage.Music,
       selectedMarkers,
-      markers: initialMarkers.content,
+      markers: initialMarkers,
       interactive: hasInteractiveScenes,
     })
     navigate("/music")
@@ -122,7 +122,7 @@ const SelectMarkers: React.FC = () => {
   const onLimitDuration = () => {
     setSelection((draft) => {
       for (const selectedMarker of Object.values(draft)) {
-        const originalMarker = initialMarkers.content.find(
+        const originalMarker = initialMarkers.find(
           (m) => m.id === selectedMarker.id,
         )!
         const start = selectedMarker.selectedRange[0]

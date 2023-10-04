@@ -16,7 +16,7 @@ interface Props {
   video: ListVideoDto
   stashConfig?: StashConfig
   actionChildren?: React.ReactNode
-  onEditTitle: (title: string) => void
+  onEditTitle?: (title: string) => void
 }
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
@@ -53,10 +53,13 @@ const VideoCard: React.FC<Props> = ({
       </figure>
       <div className="card-body">
         <h2 className="card-title">
-          <EditableText
-            value={video.video.title || video.video.fileName}
-            onSave={onEditTitle}
-          />
+          {onEditTitle && (
+            <EditableText
+              value={video.video.title || video.video.fileName}
+              onSave={onEditTitle}
+            />
+          )}
+          {!onEditTitle && (video.video.title || video.video.fileName)}
         </h2>
         <ul className="flex flex-col gap-2 self-start">
           {tags.length > 0 && (

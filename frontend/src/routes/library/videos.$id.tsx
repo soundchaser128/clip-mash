@@ -20,11 +20,17 @@ import TimestampInput from "../../components/TimestampInput"
 import {createMarker, updateMarker} from "./api"
 import Timeline from "../../components/Timeline"
 import Loader from "../../components/Loader"
-import {Config, MarkerDto, VideoDto, deleteMarker, splitMarker} from "../../api"
+import {
+  StashConfig,
+  MarkerDto,
+  VideoDto,
+  deleteMarker,
+  splitMarker,
+} from "../../api"
 import {detectMarkers} from "../../api"
 import {useConfig} from "../../hooks/useConfig"
 
-function getVideoUrl(video: VideoDto, config?: Config): string {
+function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
     return `${config.stashUrl}/scene/${video.stashSceneId!}/stream?apikey=${
       config.apiKey

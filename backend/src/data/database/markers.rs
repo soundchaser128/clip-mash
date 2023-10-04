@@ -1,8 +1,8 @@
-use sqlx::SqlitePool;
-use tracing::info;
+use sqlx::{FromRow, QueryBuilder, SqlitePool};
+use tracing::{debug, info};
 
 use super::{DbMarker, DbMarkerWithVideo};
-use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
+use crate::server::types::{CreateMarker, UpdateMarker};
 use crate::Result;
 
 #[derive(Debug, Clone)]
@@ -161,44 +161,32 @@ impl MarkersDatabase {
         Ok(markers)
     }
 
-    pub async fn list_markers(
-        &self,
-        query: Option<&str>,
-        params: &PageParameters,
-    ) -> Result<(Vec<DbMarkerWithVideo>, i64)> {
-        info!("fetching markers with query {query:?} and page {params:?}");
-        let query = query
-            .map(|q| format!("%{q}%"))
-            .unwrap_or_else(|| "%".to_string());
-        let count = sqlx::query_scalar!("SELECT COUNT(*) FROM markers WHERE title LIKE $1", query)
-            .fetch_one(&self.pool)
-            .await?;
-        let limit = params.limit();
-        let offset = params.offset();
-        let sort = params.sort("marker_created_on", SortDirection::Desc);
-
-        let markers = sqlx::query_as!(
-            DbMarkerWithVideo,
+    pub async fn list_markers(&self, video_ids: &[&str]) -> Result<Vec<DbMarkerWithVideo>> {
+        info!("fetching markers with video ids {video_ids:?}");
+        let mut query_builder = QueryBuilder::new(
             "SELECT m.video_id, m.rowid, m.start_time, m.end_time, 
                     m.title, v.file_path, m.index_within_video, m.marker_preview_image, 
                     v.interactive, m.marker_created_on, v.video_title, v.source
             FROM markers m
             INNER JOIN videos v ON m.video_id = v.id
-            WHERE m.title LIKE $1
-            ORDER BY $2
-            LIMIT $3
-            OFFSET $4
-        ",
-            query,
-            sort,
-            limit,
-            offset
-        )
-        .fetch_all(&self.pool)
-        .await?;
-        info!("found markers {markers:#?}");
+            WHERE video_id IN (",
+        );
+        let mut list = query_builder.separated(",");
+        for video_id in video_ids {
+            list.push_bind(video_id);
+        }
+        list.push_unseparated(") ");
+        query_builder.push("ORDER BY m.video_id ASC, m.index_within_video ASC");
+        let query = query_builder.build();
+        let records = query.fetch_all(&self.pool).await?;
+        let markers = records
+            .iter()
+            .flat_map(DbMarkerWithVideo::from_row)
+            .collect();
 
-        Ok((markers, count.into()))
+        debug!("found markers {markers:#?}");
+
+        Ok(markers)
     }
 
     pub async fn set_marker_preview_image(&self, id: i64, preview_image: &str) -> Result<()> {

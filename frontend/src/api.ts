@@ -51,11 +51,7 @@ export type SplitMarkerParams = {
 export type DeleteMarker200 = unknown | null
 
 export type ListMarkersParams = {
-  query?: string | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
+  videoIds: string[]
 }
 
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
@@ -551,8 +547,8 @@ export type AddVideosRequest =
   | AddVideosRequestOneOfThree
   | AddVideosRequestOneOfFive
 
-export const listMarkers = (params?: ListMarkersParams) => {
-  return customInstance<MarkerDtoPage>({
+export const listMarkers = (params: ListMarkersParams) => {
+  return customInstance<MarkerDto[]>({
     url: `/api/library/marker`,
     method: "get",
     params,

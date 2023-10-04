@@ -10,7 +10,7 @@ use super::{
     AllVideosFilter, CreateVideo, DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers,
     VideoUpdate,
 };
-use crate::server::types::{ListVideoDto, PageParameters, SortDirection};
+use crate::server::types::{ListVideoDto, PageParameters};
 use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
 
@@ -253,7 +253,7 @@ impl VideosDatabase {
         }
 
         let count = self.fetch_count(query).await?;
-//         let query = query.map(|q| format!("{}'", q));
+        //         let query = query.map(|q| format!("{}'", q));
         info!("count: {} for query {:?}", count, query);
         let limit = params.limit();
         let offset = params.offset();

@@ -139,7 +139,13 @@ impl Migrator {
                 .to_string();
             self.database
                 .videos
-                .update_video(&video.id, VideoUpdate { title: Some(title), tags: None })
+                .update_video(
+                    &video.id,
+                    VideoUpdate {
+                        title: Some(title),
+                        tags: None,
+                    },
+                )
                 .await?;
         }
 

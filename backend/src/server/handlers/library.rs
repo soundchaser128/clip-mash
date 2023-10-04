@@ -294,7 +294,7 @@ pub async fn get_marker_preview(
 #[derive(Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 pub struct ListMarkersQuery {
-    pub video_ids: String,
+    pub video_ids: Option<String>,
 }
 
 #[utoipa::path(
@@ -310,8 +310,14 @@ pub async fn list_markers(
     state: State<Arc<AppState>>,
     Query(body): Query<ListMarkersQuery>,
 ) -> Result<Json<Vec<MarkerDto>>, AppError> {
-    let video_ids: Vec<_> = body.video_ids.split(",").collect();
-    let markers = state.database.markers.list_markers(&video_ids).await?;
+    let video_ids: Option<Vec<_>> = body
+        .video_ids
+        .map(|ids| ids.split(",").map(String::from).collect());
+    let markers = state
+        .database
+        .markers
+        .list_markers(video_ids.as_deref())
+        .await?;
     let markers = markers.into_iter().map(From::from).collect();
     Ok(Json(markers))
 }

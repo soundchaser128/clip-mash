@@ -185,21 +185,26 @@ impl MarkersDatabase {
         Ok(markers)
     }
 
-    pub async fn list_markers(&self, video_ids: &[&str]) -> Result<Vec<DbMarkerWithVideo>> {
+    pub async fn list_markers(
+        &self,
+        video_ids: Option<&[String]>,
+    ) -> Result<Vec<DbMarkerWithVideo>> {
         info!("fetching markers with video ids {video_ids:?}");
         let mut query_builder = QueryBuilder::new(
             "SELECT m.video_id, m.rowid, m.start_time, m.end_time, 
                     m.title, v.file_path, m.index_within_video, m.marker_preview_image, 
                     v.interactive, m.marker_created_on, v.video_title, v.source
             FROM markers m
-            INNER JOIN videos v ON m.video_id = v.id
-            WHERE video_id IN (",
+            INNER JOIN videos v ON m.video_id = v.id ",
         );
-        let mut list = query_builder.separated(",");
-        for video_id in video_ids {
-            list.push_bind(video_id);
+        if let Some(video_ids) = video_ids {
+            query_builder.push("WHERE video_id IN (");
+            let mut list = query_builder.separated(",");
+            for video_id in video_ids {
+                list.push_bind(video_id);
+            }
+            list.push_unseparated(") ");
         }
-        list.push_unseparated(") ");
         query_builder.push("ORDER BY m.video_id ASC, m.index_within_video ASC");
         let query = query_builder.build();
         let records = query.fetch_all(&self.pool).await?;

@@ -150,7 +150,7 @@ export default function ListVideos() {
         )}
       </div>
       {!noVideos && (
-        <div className="w-full flex justify-between">
+        <div className="w-full grid grid-cols-3">
           <div className="flex gap-2">
             <input
               type="text"
@@ -160,6 +160,11 @@ export default function ListVideos() {
               onChange={onFilterChange}
             />
           </div>
+
+          <p className="place-self-center opacity-80">
+            You can either select videos by clicking on them or just continue,
+            this will automatically select all videos.
+          </p>
         </div>
       )}
 

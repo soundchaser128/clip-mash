@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT \n                m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, \n                m.index_within_video, m.marker_preview_image, v.interactive, \n                m.marker_created_on, v.video_title, v.source\n            FROM markers m INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.marker_preview_image IS NULL",
+  "query": "SELECT \n                m.rowid, m.title, m.video_id, v.file_path, m.start_time, \n                m.end_time, m.index_within_video, m.marker_preview_image, \n                v.interactive, m.marker_created_on, v.video_title, v.source,\n                v.video_tags, v.stash_scene_id\n            FROM markers m INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.rowid = $1",
   "describe": {
     "columns": [
       {
@@ -62,10 +62,20 @@
         "name": "source",
         "ordinal": 11,
         "type_info": "Text"
+      },
+      {
+        "name": "video_tags",
+        "ordinal": 12,
+        "type_info": "Text"
+      },
+      {
+        "name": "stash_scene_id",
+        "ordinal": 13,
+        "type_info": "Int64"
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
@@ -79,8 +89,10 @@
       false,
       false,
       true,
-      false
+      false,
+      true,
+      true
     ]
   },
-  "hash": "c94155a813357076cd8f243da2074c4d48586c616cb13672fef85e3001d607e5"
+  "hash": "5c4cca730fcfa985bce9889c56b8e08622bfcaeee2d4796477940ee590f718e7"
 }

@@ -25,6 +25,7 @@ use crate::util::generate_id;
 use crate::Result;
 
 pub const TAG_SEPARATOR: &str = ";";
+const VIDEO_EXTENSIONS: &[&str] = &["mp4", "m4v", "webm"];
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
@@ -118,9 +119,11 @@ impl VideoService {
         let mut videos = vec![];
         debug!("found files {entries:?} (recurse = {recurse})");
         for path in entries {
-            if path.extension() == Some("mp4") || path.extension() == Some("m4v") {
-                if let Some(video) = self.add_local_video(&path).await? {
-                    videos.push(video);
+            if let Some(extension) = path.extension() {
+                if VIDEO_EXTENSIONS.contains(&extension) {
+                    if let Some(video) = self.add_local_video(&path).await? {
+                        videos.push(video);
+                    }
                 }
             }
         }
@@ -180,6 +183,8 @@ impl VideoService {
         }
         let api_key = api_key.unwrap();
 
+        info!("adding videos from stash with IDs {scene_ids:?}");
+
         let scenes = self.stash_api.find_scenes_by_ids(scene_ids).await?;
         let stash_markers: Vec<_> = scenes
             .iter()
@@ -188,22 +193,30 @@ impl VideoService {
 
         let create_videos: Vec<_> = scenes
             .into_iter()
-            .map(|scene| CreateVideo {
-                id: generate_id(),
-                file_path: self.stash_api.get_stream_url(scene.id.parse().unwrap()),
-                interactive: scene.interactive,
-                source: VideoSource::Stash,
-                duration: scene.files[0].duration,
-                video_preview_image: Some(self.stash_api.get_screenshot_url(&scene.id)),
-                stash_scene_id: Some(scene.id.parse().unwrap()),
-                title: scene.title,
-                tags: Some(
-                    scene
-                        .tags
-                        .iter()
-                        .map(|t| t.name.as_str())
-                        .join(TAG_SEPARATOR),
-                ),
+            .map(|scene| {
+                let title = scene
+                    .title
+                    .filter(|t| !t.is_empty())
+                    .or(scene.files.get(0).map(|f| f.basename.clone()));
+                info!("inserting video from stash with title {title:?}");
+
+                CreateVideo {
+                    id: generate_id(),
+                    file_path: self.stash_api.get_stream_url(scene.id.parse().unwrap()),
+                    interactive: scene.interactive,
+                    source: VideoSource::Stash,
+                    duration: scene.files[0].duration,
+                    video_preview_image: Some(self.stash_api.get_screenshot_url(&scene.id)),
+                    stash_scene_id: Some(scene.id.parse().unwrap()),
+                    title,
+                    tags: Some(
+                        scene
+                            .tags
+                            .iter()
+                            .map(|t| t.name.as_str())
+                            .join(TAG_SEPARATOR),
+                    ),
+                }
             })
             .collect();
 

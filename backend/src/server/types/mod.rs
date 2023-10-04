@@ -280,6 +280,7 @@ pub struct StashVideoDto {
     pub id: String,
     pub title: String,
     pub performers: Vec<String>,
+    pub tags: Vec<String>,
     pub file_name: String,
     pub interactive: bool,
     pub source: VideoSource,
@@ -300,6 +301,7 @@ impl StashVideoDto {
             duration: dto.duration,
             stash_scene_id: dto.stash_scene_id,
             exists_in_database,
+            tags: dto.tags.unwrap_or_default(),
         }
     }
 }

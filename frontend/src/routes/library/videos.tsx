@@ -8,7 +8,7 @@ import {
   HiTrash,
   HiXMark,
 } from "react-icons/hi2"
-import {useEffect, useState} from "react"
+import {useCallback, useEffect, useState} from "react"
 import {useImmer} from "use-immer"
 import {updateForm} from "../actions"
 import {
@@ -21,7 +21,7 @@ import {
   useRevalidator,
   useSearchParams,
 } from "react-router-dom"
-import {ListVideoDto, cleanupVideos, updateVideo} from "../../api"
+import {ListVideoDto, cleanupVideos, deleteVideo, updateVideo} from "../../api"
 import Pagination from "../../components/Pagination"
 import debounce from "lodash.debounce"
 import {listVideos} from "../../api"
@@ -29,6 +29,7 @@ import {FormStage} from "../../types/form-state"
 import VideoCard from "../../components/VideoCard"
 import {useConfig} from "../../hooks/useConfig"
 import {DEFAULT_PAGE_LENGTH} from "../loaders"
+import useDebouncedSetQuery from "../../hooks/useDebouncedQuery"
 
 export const loader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
@@ -48,16 +49,13 @@ export default function ListVideos() {
   const navigation = useNavigation()
   const config = useConfig()
   const isLoading = navigation.state === "loading"
-  const [params, setParams] = useSearchParams()
+  const [params] = useSearchParams()
   const [filter, setFilter] = useState(params.get("query") ?? "")
   const noVideos = videos.length === 0 && !filter && !isLoading
   const noVideosForFilter = videos.length === 0 && filter && !isLoading
   const revalidator = useRevalidator()
 
-  const setQuery = (query: string) => {
-    setParams({query})
-  }
-  const debouncedSetQuery = debounce(setQuery, 500)
+  const debouncedSetQuery = useDebouncedSetQuery()
 
   useEffect(() => {
     setVideos(initialVideos.content)
@@ -97,6 +95,13 @@ export default function ListVideos() {
   const onToggleCheckbox = (id: string) => {
     const selected = state.data.videoIds?.includes(id) ?? false
     onCheckboxChange(id, !selected)
+  }
+
+  const onRemoveVideo = async (id: string) => {
+    if (confirm("Are you sure you want to remove this video?")) {
+      await deleteVideo(id)
+      revalidator.revalidate()
+    }
   }
 
   const onCleanupVideos = async () => {
@@ -197,13 +202,21 @@ export default function ListVideos() {
                     />
                   </label>
                 </div>
-                <button
-                  onClick={() => onOpenModal(video)}
-                  className="btn btn-sm btn-primary"
-                >
-                  <HiTag className="w-4 h-4 mr-2" />
-                  Markers
-                </button>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => onRemoveVideo(video.video.id)}
+                    className="btn btn-error btn-sm btn-square"
+                  >
+                    <HiTrash className="" />
+                  </button>
+                  <button
+                    onClick={() => onOpenModal(video)}
+                    className="btn btn-sm btn-primary"
+                  >
+                    <HiTag className="w-4 h-4 mr-2" />
+                    Markers
+                  </button>
+                </div>
               </>
             }
           />

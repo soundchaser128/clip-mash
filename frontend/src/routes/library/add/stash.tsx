@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from "react"
+import React, {useEffect, useState} from "react"
 import {
   Link,
   useLoaderData,
@@ -12,10 +12,10 @@ import Pagination from "../../../components/Pagination"
 import {HiChevronLeft, HiPlus} from "react-icons/hi2"
 import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../../api"
 import {useConfig} from "../../../hooks/useConfig"
-import debounce from "lodash.debounce"
+import useDebouncedSetQuery from "../../../hooks/useDebouncedQuery"
 
 const AddStashVideoPage: React.FC = () => {
-  const [search, setSearchParams] = useSearchParams()
+  const [search] = useSearchParams()
   const [query, setQuery] = useState<string>(search.get("query") || "")
   const data = useLoaderData() as StashLoaderData
   const revalidator = useRevalidator()
@@ -28,24 +28,7 @@ const AddStashVideoPage: React.FC = () => {
     }
   }, [config, navigate])
 
-  const setParams = useCallback(
-    (query: string | undefined) => {
-      if (query) {
-        setSearchParams((prev) => {
-          const params = new URLSearchParams(prev)
-          params.set("query", query)
-          return params
-        })
-      }
-    },
-    [setSearchParams],
-  )
-
-  useEffect(() => {
-    setParams(query)
-  }, [setParams, query])
-
-  const debouncedSetQuery = debounce(setParams, 500)
+  const debouncedSetQuery = useDebouncedSetQuery()
 
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value)

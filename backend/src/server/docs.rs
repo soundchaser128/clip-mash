@@ -15,6 +15,7 @@ use crate::service::video::AddVideosRequest;
         library::update_video,
         library::create_new_marker,
         library::delete_marker,
+        library::delete_video,
         library::detect_markers,
         library::get_video,
         library::list_markers,

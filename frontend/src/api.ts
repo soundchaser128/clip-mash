@@ -23,6 +23,8 @@ export type DetectMarkersParams = {
   threshold?: number | null
 }
 
+export type DeleteVideo200 = unknown | null
+
 export type UpdateVideo200 = unknown | null
 
 export type ListStashVideosParams = {
@@ -169,6 +171,7 @@ export interface StashVideoDto {
   performers: string[]
   source: VideoSource
   stashSceneId?: number | null
+  tags: string[]
   title: string
 }
 
@@ -259,10 +262,6 @@ export type PmvClipOptionsOneOfFourAllOf = {
 export type PmvClipOptionsOneOfFour = SongClipOptions &
   PmvClipOptionsOneOfFourAllOf
 
-export type PmvClipOptionsOneOfAllOf = {
-  type: PmvClipOptionsOneOfAllOfType
-}
-
 export type PmvClipOptionsOneOf = RandomizedClipOptions &
   PmvClipOptionsOneOfAllOf
 
@@ -275,6 +274,10 @@ export type PmvClipOptionsOneOfAllOfType =
 export const PmvClipOptionsOneOfAllOfType = {
   randomized: "randomized",
 } as const
+
+export type PmvClipOptionsOneOfAllOf = {
+  type: PmvClipOptionsOneOfAllOfType
+}
 
 export interface NewId {
   id: string
@@ -640,6 +643,13 @@ export const updateVideo = (id: string, videoUpdate: VideoUpdate) => {
   })
 }
 
+export const deleteVideo = (id: string) => {
+  return customInstance<DeleteVideo200>({
+    url: `/api/library/video/${id}`,
+    method: "delete",
+  })
+}
+
 export const detectMarkers = (id: string, params?: DetectMarkersParams) => {
   return customInstance<MarkerDto[]>({
     url: `/api/library/video/${id}/detect-markers`,
@@ -687,7 +697,6 @@ export const getBeatFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
-    data: createBeatFunscriptBody,
   })
 }
 
@@ -699,7 +708,6 @@ export const getCombinedFunscript = (
     method: "get",
     headers: {"Content-Type": "application/json"},
     responseType: "blob",
-    data: createFunscriptBody,
   })
 }
 
@@ -762,6 +770,9 @@ export type ListStashVideosResult = NonNullable<
 export type GetVideoResult = NonNullable<Awaited<ReturnType<typeof getVideo>>>
 export type UpdateVideoResult = NonNullable<
   Awaited<ReturnType<typeof updateVideo>>
+>
+export type DeleteVideoResult = NonNullable<
+  Awaited<ReturnType<typeof deleteVideo>>
 >
 export type DetectMarkersResult = NonNullable<
   Awaited<ReturnType<typeof detectMarkers>>

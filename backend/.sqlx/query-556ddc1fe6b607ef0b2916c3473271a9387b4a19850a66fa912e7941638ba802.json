@@ -1,12 +1,12 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT COUNT(*) FROM markers WHERE title LIKE $1",
+  "query": "SELECT COUNT(*) FROM videos_fts WHERE videos_fts MATCH $1",
   "describe": {
     "columns": [
       {
         "name": "COUNT(*)",
         "ordinal": 0,
-        "type_info": "Int"
+        "type_info": "Int64"
       }
     ],
     "parameters": {
@@ -16,5 +16,5 @@
       false
     ]
   },
-  "hash": "f774064df920aeb169728534b4e3d7831a1b1ec3560b7b966bee4653230fad35"
+  "hash": "556ddc1fe6b607ef0b2916c3473271a9387b4a19850a66fa912e7941638ba802"
 }

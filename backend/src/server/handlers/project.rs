@@ -12,11 +12,11 @@ use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
 use crate::data::database::VideoSource;
-use crate::data::service::DataService;
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::funscript::{self, FunScript, ScriptBuilder};
+use crate::service::options_converter::OptionsConverterService;
 use crate::service::streams::{LocalVideoSource, StreamUrlService};
 use crate::util::generate_id;
 
@@ -33,7 +33,7 @@ pub async fn fetch_clips(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
-    let service = DataService::new(state.database.clone());
+    let service = OptionsConverterService::new(state.database.clone());
     let options = service.convert_clip_options(body).await?;
     debug!("clip options: {options:?}");
 
@@ -43,12 +43,14 @@ pub async fn fetch_clips(
         clips,
     } = clip_service.arrange_clips(options);
 
-    let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.clone()).collect();
+    let mut video_ids: Vec<_> = clips.iter().map(|c| c.video_id.as_str()).collect();
     video_ids.sort();
     video_ids.dedup();
 
-    let videos: Vec<_> = service
-        .fetch_videos(&video_ids)
+    let videos: Vec<_> = state
+        .database
+        .videos
+        .get_videos_by_ids(&video_ids)
         .await?
         .into_iter()
         .map(From::from)
@@ -70,7 +72,7 @@ async fn create_video_inner(
     state: State<Arc<AppState>>,
     body: CreateVideoBody,
 ) -> Result<(), AppError> {
-    let service = DataService::new(state.database.clone());
+    let service = OptionsConverterService::new(state.database.clone());
     let options = service.convert_compilation_options(body).await?;
 
     let clips = state.generator.gather_clips(&options).await?;
@@ -203,7 +205,7 @@ pub async fn get_combined_funscript(
     Json(body): Json<CreateFunscriptBody>,
 ) -> Result<Json<FunScript>, AppError> {
     let script_builder = ScriptBuilder::new().await;
-    let service = DataService::new(state.database.clone());
+    let service = OptionsConverterService::new(state.database.clone());
     let clips = service.convert_clips(body.clips).await?;
     let script = script_builder.combine_scripts(clips).await?;
 

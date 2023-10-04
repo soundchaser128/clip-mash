@@ -5,6 +5,7 @@ pub mod funscript;
 pub mod generator;
 pub mod migrations;
 pub mod music;
+pub mod options_converter;
 pub mod preview_image;
 pub mod scene_detection;
 pub mod stash_config;

@@ -1,48 +1,32 @@
 use std::collections::{HashMap, HashSet};
 
-use color_eyre::eyre::bail;
-
-use super::database::{Database, DbSong, DbVideo};
-use crate::server::types::*;
+use crate::data::database::{Database, DbSong, DbVideo};
+use crate::server::types::{Clip, CreateClipsBody, CreateVideoBody, SelectedMarker};
 use crate::service::clip::CreateClipsOptions;
 use crate::service::generator::CompilationOptions;
 use crate::service::Marker;
 use crate::Result;
 
-pub struct DataService {
+pub struct OptionsConverterService {
     db: Database,
 }
 
-impl DataService {
+impl OptionsConverterService {
     pub fn new(db: Database) -> Self {
         Self { db }
     }
 
-    pub async fn fetch_video(&self, id: &String) -> Result<DbVideo> {
-        let video = self.db.videos.get_video(id).await?;
-        if let Some(video) = video {
-            Ok(video.into())
-        } else {
-            bail!("no video found for id {id}")
-        }
-    }
-
-    pub async fn fetch_videos(&self, ids: &[String]) -> Result<Vec<DbVideo>> {
-        let mut videos = vec![];
-        for id in ids {
-            videos.push(self.fetch_video(id).await?);
-        }
-
-        Ok(videos)
-    }
-
     pub async fn convert_clips(&self, clips: Vec<Clip>) -> Result<Vec<(DbVideo, Clip)>> {
-        let all_video_ids: HashSet<_> = clips.iter().map(|c| &c.video_id).collect();
-        let mut videos = HashMap::new();
-        for id in all_video_ids {
-            let video = self.fetch_video(id).await?;
-            videos.insert(id, video);
-        }
+        let all_video_ids: HashSet<_> = clips.iter().map(|c| c.video_id.as_str()).collect();
+        let all_video_ids: Vec<_> = all_video_ids.into_iter().collect();
+        let videos: HashMap<_, _> = self
+            .db
+            .videos
+            .get_videos_by_ids(&all_video_ids)
+            .await?
+            .into_iter()
+            .map(|v| (v.id.clone(), v))
+            .collect();
 
         let mut results = vec![];
         for clip in &clips {
@@ -52,7 +36,7 @@ impl DataService {
         Ok(results)
     }
 
-    async fn convert_selected_markers(&self, markers: Vec<SelectedMarker>) -> Result<Vec<Marker>> {
+    fn convert_selected_markers(&self, markers: Vec<SelectedMarker>) -> Vec<Marker> {
         let mut results = vec![];
 
         for selected_marker in markers {
@@ -69,7 +53,7 @@ impl DataService {
             })
         }
 
-        Ok(results)
+        results
     }
 
     pub async fn convert_compilation_options(
@@ -81,7 +65,7 @@ impl DataService {
         Ok(CompilationOptions {
             video_id: body.video_id,
             clips: body.clips,
-            markers: self.convert_selected_markers(body.selected_markers).await?,
+            markers: self.convert_selected_markers(body.selected_markers),
             output_resolution: body.output_resolution,
             output_fps: body.output_fps,
             file_name: body.file_name,
@@ -99,7 +83,7 @@ impl DataService {
 
     pub async fn convert_clip_options(&self, body: CreateClipsBody) -> Result<CreateClipsOptions> {
         Ok(CreateClipsOptions {
-            markers: self.convert_selected_markers(body.markers).await?,
+            markers: self.convert_selected_markers(body.markers),
             seed: body.seed,
             clip_options: body.clips,
         })

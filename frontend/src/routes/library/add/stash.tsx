@@ -104,7 +104,7 @@ const AddStashVideoPage: React.FC = () => {
         {data.content.map((video) => (
           <VideoCard
             key={video.id}
-            video={{video, markers: []}}
+            video={{video, markerCount: 0}}
             stashConfig={config}
             actionChildren={
               <>

@@ -108,7 +108,7 @@ impl MarkersDatabase {
         query_builder.push_bind(id);
         query_builder.push(" RETURNING *, rowid");
 
-        info!("sql: '{}'", query_builder.sql());
+        debug!("sql: '{}'", query_builder.sql());
 
         let query = query_builder.build();
         let row = query.fetch_one(&self.pool).await?;

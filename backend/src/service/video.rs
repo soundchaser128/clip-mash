@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
@@ -112,6 +113,7 @@ impl VideoService {
         path: impl AsRef<Utf8Path>,
         recurse: bool,
     ) -> Result<Vec<DbVideo>> {
+        let start = Instant::now();
         let entries = self.gather_files(path.as_ref().to_owned(), recurse).await?;
         let mut videos = vec![];
         debug!("found files {entries:?} (recurse = {recurse})");
@@ -122,6 +124,12 @@ impl VideoService {
                 }
             }
         }
+        let elapsed = start.elapsed();
+        info!(
+            "added {videos} videos in {elapsed:?}",
+            videos = videos.len(),
+            elapsed = elapsed
+        );
         Ok(videos)
     }
 

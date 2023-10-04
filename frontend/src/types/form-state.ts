@@ -9,7 +9,7 @@ import {
   SongDto,
   MarkerDto,
 } from "../api"
-import {ClipStrategy, VideoWithMarkers} from "./types"
+import {ClipStrategy} from "./types"
 
 export enum FormStage {
   Start = 0,

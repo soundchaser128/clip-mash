@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use camino::Utf8Path;
 use futures::TryStreamExt;
 use sqlx::{FromRow, QueryBuilder, Row, SqlitePool};
-use tracing::info;
+use tracing::{debug, info};
 
 use super::{AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers, VideoUpdate};
 use crate::server::types::{ListVideoDto, PageParameters};
@@ -25,6 +25,16 @@ impl VideosDatabase {
             .fetch_optional(&self.pool)
             .await?;
         Ok(video)
+    }
+
+    pub async fn delete_video(&self, id: &str) -> Result<()> {
+        sqlx::query!("DELETE FROM markers WHERE video_id = $1", id)
+            .execute(&self.pool)
+            .await?;
+        sqlx::query!("DELETE FROM videos WHERE id = $1", id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 
     pub async fn update_video(&self, id: &str, update: VideoUpdate) -> Result<()> {
@@ -266,7 +276,7 @@ impl VideosDatabase {
         query_builder.push(" OFFSET ");
         query_builder.push_bind(offset);
 
-        info!("sql: '{}'", query_builder.sql());
+        debug!("sql: '{}'", query_builder.sql());
 
         let query = query_builder.build();
         let records = query.fetch_all(&self.pool).await?;

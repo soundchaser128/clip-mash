@@ -54,7 +54,7 @@ export async function updateMarker(
   } satisfies UpdateMarker
 
   try {
-    const marker = await updateMarkerApi(payload)
+    const marker = await updateMarkerApi(id, payload)
     return Result.ok(marker)
   } catch (e) {
     const error = e as JsonError

@@ -1,5 +1,3 @@
-import {MarkerDto, VideoDto} from "../api"
-
 export type SelectMode = "tags" | "performers" | "scenes"
 
 export type VideoSource = "stash" | "localFile" | undefined

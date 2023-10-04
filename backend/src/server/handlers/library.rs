@@ -185,6 +185,25 @@ pub async fn get_video(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/library/video/{id}",
+    params(
+        ("id" = String, Path, description = "The ID of the video to delete")
+    ),
+    responses(
+        (status = 200, description = "Delete a single video from the database", body = ()),
+    )
+)]
+#[axum::debug_handler]
+pub async fn delete_video(
+    Path(id): Path<String>,
+    state: State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    state.database.videos.delete_video(&id).await?;
+    Ok(Json("OK"))
+}
+
 #[derive(Deserialize)]
 pub struct DetectMarkersQuery {
     pub threshold: Option<f64>,

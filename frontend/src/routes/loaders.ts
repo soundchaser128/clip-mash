@@ -115,7 +115,8 @@ export const clipsLoader: LoaderFunction = async () => {
 export const localMarkerLoader: LoaderFunction = async () => {
   const state = getFormState()
 
-  const markers = listMarkers({videoIds: state?.videoIds || []})
+  const videoIds = (state?.videoIds ?? []).join(",")
+  const markers = listMarkers({videoIds})
   return markers
 }
 

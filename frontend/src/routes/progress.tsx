@@ -23,8 +23,9 @@ function Progress() {
     state.data.finalFileName || "",
   )
 
-  const fileName =
-    state.data.fileName || `Compilation [${state.data.videoId}].mp4`
+  const fileName = `${state.data.fileName || "Compilation"} [${
+    state.data.videoId
+  }].mp4`
   const sendNotification = useNotification()
   const numSongs = state.data.songs?.length || 0
   const interactive = numSongs > 0 || state.data.interactive

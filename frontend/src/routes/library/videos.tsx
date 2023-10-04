@@ -29,6 +29,7 @@ import VideoCard from "../../components/VideoCard"
 import {useConfig} from "../../hooks/useConfig"
 import {DEFAULT_PAGE_LENGTH} from "../loaders"
 import useDebouncedSetQuery from "../../hooks/useDebouncedQuery"
+import {pluralize} from "../../helpers"
 
 export const loader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
@@ -135,9 +136,13 @@ export default function ListVideos() {
             </button>
           )}
         </div>
-        <span className="text-center">
-          Found <strong>{initialVideos.totalItems}</strong> videos.
-        </span>
+        <div className="text-center">
+          <p>Found <strong>{initialVideos.totalItems}</strong> videos.</p>
+          <p>
+              <strong>{state.data.videoIds?.length || "all"}</strong>{" "}
+              {pluralize("video", state.data.videoIds?.length)} selected.
+            </p>
+        </div>
         {videos.length > 0 && (
           <button
             className="btn btn-success place-self-end"
@@ -159,11 +164,6 @@ export default function ListVideos() {
               onChange={onFilterChange}
             />
           </div>
-
-          <p className="place-self-center opacity-80">
-            You can either select videos by clicking on them or just continue,
-            this will automatically select all videos.
-          </p>
         </div>
       )}
 

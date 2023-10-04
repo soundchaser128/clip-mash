@@ -3,7 +3,7 @@ import {
   StateMachineProvider,
   useStateMachine,
 } from "little-state-machine"
-import React, {useEffect} from "react"
+import React, {useEffect, useState} from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
@@ -156,6 +156,7 @@ const Init = () => {
 const HomePage = () => {
   const videoId = useLoaderData() as string
   const {actions} = useStateMachine({updateForm})
+  const [project, setProject] = useState("")
 
   useEffect(() => {
     actions.updateForm({videoId})
@@ -164,6 +165,7 @@ const HomePage = () => {
   const onNext = () => {
     actions.updateForm({
       stage: FormStage.ListVideos,
+      fileName: project,
     })
   }
 
@@ -176,6 +178,19 @@ const HomePage = () => {
             <p className="mt-2 text-lg text-center opacity-60">
               ClipMash helps you create video compilations.
             </p>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Project name</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Enter a project name (optional)"
+                className="input input-primary input-bordered"
+                value={project}
+                onChange={(e) => setProject(e.target.value)}
+              />
+            </div>
+
             <div className="self-center btn-group">
               <Link
                 onClick={onNext}

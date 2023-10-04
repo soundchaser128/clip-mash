@@ -137,11 +137,13 @@ export default function ListVideos() {
           )}
         </div>
         <div className="text-center">
-          <p>Found <strong>{initialVideos.totalItems}</strong> videos.</p>
           <p>
-              <strong>{state.data.videoIds?.length || "all"}</strong>{" "}
-              {pluralize("video", state.data.videoIds?.length)} selected.
-            </p>
+            Found <strong>{initialVideos.totalItems}</strong> videos.
+          </p>
+          <p>
+            <strong>{state.data.videoIds?.length || "all"}</strong>{" "}
+            {pluralize("video", state.data.videoIds?.length)} selected.
+          </p>
         </div>
         {videos.length > 0 && (
           <button

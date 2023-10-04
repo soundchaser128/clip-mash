@@ -6,7 +6,7 @@ use tracing::{info, warn};
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::preview_image::PreviewGenerator;
-use crate::data::database::{AllVideosFilter, Database};
+use crate::data::database::{AllVideosFilter, Database, VideoUpdate};
 use crate::service::commands::ffprobe;
 use crate::Result;
 
@@ -125,6 +125,27 @@ impl Migrator {
         Ok(())
     }
 
+    async fn initialize_video_titles(&self) -> Result<()> {
+        info!("initializing video titles if necessary");
+        let videos = self
+            .database
+            .videos
+            .get_videos(AllVideosFilter::NoTitle)
+            .await?;
+        for video in videos {
+            let title = Utf8Path::new(&video.file_path)
+                .file_stem()
+                .unwrap_or_default()
+                .to_string();
+            self.database
+                .videos
+                .update_video(&video.id, VideoUpdate { title: Some(title), tags: None })
+                .await?;
+        }
+
+        Ok(())
+    }
+
     pub async fn run(&self) -> Result<()> {
         info!("running migrations");
         let start = Instant::now();
@@ -137,6 +158,7 @@ impl Migrator {
             self.generate_video_preview_images(),
             self.generate_marker_preview_images(),
             self.database.progress.cleanup_progress(),
+            self.initialize_video_titles(),
         )?;
 
         let elapsed = start.elapsed();

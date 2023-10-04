@@ -161,6 +161,7 @@ pub struct CreateSong {
 pub enum AllVideosFilter {
     NoVideoDuration,
     NoPreviewImage,
+    NoTitle,
 }
 
 #[derive(Clone)]
@@ -342,18 +343,16 @@ mod test {
             persist_video(&database).await.unwrap();
         }
         for i in 0..10 {
-            let path = format!("/some/path/{i}/sexy.mp4");
             persist_video_fn(&database, |v| {
-                v.file_path = path;
+                v.title = Some("sexy".into());
             })
             .await
             .unwrap();
         }
 
         for i in 0..5 {
-            let path = format!("/some/path/{i}/cool.mp4");
             persist_video_fn(&database, |v| {
-                v.file_path = path;
+                v.title = Some("cool".into());
             })
             .await
             .unwrap();

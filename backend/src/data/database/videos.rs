@@ -51,7 +51,6 @@ impl VideosDatabase {
         query_builder.push(" WHERE id = ");
         query_builder.push_bind(id);
 
-        info!("{}", query_builder.sql());
         let query = query_builder.build();
         query.execute(&self.pool).await?;
 
@@ -144,6 +143,11 @@ impl VideosDatabase {
                 .fetch_all(&self.pool)
                 .await
             }
+            AllVideosFilter::NoTitle => {
+                sqlx::query_as!(DbVideo, "SELECT * FROM videos WHERE video_title IS NULL")
+                    .fetch_all(&self.pool)
+                    .await
+            }
         };
         query.map_err(From::from)
     }
@@ -204,28 +208,76 @@ impl VideosDatabase {
         })
     }
 
+    async fn fetch_count(&self, query: Option<&str>) -> Result<i64> {
+        match query {
+            Some(query) => sqlx::query_scalar!(
+                "SELECT COUNT(*) FROM videos_fts WHERE videos_fts MATCH $1",
+                query
+            )
+            .fetch_one(&self.pool)
+            .await
+            .map_err(From::from),
+            None => sqlx::query_scalar!("SELECT COUNT(*) FROM videos")
+                .fetch_one(&self.pool)
+                .await
+                .map_err(From::from)
+                .map(|c| c as i64),
+        }
+    }
+
     pub async fn list_videos(
         &self,
         query: Option<&str>,
         params: &PageParameters,
     ) -> Result<(Vec<ListVideoDto>, usize)> {
-        let query = query.unwrap_or_default();
-        let count =
-            sqlx::query_scalar!("SELECT COUNT(*) FROM videos WHERE file_path LIKE $1 OR video_title LIKE $1 OR video_tags LIKE $1", query)
-                .fetch_one(&self.pool)
-                .await?;
+        #[derive(FromRow, Debug)]
+        struct Row {
+            id: String,
+            file_path: String,
+            interactive: bool,
+            duration: f64,
+            video_created_on: String,
+            source: String,
+            video_preview_image: Option<String>,
+            stash_scene_id: Option<i64>,
+            video_tags: Option<String>,
+            video_title: Option<String>,
+            video_id: String,
+            start_time: f64,
+            end_time: f64,
+            title: String,
+            rowid: Option<i64>,
+            index_within_video: i64,
+            marker_preview_image: Option<String>,
+            marker_created_on: String,
+        }
+
+        let count = self.fetch_count(query).await?;
+//         let query = query.map(|q| format!("{}'", q));
+        info!("count: {} for query {:?}", count, query);
         let limit = params.limit();
         let offset = params.offset();
-        // let sort = params.sort("video_created_on", SortDirection::Desc);
 
-        let  mut records = sqlx::query!("
-            SELECT *, m.rowid AS rowid
+        let mut query_builder = QueryBuilder::new(
+            "SELECT *, m.rowid AS rowid
             FROM videos v
-            LEFT JOIN markers m ON v.id = m.video_id
-            WHERE v.rowid IN (SELECT rowid FROM videos_fts WHERE videos_fts MATCH $1 LIMIT $2 OFFSET $3)
-        ", query, limit, offset)
-            .fetch_all(&self.pool)
-            .await?;
+            LEFT JOIN markers m ON v.id = m.video_id ",
+        );
+
+        if let Some(query) = query {
+            query_builder
+                .push("WHERE v.rowid IN (SELECT rowid FROM videos_fts WHERE videos_fts MATCH ");
+            query_builder.push_bind(query);
+            query_builder.push(") ");
+        }
+        query_builder.push("LIMIT ");
+        query_builder.push_bind(limit);
+        query_builder.push(" OFFSET ");
+        query_builder.push_bind(offset);
+
+        let query = query_builder.build();
+        let records = query.fetch_all(&self.pool).await?;
+        let mut records: Vec<_> = records.iter().flat_map(|r| Row::from_row(r)).collect();
 
         if records.is_empty() {
             Ok((vec![], count as usize))

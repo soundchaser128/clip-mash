@@ -367,7 +367,7 @@ impl VideosDatabase {
 
         let query = query_builder.build();
         let rows = query.fetch_all(&self.pool).await?;
-        let videos: Vec<_> = rows.iter().flat_map(DbVideo::from_row).collect();
+        let videos: Vec<_> = rows.iter().map(|v| DbVideo::from_row(v).unwrap()).collect();
         Ok(videos)
     }
 }

@@ -7,7 +7,7 @@ use tracing::{debug, info};
 
 use super::commands::ffmpeg::{Ffmpeg, FfmpegLocation};
 use crate::server::handlers::AppState;
-use crate::server::types::{CreateMarker, MarkerDto};
+use crate::server::types::{CreateMarker, MarkerDto, MarkerDtoConverter};
 use crate::service::preview_image::PreviewGenerator;
 use crate::Result;
 
@@ -101,6 +101,7 @@ pub async fn find_and_persist_markers(
 
     let mut created_markers = vec![];
     let preview_generator: PreviewGenerator = state.clone().into();
+    let converter = MarkerDtoConverter::new().await;
     for (index, marker) in markers.into_iter().enumerate() {
         let preview_image = preview_generator
             .generate_preview(&video.id, &video.file_path, marker.start)
@@ -119,7 +120,7 @@ pub async fn find_and_persist_markers(
             })
             .await?;
         info!("created marker {db_marker:?}");
-        created_markers.push(MarkerDto::from_db(db_marker, &video));
+        created_markers.push(converter.from_db(db_marker, &video));
     }
     Ok(created_markers)
 }

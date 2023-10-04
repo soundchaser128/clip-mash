@@ -9,7 +9,7 @@ use crate::data::database::{
     DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers, VideoSource,
 };
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
-use crate::data::stash_api::StashMarker;
+use crate::data::stash_api::StashApi;
 use crate::service::video::TAG_SEPARATOR;
 use crate::util::{add_api_key, expect_file_name};
 
@@ -119,59 +119,63 @@ pub struct MarkerDto {
     pub start: f64,
     pub end: f64,
     pub scene_title: Option<String>,
-    pub performers: Vec<String>,
     pub file_name: Option<String>,
     pub scene_interactive: bool,
     pub tags: Vec<String>,
-    pub screenshot_url: Option<String>,
+    pub screenshot_url: String,
     pub index_within_video: usize,
     pub source: VideoSource,
 }
 
-impl MarkerDto {
-    pub fn from_db(marker: DbMarker, video: &DbVideo) -> Self {
+pub struct MarkerDtoConverter {
+    stash_api: StashApi,
+}
+
+impl MarkerDtoConverter {
+    pub async fn new() -> Self {
+        Self {
+            stash_api: StashApi::load_config().await,
+        }
+    }
+
+    fn stream_url(&self, source: VideoSource, video_id: &str, stash_id: Option<i64>) -> String {
+        match source {
+            VideoSource::Stash => {
+                let stash_id = stash_id.expect("stash video must have scene id");
+                let url = self.stash_api.get_stream_url(stash_id);
+                url
+            }
+            VideoSource::Folder | VideoSource::Download => {
+                format!("/api/library/video/{}/file", video_id)
+            }
+        }
+    }
+
+    fn screenshot_url(&self, marker_id: i64) -> String {
+        format!("/api/library/marker/{}/preview", marker_id)
+    }
+
+    pub fn from_db(&self, marker: DbMarker, video: &DbVideo) -> MarkerDto {
         MarkerDto {
             id: marker.rowid.expect("marker must have rowid"),
             video_id: video.id.clone(),
             primary_tag: marker.title,
-            stream_url: format!("/api/local/video/{}/file", video.id),
+            stream_url: self.stream_url(video.source, &video.id, video.stash_scene_id),
             start: marker.start_time,
             end: marker.end_time,
             scene_title: video.video_title.clone(),
-            performers: vec![],
             file_name: Some(expect_file_name(&video.file_path)),
             scene_interactive: video.interactive,
             tags: video.tags().unwrap_or_default(),
-            screenshot_url: marker.marker_preview_image,
+            screenshot_url: self.screenshot_url(marker.rowid.unwrap()),
             index_within_video: marker.index_within_video as usize,
             source: video.source,
         }
     }
-}
 
-impl From<StashMarker> for MarkerDto {
-    fn from(value: StashMarker) -> Self {
-        MarkerDto {
-            id: value.id.parse().unwrap(),
-            stream_url: value.stream_url,
-            primary_tag: value.primary_tag,
-            start: value.start,
-            end: value.end,
-            scene_title: value.scene_title,
-            performers: value.performers,
-            file_name: value.file_name,
-            scene_interactive: value.scene_interactive,
-            tags: value.tags,
-            screenshot_url: Some(value.screenshot_url),
-            index_within_video: value.index_within_video,
-            video_id: value.scene_id,
-            source: VideoSource::Stash,
-        }
-    }
-}
+    pub fn from_db_with_video(&self, value: DbMarkerWithVideo) -> MarkerDto {
+        let tags = value.tags();
 
-impl From<DbMarkerWithVideo> for MarkerDto {
-    fn from(value: DbMarkerWithVideo) -> Self {
         MarkerDto {
             id: value.rowid.expect("marker must have a rowid"),
             start: value.start_time,
@@ -179,16 +183,12 @@ impl From<DbMarkerWithVideo> for MarkerDto {
             file_name: Utf8Path::new(&value.file_path)
                 .file_name()
                 .map(|s| s.to_string()),
-            performers: vec![],
             primary_tag: value.title,
             scene_interactive: value.interactive,
             scene_title: value.video_title,
-            stream_url: format!("/api/local/video/{}/file", value.video_id),
-            tags: vec![],
-            screenshot_url: Some(format!(
-                "/api/local/video/marker/{}/preview",
-                value.rowid.unwrap()
-            )),
+            stream_url: self.stream_url(value.source, &value.video_id, value.stash_scene_id),
+            tags,
+            screenshot_url: self.screenshot_url(value.rowid.unwrap()),
             index_within_video: value.index_within_video as usize,
             video_id: value.video_id,
             source: value.source,
@@ -450,15 +450,24 @@ pub struct VideoDetailsDto {
     pub markers: Vec<MarkerDto>,
 }
 
-impl From<LocalVideoWithMarkers> for VideoDetailsDto {
-    fn from(value: LocalVideoWithMarkers) -> Self {
+pub struct VideoDetailsDtoConverter {
+    marker_converter: MarkerDtoConverter,
+}
+
+impl VideoDetailsDtoConverter {
+    pub async fn new() -> Self {
+        let marker_converter = MarkerDtoConverter::new().await;
+        Self { marker_converter }
+    }
+
+    pub fn from_db(&self, value: LocalVideoWithMarkers) -> VideoDetailsDto {
         let db_video = value.video.clone();
         VideoDetailsDto {
             video: value.video.into(),
             markers: value
                 .markers
                 .into_iter()
-                .map(|m| MarkerDto::from_db(m, &db_video))
+                .map(|m| self.marker_converter.from_db(m, &db_video))
                 .collect(),
         }
     }

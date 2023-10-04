@@ -131,7 +131,18 @@ pub struct DbMarkerWithVideo {
     pub interactive: bool,
     pub marker_created_on: String,
     pub video_title: Option<String>,
+    pub video_tags: Option<String>,
     pub source: VideoSource,
+    pub stash_scene_id: Option<i64>,
+}
+
+impl DbMarkerWithVideo {
+    pub fn tags(&self) -> Vec<String> {
+        self.video_tags
+            .clone()
+            .map(|s| s.split(TAG_SEPARATOR).map(|s| s.to_string()).collect())
+            .unwrap_or_default()
+    }
 }
 
 #[derive(Debug)]

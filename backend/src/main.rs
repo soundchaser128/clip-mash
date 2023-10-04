@@ -109,7 +109,7 @@ async fn main() -> Result<()> {
             "/video/:id/preview",
             get(handlers::library::get_video_preview),
         )
-        // list all markers (paginated, with search)
+        // list all markers by video ID
         .route("/marker", get(handlers::library::list_markers))
         // create new marker for video
         .route("/marker", post(handlers::library::create_new_marker))

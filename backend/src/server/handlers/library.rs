@@ -16,8 +16,8 @@ use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::server::types::{
-    CreateMarker, ListVideoDto, MarkerDto, Page, PageParameters, StashVideoDto, UpdateMarker,
-    VideoDetailsDto, VideoDto,
+    CreateMarker, ListVideoDto, MarkerDto, MarkerDtoConverter, Page, PageParameters, StashVideoDto,
+    UpdateMarker, VideoDetailsDto, VideoDetailsDtoConverter, VideoDto,
 };
 use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;
@@ -178,7 +178,8 @@ pub async fn get_video(
 ) -> Result<Json<VideoDetailsDto>, AppError> {
     let video = state.database.videos.get_video_with_markers(&id).await?;
     if let Some(video) = video {
-        let dto = video.into();
+        let converter = VideoDetailsDtoConverter::new().await;
+        let dto = converter.from_db(video);
         Ok(Json(dto))
     } else {
         Err(AppError::StatusCode(StatusCode::NOT_FOUND))
@@ -318,7 +319,12 @@ pub async fn list_markers(
         .markers
         .list_markers(video_ids.as_deref())
         .await?;
-    let markers = markers.into_iter().map(From::from).collect();
+    let converter = MarkerDtoConverter::new().await;
+
+    let markers = markers
+        .into_iter()
+        .map(|m| converter.from_db_with_video(m))
+        .collect();
     Ok(Json(markers))
 }
 
@@ -359,8 +365,9 @@ pub async fn create_new_marker(
                 .await?;
             marker.preview_image_path = Some(preview_image.to_string());
             let marker = state.database.markers.create_new_marker(marker).await?;
+            let converter = MarkerDtoConverter::new().await;
 
-            Ok(Json(MarkerDto::from_db(marker, &video)))
+            Ok(Json(converter.from_db(marker, &video)))
         } else {
             warn!("No video found for marker {marker:?}, returning 404");
             Err(AppError::StatusCode(StatusCode::NOT_FOUND))
@@ -394,7 +401,8 @@ pub async fn update_marker(
         .get_video(&marker.video_id)
         .await?
         .expect("video for marker must exist");
-    Ok(Json(MarkerDto::from_db(marker, &video)))
+    let converter = MarkerDtoConverter::new().await;
+    Ok(Json(converter.from_db(marker, &video)))
 }
 
 #[utoipa::path(
@@ -467,10 +475,12 @@ pub async fn split_marker(
         }
     }
 
+    let converter = MarkerDtoConverter::new().await;
+
     Ok(Json(
         new_markers
             .into_iter()
-            .map(|m| MarkerDto::from_db(m, &data.video))
+            .map(|m| converter.from_db(m, &data.video))
             .collect(),
     ))
 }

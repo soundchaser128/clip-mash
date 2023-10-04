@@ -317,11 +317,10 @@ export interface MarkerDto {
   fileName?: string | null
   id: number
   indexWithinVideo: number
-  performers: string[]
   primaryTag: string
   sceneInteractive: boolean
   sceneTitle?: string | null
-  screenshotUrl?: string | null
+  screenshotUrl: string
   source: VideoSource
   start: number
   streamUrl: string

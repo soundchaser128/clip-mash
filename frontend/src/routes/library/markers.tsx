@@ -19,14 +19,7 @@ import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
 import EditableText from "../../components/EditableText"
 import {updateMarker} from "../../api"
-
-function getPreview(marker: MarkerDto) {
-  if (marker.screenshotUrl?.includes("stash")) {
-    return marker.screenshotUrl
-  } else {
-    return `/api/library/marker/${marker.id}/preview`
-  }
-}
+import useFuse from "../../hooks/useFuse"
 
 const SelectMarkers: React.FC = () => {
   const initialMarkers = useLoaderData() as MarkerDto[]
@@ -56,7 +49,11 @@ const SelectMarkers: React.FC = () => {
   const [filter, setFilter] = useState("")
   const [videoPreview, setVideoPreview] = useState<number>()
   const navigate = useNavigate()
-  const markers = initialMarkers
+  const markers = useFuse({
+    query: filter,
+    keys: ["performers", "primaryTag", "sceneTitle", "tags"],
+    items: initialMarkers,
+  })
 
   const [maxMarkerLength, setMaxMarkerLength] = useState<number>()
   const allDisabled = Object.values(selection).every((m) => !m.selected)
@@ -85,17 +82,17 @@ const SelectMarkers: React.FC = () => {
 
   const onDeselectAll = () => {
     setSelection((draft) => {
-      Object.values(draft).forEach((e) => {
-        e.selected = false
-      })
+      for (const marker of markers) {
+        draft[marker.id].selected = false
+      }
     })
   }
 
   const onSelectAll = () => {
     setSelection((draft) => {
-      Object.values(draft).forEach((e) => {
-        e.selected = true
-      })
+      for (const marker of markers) {
+        draft[marker.id].selected = true
+      }
     })
   }
 
@@ -241,6 +238,7 @@ const SelectMarkers: React.FC = () => {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
         {markers.map((marker) => {
           const selectedMarker = selection[marker.id]
+          const streamUrl = `${marker.streamUrl}#t=${marker.start},${marker.end}`
           return (
             <article
               key={marker.id}
@@ -251,13 +249,21 @@ const SelectMarkers: React.FC = () => {
             >
               <figure>
                 {videoPreview === marker.id && (
-                  <video muted autoPlay src={marker.streamUrl} />
+                  <video
+                    muted
+                    autoPlay
+                    src={streamUrl}
+                    width={499}
+                    height={281}
+                  />
                 )}
                 {videoPreview !== marker.id && (
                   <img
-                    src={getPreview(marker)}
+                    src={marker.screenshotUrl}
                     className="aspect-[16/9] object-cover object-top w-full cursor-pointer"
                     onClick={() => onCheckboxToggle(marker.id)}
+                    width={499}
+                    height={281}
                   />
                 )}
               </figure>

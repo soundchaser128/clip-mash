@@ -165,7 +165,7 @@ impl VideoService {
             duration: duration.unwrap_or_default(),
             video_preview_image: Some(image_path.to_string()),
             stash_scene_id: None,
-            title: None,
+            title: path.file_stem().map(String::from),
             tags: None,
         };
         info!("persisting downloaded video {video:#?}");
@@ -199,6 +199,7 @@ impl VideoService {
                     .filter(|t| !t.is_empty())
                     .or(scene.files.get(0).map(|f| f.basename.clone()));
                 info!("inserting video from stash with title {title:?}");
+                let stash_id = scene.id.parse().unwrap();
 
                 CreateVideo {
                     id: generate_id(),
@@ -206,7 +207,7 @@ impl VideoService {
                     interactive: scene.interactive,
                     source: VideoSource::Stash,
                     duration: scene.files[0].duration,
-                    video_preview_image: Some(self.stash_api.get_screenshot_url(&scene.id)),
+                    video_preview_image: Some(self.stash_api.get_screenshot_url(stash_id)),
                     stash_scene_id: Some(scene.id.parse().unwrap()),
                     title,
                     tags: Some(
@@ -226,19 +227,25 @@ impl VideoService {
             videos.push(result);
         }
 
+        let preview_generator =
+            PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
         for marker in stash_markers {
             let scene_id: i64 = marker.scene_id.parse()?;
+            let stream_url = self.stash_api.get_stream_url(scene_id);
             let video = videos
                 .iter()
                 .find(|v| v.stash_scene_id == Some(scene_id))
                 .expect("video must exist");
+            let preview_path = preview_generator
+                .generate_preview(&video.id, &stream_url, marker.start)
+                .await?;
             let create_marker = CreateMarker {
                 video_id: video.id.clone(),
                 start: marker.start,
                 end: marker.end,
                 title: marker.primary_tag,
                 index_within_video: marker.index_within_video as i64,
-                preview_image_path: Some(marker.screenshot_url),
+                preview_image_path: Some(preview_path.to_string()),
                 video_interactive: video.interactive,
             };
             self.database

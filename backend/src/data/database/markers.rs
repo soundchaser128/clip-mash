@@ -21,7 +21,8 @@ impl MarkersDatabase {
             "SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, 
                 m.end_time, m.index_within_video, m.marker_preview_image, 
-                v.interactive, m.marker_created_on, v.video_title, v.source
+                v.interactive, m.marker_created_on, v.video_title, v.source,
+                v.video_tags, v.stash_scene_id
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.rowid = $1",
             id
@@ -37,7 +38,8 @@ impl MarkersDatabase {
             "SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, 
                 m.index_within_video, m.marker_preview_image, v.interactive, 
-                m.marker_created_on, v.video_title, v.source
+                m.marker_created_on, v.video_title, v.source, v.video_tags,
+                v.stash_scene_id
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.marker_preview_image IS NULL"
         )
@@ -176,7 +178,8 @@ impl MarkersDatabase {
             SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, 
                 m.index_within_video, m.marker_preview_image, v.interactive, 
-                m.marker_created_on, v.video_title, v.source
+                m.marker_created_on, v.video_title, v.source, v.video_tags,
+                v.stash_scene_id
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             ORDER BY v.file_path ASC"
         )
@@ -193,7 +196,8 @@ impl MarkersDatabase {
         let mut query_builder = QueryBuilder::new(
             "SELECT m.video_id, m.rowid, m.start_time, m.end_time, 
                     m.title, v.file_path, m.index_within_video, m.marker_preview_image, 
-                    v.interactive, m.marker_created_on, v.video_title, v.source
+                    v.interactive, m.marker_created_on, v.video_title, v.video_tags, v.source,
+                    v.stash_scene_id
             FROM markers m
             INNER JOIN videos v ON m.video_id = v.id ",
         );
@@ -206,11 +210,12 @@ impl MarkersDatabase {
             list.push_unseparated(") ");
         }
         query_builder.push("ORDER BY m.video_id ASC, m.index_within_video ASC");
+        debug!("sql: '{}'", query_builder.sql());
         let query = query_builder.build();
         let records = query.fetch_all(&self.pool).await?;
         let markers = records
             .iter()
-            .flat_map(DbMarkerWithVideo::from_row)
+            .map(|m| DbMarkerWithVideo::from_row(m).unwrap())
             .collect();
 
         debug!("found markers {markers:#?}");

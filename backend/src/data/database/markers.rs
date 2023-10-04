@@ -106,7 +106,7 @@ impl MarkersDatabase {
 
         query_builder.push(" WHERE rowid = ");
         query_builder.push_bind(id);
-        query_builder.push(" RETURNING *");
+        query_builder.push(" RETURNING *, rowid");
 
         info!("sql: '{}'", query_builder.sql());
 

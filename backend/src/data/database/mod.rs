@@ -345,6 +345,7 @@ mod test {
         for i in 0..10 {
             persist_video_fn(&database, |v| {
                 v.title = Some("sexy".into());
+                v.file_path = format!("/path/{i}/sexy.mp4");
             })
             .await
             .unwrap();
@@ -353,6 +354,7 @@ mod test {
         for i in 0..5 {
             persist_video_fn(&database, |v| {
                 v.title = Some("cool".into());
+                v.file_path = format!("/path/{i}/cool.mp4");
             })
             .await
             .unwrap();
@@ -361,8 +363,8 @@ mod test {
         let page = PageParameters {
             page: Some(0),
             size: Some(10),
-            sort: Some("file_path".into()),
-            dir: Some(SortDirection::Asc),
+            sort: None,
+            dir: None,
         };
         let (result, total) = database
             .videos
@@ -373,6 +375,7 @@ mod test {
         assert_eq!(10, result.len());
         let file_name = &result[0].video.file_name;
         assert_eq!(file_name, "sexy.mp4");
+        assert_eq!(result[0].video.title.as_str(), "sexy");
 
         let (result, total) = database
             .videos
@@ -383,6 +386,7 @@ mod test {
         assert_eq!(5, result.len());
         let file_name = &result[0].video.file_name;
         assert_eq!(file_name, "cool.mp4");
+        assert_eq!(result[0].video.title.as_str(), "cool");
     }
 
     #[sqlx::test]

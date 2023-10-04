@@ -2,14 +2,10 @@ use std::collections::HashSet;
 
 use camino::Utf8Path;
 use futures::TryStreamExt;
-use itertools::Itertools;
 use sqlx::{FromRow, QueryBuilder, Row, SqlitePool};
 use tracing::info;
 
-use super::{
-    AllVideosFilter, CreateVideo, DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers,
-    VideoUpdate,
-};
+use super::{AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers, VideoUpdate};
 use crate::server::types::{ListVideoDto, PageParameters};
 use crate::service::video::TAG_SEPARATOR;
 use crate::Result;

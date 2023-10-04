@@ -434,7 +434,6 @@ pub struct ListVideoDto {
 
 impl From<LocalVideoWithMarkers> for ListVideoDto {
     fn from(value: LocalVideoWithMarkers) -> Self {
-        let db_video = value.video.clone();
         ListVideoDto {
             video: value.video.into(),
             marker_count: value.markers.len(),

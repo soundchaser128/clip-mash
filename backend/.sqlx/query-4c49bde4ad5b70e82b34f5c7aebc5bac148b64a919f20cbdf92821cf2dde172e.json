@@ -51,7 +51,7 @@
       {
         "name": "marker_created_on",
         "ordinal": 9,
-        "type_info": "Text"
+        "type_info": "Int64"
       },
       {
         "name": "video_title",

@@ -41,7 +41,7 @@
       {
         "name": "video_created_on",
         "ordinal": 7,
-        "type_info": "Text"
+        "type_info": "Int64"
       },
       {
         "name": "video_title",
@@ -86,7 +86,7 @@
       {
         "name": "marker_created_on",
         "ordinal": 16,
-        "type_info": "Text"
+        "type_info": "Int64"
       },
       {
         "name": "rowid",

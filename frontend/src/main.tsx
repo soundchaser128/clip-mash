@@ -16,7 +16,9 @@ import {
   useNavigate,
   useRouteError,
 } from "react-router-dom"
+import "inter-ui/inter.css"
 import "./index.css"
+
 import VideoOptions from "./routes/video-options"
 import Progress from "./routes/progress"
 import PreviewClips from "./routes/clips"

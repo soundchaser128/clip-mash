@@ -28,11 +28,11 @@ const AddStashVideoPage: React.FC = () => {
     }
   }, [config, navigate])
 
-  const debouncedSetQuery = useDebouncedSetQuery()
+  const {setQueryDebounced} = useDebouncedSetQuery()
 
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value)
-    debouncedSetQuery(e.target.value.trim())
+    setQueryDebounced(e.target.value.trim())
   }
 
   const onAddVideo = async (video: StashVideoDto) => {

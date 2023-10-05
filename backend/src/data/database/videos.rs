@@ -255,6 +255,11 @@ impl VideosDatabase {
         info!("count: {} for query {:?}", count, query);
         let limit = params.limit();
         let offset = params.offset();
+        let order_by = match params.sort.as_deref() {
+            Some("title") => "v.video_title COLLATE NOCASE ASC",
+            Some("created") => "v.video_created_on DESC",
+            _ => "marker_count DESC, v.video_title COLLATE NOCASE ASC",
+        };
 
         let mut query_builder = QueryBuilder::new(
             "SELECT v.id, v.file_path, v.interactive, v.duration, v.video_created_on, v.source, v.video_preview_image, 
@@ -270,8 +275,12 @@ impl VideosDatabase {
             query_builder.push(") ");
         }
         query_builder.push("GROUP BY v.id ");
-        query_builder.push("ORDER BY marker_count DESC, v.video_title COLLATE NOCASE ASC ");
-        query_builder.push("LIMIT ");
+        query_builder.push("ORDER BY ");
+        // security: technically this would be vulnerable to SQL injection, but
+        // all the user would get is their own local sqlite database, I don't think
+        // this is too much of an issue. with binds, this doesn't seem to work.
+        query_builder.push(order_by);
+        query_builder.push(" LIMIT ");
         query_builder.push_bind(limit);
         query_builder.push(" OFFSET ");
         query_builder.push_bind(offset);
@@ -280,7 +289,7 @@ impl VideosDatabase {
 
         let query = query_builder.build();
         let records = query.fetch_all(&self.pool).await?;
-        let records: Vec<_> = records.iter().flat_map(|r| Row::from_row(r)).collect();
+        let records: Vec<_> = records.iter().map(|r| Row::from_row(r).unwrap()).collect();
 
         if records.is_empty() {
             Ok((vec![], count as usize))

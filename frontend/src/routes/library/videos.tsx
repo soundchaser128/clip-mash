@@ -54,8 +54,8 @@ export default function ListVideos() {
   const noVideos = videos.length === 0 && !filter && !isLoading
   const noVideosForFilter = videos.length === 0 && filter && !isLoading
   const revalidator = useRevalidator()
-
-  const debouncedSetQuery = useDebouncedSetQuery()
+  const [sort, setSort] = useState(params.get("sort") ?? "markers")
+  const {setQueryDebounced, addOrReplaceParam} = useDebouncedSetQuery()
 
   useEffect(() => {
     setVideos(initialVideos.content)
@@ -67,7 +67,12 @@ export default function ListVideos() {
 
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value)
-    debouncedSetQuery(e.target.value.trim())
+    setQueryDebounced(e.target.value.trim())
+  }
+
+  const onChangeSort = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSort(e.target.value)
+    addOrReplaceParam("sort", e.target.value)
   }
 
   const onNextStage = () => {
@@ -156,15 +161,31 @@ export default function ListVideos() {
         )}
       </div>
       {!noVideos && (
-        <div className="w-full grid grid-cols-3">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Filter..."
-              className="input input-primary w-full lg:w-96"
-              value={filter}
-              onChange={onFilterChange}
-            />
+        <div className="w-full grid grid-cols-2">
+          <input
+            type="text"
+            placeholder="Filter..."
+            className="input input-primary w-full lg:w-96"
+            value={filter}
+            onChange={onFilterChange}
+          />
+
+          <div className="flex place-self-end gap-1">
+            <label className="label">
+              <span className="label-text">Sort by</span>
+            </label>
+            <select
+              value={sort}
+              onChange={onChangeSort}
+              className="select select-sm select-bordered"
+            >
+              <option disabled value="none">
+                Sort by...
+              </option>
+              <option value="markers">Number of markers</option>
+              <option value="title">Video title</option>
+              <option value="created">Created on</option>
+            </select>
           </div>
         </div>
       )}

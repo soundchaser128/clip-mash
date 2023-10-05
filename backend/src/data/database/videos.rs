@@ -279,9 +279,8 @@ impl VideosDatabase {
         }
         query_builder.push("GROUP BY v.id ");
         query_builder.push("ORDER BY ");
-        // security: technically this would be vulnerable to SQL injection, but
-        // all the user would get is their own local sqlite database, I don't think
-        // this is too much of an issue. with binds, this doesn't seem to work.
+        // security: order_by is a static string determined from the `sort` parameter,
+        // so it is safe to append it to the query without escaping
         query_builder.push(order_by);
         query_builder.push(" LIMIT ");
         query_builder.push_bind(limit);

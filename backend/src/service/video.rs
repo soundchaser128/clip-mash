@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::{Instant, SystemTime};
 
 use camino::{Utf8Path, Utf8PathBuf};
-use color_eyre::eyre::bail;
+use color_eyre::eyre::{bail, eyre};
 use futures::future;
 use itertools::Itertools;
 use serde::Deserialize;
@@ -296,6 +296,23 @@ impl VideoService {
 
     pub async fn cleanup_videos(&self) -> Result<u32> {
         self.database.videos.cleanup_videos().await
+    }
+
+    pub async fn merge_stash_scene(&self, video_id: &str) -> Result<()> {
+        let video = self
+            .database
+            .videos
+            .get_video(video_id)
+            .await?
+            .ok_or_else(|| eyre!("video not found"))?;
+
+        if let Some(stash_scene_id) = video.stash_scene_id {
+            let scene = self.stash_api.find_scene(stash_scene_id).await?;
+
+            Ok(())
+        } else {
+            bail!("video is not from stash")
+        }
     }
 }
 

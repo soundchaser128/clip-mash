@@ -190,6 +190,32 @@ impl StashApi {
         Ok(serde_json::to_string(&status)?)
     }
 
+    pub async fn find_scene(&self, scene_id: i64) -> Result<FindScenesQueryFindScenesScenes> {
+        let variables = find_scenes_query::Variables {
+            scene_ids: Some(vec![scene_id]),
+            query: None,
+            page: 0,
+            page_size: 1,
+            has_markers: None,
+        };
+        let request_body = FindScenesQuery::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+        let response: Response<find_scenes_query::ResponseData> = response.json().await?;
+
+        match response.data {
+            Some(scenes) => Ok(scenes.find_scenes.scenes.into_iter().next().unwrap()),
+            None => bail!("no scene found"),
+        }
+    }
+
     pub async fn find_scenes(
         &self,
         page: &PageParameters,

@@ -175,7 +175,7 @@ async fn main() -> Result<()> {
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
         .with_state(state);
 
-    let host = env::args().nth(1).unwrap_or_else(|| "[::1]".to_string());
+    let host = env::args().nth(1).unwrap_or_else(|| "127.0.0.1".to_string());
     let addr = format!("{host}:5174");
     info!("running at {}", addr);
 

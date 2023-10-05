@@ -1,5 +1,4 @@
 import {useStateMachine} from "little-state-machine"
-import {Page} from "../../types/types"
 import {
   HiChevronRight,
   HiFolder,
@@ -21,7 +20,13 @@ import {
   useRevalidator,
   useSearchParams,
 } from "react-router-dom"
-import {ListVideoDto, cleanupVideos, deleteVideo, updateVideo} from "../../api"
+import {
+  ListVideoDto,
+  ListVideoDtoPage,
+  cleanupVideos,
+  deleteVideo,
+  updateVideo,
+} from "../../api"
 import Pagination from "../../components/Pagination"
 import {listVideos} from "../../api"
 import {FormStage} from "../../types/form-state"
@@ -43,7 +48,7 @@ export const loader: LoaderFunction = async ({request}) => {
 
 export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
-  const initialVideos = useLoaderData() as Page<ListVideoDto>
+  const initialVideos = useLoaderData() as ListVideoDtoPage
   const [videos, setVideos] = useImmer<ListVideoDto[]>(initialVideos.content)
   const navigate = useNavigate()
   const navigation = useNavigation()

@@ -2,7 +2,6 @@ import {useStateMachine} from "little-state-machine"
 import Field from "../components/Field"
 import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
-import {ClipStrategy} from "../types/types"
 import React, {useCallback, useRef, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds, sumDurations} from "../helpers"
@@ -24,6 +23,7 @@ import useNotification from "../hooks/useNotification"
 import Loader from "../components/Loader"
 import {FormStage} from "../types/form-state"
 import ExternalLink from "../components/ExternalLink"
+import {ClipStrategy} from "../types/types"
 
 interface Inputs {
   musicUrl: string

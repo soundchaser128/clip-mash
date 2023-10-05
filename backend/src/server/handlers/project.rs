@@ -5,6 +5,7 @@ use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
 use camino::Utf8PathBuf;
+use color_eyre::eyre::eyre;
 use serde::{Deserialize, Serialize};
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
@@ -150,7 +151,7 @@ pub async fn get_new_id() -> Json<NewId> {
 #[derive(Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 pub struct FilenameQuery {
-    file_name: String,
+    video_id: String,
 }
 
 #[utoipa::path(
@@ -164,15 +165,32 @@ pub struct FilenameQuery {
 #[axum::debug_handler]
 pub async fn download_video(
     state: State<Arc<AppState>>,
-    Query(FilenameQuery { file_name }): Query<FilenameQuery>,
+    Query(FilenameQuery { video_id }): Query<FilenameQuery>,
 ) -> Result<impl IntoResponse, AppError> {
     use axum::http::header;
     use axum::response::AppendHeaders;
+    use tokio::fs;
 
-    info!("downloading video '{file_name}'");
-    let path = state.directories.compilation_video_dir().join(&file_name);
-    let file = tokio::fs::File::open(path).await?;
+    info!("downloading video '{video_id}'");
+    let mut iter = fs::read_dir(state.directories.compilation_video_dir()).await?;
+    let mut path = None;
+    while let Some(entry) = iter.next_entry().await? {
+        let file_path = Utf8PathBuf::from_path_buf(entry.path()).expect("must be utf-8 path");
+        if let Some(name) = file_path.file_name() {
+            if name.contains(&video_id) {
+                path = Some(file_path);
+                break;
+            }
+        }
+    }
+    if path.is_none() {
+        return Err(eyre!("no video found for video ID '{video_id}'").into());
+    }
+    let path = path.unwrap();
+    let file = fs::File::open(&path).await?;
+
     let stream = ReaderStream::new(file);
+    let file_name = path.file_name().unwrap();
     let content_disposition = format!("attachment; filename=\"{}\"", file_name);
 
     let headers = AppendHeaders([

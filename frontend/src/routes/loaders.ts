@@ -68,7 +68,7 @@ const getClipSettings = (state: FormState): ClipPickerOptions => {
       clipLengths: getClipLengths(state),
       length: state.songs.reduce((sum, song) => sum + song.duration, 0),
     }
-  } else if (state.clipStrategy === "noSplit") {
+  } else if (state.clipStrategy === "noSplit" || state.splitClips === false) {
     return {type: "noSplit"}
   } else {
     return {

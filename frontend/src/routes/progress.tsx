@@ -1,42 +1,27 @@
 import {useStateMachine} from "little-state-machine"
 import {useEffect, useRef, useState} from "react"
-import {
-  HiArrowDown,
-  HiCodeBracket,
-  HiHeart,
-  HiRocketLaunch,
-} from "react-icons/hi2"
+import {HiRocketLaunch} from "react-icons/hi2"
 import {formatSeconds} from "../helpers"
 import {CreateVideoBody, Progress, createVideo} from "../api"
 import useNotification from "../hooks/useNotification"
-import {updateForm} from "./actions"
-import {Link} from "react-router-dom"
-import clsx from "clsx"
-import ExternalLink from "../components/ExternalLink"
+import {useNavigate} from "react-router-dom"
 
 function Progress() {
-  const {state, actions} = useStateMachine({updateForm})
+  const {state} = useStateMachine()
   const [progress, setProgress] = useState<Progress>()
-
-  const [finished, setFinished] = useState(false)
-  const [finalFileName, setFinalFileName] = useState(
-    state.data.finalFileName || "",
-  )
-
   const fileName = `${state.data.fileName || "Compilation"} [${
     state.data.videoId
   }].mp4`
   const sendNotification = useNotification()
-  const numSongs = state.data.songs?.length || 0
-  const interactive = numSongs > 0 || state.data.interactive
   const eventSource = useRef<EventSource>()
   const {videoId} = state.data
+  const navigate = useNavigate()
 
   const handleProgress = (data: Progress) => {
     if (data.done) {
-      setFinished(true)
       eventSource.current?.close()
       sendNotification("Success", "Video generation finished!")
+      navigate(`/${videoId}/download`)
     }
     setProgress(data)
   }
@@ -94,12 +79,7 @@ function Progress() {
       musicVolume: state.data.musicVolume,
     } satisfies CreateVideoBody
 
-    const response = await createVideo(data)
-    setFinalFileName(response.finalFileName)
-    actions.updateForm({
-      finalFileName: response.finalFileName,
-    })
-
+    await createVideo(data)
     eventSource.current = openEventSource()
     setProgress({
       itemsFinished: 0,
@@ -114,7 +94,7 @@ function Progress() {
 
   return (
     <div className="mt-2 w-full self-center flex flex-col items-center">
-      {!progress && !finished && (
+      {!progress && (
         <>
           <div className="mb-8">
             <p>
@@ -136,7 +116,7 @@ function Progress() {
         </>
       )}
 
-      {progress && !finished && (
+      {progress && (
         <div className="w-full">
           <progress
             className="progress h-6 progress-primary w-full"
@@ -156,58 +136,6 @@ function Progress() {
             </p>
             <p>{progress.message}</p>
           </section>
-        </div>
-      )}
-
-      {finished && (
-        <div className="flex flex-col gap-6">
-          <h1 className="text-5xl font-bold text-center">🎉 Success!</h1>
-          <p>
-            You can now download the finished compilation!{" "}
-            {interactive && (
-              <>
-                You can also create a <code>.funscript</code> file for use with
-                sex toys.
-              </>
-            )}
-          </p>
-          <div
-            className={clsx(
-              "grid gap-2 w-full",
-              interactive && "grid-cols-3",
-              !interactive && "grid-cols-2",
-            )}
-          >
-            <div className="flex flex-col">
-              <a
-                href={`/api/project/download?fileName=${encodeURIComponent(
-                  finalFileName,
-                )}`}
-                className="btn btn-success btn-lg"
-                download
-              >
-                <HiArrowDown className="w-6 h-6 mr-2" />
-                Download video
-              </a>
-            </div>
-            {interactive && (
-              <div className="flex flex-col">
-                <Link className="btn btn-primary btn-lg" to="/funscript">
-                  <HiCodeBracket className="w-6 h-6 mr-2" />
-                  Create funscript
-                </Link>
-              </div>
-            )}
-            <div className="flex flex-col">
-              <ExternalLink
-                href="https://ko-fi.com/soundchaser128"
-                className="btn btn-lg btn-secondary"
-              >
-                <HiHeart className="w-6 h-6 mr-2" />
-                Support the developer
-              </ExternalLink>
-            </div>
-          </div>
         </div>
       )}
     </div>

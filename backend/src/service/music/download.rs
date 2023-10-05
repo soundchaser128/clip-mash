@@ -68,7 +68,8 @@ impl MusicDownloadService {
             destination: FolderType::Music,
         };
         let result = yt_dlp.run(&options, &self.ffmpeg_location).await?;
-        let ffprobe_result = ffprobe(&result.downloaded_file, &self.ffmpeg_location).await?;
+        let ffprobe_result =
+            ffprobe(result.downloaded_file.as_str(), &self.ffmpeg_location).await?;
         let duration = ffprobe_result.format.duration().unwrap_or_default();
 
         Ok(SongInfo {
@@ -122,7 +123,7 @@ impl MusicDownloadService {
             writer.write_all(&chunk).await?;
         }
 
-        let ffprobe_result = ffprobe(&path, &self.ffmpeg_location).await?;
+        let ffprobe_result = ffprobe(path.as_str(), &self.ffmpeg_location).await?;
         let beats = music::detect_beats(&path, &self.ffmpeg_location).ok();
 
         let result = self

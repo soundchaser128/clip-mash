@@ -78,7 +78,7 @@ impl VideoService {
         info!("video at path {path} exists: {video_exists}");
         if !video_exists {
             let interactive = path.with_extension("funscript").is_file();
-            let ffprobe = ffprobe(&path, &self.ffmpeg_location).await;
+            let ffprobe = ffprobe(path.as_ref(), &self.ffmpeg_location).await;
             if let Err(e) = ffprobe {
                 warn!("skipping video {path} because ffprobe failed with error {e}");
                 return Ok(None);
@@ -157,7 +157,7 @@ impl VideoService {
     }
 
     async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
-        let ffprobe = ffprobe(&path, &self.ffmpeg_location).await?;
+        let ffprobe = ffprobe(path.as_str(), &self.ffmpeg_location).await?;
         let duration = ffprobe.duration();
         let preview_generator =
             PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());

@@ -8,6 +8,7 @@ use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
 
 use super::commands::ffmpeg::FfmpegLocation;
+use super::commands::ffprobe::{ffprobe, FfProbe};
 use super::directories::Directories;
 use super::streams::{LocalVideoSource, StreamUrlService};
 use super::Marker;
@@ -77,6 +78,7 @@ struct CreateClip<'a> {
     codec: VideoCodec,
     quality: VideoQuality,
     effort: EncodingEffort,
+    re_encode: bool,
 }
 
 #[derive(Clone)]
@@ -84,6 +86,7 @@ pub struct CompilationGenerator {
     directories: Directories,
     ffmpeg_path: Utf8PathBuf,
     database: Database,
+    ffmpeg_location: FfmpegLocation,
 }
 
 impl CompilationGenerator {
@@ -98,6 +101,7 @@ impl CompilationGenerator {
             directories,
             ffmpeg_path,
             database,
+            ffmpeg_location: ffmpeg_location.clone(),
         })
     }
 
@@ -197,16 +201,13 @@ impl CompilationGenerator {
             "-t",
             clip_str.as_str(),
         ];
-        args.extend(self.video_encoding_parameters(clip.codec, clip.quality, clip.effort));
-        args.extend(&[
-            "-acodec",
-            "aac",
-            "-vf",
-            &filter,
-            "-ar",
-            "48000",
-            clip.out_file.as_str(),
-        ]);
+        if clip.re_encode {
+            args.extend(self.video_encoding_parameters(clip.codec, clip.quality, clip.effort));
+            args.extend(&["-acodec", "aac", "-vf", &filter, "-ar", "48000"]);
+        } else {
+            args.extend(&["-c:v", "copy", "-c:a", "copy"]);
+        }
+        args.push(clip.out_file.as_str());
 
         self.ffmpeg(args).await
     }
@@ -238,6 +239,36 @@ impl CompilationGenerator {
         Ok(())
     }
 
+    async fn get_video_infos<'a>(
+        &self,
+        streams: &'a HashMap<String, String>,
+    ) -> HashMap<&'a str, Option<FfProbe>> {
+        let mut result = HashMap::new();
+        for (video_id, url) in streams {
+            let ffprobe = ffprobe(url, &self.ffmpeg_location).await;
+            result.insert(video_id.as_str(), ffprobe.ok());
+        }
+
+        result
+    }
+
+    fn can_concatenate_without_re_encoding(
+        &self,
+        video_infos: HashMap<&str, Option<FfProbe>>,
+    ) -> bool {
+        let any_ffprobe_errors = video_infos.values().any(|v| v.is_none());
+        if any_ffprobe_errors {
+            false
+        } else {
+            let parameters: Vec<_> = video_infos
+                .into_values()
+                .map(|v| v.unwrap().video_parameters())
+                .collect();
+            info!("video parameters: {:#?}", parameters);
+            parameters.into_iter().all_equal()
+        }
+    }
+
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
         let mut estimator = Estimator::new(Instant::now());
         let clips = &options.clips;
@@ -247,6 +278,9 @@ impl CompilationGenerator {
         let video_dir = self.directories.temp_video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
         let stream_urls = self.prepare_stream_urls(clips).await?;
+        let video_infos = self.get_video_infos(&stream_urls).await;
+        let can_concatenate = self.can_concatenate_without_re_encoding(video_infos);
+        info!("can concatenate without re-encoding: {}", can_concatenate);
 
         let total = clips.len();
         let mut paths = vec![];
@@ -284,6 +318,7 @@ impl CompilationGenerator {
                     codec: options.video_codec,
                     quality: options.video_quality,
                     effort: options.encoding_effort,
+                    re_encode: !can_concatenate,
                 })
                 .await?;
             } else {

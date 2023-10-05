@@ -11,6 +11,8 @@
 - fix: Select all/Deselect all on the marker page now only selects the currently visible markers
 - feat: Add basic sorting options to the video library page
 - feat: Resolution can now be set freely via input fields, allowing more exotic resolutions and vertical videos, for example.
+- feat: Greatly improve OpenAPI docs. 
+- refactor: Use OpenAPI generated client for the frontend
 
 # 0.16.1
 - fix: add tooltips, don't run onSubmit when shifting clips around

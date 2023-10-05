@@ -21,6 +21,8 @@ const AddStashVideoPage: React.FC = () => {
   const revalidator = useRevalidator()
   const config = useConfig()
   const navigate = useNavigate()
+  const [addingVideo, setAddingVideo] = useState(false)
+  const withMarkers = search.get("withMarkers") === "true"
 
   useEffect(() => {
     if (!config) {
@@ -28,7 +30,7 @@ const AddStashVideoPage: React.FC = () => {
     }
   }, [config, navigate])
 
-  const {setQueryDebounced} = useDebouncedSetQuery()
+  const {setQueryDebounced, addOrReplaceParam} = useDebouncedSetQuery()
 
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value)
@@ -36,6 +38,7 @@ const AddStashVideoPage: React.FC = () => {
   }
 
   const onAddVideo = async (video: StashVideoDto) => {
+    setAddingVideo(true)
     const body: AddVideosRequest = {
       type: "stash",
       scene_ids: [parseInt(video.id)],
@@ -43,9 +46,11 @@ const AddStashVideoPage: React.FC = () => {
 
     await addNewVideos(body)
     revalidator.revalidate()
+    setAddingVideo(false)
   }
 
   const onAddEntirePage = async () => {
+    setAddingVideo(true)
     const body: AddVideosRequest = {
       type: "stash",
       scene_ids: data.content
@@ -55,6 +60,7 @@ const AddStashVideoPage: React.FC = () => {
 
     await addNewVideos(body)
     revalidator.revalidate()
+    setAddingVideo(false)
   }
 
   return (
@@ -69,7 +75,7 @@ const AddStashVideoPage: React.FC = () => {
           Add videos from Stash
         </h1>
       </div>
-      <section className="flex justify-between w-full">
+      <section className="grid grid-cols-3 w-full">
         <div className="form-control">
           <input
             type="text"
@@ -79,7 +85,27 @@ const AddStashVideoPage: React.FC = () => {
             onChange={onFilterChange}
           />
         </div>
-        <button className="btn btn-success" onClick={onAddEntirePage}>
+        <div className="form-control place-self-center">
+          <label className="label cursor-pointer">
+            <span className="label-text mr-3">Show videos with markers</span>
+            <input
+              type="checkbox"
+              className="checkbox checkbox-primary"
+              checked={withMarkers}
+              onChange={(e) =>
+                addOrReplaceParam(
+                  "withMarkers",
+                  e.target.checked ? "true" : undefined,
+                )
+              }
+            />
+          </label>
+        </div>
+        <button
+          disabled={addingVideo}
+          className="btn btn-success place-self-end"
+          onClick={onAddEntirePage}
+        >
           <HiPlus /> Add entire page
         </button>
       </section>
@@ -87,7 +113,7 @@ const AddStashVideoPage: React.FC = () => {
         {data.content.map((video) => (
           <VideoCard
             key={video.id}
-            video={{video, markerCount: 0}}
+            video={{video, markerCount: video.markerCount}}
             stashConfig={config}
             actionChildren={
               <>
@@ -95,7 +121,7 @@ const AddStashVideoPage: React.FC = () => {
                 <button
                   onClick={() => onAddVideo(video)}
                   className="btn btn-sm btn-success"
-                  disabled={video.existsInDatabase}
+                  disabled={video.existsInDatabase || addingVideo}
                 >
                   {video.existsInDatabase ? (
                     "Added"

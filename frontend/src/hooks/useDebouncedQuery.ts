@@ -17,9 +17,13 @@ function useDebouncedSetQuery({
     setParams({[parameterName]: value})
   }
 
-  const addOrReplaceParam = (key: string, value: string) => {
+  const addOrReplaceParam = (key: string, value: string | undefined) => {
     const qs = new URLSearchParams(params)
-    qs.set(key, value)
+    if (typeof value !== "undefined") {
+      qs.set(key, value)
+    } else {
+      qs.delete(key)
+    }
     setParams(qs)
   }
 

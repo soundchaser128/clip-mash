@@ -47,5 +47,4 @@ export interface FormState {
   videoCodec?: VideoCodec
   videoQuality?: VideoQuality
   encodingEffort?: EncodingEffort
-  finalFileName?: string
 }

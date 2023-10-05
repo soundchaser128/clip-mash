@@ -117,6 +117,13 @@ pub async fn create_video(
 }
 
 #[axum::debug_handler]
+#[utoipa::path(
+    get,
+    path = "/api/project/finished",
+    responses(
+        (status = 200, description = "List all finished videos", body = Vec<String>),
+    )
+)]
 pub async fn list_finished_videos(
     state: State<Arc<AppState>>,
 ) -> Result<Json<Vec<String>>, AppError> {
@@ -212,7 +219,7 @@ pub struct CreateFunscriptBody {
     path = "/api/project/funscript/combined",
     request_body = CreateFunscriptBody,
     responses(
-        (status = 200, description = "Create a funscript by combining the funscripts from the videos", body = Vec<u8>),
+        (status = 200, description = "Create a funscript by combining the funscripts from the videos", body = serde_json::Value),
     )
 )]
 #[axum::debug_handler]
@@ -233,7 +240,7 @@ pub async fn get_combined_funscript(
     path = "/api/project/funscript/beat",
     request_body = CreateBeatFunscriptBody,
     responses(
-        (status = 200, description = "Create a funscript from the beats of the music", body = Vec<u8>),
+        (status = 200, description = "Create a funscript from the beats of the music", body = serde_json::Value),
     )
 )]
 #[axum::debug_handler]

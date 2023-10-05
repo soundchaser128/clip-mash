@@ -287,10 +287,11 @@ pub struct StashVideoDto {
     pub duration: f64,
     pub stash_scene_id: Option<i64>,
     pub exists_in_database: bool,
+    pub marker_count: usize,
 }
 
 impl StashVideoDto {
-    pub fn from(dto: VideoDto, exists_in_database: bool) -> Self {
+    pub fn from(dto: VideoDto, exists_in_database: bool, marker_count: usize) -> Self {
         Self {
             id: dto.id,
             title: dto.title,
@@ -302,6 +303,7 @@ impl StashVideoDto {
             stash_scene_id: dto.stash_scene_id,
             exists_in_database,
             tags: dto.tags.unwrap_or_default(),
+            marker_count,
         }
     }
 }

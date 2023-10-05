@@ -1,9 +1,10 @@
 import {useStateMachine} from "little-state-machine"
-import {useRef, useState} from "react"
+import {useEffect, useRef, useState} from "react"
 import {
   CreateBeatFunscriptBody,
   getBeatFunscript,
   getCombinedFunscript,
+  listFinishedVideos,
 } from "../api"
 import {HiCodeBracket} from "react-icons/hi2"
 import ExternalLink from "../components/ExternalLink"
@@ -14,7 +15,27 @@ const FunscriptPage = () => {
 
   const downloadLink = useRef<HTMLAnchorElement>(null)
   const [creatingScript, setCreatingScript] = useState(false)
-  const finalFileName = state.data.finalFileName!
+  const [finalFileName, setFinalFileName] = useState<string>()
+  const videoId = state.data.videoId!
+
+  useEffect(() => {
+    listFinishedVideos().then((fileNames) => {
+      const fileName = fileNames.find((f) => f.includes(videoId))
+      setFinalFileName(fileName || "compilation.mp4")
+    })
+  }, [videoId])
+
+  const downloadJson = (json: unknown) => {
+    const file = finalFileName!.replace(".mp4", ".funscript")
+    const string = JSON.stringify(json)
+    const blob = new Blob([string], {type: "application/json"})
+    const downloadUrl = URL.createObjectURL(blob)
+    if (downloadLink.current) {
+      downloadLink.current.href = downloadUrl
+      downloadLink.current.download = file
+      downloadLink.current.click()
+    }
+  }
 
   const onCreateBeatFunscript = async (
     e: React.MouseEvent<HTMLButtonElement>,
@@ -33,13 +54,7 @@ const FunscriptPage = () => {
     } satisfies CreateBeatFunscriptBody
 
     const script = await getBeatFunscript(data)
-    const file = finalFileName.replace(".mp4", ".funscript")
-    const downloadUrl = URL.createObjectURL(script)
-    if (downloadLink.current) {
-      downloadLink.current.href = downloadUrl
-      downloadLink.current.download = file
-      downloadLink.current.click()
-    }
+    downloadJson(script)
     setCreatingScript(false)
   }
 
@@ -51,13 +66,7 @@ const FunscriptPage = () => {
     const script = await getCombinedFunscript({
       clips: state.data.clips!,
     })
-    const file = finalFileName.replace(".mp4", ".funscript")
-    const downloadUrl = URL.createObjectURL(script)
-    if (downloadLink.current) {
-      downloadLink.current.href = downloadUrl
-      downloadLink.current.download = file
-      downloadLink.current.click()
-    }
+    downloadJson(script)
     setCreatingScript(false)
   }
   return (

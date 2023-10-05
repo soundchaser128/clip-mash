@@ -253,6 +253,7 @@ impl ScriptBuilder {
                 }
                 VideoSource::Download | VideoSource::Folder => {
                     let path = Utf8PathBuf::from(video.file_path).with_extension("funscript");
+                    info!("trying to load funscript from {}", path);
                     FunScript::load(path).await
                 }
             };

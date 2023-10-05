@@ -137,10 +137,7 @@ async fn main() -> Result<()> {
             "/funscript/combined",
             post(handlers::project::get_combined_funscript),
         )
-        .route(
-            "/finished-videos",
-            get(handlers::project::list_finished_videos),
-        )
+        .route("/finished", get(handlers::project::list_finished_videos))
         .route("/download", get(handlers::project::download_video));
 
     let stash_routes = Router::new()

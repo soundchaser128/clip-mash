@@ -188,12 +188,17 @@ impl StashApi {
         &self,
         page: &PageParameters,
         query: Option<String>,
+        with_markers: Option<bool>,
     ) -> Result<(Vec<FindScenesQueryFindScenesScenes>, usize)> {
         let variables = find_scenes_query::Variables {
             page_size: page.size(),
             page: page.page(),
             query,
             scene_ids: None,
+            has_markers: match with_markers {
+                Some(true) => Some("true".into()),
+                _ => None,
+            },
         };
         let request_body = FindScenesQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
@@ -220,6 +225,7 @@ impl StashApi {
             query: None,
             page: 0,
             page_size: -1,
+            has_markers: None,
         };
         let request_body = FindScenesQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);

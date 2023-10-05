@@ -148,10 +148,12 @@ export type StashLoaderData = StashVideoDtoPage
 export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
   const query = url.searchParams.get("query")
+  const withMarkers = url.searchParams.get("withMarkers") === "true"
   const videos = await listStashVideos({
     query,
     page: Number(url.searchParams.get("page")) || 1,
     size: DEFAULT_PAGE_LENGTH,
+    withMarkers: withMarkers ? true : null,
   })
 
   return videos

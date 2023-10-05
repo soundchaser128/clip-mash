@@ -13,7 +13,7 @@ export type GetHealthParams = {
 export type SetConfig204 = unknown | null
 
 export type DownloadVideoParams = {
-  fileName: string
+  videoId: string
 }
 
 export type DetectMarkersParams = {
@@ -29,6 +29,7 @@ export type UpdateVideo200 = unknown | null
 
 export type ListStashVideosParams = {
   query?: string | null
+  withMarkers?: boolean | null
   page?: number | null
   size?: number | null
   sort?: string | null
@@ -158,6 +159,7 @@ export interface StashVideoDto {
   fileName: string
   id: string
   interactive: boolean
+  markerCount: number
   performers: string[]
   source: VideoSource
   stashSceneId?: number | null
@@ -679,27 +681,29 @@ export const downloadVideo = (params: DownloadVideoParams) => {
   })
 }
 
+export const listFinishedVideos = () => {
+  return customInstance<string[]>({url: `/api/project/finished`, method: "get"})
+}
+
 export const getBeatFunscript = (
   createBeatFunscriptBody: CreateBeatFunscriptBody,
 ) => {
-  return customInstance<Blob>({
+  return customInstance<unknown>({
     url: `/api/project/funscript/beat`,
     method: "post",
     headers: {"Content-Type": "application/json"},
     data: createBeatFunscriptBody,
-    responseType: "blob",
   })
 }
 
 export const getCombinedFunscript = (
   createFunscriptBody: CreateFunscriptBody,
 ) => {
-  return customInstance<Blob>({
+  return customInstance<unknown>({
     url: `/api/project/funscript/combined`,
     method: "post",
     headers: {"Content-Type": "application/json"},
     data: createFunscriptBody,
-    responseType: "blob",
   })
 }
 
@@ -780,6 +784,9 @@ export type CreateVideoResult = NonNullable<
 >
 export type DownloadVideoResult = NonNullable<
   Awaited<ReturnType<typeof downloadVideo>>
+>
+export type ListFinishedVideosResult = NonNullable<
+  Awaited<ReturnType<typeof listFinishedVideos>>
 >
 export type GetBeatFunscriptResult = NonNullable<
   Awaited<ReturnType<typeof getBeatFunscript>>

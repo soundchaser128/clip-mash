@@ -52,10 +52,17 @@ pub async fn list_videos(
     Ok(Json(Page::new(videos, size, page)))
 }
 
+#[derive(Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+pub struct StashVideoQuery {
+    pub query: Option<String>,
+    pub with_markers: Option<bool>,
+}
+
 #[utoipa::path(
     get,
     path = "/api/library/video/stash",
-    params(VideoSearchQuery, PageParameters),
+    params(StashVideoQuery, PageParameters),
     responses(
         (status = 200, description = "Lists all videos in Stash with given query", body = StashVideoDtoPage),
     )
@@ -63,7 +70,10 @@ pub async fn list_videos(
 #[axum::debug_handler]
 pub async fn list_stash_videos(
     Query(page): Query<PageParameters>,
-    Query(VideoSearchQuery { query }): Query<VideoSearchQuery>,
+    Query(StashVideoQuery {
+        query,
+        with_markers,
+    }): Query<StashVideoQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Page<StashVideoDto>>, AppError> {
     info!("listing stash videos with page {page:?} and query {query:?}");
@@ -73,7 +83,7 @@ pub async fn list_stash_videos(
         return Ok(Json(Page::empty()));
     }
     let stash_api = stash_api.unwrap();
-    let (stash_videos, count) = stash_api.find_scenes(&page, query).await?;
+    let (stash_videos, count) = stash_api.find_scenes(&page, query, with_markers).await?;
     info!("found {} stash videos", stash_videos.len());
     let ids: Vec<i64> = stash_videos
         .iter()
@@ -83,10 +93,11 @@ pub async fn list_stash_videos(
     let videos: Vec<_> = stash_videos
         .into_iter()
         .map(|v| {
+            let marker_count = v.scene_markers.len();
             let video_dto = VideoDto::from(v);
             let id = video_dto.stash_scene_id.unwrap();
             let exists = scene_ids_in_database.contains(&id);
-            StashVideoDto::from(video_dto, exists)
+            StashVideoDto::from(video_dto, exists, marker_count)
         })
         .collect();
 

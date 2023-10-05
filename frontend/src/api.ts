@@ -90,6 +90,7 @@ export const VideoQuality = {
 } as const
 
 export interface VideoDto {
+  createdOn: number
   duration: number
   fileName: string
   filePath?: string | null
@@ -98,7 +99,7 @@ export interface VideoDto {
   performers: string[]
   source: VideoSource
   stashSceneId?: number | null
-  tags?: string[] | null
+  tags: string[]
   title: string
 }
 
@@ -154,6 +155,7 @@ export type StrokeTypeOneOf = {
 }
 
 export interface StashVideoDto {
+  createdOn: number
   duration: number
   existsInDatabase: boolean
   fileName: string

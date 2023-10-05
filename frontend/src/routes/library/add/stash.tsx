@@ -9,7 +9,7 @@ import {
 import VideoCard from "../../../components/VideoCard"
 import {StashLoaderData} from "../../loaders"
 import Pagination from "../../../components/Pagination"
-import {HiChevronLeft, HiPlus} from "react-icons/hi2"
+import {HiCheck, HiChevronLeft, HiPlus} from "react-icons/hi2"
 import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../../api"
 import {useConfig} from "../../../hooks/useConfig"
 import useDebouncedSetQuery from "../../../hooks/useDebouncedQuery"
@@ -21,7 +21,7 @@ const AddStashVideoPage: React.FC = () => {
   const revalidator = useRevalidator()
   const config = useConfig()
   const navigate = useNavigate()
-  const [addingVideo, setAddingVideo] = useState(false)
+  const [addingVideo, setAddingVideo] = useState<string | boolean>()
   const withMarkers = search.get("withMarkers") === "true"
 
   useEffect(() => {
@@ -38,7 +38,7 @@ const AddStashVideoPage: React.FC = () => {
   }
 
   const onAddVideo = async (video: StashVideoDto) => {
-    setAddingVideo(true)
+    setAddingVideo(video.id)
     const body: AddVideosRequest = {
       type: "stash",
       scene_ids: [parseInt(video.id)],
@@ -46,7 +46,7 @@ const AddStashVideoPage: React.FC = () => {
 
     await addNewVideos(body)
     revalidator.revalidate()
-    setAddingVideo(false)
+    setAddingVideo(undefined)
   }
 
   const onAddEntirePage = async () => {
@@ -60,7 +60,7 @@ const AddStashVideoPage: React.FC = () => {
 
     await addNewVideos(body)
     revalidator.revalidate()
-    setAddingVideo(false)
+    setAddingVideo(undefined)
   }
 
   return (
@@ -102,7 +102,7 @@ const AddStashVideoPage: React.FC = () => {
           </label>
         </div>
         <button
-          disabled={addingVideo}
+          disabled={addingVideo === true}
           className="btn btn-success place-self-end"
           onClick={onAddEntirePage}
         >
@@ -110,31 +110,48 @@ const AddStashVideoPage: React.FC = () => {
         </button>
       </section>
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
-        {data.content.map((video) => (
-          <VideoCard
-            key={video.id}
-            video={{video, markerCount: video.markerCount}}
-            stashConfig={config}
-            actionChildren={
-              <>
-                <span />
-                <button
-                  onClick={() => onAddVideo(video)}
-                  className="btn btn-sm btn-success"
-                  disabled={video.existsInDatabase || addingVideo}
-                >
-                  {video.existsInDatabase ? (
-                    "Added"
-                  ) : (
-                    <>
-                      <HiPlus /> Add
-                    </>
-                  )}
-                </button>
-              </>
-            }
-          />
-        ))}
+        {data.content.map((video) => {
+          const videoBeingAdded =
+            addingVideo === video.id || addingVideo === true
+          const {existsInDatabase} = video
+
+          return (
+            <VideoCard
+              key={video.id}
+              video={{video, markerCount: video.markerCount}}
+              stashConfig={config}
+              actionChildren={
+                <>
+                  <span />
+                  <button
+                    onClick={() => onAddVideo(video)}
+                    className="btn btn-sm btn-success"
+                    disabled={existsInDatabase || videoBeingAdded}
+                  >
+                    {!existsInDatabase && !videoBeingAdded && (
+                      <>
+                        <HiPlus /> Add
+                      </>
+                    )}
+
+                    {videoBeingAdded && (
+                      <>
+                        <span className="loading loading-spinner loading-xs" />{" "}
+                        Adding...
+                      </>
+                    )}
+
+                    {existsInDatabase && (
+                      <>
+                        <HiCheck /> Added
+                      </>
+                    )}
+                  </button>
+                </>
+              }
+            />
+          )
+        })}
       </section>
 
       <Pagination

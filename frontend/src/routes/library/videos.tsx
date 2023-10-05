@@ -35,6 +35,7 @@ import {useConfig} from "../../hooks/useConfig"
 import {DEFAULT_PAGE_LENGTH} from "../loaders"
 import useDebouncedSetQuery from "../../hooks/useDebouncedQuery"
 import {pluralize} from "../../helpers"
+import JumpToTop from "../../components/JumpToTop"
 
 export const loader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
@@ -132,6 +133,7 @@ export default function ListVideos() {
 
   return (
     <>
+      <JumpToTop />
       <Outlet />
       <div className="my-4 grid grid-cols-3 items-center">
         <div className="flex gap-2">

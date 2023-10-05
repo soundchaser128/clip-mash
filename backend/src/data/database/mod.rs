@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::time::SystemTime;
 
 use color_eyre::eyre::bail;
 use serde::{Deserialize, Serialize};
@@ -65,7 +66,7 @@ pub struct DbVideo {
     pub duration: f64,
     pub video_preview_image: Option<String>,
     pub stash_scene_id: Option<i64>,
-    pub video_created_on: String,
+    pub video_created_on: i64,
     pub video_title: Option<String>,
     pub video_tags: Option<String>,
 }
@@ -103,6 +104,7 @@ pub struct CreateVideo {
     pub stash_scene_id: Option<i64>,
     pub title: Option<String>,
     pub tags: Option<String>,
+    pub created_on: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
@@ -114,7 +116,7 @@ pub struct DbMarker {
     pub title: String,
     pub index_within_video: i64,
     pub marker_preview_image: Option<String>,
-    pub marker_created_on: String,
+    pub marker_created_on: i64,
 }
 
 // TODO better name
@@ -129,7 +131,7 @@ pub struct DbMarkerWithVideo {
     pub index_within_video: i64,
     pub marker_preview_image: Option<String>,
     pub interactive: bool,
-    pub marker_created_on: String,
+    pub marker_created_on: i64,
     pub video_title: Option<String>,
     pub video_tags: Option<String>,
     pub source: VideoSource,
@@ -216,6 +218,13 @@ impl Database {
             videos: VideosDatabase::new(pool),
         }
     }
+}
+
+pub fn unix_timestamp_now() -> u64 {
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }
 
 #[cfg(test)]

@@ -208,7 +208,8 @@ pub struct VideoDto {
     pub source: VideoSource,
     pub duration: f64,
     pub stash_scene_id: Option<i64>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Vec<String>,
+    pub created_on: i64,
 }
 
 impl VideoLike for VideoDto {
@@ -242,7 +243,8 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
             interactive: value.interactive,
             source: VideoSource::Stash,
             duration: file.duration,
-            tags: Some(value.tags.into_iter().map(|t| t.name).collect()),
+            tags: value.tags.into_iter().map(|t| t.name).collect(),
+            created_on: 0,
         }
     }
 }
@@ -257,7 +259,8 @@ impl From<DbVideo> for VideoDto {
         });
         let tags = value
             .video_tags
-            .map(|s| s.split(TAG_SEPARATOR).map(From::from).collect());
+            .map(|s| s.split(TAG_SEPARATOR).map(From::from).collect())
+            .unwrap_or_default();
 
         VideoDto {
             id: value.id,
@@ -270,6 +273,7 @@ impl From<DbVideo> for VideoDto {
             duration: value.duration,
             tags,
             file_path: Some(value.file_path),
+            created_on: value.video_created_on,
         }
     }
 }
@@ -288,6 +292,7 @@ pub struct StashVideoDto {
     pub stash_scene_id: Option<i64>,
     pub exists_in_database: bool,
     pub marker_count: usize,
+    pub created_on: i64,
 }
 
 impl StashVideoDto {
@@ -302,8 +307,9 @@ impl StashVideoDto {
             duration: dto.duration,
             stash_scene_id: dto.stash_scene_id,
             exists_in_database,
-            tags: dto.tags.unwrap_or_default(),
+            tags: dto.tags,
             marker_count,
+            created_on: dto.created_on,
         }
     }
 }
@@ -591,28 +597,12 @@ impl PageParameters {
             .unwrap_or(Self::DEFAULT_PAGE)
     }
 
-    #[allow(unused)]
     pub fn size(&self) -> i64 {
         self.size.map(|s| s as i64).unwrap_or(Self::DEFAULT_SIZE)
     }
 
-    #[allow(unused)]
     pub fn page(&self) -> i64 {
         self.page.map(|p| p as i64).unwrap_or(Self::DEFAULT_PAGE)
-    }
-
-    pub fn sort(&self, default_col: &str, default_direction: SortDirection) -> String {
-        let sort = self.sort.as_deref().unwrap_or(default_col);
-        let direction = self.direction(default_direction);
-        format!("{} {}", sort, direction)
-    }
-
-    fn direction(&self, default: SortDirection) -> &str {
-        let dir = self.dir.unwrap_or(default);
-        match dir {
-            SortDirection::Asc => "ASC",
-            SortDirection::Desc => "DESC",
-        }
     }
 }
 

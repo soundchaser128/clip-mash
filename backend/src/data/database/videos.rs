@@ -6,6 +6,7 @@ use sqlx::{FromRow, QueryBuilder, Row, SqlitePool};
 use tracing::{debug, info};
 
 use super::{AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers, VideoUpdate};
+use crate::data::database::unix_timestamp_now;
 use crate::server::types::{ListVideoDto, PageParameters};
 use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
@@ -182,10 +183,13 @@ impl VideosDatabase {
     }
 
     pub async fn persist_video(&self, video: &CreateVideo) -> Result<DbVideo> {
+        let created_on = video
+            .created_on
+            .unwrap_or_else(|| unix_timestamp_now() as i64);
         let inserted = sqlx::query!(
             "INSERT INTO videos 
-            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING video_created_on",
             video.id,
             video.file_path,
@@ -196,6 +200,7 @@ impl VideosDatabase {
             video.stash_scene_id,
             video.title,
             video.tags,
+            created_on,
         )
         .fetch_one(&self.pool)
         .await?;
@@ -242,7 +247,7 @@ impl VideosDatabase {
             file_path: String,
             interactive: bool,
             duration: f64,
-            video_created_on: String,
+            video_created_on: i64,
             source: String,
             video_preview_image: Option<String>,
             stash_scene_id: Option<i64>,

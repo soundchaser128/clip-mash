@@ -16,6 +16,8 @@ use crate::service::stash_config::StashConfig;
 use crate::util::add_api_key;
 use crate::Result;
 
+type Time = String;
+
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "graphql/schema.json",

@@ -13,7 +13,9 @@ use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;
-use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource};
+use crate::data::database::{
+    unix_timestamp_now, CreateVideo, Database, DbMarker, DbVideo, VideoSource,
+};
 use crate::server::types::{Beats, CreateMarker};
 use crate::util::generate_id;
 use crate::Result;
@@ -348,6 +350,7 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
         stash_scene_id: None,
         title: Some(Word().fake::<String>()),
         tags: Some(Word().fake::<String>()),
+        created_on: None,
     };
 
     db.videos.persist_video(&video).await
@@ -371,6 +374,7 @@ pub async fn persist_video_fn<F: FnOnce(&mut CreateVideo)>(
         stash_scene_id: None,
         title: Some(Word().fake::<String>()),
         tags: Some(Word().fake::<String>()),
+        created_on: Some(unix_timestamp_now() as i64),
     };
     before_insert(&mut video);
     info!("inserting video {:#?}", video);

@@ -1,11 +1,13 @@
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
 
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::bail;
 use futures::future;
 use itertools::Itertools;
 use serde::Deserialize;
+use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 use tokio::task::spawn_blocking;
 use tracing::{debug, info, warn};
 use url::Url;
@@ -89,6 +91,11 @@ impl VideoService {
             let image_path = preview_generator
                 .generate_preview(&id, &path, duration.map_or(0.0, |d| d / 2.0))
                 .await?;
+            let file_created = path.metadata()?.created().ok().map(|time| {
+                time.duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64
+            });
 
             let create_video = CreateVideo {
                 id,
@@ -100,6 +107,7 @@ impl VideoService {
                 stash_scene_id: None,
                 title: Some(path.file_stem().unwrap().to_string()),
                 tags: None,
+                created_on: file_created,
             };
             info!("inserting new video {create_video:#?}");
             let video = self.database.videos.persist_video(&create_video).await?;
@@ -167,6 +175,7 @@ impl VideoService {
             stash_scene_id: None,
             title: path.file_stem().map(String::from),
             tags: None,
+            created_on: None,
         };
         info!("persisting downloaded video {video:#?}");
 
@@ -200,6 +209,9 @@ impl VideoService {
                     .or(scene.files.get(0).map(|f| f.basename.clone()));
                 info!("inserting video from stash with title {title:?}");
                 let stash_id = scene.id.parse().unwrap();
+                let created_on = OffsetDateTime::parse(&scene.created_at, &Rfc3339)
+                    .map(|time| time.unix_timestamp() as i64)
+                    .ok();
 
                 CreateVideo {
                     id: generate_id(),
@@ -217,6 +229,7 @@ impl VideoService {
                             .map(|t| t.name.as_str())
                             .join(TAG_SEPARATOR),
                     ),
+                    created_on,
                 }
             })
             .collect();

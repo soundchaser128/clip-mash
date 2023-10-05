@@ -3,6 +3,7 @@ import {StashConfig, ListVideoDto, VideoDto} from "../api"
 import {
   HiAdjustmentsVertical,
   HiArrowDownTray,
+  HiCalendar,
   HiCheck,
   HiClock,
   HiTag,
@@ -30,6 +31,11 @@ function getPreview(video: VideoDto, config?: StashConfig): string {
   }
 }
 
+const dateTimeFormat = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "long",
+  timeStyle: "short",
+})
+
 const VideoCard: React.FC<Props> = ({
   video,
   stashConfig,
@@ -38,6 +44,9 @@ const VideoCard: React.FC<Props> = ({
   onImageClick,
 }) => {
   const tags = video.video.tags?.filter(Boolean) ?? []
+  const date = new Date(video.video.createdOn * 1000)
+  const isoDate = date.toISOString()
+  const humanDate = dateTimeFormat.format(date)
   return (
     <article
       className={clsx(
@@ -101,6 +110,13 @@ const VideoCard: React.FC<Props> = ({
           <li>
             <HiClock className="inline mr-2" />
             Duration: <strong>{formatSeconds(video.video.duration)}</strong>
+          </li>
+          <li>
+            <HiCalendar className="inline mr-2" />
+            Created:{" "}
+            <strong>
+              <time dateTime={isoDate}>{humanDate}</time>
+            </strong>
           </li>
         </ul>
         <div className="card-actions justify-between grow items-end">

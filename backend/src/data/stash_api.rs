@@ -5,11 +5,13 @@ use graphql_client::{GraphQLQuery, Response};
 use ordered_float::OrderedFloat;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 
 use self::find_scenes_query::{
     FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
     FindScenesQueryFindScenesScenesSceneStreams,
 };
+use super::database::unix_timestamp_now;
 use crate::server::types::PageParameters;
 use crate::service::funscript::FunScript;
 use crate::service::stash_config::StashConfig;
@@ -94,6 +96,7 @@ pub struct StashMarker {
     pub screenshot_url: String,
     pub stream_url: String,
     pub index_within_video: usize,
+    pub created_on: i64,
 }
 
 impl StashMarker {
@@ -136,6 +139,7 @@ impl StashMarker {
                 screenshot_url: add_api_key(&m.screenshot, api_key),
                 stream_url: add_api_key(&m.stream, api_key),
                 index_within_video: idx,
+                created_on: unix_timestamp_now(),
             })
             .collect()
     }
@@ -213,9 +217,13 @@ impl StashApi {
             .await?
             .error_for_status()?;
         let response: Response<find_scenes_query::ResponseData> = response.json().await?;
-        let response = response.data.unwrap().find_scenes;
+        debug!("stash response: {:#?}", response);
+        let (scenes, count) = response
+            .data
+            .map(|r| (r.find_scenes.scenes, r.find_scenes.count as usize))
+            .unwrap_or_default();
 
-        Ok((response.scenes, response.count as usize))
+        Ok((scenes, count))
     }
 
     pub async fn find_scenes_by_ids(

@@ -374,7 +374,7 @@ pub async fn persist_video_fn<F: FnOnce(&mut CreateVideo)>(
         stash_scene_id: None,
         title: Some(Word().fake::<String>()),
         tags: Some(Word().fake::<String>()),
-        created_on: Some(unix_timestamp_now() as i64),
+        created_on: Some(unix_timestamp_now()),
     };
     before_insert(&mut video);
     info!("inserting video {:#?}", video);
@@ -397,6 +397,7 @@ pub async fn persist_marker(
         title: Sentence(5..8).fake(),
         preview_image_path: None,
         video_interactive,
+        created_on: None,
     };
     db.markers.create_new_marker(marker).await
 }

@@ -221,11 +221,11 @@ impl Database {
     }
 }
 
-pub fn unix_timestamp_now() -> u64 {
+pub fn unix_timestamp_now() -> i64 {
     SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
-        .as_secs()
+        .as_secs() as i64
 }
 
 #[cfg(test)]
@@ -266,6 +266,7 @@ mod test {
             index_within_video: 0,
             preview_image_path: None,
             video_interactive: false,
+            created_on: None,
         };
         let result = database
             .markers
@@ -291,6 +292,7 @@ mod test {
             index_within_video: 0,
             preview_image_path: None,
             video_interactive: false,
+            created_on: None,
         };
         let err = database
             .markers
@@ -314,6 +316,7 @@ mod test {
             index_within_video: 0,
             preview_image_path: None,
             video_interactive: false,
+            created_on: None,
         };
         let result = database.markers.create_new_marker(marker).await.unwrap();
         let id = result.rowid.unwrap();

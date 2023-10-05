@@ -125,6 +125,7 @@ pub struct MarkerDto {
     pub screenshot_url: String,
     pub index_within_video: usize,
     pub source: VideoSource,
+    pub created_on: i64,
 }
 
 pub struct MarkerDtoConverter {
@@ -169,6 +170,7 @@ impl MarkerDtoConverter {
             screenshot_url: self.screenshot_url(marker.rowid.unwrap()),
             index_within_video: marker.index_within_video as usize,
             source: video.source,
+            created_on: marker.marker_created_on,
         }
     }
 
@@ -191,6 +193,7 @@ impl MarkerDtoConverter {
             index_within_video: value.index_within_video as usize,
             video_id: value.video_id,
             source: value.source,
+            created_on: value.marker_created_on,
         }
     }
 }
@@ -627,6 +630,7 @@ pub struct CreateMarker {
     pub index_within_video: i64,
     pub preview_image_path: Option<String>,
     pub video_interactive: bool,
+    pub created_on: Option<i64>,
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]

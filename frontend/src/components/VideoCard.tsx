@@ -9,7 +9,7 @@ import {
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
-import {formatSeconds} from "../helpers"
+import {dateTimeFormat, formatSeconds} from "../helpers"
 import React from "react"
 import EditableText from "./EditableText"
 
@@ -30,11 +30,6 @@ function getPreview(video: VideoDto, config?: StashConfig): string {
     return `/api/library/video/${video.id}/preview`
   }
 }
-
-const dateTimeFormat = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "long",
-  timeStyle: "short",
-})
 
 const VideoCard: React.FC<Props> = ({
   video,

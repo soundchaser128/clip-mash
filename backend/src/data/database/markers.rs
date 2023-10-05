@@ -2,6 +2,7 @@ use sqlx::{FromRow, QueryBuilder, SqlitePool};
 use tracing::{debug, info};
 
 use super::{DbMarker, DbMarkerWithVideo};
+use crate::data::database::unix_timestamp_now;
 use crate::server::types::{CreateMarker, UpdateMarker};
 use crate::Result;
 
@@ -49,9 +50,10 @@ impl MarkersDatabase {
     }
 
     pub async fn create_new_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
+        let created_on = marker.created_on.unwrap_or_else(|| unix_timestamp_now());
         let inserted_value = sqlx::query!(
-            "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video, marker_preview_image) 
-                VALUES ($1, $2, $3, $4, $5, $6) 
+            "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video, marker_preview_image, marker_created_on)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 ON CONFLICT DO UPDATE SET start_time = excluded.start_time, end_time = excluded.end_time, title = excluded.title
                 RETURNING rowid, marker_created_on",
                 marker.video_id,
@@ -60,6 +62,7 @@ impl MarkersDatabase {
                 marker.title,
                 marker.index_within_video,
                 marker.preview_image_path,
+                created_on,
         )
         .fetch_one(&self.pool)
         .await?;
@@ -140,6 +143,7 @@ impl MarkersDatabase {
             index_within_video: marker.index_within_video,
             preview_image_path: None,
             video_interactive: marker.interactive,
+            created_on: None,
         };
 
         let new_marker_2 = CreateMarker {
@@ -150,6 +154,7 @@ impl MarkersDatabase {
             index_within_video: marker.index_within_video + 1,
             preview_image_path: None,
             video_interactive: marker.interactive,
+            created_on: None,
         };
 
         let rowid = marker.rowid.expect("marker must have rowid");

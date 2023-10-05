@@ -260,6 +260,7 @@ impl VideoService {
                 index_within_video: marker.index_within_video as i64,
                 preview_image_path: Some(preview_path.to_string()),
                 video_interactive: video.interactive,
+                created_on: Some(marker.created_on),
             };
             self.database
                 .markers

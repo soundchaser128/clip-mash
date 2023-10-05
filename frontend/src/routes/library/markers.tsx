@@ -4,6 +4,7 @@ import {useLoaderData, useNavigate} from "react-router-dom"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
 import {
+  HiCalendar,
   HiCheck,
   HiChevronRight,
   HiClock,
@@ -14,7 +15,7 @@ import {
 } from "react-icons/hi2"
 import {MarkerDto, SelectedMarker} from "../../api"
 import {updateForm} from "../actions"
-import {formatSeconds, sumDurations} from "../../helpers"
+import {dateTimeFormat, formatSeconds, sumDurations} from "../../helpers"
 import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
 import EditableText from "../../components/EditableText"
@@ -239,6 +240,10 @@ const SelectMarkers: React.FC = () => {
         {markers.map((marker) => {
           const selectedMarker = selection[marker.id]
           const streamUrl = `${marker.streamUrl}#t=${marker.start},${marker.end}`
+          const date = new Date(marker.createdOn * 1000)
+          const isoDate = date.toISOString()
+          const humanDate = dateTimeFormat.format(date)
+
           return (
             <article
               key={marker.id}
@@ -289,6 +294,13 @@ const SelectMarkers: React.FC = () => {
                   </strong>
                   {formatSeconds(selectedMarker.selectedRange, "short")} /{" "}
                   {formatSeconds(marker.end - marker.start, "short")}
+                </p>
+                <p>
+                  <strong>
+                    <HiCalendar className="mr-2 inline" />
+                    Created:{" "}
+                  </strong>
+                  <time dateTime={isoDate}>{humanDate}</time>
                 </p>
                 <div className="">
                   <div className="w-full">

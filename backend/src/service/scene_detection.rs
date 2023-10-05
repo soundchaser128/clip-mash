@@ -117,6 +117,7 @@ pub async fn find_and_persist_markers(
                 preview_image_path: Some(preview_image.to_string()),
                 index_within_video: index as i64,
                 video_interactive: video.interactive,
+                created_on: None,
             })
             .await?;
         info!("created marker {db_marker:?}");

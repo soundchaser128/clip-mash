@@ -183,9 +183,7 @@ impl VideosDatabase {
     }
 
     pub async fn persist_video(&self, video: &CreateVideo) -> Result<DbVideo> {
-        let created_on = video
-            .created_on
-            .unwrap_or_else(|| unix_timestamp_now() as i64);
+        let created_on = video.created_on.unwrap_or_else(|| unix_timestamp_now());
         let inserted = sqlx::query!(
             "INSERT INTO videos 
             (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on) 

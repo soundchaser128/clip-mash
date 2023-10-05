@@ -142,8 +142,7 @@ impl MarkerDtoConverter {
         match source {
             VideoSource::Stash => {
                 let stash_id = stash_id.expect("stash video must have scene id");
-                let url = self.stash_api.get_stream_url(stash_id);
-                url
+                self.stash_api.get_stream_url(stash_id)
             }
             VideoSource::Folder | VideoSource::Download => {
                 format!("/api/library/video/{}/file", video_id)

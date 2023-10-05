@@ -91,7 +91,7 @@ impl VideosDatabase {
                 duration: records[0].duration,
                 video_preview_image: records[0].video_preview_image.clone(),
                 stash_scene_id: records[0].stash_scene_id,
-                video_created_on: records[0].video_created_on.clone(),
+                video_created_on: records[0].video_created_on,
                 video_tags: records[0].video_tags.clone(),
                 video_title: records[0].video_title.clone(),
             };
@@ -209,7 +209,7 @@ impl VideosDatabase {
             id: video.id.clone(),
             file_path: video.file_path.clone(),
             interactive: video.interactive,
-            source: video.source.clone(),
+            source: video.source,
             duration: video.duration,
             video_preview_image: video.video_preview_image.clone(),
             stash_scene_id: video.stash_scene_id,

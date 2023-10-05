@@ -115,7 +115,7 @@ impl ClipService {
             .clip_options
             .clip_picker
             .songs()
-            .map(|songs| normalize_beat_offsets(songs));
+            .map(normalize_beat_offsets);
 
         if options.clip_options.clip_picker.has_music() {
             info!("options have music, not sorting clips");
@@ -229,11 +229,11 @@ mod tests {
     fn test_normalize_video_indices() {
         let mut options = CreateClipsOptions {
             markers: vec![
-                create_marker_video_id(1, 140.0, 190.0, 5, "v2".into()),
-                create_marker_video_id(2, 1.0, 17.0, 0, "v1".into()),
-                create_marker_video_id(3, 80.0, 120.0, 3, "v2".into()),
-                create_marker_video_id(4, 1.0, 15.0, 0, "v3".into()),
-                create_marker_video_id(5, 20.0, 60.0, 3, "v1".into()),
+                create_marker_video_id(1, 140.0, 190.0, 5, "v2"),
+                create_marker_video_id(2, 1.0, 17.0, 0, "v1"),
+                create_marker_video_id(3, 80.0, 120.0, 3, "v2"),
+                create_marker_video_id(4, 1.0, 15.0, 0, "v3"),
+                create_marker_video_id(5, 20.0, 60.0, 3, "v1"),
             ],
             seed: None,
             clip_options: ClipOptions {

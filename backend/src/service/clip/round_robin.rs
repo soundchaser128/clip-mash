@@ -79,7 +79,7 @@ impl ClipPicker for RoundRobinClipPicker {
                     });
                 }
 
-                marker_state.update(&marker.id, end, duration, skipped_duration);
+                marker_state.update(marker.id, end, duration, skipped_duration);
             }
             marker_idx += 1;
         }
@@ -145,11 +145,11 @@ mod test {
         let songs = vec![
             Beats {
                 length: 10.0,
-                offsets: (0..10).into_iter().map(|n| n as f32).collect(),
+                offsets: (0..10).map(|n| n as f32).collect(),
             },
             Beats {
                 length: 10.0,
-                offsets: (0..10).into_iter().map(|n| n as f32).collect(),
+                offsets: (0..10).map(|n| n as f32).collect(),
             },
         ];
         let song_duration = songs.iter().map(|s| s.length as f64).sum();

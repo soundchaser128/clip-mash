@@ -13,7 +13,6 @@ use super::directories::Directories;
 use super::streams::{LocalVideoSource, StreamUrlService};
 use super::Marker;
 use crate::data::database::{Database, DbSong};
-use crate::data::stash_api::StashMarker;
 use crate::helpers::estimator::Estimator;
 use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
@@ -32,28 +31,6 @@ pub struct CompilationOptions {
     pub video_codec: VideoCodec,
     pub video_quality: VideoQuality,
     pub encoding_effort: EncodingEffort,
-}
-
-fn find_stash_stream_url(marker: &StashMarker) -> &str {
-    const LABEL_PRIORITIES: &[&str] = &["Direct stream", "webm", "HLS"];
-
-    let streams = &marker.streams;
-    for stream in streams {
-        for label in LABEL_PRIORITIES {
-            if let Some(l) = &stream.label {
-                if l == label {
-                    debug!("returning stream {stream:?}");
-                    return &stream.url;
-                }
-            }
-        }
-    }
-    // fallback to returning the first URL
-    info!(
-        "could not find any stream URL with the preferred labels, returning {:?}",
-        streams[0]
-    );
-    &streams[0].url
 }
 
 fn get_clip_file_name(
@@ -285,7 +262,7 @@ impl CompilationGenerator {
         let total = clips.len();
         let mut paths = vec![];
         let mut completed = 0.0;
-        for (index, clip) in clips.into_iter().enumerate() {
+        for (index, clip) in clips.iter().enumerate() {
             let Clip {
                 range: (start, end),
                 marker_id,

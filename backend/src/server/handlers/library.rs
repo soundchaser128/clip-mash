@@ -78,7 +78,7 @@ pub async fn list_stash_videos(
 ) -> Result<Json<Page<StashVideoDto>>, AppError> {
     info!("listing stash videos with page {page:?} and query {query:?}");
     let stash_api = StashApi::load_config_or_fail().await;
-    if let Err(_) = stash_api {
+    if stash_api.is_err() {
         info!("no stash config found, returning empty page");
         return Ok(Json(Page::empty()));
     }
@@ -123,7 +123,7 @@ pub async fn add_new_videos(
         .add_videos(request, api_key.as_deref())
         .await?
         .into_iter()
-        .map(|v| VideoDto::from(v))
+        .map(VideoDto::from)
         .collect();
 
     Ok(Json(new_videos))
@@ -324,7 +324,7 @@ pub async fn list_markers(
 ) -> Result<Json<Vec<MarkerDto>>, AppError> {
     let video_ids: Option<Vec<_>> = body
         .video_ids
-        .map(|ids| ids.split(",").map(String::from).collect());
+        .map(|ids| ids.split(',').map(String::from).collect());
     let markers = state
         .database
         .markers

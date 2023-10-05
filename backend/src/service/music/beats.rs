@@ -50,7 +50,7 @@ fn convert_to_wav(source: impl AsRef<Utf8Path>, ffmpeg: &FfmpegLocation) -> AppR
 pub fn detect_beats(file: impl AsRef<Utf8Path>, ffmpeg: &FfmpegLocation) -> AppResult<Beats> {
     let start = Instant::now();
     let file = file.as_ref();
-    let wav_file = convert_to_wav(file, &ffmpeg)?;
+    let wav_file = convert_to_wav(file, ffmpeg)?;
     let reader = WavReader::open(wav_file)?;
     let format = reader.spec();
     let duration = reader.duration();

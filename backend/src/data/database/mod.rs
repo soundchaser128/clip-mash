@@ -170,6 +170,7 @@ pub struct CreateSong {
     pub beats: Option<Beats>,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Clone, Copy)]
 pub enum AllVideosFilter {
     NoVideoDuration,
@@ -334,7 +335,7 @@ mod test {
             .video_exists_by_path(&inserted.file_path)
             .await
             .unwrap();
-        assert_eq!(true, exists);
+        assert!(exists);
     }
 
     #[sqlx::test]

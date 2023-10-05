@@ -210,7 +210,7 @@ impl VideoService {
                 info!("inserting video from stash with title {title:?}");
                 let stash_id = scene.id.parse().unwrap();
                 let created_on = OffsetDateTime::parse(&scene.created_at, &Rfc3339)
-                    .map(|time| time.unix_timestamp() as i64)
+                    .map(|time| time.unix_timestamp())
                     .ok();
 
                 CreateVideo {
@@ -236,7 +236,7 @@ impl VideoService {
 
         let mut videos = vec![];
         for request in &create_videos {
-            let result = self.database.videos.persist_video(&request).await?;
+            let result = self.database.videos.persist_video(request).await?;
             videos.push(result);
         }
 

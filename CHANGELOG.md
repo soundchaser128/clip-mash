@@ -13,6 +13,7 @@
 - feat: Resolution can now be set freely via input fields, allowing more exotic resolutions and vertical videos, for example.
 - feat: Greatly improve OpenAPI docs. 
 - refactor: Use OpenAPI generated client for the frontend
+- feat: Allow filtering videos by source
 
 # 0.16.1
 - fix: add tooltips, don't run onSubmit when shifting clips around

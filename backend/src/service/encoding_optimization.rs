@@ -38,6 +38,13 @@ impl EncodingOptimizationService {
     }
 
     pub async fn needs_re_encode(&self, video_ids: &[&str]) -> Result<bool> {
+        if video_ids.len() == 1 {
+            info!("only one video, no need to re-encode");
+            return Ok(false);
+        }
+
+        info!("checking encoding parameters for videos {:?}", video_ids);
+
         let streams = self
             .streams_service
             .get_video_streams(video_ids, LocalVideoSource::File)
@@ -54,6 +61,7 @@ impl EncodingOptimizationService {
                 .collect();
             info!("video parameters: {:#?}", parameters);
             let can_concatenate = parameters.into_iter().all_equal();
+            info!("can concatenate: {}", can_concatenate);
             Ok(!can_concatenate)
         }
     }

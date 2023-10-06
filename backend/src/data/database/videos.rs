@@ -73,6 +73,13 @@ impl VideosDatabase {
         Ok(!records.is_empty())
     }
 
+    pub async fn get_video_ids_with_markers(&self) -> Result<Vec<String>> {
+        let records = sqlx::query_scalar!("SELECT DISTINCT video_id FROM markers")
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(records)
+    }
+
     pub async fn get_video_with_markers(&self, id: &str) -> Result<Option<LocalVideoWithMarkers>> {
         let records = sqlx::query!(
             "SELECT *, m.rowid AS rowid FROM videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.id = $1",

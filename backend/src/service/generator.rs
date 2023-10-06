@@ -231,11 +231,10 @@ impl CompilationGenerator {
             .stream_urls
             .get_video_streams(&video_ids, LocalVideoSource::File)
             .await?;
-        let can_concatenate = self
+        let needs_re_encode = self
             .encoding_optimization
             .needs_re_encode(&video_ids)
             .await?;
-        info!("can concatenate without re-encoding: {}", can_concatenate);
 
         let total = clips.len();
         let mut paths = vec![];
@@ -273,7 +272,7 @@ impl CompilationGenerator {
                     codec: options.video_codec,
                     quality: options.video_quality,
                     effort: options.encoding_effort,
-                    re_encode: !can_concatenate,
+                    re_encode: needs_re_encode,
                 })
                 .await?;
             } else {

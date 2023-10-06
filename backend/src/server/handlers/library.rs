@@ -139,8 +139,13 @@ pub async fn add_new_videos(
 )]
 pub async fn videos_need_encoding(
     State(state): State<Arc<AppState>>,
-    Json(video_ids): Json<Vec<String>>,
+    Json(mut video_ids): Json<Vec<String>>,
 ) -> Result<impl IntoResponse, AppError> {
+    if video_ids.is_empty() {
+        let all_ids = state.database.videos.get_video_ids_with_markers().await?;
+        video_ids.extend(all_ids);
+    }
+
     let service =
         EncodingOptimizationService::new(state.ffmpeg_location.clone(), state.database.clone())
             .await;

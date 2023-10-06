@@ -87,6 +87,11 @@ async fn main() -> Result<()> {
         .route("/video", get(handlers::library::list_videos))
         // add new videos either via stash, local or url
         .route("/video", post(handlers::library::add_new_videos))
+        // returns whether a set of videos need to be re-encoded or not
+        .route(
+            "/video/need-encoding",
+            post(handlers::library::videos_need_encoding),
+        )
         // update video metadata
         .route("/video/:id", put(handlers::library::update_video))
         // sync a single video with stash

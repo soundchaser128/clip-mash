@@ -1,9 +1,17 @@
 import {useStateMachine} from "little-state-machine"
 import {useForm} from "react-hook-form"
-import {useNavigate} from "react-router-dom"
+import {LoaderFunction, useNavigate} from "react-router-dom"
 import {FormStage, FormState} from "../types/form-state"
 import {updateForm} from "./actions"
 import {HiArrowsRightLeft, HiChevronRight} from "react-icons/hi2"
+import {videosNeedEncoding} from "../api"
+import {getFormState} from "../helpers"
+
+export const videoOptionsLoader: LoaderFunction = async () => {
+  const formState = getFormState()!
+  const needsEncode = await videosNeedEncoding(formState.videoIds || [])
+  return {needsEncode}
+}
 
 type Inputs = Pick<
   FormState,

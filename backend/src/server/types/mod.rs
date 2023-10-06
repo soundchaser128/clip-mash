@@ -8,7 +8,7 @@ use time::OffsetDateTime;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::data::database::{
-    DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers, VideoSource, unix_timestamp_now,
+    unix_timestamp_now, DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers, VideoSource,
 };
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashApi;

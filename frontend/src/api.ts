@@ -616,6 +616,15 @@ export const cleanupVideos = () => {
   })
 }
 
+export const videosNeedEncoding = (videosNeedEncodingBody: string[]) => {
+  return customInstance<boolean>({
+    url: `/api/library/video/need-encoding`,
+    method: "post",
+    headers: {"Content-Type": "application/json"},
+    data: videosNeedEncodingBody,
+  })
+}
+
 export const listStashVideos = (params?: ListStashVideosParams) => {
   return customInstance<StashVideoDtoPage>({
     url: `/api/library/video/stash`,
@@ -771,6 +780,9 @@ export type AddNewVideosResult = NonNullable<
 >
 export type CleanupVideosResult = NonNullable<
   Awaited<ReturnType<typeof cleanupVideos>>
+>
+export type VideosNeedEncodingResult = NonNullable<
+  Awaited<ReturnType<typeof videosNeedEncoding>>
 >
 export type ListStashVideosResult = NonNullable<
   Awaited<ReturnType<typeof listStashVideos>>

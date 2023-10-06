@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::time::Instant;
 
@@ -8,8 +7,8 @@ use tokio::process::Command;
 use tracing::{debug, enabled, info, Level};
 
 use super::commands::ffmpeg::FfmpegLocation;
-use super::commands::ffprobe::{ffprobe, FfProbe};
 use super::directories::Directories;
+use super::encoding_optimization::EncodingOptimizationService;
 use super::streams::{LocalVideoSource, StreamUrlService};
 use super::Marker;
 use crate::data::database::{Database, DbSong};
@@ -63,7 +62,8 @@ pub struct CompilationGenerator {
     directories: Directories,
     ffmpeg_path: Utf8PathBuf,
     database: Database,
-    ffmpeg_location: FfmpegLocation,
+    encoding_optimization: EncodingOptimizationService,
+    stream_urls: StreamUrlService,
 }
 
 impl CompilationGenerator {
@@ -73,23 +73,17 @@ impl CompilationGenerator {
         database: Database,
     ) -> Result<Self> {
         let ffmpeg_path = ffmpeg_location.ffmpeg();
+        let encoding_optimization =
+            EncodingOptimizationService::new(ffmpeg_location.clone(), database.clone()).await;
+        let streams_service = StreamUrlService::new(database.clone()).await;
         info!("using ffmpeg at {ffmpeg_path}");
         Ok(CompilationGenerator {
             directories,
             ffmpeg_path,
-            database,
-            ffmpeg_location: ffmpeg_location.clone(),
+            database: database,
+            encoding_optimization,
+            stream_urls: streams_service,
         })
-    }
-
-    async fn prepare_stream_urls(&self, clips: &[Clip]) -> Result<HashMap<String, String>> {
-        let service = StreamUrlService::new().await;
-        let mut ids: Vec<_> = clips.iter().map(|c| c.video_id.as_str()).collect();
-        ids.sort();
-        ids.dedup();
-
-        let videos = self.database.videos.get_videos_by_ids(&ids).await?;
-        Ok(service.get_clip_streams(clips, &videos, LocalVideoSource::File))
     }
 
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {
@@ -216,34 +210,12 @@ impl CompilationGenerator {
         Ok(())
     }
 
-    async fn get_video_infos<'a>(
-        &self,
-        streams: &'a HashMap<String, String>,
-    ) -> HashMap<&'a str, Option<FfProbe>> {
-        let mut result = HashMap::new();
-        for (video_id, url) in streams {
-            let ffprobe = ffprobe(url, &self.ffmpeg_location).await;
-            result.insert(video_id.as_str(), ffprobe.ok());
-        }
+    fn get_video_ids<'a>(&self, options: &'a CompilationOptions) -> Vec<&'a str> {
+        let mut ids: Vec<_> = options.clips.iter().map(|c| c.video_id.as_str()).collect();
+        ids.sort();
+        ids.dedup();
 
-        result
-    }
-
-    fn can_concatenate_without_re_encoding(
-        &self,
-        video_infos: HashMap<&str, Option<FfProbe>>,
-    ) -> bool {
-        let any_ffprobe_errors = video_infos.values().any(|v| v.is_none());
-        if any_ffprobe_errors {
-            false
-        } else {
-            let parameters: Vec<_> = video_infos
-                .into_values()
-                .map(|v| v.unwrap().video_parameters())
-                .collect();
-            info!("video parameters: {:#?}", parameters);
-            parameters.into_iter().all_equal()
-        }
+        ids
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
@@ -254,9 +226,15 @@ impl CompilationGenerator {
             .await?;
         let video_dir = self.directories.temp_video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
-        let stream_urls = self.prepare_stream_urls(clips).await?;
-        let video_infos = self.get_video_infos(&stream_urls).await;
-        let can_concatenate = self.can_concatenate_without_re_encoding(video_infos);
+        let video_ids = self.get_video_ids(&options);
+        let stream_urls = self
+            .stream_urls
+            .get_video_streams(&video_ids, LocalVideoSource::File)
+            .await?;
+        let can_concatenate = self
+            .encoding_optimization
+            .needs_re_encode(&video_ids)
+            .await?;
         info!("can concatenate without re-encoding: {}", can_concatenate);
 
         let total = clips.len();

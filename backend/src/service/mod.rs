@@ -1,6 +1,7 @@
 pub mod clip;
 pub mod commands;
 pub mod directories;
+pub mod encoding_optimization;
 pub mod funscript;
 pub mod generator;
 pub mod migrations;

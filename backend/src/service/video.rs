@@ -341,6 +341,7 @@ impl VideoService {
                     new_markers += 1;
                 } else {
                     info!("marker {id} already exists");
+                    // TODO update marker information in database
                 }
             }
 

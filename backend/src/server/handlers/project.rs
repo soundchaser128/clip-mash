@@ -56,7 +56,7 @@ pub async fn fetch_clips(
         .map(From::from)
         .collect();
 
-    let stream_service = StreamUrlService::new().await;
+    let stream_service = StreamUrlService::new(state.database.clone()).await;
     let streams = stream_service.get_clip_streams(&clips, &videos, LocalVideoSource::Url);
 
     let response = ClipsResponse {

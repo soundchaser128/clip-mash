@@ -19,7 +19,7 @@ import {
 import "inter-ui/inter.css"
 import "./index.css"
 
-import VideoOptions from "./routes/video-options"
+import VideoOptions, {videoOptionsLoader} from "./routes/video-options"
 import Progress from "./routes/progress"
 import PreviewClips from "./routes/clips"
 import ListVideos, {loader as listVideosLoader} from "./routes/library/videos"
@@ -268,6 +268,7 @@ const router = createBrowserRouter([
           {
             path: "video-options",
             element: <VideoOptions />,
+            loader: videoOptionsLoader,
           },
           {
             path: "clips",

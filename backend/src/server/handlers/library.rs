@@ -19,6 +19,7 @@ use crate::server::types::{
     CreateMarker, ListVideoDto, MarkerDto, MarkerDtoConverter, Page, PageParameters, StashVideoDto,
     UpdateMarker, VideoDetailsDto, VideoDetailsDtoConverter, VideoDto,
 };
+use crate::service::encoding_optimization::EncodingOptimizationService;
 use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;
 use crate::service::video::{AddVideosRequest, VideoService};
@@ -125,6 +126,28 @@ pub async fn add_new_videos(
         .collect();
 
     Ok(Json(new_videos))
+}
+
+#[axum::debug_handler]
+#[utoipa::path(
+    post,
+    path = "/api/library/video/need-encoding",
+    request_body = Vec<String>,
+    responses(
+        (status = 200, description = "Check if the videos can be combined without encoding", body = bool),
+    )
+)]
+pub async fn videos_need_encoding(
+    State(state): State<Arc<AppState>>,
+    Json(video_ids): Json<Vec<String>>,
+) -> Result<impl IntoResponse, AppError> {
+    let service =
+        EncodingOptimizationService::new(state.ffmpeg_location.clone(), state.database.clone())
+            .await;
+    let ids: Vec<_> = video_ids.iter().map(|s| s.as_str()).collect();
+
+    let needs_encoding = service.needs_re_encode(&ids).await?;
+    Ok(Json(needs_encoding))
 }
 
 #[utoipa::path(

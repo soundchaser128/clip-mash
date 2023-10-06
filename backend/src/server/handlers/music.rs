@@ -9,6 +9,7 @@ use color_eyre::Report;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 use url::Url;
+use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
 use crate::data::database::DbSong;
@@ -17,9 +18,9 @@ use crate::server::types::*;
 use crate::service::music::{self, MusicDownloadService};
 use crate::util::expect_file_name;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, IntoParams)]
 pub struct DownloadMusicQuery {
-    pub url: Url,
+    pub url: String,
 }
 
 #[derive(Serialize)]
@@ -47,12 +48,21 @@ impl From<DbSong> for SongDto {
 }
 
 #[axum::debug_handler]
+#[utoipa::path(
+    post,
+    path = "/api/song/download",
+    params(DownloadMusicQuery),
+    responses(
+        (status = 200, description = "Download a song from a URL", body = SongDto)
+    )
+)]
 pub async fn download_music(
     Query(DownloadMusicQuery { url }): Query<DownloadMusicQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<SongDto>, AppError> {
     info!("downloading music at url {url}");
     let music_service = MusicDownloadService::from(state);
+    let url = Url::parse(&url)?;
     let song = music_service.download_song(url).await?;
 
     Ok(Json(song.into()))
@@ -72,7 +82,22 @@ pub async fn stream_song(
     Ok(result)
 }
 
+#[derive(ToSchema)]
+pub struct SongUpload {
+    #[schema(value_type = String, format = Binary)]
+    #[allow(unused)]
+    file: String,
+}
+
 #[axum::debug_handler]
+#[utoipa::path(
+    post,
+    path = "/api/song/upload",
+    request_body(content = SongUpload, content_type = "multipart/form-data"),
+    responses(
+        (status = 200, description = "Uploads a song", body = SongDto),
+    )
+)]
 pub async fn upload_music(
     State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
@@ -90,6 +115,13 @@ pub async fn upload_music(
 }
 
 #[axum::debug_handler]
+#[utoipa::path(
+    get,
+    path = "/api/song",
+    responses(
+        (status = 200, description = "Lists all songs", body = Vec<SongDto>),
+    )
+)]
 pub async fn list_songs(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<SongDto>>, AppError> {
@@ -106,6 +138,16 @@ pub async fn list_songs(
 }
 
 #[axum::debug_handler]
+#[utoipa::path(
+    get,
+    path = "/api/song/{id}/beats",
+    params(
+        ("id" = String, Path, description = "The ID of the song to get beats for")
+    ),
+    responses(
+        (status = 200, description = "Get beats for a song", body = Beats),
+    )
+)]
 pub async fn get_beats(
     Path(song_id): Path<i64>,
     state: State<Arc<AppState>>,

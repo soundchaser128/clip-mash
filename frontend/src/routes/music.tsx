@@ -17,7 +17,7 @@ import {Updater, useImmer} from "use-immer"
 import {useDrag, useDrop} from "react-dnd"
 import type {Identifier, XYCoord} from "dnd-core"
 import clsx from "clsx"
-import {SongDto} from "../api"
+import {SongDto, downloadMusic, getBeats, uploadMusic} from "../api"
 import HelpModal from "../components/HelpModal"
 import useNotification from "../hooks/useNotification"
 import Loader from "../components/Loader"
@@ -244,13 +244,9 @@ const UploadMusic: React.FC<UploadMusicProps> = ({onCancel, onSuccess}) => {
   const onUpload = async () => {
     if (file) {
       setLoading(true)
-      const formData = new FormData()
-      formData.set("file", file)
-      const response = await fetch(`/api/song/upload`, {
-        method: "POST",
-        body: formData,
+      const data = await uploadMusic({
+        file,
       })
-      const data: SongDto = await response.json()
       onSuccess(data)
     }
   }
@@ -288,14 +284,11 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
   const onSubmit = async (values: Inputs) => {
     setLoading(true)
 
-    const response = await fetch(
-      `/api/song/download?url=${encodeURIComponent(values.musicUrl)}`,
-      {
-        method: "POST",
-      },
-    )
-    const data: SongDto = await response.json()
-    await fetch(`/api/song/${data.songId}/beats`)
+    const data = await downloadMusic({
+      url: values.musicUrl,
+    })
+    await getBeats(data.songId)
+
     setLoading(false)
     onSuccess(data)
     reset()

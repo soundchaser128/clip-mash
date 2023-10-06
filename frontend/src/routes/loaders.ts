@@ -6,10 +6,11 @@ import {
   ClipsResponse,
   CreateClipsBody,
   PmvClipOptions,
-  SongDto,
   StashVideoDtoPage,
   VideoDto,
   fetchClips,
+  getVersion,
+  listSongs,
   listStashVideos,
 } from "../api"
 import {FormState} from "../types/form-state"
@@ -132,15 +133,14 @@ export const videoDetailsLoader: LoaderFunction = async ({params}) => {
 }
 
 export const musicLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/song")
-  const data = (await response.json()) as SongDto[]
+  const data = await listSongs()
+
   return data
 }
 
 export const versionLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/version")
-  const data = (await response.json()) as {version: string}
-  return data.version
+  const response = await getVersion()
+  return response.version
 }
 
 export type StashLoaderData = StashVideoDtoPage

@@ -1,10 +1,12 @@
 use utoipa::OpenApi;
 
 use super::handlers::library::{CreateMarkerRequest, VideoCleanupResponse};
+use super::handlers::music::SongUpload;
 use super::handlers::project::{CreateFunscriptBody, ProjectCreateResponse};
+use super::handlers::version::Version;
 use super::types::*;
 use crate::data::database::{VideoSource, VideoUpdate};
-use crate::server::handlers::{library, progress, project, stash};
+use crate::server::handlers::{library, music, progress, project, stash, version};
 use crate::service::stash_config::StashConfig;
 use crate::service::video::AddVideosRequest;
 
@@ -37,6 +39,11 @@ use crate::service::video::AddVideosRequest;
         stash::get_config,
         stash::get_health,
         stash::set_config,
+        music::list_songs,
+        music::get_beats,
+        music::upload_music,
+        music::download_music,
+        version::get_version,
     ),
     components(
         schemas(
@@ -86,6 +93,8 @@ use crate::service::video::AddVideosRequest;
             VideoUpdate,
             VideoDetailsDto,
             CreateMarkerRequest,
+            SongUpload,
+            Version,
         )
     ),
     tags(

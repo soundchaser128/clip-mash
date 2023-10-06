@@ -13,6 +13,7 @@ pub enum AppError {
     Report(color_eyre::Report),
     StatusCode(StatusCode),
     Validation(HashMap<&'static str, &'static str>),
+    Url(url::ParseError),
 }
 
 impl From<io::Error> for AppError {
@@ -24,6 +25,12 @@ impl From<io::Error> for AppError {
 impl From<color_eyre::Report> for AppError {
     fn from(value: color_eyre::Report) -> Self {
         AppError::Report(value)
+    }
+}
+
+impl From<url::ParseError> for AppError {
+    fn from(value: url::ParseError) -> Self {
+        AppError::Url(value)
     }
 }
 
@@ -40,6 +47,7 @@ impl IntoResponse for AppError {
             AppError::Report(e) => json!(e.to_string()),
             AppError::StatusCode(s) => json!(s.to_string()),
             AppError::Validation(map) => json!(map),
+            AppError::Url(e) => json!(format!("url error: {e}")),
         };
 
         let body = Json(json!({
@@ -57,6 +65,7 @@ impl fmt::Display for AppError {
             AppError::Report(e) => write!(f, "{}", e),
             AppError::StatusCode(s) => write!(f, "status code: {}", s),
             AppError::Validation(map) => write!(f, "validation error: {:?}", map),
+            AppError::Url(e) => write!(f, "url error: {}", e),
         }
     }
 }

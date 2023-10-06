@@ -58,8 +58,9 @@ export default function ListVideos() {
   const config = useConfig()
   const isLoading = navigation.state === "loading"
   const [params] = useSearchParams()
+  const [source, setSource] = useState(params.get("source") || undefined)
   const [filter, setFilter] = useState(params.get("query") ?? "")
-  const noVideos = videos.length === 0 && !filter && !isLoading
+  const noVideos = videos.length === 0 && !filter && !isLoading && !source
   const noVideosForFilter = videos.length === 0 && filter && !isLoading
   const revalidator = useRevalidator()
   const [sort, setSort] = useState(params.get("sort") ?? "markers")
@@ -81,6 +82,17 @@ export default function ListVideos() {
   const onChangeSort = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSort(e.target.value)
     addOrReplaceParam("sort", e.target.value)
+  }
+
+  const onChangeSource = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    if (value === "All") {
+      setSource(undefined)
+      addOrReplaceParam("source", undefined)
+    } else {
+      setSource(value)
+      addOrReplaceParam("source", value)
+    }
   }
 
   const onNextStage = () => {
@@ -184,22 +196,43 @@ export default function ListVideos() {
             onChange={onFilterChange}
           />
 
-          <div className="flex place-self-end gap-1">
-            <label className="label">
-              <span className="label-text">Sort by</span>
-            </label>
-            <select
-              value={sort}
-              onChange={onChangeSort}
-              className="select select-sm select-bordered"
-            >
-              <option disabled value="none">
-                Sort by...
-              </option>
-              <option value="markers">Number of markers</option>
-              <option value="title">Video title</option>
-              <option value="created">Created on</option>
-            </select>
+          <div className="flex gap-2 place-self-end">
+            <div className="flex gap-1">
+              <label className="label">
+                <span className="label-text">Video source</span>
+              </label>
+              <select
+                value={source}
+                onChange={onChangeSource}
+                className="select select-sm select-bordered"
+              >
+                <option disabled value="none">
+                  Filter video source
+                </option>
+                <option value="All">All</option>
+                <option value="Folder">Local folder</option>
+                <option value="Stash">Stash</option>
+                <option value="Download">Downloaded</option>
+              </select>
+            </div>
+
+            <div className="flex gap-1">
+              <label className="label">
+                <span className="label-text">Sort by</span>
+              </label>
+              <select
+                value={sort}
+                onChange={onChangeSort}
+                className="select select-sm select-bordered"
+              >
+                <option disabled value="none">
+                  Sort by...
+                </option>
+                <option value="markers">Number of markers</option>
+                <option value="title">Video title</option>
+                <option value="created">Created on</option>
+              </select>
+            </div>
           </div>
         </div>
       )}

@@ -5,7 +5,10 @@ use futures::TryStreamExt;
 use sqlx::{FromRow, QueryBuilder, Row, SqlitePool};
 use tracing::{debug, info};
 
-use super::{AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers, VideoUpdate};
+use super::{
+    AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers, VideoSource,
+    VideoUpdate,
+};
 use crate::data::database::unix_timestamp_now;
 use crate::server::types::{ListVideoDto, PageParameters};
 use crate::service::video::TAG_SEPARATOR;
@@ -248,6 +251,7 @@ impl VideosDatabase {
     pub async fn list_videos(
         &self,
         query: Option<&str>,
+        source: Option<VideoSource>,
         params: &PageParameters,
     ) -> Result<(Vec<ListVideoDto>, usize)> {
         #[derive(FromRow, Debug)]
@@ -282,13 +286,26 @@ impl VideosDatabase {
             LEFT JOIN markers m ON v.id = m.video_id ",
         );
 
+        let mut first = true;
         if let Some(query) = query {
             query_builder
                 .push("WHERE v.rowid IN (SELECT rowid FROM videos_fts WHERE videos_fts MATCH ");
             query_builder.push_bind(query);
             query_builder.push(") ");
+            first = false;
         }
-        query_builder.push("GROUP BY v.id ");
+
+        if let Some(source) = source {
+            if first {
+                query_builder.push("WHERE ");
+            } else {
+                query_builder.push("AND ");
+            }
+            query_builder.push("v.source = ");
+            query_builder.push_bind(source.to_string());
+        }
+
+        query_builder.push(" GROUP BY v.id ");
         query_builder.push("ORDER BY ");
         // security: order_by is a static string determined from the `sort` parameter,
         // so it is safe to append it to the query without escaping

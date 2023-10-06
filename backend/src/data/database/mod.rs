@@ -1,3 +1,4 @@
+use std::fmt;
 use std::str::FromStr;
 use std::time::SystemTime;
 
@@ -54,6 +55,16 @@ impl From<String> for VideoSource {
                 warn!("unknown enum constant {other}, falling back to VideoSource::Folder");
                 VideoSource::Folder
             }
+        }
+    }
+}
+
+impl fmt::Display for VideoSource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VideoSource::Folder => write!(f, "folder"),
+            VideoSource::Download => write!(f, "download"),
+            VideoSource::Stash => write!(f, "stash"),
         }
     }
 }
@@ -245,10 +256,11 @@ mod test {
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
-    use crate::data::database::{Database, VideoUpdate};
+    use crate::data::database::{Database, VideoSource, VideoUpdate};
     use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_fn};
     use crate::util::generate_id;
+    use crate::Result;
 
     #[sqlx::test]
     async fn test_get_and_persist_video(pool: SqlitePool) {
@@ -368,9 +380,52 @@ mod test {
             sort: Some("file_path".into()),
             dir: Some(SortDirection::Asc),
         };
-        let (result, total) = database.videos.list_videos(None, &page).await.unwrap();
+        let (result, total) = database
+            .videos
+            .list_videos(None, None, &page)
+            .await
+            .unwrap();
         assert_eq!(45, total);
         assert_eq!(10, result.len());
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn test_list_videos_with_source(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+        for _ in 0..5 {
+            persist_video_fn(&database, |v| {
+                v.source = VideoSource::Stash;
+            })
+            .await?;
+        }
+
+        for _ in 0..5 {
+            persist_video_fn(&database, |v| {
+                v.source = VideoSource::Folder;
+            })
+            .await?;
+        }
+        let params = PageParameters::new(0, 10);
+        let (stash_videos, _) = database
+            .videos
+            .list_videos(None, Some(VideoSource::Stash), &params)
+            .await?;
+        assert_eq!(5, stash_videos.len());
+        for video in stash_videos {
+            assert_eq!(video.video.source, VideoSource::Stash);
+        }
+
+        let (folder_videos, _) = database
+            .videos
+            .list_videos(None, Some(VideoSource::Folder), &params)
+            .await?;
+        assert_eq!(5, folder_videos.len());
+        for video in folder_videos {
+            assert_eq!(video.video.source, VideoSource::Folder);
+        }
+
+        Ok(())
     }
 
     #[sqlx::test]
@@ -407,7 +462,7 @@ mod test {
         };
         let (result, total) = database
             .videos
-            .list_videos(Some("sexy"), &page)
+            .list_videos(Some("sexy"), None, &page)
             .await
             .unwrap();
         assert_eq!(10, total);
@@ -418,7 +473,7 @@ mod test {
 
         let (result, total) = database
             .videos
-            .list_videos(Some("cool"), &page)
+            .list_videos(Some("cool"), None, &page)
             .await
             .unwrap();
         assert_eq!(5, total);
@@ -618,7 +673,11 @@ mod test {
             size: Some(100),
             sort: None,
         };
-        let (_videos, count) = database.videos.list_videos(None, &params).await.unwrap();
+        let (_videos, count) = database
+            .videos
+            .list_videos(None, None, &params)
+            .await
+            .unwrap();
         assert_eq!(20, count);
 
         let ids: Vec<_> = (0..20).collect();

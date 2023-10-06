@@ -593,6 +593,16 @@ impl PageParameters {
     pub const DEFAULT_PAGE: i64 = 0;
     pub const DEFAULT_SIZE: i64 = 20;
 
+    #[allow(unused)]
+    pub fn new(page: usize, size: usize) -> Self {
+        Self {
+            page: Some(page),
+            size: Some(size),
+            sort: None,
+            dir: None,
+        }
+    }
+
     pub fn limit(&self) -> i64 {
         self.size.map(|s| s as i64).unwrap_or(Self::DEFAULT_SIZE)
     }

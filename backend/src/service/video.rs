@@ -16,13 +16,14 @@ use walkdir::WalkDir;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
-use crate::data::database::{CreateVideo, Database, DbVideo, VideoSource};
+use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource, VideoUpdate};
 use crate::data::stash_api::{StashApi, StashMarker};
 use crate::server::handlers::AppState;
-use crate::server::types::CreateMarker;
+use crate::server::types::{CreateMarker, ListVideoDto};
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
+use crate::service::stash_config::StashConfig;
 use crate::util::generate_id;
 use crate::Result;
 
@@ -42,15 +43,19 @@ pub struct VideoService {
     directories: Directories,
     ffmpeg_location: FfmpegLocation,
     stash_api: StashApi,
+    preview_generator: PreviewGenerator,
 }
 
 impl VideoService {
     pub async fn new(state: Arc<AppState>) -> Result<Self> {
+        let preview_generator =
+            PreviewGenerator::new(state.directories.clone(), state.ffmpeg_location.clone());
         Ok(VideoService {
             database: state.database.clone(),
             directories: state.directories.clone(),
             ffmpeg_location: state.ffmpeg_location.clone(),
             stash_api: StashApi::load_config().await,
+            preview_generator,
         })
     }
 
@@ -86,9 +91,8 @@ impl VideoService {
             let ffprobe = ffprobe.unwrap();
             let duration = ffprobe.duration();
             let id = generate_id();
-            let preview_generator =
-                PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
-            let image_path = preview_generator
+            let image_path = self
+                .preview_generator
                 .generate_preview(&id, &path, duration.map_or(0.0, |d| d / 2.0))
                 .await?;
             let file_created = path.metadata()?.created().ok().map(|time| {
@@ -156,12 +160,33 @@ impl VideoService {
         Ok((result.generated_id, result.downloaded_file))
     }
 
+    async fn persist_stash_marker(&self, marker: StashMarker, video: &DbVideo) -> Result<DbMarker> {
+        let scene_id: i64 = marker.scene_id.parse()?;
+        let stream_url = self.stash_api.get_stream_url(scene_id);
+
+        let preview_path = self
+            .preview_generator
+            .generate_preview(&video.id, &stream_url, marker.start)
+            .await?;
+        let create_marker = CreateMarker {
+            video_id: video.id.clone(),
+            start: marker.start,
+            end: marker.end,
+            title: marker.primary_tag,
+            index_within_video: marker.index_within_video as i64,
+            preview_image_path: Some(preview_path.to_string()),
+            video_interactive: video.interactive,
+            created_on: Some(marker.created_on),
+            marker_stash_id: Some(marker.id.parse()?),
+        };
+        self.database.markers.create_new_marker(create_marker).await
+    }
+
     async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
         let ffprobe = ffprobe(path.as_str(), &self.ffmpeg_location).await?;
         let duration = ffprobe.duration();
-        let preview_generator =
-            PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
-        let image_path = preview_generator
+        let image_path = self
+            .preview_generator
             .generate_preview(&id, &path, duration.map_or(0.0, |d| d / 2.0))
             .await?;
 
@@ -182,22 +207,14 @@ impl VideoService {
         self.database.videos.persist_video(&video).await
     }
 
-    async fn persist_stash_video(
-        &self,
-        scene_ids: Vec<i64>,
-        api_key: Option<&str>,
-    ) -> Result<Vec<DbVideo>> {
-        if api_key.is_none() {
-            bail!("api key must be provided")
-        }
-        let api_key = api_key.unwrap();
-
+    async fn persist_stash_video(&self, scene_ids: Vec<i64>) -> Result<Vec<DbVideo>> {
+        let stash_config = StashConfig::get().await?;
         info!("adding videos from stash with IDs {scene_ids:?}");
 
         let scenes = self.stash_api.find_scenes_by_ids(scene_ids).await?;
         let stash_markers: Vec<_> = scenes
             .iter()
-            .flat_map(|s| StashMarker::from_scene(s.clone(), api_key))
+            .flat_map(|s| StashMarker::from_scene(s.clone(), &stash_config.api_key))
             .collect();
 
         let create_videos: Vec<_> = scenes
@@ -240,42 +257,19 @@ impl VideoService {
             videos.push(result);
         }
 
-        let preview_generator =
-            PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
         for marker in stash_markers {
-            let scene_id: i64 = marker.scene_id.parse()?;
-            let stream_url = self.stash_api.get_stream_url(scene_id);
+            let scene_id = marker.scene_id.parse()?;
             let video = videos
                 .iter()
                 .find(|v| v.stash_scene_id == Some(scene_id))
                 .expect("video must exist");
-            let preview_path = preview_generator
-                .generate_preview(&video.id, &stream_url, marker.start)
-                .await?;
-            let create_marker = CreateMarker {
-                video_id: video.id.clone(),
-                start: marker.start,
-                end: marker.end,
-                title: marker.primary_tag,
-                index_within_video: marker.index_within_video as i64,
-                preview_image_path: Some(preview_path.to_string()),
-                video_interactive: video.interactive,
-                created_on: Some(marker.created_on),
-            };
-            self.database
-                .markers
-                .create_new_marker(create_marker)
-                .await?;
+            self.persist_stash_marker(marker, &video).await?;
         }
 
         Ok(videos)
     }
 
-    pub async fn add_videos(
-        &self,
-        request: AddVideosRequest,
-        stash_api_key: Option<&str>,
-    ) -> Result<Vec<DbVideo>> {
+    pub async fn add_videos(&self, request: AddVideosRequest) -> Result<Vec<DbVideo>> {
         match request {
             AddVideosRequest::Local { path, recurse } => {
                 self.add_new_local_videos(path, recurse).await
@@ -288,9 +282,7 @@ impl VideoService {
 
                 futures.await
             }
-            AddVideosRequest::Stash { scene_ids } => {
-                self.persist_stash_video(scene_ids, stash_api_key).await
-            }
+            AddVideosRequest::Stash { scene_ids } => self.persist_stash_video(scene_ids).await,
         }
     }
 
@@ -298,8 +290,10 @@ impl VideoService {
         self.database.videos.cleanup_videos().await
     }
 
-    pub async fn merge_stash_scene(&self, video_id: &str) -> Result<()> {
-        let video = self
+    pub async fn merge_stash_scene(&self, video_id: &str) -> Result<ListVideoDto> {
+        let stash_config = StashConfig::get().await?;
+
+        let mut video = self
             .database
             .videos
             .get_video(video_id)
@@ -308,8 +302,52 @@ impl VideoService {
 
         if let Some(stash_scene_id) = video.stash_scene_id {
             let scene = self.stash_api.find_scene(stash_scene_id).await?;
+            let scene_markers = StashMarker::from_scene(scene.clone(), &stash_config.api_key);
 
-            Ok(())
+            let new_title = scene
+                .title
+                .filter(|t| !t.is_empty() && video.video_title.as_deref() != Some(t));
+            info!("setting video title to {new_title:?} (not changing if None)");
+
+            let new_tags: Vec<_> = scene.tags.iter().map(|t| t.name.clone()).collect();
+            let new_tags = Some(new_tags).filter(|t| !t.is_empty());
+
+            video.video_tags = new_tags.clone().map(|t| t.join(TAG_SEPARATOR));
+            video.video_title = new_title.clone();
+
+            self.database
+                .videos
+                .update_video(
+                    &video.id,
+                    VideoUpdate {
+                        title: new_title,
+                        tags: new_tags,
+                    },
+                )
+                .await?;
+
+            let db_markers = self
+                .database
+                .markers
+                .get_markers_for_video(&video.id)
+                .await?;
+
+            let mut new_markers = 0;
+            let stored_ids: Vec<_> = db_markers.iter().flat_map(|m| m.marker_stash_id).collect();
+            for marker in scene_markers {
+                let id = marker.id.parse()?;
+                if !stored_ids.contains(&id) {
+                    self.persist_stash_marker(marker, &video).await?;
+                    new_markers += 1;
+                } else {
+                    info!("marker {id} already exists");
+                }
+            }
+
+            Ok(ListVideoDto {
+                video: video.into(),
+                marker_count: db_markers.len() + new_markers,
+            })
         } else {
             bail!("video is not from stash")
         }

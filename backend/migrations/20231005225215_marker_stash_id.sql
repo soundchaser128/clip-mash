@@ -1,0 +1,1 @@
+ALTER TABLE markers ADD COLUMN marker_stash_id INTEGER;

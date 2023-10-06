@@ -89,6 +89,11 @@ async fn main() -> Result<()> {
         .route("/video", post(handlers::library::add_new_videos))
         // update video metadata
         .route("/video/:id", put(handlers::library::update_video))
+        // sync a single video with stash
+        .route(
+            "/video/:id/stash/sync",
+            post(handlers::library::sync_stash_video),
+        )
         // remove videos that don't exist on disk
         .route("/video/cleanup", post(handlers::library::cleanup_videos))
         // list videos on stash

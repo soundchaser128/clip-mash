@@ -117,6 +117,7 @@ pub struct DbMarker {
     pub index_within_video: i64,
     pub marker_preview_image: Option<String>,
     pub marker_created_on: i64,
+    pub marker_stash_id: Option<i64>,
 }
 
 // TODO better name
@@ -267,6 +268,7 @@ mod test {
             preview_image_path: None,
             video_interactive: false,
             created_on: None,
+            marker_stash_id: None,
         };
         let result = database
             .markers
@@ -293,6 +295,7 @@ mod test {
             preview_image_path: None,
             video_interactive: false,
             created_on: None,
+            marker_stash_id: None,
         };
         let err = database
             .markers
@@ -317,6 +320,7 @@ mod test {
             preview_image_path: None,
             video_interactive: false,
             created_on: None,
+            marker_stash_id: None,
         };
         let result = database.markers.create_new_marker(marker).await.unwrap();
         let id = result.rowid.unwrap();

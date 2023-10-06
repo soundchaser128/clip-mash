@@ -52,8 +52,8 @@ impl MarkersDatabase {
     pub async fn create_new_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
         let created_on = marker.created_on.unwrap_or_else(|| unix_timestamp_now());
         let inserted_value = sqlx::query!(
-            "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video, marker_preview_image, marker_created_on)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+            "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video, marker_preview_image, marker_created_on, marker_stash_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 ON CONFLICT DO UPDATE SET start_time = excluded.start_time, end_time = excluded.end_time, title = excluded.title
                 RETURNING rowid, marker_created_on",
                 marker.video_id,
@@ -63,6 +63,8 @@ impl MarkersDatabase {
                 marker.index_within_video,
                 marker.preview_image_path,
                 created_on,
+                marker.marker_stash_id,
+
         )
         .fetch_one(&self.pool)
         .await?;
@@ -76,6 +78,7 @@ impl MarkersDatabase {
             index_within_video: marker.index_within_video,
             marker_preview_image: marker.preview_image_path,
             marker_created_on: inserted_value.marker_created_on,
+            marker_stash_id: marker.marker_stash_id,
         };
 
         info!("newly updated or inserted marker: {marker:?}");
@@ -128,6 +131,7 @@ impl MarkersDatabase {
             index_within_video: record.index_within_video,
             marker_preview_image: record.marker_preview_image,
             marker_created_on: record.marker_created_on,
+            marker_stash_id: record.marker_stash_id,
         };
 
         Ok(marker)
@@ -144,6 +148,7 @@ impl MarkersDatabase {
             preview_image_path: None,
             video_interactive: marker.interactive,
             created_on: None,
+            marker_stash_id: None,
         };
 
         let new_marker_2 = CreateMarker {
@@ -155,6 +160,7 @@ impl MarkersDatabase {
             preview_image_path: None,
             video_interactive: marker.interactive,
             created_on: None,
+            marker_stash_id: None,
         };
 
         let rowid = marker.rowid.expect("marker must have rowid");
@@ -238,5 +244,16 @@ impl MarkersDatabase {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn get_markers_for_video(&self, video_id: &str) -> Result<Vec<DbMarker>> {
+        let markers = sqlx::query_as!(
+            DbMarker,
+            "SELECT *, rowid FROM markers WHERE video_id = $1 ORDER BY index_within_video ASC",
+            video_id
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(markers)
     }
 }

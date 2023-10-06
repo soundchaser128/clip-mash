@@ -631,6 +631,7 @@ pub struct CreateMarker {
     pub preview_image_path: Option<String>,
     pub video_interactive: bool,
     pub created_on: Option<i64>,
+    pub marker_stash_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]

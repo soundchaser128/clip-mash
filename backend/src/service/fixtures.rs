@@ -398,6 +398,7 @@ pub async fn persist_marker(
         preview_image_path: None,
         video_interactive,
         created_on: None,
+        marker_stash_id: None,
     };
     db.markers.create_new_marker(marker).await
 }

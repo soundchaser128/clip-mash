@@ -118,6 +118,7 @@ pub async fn find_and_persist_markers(
                 index_within_video: index as i64,
                 video_interactive: video.interactive,
                 created_on: None,
+                marker_stash_id: None,
             })
             .await?;
         info!("created marker {db_marker:?}");

@@ -39,6 +39,7 @@ impl VideosDatabase {
     }
 
     pub async fn update_video(&self, id: &str, update: VideoUpdate) -> Result<()> {
+        info!("updating video with id {id} and {update:?}");
         let mut query_builder = QueryBuilder::new("UPDATE videos SET ");
         let mut first = true;
         if let Some(title) = update.title {
@@ -107,6 +108,7 @@ impl VideosDatabase {
                         r.index_within_video,
                         r.marker_preview_image,
                         r.marker_created_on,
+                        r.marker_stash_id,
                     ) {
                         (
                             Some(video_id),
@@ -117,6 +119,7 @@ impl VideosDatabase {
                             Some(index),
                             marker_preview_image,
                             Some(marker_created_on),
+                            marker_stash_id,
                         ) => Some(DbMarker {
                             rowid,
                             title,
@@ -126,6 +129,7 @@ impl VideosDatabase {
                             index_within_video: index,
                             marker_preview_image,
                             marker_created_on,
+                            marker_stash_id,
                         }),
                         _ => None,
                     }

@@ -116,7 +116,7 @@ impl MarkersDatabase {
             if !first {
                 query_builder.push(", ");
             }
-            query_builder.push("stash_marker_id = ");
+            query_builder.push("marker_stash_id = ");
             query_builder.push_bind(stash_id);
         }
 

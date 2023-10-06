@@ -337,6 +337,7 @@ impl VideoService {
             for marker in scene_markers {
                 let id = marker.id.parse()?;
                 if !stored_ids.contains(&id) {
+                    info!("creating marker {marker:?} in database");
                     self.persist_stash_marker(marker, &video).await?;
                     new_markers += 1;
                 } else {
@@ -349,6 +350,7 @@ impl VideoService {
             // for every marker in the local database, but not on stash: create it in stash
             for marker in db_markers {
                 if marker.marker_stash_id.is_none() {
+                    info!("creating marker {marker:?} in stash");
                     let rowid = marker.rowid.unwrap();
                     let scene_id = video.stash_scene_id.unwrap();
                     let stash_marker_id = self

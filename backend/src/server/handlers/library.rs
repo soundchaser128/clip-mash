@@ -419,8 +419,19 @@ pub async fn create_new_marker(
             if create_in_stash && video.source == VideoSource::Stash {
                 let scene_id = video.stash_scene_id.unwrap();
                 let stash_api = StashApi::load_config_or_fail().await?;
-                stash_api
+                let stash_id = stash_api
                     .add_marker(marker.clone(), scene_id.to_string())
+                    .await?;
+                state
+                    .database
+                    .markers
+                    .update_marker(
+                        marker.rowid.unwrap(),
+                        UpdateMarker {
+                            stash_marker_id: Some(stash_id),
+                            ..Default::default()
+                        },
+                    )
                     .await?;
             }
 

@@ -17,7 +17,7 @@ use walkdir::WalkDir;
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource, VideoUpdate};
-use crate::data::stash_api::{StashApi, StashMarker};
+use crate::data::stash_api::{MarkerLike, StashApi, StashMarker};
 use crate::server::handlers::AppState;
 use crate::server::types::{CreateMarker, ListVideoDto, UpdateMarker};
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
@@ -290,6 +290,13 @@ impl VideoService {
         self.database.videos.cleanup_videos().await
     }
 
+    fn has_overlap<M: MarkerLike>(&self, stash_markers: &[M], start: f64, end: f64) -> bool {
+        stash_markers.iter().any(|m| {
+            let range = m.start()..m.end();
+            range.contains(&start) || range.contains(&end)
+        })
+    }
+
     pub async fn merge_stash_scene(&self, video_id: &str) -> Result<ListVideoDto> {
         let stash_config = StashConfig::get().await?;
 
@@ -334,22 +341,43 @@ impl VideoService {
 
             let mut new_markers = 0;
             let stored_ids: Vec<_> = db_markers.iter().flat_map(|m| m.marker_stash_id).collect();
-            for marker in scene_markers {
-                let id = marker.id.parse()?;
-                if !stored_ids.contains(&id) {
+            for marker in &scene_markers {
+                let stash_id = marker.id.parse()?;
+                if !stored_ids.contains(&stash_id)
+                    && !self.has_overlap(&db_markers, marker.start, marker.end)
+                {
                     info!("creating marker {marker:?} in database");
-                    self.persist_stash_marker(marker, &video).await?;
+                    self.persist_stash_marker(marker.clone(), &video).await?;
                     new_markers += 1;
                 } else {
-                    info!("marker {id} already exists");
-                    // TODO update marker information in database
+                    info!("marker {stash_id} already exists, updating it");
+                    let db_id = db_markers
+                        .iter()
+                        .find(|m| m.marker_stash_id == Some(stash_id))
+                        .unwrap()
+                        .rowid
+                        .unwrap();
+                    self.database
+                        .markers
+                        .update_marker(
+                            db_id,
+                            UpdateMarker {
+                                start: Some(marker.start),
+                                end: Some(marker.end),
+                                title: Some(marker.primary_tag.clone()),
+                                ..Default::default()
+                            },
+                        )
+                        .await?;
                 }
             }
             let marker_count = db_markers.len() + new_markers;
 
             // for every marker in the local database, but not on stash: create it in stash
             for marker in db_markers {
-                if marker.marker_stash_id.is_none() {
+                if marker.marker_stash_id.is_none()
+                    && !self.has_overlap(&scene_markers, marker.start_time, marker.end_time)
+                {
                     info!("creating marker {marker:?} in stash");
                     let rowid = marker.rowid.unwrap();
                     let scene_id = video.stash_scene_id.unwrap();

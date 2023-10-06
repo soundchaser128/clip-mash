@@ -12,6 +12,7 @@ use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
 use self::progress::ProgressDatabase;
 use self::videos::VideosDatabase;
+use super::stash_api::MarkerLike;
 use crate::server::types::{Beats, Progress, VideoLike};
 use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
@@ -118,6 +119,16 @@ pub struct DbMarker {
     pub marker_preview_image: Option<String>,
     pub marker_created_on: i64,
     pub marker_stash_id: Option<i64>,
+}
+
+impl MarkerLike for DbMarker {
+    fn start(&self) -> f64 {
+        self.start_time
+    }
+
+    fn end(&self) -> f64 {
+        self.end_time
+    }
 }
 
 // TODO better name

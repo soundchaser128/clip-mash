@@ -85,11 +85,11 @@ impl From<FindScenesQueryFindScenesScenesSceneStreams> for SceneStream {
     }
 }
 
-trait MarkerLike {
+trait HasStart {
     fn start(&self) -> f64;
 }
 
-impl MarkerLike for &FindScenesQueryFindScenesScenesSceneMarkers {
+impl HasStart for &FindScenesQueryFindScenesScenesSceneMarkers {
     fn start(&self) -> f64 {
         self.seconds
     }
@@ -97,13 +97,19 @@ impl MarkerLike for &FindScenesQueryFindScenesScenesSceneMarkers {
 
 fn compute_end<M>(start: f64, markers: impl IntoIterator<Item = M>, duration: f64) -> f64
 where
-    M: MarkerLike,
+    M: HasStart,
 {
     markers
         .into_iter()
         .find(|m| m.start() > start)
         .map(|m| m.start())
         .unwrap_or(duration)
+}
+
+pub trait MarkerLike {
+    fn start(&self) -> f64;
+
+    fn end(&self) -> f64;
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -123,6 +129,16 @@ pub struct StashMarker {
     pub stream_url: String,
     pub index_within_video: usize,
     pub created_on: i64,
+}
+
+impl MarkerLike for StashMarker {
+    fn start(&self) -> f64 {
+        self.start
+    }
+
+    fn end(&self) -> f64 {
+        self.end
+    }
 }
 
 impl StashMarker {

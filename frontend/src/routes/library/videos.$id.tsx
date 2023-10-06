@@ -70,10 +70,6 @@ function CreateMarkerButtons({
   return (
     <div className="flex flex-col h-full gap-6 items-center">
       <Box>
-        <p className="">
-          Detect markers by detecting scene changes (cuts in the video). Might
-          not be fully accurate. It does not work very well for PoV videos.
-        </p>
         <div className="form-control">
           <label className="label">
             <span className="label-text">
@@ -99,6 +95,10 @@ function CreateMarkerButtons({
           <HiSquaresPlus className="mr-2" />
           Detect markers
         </button>
+        <p className="text-sm opacity-75 mt-2">
+          Detect markers by detecting scene changes (cuts in the video). Might
+          not be fully accurate. It does not work very well for PoV videos.
+        </p>
       </Box>
       <Box>
         <p className="mb-2">Add a single marker that spans the entire video.</p>

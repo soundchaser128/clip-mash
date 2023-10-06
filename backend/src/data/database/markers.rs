@@ -112,6 +112,14 @@ impl MarkersDatabase {
             query_builder.push_bind(title);
         }
 
+        if let Some(stash_id) = update.stash_marker_id {
+            if !first {
+                query_builder.push(", ");
+            }
+            query_builder.push("stash_marker_id = ");
+            query_builder.push_bind(stash_id);
+        }
+
         query_builder.push(" WHERE rowid = ");
         query_builder.push_bind(id);
         query_builder.push(" RETURNING *, rowid");

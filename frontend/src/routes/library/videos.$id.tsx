@@ -51,6 +51,7 @@ interface Inputs {
   title: string
   start: string
   end?: string
+  createInStash?: boolean
 }
 
 type FormMode = "hidden" | "create" | "edit"
@@ -190,7 +191,13 @@ export default function EditVideoModal() {
 
     const result =
       formMode === "create"
-        ? await createMarker(video, values, videoDuration!, index)
+        ? await createMarker(
+            video,
+            values,
+            videoDuration!,
+            index,
+            values.createInStash ?? false,
+          )
         : await updateMarker(editedMarker!.id, values)
 
     if (result.isOk) {
@@ -285,6 +292,7 @@ export default function EditVideoModal() {
       },
       duration,
       0,
+      false,
     )
 
     if (result.isOk) {
@@ -387,6 +395,21 @@ export default function EditVideoModal() {
                   </button>
                 </div>
               </div>
+              {video.source === "Stash" && (
+                <div className="form-control">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">
+                      Create marker in Stash as well?
+                    </span>
+
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-primary"
+                      {...register("createInStash")}
+                    />
+                  </label>
+                </div>
+              )}
 
               <div className="flex justify-between mt-2">
                 {formMode === "edit" ? (

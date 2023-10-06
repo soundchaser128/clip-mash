@@ -7,11 +7,13 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
+use self::create_marker::SceneMarkerCreateInput;
+use self::create_tag::TagCreateInput;
 use self::find_scenes_query::{
     FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
     FindScenesQueryFindScenesScenesSceneStreams,
 };
-use super::database::unix_timestamp_now;
+use super::database::{unix_timestamp_now, DbMarker};
 use crate::server::types::PageParameters;
 use crate::service::funscript::FunScript;
 use crate::service::stash_config::StashConfig;
@@ -35,6 +37,30 @@ pub struct FindScenesQuery;
     response_derives = "Debug"
 )]
 struct HealthCheckQuery;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/create_marker.graphql",
+    response_derives = "Debug"
+)]
+struct CreateMarker;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/create_tag.graphql",
+    response_derives = "Debug"
+)]
+struct CreateTag;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/get_tag.graphql",
+    response_derives = "Debug"
+)]
+struct GetTag;
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -280,6 +306,91 @@ impl StashApi {
             Some(scenes) => Ok(scenes.find_scenes.scenes),
             None => Ok(vec![]),
         }
+    }
+
+    pub async fn add_tag(&self, tag: String) -> Result<String> {
+        let variables = create_tag::Variables {
+            input: TagCreateInput {
+                name: tag,
+                description: None,
+                aliases: None,
+                child_ids: None,
+                ignore_auto_tag: None,
+                image: None,
+                parent_ids: None,
+            },
+        };
+
+        let request_body = CreateTag::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+        let response: Response<create_tag::ResponseData> = response.json().await?;
+        debug!("stash response: {:#?}", response);
+        Ok(response.data.unwrap().tag_create.unwrap().id)
+    }
+
+    pub async fn get_tag_id(&self, tag: String) -> Result<Option<String>> {
+        let variables = get_tag::Variables { tag };
+
+        let request_body = GetTag::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+        let response: Response<get_tag::ResponseData> = response.json().await?;
+        debug!("stash response: {:#?}", response);
+
+        Ok(response
+            .data
+            .map(|r| r.find_tags.tags)
+            .and_then(|mut r| if r.is_empty() { None } else { r.pop() })
+            .map(|r| r.id))
+    }
+
+    pub async fn add_marker(&self, marker: DbMarker, scene_id: String) -> Result<i64> {
+        let tag_id = self.get_tag_id(marker.title.clone()).await?;
+        let tag_id = match tag_id {
+            Some(id) => id,
+            None => self.add_tag(marker.title.clone()).await?,
+        };
+
+        let variables = create_marker::Variables {
+            marker: SceneMarkerCreateInput {
+                scene_id,
+                primary_tag_id: tag_id,
+                title: marker.title,
+                seconds: marker.start_time,
+                tag_ids: None,
+            },
+        };
+
+        let request_body = CreateMarker::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+        let response: Response<create_marker::ResponseData> = response.json().await?;
+        debug!("stash response: {:#?}", response);
+        let new_marker_id = response.data.unwrap().scene_marker_create.unwrap().id;
+
+        Ok(new_marker_id.parse()?)
     }
 
     pub async fn get_funscript(&self, scene_id: &str) -> Result<FunScript> {

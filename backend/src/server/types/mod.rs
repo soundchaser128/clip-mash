@@ -638,12 +638,13 @@ pub struct CreateMarker {
     pub marker_stash_id: Option<i64>,
 }
 
-#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateMarker {
     pub start: Option<f64>,
     pub end: Option<f64>,
     pub title: Option<String>,
+    pub stash_marker_id: Option<i64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, ToSchema)]

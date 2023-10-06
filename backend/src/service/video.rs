@@ -19,7 +19,7 @@ use super::directories::Directories;
 use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource, VideoUpdate};
 use crate::data::stash_api::{StashApi, StashMarker};
 use crate::server::handlers::AppState;
-use crate::server::types::{CreateMarker, ListVideoDto};
+use crate::server::types::{CreateMarker, ListVideoDto, UpdateMarker};
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
@@ -344,10 +344,33 @@ impl VideoService {
                     // TODO update marker information in database
                 }
             }
+            let marker_count = db_markers.len() + new_markers;
+
+            // for every marker in the local database, but not on stash: create it in stash
+            for marker in db_markers {
+                if marker.marker_stash_id.is_none() {
+                    let rowid = marker.rowid.unwrap();
+                    let scene_id = video.stash_scene_id.unwrap();
+                    let stash_marker_id = self
+                        .stash_api
+                        .add_marker(marker, scene_id.to_string())
+                        .await?;
+                    self.database
+                        .markers
+                        .update_marker(
+                            rowid,
+                            UpdateMarker {
+                                stash_marker_id: Some(stash_marker_id),
+                                ..Default::default()
+                            },
+                        )
+                        .await?;
+                }
+            }
 
             Ok(ListVideoDto {
                 video: video.into(),
-                marker_count: db_markers.len() + new_markers,
+                marker_count,
             })
         } else {
             bail!("video is not from stash")

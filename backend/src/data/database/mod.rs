@@ -429,6 +429,7 @@ mod test {
             title: Some(marker.title),
             start: Some(5.0),
             end: Some(15.0),
+            ..Default::default()
         };
         database
             .markers

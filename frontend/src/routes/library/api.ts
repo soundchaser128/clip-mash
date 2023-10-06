@@ -21,6 +21,7 @@ export async function createMarker(
   marker: MarkerInputs,
   duration: number,
   index: number,
+  createInStash: boolean,
 ): Promise<Result<MarkerDto, JsonError>> {
   const start = Math.max(parseTimestamp(marker.start), 0)
   const end = Math.min(parseTimestamp(marker.end!), duration)
@@ -35,7 +36,10 @@ export async function createMarker(
   } satisfies CreateMarker
 
   try {
-    const marker = await createNewMarker(payload)
+    const marker = await createNewMarker({
+      marker: payload,
+      createInStash,
+    })
     return Result.ok(marker)
   } catch (e) {
     const error = e as JsonError

@@ -1,6 +1,6 @@
 use utoipa::OpenApi;
 
-use super::handlers::library::VideoCleanupResponse;
+use super::handlers::library::{CreateMarkerRequest, VideoCleanupResponse};
 use super::handlers::project::{CreateFunscriptBody, ProjectCreateResponse};
 use super::types::*;
 use crate::data::database::{VideoSource, VideoUpdate};
@@ -85,6 +85,7 @@ use crate::service::video::AddVideosRequest;
             VideoCleanupResponse,
             VideoUpdate,
             VideoDetailsDto,
+            CreateMarkerRequest,
         )
     ),
     tags(

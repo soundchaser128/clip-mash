@@ -11,7 +11,7 @@ use tower::ServiceExt;
 use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::VideoUpdate;
+use crate::data::database::{VideoSource, VideoUpdate};
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -376,10 +376,17 @@ fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str>
     errors
 }
 
+#[derive(Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateMarkerRequest {
+    marker: CreateMarker,
+    create_in_stash: bool,
+}
+
 #[utoipa::path(
     post,
     path = "/api/library/marker",
-    request_body = CreateMarker,
+    request_body = CreateMarkerRequest,
     responses(
         (status = 200, description = "Create a new marker", body = MarkerDto),
     )
@@ -387,8 +394,13 @@ fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str>
 #[axum::debug_handler]
 pub async fn create_new_marker(
     state: State<Arc<AppState>>,
-    Json(mut marker): Json<CreateMarker>,
+    Json(body): Json<CreateMarkerRequest>,
 ) -> Result<Json<MarkerDto>, AppError> {
+    let CreateMarkerRequest {
+        mut marker,
+        create_in_stash,
+    } = body;
+
     let validation = validate_marker(&marker);
     if !validation.is_empty() {
         Err(AppError::Validation(validation))
@@ -403,6 +415,14 @@ pub async fn create_new_marker(
             marker.preview_image_path = Some(preview_image.to_string());
             let marker = state.database.markers.create_new_marker(marker).await?;
             let converter = MarkerDtoConverter::new().await;
+
+            if create_in_stash && video.source == VideoSource::Stash {
+                let scene_id = video.stash_scene_id.unwrap();
+                let stash_api = StashApi::load_config_or_fail().await?;
+                stash_api
+                    .add_marker(marker.clone(), scene_id.to_string())
+                    .await?;
+            }
 
             Ok(Json(converter.from_db(marker, &video)))
         } else {

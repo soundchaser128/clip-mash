@@ -124,6 +124,7 @@ export interface VideoCleanupResponse {
 export interface UpdateMarker {
   end?: number | null
   start?: number | null
+  stashMarkerId?: number | null
   title?: string | null
 }
 
@@ -241,6 +242,8 @@ export interface Progress {
   videoId: string
 }
 
+export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
+
 export type PmvClipOptionsOneOfFourAllOfType =
   (typeof PmvClipOptionsOneOfFourAllOfType)[keyof typeof PmvClipOptionsOneOfFourAllOfType]
 
@@ -256,15 +259,6 @@ export type PmvClipOptionsOneOfFourAllOf = {
 export type PmvClipOptionsOneOfFour = SongClipOptions &
   PmvClipOptionsOneOfFourAllOf
 
-export type PmvClipOptionsOneOfAllOf = {
-  type: PmvClipOptionsOneOfAllOfType
-}
-
-export type PmvClipOptionsOneOf = RandomizedClipOptions &
-  PmvClipOptionsOneOfAllOf
-
-export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
-
 export type PmvClipOptionsOneOfAllOfType =
   (typeof PmvClipOptionsOneOfAllOfType)[keyof typeof PmvClipOptionsOneOfAllOfType]
 
@@ -272,6 +266,13 @@ export type PmvClipOptionsOneOfAllOfType =
 export const PmvClipOptionsOneOfAllOfType = {
   randomized: "randomized",
 } as const
+
+export type PmvClipOptionsOneOfAllOf = {
+  type: PmvClipOptionsOneOfAllOfType
+}
+
+export type PmvClipOptionsOneOf = RandomizedClipOptions &
+  PmvClipOptionsOneOfAllOf
 
 export interface NewId {
   id: string
@@ -385,6 +386,11 @@ export interface CreateMarker {
   title: string
   videoId: string
   videoInteractive: boolean
+}
+
+export interface CreateMarkerRequest {
+  createInStash: boolean
+  marker: CreateMarker
 }
 
 export interface CreateFunscriptBody {
@@ -559,12 +565,12 @@ export const listMarkers = (params?: ListMarkersParams) => {
   })
 }
 
-export const createNewMarker = (createMarker: CreateMarker) => {
+export const createNewMarker = (createMarkerRequest: CreateMarkerRequest) => {
   return customInstance<MarkerDto>({
     url: `/api/library/marker`,
     method: "post",
     headers: {"Content-Type": "application/json"},
-    data: createMarker,
+    data: createMarkerRequest,
   })
 }
 

@@ -2,6 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import {
   HiChevronRight,
   HiFolder,
+  HiOutlineArrowPath,
   HiPlus,
   HiTag,
   HiTrash,
@@ -25,6 +26,7 @@ import {
   ListVideoDtoPage,
   cleanupVideos,
   deleteVideo,
+  mergeStashVideo,
   updateVideo,
 } from "../../api"
 import Pagination from "../../components/Pagination"
@@ -129,6 +131,11 @@ export default function ListVideos() {
 
   const onEditTitle = async (id: string, title: string) => {
     await updateVideo(id, {title})
+  }
+
+  const onSyncVideo = async (id: string) => {
+    await mergeStashVideo(id)
+    revalidator.revalidate()
   }
 
   return (
@@ -237,11 +244,20 @@ export default function ListVideos() {
                   </label>
                 </div>
                 <div className="flex gap-1">
+                  {video.video.source === "Stash" && (
+                    <button
+                      onClick={() => onSyncVideo(video.video.id)}
+                      className="btn btn-sm btn-secondary"
+                    >
+                      <HiOutlineArrowPath />
+                      Sync
+                    </button>
+                  )}
                   <button
                     onClick={() => onRemoveVideo(video.video.id)}
                     className="btn btn-error btn-sm btn-square"
                   >
-                    <HiTrash className="" />
+                    <HiTrash />
                   </button>
                   <button
                     onClick={() => onOpenModal(video)}

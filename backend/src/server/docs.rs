@@ -24,6 +24,7 @@ use crate::service::video::AddVideosRequest;
         library::update_marker,
         library::list_stash_videos,
         library::cleanup_videos,
+        library::merge_stash_video,
         progress::get_progress_info,
         project::create_video,
         project::download_video,

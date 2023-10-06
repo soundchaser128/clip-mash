@@ -376,8 +376,10 @@ export interface CreateVideoBody {
 }
 
 export interface CreateMarker {
+  createdOn?: number | null
   end: number
   indexWithinVideo: number
+  markerStashId?: number | null
   previewImagePath?: string | null
   start: number
   title: string
@@ -653,6 +655,13 @@ export const detectMarkers = (id: string, params?: DetectMarkersParams) => {
   })
 }
 
+export const mergeStashVideo = (id: string) => {
+  return customInstance<ListVideoDto>({
+    url: `/api/library/video/${id}/stash/merge`,
+    method: "post",
+  })
+}
+
 export const getProgressInfo = () => {
   return customInstance<Progress>({url: `/api/progress/info`, method: "get"})
 }
@@ -775,6 +784,9 @@ export type DeleteVideoResult = NonNullable<
 >
 export type DetectMarkersResult = NonNullable<
   Awaited<ReturnType<typeof detectMarkers>>
+>
+export type MergeStashVideoResult = NonNullable<
+  Awaited<ReturnType<typeof mergeStashVideo>>
 >
 export type GetProgressInfoResult = NonNullable<
   Awaited<ReturnType<typeof getProgressInfo>>

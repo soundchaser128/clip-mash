@@ -3,10 +3,12 @@ use std::fmt;
 
 use camino::Utf8Path;
 use serde::{Deserialize, Serialize};
+use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::data::database::{
-    DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers, VideoSource,
+    DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers, VideoSource, unix_timestamp_now,
 };
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashApi;
@@ -231,7 +233,9 @@ impl VideoLike for VideoDto {
 impl From<FindScenesQueryFindScenesScenes> for VideoDto {
     fn from(value: FindScenesQueryFindScenesScenes) -> Self {
         let file = value.files.get(0).expect("must have at least one file");
-
+        let created_on = OffsetDateTime::parse(&value.created_at, &Rfc3339)
+            .map(|time| time.unix_timestamp())
+            .unwrap_or_else(|_| unix_timestamp_now());
         VideoDto {
             id: value.id.clone(),
             stash_scene_id: Some(value.id.parse().expect("invalid scene id")),
@@ -246,7 +250,7 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
             source: VideoSource::Stash,
             duration: file.duration,
             tags: value.tags.into_iter().map(|t| t.name).collect(),
-            created_on: 0,
+            created_on,
         }
     }
 }

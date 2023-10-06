@@ -495,12 +495,23 @@ pub async fn split_marker(
 }
 
 #[axum::debug_handler]
-pub async fn sync_stash_video(
+#[utoipa::path(
+    post,
+    path = "/api/library/video/{id}/stash/merge",
+    params(
+        ("id" = i64, Path, description = "The ID of video to merge"),
+    ),
+    responses(
+        (status = 200, description = "Merge the video data from stash into the local video", body = ListVideoDto),
+    )
+)]
+pub async fn merge_stash_video(
     Path(id): Path<String>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     let video_service = VideoService::new(state).await?;
     let new_video = video_service.merge_stash_scene(&id).await?;
+    info!("new video after merging: {new_video:?}");
 
     Ok(Json(new_video))
 }

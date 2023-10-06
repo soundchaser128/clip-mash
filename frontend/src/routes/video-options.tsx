@@ -82,8 +82,6 @@ function VideoOptions() {
               type="number"
               placeholder="Type here"
               className="input input-bordered"
-              min="30"
-              max="120"
               {...register("outputFps", {valueAsNumber: true})}
             />
           </div>

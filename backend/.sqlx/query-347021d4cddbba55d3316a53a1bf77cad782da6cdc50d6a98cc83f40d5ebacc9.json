@@ -89,8 +89,13 @@
         "type_info": "Int64"
       },
       {
-        "name": "rowid",
+        "name": "marker_stash_id",
         "ordinal": 17,
+        "type_info": "Int64"
+      },
+      {
+        "name": "rowid",
+        "ordinal": 18,
         "type_info": "Int64"
       }
     ],
@@ -106,6 +111,7 @@
       true,
       true,
       false,
+      true,
       true,
       true,
       true,

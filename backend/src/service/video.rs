@@ -80,7 +80,7 @@ impl VideoService {
             .videos
             .video_exists_by_path(path.as_str())
             .await?;
-        info!("video at path {path} exists: {video_exists}");
+        info!("video at path '{path}' exists: {video_exists}");
         if !video_exists {
             let interactive = path.with_extension("funscript").is_file();
             let ffprobe = ffprobe(path.as_ref(), &self.ffmpeg_location).await;

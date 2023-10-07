@@ -1,10 +1,27 @@
 import {useStateMachine} from "little-state-machine"
 import {useEffect, useRef, useState} from "react"
 import {HiRocketLaunch} from "react-icons/hi2"
-import {formatSeconds} from "../helpers"
+import {formatSeconds, pluralize} from "../helpers"
 import {CreateVideoBody, Progress, createVideo} from "../api"
 import useNotification from "../hooks/useNotification"
 import {useNavigate} from "react-router-dom"
+
+const TWO_MINUTES = 120
+const ONE_HOUR = 3600
+
+const formatEta = (seconds: number): string => {
+  if (seconds > ONE_HOUR) {
+    const hours = Math.round(seconds / ONE_HOUR)
+    const word = pluralize("hour", hours)
+    return `${hours} ${word}`
+  } else if (seconds > TWO_MINUTES) {
+    const minutes = Math.round(seconds / 60)
+    const word = pluralize("minute", minutes)
+    return `${minutes} ${word}`
+  } else {
+    return `${Math.round(seconds)} seconds`
+  }
+}
 
 function Progress() {
   const {state} = useStateMachine()
@@ -130,10 +147,18 @@ function Progress() {
               / <strong>{formatSeconds(progress.itemsTotal, "short")}</strong>{" "}
               of the compilation finished
             </p>
-            <p>
-              Estimated time remaining:{" "}
-              <strong>{Math.round(progress.etaSeconds || 0)} seconds</strong>
-            </p>
+            {progress.etaSeconds != undefined && (
+              <p>
+                Estimated time remaining:{" "}
+                <strong
+                  className="tooltip"
+                  data-tip={formatSeconds(progress.etaSeconds)}
+                >
+                  {formatEta(progress.etaSeconds)}
+                </strong>
+              </p>
+            )}
+
             <p>{progress.message}</p>
           </section>
         </div>

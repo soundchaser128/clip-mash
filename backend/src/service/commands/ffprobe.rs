@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use tracing::info;
+use tracing::{info, debug};
 
 use super::ffmpeg::FfmpegLocation;
 use crate::util::commandline_error;
@@ -183,7 +183,7 @@ pub async fn ffprobe(path: &str, location: &FfmpegLocation) -> Result<FfProbe> {
         path,
     ];
 
-    info!("running ffprobe with args {args:?}");
+    debug!("running ffprobe with args {args:?}");
     let output = Command::new(location.ffprobe()).args(args).output().await?;
     if output.status.success() {
         let json = serde_json::from_slice(&output.stdout)?;

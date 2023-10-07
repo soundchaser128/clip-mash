@@ -65,6 +65,7 @@ export default function ListVideos() {
   const revalidator = useRevalidator()
   const [sort, setSort] = useState(params.get("sort") ?? "markers")
   const {setQueryDebounced, addOrReplaceParam} = useDebouncedSetQuery()
+  const [syncingVideo, setSyncingVideo] = useState<string>()
 
   useEffect(() => {
     setVideos(initialVideos.content)
@@ -146,8 +147,10 @@ export default function ListVideos() {
   }
 
   const onSyncVideo = async (id: string) => {
+    setSyncingVideo(id)
     await mergeStashVideo(id)
     revalidator.revalidate()
+    setSyncingVideo(undefined)
   }
 
   return (
@@ -281,6 +284,7 @@ export default function ListVideos() {
                     <button
                       onClick={() => onSyncVideo(video.video.id)}
                       className="btn btn-sm btn-secondary"
+                      disabled={syncingVideo === video.video.id}
                     >
                       <HiOutlineArrowPath />
                       Sync

@@ -231,8 +231,41 @@ impl VideosDatabase {
         })
     }
 
-    async fn fetch_count(&self, _query: &VideoSearchQuery) -> Result<i64> {
-        todo!()
+    async fn fetch_count(&self, query: &VideoSearchQuery) -> Result<i64> {
+        let mut query_builder = QueryBuilder::new("SELECT COUNT(*) FROM videos v ");
+        let mut first = true;
+        if let Some(query) = &query.query {
+            query_builder
+                .push("WHERE v.rowid IN (SELECT rowid FROM videos_fts WHERE videos_fts MATCH ");
+            query_builder.push_bind(query);
+            query_builder.push(") ");
+            first = false;
+        }
+
+        if let Some(source) = query.source {
+            if first {
+                query_builder.push("WHERE ");
+            } else {
+                query_builder.push("AND ");
+            }
+            query_builder.push("v.source = ");
+            query_builder.push_bind(source.to_string());
+        }
+
+        if let Some(has_markers) = query.has_markers {
+            if first {
+                query_builder.push("WHERE ");
+            } else {
+                query_builder.push("AND ");
+            }
+            if has_markers {
+                query_builder.push("v.id IN (SELECT DISTINCT video_id FROM markers) ");
+            }
+        }
+
+        let query = query_builder.build();
+        let count = query.fetch_one(&self.pool).await?.get::<i64, _>(0);
+        Ok(count)
     }
 
     pub async fn list_videos(
@@ -300,8 +333,6 @@ impl VideosDatabase {
         if let Some(has_markers) = has_markers {
             if has_markers {
                 query_builder.push(" HAVING marker_count > 0 ");
-            } else {
-                query_builder.push(" HAVING marker_count = 0 ");
             }
         }
 

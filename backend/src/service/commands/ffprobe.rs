@@ -173,6 +173,8 @@ pub struct FormatTags {
 pub async fn ffprobe(path: &str, location: &FfmpegLocation) -> Result<FfProbe> {
     use tokio::process::Command;
 
+    info!("running ffprobe on {path}");
+
     let args = &[
         "-v",
         "error",
@@ -182,7 +184,6 @@ pub async fn ffprobe(path: &str, location: &FfmpegLocation) -> Result<FfProbe> {
         "-show_streams",
         path,
     ];
-
     debug!("running ffprobe with args {args:?}");
     let output = Command::new(location.ffprobe()).args(args).output().await?;
     if output.status.success() {

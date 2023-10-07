@@ -14,6 +14,7 @@
     "type-check:watch": "tsc --watch",
     "lint": "eslint .",
     "test": "vitest",
+    "test:once": "vitest run",
     "generate": "orval --config ./orval.config.ts"
   },
   "dependencies": {

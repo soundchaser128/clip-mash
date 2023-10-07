@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use tracing::{info, debug};
+use tracing::{debug, info};
 
 use super::ffmpeg::FfmpegLocation;
 use crate::util::commandline_error;

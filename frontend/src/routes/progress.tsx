@@ -2,7 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import {useEffect, useRef, useState} from "react"
 import {HiRocketLaunch} from "react-icons/hi2"
 import {formatSeconds, pluralize} from "../helpers"
-import {CreateVideoBody, Progress, createVideo} from "../api"
+import {CreateVideoBody, Progress, createVideo, getProgressInfo} from "../api"
 import useNotification from "../hooks/useNotification"
 import {useNavigate} from "react-router-dom"
 
@@ -53,21 +53,12 @@ function Progress() {
   }
 
   useEffect(() => {
-    fetch(`/api/progress/${videoId}/info`)
-      .then((res) => {
-        if (res.ok) {
-          return res.json()
-        } else {
-          throw new Error("Failed to fetch progress info")
-        }
-      })
-      .then((json) => {
-        const progress = json as Progress | null
-        if (progress && progress.itemsTotal > 0) {
-          handleProgress(progress)
-          eventSource.current = openEventSource()
-        }
-      })
+    getProgressInfo().then((progress) => {
+      if (progress && progress.itemsTotal > 0) {
+        handleProgress(progress)
+        eventSource.current = openEventSource()
+      }
+    })
 
     return () => {
       eventSource.current?.close()

@@ -18,6 +18,11 @@ const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
           content: "Video library",
         },
         {
+          stage: FormStage.SelectVideos,
+          link: "/library/select",
+          content: "Select videos",
+        },
+        {
           stage: FormStage.SelectMarkers,
           link: "/markers",
           content: "Select markers",
@@ -38,7 +43,7 @@ const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
           content: "Preview clips",
         },
         {
-          stage: FormStage.Wait,
+          stage: FormStage.CreateVideo,
           link: "/progress",
           content: "Create video",
         },

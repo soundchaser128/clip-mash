@@ -11,7 +11,7 @@ use tower::ServiceExt;
 use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::{VideoSource, VideoUpdate};
+use crate::data::database::{VideoSearchQuery, VideoSource, VideoUpdate};
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -24,12 +24,6 @@ use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;
 use crate::service::video::{AddVideosRequest, VideoService};
 
-#[derive(Deserialize, IntoParams)]
-pub struct VideoSearchQuery {
-    pub query: Option<String>,
-    pub source: Option<VideoSource>,
-}
-
 #[utoipa::path(
     get,
     path = "/api/library/video",
@@ -41,15 +35,11 @@ pub struct VideoSearchQuery {
 #[axum::debug_handler]
 pub async fn list_videos(
     Query(page): Query<PageParameters>,
-    Query(VideoSearchQuery { query, source }): Query<VideoSearchQuery>,
+    Query(query): Query<VideoSearchQuery>,
     state: State<Arc<AppState>>,
 ) -> Result<Json<Page<ListVideoDto>>, AppError> {
     info!("handling list_videos request with page {page:?} and query {query:?}");
-    let (videos, size) = state
-        .database
-        .videos
-        .list_videos(query.as_deref(), source, &page)
-        .await?;
+    let (videos, size) = state.database.videos.list_videos(query, &page).await?;
     Ok(Json(Page::new(videos, size, page)))
 }
 

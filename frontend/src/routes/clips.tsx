@@ -592,7 +592,7 @@ function PreviewClips() {
 
   const onNextStage = () => {
     actions.updateForm({
-      stage: FormStage.Wait,
+      stage: FormStage.CreateVideo,
       clips: clips.map((c) => c.clip),
     })
     navigate("/generate")

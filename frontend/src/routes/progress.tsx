@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import {useEffect, useRef, useState} from "react"
+import {useCallback, useEffect, useRef, useState} from "react"
 import {HiRocketLaunch} from "react-icons/hi2"
 import {formatSeconds, pluralize} from "../helpers"
 import {CreateVideoBody, Progress, createVideo, getProgressInfo} from "../api"
@@ -34,23 +34,26 @@ function Progress() {
   const {videoId} = state.data
   const navigate = useNavigate()
 
-  const handleProgress = (data: Progress) => {
-    if (data.done) {
-      eventSource.current?.close()
-      sendNotification("Success", "Video generation finished!")
-      navigate(`/${videoId}/download`)
-    }
-    setProgress(data)
-  }
+  const handleProgress = useCallback(
+    (data: Progress) => {
+      if (data.done) {
+        eventSource.current?.close()
+        sendNotification("Success", "Video generation finished!")
+        navigate(`/${videoId}/download`)
+      }
+      setProgress(data)
+    },
+    [navigate, sendNotification, videoId],
+  )
 
-  const openEventSource = () => {
+  const openEventSource = useCallback(() => {
     const es = new EventSource(`/api/progress/${videoId}/stream`)
     es.onmessage = (event) => {
       const data = JSON.parse(event.data) as Progress | null
       data && handleProgress(data)
     }
     return es
-  }
+  }, [handleProgress, videoId])
 
   useEffect(() => {
     getProgressInfo().then((progress) => {
@@ -63,7 +66,7 @@ function Progress() {
     return () => {
       eventSource.current?.close()
     }
-  }, [])
+  }, [handleProgress, openEventSource])
 
   const totalDuration = state.data.clips!.reduce(
     (duration, clip) => duration + (clip.range[1] - clip.range[0]),

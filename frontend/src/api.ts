@@ -43,6 +43,7 @@ export type ListStashVideosParams = {
 export type ListVideosParams = {
   query?: string | null
   source?: VideoSource | null
+  hasMarkers?: boolean | null
   page?: number | null
   size?: number | null
   sort?: string | null

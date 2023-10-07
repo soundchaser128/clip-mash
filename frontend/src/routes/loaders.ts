@@ -8,10 +8,12 @@ import {
   PmvClipOptions,
   StashVideoDtoPage,
   VideoDto,
+  VideoSource,
   fetchClips,
   getVersion,
   listSongs,
   listStashVideos,
+  listVideos,
 } from "../api"
 import {FormState} from "../types/form-state"
 import {getNewId, getVideo, listMarkers} from "../api"
@@ -158,3 +160,20 @@ export const stashVideoLoader: LoaderFunction = async ({request}) => {
 
   return videos
 }
+
+export const makeVideoLoader: (withMarkers: boolean) => LoaderFunction =
+  (withMarkers) =>
+  async ({request}) => {
+    const url = new URL(request.url)
+    const query = url.searchParams
+    const videos = await listVideos({
+      hasMarkers: withMarkers ? true : null,
+      page: Number(query.get("page")) || 0,
+      size: DEFAULT_PAGE_LENGTH,
+      query: query.get("query"),
+      sort: query.get("sort"),
+      source: query.get("source") as VideoSource | null,
+    })
+
+    return videos
+  }

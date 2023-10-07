@@ -105,7 +105,7 @@ async fn main() -> Result<()> {
         .route("/video/stash", get(handlers::library::list_stash_videos))
         // get details on a single video
         .route("/video/:id", get(handlers::library::get_video))
-        // delete a viedo
+        // delete a video
         .route("/video/:id", delete(handlers::library::delete_video))
         // detect markers in a video
         .route(

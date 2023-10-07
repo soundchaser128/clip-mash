@@ -6,7 +6,7 @@ use sqlx::{FromRow, QueryBuilder, Row, SqlitePool};
 use tracing::{debug, info};
 
 use super::{
-    AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers, VideoSource,
+    AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers, VideoSearchQuery,
     VideoUpdate,
 };
 use crate::data::database::unix_timestamp_now;
@@ -231,27 +231,13 @@ impl VideosDatabase {
         })
     }
 
-    async fn fetch_count(&self, query: Option<&str>) -> Result<i64> {
-        match query {
-            Some(query) => sqlx::query_scalar!(
-                "SELECT COUNT(*) FROM videos_fts WHERE videos_fts MATCH $1",
-                query
-            )
-            .fetch_one(&self.pool)
-            .await
-            .map_err(From::from),
-            None => sqlx::query_scalar!("SELECT COUNT(*) FROM videos")
-                .fetch_one(&self.pool)
-                .await
-                .map_err(From::from)
-                .map(|c| c as i64),
-        }
+    async fn fetch_count(&self, _query: &VideoSearchQuery) -> Result<i64> {
+        todo!()
     }
 
     pub async fn list_videos(
         &self,
-        query: Option<&str>,
-        source: Option<VideoSource>,
+        query_object: VideoSearchQuery,
         params: &PageParameters,
     ) -> Result<(Vec<ListVideoDto>, usize)> {
         #[derive(FromRow, Debug)]
@@ -269,7 +255,12 @@ impl VideosDatabase {
             marker_count: i64,
         }
 
-        let count = self.fetch_count(query).await?;
+        let count = self.fetch_count(&query_object).await?;
+        let VideoSearchQuery {
+            query,
+            source,
+            has_markers,
+        } = query_object;
         info!("count: {} for query {:?}", count, query);
         let limit = params.limit();
         let offset = params.offset();
@@ -306,6 +297,14 @@ impl VideosDatabase {
         }
 
         query_builder.push(" GROUP BY v.id ");
+        if let Some(has_markers) = has_markers {
+            if has_markers {
+                query_builder.push(" HAVING marker_count > 0 ");
+            } else {
+                query_builder.push(" HAVING marker_count = 0 ");
+            }
+        }
+
         query_builder.push("ORDER BY ");
         // security: order_by is a static string determined from the `sort` parameter,
         // so it is safe to append it to the query without escaping

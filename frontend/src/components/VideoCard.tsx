@@ -19,6 +19,7 @@ interface Props {
   actionChildren?: React.ReactNode
   onEditTitle?: (title: string) => void
   onImageClick?: (id: string) => void
+  disabled?: boolean
 }
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
@@ -37,6 +38,7 @@ const VideoCard: React.FC<Props> = ({
   actionChildren,
   onEditTitle,
   onImageClick,
+  disabled,
 }) => {
   const tags = video.video.tags?.filter(Boolean) ?? []
   const date = new Date(video.video.createdOn * 1000)
@@ -47,6 +49,7 @@ const VideoCard: React.FC<Props> = ({
       className={clsx(
         "card card-compact shadow-xl bg-base-200",
         video.markerCount > 0 && "ring-4 ring-green-500",
+        disabled && "opacity-50",
       )}
     >
       <figure>

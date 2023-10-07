@@ -14,11 +14,12 @@ import {ClipStrategy} from "./types"
 export enum FormStage {
   Start = 0,
   ListVideos = 1,
-  SelectMarkers = 2,
-  Music = 3,
-  VideoOptions = 4,
-  PreviewClips = 5,
-  Wait = 6,
+  SelectVideos = 2,
+  SelectMarkers = 3,
+  Music = 4,
+  VideoOptions = 5,
+  PreviewClips = 6,
+  CreateVideo = 7,
 }
 
 export interface FormState {

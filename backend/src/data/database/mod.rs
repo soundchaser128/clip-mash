@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::{FromRow, SqlitePool};
 use tracing::{info, warn};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
@@ -103,6 +103,14 @@ impl VideoLike for DbVideo {
     fn file_path(&self) -> Option<&str> {
         Some(self.file_path.as_str())
     }
+}
+
+#[derive(Deserialize, IntoParams, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct VideoSearchQuery {
+    pub query: Option<String>,
+    pub source: Option<VideoSource>,
+    pub has_markers: Option<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -256,7 +264,7 @@ mod test {
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
-    use crate::data::database::{Database, VideoSource, VideoUpdate};
+    use crate::data::database::{Database, VideoSearchQuery, VideoSource, VideoUpdate};
     use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_fn};
     use crate::util::generate_id;
@@ -382,7 +390,7 @@ mod test {
         };
         let (result, total) = database
             .videos
-            .list_videos(None, None, &page)
+            .list_videos(VideoSearchQuery::default(), &page)
             .await
             .unwrap();
         assert_eq!(45, total);
@@ -409,7 +417,13 @@ mod test {
         let params = PageParameters::new(0, 10);
         let (stash_videos, _) = database
             .videos
-            .list_videos(None, Some(VideoSource::Stash), &params)
+            .list_videos(
+                VideoSearchQuery {
+                    source: Some(VideoSource::Stash),
+                    ..Default::default()
+                },
+                &params,
+            )
             .await?;
         assert_eq!(5, stash_videos.len());
         for video in stash_videos {
@@ -418,7 +432,13 @@ mod test {
 
         let (folder_videos, _) = database
             .videos
-            .list_videos(None, Some(VideoSource::Folder), &params)
+            .list_videos(
+                VideoSearchQuery {
+                    source: Some(VideoSource::Folder),
+                    ..Default::default()
+                },
+                &params,
+            )
             .await?;
         assert_eq!(5, folder_videos.len());
         for video in folder_videos {
@@ -462,7 +482,13 @@ mod test {
         };
         let (result, total) = database
             .videos
-            .list_videos(Some("sexy"), None, &page)
+            .list_videos(
+                VideoSearchQuery {
+                    query: Some("sexy".into()),
+                    ..Default::default()
+                },
+                &page,
+            )
             .await
             .unwrap();
         assert_eq!(10, total);
@@ -473,7 +499,13 @@ mod test {
 
         let (result, total) = database
             .videos
-            .list_videos(Some("cool"), None, &page)
+            .list_videos(
+                VideoSearchQuery {
+                    query: Some("cool".into()),
+                    ..Default::default()
+                },
+                &page,
+            )
             .await
             .unwrap();
         assert_eq!(5, total);
@@ -675,7 +707,7 @@ mod test {
         };
         let (_videos, count) = database
             .videos
-            .list_videos(None, None, &params)
+            .list_videos(VideoSearchQuery::default(), &params)
             .await
             .unwrap();
         assert_eq!(20, count);

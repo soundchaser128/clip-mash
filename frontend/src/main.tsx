@@ -22,7 +22,7 @@ import "./index.css"
 import VideoOptions, {videoOptionsLoader} from "./routes/video-options"
 import Progress from "./routes/progress"
 import PreviewClips from "./routes/clips"
-import ListVideos, {loader as listVideosLoader} from "./routes/library/videos"
+import ListVideos from "./routes/library/videos"
 import CreateLayout from "./routes/root"
 import Layout from "./components/Layout"
 import Music from "./routes/music"
@@ -34,6 +34,7 @@ import {
   versionLoader,
   videoDetailsLoader,
   stashVideoLoader,
+  makeVideoLoader,
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
@@ -51,6 +52,7 @@ import {ConfigProvider} from "./hooks/useConfig"
 import StashConfigPage from "./routes/stash-config"
 import FunscriptPage from "./routes/funscript"
 import DownloadVideoPage from "./routes/download-video"
+import SelectVideosPage from "./routes/library/select-videos"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -164,7 +166,7 @@ const HomePage = () => {
 
   useEffect(() => {
     actions.updateForm({videoId})
-  }, [])
+  }, [actions, videoId])
 
   const onNext = () => {
     actions.updateForm({
@@ -235,7 +237,7 @@ const router = createBrowserRouter([
           {
             path: "library",
             element: <ListVideos />,
-            loader: listVideosLoader,
+            loader: makeVideoLoader(false),
             children: [
               {
                 path: ":id/markers",
@@ -254,6 +256,11 @@ const router = createBrowserRouter([
             path: "library/add/stash",
             element: <AddStashVideoPage />,
             loader: stashVideoLoader,
+          },
+          {
+            path: "/library/select",
+            element: <SelectVideosPage />,
+            loader: makeVideoLoader(true),
           },
           {
             path: "markers",

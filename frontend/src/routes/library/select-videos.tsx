@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import {HiChevronRight, HiXMark} from "react-icons/hi2"
+import {HiCheck, HiChevronRight, HiXMark} from "react-icons/hi2"
 import {useEffect, useState} from "react"
 import {useImmer} from "use-immer"
 import {updateForm} from "../actions"
@@ -88,6 +88,18 @@ export default function ListVideos() {
     onCheckboxChange(id, !selected)
   }
 
+  const onDeselectAll = () => {
+    const ids = videos.map((v) => v.video.id)
+    const newIds = state.data.videoIds?.filter((v) => !ids.includes(v)) ?? []
+    actions.updateForm({videoIds: newIds})
+  }
+
+  const onSelectAll = () => {
+    const ids = videos.map((v) => v.video.id)
+    const newIds = new Set([...(state.data.videoIds ?? []), ...ids])
+    actions.updateForm({videoIds: Array.from(newIds)})
+  }
+
   return (
     <>
       <JumpToTop />
@@ -106,7 +118,7 @@ export default function ListVideos() {
         </button>
       </div>
       {!noVideos && (
-        <div className="w-full grid grid-cols-2">
+        <div className="w-full grid grid-cols-3">
           <input
             type="text"
             placeholder="Filter..."
@@ -114,6 +126,17 @@ export default function ListVideos() {
             value={filter}
             onChange={onFilterChange}
           />
+
+          <div className="flex gap-2 justify-center">
+            <button onClick={onDeselectAll} className="btn btn-error">
+              <HiXMark className="mr-1" />
+              Deselect all
+            </button>
+            <button onClick={onSelectAll} className="btn btn-secondary">
+              <HiCheck className="mr-1" />
+              Select all
+            </button>
+          </div>
 
           <div className="flex gap-2 place-self-end">
             <div className="flex gap-1">

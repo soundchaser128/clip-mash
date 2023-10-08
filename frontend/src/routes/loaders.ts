@@ -93,10 +93,7 @@ export interface ClipsLoaderData {
 export const clipsLoader: LoaderFunction = async () => {
   const state = getFormState()!
 
-  const clipOrder = {
-    // TODO
-    type: "scene",
-  } satisfies ClipOrder
+  const clipOrder = state.clipOrder || {type: "scene"}
 
   const body = {
     clipOrder,

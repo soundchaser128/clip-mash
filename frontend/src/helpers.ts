@@ -3,6 +3,7 @@ import {SelectedMarker} from "./api"
 import {FormState} from "./types/form-state"
 import {scaleSequential} from "d3-scale"
 import {interpolatePlasma} from "d3-scale-chromatic"
+import React from "react"
 
 export function getFormState(): FormState | null {
   const json = sessionStorage.getItem("form-state")
@@ -34,6 +35,19 @@ export function getSegmentTextColor(color: string): string {
     return "#ffffff"
   } else {
     return "#000000"
+  }
+}
+
+export function getSegmentStyle(
+  index: number,
+  count: number,
+): React.CSSProperties {
+  const color = getSegmentColor(index, count)
+  const textColor = getSegmentTextColor(color)
+
+  return {
+    backgroundColor: color,
+    color: textColor,
   }
 }
 

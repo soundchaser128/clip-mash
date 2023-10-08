@@ -21,7 +21,7 @@ import "./index.css"
 
 import VideoOptions, {videoOptionsLoader} from "./routes/video-options"
 import Progress from "./routes/progress"
-import PreviewClips from "./routes/clips"
+import PreviewClips from "./routes/clips/clips"
 import ListVideos from "./routes/library/videos"
 import CreateLayout from "./routes/root"
 import Layout from "./components/Layout"

@@ -253,12 +253,13 @@ impl VideosDatabase {
         }
 
         if let Some(has_markers) = query.has_markers {
-            if first {
-                query_builder.push("WHERE ");
-            } else {
-                query_builder.push("AND ");
-            }
             if has_markers {
+                if first {
+                    query_builder.push("WHERE ");
+                } else {
+                    query_builder.push("AND ");
+                }
+
                 query_builder.push("v.id IN (SELECT DISTINCT video_id FROM markers) ");
             }
         }

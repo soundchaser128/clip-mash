@@ -30,7 +30,10 @@ pub async fn get_progress_stream(
 
 #[utoipa::path(
     get,
-    path = "/api/progress/info",
+    path = "/api/progress/{id}/info",
+    params(
+        ("id" = String, Path, description = "The project ID to get the progress of")
+    ),
     responses(
         (status = 200, description = "The current progress of video creation, or null if it is finished", body = Progress),
     )

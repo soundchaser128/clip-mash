@@ -56,7 +56,7 @@ function Progress() {
   }, [handleProgress, videoId])
 
   useEffect(() => {
-    getProgressInfo().then((progress) => {
+    getProgressInfo(videoId!).then((progress) => {
       if (progress && progress.itemsTotal > 0) {
         handleProgress(progress)
         eventSource.current = openEventSource()
@@ -66,7 +66,7 @@ function Progress() {
     return () => {
       eventSource.current?.close()
     }
-  }, [handleProgress, openEventSource])
+  }, [handleProgress, openEventSource, videoId])
 
   const totalDuration = state.data.clips!.reduce(
     (duration, clip) => duration + (clip.range[1] - clip.range[0]),

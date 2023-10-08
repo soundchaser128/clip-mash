@@ -51,6 +51,7 @@ impl ClipPicker for EqualLengthClipPicker {
                         range: (start, end),
                         index_within_marker: index,
                         index_within_video: marker.index_within_video,
+                        marker_title: marker.title.clone(),
                     });
                     index += 1;
                 }

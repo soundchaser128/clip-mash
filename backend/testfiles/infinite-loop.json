@@ -947,6 +947,8 @@
         ]
       }
     },
-    "order": "scene-order"
+    "order": {
+      "type": "scene"
+    }
   }
 }

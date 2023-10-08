@@ -31,6 +31,7 @@ import {Clip, ClipOrder} from "../api"
 import {FormStage} from "../types/form-state"
 import useUndo from "use-undo"
 import {produce} from "immer"
+import {useDrag, useDrop} from "react-dnd"
 
 interface ClipState {
   included: boolean
@@ -267,6 +268,44 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
   )
 }
 
+const MarkerOrderModal = () => {
+  const [open, setOpen] = useState(false)
+  const {state} = useStateMachine()
+  const markers = state.data.markers ?? []
+  const markerTitles = Array.from(
+    new Set(markers.map((m) => m.primaryTag.trim())),
+  )
+
+  const onClose = () => {
+    setOpen(false)
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        type="button"
+        className="btn btn-primary mt-2"
+      >
+        Set marker order
+      </button>
+      <Modal position="top" size="fluid" isOpen={open} onClose={onClose}>
+        <h1 className="text-2xl font-bold mb-2">Marker order</h1>
+        <ul className="flex flex-col gap-1">
+          {markerTitles.map((title, idx) => (
+            <li
+              className="w-full text-center bg-primary text-primary-content px-4 py-1 rounded-full cursor-pointer"
+              key={idx}
+            >
+              {title}
+            </li>
+          ))}
+        </ul>
+      </Modal>
+    </>
+  )
+}
+
 interface Inputs {
   clipOrder: ClipOrder
   seed?: string
@@ -315,6 +354,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const revalidator = useRevalidator()
   const {actions, state} = useStateMachine({updateForm})
   const isPmv = state.data.songs?.length !== 0
+  const clipOrderType = watch("clipOrder.type")
 
   const onSubmit = (values: Inputs) => {
     if (
@@ -510,11 +550,15 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
         <label className="label">
           <span className="label-text">Clip order:</span>
         </label>
-        <select className="select select-bordered" {...register("clipOrder")}>
+        <select
+          className="select select-bordered"
+          {...register("clipOrder.type")}
+        >
           <option disabled value="none">
             Select clip ordering
           </option>
-          <option value="scene-order">Scene order</option>
+          <option value="scene">Scene order</option>
+          <option value="fixed">Fixed</option>
           <option value="random">Random</option>
         </select>
       </div>
@@ -530,6 +574,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
           {...register("seed")}
         />
       </div>
+      {clipOrderType === "fixed" && <MarkerOrderModal />}
       <div className="flex w-full justify-between items-center mt-4">
         <WeightsModal clips={clips} />
 
@@ -720,7 +765,7 @@ function PreviewClips() {
             onRemoveClip={onRemoveClip}
             initialValues={{
               clipDuration: state.data.clipDuration || 30,
-              clipOrder: state.data.clipOrder || "scene-order",
+              clipOrder: state.data.clipOrder || {type: "scene"},
               splitClips: state.data.splitClips || true,
               seed: state.data.seed,
               beatsPerMeasure: state.data.beatsPerMeasure || 4,

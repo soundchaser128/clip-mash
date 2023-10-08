@@ -37,3 +37,29 @@ impl ClipSorter for SceneOrderClipSorter {
         clips.into_iter().map(|(clip, _)| clip).collect()
     }
 }
+
+#[derive(Debug)]
+pub struct FixedOrderClipSorter {
+    pub marker_titles: Vec<String>,
+}
+
+impl ClipSorter for FixedOrderClipSorter {
+    fn sort_clips(&self, clips: Vec<Clip>, rng: &mut StdRng) -> Vec<Clip> {
+        info!("sorting clips with FixedOrderClipSorter");
+        let mut clips: Vec<_> = clips.into_iter().map(|c| (c, rng.gen::<usize>())).collect();
+        debug!("clips: {:#?}", clips);
+        clips.sort_by_key(|(clip, random)| {
+            (
+                self.marker_titles
+                    .iter()
+                    .position(|title| title == &clip.marker_title)
+                    .unwrap_or(usize::MAX),
+                clip.index_within_video,
+                clip.index_within_marker,
+                *random,
+            )
+        });
+        debug!("sorted clips: {:#?}", clips);
+        clips.into_iter().map(|(clip, _)| clip).collect()
+    }
+}

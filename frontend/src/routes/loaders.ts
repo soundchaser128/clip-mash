@@ -2,6 +2,7 @@ import {LoaderFunction} from "react-router-dom"
 import {getFormState} from "../helpers"
 import {
   Clip,
+  ClipOrder,
   ClipPickerOptions,
   ClipsResponse,
   CreateClipsBody,
@@ -92,13 +93,18 @@ export interface ClipsLoaderData {
 export const clipsLoader: LoaderFunction = async () => {
   const state = getFormState()!
 
+  const clipOrder = {
+    // TODO
+    type: "scene",
+  } satisfies ClipOrder
+
   const body = {
-    clipOrder: state.clipOrder || "scene-order",
+    clipOrder,
     markers: state.selectedMarkers!.filter((m) => m.selected),
     seed: state.seed || null,
     clips: {
       clipPicker: getClipSettings(state),
-      order: state.clipOrder || "scene-order",
+      order: clipOrder,
     },
   } satisfies CreateClipsBody
 

@@ -80,12 +80,13 @@ impl<T: Serialize + ToSchema<'static>> Page<T> {
     }
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, ToSchema)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
+#[serde(rename_all = "kebab-case", tag = "type")]
 pub enum ClipOrder {
     Random,
-    SceneOrder,
+    Scene,
     NoOp,
+    Fixed { marker_titles: Vec<String> },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
@@ -98,6 +99,7 @@ pub struct Clip {
     pub range: (f64, f64),
     pub index_within_video: usize,
     pub index_within_marker: usize,
+    pub marker_title: String,
 }
 
 impl Clip {

@@ -22,6 +22,8 @@ export enum FormStage {
   CreateVideo = 7,
 }
 
+export type ClipOrderType = ClipOrder["type"]
+
 export interface FormState {
   stage: FormStage
   videoId?: string

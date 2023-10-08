@@ -20,8 +20,8 @@ lazy_static = "1.4.0"
 opener = "0.6.1"
 ordered-float = "4.1.0"
 rand = "0.8.5"
-regex = "1.9.5"
-reqwest = { version = "0.11.20", features = ["json"] }
+regex = "1.9.6"
+reqwest = { version = "0.11.22", features = ["json"] }
 sanitise-file-name = "1.0.0"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
@@ -35,10 +35,10 @@ tracing = "0.1.37"
 tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 url = { version = "2.4.1", features = ["serde"] }
-utoipa = { version = "3.5.0", features = ["axum_extras"] }
-utoipa-rapidoc = { version = "0.1.0", features = ["axum"] }
-utoipa-redoc = { version = "0.1.0", features = ["axum"] }
-utoipa-swagger-ui = { version = "3.1.5", features = ["axum"] }
+utoipa = { version = "4.0.0", features = ["axum_extras"] }
+utoipa-rapidoc = { version = "1.0.0", features = ["axum"] }
+utoipa-redoc = { version = "1.0.0", features = ["axum"] }
+utoipa-swagger-ui = { version = "4.0.0", features = ["axum"] }
 walkdir = "2.4.0"
 webbrowser = "0.8.11"
 youtube_dl = { version = "0.9.0", features = ["tokio", "downloader-native-tls"] }

@@ -77,6 +77,7 @@ fn markers_to_clips(markers: Vec<Marker>) -> Vec<Clip> {
             range: (marker.start_time, marker.end_time),
             index_within_marker: 0,
             index_within_video: marker.index_within_video,
+            marker_title: marker.title.clone(),
         })
         .collect()
 }
@@ -145,8 +146,12 @@ impl ClipService {
                 let sorter = RandomClipSorter;
                 sorter.sort_clips(clips, &mut rng)
             }
-            ClipOrder::SceneOrder => {
+            ClipOrder::Scene => {
                 let sorter = SceneOrderClipSorter;
+                sorter.sort_clips(clips, &mut rng)
+            }
+            ClipOrder::Fixed { marker_titles } => {
+                let sorter = sort::FixedOrderClipSorter { marker_titles };
                 sorter.sort_clips(clips, &mut rng)
             }
             ClipOrder::NoOp => clips,
@@ -192,7 +197,7 @@ mod tests {
                     clip_duration: 30.0,
                     divisors: vec![2.0, 3.0, 4.0],
                 }),
-                order: ClipOrder::SceneOrder,
+                order: ClipOrder::Scene,
             },
         };
         let service = ClipService::new();
@@ -214,7 +219,7 @@ mod tests {
             seed: None,
             clip_options: ClipOptions {
                 clip_picker: ClipPickerOptions::NoSplit,
-                order: ClipOrder::SceneOrder,
+                order: ClipOrder::Scene,
             },
         };
         let service = ClipService::new();
@@ -241,7 +246,7 @@ mod tests {
                     clip_duration: 30.0,
                     divisors: vec![2.0, 3.0, 4.0],
                 }),
-                order: ClipOrder::SceneOrder,
+                order: ClipOrder::Scene,
             },
         };
 
@@ -274,6 +279,7 @@ mod tests {
                 range: (0.0, 9.0),
                 source: VideoSource::Folder,
                 video_id: "video".into(),
+                marker_title: "One".into(),
             },
             Clip {
                 index_within_marker: 0,
@@ -282,6 +288,7 @@ mod tests {
                 range: (1.0, 12.0),
                 source: VideoSource::Folder,
                 video_id: "video".into(),
+                marker_title: "Two".into(),
             },
         ];
         let mut rng = create_seeded_rng(None);
@@ -309,7 +316,7 @@ mod tests {
                     }),
                     length: 30.0,
                 }),
-                order: ClipOrder::SceneOrder,
+                order: ClipOrder::Scene,
             },
         };
         let service = ClipService::new();
@@ -335,7 +342,7 @@ mod tests {
                     }),
                     length: 30.0,
                 }),
-                order: ClipOrder::SceneOrder,
+                order: ClipOrder::Scene,
             },
         };
         let options = options.apply_marker_loops();

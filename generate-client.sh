@@ -1,12 +1,14 @@
 #!/bin/bash
 set -e
 
+killall clip-mash || true
+
 cd backend
 cargo build
 cargo run &
 cd ..
 sleep 2
 curl localhost:5174/api-docs/openapi.json > api-docs.json
-openapi-generator-cli generate -g typescript-fetch -i api-docs.json -o typescript-client
+cd frontend && npm run generate && npm run format && cd ..
 rm api-docs.json
 kill %1

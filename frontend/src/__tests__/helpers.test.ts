@@ -12,6 +12,7 @@ describe("parseTimestamp", () => {
     expect(parseTimestamp("00:00")).toBe(0)
     expect(parseTimestamp("1:40")).toBe(100)
     expect(parseTimestamp("00:30")).toBe(30)
+    expect(parseTimestamp("00:00:30")).toBe(30)
   })
 })
 
@@ -21,6 +22,7 @@ describe("formatSeconds", () => {
     expect(formatSeconds(200, "short")).toBe("03:20")
     expect(formatSeconds(100.08, "short")).toBe("01:40")
     expect(formatSeconds(0, "short")).toBe("00:00")
+    expect(formatSeconds(60 * 60 * 2 + 10, "short")).toBe("02:00:10")
   })
 
   it("should format hours/seconds in long format", () => {

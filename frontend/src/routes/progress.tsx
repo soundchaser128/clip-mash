@@ -1,80 +1,72 @@
 import {useStateMachine} from "little-state-machine"
-import {useEffect, useRef, useState} from "react"
-import {
-  HiArrowDown,
-  HiCodeBracket,
-  HiHeart,
-  HiRocketLaunch,
-} from "react-icons/hi2"
-import {FormState} from "../types/form-state"
-import {formatSeconds} from "../helpers"
-import {Progress} from "../types/types.generated"
+import {useCallback, useEffect, useRef, useState} from "react"
+import {HiRocketLaunch} from "react-icons/hi2"
+import {formatSeconds, pluralize} from "../helpers"
+import {CreateVideoBody, Progress, createVideo, getProgressInfo} from "../api"
 import useNotification from "../hooks/useNotification"
-import {updateForm} from "./actions"
-import {Link} from "react-router-dom"
-import clsx from "clsx"
-import ExternalLink from "../components/ExternalLink"
+import {useNavigate} from "react-router-dom"
 
-type CreateVideoBody = Omit<FormState, "songs"> & {
-  songIds: number[]
+const TWO_MINUTES = 120
+const ONE_HOUR = 3600
+
+const formatEta = (seconds: number): string => {
+  if (seconds > ONE_HOUR) {
+    const hours = Math.round(seconds / ONE_HOUR)
+    const word = pluralize("hour", hours)
+    return `${hours} ${word}`
+  } else if (seconds > TWO_MINUTES) {
+    const minutes = Math.round(seconds / 60)
+    const word = pluralize("minute", minutes)
+    return `${minutes} ${word}`
+  } else {
+    return `${Math.round(seconds)} seconds`
+  }
 }
 
 function Progress() {
-  const {state, actions} = useStateMachine({updateForm})
+  const {state} = useStateMachine()
   const [progress, setProgress] = useState<Progress>()
-
-  const [finished, setFinished] = useState(false)
-  const [finalFileName, setFinalFileName] = useState(
-    state.data.finalFileName || "",
-  )
-
-  const fileName =
-    state.data.fileName || `Compilation [${state.data.videoId}].mp4`
+  const fileName = `${state.data.fileName || "Compilation"} [${
+    state.data.videoId
+  }].mp4`
   const sendNotification = useNotification()
-  const numSongs = state.data.songs?.length || 0
-  const interactive = numSongs > 0 || state.data.interactive
   const eventSource = useRef<EventSource>()
   const {videoId} = state.data
+  const navigate = useNavigate()
 
-  const handleProgress = (data: Progress) => {
-    if (data.done) {
-      setFinished(true)
-      eventSource.current?.close()
-      sendNotification("Success", "Video generation finished!")
-    }
-    setProgress(data)
-  }
+  const handleProgress = useCallback(
+    (data: Progress) => {
+      if (data.done) {
+        eventSource.current?.close()
+        sendNotification("Success", "Video generation finished!")
+        navigate(`/${videoId}/download`)
+      }
+      setProgress(data)
+    },
+    [navigate, sendNotification, videoId],
+  )
 
-  const openEventSource = () => {
+  const openEventSource = useCallback(() => {
     const es = new EventSource(`/api/progress/${videoId}/stream`)
     es.onmessage = (event) => {
       const data = JSON.parse(event.data) as Progress | null
       data && handleProgress(data)
     }
     return es
-  }
+  }, [handleProgress, videoId])
 
   useEffect(() => {
-    fetch(`/api/progress/${videoId}/info`)
-      .then((res) => {
-        if (res.ok) {
-          return res.json()
-        } else {
-          throw new Error("Failed to fetch progress info")
-        }
-      })
-      .then((json) => {
-        const progress = json as Progress | null
-        if (progress && progress.itemsTotal > 0) {
-          handleProgress(progress)
-          eventSource.current = openEventSource()
-        }
-      })
+    getProgressInfo().then((progress) => {
+      if (progress && progress.itemsTotal > 0) {
+        handleProgress(progress)
+        eventSource.current = openEventSource()
+      }
+    })
 
     return () => {
       eventSource.current?.close()
     }
-  }, [])
+  }, [handleProgress, openEventSource])
 
   const totalDuration = state.data.clips!.reduce(
     (duration, clip) => duration + (clip.range[1] - clip.range[0]),
@@ -84,40 +76,36 @@ function Progress() {
   const onSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
 
-    const songIds = state.data.songs?.map((s) => s.songId) || []
     const data = {
-      ...state.data,
+      clips: state.data.clips!,
       fileName,
-      songIds,
+      songIds: state.data.songs?.map((s) => s.songId) || [],
+      videoId: state.data.videoId!,
+      encodingEffort: state.data.encodingEffort!,
+      outputFps: state.data.outputFps!,
+      outputResolution: state.data.outputResolution!,
+      selectedMarkers: state.data.selectedMarkers!,
+      videoCodec: state.data.videoCodec!,
+      videoQuality: state.data.videoQuality!,
+      musicVolume: state.data.musicVolume,
     } satisfies CreateVideoBody
 
-    const body = JSON.stringify(data)
-    const response = await fetch("/api/create", {
-      method: "POST",
-      body,
-      headers: {"content-type": "application/json"},
+    await createVideo(data)
+    eventSource.current = openEventSource()
+    setProgress({
+      itemsFinished: 0,
+      etaSeconds: 0,
+      done: false,
+      itemsTotal: totalDuration,
+      message: "Starting...",
+      timestamp: Date.now().toString(),
+      videoId: state.data.videoId!,
     })
-
-    if (response.ok) {
-      const fileName = await response.text()
-      setFinalFileName(fileName)
-      actions.updateForm({
-        finalFileName: fileName,
-      })
-      eventSource.current = openEventSource()
-      setProgress({
-        itemsFinished: 0,
-        etaSeconds: 0,
-        done: false,
-        itemsTotal: totalDuration,
-        message: "Starting...",
-      })
-    }
   }
 
   return (
     <div className="mt-2 w-full self-center flex flex-col items-center">
-      {!progress && !finished && (
+      {!progress && (
         <>
           <div className="mb-8">
             <p>
@@ -139,7 +127,7 @@ function Progress() {
         </>
       )}
 
-      {progress && !finished && (
+      {progress && (
         <div className="w-full">
           <progress
             className="progress h-6 progress-primary w-full"
@@ -153,64 +141,20 @@ function Progress() {
               / <strong>{formatSeconds(progress.itemsTotal, "short")}</strong>{" "}
               of the compilation finished
             </p>
-            <p>
-              Estimated time remaining:{" "}
-              <strong>{Math.round(progress.etaSeconds)} seconds</strong>
-            </p>
+            {progress.etaSeconds != undefined && (
+              <p>
+                Estimated time remaining:{" "}
+                <strong
+                  className="tooltip"
+                  data-tip={formatSeconds(progress.etaSeconds)}
+                >
+                  {formatEta(progress.etaSeconds)}
+                </strong>
+              </p>
+            )}
+
             <p>{progress.message}</p>
           </section>
-        </div>
-      )}
-
-      {finished && (
-        <div className="flex flex-col gap-6">
-          <h1 className="text-5xl font-bold text-center">🎉 Success!</h1>
-          <p>
-            You can now download the finished compilation!{" "}
-            {interactive && (
-              <>
-                You can also create a <code>.funscript</code> file for use with
-                sex toys.
-              </>
-            )}
-          </p>
-          <div
-            className={clsx(
-              "grid gap-2 w-full",
-              interactive && "grid-cols-3",
-              !interactive && "grid-cols-2",
-            )}
-          >
-            <div className="flex flex-col">
-              <a
-                href={`/api/download?fileName=${encodeURIComponent(
-                  finalFileName,
-                )}`}
-                className="btn btn-success btn-lg"
-                download
-              >
-                <HiArrowDown className="w-6 h-6 mr-2" />
-                Download video
-              </a>
-            </div>
-            {interactive && (
-              <div className="flex flex-col">
-                <Link className="btn btn-primary btn-lg" to="/stash/funscript">
-                  <HiCodeBracket className="w-6 h-6 mr-2" />
-                  Create funscript
-                </Link>
-              </div>
-            )}
-            <div className="flex flex-col">
-              <ExternalLink
-                href="https://ko-fi.com/soundchaser128"
-                className="btn btn-lg btn-secondary"
-              >
-                <HiHeart className="w-6 h-6 mr-2" />
-                Support the developer
-              </ExternalLink>
-            </div>
-          </div>
         </div>
       )}
     </div>

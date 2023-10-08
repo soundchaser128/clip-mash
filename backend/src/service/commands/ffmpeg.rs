@@ -263,7 +263,7 @@ impl Ffmpeg {
         }
 
         args.push(&self.output_file);
-        info!("running ffmpeg with arguments {:?}", args);
+        debug!("running ffmpeg with arguments {:?}", args);
         args
     }
 

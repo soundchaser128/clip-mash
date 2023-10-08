@@ -71,7 +71,7 @@ fn markers_to_clips(markers: Vec<Marker>) -> Vec<Clip> {
     markers
         .into_iter()
         .map(|marker| Clip {
-            source: marker.video_id.source(),
+            source: marker.source,
             video_id: marker.video_id.clone(),
             marker_id: marker.id,
             range: (marker.start_time, marker.end_time),
@@ -115,7 +115,7 @@ impl ClipService {
             .clip_options
             .clip_picker
             .songs()
-            .map(|songs| normalize_beat_offsets(songs));
+            .map(normalize_beat_offsets);
 
         if options.clip_options.clip_picker.has_music() {
             info!("options have music, not sorting clips");
@@ -168,14 +168,14 @@ mod tests {
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
+    use crate::data::database::VideoSource;
     use crate::server::types::{
-        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, PmvClipOptions,
-        RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
+        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, PmvClipOptions,
+        RandomizedClipOptions, RoundRobinClipOptions,
     };
     use crate::service::clip::sort::ClipSorter;
     use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
     use crate::service::fixtures::{create_marker_video_id, create_marker_with_loops};
-    use crate::service::VideoId;
     use crate::util::create_seeded_rng;
 
     #[traced_test]
@@ -229,11 +229,11 @@ mod tests {
     fn test_normalize_video_indices() {
         let mut options = CreateClipsOptions {
             markers: vec![
-                create_marker_video_id(1, 140.0, 190.0, 5, "v2".into()),
-                create_marker_video_id(2, 1.0, 17.0, 0, "v1".into()),
-                create_marker_video_id(3, 80.0, 120.0, 3, "v2".into()),
-                create_marker_video_id(4, 1.0, 15.0, 0, "v3".into()),
-                create_marker_video_id(5, 20.0, 60.0, 3, "v1".into()),
+                create_marker_video_id(1, 140.0, 190.0, 5, "v2"),
+                create_marker_video_id(2, 1.0, 17.0, 0, "v1"),
+                create_marker_video_id(3, 80.0, 120.0, 3, "v2"),
+                create_marker_video_id(4, 1.0, 15.0, 0, "v3"),
+                create_marker_video_id(5, 20.0, 60.0, 3, "v1"),
             ],
             seed: None,
             clip_options: ClipOptions {
@@ -247,39 +247,19 @@ mod tests {
 
         options.normalize_video_indices();
 
-        let marker = options
-            .markers
-            .iter()
-            .find(|m| m.id == MarkerId::LocalFile(1))
-            .unwrap();
+        let marker = options.markers.iter().find(|m| m.id == 1).unwrap();
         assert_eq!(marker.index_within_video, 1);
 
-        let marker = options
-            .markers
-            .iter()
-            .find(|m| m.id == MarkerId::LocalFile(2))
-            .unwrap();
+        let marker = options.markers.iter().find(|m| m.id == 2).unwrap();
         assert_eq!(marker.index_within_video, 0);
 
-        let marker = options
-            .markers
-            .iter()
-            .find(|m| m.id == MarkerId::LocalFile(3))
-            .unwrap();
+        let marker = options.markers.iter().find(|m| m.id == 3).unwrap();
         assert_eq!(marker.index_within_video, 0);
 
-        let marker = options
-            .markers
-            .iter()
-            .find(|m| m.id == MarkerId::LocalFile(4))
-            .unwrap();
+        let marker = options.markers.iter().find(|m| m.id == 4).unwrap();
         assert_eq!(marker.index_within_video, 0);
 
-        let marker = options
-            .markers
-            .iter()
-            .find(|m| m.id == MarkerId::LocalFile(5))
-            .unwrap();
+        let marker = options.markers.iter().find(|m| m.id == 5).unwrap();
         assert_eq!(marker.index_within_video, 1);
     }
 
@@ -290,18 +270,18 @@ mod tests {
             Clip {
                 index_within_marker: 0,
                 index_within_video: 0,
-                marker_id: MarkerId::LocalFile(1),
+                marker_id: 1,
                 range: (0.0, 9.0),
-                source: VideoSource::LocalFile,
-                video_id: VideoId::LocalFile("video".into()),
+                source: VideoSource::Folder,
+                video_id: "video".into(),
             },
             Clip {
                 index_within_marker: 0,
                 index_within_video: 0,
-                marker_id: MarkerId::LocalFile(2),
+                marker_id: 2,
                 range: (1.0, 12.0),
-                source: VideoSource::LocalFile,
-                video_id: VideoId::LocalFile("video".into()),
+                source: VideoSource::Folder,
+                video_id: "video".into(),
             },
         ];
         let mut rng = create_seeded_rng(None);

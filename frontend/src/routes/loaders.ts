@@ -1,28 +1,24 @@
-import {LoaderFunction, json} from "react-router-dom"
+import {LoaderFunction} from "react-router-dom"
 import {getFormState} from "../helpers"
-import invariant from "tiny-invariant"
 import {
   Clip,
   ClipPickerOptions,
   ClipsResponse,
   CreateClipsBody,
-  NewId,
   PmvClipOptions,
-  SongDto,
+  StashVideoDtoPage,
   VideoDto,
-} from "../types/types.generated"
-import {FormState, StateHelpers} from "../types/form-state"
+  VideoSource,
+  fetchClips,
+  getVersion,
+  listSongs,
+  listStashVideos,
+  listVideos,
+} from "../api"
+import {FormState} from "../types/form-state"
+import {getNewId, getVideo, listMarkers} from "../api"
 
-export const configLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/stash/config")
-  if (response.ok) {
-    const config = await response.json()
-    return config
-  } else {
-    const error = await response.text()
-    throw json({error, request: "/api/stash/config"}, {status: 500})
-  }
-}
+export const DEFAULT_PAGE_LENGTH = 24
 
 const getClipLengths = (state: FormState): PmvClipOptions => {
   if (state.songs && state.songs.length) {
@@ -48,6 +44,7 @@ const getClipSettings = (state: FormState): ClipPickerOptions => {
   if (state.clipStrategy === "weightedRandom") {
     return {
       type: "weightedRandom",
+      // @ts-expect-error form state needs to align with this
       weights: state.clipWeights!,
       clipLengths: getClipLengths(state),
       length:
@@ -74,7 +71,7 @@ const getClipSettings = (state: FormState): ClipPickerOptions => {
       clipLengths: getClipLengths(state),
       length: state.songs.reduce((sum, song) => sum + song.duration, 0),
     }
-  } else if (state.clipStrategy === "noSplit") {
+  } else if (state.clipStrategy === "noSplit" || state.splitClips === false) {
     return {type: "noSplit"}
   } else {
     return {
@@ -105,81 +102,78 @@ export const clipsLoader: LoaderFunction = async () => {
     },
   } satisfies CreateClipsBody
 
-  const response = await fetch("/api/clips", {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: {"content-type": "application/json"},
+  const data: ClipsResponse = await fetchClips(body)
+
+  const videos: Record<string, VideoDto> = {}
+  data.videos.forEach((s) => {
+    videos[s.id] = s
   })
-  if (response.ok) {
-    const data: ClipsResponse = await response.json()
 
-    const videos: Record<string, VideoDto> = {}
-    data.videos.forEach((s) => {
-      videos[s.id.id] = s
-    })
-
-    return {
-      ...data,
-      videos,
-    } // satisfies ClipsLoaderData
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/clips"}, {status: 500})
-  }
+  return {
+    ...data,
+    videos,
+  } // satisfies ClipsLoaderData
 }
 
-export const localMarkerLoader: LoaderFunction = async ({request}) => {
-  const formState = getFormState()!
-  invariant(StateHelpers.isLocalFiles(formState))
-  const params = new URL(request.url).search
+export const localMarkerLoader: LoaderFunction = async () => {
+  const state = getFormState()
 
-  const response = await fetch(`/api/local/video/marker${params}`)
-  if (response.ok) {
-    const json = await response.json()
-    return json
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/local/video/marker"}, {status: 500})
-  }
-}
-
-export const loadNewId = async () => {
-  const response = await fetch("/api/id")
-  if (response.ok) {
-    const data = (await response.json()) as NewId
-    return data.id
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/id"}, {status: 500})
-  }
+  const videoIds = (state?.videoIds ?? []).join(",")
+  const markers = listMarkers({videoIds})
+  return markers
 }
 
 export const newIdLoader: LoaderFunction = async () => {
-  const id = await loadNewId()
-
-  return id
+  const data = await getNewId()
+  return data.id
 }
 
 export const videoDetailsLoader: LoaderFunction = async ({params}) => {
   const {id} = params
-  const response = await fetch(`/api/local/video/${id}`)
-  if (response.ok) {
-    const data = await response.json()
-    return data
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: `/api/video/${id}`}, {status: 500})
-  }
+  const data = await getVideo(id!)
+  return data
 }
 
 export const musicLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/song")
-  const data = (await response.json()) as SongDto[]
+  const data = await listSongs()
+
   return data
 }
 
 export const versionLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/version")
-  const data = (await response.json()) as {version: string}
-  return data.version
+  const response = await getVersion()
+  return response.version
 }
+
+export type StashLoaderData = StashVideoDtoPage
+
+export const stashVideoLoader: LoaderFunction = async ({request}) => {
+  const url = new URL(request.url)
+  const query = url.searchParams.get("query")
+  const withMarkers = url.searchParams.get("withMarkers") === "true"
+  const videos = await listStashVideos({
+    query,
+    page: Number(url.searchParams.get("page")) || 1,
+    size: DEFAULT_PAGE_LENGTH,
+    withMarkers: withMarkers ? true : null,
+  })
+
+  return videos
+}
+
+export const makeVideoLoader: (withMarkers: boolean) => LoaderFunction =
+  (withMarkers) =>
+  async ({request}) => {
+    const url = new URL(request.url)
+    const query = url.searchParams
+    const videos = await listVideos({
+      hasMarkers: withMarkers ? true : null,
+      page: Number(query.get("page")) || 0,
+      size: DEFAULT_PAGE_LENGTH,
+      query: query.get("query"),
+      sort: query.get("sort"),
+      source: query.get("source") as VideoSource | null,
+    })
+
+    return videos
+  }

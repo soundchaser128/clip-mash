@@ -196,11 +196,11 @@ mod test {
         let beats = vec![
             Beats {
                 length: 250.0,
-                offsets: (0..250).into_iter().map(|n| n as f32).collect(),
+                offsets: (0..250).map(|n| n as f32).collect(),
             },
             Beats {
                 length: 250.0,
-                offsets: (0..250).into_iter().map(|n| n as f32).collect(),
+                offsets: (0..250).map(|n| n as f32).collect(),
             },
         ];
         let songs = SongClipLengthPicker::new(&mut rng, beats, 4, MeasureCount::Fixed { count: 1 });
@@ -215,11 +215,11 @@ mod test {
         let beats = vec![
             Beats {
                 length: 10.0,
-                offsets: (0..10).into_iter().map(|n| n as f32).collect(),
+                offsets: (0..10).map(|n| n as f32).collect(),
             },
             Beats {
                 length: 10.0,
-                offsets: (0..10).into_iter().map(|n| n as f32).collect(),
+                offsets: (0..10).map(|n| n as f32).collect(),
             },
         ];
         let songs =

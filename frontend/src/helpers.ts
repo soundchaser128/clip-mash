@@ -1,5 +1,5 @@
-import {format, formatDuration, getTime, parse} from "date-fns"
-import {SelectedMarker} from "./types/types.generated"
+import {formatDuration} from "date-fns"
+import {SelectedMarker} from "./api"
 import {FormState} from "./types/form-state"
 import {scaleSequential} from "d3-scale"
 import {interpolatePlasma} from "d3-scale-chromatic"
@@ -39,8 +39,12 @@ export function getSegmentTextColor(color: string): string {
 
 type DurationFormat = "long" | "short"
 
+function padNumber(n: number): string {
+  return n.toString().padStart(2, "0")
+}
+
 export function formatSeconds(
-  input: number | [number, number] | undefined,
+  input: number | [number, number] | number[] | undefined,
   durationFormat: DurationFormat = "long",
 ): string {
   let duration = 0
@@ -58,30 +62,39 @@ export function formatSeconds(
     }
   }
 
-  const date = new Date(duration * 1000)
+  const hours = Math.floor(duration / 3600)
+  const minutes = Math.floor((duration % 3600) / 60)
+  const seconds = Math.floor(duration % 60)
+
   if (durationFormat === "long") {
     return formatDuration(
       {
-        hours: date.getUTCHours(),
-        minutes: date.getUTCMinutes(),
-        seconds: date.getUTCSeconds(),
+        hours,
+        minutes,
+        seconds,
       },
       {format: ["hours", "minutes", "seconds"]},
     )
   } else {
-    if (date.getUTCHours() > 0) {
-      return format(date, "HH:mm:ss")
+    if (hours > 0) {
+      return `${padNumber(hours)}:${padNumber(minutes)}:${padNumber(seconds)}`
     } else {
-      return format(date, "mm:ss")
+      return `${padNumber(minutes)}:${padNumber(seconds)}`
     }
   }
 }
 
 export function parseTimestamp(input: string | number): number {
   if (typeof input === "string") {
-    const date = parse(input, "mm:ss", 0)
-    const millis = getTime(date)
-    return millis / 1000.0
+    let seconds: number
+    if (input.match(/^\d+:\d+:\d+$/)) {
+      const [hh, mm, ss] = input.split(":").map((x) => parseInt(x, 10))
+      seconds = ss + mm * 60 + hh * 60 * 60
+    } else {
+      const [mm, ss] = input.split(":").map((x) => parseInt(x, 10))
+      seconds = ss + mm * 60
+    }
+    return seconds
   } else {
     return input
   }
@@ -124,3 +137,8 @@ export function isBetween(
 export function clamp(value: number, lower: number, upper: number): number {
   return Math.min(Math.max(value, lower), upper)
 }
+
+export const dateTimeFormat = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "long",
+  timeStyle: "short",
+})

@@ -76,7 +76,7 @@ pub struct Directories {
     dirs: Arc<Box<dyn DirectorySupplier + 'static + Send + Sync>>,
 }
 
-const ENV_VAR: &'static str = "CLIP_MASH_BASE_DIR";
+const ENV_VAR: &str = "CLIP_MASH_BASE_DIR";
 
 impl Directories {
     pub fn new() -> Result<Self> {
@@ -178,20 +178,5 @@ impl Directories {
         );
         info!("temporary video directory: {}", self.temp_video_dir());
         info!("database file: {}", self.database_file());
-    }
-
-    #[allow(unused)]
-    pub async fn cleanup_videos(&self) -> Result<()> {
-        use tokio::fs;
-
-        let mut stream = fs::read_dir(self.temp_video_dir()).await?;
-        while let Some(file) = stream.next_entry().await? {
-            let path = Utf8PathBuf::from_path_buf(file.path()).expect("path must be utf-8");
-            if let Some("mp4") = path.extension() {
-                fs::remove_file(path).await?;
-            }
-        }
-
-        Ok(())
     }
 }

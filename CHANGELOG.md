@@ -1,6 +1,19 @@
 # Changelog
 
 ## Unreleased
+- feat: Unified video library. You no longer need to choose between whether you want videos from Stash or from your local hard drive.
+- feat: Only re-encode clips when the source videos have different encoding parameters (width, height, FPS, codec). Clips will be
+  created losslessly, without re-encoding if the source videos' encoding parameters are the same.
+- fix: Bug when trying to add markers in videos longer than an hour
+- feat: Pressing ESC now closes modal windows
+- feat: Clicking on a marker or a video's image now selects/deselects it
+- fix: Marker video preview now shows the correct time range of the video
+- fix: Select all/Deselect all on the marker page now only selects the currently visible markers
+- feat: Add basic sorting options to the video library page
+- feat: Resolution can now be set freely via input fields, allowing more exotic resolutions and vertical videos, for example.
+- feat: Greatly improve OpenAPI docs. 
+- refactor: Use OpenAPI generated client for the frontend
+- feat: Allow filtering videos by source
 
 # 0.16.1
 - fix: add tooltips, don't run onSubmit when shifting clips around

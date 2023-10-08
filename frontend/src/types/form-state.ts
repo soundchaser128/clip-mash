@@ -2,43 +2,35 @@ import {
   Clip,
   ClipOrder,
   EncodingEffort,
-  MarkerDto,
   MeasureCount,
   SelectedMarker,
-  SongDto,
   VideoCodec,
   VideoQuality,
-} from "./types.generated"
-import {ClipStrategy, SelectMode, VideoWithMarkers} from "./types"
+  SongDto,
+  MarkerDto,
+} from "../api"
+import {ClipStrategy} from "./types"
 
 export enum FormStage {
-  SelectMode = 1,
-  SelectCriteria = 2,
+  Start = 0,
+  ListVideos = 1,
+  SelectVideos = 2,
   SelectMarkers = 3,
   Music = 4,
   VideoOptions = 5,
   PreviewClips = 6,
-  Wait = 7,
+  CreateVideo = 7,
 }
 
-export enum LocalFilesFormStage {
-  ListVideos = 1,
-  SelectMarkers = 2,
-  Music = 3,
-  VideoOptions = 4,
-  PreviewClips = 5,
-  Wait = 6,
-}
-
-export type FormState = LocalVideosFormState | StashFormState | InitialFormState
-
-interface CommonFormState {
+export interface FormState {
+  stage: FormStage
   videoId?: string
-  videos?: VideoWithMarkers[]
+  markers?: MarkerDto[]
+  videoIds?: string[]
   recurse?: boolean
   clipOrder?: ClipOrder
   clipDuration?: number
-  outputResolution?: "720" | "1080" | "4K"
+  outputResolution?: [number, number]
   outputFps?: number
   selectedMarkers?: SelectedMarker[]
   splitClips?: boolean
@@ -56,33 +48,4 @@ interface CommonFormState {
   videoCodec?: VideoCodec
   videoQuality?: VideoQuality
   encodingEffort?: EncodingEffort
-  finalFileName?: string
-}
-
-export interface InitialFormState extends CommonFormState {
-  source: undefined
-}
-
-export interface LocalVideosFormState extends CommonFormState {
-  source: "localFile"
-  stage: LocalFilesFormStage
-}
-
-export interface StashFormState extends CommonFormState {
-  source: "stash"
-  selectMode?: SelectMode
-  selectedIds?: string[]
-  includeAll?: boolean
-  markers?: MarkerDto[]
-  stage: FormStage
-}
-
-export const StateHelpers = {
-  isStash(state: FormState): state is StashFormState {
-    return state.source === "stash"
-  },
-
-  isLocalFiles(state: FormState): state is LocalVideosFormState {
-    return state.source === "localFile"
-  },
 }

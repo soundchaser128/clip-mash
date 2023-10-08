@@ -1,23 +1,43 @@
 import clsx from "clsx"
 import React from "react"
 import {HiChevronLeft, HiChevronRight} from "react-icons/hi2"
-import {Link, To} from "react-router-dom"
+import {Link, To, useSearchParams} from "react-router-dom"
 
 interface PaginationProps {
   currentPage: number
   totalPages: number
-  prevLink: To
-  nextLink: To
+  startIndex?: 0 | 1
+}
+
+function setParam(
+  searchParams: URLSearchParams,
+  name: string,
+  value: string,
+): To {
+  const params = new URLSearchParams(searchParams)
+  params.set(name, value.toString())
+  return {search: `?${params.toString()}`}
 }
 
 const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
-  prevLink,
-  nextLink,
+  startIndex = 0,
 }) => {
-  const hasNextPage = currentPage < totalPages - 1
-  const hasPreviousPage = currentPage > 0
+  const hasNextPage =
+    startIndex === 1 ? currentPage < totalPages : currentPage < totalPages - 1
+  const hasPreviousPage = currentPage > startIndex
+  const [searchParams] = useSearchParams()
+  const nextLink: To = setParam(
+    searchParams,
+    "page",
+    (currentPage + 1).toString(),
+  )
+  const prevLink: To = setParam(
+    searchParams,
+    "page",
+    (currentPage - 1).toString(),
+  )
 
   if (totalPages <= 1) {
     return null
@@ -37,7 +57,8 @@ const Pagination: React.FC<PaginationProps> = ({
         Previous
       </Link>
       <span>
-        Page <strong>{currentPage + 1}</strong> of <strong>{totalPages}</strong>
+        Page <strong>{startIndex === 0 ? currentPage + 1 : currentPage}</strong>{" "}
+        of <strong>{totalPages}</strong>
       </span>
       <Link
         to={nextLink}

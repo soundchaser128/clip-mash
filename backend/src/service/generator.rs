@@ -8,14 +8,12 @@ use tracing::{debug, enabled, info, Level};
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
+use super::encoding_optimization::EncodingOptimizationService;
+use super::streams::{LocalVideoSource, StreamUrlService};
 use super::Marker;
 use crate::data::database::{Database, DbSong};
-use crate::data::stash_api::StashMarker;
 use crate::helpers::estimator::Estimator;
-use crate::server::types::{
-    Clip, EncodingEffort, VideoCodec, VideoId, VideoQuality, VideoResolution,
-};
-use crate::service::MarkerInfo;
+use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
 use crate::Result;
 
@@ -24,7 +22,7 @@ pub struct CompilationOptions {
     pub video_id: String,
     pub clips: Vec<Clip>,
     pub markers: Vec<Marker>,
-    pub output_resolution: VideoResolution,
+    pub output_resolution: (u32, u32),
     pub output_fps: u32,
     pub file_name: String,
     pub songs: Vec<DbSong>,
@@ -34,43 +32,14 @@ pub struct CompilationOptions {
     pub encoding_effort: EncodingEffort,
 }
 
-pub fn find_stash_stream_url(marker: &StashMarker) -> &str {
-    const LABEL_PRIORITIES: &[&str] = &["Direct stream", "webm", "HLS"];
-
-    let streams = &marker.streams;
-    for stream in streams {
-        for label in LABEL_PRIORITIES {
-            if let Some(l) = &stream.label {
-                if l == label {
-                    debug!("returning stream {stream:?}");
-                    return &stream.url;
-                }
-            }
-        }
-    }
-    // fallback to returning the first URL
-    info!(
-        "could not find any stream URL with the preferred labels, returning {:?}",
-        streams[0]
-    );
-    &streams[0].url
-}
-
-pub fn find_stream_url(marker: &Marker) -> &str {
-    match &marker.info {
-        MarkerInfo::Stash { marker } => find_stash_stream_url(marker),
-        MarkerInfo::LocalFile { marker } => &marker.file_path,
-    }
-}
-
 fn get_clip_file_name(
-    video_id: &VideoId,
+    video_id: &String,
     start: f64,
     end: f64,
     codec: VideoCodec,
-    resolution: VideoResolution,
+    (x_res, y_res): (u32, u32),
 ) -> String {
-    format!("{video_id}_{start}-{end}-{codec}-{resolution}.mp4")
+    format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}.mp4")
 }
 
 #[derive(Debug)]
@@ -85,6 +54,7 @@ struct CreateClip<'a> {
     codec: VideoCodec,
     quality: VideoQuality,
     effort: EncodingEffort,
+    re_encode: bool,
 }
 
 #[derive(Clone)]
@@ -92,6 +62,8 @@ pub struct CompilationGenerator {
     directories: Directories,
     ffmpeg_path: Utf8PathBuf,
     database: Database,
+    encoding_optimization: EncodingOptimizationService,
+    stream_urls: StreamUrlService,
 }
 
 impl CompilationGenerator {
@@ -101,11 +73,16 @@ impl CompilationGenerator {
         database: Database,
     ) -> Result<Self> {
         let ffmpeg_path = ffmpeg_location.ffmpeg();
+        let encoding_optimization =
+            EncodingOptimizationService::new(ffmpeg_location.clone(), database.clone()).await;
+        let streams_service = StreamUrlService::new(database.clone()).await;
         info!("using ffmpeg at {ffmpeg_path}");
         Ok(CompilationGenerator {
             directories,
             ffmpeg_path,
-            database,
+            database: database,
+            encoding_optimization,
+            stream_urls: streams_service,
         })
     }
 
@@ -195,22 +172,20 @@ impl CompilationGenerator {
             "-t",
             clip_str.as_str(),
         ];
-        args.extend(self.video_encoding_parameters(clip.codec, clip.quality, clip.effort));
-        args.extend(&[
-            "-acodec",
-            "aac",
-            "-vf",
-            &filter,
-            "-ar",
-            "48000",
-            clip.out_file.as_str(),
-        ]);
+        if clip.re_encode {
+            args.extend(self.video_encoding_parameters(clip.codec, clip.quality, clip.effort));
+            args.extend(&["-acodec", "aac", "-vf", &filter, "-ar", "48000"]);
+        } else {
+            args.extend(&["-c:v", "copy", "-c:a", "copy"]);
+        }
+        args.push(clip.out_file.as_str());
 
         self.ffmpeg(args).await
     }
 
     async fn initialize_progress(&self, video_id: &str, total_items: f64) -> Result<()> {
         self.database
+            .progress
             .insert_progress(video_id, total_items, "Starting...")
             .await?;
         Ok(())
@@ -224,14 +199,23 @@ impl CompilationGenerator {
         message: &str,
     ) -> Result<()> {
         self.database
+            .progress
             .update_progress(video_id, seconds, eta, message)
             .await?;
         Ok(())
     }
 
     async fn finish_progress(&self, video_id: &str) -> Result<()> {
-        self.database.finish_progress(video_id).await?;
+        self.database.progress.finish_progress(video_id).await?;
         Ok(())
+    }
+
+    fn get_video_ids<'a>(&self, options: &'a CompilationOptions) -> Vec<&'a str> {
+        let mut ids: Vec<_> = options.clips.iter().map(|c| c.video_id.as_str()).collect();
+        ids.sort();
+        ids.dedup();
+
+        ids
     }
 
     pub async fn gather_clips(&self, options: &CompilationOptions) -> Result<Vec<Utf8PathBuf>> {
@@ -242,11 +226,20 @@ impl CompilationGenerator {
             .await?;
         let video_dir = self.directories.temp_video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
+        let video_ids = self.get_video_ids(&options);
+        let stream_urls = self
+            .stream_urls
+            .get_video_streams(&video_ids, LocalVideoSource::File)
+            .await?;
+        let needs_re_encode = self
+            .encoding_optimization
+            .needs_re_encode(&video_ids)
+            .await?;
 
         let total = clips.len();
         let mut paths = vec![];
         let mut completed = 0.0;
-        for (index, clip) in clips.into_iter().enumerate() {
+        for (index, clip) in clips.iter().enumerate() {
             let Clip {
                 range: (start, end),
                 marker_id,
@@ -257,8 +250,8 @@ impl CompilationGenerator {
                 .iter()
                 .find(|m| &m.id == marker_id)
                 .expect(&format!("no marker with ID {marker_id} found"));
-            let url = find_stream_url(marker);
-            let (width, height) = options.output_resolution.resolution();
+            let url = &stream_urls[&marker.video_id];
+            let (width, height) = options.output_resolution;
             let out_file = video_dir.join(get_clip_file_name(
                 &marker.video_id,
                 *start,
@@ -279,6 +272,7 @@ impl CompilationGenerator {
                     codec: options.video_codec,
                     quality: options.video_quality,
                     effort: options.encoding_effort,
+                    re_encode: needs_re_encode,
                 })
                 .await?;
             } else {

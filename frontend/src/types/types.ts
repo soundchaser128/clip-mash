@@ -1,19 +1,4 @@
-import {MarkerDto, VideoDto} from "./types.generated"
-
-export type SelectMode = "tags" | "performers" | "scenes"
-
-export type VideoSource = "stash" | "localFile" | undefined
-
-export type ClipStrategy =
-  | "roundRobin"
-  | "weightedRandom"
-  | "equalLength"
-  | "noSplit"
-
-export interface VideoWithMarkers {
-  video: VideoDto
-  markers: MarkerDto[]
-}
+import {ClipOptions} from "../api"
 
 export interface JsonError {
   name: "JsonError"
@@ -21,10 +6,4 @@ export interface JsonError {
   error: string | Record<string, string>
 }
 
-export interface Page<T> {
-  content: T[]
-  totalItems: number
-  pageNumber: number
-  pageSize: number
-  totalPages: number
-}
+export type ClipStrategy = ClipOptions["clipPicker"]["type"]

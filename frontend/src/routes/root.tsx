@@ -1,64 +1,50 @@
 import {useStateMachine} from "little-state-machine"
-import React, {useEffect} from "react"
-import {
-  Outlet,
-  useLoaderData,
-  useNavigate,
-  useNavigation,
-} from "react-router-dom"
+import React from "react"
+import {Outlet, useNavigate, useNavigation} from "react-router-dom"
 import {HiXMark} from "react-icons/hi2"
 import {resetForm} from "./actions"
 import Layout from "../components/Layout"
-import {getUrl} from "./stash/filter/root"
 import Steps from "../components/Steps"
-import {
-  FormStage,
-  LocalFilesFormStage,
-  LocalVideosFormState,
-  StashFormState,
-  StateHelpers,
-} from "../types/form-state"
+import {FormState, FormStage} from "../types/form-state"
 
-const StashSteps: React.FC<{state: StashFormState}> = ({state}) => {
+const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
   return (
     <Steps
       currentStage={state.stage}
       steps={[
         {
-          stage: FormStage.SelectMode,
-          link: "/stash/mode",
-          content: "Choose mode",
+          stage: FormStage.ListVideos,
+          link: "/library",
+          content: "Video library",
         },
         {
-          stage: FormStage.SelectCriteria,
-          link: state.selectMode ? getUrl(state.selectMode) : "",
-          content: state.selectMode
-            ? `Select ${state.selectMode}`
-            : "Select criteria",
+          stage: FormStage.SelectVideos,
+          link: "/library/select",
+          content: "Select videos",
         },
         {
           stage: FormStage.SelectMarkers,
-          link: "/stash/markers",
+          link: "/markers",
           content: "Select markers",
         },
         {
           stage: FormStage.Music,
-          link: "/stash/music",
+          link: "/music",
           content: "Music options",
         },
         {
           stage: FormStage.VideoOptions,
-          link: "/stash/video-options",
+          link: "/video-options",
           content: "Video options",
         },
         {
           stage: FormStage.PreviewClips,
-          link: "/stash/clips",
+          link: "/clips",
           content: "Preview clips",
         },
         {
-          stage: FormStage.Wait,
-          link: "/stash/progress",
+          stage: FormStage.CreateVideo,
+          link: "/progress",
           content: "Create video",
         },
       ]}
@@ -66,47 +52,7 @@ const StashSteps: React.FC<{state: StashFormState}> = ({state}) => {
   )
 }
 
-const LocalFileSteps: React.FC<{state: LocalVideosFormState}> = ({state}) => {
-  return (
-    <Steps
-      currentStage={state.stage}
-      steps={[
-        {
-          stage: LocalFilesFormStage.ListVideos,
-          link: "/local/videos",
-          content: "Video library",
-        },
-        {
-          stage: LocalFilesFormStage.SelectMarkers,
-          link: "/local/markers",
-          content: "Select markers",
-        },
-        {
-          stage: LocalFilesFormStage.Music,
-          link: "/stash/music",
-          content: "Music options",
-        },
-        {
-          stage: LocalFilesFormStage.VideoOptions,
-          link: "/stash/video-options",
-          content: "Video options",
-        },
-        {
-          stage: LocalFilesFormStage.PreviewClips,
-          link: "/stash/clips",
-          content: "Preview clips",
-        },
-        {
-          stage: LocalFilesFormStage.Wait,
-          link: "/stash/progress",
-          content: "Create video",
-        },
-      ]}
-    />
-  )
-}
-
-const RootLayout: React.FC = () => {
+const AssistantLayout: React.FC = () => {
   const {actions, state} = useStateMachine({resetForm})
   const onReset = () => {
     if (
@@ -121,15 +67,6 @@ const RootLayout: React.FC = () => {
   const navigate = useNavigate()
   const navigation = useNavigation()
   const isLoading = navigation.state === "loading"
-  const config = useLoaderData()
-  const configExists = config !== null
-  const isStashMode = StateHelpers.isStash(state.data)
-
-  useEffect(() => {
-    if (!configExists && isStashMode) {
-      navigate("/stash/config")
-    }
-  }, [configExists, isStashMode, navigate])
 
   return (
     <Layout isLoading={isLoading}>
@@ -143,14 +80,12 @@ const RootLayout: React.FC = () => {
             Reset
           </button>
         </div>
-        {StateHelpers.isStash(state.data) && <StashSteps state={state.data} />}
-        {StateHelpers.isLocalFiles(state.data) && (
-          <LocalFileSteps state={state.data} />
-        )}
+
+        <LocalFileSteps state={state.data} />
         <Outlet />
       </section>
     </Layout>
   )
 }
 
-export default RootLayout
+export default AssistantLayout

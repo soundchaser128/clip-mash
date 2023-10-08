@@ -3,10 +3,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{debug, info, warn};
 
-use super::Video;
+use crate::data::database::{DbVideo, VideoSource};
 use crate::data::stash_api::StashApi;
 use crate::server::types::{Beats, Clip, StrokeType};
-use crate::service::VideoInfo;
 use crate::util::lerp;
 use crate::Result;
 
@@ -230,16 +229,17 @@ pub fn create_beat_script(songs: Vec<Beats>, stroke_type: StrokeType) -> FunScri
     }
 }
 
-pub struct ScriptBuilder<'a> {
-    api: &'a StashApi,
+pub struct ScriptBuilder {
+    api: StashApi,
 }
 
-impl<'a> ScriptBuilder<'a> {
-    pub fn new(api: &'a StashApi) -> Self {
+impl ScriptBuilder {
+    pub async fn new() -> Self {
+        let api = StashApi::load_config().await;
         Self { api }
     }
 
-    pub async fn combine_scripts(&self, clips: Vec<(Video, Clip)>) -> Result<FunScript> {
+    pub async fn combine_scripts(&self, clips: Vec<(DbVideo, Clip)>) -> Result<FunScript> {
         let mut resulting_actions = vec![];
         let mut offset = 0;
 
@@ -247,10 +247,13 @@ impl<'a> ScriptBuilder<'a> {
             let (start, end) = clip.range_millis();
             let duration = end - start;
 
-            let script = match video.info {
-                VideoInfo::Stash { .. } => self.api.get_funscript(&clip.video_id.to_string()).await,
-                VideoInfo::LocalFile { video } => {
+            let script = match video.source {
+                VideoSource::Stash { .. } => {
+                    self.api.get_funscript(&clip.video_id.to_string()).await
+                }
+                VideoSource::Download | VideoSource::Folder => {
                     let path = Utf8PathBuf::from(video.file_path).with_extension("funscript");
+                    info!("trying to load funscript from {}", path);
                     FunScript::load(path).await
                 }
             };

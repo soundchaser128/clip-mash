@@ -6,7 +6,7 @@ use tracing::{info, warn};
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::preview_image::PreviewGenerator;
-use crate::data::database::{AllVideosFilter, Database};
+use crate::data::database::{AllVideosFilter, Database, VideoUpdate};
 use crate::service::commands::ffprobe;
 use crate::Result;
 
@@ -42,6 +42,7 @@ impl Migrator {
         info!("setting video durations if necessary");
         let videos = self
             .database
+            .videos
             .get_videos(AllVideosFilter::NoVideoDuration)
             .await?;
         for video in videos {
@@ -51,6 +52,7 @@ impl Migrator {
             } else if let Ok(ffprobe) = ffprobe(&video.file_path, &self.ffmpeg_location).await {
                 let duration = ffprobe.duration().unwrap_or_default();
                 self.database
+                    .videos
                     .set_video_duration(&video.id, duration)
                     .await?;
             } else {
@@ -67,6 +69,7 @@ impl Migrator {
             PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
         let videos = self
             .database
+            .videos
             .get_videos(AllVideosFilter::NoPreviewImage)
             .await?;
         for video in videos {
@@ -76,6 +79,7 @@ impl Migrator {
             match preview_image {
                 Ok(path) => {
                     self.database
+                        .videos
                         .set_video_preview_image(&video.id, path.as_str())
                         .await?
                 }
@@ -93,7 +97,11 @@ impl Migrator {
         info!("generating marker preview images if necessary");
         let preview_generator =
             PreviewGenerator::new(self.directories.clone(), self.ffmpeg_location.clone());
-        let markers = self.database.get_markers_without_preview_images().await?;
+        let markers = self
+            .database
+            .markers
+            .get_markers_without_preview_images()
+            .await?;
         for marker in markers {
             if marker.marker_preview_image.is_none() {
                 let preview_image = preview_generator
@@ -102,6 +110,7 @@ impl Migrator {
                 match preview_image {
                     Ok(path) => {
                         self.database
+                            .markers
                             .set_marker_preview_image(marker.rowid.unwrap(), path.as_str())
                             .await?;
                     }
@@ -116,17 +125,46 @@ impl Migrator {
         Ok(())
     }
 
+    async fn initialize_video_titles(&self) -> Result<()> {
+        info!("initializing video titles if necessary");
+        let videos = self
+            .database
+            .videos
+            .get_videos(AllVideosFilter::NoTitle)
+            .await?;
+        for video in videos {
+            let title = Utf8Path::new(&video.file_path)
+                .file_stem()
+                .unwrap_or_default()
+                .to_string();
+            self.database
+                .videos
+                .update_video(
+                    &video.id,
+                    VideoUpdate {
+                        title: Some(title),
+                        tags: None,
+                    },
+                )
+                .await?;
+        }
+
+        Ok(())
+    }
+
     pub async fn run(&self) -> Result<()> {
         info!("running migrations");
         let start = Instant::now();
 
         futures::try_join!(
             self.database
+                .music
                 .generate_all_beats(self.ffmpeg_location.clone()),
             self.set_video_durations(),
             self.generate_video_preview_images(),
             self.generate_marker_preview_images(),
-            self.database.cleanup_progress(),
+            self.database.progress.cleanup_progress(),
+            self.initialize_video_titles(),
         )?;
 
         let elapsed = start.elapsed();

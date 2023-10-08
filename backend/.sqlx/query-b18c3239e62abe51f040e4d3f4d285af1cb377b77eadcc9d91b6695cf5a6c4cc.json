@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE videos SET duration = $1 WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "b18c3239e62abe51f040e4d3f4d285af1cb377b77eadcc9d91b6695cf5a6c4cc"
+}

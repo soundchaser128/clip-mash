@@ -2,7 +2,6 @@ import {useStateMachine} from "little-state-machine"
 import Field from "../components/Field"
 import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
-import {ClipStrategy} from "../types/types"
 import React, {useCallback, useRef, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds, sumDurations} from "../helpers"
@@ -18,12 +17,13 @@ import {Updater, useImmer} from "use-immer"
 import {useDrag, useDrop} from "react-dnd"
 import type {Identifier, XYCoord} from "dnd-core"
 import clsx from "clsx"
-import {SongDto} from "../types/types.generated"
+import {SongDto, downloadMusic, getBeats, uploadMusic} from "../api"
 import HelpModal from "../components/HelpModal"
 import useNotification from "../hooks/useNotification"
 import Loader from "../components/Loader"
-import {FormStage, LocalFilesFormStage, StateHelpers} from "../types/form-state"
+import {FormStage} from "../types/form-state"
 import ExternalLink from "../components/ExternalLink"
+import {ClipStrategy} from "../types/types"
 
 interface Inputs {
   musicUrl: string
@@ -244,13 +244,9 @@ const UploadMusic: React.FC<UploadMusicProps> = ({onCancel, onSuccess}) => {
   const onUpload = async () => {
     if (file) {
       setLoading(true)
-      const formData = new FormData()
-      formData.set("file", file)
-      const response = await fetch(`/api/song/upload`, {
-        method: "POST",
-        body: formData,
+      const data = await uploadMusic({
+        file,
       })
-      const data: SongDto = await response.json()
       onSuccess(data)
     }
   }
@@ -288,14 +284,11 @@ const DownloadMusic: React.FC<UploadMusicProps> = ({onSuccess, onCancel}) => {
   const onSubmit = async (values: Inputs) => {
     setLoading(true)
 
-    const response = await fetch(
-      `/api/song/download?url=${encodeURIComponent(values.musicUrl)}`,
-      {
-        method: "POST",
-      },
-    )
-    const data: SongDto = await response.json()
-    await fetch(`/api/song/${data.songId}/beats`)
+    const data = await downloadMusic({
+      url: values.musicUrl,
+    })
+    await getBeats(data.songId)
+
     setLoading(false)
     onSuccess(data)
     reset()
@@ -447,9 +440,7 @@ export default function Music() {
   }
 
   const onNextStage = () => {
-    const nextStage = StateHelpers.isLocalFiles(state.data)
-      ? LocalFilesFormStage.VideoOptions
-      : FormStage.VideoOptions
+    const nextStage = FormStage.VideoOptions
 
     actions.updateForm({
       stage: nextStage,
@@ -459,7 +450,7 @@ export default function Music() {
       clipStrategy: formValues.clipStrategy,
     })
 
-    navigate("/stash/video-options")
+    navigate("/video-options")
   }
 
   return (

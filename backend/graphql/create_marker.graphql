@@ -1,0 +1,5 @@
+mutation CreateMarker($marker: SceneMarkerCreateInput!) {
+  sceneMarkerCreate(input: $marker) {
+    id
+  }
+}

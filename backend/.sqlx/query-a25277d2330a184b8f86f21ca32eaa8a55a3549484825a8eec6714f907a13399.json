@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT *, rowid FROM markers WHERE video_id = $1 ORDER BY index_within_video ASC",
+  "describe": {
+    "columns": [
+      {
+        "name": "video_id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "start_time",
+        "ordinal": 1,
+        "type_info": "Float"
+      },
+      {
+        "name": "end_time",
+        "ordinal": 2,
+        "type_info": "Float"
+      },
+      {
+        "name": "title",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "index_within_video",
+        "ordinal": 4,
+        "type_info": "Int64"
+      },
+      {
+        "name": "marker_preview_image",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "marker_created_on",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "marker_stash_id",
+        "ordinal": 7,
+        "type_info": "Int64"
+      },
+      {
+        "name": "rowid",
+        "ordinal": 8,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "a25277d2330a184b8f86f21ca32eaa8a55a3549484825a8eec6714f907a13399"
+}

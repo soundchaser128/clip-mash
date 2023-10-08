@@ -52,13 +52,15 @@ export default function ListVideos() {
   const [sort, setSort] = useState(params.get("sort") ?? "markers")
   const {setQueryDebounced, addOrReplaceParam} = useDebouncedSetQuery()
   const [syncingVideo, setSyncingVideo] = useState<string>()
+  const [query] = useSearchParams()
 
   useEffect(() => {
     setVideos(initialVideos.content)
   }, [initialVideos, setVideos])
 
   const onOpenModal = (videoId: string) => {
-    navigate(`/library/${videoId}/markers`)
+    const queryString = query.toString()
+    navigate(`/library/${videoId}/markers?${queryString}`)
   }
 
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,7 +233,11 @@ export default function ListVideos() {
             onImageClick={onOpenModal}
             video={video}
             stashConfig={config}
-            onEditTitle={(title) => onEditTitle(video.video.id, title)}
+            onEditTitle={
+              video.video.source === "Stash"
+                ? undefined
+                : (title) => onEditTitle(video.video.id, title)
+            }
             actionChildren={
               <>
                 <div className="form-control"></div>

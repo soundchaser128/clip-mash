@@ -161,8 +161,8 @@ const Init = () => {
 
 const HomePage = () => {
   const videoId = useLoaderData() as string
-  const {actions} = useStateMachine({updateForm})
-  const [project, setProject] = useState("")
+  const {actions, state} = useStateMachine({updateForm})
+  const [project, setProject] = useState(state.data?.fileName || "")
 
   useEffect(() => {
     actions.updateForm({videoId})

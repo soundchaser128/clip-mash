@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.17.0
 - feat: Unified video library. You no longer need to choose between whether you want videos from Stash or from your local hard drive.
 - feat: Only re-encode clips when the source videos have different encoding parameters (width, height, FPS, codec). Clips will be
   created losslessly, without re-encoding if the source videos' encoding parameters are the same.
@@ -15,7 +17,7 @@
 - refactor: Use OpenAPI generated client for the frontend
 - feat: Allow filtering videos by source
 
-# 0.16.1
+## 0.16.1
 - fix: add tooltips, don't run onSubmit when shifting clips around
 
 ## 0.16.0

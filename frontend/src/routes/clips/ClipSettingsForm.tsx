@@ -76,7 +76,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
     }
     actions.updateForm({
       clipDuration: values.clipDuration,
-      clipOrder: values.clipOrder,
+      clipOrder: state.data.clipOrder,
       splitClips: values.splitClips,
       seed: values.seed,
       beatsPerMeasure: values.beatsPerMeasure,

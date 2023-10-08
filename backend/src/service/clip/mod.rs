@@ -150,8 +150,12 @@ impl ClipService {
                 let sorter = SceneOrderClipSorter;
                 sorter.sort_clips(clips, &mut rng)
             }
-            ClipOrder::Fixed { marker_titles } => {
-                let sorter = sort::FixedOrderClipSorter { marker_titles };
+            ClipOrder::Fixed {
+                marker_title_groups,
+            } => {
+                let sorter = sort::FixedOrderClipSorter {
+                    marker_title_groups,
+                };
                 sorter.sort_clips(clips, &mut rng)
             }
             ClipOrder::NoOp => clips,

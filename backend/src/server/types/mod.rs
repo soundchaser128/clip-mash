@@ -86,7 +86,10 @@ pub enum ClipOrder {
     Random,
     Scene,
     NoOp,
-    Fixed { marker_titles: Vec<String> },
+    #[serde(rename_all = "camelCase")]
+    Fixed {
+        marker_title_groups: Vec<Vec<String>>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]

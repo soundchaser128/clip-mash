@@ -40,7 +40,7 @@ impl ClipSorter for SceneOrderClipSorter {
 
 #[derive(Debug)]
 pub struct FixedOrderClipSorter {
-    pub marker_titles: Vec<String>,
+    pub marker_title_groups: Vec<Vec<String>>,
 }
 
 impl ClipSorter for FixedOrderClipSorter {
@@ -50,9 +50,9 @@ impl ClipSorter for FixedOrderClipSorter {
         debug!("clips: {:#?}", clips);
         clips.sort_by_key(|(clip, random)| {
             (
-                self.marker_titles
+                self.marker_title_groups
                     .iter()
-                    .position(|title| title == &clip.marker_title)
+                    .position(|group| group.contains(&clip.marker_title))
                     .unwrap_or(usize::MAX),
                 clip.index_within_video,
                 clip.index_within_marker,

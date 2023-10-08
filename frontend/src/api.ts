@@ -497,7 +497,7 @@ export const ClipOrderOneOfSevenType = {
 } as const
 
 export type ClipOrderOneOfSeven = {
-  marker_titles: string[]
+  markerTitleGroups: string[][]
   type: ClipOrderOneOfSevenType
 }
 

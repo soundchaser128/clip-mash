@@ -51,6 +51,26 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
     })),
   )
   const [selected, setSelected] = useState<MarkerGroup>()
+  const [groupToAdd, setGroupToAdd] = useState<MarkerGroup>()
+
+  const onAddToGroup = () => {
+    if (!groupToAdd) {
+      return
+    }
+    setGroups((draft) => {
+      const item = draft.find((g) => g.name === selected?.name)!
+      for (const marker of groupToAdd.markers) {
+        if (!item.markers.map((m) => m.title).includes(marker.title)) {
+          item.markers.push(marker)
+        }
+      }
+    })
+  }
+
+  const onChangeGroupToAdd = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const group = groups.find((g) => g.name === e.target.value)
+    setGroupToAdd(group)
+  }
 
   return (
     <div className="flex flex-col">
@@ -96,7 +116,11 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                   <span className="label-text">Add marker to group</span>
                 </label>
                 <div className="flex items-center gap-2">
-                  <select className="select select-bordered w-full max-w-xs">
+                  <select
+                    value={groupToAdd?.name}
+                    onChange={onChangeGroupToAdd}
+                    className="select select-bordered w-full max-w-xs"
+                  >
                     {markers
                       .filter(
                         (m) =>
@@ -109,6 +133,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                       ))}
                   </select>
                   <button
+                    onClick={onAddToGroup}
                     className="btn btn-square btn-success btn-sm"
                     type="button"
                   >

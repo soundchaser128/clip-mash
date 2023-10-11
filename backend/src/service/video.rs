@@ -33,9 +33,17 @@ const VIDEO_EXTENSIONS: &[&str] = &["mp4", "m4v", "webm"];
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum AddVideosRequest {
-    Local { path: String, recurse: bool },
-    Download { urls: Vec<String> },
-    Stash { scene_ids: Vec<i64> },
+    Local {
+        path: String,
+        recurse: bool,
+    },
+    Download {
+        urls: Vec<String>,
+    },
+    #[serde(rename_all = "camelCase")]
+    Stash {
+        scene_ids: Vec<i64>,
+    },
 }
 
 pub struct VideoService {

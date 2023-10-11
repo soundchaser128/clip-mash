@@ -118,7 +118,7 @@ export default function ListVideos() {
         </button>
       </div>
       {!noVideos && (
-        <div className="w-full grid grid-cols-3">
+        <div className="w-full grid grid-cols-3 items-center">
           <input
             type="text"
             placeholder="Filter..."
@@ -138,7 +138,7 @@ export default function ListVideos() {
             </button>
           </div>
 
-          <div className="flex gap-2 place-self-end">
+          <div className="flex gap-1 place-self-end">
             <div className="flex gap-1">
               <label className="label">
                 <span className="label-text">Video source</span>

@@ -2,7 +2,6 @@ import {useStateMachine} from "little-state-machine"
 import React, {useCallback, useState} from "react"
 import Modal from "../../components/Modal"
 import DraggableCard from "../../components/DraggableCard"
-import {useImmer} from "use-immer"
 import {getSegmentStyle} from "../../helpers"
 import {HiCheck, HiChevronRight, HiPlus} from "react-icons/hi2"
 import {updateForm} from "../actions"
@@ -30,28 +29,41 @@ interface MarkerGroupsFormProps {
   markers: MarkerCount[]
   groups: MarkerGroup[]
   onSave: (groups: MarkerGroup[]) => void
+  onNext: (groups: MarkerGroup[], markers: MarkerCount[]) => void
 }
 
 const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
   markers,
   onSave,
   groups,
+  onNext,
 }) => {
   const [selected, setSelected] = useState<MarkerCount>()
   const [newGroup, setNewGroup] = useState<string>("")
-  const [groupToAdd, setGroupToAdd] = useState<string>()
+  const [groupToAdd, setGroupToAdd] = useState<string>(groups.at(0)?.name || "")
 
   const onAddToGroup = () => {
     if (!selected) {
       return
     }
     const newGroups = groups.map((group) => {
-      return {
-        markers: [...group.markers, selected],
-        name: group.name,
+      if (group.name === groupToAdd) {
+        return {
+          markers: [...group.markers, selected],
+          name: group.name,
+        }
+      } else {
+        return {
+          markers: group.markers.filter((m) => m.title !== selected.title),
+          name: group.name,
+        }
       }
     })
     onSave(newGroups)
+  }
+
+  const onReset = () => {
+    onSave([])
   }
 
   const onChangeGroupToAdd = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -64,10 +76,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
     }
     const newGroups = [...groups, {name: newGroup, markers: []}]
     onSave(newGroups)
-  }
-
-  const onNext = () => {
-    onSave(groups)
+    setGroupToAdd(newGroup)
   }
 
   return (
@@ -86,7 +95,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
             )?.name
             return (
               <li
-                className="bg-secondary text-secondary-content px-3 py-2 rounded-lg cursor-pointer hover:bg-secondary-focus"
+                className="bg-secondary text-white px-3 py-2 rounded-lg cursor-pointer hover:bg-secondary-focus flex items-baseline gap-1"
                 key={marker.title}
                 onClick={() => setSelected(marker)}
               >
@@ -160,14 +169,20 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
         </div>
       </section>
 
-      <button
-        onClick={onNext}
-        type="button"
-        className="self-end btn btn-success mt-4"
-      >
-        Next
-        <HiChevronRight className="ml-1" />
-      </button>
+      <div className="flex w-full justify-between mt-4">
+        <button className="btn btn-warning" onClick={onReset} type="button">
+          Reset
+        </button>
+
+        <button
+          onClick={() => onNext(groups, markers)}
+          type="button"
+          className="btn btn-success"
+        >
+          Next
+          <HiChevronRight className="ml-1" />
+        </button>
+      </div>
     </div>
   )
 }
@@ -240,7 +255,6 @@ const MarkerOrderModal = () => {
     actions.updateForm({
       markerGroups: groups,
     })
-    // setStage("order")
   }
 
   const onSaveOrder = (groups: MarkerGroup[]) => {
@@ -255,6 +269,25 @@ const MarkerOrderModal = () => {
     })
     onClose()
     setStage("groups")
+  }
+
+  const onNext = (groups: MarkerGroup[], markerTitles: MarkerCount[]) => {
+    for (const marker of markerTitles) {
+      // if no group contains this marker, make a group with just this marker
+      const containedInGroup = groups.find((g) =>
+        g.markers.find((m) => m.title === marker.title),
+      )
+      if (!containedInGroup) {
+        groups.push({
+          name: marker.title,
+          markers: [marker],
+        })
+      }
+    }
+
+    onSaveGroups(groups)
+
+    setStage("order")
   }
 
   return (
@@ -272,6 +305,7 @@ const MarkerOrderModal = () => {
             groups={groups}
             markers={initialTitles}
             onSave={onSaveGroups}
+            onNext={onNext}
           />
         )}
         {stage === "order" && (

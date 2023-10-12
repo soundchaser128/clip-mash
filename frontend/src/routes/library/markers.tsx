@@ -40,7 +40,6 @@ const SelectMarkers: React.FC = () => {
             selectedRange: [m.start, m.end],
             title: m.primaryTag,
             loops: 1,
-            // TODO
             source: m.source,
           } satisfies SelectedMarker,
         ])

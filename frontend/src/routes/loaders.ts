@@ -114,7 +114,7 @@ export const clipsLoader: LoaderFunction = async () => {
   return {
     ...data,
     videos,
-  } // satisfies ClipsLoaderData
+  }
 }
 
 export const localMarkerLoader: LoaderFunction = async () => {

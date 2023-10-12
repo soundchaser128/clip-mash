@@ -8,6 +8,7 @@ import {updateForm} from "../actions"
 import {MarkerDto} from "../../api"
 import {MarkerCount, MarkerGroup} from "../../types/types"
 import {produce} from "immer"
+import clsx from "clsx"
 
 function getMarkerCounts(markers: MarkerDto[]): MarkerCount[] {
   const counts = new Map<string, number>()
@@ -47,6 +48,10 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
       return
     }
     const newGroups = produce(groups, (draft) => {
+      for (const group of draft) {
+        group.markers = group.markers.filter((m) => m.title !== marker.title)
+      }
+
       const group = draft.find((g) => g.name === selected.name)
       if (!group) {
         return
@@ -78,36 +83,48 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
       </p>
       <section className="flex flex-col">
         <h2 className="mb-2 mt-4 font-bold text-xl">All marker titles</h2>
-        <ul className="flex items-start flex-wrap flex-row gap-1">
+        <div className="flex items-start flex-wrap flex-row gap-1">
           {markers.map((marker) => {
-            const group = groups.find((g) =>
-              g.markers.find((m) => m.title === marker.title),
-            )?.name
             return (
-              <li
-                className="bg-secondary text-white px-3 py-2 rounded-lg cursor-pointer hover:bg-secondary-focus flex items-baseline gap-1"
+              <button
+                className="btn btn-secondary"
                 key={marker.title}
                 onClick={() => onAddToGroup(marker)}
+                type="button"
               >
-                {marker.title}{" "}
-                {group && <span className="text-xs">({group})</span>}
-              </li>
+                {marker.title}
+              </button>
             )
           })}
-        </ul>
+        </div>
         <button
           type="button"
           onClick={onAddNewGroup}
-          className="btn btn-success self-end mt-4"
+          className="btn btn-success self-end my-4"
         >
           <HiPlus className="mr-2" />
           Add new group
         </button>
-        <div className="w-full grid grid-flow-col place-items-center">
+        <div className="w-full grid grid-flow-col gap-2">
           {groups.map((group) => {
+            const enabled = selected?.name === group.name
             return (
-              <div className="h-20" key={group.name}>
-                {group.name}
+              <div
+                onClick={() => setSelected(group)}
+                className={clsx(
+                  "card bg-base-100 hover:bg-base-200 border-2",
+                  enabled && "border-primary",
+                )}
+                key={group.name}
+              >
+                <div className="card-body">
+                  <p className="card-title flex-grow-0">{group.name}</p>
+                  <ul>
+                    {group.markers.map((marker) => (
+                      <li key={marker.title}>{marker.title}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )
           })}

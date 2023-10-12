@@ -156,6 +156,10 @@ const SelectMarkers: React.FC = () => {
 
   const onUpdateTitle = (id: number, title: string) => {
     updateMarker(id, {title})
+    setSelection((draft) => {
+      const marker = draft[id]
+      marker.title = title
+    })
   }
 
   return (

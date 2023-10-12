@@ -9,7 +9,7 @@ import {
   SongDto,
   MarkerDto,
 } from "../api"
-import {ClipStrategy} from "./types"
+import {ClipStrategy, MarkerGroup} from "./types"
 
 export enum FormStage {
   Start = 0,
@@ -50,4 +50,5 @@ export interface FormState {
   videoCodec?: VideoCodec
   videoQuality?: VideoQuality
   encodingEffort?: EncodingEffort
+  markerGroups?: MarkerGroup[]
 }

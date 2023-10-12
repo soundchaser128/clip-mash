@@ -582,7 +582,7 @@ export const AddVideosRequestOneOfFiveType = {
 } as const
 
 export type AddVideosRequestOneOfFive = {
-  scene_ids: number[]
+  sceneIds: number[]
   type: AddVideosRequestOneOfFiveType
 }
 

@@ -107,6 +107,35 @@ impl ClipService {
         Self {}
     }
 
+    // if two clips are adjacent, have the same end/start point, and are from the same video,
+    // concatenate them into one clip
+    fn concatenate_clips_if_possible(&self, clips: Vec<Clip>) -> Vec<Clip> {
+        let mut result = vec![];
+        for slice in clips.windows(2) {
+            let [clip1, clip2] = slice else {
+                unreachable!("windows(2) always returns a slice of length 2")
+            };
+
+            if clip1.video_id == clip2.video_id && clip1.range.1 == clip2.range.0 {
+                let new_clip = Clip {
+                    source: clip1.source,
+                    video_id: clip1.video_id.clone(),
+                    marker_id: clip1.marker_id,
+                    range: (clip1.range.0, clip2.range.1),
+                    index_within_marker: clip1.index_within_marker,
+                    index_within_video: clip1.index_within_video,
+                    marker_title: clip1.marker_title.clone(),
+                };
+                info!("concatenated two clips into {new_clip:?}");
+                result.push(new_clip);
+            } else {
+                result.push(clip1.clone());
+            }
+        }
+
+        result
+    }
+
     pub fn arrange_clips(&self, mut options: CreateClipsOptions) -> ClipsResult {
         let start = Instant::now();
         options.normalize_video_indices();
@@ -163,6 +192,8 @@ impl ClipService {
 
         let elapsed = start.elapsed();
         info!("generated {} clips in {:?}", clips.len(), elapsed);
+
+        // let clips = self.concatenate_clips_if_possible(clips);
 
         ClipsResult {
             clips,

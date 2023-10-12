@@ -41,8 +41,6 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
   const [selected, setSelected] = useState<MarkerGroup | undefined>(
     groups?.at(0),
   )
-  const [newGroup, setNewGroup] = useState<string>("")
-  const [groupToAdd, setGroupToAdd] = useState<string>(groups.at(0)?.name || "")
 
   const onAddToGroup = (marker: MarkerCount) => {
     if (!selected) {
@@ -63,17 +61,12 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
     onSave([])
   }
 
-  const onChangeGroupToAdd = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setGroupToAdd(e.target.value)
-  }
-
   const onAddNewGroup = () => {
-    if (!newGroup) {
-      return
-    }
-    const newGroups = [...groups, {name: newGroup, markers: []}]
+    const newGroups = [
+      ...groups,
+      {name: `Group ${groups.length + 1}`, markers: []},
+    ]
     onSave(newGroups)
-    setGroupToAdd(newGroup)
   }
 
   return (
@@ -102,62 +95,22 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
             )
           })}
         </ul>
-        <div className="flex flex-col mt-4">
-          <p>
-            Selected group:{" "}
-            {selected ? (
-              <strong>{selected.name}</strong>
-            ) : (
-              <strong>None</strong>
-            )}
-          </p>
-          <div className="flex flex-col gap-4">
-            <div className="mt-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Create new group</span>
-                </label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    className="input input-bordered max-w-xs w-full"
-                    value={newGroup}
-                    onChange={(e) => setNewGroup(e.target.value)}
-                    placeholder="Group name"
-                  />
-                  <button
-                    onClick={onAddNewGroup}
-                    className="btn btn-square btn-success btn-sm"
-                    type="button"
-                  >
-                    <HiPlus />
-                  </button>
-                </div>
+        <button
+          type="button"
+          onClick={onAddNewGroup}
+          className="btn btn-success self-end mt-4"
+        >
+          <HiPlus className="mr-2" />
+          Add new group
+        </button>
+        <div className="w-full grid grid-flow-col place-items-center">
+          {groups.map((group) => {
+            return (
+              <div className="h-20" key={group.name}>
+                {group.name}
               </div>
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Select group</span>
-              </label>
-              <div className="flex items-center gap-2">
-                <select
-                  value={selected?.name || ""}
-                  onChange={(e) =>
-                    setSelected(groups.find((g) => g.name === e.target.value))
-                  }
-                  className="select select-bordered w-full max-w-xs"
-                  disabled={groups.length === 0}
-                >
-                  {groups.map((group) => (
-                    <option key={group.name} value={group.name}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
+            )
+          })}
         </div>
       </section>
 

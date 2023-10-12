@@ -38,27 +38,24 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
   groups,
   onNext,
 }) => {
-  const [selected, setSelected] = useState<MarkerCount>()
+  const [selected, setSelected] = useState<MarkerGroup | undefined>(
+    groups?.at(0),
+  )
   const [newGroup, setNewGroup] = useState<string>("")
   const [groupToAdd, setGroupToAdd] = useState<string>(groups.at(0)?.name || "")
 
-  const onAddToGroup = () => {
+  const onAddToGroup = (marker: MarkerCount) => {
     if (!selected) {
       return
     }
-    const newGroups = groups.map((group) => {
-      if (group.name === groupToAdd) {
-        return {
-          markers: [...group.markers, selected],
-          name: group.name,
-        }
-      } else {
-        return {
-          markers: group.markers.filter((m) => m.title !== selected.title),
-          name: group.name,
-        }
+    const newGroups = produce(groups, (draft) => {
+      const group = draft.find((g) => g.name === selected.name)
+      if (!group) {
+        return
       }
+      group.markers.push(marker)
     })
+
     onSave(newGroups)
   }
 
@@ -97,7 +94,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
               <li
                 className="bg-secondary text-white px-3 py-2 rounded-lg cursor-pointer hover:bg-secondary-focus flex items-baseline gap-1"
                 key={marker.title}
-                onClick={() => setSelected(marker)}
+                onClick={() => onAddToGroup(marker)}
               >
                 {marker.title}{" "}
                 {group && <span className="text-xs">({group})</span>}
@@ -107,9 +104,9 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
         </ul>
         <div className="flex flex-col mt-4">
           <p>
-            Selected marker:{" "}
+            Selected group:{" "}
             {selected ? (
-              <strong>{selected.title}</strong>
+              <strong>{selected.name}</strong>
             ) : (
               <strong>None</strong>
             )}
@@ -141,14 +138,16 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Add marker to group</span>
+                <span className="label-text">Select group</span>
               </label>
               <div className="flex items-center gap-2">
                 <select
-                  value={groupToAdd}
-                  onChange={onChangeGroupToAdd}
+                  value={selected?.name || ""}
+                  onChange={(e) =>
+                    setSelected(groups.find((g) => g.name === e.target.value))
+                  }
                   className="select select-bordered w-full max-w-xs"
-                  disabled={!selected || groups.length === 0}
+                  disabled={groups.length === 0}
                 >
                   {groups.map((group) => (
                     <option key={group.name} value={group.name}>
@@ -156,13 +155,6 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                     </option>
                   ))}
                 </select>
-                <button
-                  onClick={onAddToGroup}
-                  className="btn btn-square btn-success btn-sm"
-                  type="button"
-                >
-                  <HiPlus />
-                </button>
               </div>
             </div>
           </div>

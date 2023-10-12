@@ -7,7 +7,6 @@ import {getSegmentStyle} from "../../helpers"
 import {HiCheck, HiChevronRight, HiPlus} from "react-icons/hi2"
 import {updateForm} from "../actions"
 import {MarkerDto} from "../../api"
-import {c} from "vitest/dist/reporters-5f784f42"
 
 interface MarkerCount {
   title: string
@@ -37,7 +36,7 @@ type Stage = "groups" | "order"
 
 interface MarkerGroupsFormProps {
   markers: MarkerCount[]
-  onSave: () => void
+  onSave: (groups: MarkerGroup[]) => void
 }
 
 const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
@@ -47,28 +46,29 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
   const [groups, setGroups] = useImmer<MarkerGroup[]>([])
   const [selected, setSelected] = useState<MarkerCount>()
   const [newGroup, setNewGroup] = useState<string>("")
-  const [groupToAdd, setGroupToAdd] = useState<MarkerGroup>()
+  const [groupToAdd, setGroupToAdd] = useState<string>()
 
   const onAddToGroup = () => {
-    if (!groupToAdd || !selected) {
+    if (!selected) {
       return
     }
     setGroups((draft) => {
-      const group = draft.find((g) => g.name === groupToAdd.name)
-      if (!group) {
-        return
+      // if selected is already in a group, remove it
+      for (const group of draft) {
+        const idx = group.markers.findIndex((m) => m.title === selected.title)
+        if (idx !== -1) {
+          group.markers.splice(idx, 1)
+          break
+        }
       }
-      if (group.markers.find((m) => m.title === selected.title)) {
-        return
-      }
-      group.markers.push(selected)
+      const group = draft.find((g) => g.name === groupToAdd)
+      group?.markers.push(selected)
       setSelected(undefined)
     })
   }
 
   const onChangeGroupToAdd = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const group = groups.find((g) => g.name === e.target.value)
-    setGroupToAdd(group)
+    setGroupToAdd(e.target.value)
   }
 
   const onAddNewGroup = () => {
@@ -82,11 +82,20 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
       })
     })
     setNewGroup("")
+    setGroupToAdd(newGroup)
+  }
+
+  const onNext = () => {
+    onSave(groups)
   }
 
   return (
     <div className="flex flex-col">
       <h1 className="text-2xl font-bold mb-2">Marker groups</h1>
+      <p>
+        You can group multiple markers together, so that they appear together in
+        the finished compilation.
+      </p>
       <section className="flex flex-col">
         <h2 className="mb-2 mt-4 font-bold text-xl">All marker titles</h2>
         <ul className="flex items-start flex-wrap flex-row gap-1">
@@ -106,70 +115,75 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
             )
           })}
         </ul>
-        {selected && (
-          <div className="flex flex-col mt-4">
-            <p>
-              Selected marker: <strong>{selected.title}</strong>
-            </p>
-            <form className="flex flex-col gap-4">
-              {groups.length === 0 && (
-                <div className="mt-4">
-                  <p>No groups yet. Create one:</p>
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Group name</span>
-                    </label>
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        className="input input-bordered max-w-xs w-full"
-                        value={newGroup}
-                        onChange={(e) => setNewGroup(e.target.value)}
-                      />
-                      <button
-                        onClick={onAddNewGroup}
-                        className="btn btn-square btn-success btn-sm"
-                        type="button"
-                      >
-                        <HiPlus />
-                      </button>
-                    </div>
-                  </div>
+        <div className="flex flex-col mt-4">
+          <p>
+            Selected marker:{" "}
+            {selected ? (
+              <strong>{selected.title}</strong>
+            ) : (
+              <strong>None</strong>
+            )}
+          </p>
+          <div className="flex flex-col gap-4">
+            <div className="mt-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Create new group</span>
+                </label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    className="input input-bordered max-w-xs w-full"
+                    value={newGroup}
+                    onChange={(e) => setNewGroup(e.target.value)}
+                    placeholder="Group name"
+                  />
+                  <button
+                    onClick={onAddNewGroup}
+                    className="btn btn-square btn-success btn-sm"
+                    type="button"
+                  >
+                    <HiPlus />
+                  </button>
                 </div>
-              )}
-              {groups.length > 0 && (
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Add marker to group</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={groupToAdd?.name}
-                      onChange={onChangeGroupToAdd}
-                      className="select select-bordered w-full max-w-xs"
-                    >
-                      {groups.map((group) => (
-                        <option key={group.name} value={group.name}>
-                          {group.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={onAddToGroup}
-                      className="btn btn-square btn-success btn-sm"
-                      type="button"
-                    >
-                      <HiPlus />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </form>
+              </div>
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Add marker to group</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  value={groupToAdd}
+                  onChange={onChangeGroupToAdd}
+                  className="select select-bordered w-full max-w-xs"
+                  disabled={!selected || groups.length === 0}
+                >
+                  {groups.map((group) => (
+                    <option key={group.name} value={group.name}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={onAddToGroup}
+                  className="btn btn-square btn-success btn-sm"
+                  type="button"
+                >
+                  <HiPlus />
+                </button>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </section>
 
-      <button type="button" className="self-end btn btn-success mt-4">
+      <button
+        onClick={onNext}
+        type="button"
+        className="self-end btn btn-success mt-4"
+      >
         Next
         <HiChevronRight className="ml-1" />
       </button>
@@ -179,30 +193,49 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
 
 interface MarkerOrderFormProps {
   groups: MarkerGroup[]
-  onSave: () => void
+  onSave: (groups: MarkerGroup[]) => void
 }
 
-const MarkerOrderForm: React.FC<MarkerOrderFormProps> = ({onSave, groups}) => {
+const MarkerOrderForm: React.FC<MarkerOrderFormProps> = ({
+  onSave,
+  groups: initialGroups,
+}) => {
+  const [groups, setGroups] = useImmer<MarkerGroup[]>(initialGroups)
+
+  const onNext = () => {
+    onSave(groups)
+  }
+
+  const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {
+    setGroups((draft) => {
+      const temp = draft[dragIndex]
+      draft.splice(dragIndex, 1)
+      draft.splice(hoverIndex, 0, temp)
+    })
+  }, [])
+
   return (
     <>
       <h1 className="text-2xl font-bold mb-2">Marker order</h1>
       <div className="flex flex-col gap-4 self-center">
-        <ul className="flex items-start flex-row gap-1">
+        <ul className="flex items-start flex-col gap-1">
           {groups.map((group, idx) => (
-            <li
+            <DraggableCard
               className="w-full text-center px-4 py-1 rounded-full cursor-pointer"
               style={getSegmentStyle(idx, groups.length)}
               key={group.name}
-            >
-              {group.name}
-            </li>
+              id={group.name}
+              moveCard={moveCard}
+              text={group.name}
+              index={idx}
+            />
           ))}
         </ul>
         <section className="flex flex-col"></section>
       </div>
       <button
         type="button"
-        onClick={onSave}
+        onClick={onNext}
         className="self-end btn btn-success mt-4"
       >
         <HiCheck className="mr-2" />
@@ -223,24 +256,21 @@ const MarkerOrderModal = () => {
     setOpen(false)
   }
 
-  const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {
-    setGroups((draft) => {
-      const temp = draft[dragIndex]
-      draft.splice(dragIndex, 1)
-      draft.splice(hoverIndex, 0, temp)
-    })
-  }, [])
+  const onSaveGroups = (groups: MarkerGroup[]) => {
+    setGroups(groups)
+    setStage("order")
+  }
 
-  const onSave = () => {
-    // actions.updateForm({
-    //   clipOrder: {
-    //     type: "fixed",
-    //     markerTitleGroups: groups.map((group) =>
-    //       group.markers.map((marker) => marker.title),
-    //     ),
-    //   },
-    // })
-    // onClose()
+  const onSaveOrder = (groups: MarkerGroup[]) => {
+    actions.updateForm({
+      clipOrder: {
+        type: "fixed",
+        markerTitleGroups: groups.map((group) =>
+          group.markers.map((m) => m.title),
+        ),
+      },
+    })
+    onClose()
   }
 
   return (
@@ -254,10 +284,10 @@ const MarkerOrderModal = () => {
       </button>
       <Modal position="top" size="md" isOpen={open} onClose={onClose}>
         {stage === "groups" && (
-          <MarkerGroupsForm markers={initialTitles} onSave={() => {}} />
+          <MarkerGroupsForm markers={initialTitles} onSave={onSaveGroups} />
         )}
         {stage === "order" && (
-          <MarkerOrderForm groups={groups} onSave={onSave} />
+          <MarkerOrderForm groups={groups} onSave={onSaveOrder} />
         )}
       </Modal>
     </>

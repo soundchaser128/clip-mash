@@ -2,7 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import Field from "../components/Field"
 import {useForm} from "react-hook-form"
 import {updateForm} from "./actions"
-import React, {useCallback, useRef, useState} from "react"
+import React, {useCallback, useState} from "react"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import {formatSeconds, sumDurations} from "../helpers"
 import {
@@ -14,8 +14,6 @@ import {
   HiMusicalNote,
 } from "react-icons/hi2"
 import {Updater, useImmer} from "use-immer"
-import {useDrag, useDrop} from "react-dnd"
-import type {Identifier, XYCoord} from "dnd-core"
 import clsx from "clsx"
 import {SongDto, downloadMusic, getBeats, uploadMusic} from "../api"
 import HelpModal from "../components/HelpModal"

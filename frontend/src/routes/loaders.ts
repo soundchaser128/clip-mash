@@ -2,7 +2,6 @@ import {LoaderFunction} from "react-router-dom"
 import {getFormState} from "../helpers"
 import {
   Clip,
-  ClipOrder,
   ClipPickerOptions,
   ClipsResponse,
   CreateClipsBody,

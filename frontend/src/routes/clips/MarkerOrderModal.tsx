@@ -4,7 +4,7 @@ import Modal from "../../components/Modal"
 import DraggableCard from "../../components/DraggableCard"
 import {useImmer} from "use-immer"
 import {getSegmentStyle} from "../../helpers"
-import {HiCheck, HiPlus} from "react-icons/hi2"
+import {HiCheck, HiChevronRight, HiPlus} from "react-icons/hi2"
 import {updateForm} from "../actions"
 import {MarkerDto} from "../../api"
 import {c} from "vitest/dist/reporters-5f784f42"
@@ -44,26 +44,25 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
   markers,
   onSave,
 }) => {
-  const [groups, setGroups] = useImmer<MarkerGroup[]>(
-    markers.map((marker) => ({
-      markers: [marker],
-      name: marker.title,
-    })),
-  )
-  const [selected, setSelected] = useState<MarkerGroup>()
+  const [groups, setGroups] = useImmer<MarkerGroup[]>([])
+  const [selected, setSelected] = useState<MarkerCount>()
+  const [newGroup, setNewGroup] = useState<string>("")
   const [groupToAdd, setGroupToAdd] = useState<MarkerGroup>()
 
   const onAddToGroup = () => {
-    if (!groupToAdd) {
+    if (!groupToAdd || !selected) {
       return
     }
     setGroups((draft) => {
-      const item = draft.find((g) => g.name === selected?.name)!
-      for (const marker of groupToAdd.markers) {
-        if (!item.markers.map((m) => m.title).includes(marker.title)) {
-          item.markers.push(marker)
-        }
+      const group = draft.find((g) => g.name === groupToAdd.name)
+      if (!group) {
+        return
       }
+      if (group.markers.find((m) => m.title === selected.title)) {
+        return
+      }
+      group.markers.push(selected)
+      setSelected(undefined)
     })
   }
 
@@ -72,83 +71,107 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
     setGroupToAdd(group)
   }
 
+  const onAddNewGroup = () => {
+    if (!newGroup) {
+      return
+    }
+    setGroups((draft) => {
+      draft.push({
+        name: newGroup,
+        markers: [],
+      })
+    })
+    setNewGroup("")
+  }
+
   return (
     <div className="flex flex-col">
       <h1 className="text-2xl font-bold mb-2">Marker groups</h1>
       <section className="flex flex-col">
-        <div className="flex flex-col gap-4">
-          <ul className="flex items-start flex-row gap-1">
-            {groups.map((group) => (
+        <h2 className="mb-2 mt-4 font-bold text-xl">All marker titles</h2>
+        <ul className="flex items-start flex-wrap flex-row gap-1">
+          {markers.map((marker) => {
+            const group = groups.find((g) =>
+              g.markers.find((m) => m.title === marker.title),
+            )?.name
+            return (
               <li
                 className="bg-secondary text-secondary-content px-3 py-2 rounded-lg cursor-pointer hover:bg-secondary-focus"
-                key={group.name}
-                onClick={() => setSelected(group)}
+                key={marker.title}
+                onClick={() => setSelected(marker)}
               >
-                {group.name}
+                {marker.title}{" "}
+                {group && <span className="text-xs">({group})</span>}
               </li>
-            ))}
-          </ul>
-        </div>
+            )
+          })}
+        </ul>
         {selected && (
           <div className="flex flex-col mt-4">
             <p>
-              Selected group <strong>{selected.name}</strong>
+              Selected marker: <strong>{selected.title}</strong>
             </p>
             <form className="flex flex-col gap-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Group name</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered max-w-xs w-full"
-                  value={selected.name}
-                  onChange={(e) =>
-                    setGroups((draft) => {
-                      draft.find((g) => g.name === selected.name)!.name =
-                        e.target.value
-                    })
-                  }
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Add marker to group</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={groupToAdd?.name}
-                    onChange={onChangeGroupToAdd}
-                    className="select select-bordered w-full max-w-xs"
-                  >
-                    {markers
-                      .filter(
-                        (m) =>
-                          !selected.markers
-                            .map((m) => m.title)
-                            .includes(m.title),
-                      )
-                      .map((marker) => (
-                        <option key={marker.title}>{marker.title}</option>
-                      ))}
-                  </select>
-                  <button
-                    onClick={onAddToGroup}
-                    className="btn btn-square btn-success btn-sm"
-                    type="button"
-                  >
-                    <HiPlus />
-                  </button>
+              {groups.length === 0 && (
+                <div className="mt-4">
+                  <p>No groups yet. Create one:</p>
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Group name</span>
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        className="input input-bordered max-w-xs w-full"
+                        value={newGroup}
+                        onChange={(e) => setNewGroup(e.target.value)}
+                      />
+                      <button
+                        onClick={onAddNewGroup}
+                        className="btn btn-square btn-success btn-sm"
+                        type="button"
+                      >
+                        <HiPlus />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+              {groups.length > 0 && (
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Add marker to group</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={groupToAdd?.name}
+                      onChange={onChangeGroupToAdd}
+                      className="select select-bordered w-full max-w-xs"
+                    >
+                      {groups.map((group) => (
+                        <option key={group.name} value={group.name}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={onAddToGroup}
+                      className="btn btn-square btn-success btn-sm"
+                      type="button"
+                    >
+                      <HiPlus />
+                    </button>
+                  </div>
+                </div>
+              )}
             </form>
           </div>
         )}
       </section>
 
       <button type="button" className="self-end btn btn-success mt-4">
-        <HiCheck className="mr-2" />
-        Save
+        Next
+        <HiChevronRight className="ml-1" />
       </button>
     </div>
   )

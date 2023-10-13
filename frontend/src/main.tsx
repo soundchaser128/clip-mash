@@ -3,7 +3,7 @@ import {
   StateMachineProvider,
   useStateMachine,
 } from "little-state-machine"
-import React, {useEffect, useState} from "react"
+import React, {useEffect, useRef, useState} from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
@@ -42,8 +42,8 @@ import MarkersPage from "./routes/library/markers"
 import {resetForm, updateForm} from "./routes/actions"
 import AddVideosPage from "./routes/library/add"
 import useNotification from "./hooks/useNotification"
-import {HiRocketLaunch} from "react-icons/hi2"
-import {FormStage} from "./types/form-state"
+import {HiFolder, HiRocketLaunch} from "react-icons/hi2"
+import {FormStage, FormState} from "./types/form-state"
 import EditVideoModal from "./routes/library/videos.$id"
 import DownloadVideosPage from "./routes/library/add/download"
 import SelectVideos from "./routes/library/add/folder"
@@ -163,6 +163,8 @@ const HomePage = () => {
   const videoId = useLoaderData() as string
   const {actions, state} = useStateMachine({updateForm})
   const [project, setProject] = useState(state.data?.fileName || "")
+  const navigate = useNavigate()
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     actions.updateForm({videoId})
@@ -173,6 +175,20 @@ const HomePage = () => {
       stage: FormStage.ListVideos,
       fileName: project,
     })
+  }
+
+  const onLoadProject = () => {
+    inputRef.current!.click()
+  }
+
+  const onInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.item(0)
+    if (file) {
+      const text = await file.text()
+      const json = JSON.parse(text) as FormState
+      actions.updateForm(json)
+      navigate("/library")
+    }
   }
 
   return (
@@ -200,13 +216,28 @@ const HomePage = () => {
             <div className="self-center btn-group">
               <Link
                 onClick={onNext}
-                className="btn btn-lg btn-primary w-52 mt-4"
+                className="btn btn-lg btn-primary w-64 mt-4"
                 to="/library"
               >
                 <HiRocketLaunch className="mr-2 w-6 h-6" />
                 Start
               </Link>
             </div>
+            <span className="divider">OR</span>
+            <input
+              accept="application/json"
+              type="file"
+              className="hidden"
+              ref={inputRef}
+              onChange={onInputChange}
+            />
+            <button
+              onClick={onLoadProject}
+              className="btn btn-lg btn-primary w-64 self-center"
+            >
+              <HiFolder className="mr-2 w-6 h-6" />
+              Open project
+            </button>
           </div>
         </div>
       </div>

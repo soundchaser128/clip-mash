@@ -1,13 +1,27 @@
 import {useStateMachine} from "little-state-machine"
 import {useCallback, useEffect, useRef, useState} from "react"
-import {HiRocketLaunch} from "react-icons/hi2"
+import {HiArchiveBox, HiRocketLaunch} from "react-icons/hi2"
 import {formatSeconds, pluralize} from "../helpers"
 import {CreateVideoBody, Progress, createVideo, getProgressInfo} from "../api"
 import useNotification from "../hooks/useNotification"
 import {useNavigate} from "react-router-dom"
+import {FormState} from "../types/form-state"
 
 const TWO_MINUTES = 120
 const ONE_HOUR = 3600
+
+const saveProjectToDisk = async (fileName: string, data: FormState) => {
+  const json = JSON.stringify(data)
+  const blob = new Blob([json], {type: "application/json"})
+  const href = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = href
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(href)
+}
 
 const formatEta = (seconds: number): string => {
   if (seconds > ONE_HOUR) {
@@ -73,6 +87,11 @@ function Progress() {
     0,
   )
 
+  const onSaveToDisk = async () => {
+    const projectName = `${state.data.videoId}.json`
+    await saveProjectToDisk(projectName, state.data)
+  }
+
   const onSubmit = async (e: React.MouseEvent) => {
     e.preventDefault()
 
@@ -120,10 +139,16 @@ function Progress() {
               File name: <strong>{fileName}</strong>
             </p>
           </div>
-          <a onClick={onSubmit} className="btn btn-lg btn-success">
-            <HiRocketLaunch className="mr-2 w-6 h-6" />
-            Create video
-          </a>
+          <div className="flex gap-2">
+            <button onClick={onSubmit} className="btn btn-lg btn-success">
+              <HiRocketLaunch className="mr-2 w-6 h-6" />
+              Create video
+            </button>
+            <button onClick={onSaveToDisk} className="btn btn-lg btn-success">
+              <HiArchiveBox className="mr-2 w-6 h-6" />
+              Save project data
+            </button>
+          </div>
         </>
       )}
 

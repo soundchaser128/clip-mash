@@ -225,12 +225,14 @@ export default function EditVideoModal() {
     }
   }
 
-  const onShowForm = (marker?: MarkerDto) => {
-    setFormMode(marker ? "edit" : "create")
-    const start = videoRef.current?.currentTime || 0
-    setValue("start", formatSeconds(marker?.start || start, "short"))
-    setValue("end", formatSeconds(marker?.end || undefined, "short"))
-    setValue("title", marker?.primaryTag || "")
+  const onShowForm = (mode: FormMode, marker?: MarkerDto) => {
+    setFormMode(mode)
+    if (mode === "create") {
+      const start = videoRef.current?.currentTime || 0
+      setValue("start", formatSeconds(marker?.start || start, "short"))
+      setValue("end", formatSeconds(marker?.end || undefined, "short"))
+      setValue("title", marker?.primaryTag || "")
+    }
 
     if (marker) {
       setEditedMarker(marker)
@@ -484,7 +486,7 @@ export default function EditVideoModal() {
                           <td>{formatSeconds(marker.end, "short")}</td>
                           <td className="">
                             <button
-                              onClick={() => onShowForm(marker)}
+                              onClick={() => onShowForm("edit", marker)}
                               type="button"
                               className="btn btn-sm btn-square btn-primary"
                             >
@@ -503,7 +505,7 @@ export default function EditVideoModal() {
             {formMode === "hidden" ? (
               <div className="flex gap-2">
                 <button
-                  onClick={() => onShowForm()}
+                  onClick={() => onShowForm("create")}
                   className="btn btn-primary"
                 >
                   <HiTag className="w-4 h-4 mr-2" />
@@ -536,7 +538,7 @@ export default function EditVideoModal() {
           length: marker.end - marker.start,
           offset: marker.start,
         }))}
-        onItemClick={(item, index) => onShowForm(markers[index])}
+        onItemClick={(item, index) => onShowForm("edit", markers[index])}
         selectedIndex={
           editedMarker ? markers.indexOf(editedMarker) : currentItemIndex
         }

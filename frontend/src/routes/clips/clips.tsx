@@ -93,6 +93,7 @@ const Timeline: React.FC<TimelineProps> = ({
 function PreviewClips() {
   const revalidator = useRevalidator()
   const [wasRevalidated, setWasRevalidated] = useState(false)
+  const [manualChangesMade, setManualChangesMade] = useState(false)
 
   const {actions, state} = useStateMachine({updateForm})
   const loaderData = useLoaderData() as ClipsLoaderData
@@ -128,6 +129,7 @@ function PreviewClips() {
 
   useEffect(() => {
     if (revalidator.state === "loading") {
+      setManualChangesMade(false)
       setWasRevalidated(true)
     }
   }, [revalidator.state])
@@ -186,6 +188,7 @@ function PreviewClips() {
       })),
     )
     setCurrentClipIndex(clamp(currentClipIndex, 0, clips.length - 2))
+    setManualChangesMade(true)
   }
 
   const onShiftClips = (direction: "left" | "right") => {
@@ -198,6 +201,7 @@ function PreviewClips() {
     })
     setClips(newClips)
     setCurrentClipIndex(indexToSwap)
+    setManualChangesMade(true)
   }
 
   return (
@@ -293,7 +297,7 @@ function PreviewClips() {
             onShiftClips={onShiftClips}
             canShiftLeft={currentClipIndex > 0}
             canShiftRight={currentClipIndex < clips.length - 1}
-            confirmBeforeSubmit={clipsState.past.length > 0}
+            confirmBeforeSubmit={manualChangesMade}
           />
 
           <div className="btn-group justify-center">

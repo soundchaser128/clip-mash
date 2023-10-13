@@ -227,12 +227,10 @@ export default function EditVideoModal() {
 
   const onShowForm = (mode: FormMode, marker?: MarkerDto) => {
     setFormMode(mode)
-    if (mode === "create") {
-      const start = videoRef.current?.currentTime || 0
-      setValue("start", formatSeconds(marker?.start || start, "short"))
-      setValue("end", formatSeconds(marker?.end || undefined, "short"))
-      setValue("title", marker?.primaryTag || "")
-    }
+    const start = mode === "create" ? videoRef.current?.currentTime : undefined
+    setValue("start", formatSeconds(marker?.start || start, "short"))
+    setValue("end", formatSeconds(marker?.end || undefined, "short"))
+    setValue("title", marker?.primaryTag || "")
 
     if (marker) {
       setEditedMarker(marker)

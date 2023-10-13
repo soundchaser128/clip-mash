@@ -3,7 +3,13 @@ import React, {useCallback, useState} from "react"
 import Modal from "../../components/Modal"
 import DraggableCard from "../../components/DraggableCard"
 import {getSegmentStyle, pluralize} from "../../helpers"
-import {HiCheck, HiChevronRight, HiPlus} from "react-icons/hi2"
+import {
+  HiCheck,
+  HiChevronRight,
+  HiMinus,
+  HiPlus,
+  HiTrash,
+} from "react-icons/hi2"
 import {updateForm} from "../actions"
 import {MarkerDto} from "../../api"
 import {MarkerCount, MarkerGroup} from "../../types/types"
@@ -62,8 +68,21 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
     onSave(newGroups)
   }
 
+  const onRemoveFromGroup = (marker: MarkerCount, groupName: string) => {
+    const newGroups = produce(groups, (draft) => {
+      const group = draft.find((g) => g.name === groupName)
+      if (!group) {
+        return
+      }
+      group.markers = group.markers.filter((m) => m.title !== marker.title)
+    })
+
+    onSave(newGroups)
+  }
+
   const onReset = () => {
     onSave([])
+    setSelected(undefined)
   }
 
   const onAddNewGroup = () => {
@@ -79,7 +98,8 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
       <h1 className="text-2xl font-bold mb-2">Marker groups</h1>
       <p>
         You can group multiple markers together, so that they appear together in
-        the finished compilation.
+        the finished compilation. You can also change the order of the groups in
+        the next step.
       </p>
       <section className="flex flex-col">
         <h2 className="mb-2 mt-4 font-bold text-xl">All marker titles</h2>
@@ -100,15 +120,23 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
             )
           })}
         </div>
-        <button
-          type="button"
-          onClick={onAddNewGroup}
-          className="btn btn-success self-end my-4"
-        >
-          <HiPlus className="mr-2" />
-          Add new group
-        </button>
+        <div className="flex justify-between items-center">
+          <h2 className="mb-2 mt-4 font-bold text-xl">Groups</h2>
+          <button
+            type="button"
+            onClick={onAddNewGroup}
+            className="btn btn-success self-end my-4"
+          >
+            <HiPlus className="mr-2" />
+            Add new group
+          </button>
+        </div>
         <div className="w-full grid grid-flow-col gap-2">
+          {groups.length === 0 && (
+            <p className="text-center w-full">
+              No groups yet. Add a new group to get started.
+            </p>
+          )}
           {groups.map((group) => {
             const enabled = selected?.name === group.name
             const markerCount = group.markers.reduce(
@@ -125,13 +153,21 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                 key={group.name}
               >
                 <div className="card-body">
-                  <p className="card-title flex-grow-0">
+                  <h3 className="card-title flex-grow-0">
                     {group.name} ({markerCount}{" "}
                     {pluralize("marker", markerCount)})
-                  </p>
-                  <ul>
+                  </h3>
+                  <ul className="text-base">
                     {group.markers.map((marker) => (
-                      <li key={marker.title}>{marker.title}</li>
+                      <li key={marker.title}>
+                        {marker.title}
+                        <button
+                          onClick={() => onRemoveFromGroup(marker, group.name)}
+                          className="btn btn-error btn-xs btn-square btn-ghost ml-1 text-red-500"
+                        >
+                          <HiTrash className="" />
+                        </button>
+                      </li>
                     ))}
                   </ul>
                 </div>

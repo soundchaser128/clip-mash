@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
-import {useLoaderData, useNavigate} from "react-router-dom"
+import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
 import {
@@ -25,6 +25,7 @@ import useFuse from "../../hooks/useFuse"
 const SelectMarkers: React.FC = () => {
   const initialMarkers = useLoaderData() as MarkerDto[]
   const {actions, state} = useStateMachine({updateForm})
+  const revalidator = useRevalidator()
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
@@ -153,12 +154,13 @@ const SelectMarkers: React.FC = () => {
     })
   }
 
-  const onUpdateTitle = (id: number, title: string) => {
-    updateMarker(id, {title})
+  const onUpdateTitle = async (id: number, title: string) => {
+    await updateMarker(id, {title})
     setSelection((draft) => {
       const marker = draft[id]
       marker.title = title
     })
+    revalidator.revalidate()
   }
 
   return (

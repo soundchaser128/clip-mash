@@ -177,6 +177,7 @@ export default function EditVideoModal() {
     })
     setMarkers(markers.concat(data))
     setLoading(false)
+    revalidator.revalidate()
   }
 
   const onSubmit = async (values: Inputs) => {
@@ -211,6 +212,7 @@ export default function EditVideoModal() {
         }
       })
       setFormMode("hidden")
+      revalidator.revalidate()
     } else {
       const err = result.error
       if (typeof err.error === "object") {
@@ -247,6 +249,7 @@ export default function EditVideoModal() {
     })
     await deleteMarker(toRemove)
     setFormMode("hidden")
+    revalidator.revalidate()
   }
 
   const onDone = () => {
@@ -278,6 +281,7 @@ export default function EditVideoModal() {
     if (currentMarker) {
       const data = await splitMarker(currentMarker.id, {time: currentTime})
       setMarkers(data)
+      revalidator.revalidate()
     }
   }
 
@@ -298,6 +302,7 @@ export default function EditVideoModal() {
     if (result.isOk) {
       const marker = result.unwrap()
       setMarkers([marker])
+      revalidator.revalidate()
     } else {
       const error = result.error
       console.error(error)

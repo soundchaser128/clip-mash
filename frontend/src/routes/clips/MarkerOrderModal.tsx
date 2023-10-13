@@ -2,7 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import React, {useCallback, useState} from "react"
 import Modal from "../../components/Modal"
 import DraggableCard from "../../components/DraggableCard"
-import {getSegmentStyle} from "../../helpers"
+import {getSegmentStyle, pluralize} from "../../helpers"
 import {HiCheck, HiChevronRight, HiPlus} from "react-icons/hi2"
 import {updateForm} from "../actions"
 import {MarkerDto} from "../../api"
@@ -111,17 +111,24 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
         <div className="w-full grid grid-flow-col gap-2">
           {groups.map((group) => {
             const enabled = selected?.name === group.name
+            const markerCount = group.markers.reduce(
+              (count, m) => count + m.count,
+              0,
+            )
             return (
               <div
                 onClick={() => setSelected(group)}
                 className={clsx(
-                  "card bg-base-100 hover:bg-base-200 border-2",
+                  "card card-compact bg-base-100 hover:bg-base-200 border-2",
                   enabled && "border-primary",
                 )}
                 key={group.name}
               >
                 <div className="card-body">
-                  <p className="card-title flex-grow-0">{group.name}</p>
+                  <p className="card-title flex-grow-0">
+                    {group.name} ({markerCount}{" "}
+                    {pluralize("marker", markerCount)})
+                  </p>
                   <ul>
                     {group.markers.map((marker) => (
                       <li key={marker.title}>{marker.title}</li>

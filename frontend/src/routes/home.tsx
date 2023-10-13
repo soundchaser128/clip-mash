@@ -48,23 +48,18 @@ const HomePage = () => {
             <p className="mt-2 text-lg text-center opacity-60">
               ClipMash helps you create video compilations.
             </p>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Project name</span>
-              </label>
+
+            <div className="join mt-4">
               <input
                 type="text"
                 placeholder="Enter a project name (optional)"
-                className="input input-primary input-bordered"
+                className="input w-72 input-primary input-bordered join-item"
                 value={project}
                 onChange={(e) => setProject(e.target.value)}
               />
-            </div>
-
-            <div className="self-center btn-group">
               <Link
                 onClick={onNext}
-                className="btn btn-lg btn-primary w-64 mt-4"
+                className="btn btn-primary join-item"
                 to="/library"
               >
                 <HiRocketLaunch className="mr-2 w-6 h-6" />
@@ -81,7 +76,7 @@ const HomePage = () => {
             />
             <button
               onClick={onLoadProject}
-              className="btn btn-lg btn-primary w-64 self-center"
+              className="btn btn-primary w-64 self-center"
             >
               <HiFolder className="mr-2 w-6 h-6" />
               Open project

@@ -131,7 +131,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
             Add new group
           </button>
         </div>
-        <div className="w-full grid grid-flow-col gap-2">
+        <div className="w-full grid grid-flow-col auto-cols-fr gap-2">
           {groups.length === 0 && (
             <p className="text-center w-full">
               No groups yet. Add a new group to get started.
@@ -147,7 +147,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
               <div
                 onClick={() => setSelected(group)}
                 className={clsx(
-                  "card card-compact bg-base-100 hover:bg-base-200 border-2",
+                  "card card-compact bg-base-100 border-2",
                   enabled && "border-primary",
                 )}
                 key={group.name}
@@ -157,9 +157,12 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                     {group.name} ({markerCount}{" "}
                     {pluralize("marker", markerCount)})
                   </h3>
-                  <ul className="text-base">
+                  <ul className="text-base flex flex-wrap gap-1">
                     {group.markers.map((marker) => (
-                      <li key={marker.title}>
+                      <li
+                        className="badge badge-ghost badge-lg"
+                        key={marker.title}
+                      >
                         {marker.title}
                         <button
                           onClick={() => onRemoveFromGroup(marker, group.name)}

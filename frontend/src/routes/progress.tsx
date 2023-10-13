@@ -57,7 +57,7 @@ function Progress() {
       }
       setProgress(data)
     },
-    [navigate, sendNotification, videoId],
+    [navigate, videoId],
   )
 
   const openEventSource = useCallback(() => {

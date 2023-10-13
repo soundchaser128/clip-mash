@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:once": "vitest run",
-    "generate": "orval --config ./orval.config.ts"
+    "generate": "orval --config ./orval.config.ts && orval --config ./orval-validation.config.ts"
   },
   "dependencies": {
     "@badrap/result": "^0.2.13",
@@ -40,7 +40,8 @@
     "react-router-dom": "^6.16.0",
     "tiny-invariant": "^1.3.1",
     "use-immer": "^0.9.0",
-    "use-undo": "^1.1.1"
+    "use-undo": "^1.1.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.3",

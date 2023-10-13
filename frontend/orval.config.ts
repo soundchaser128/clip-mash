@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   "clip-mash": {
     input: "../api-docs.json",
     output: {

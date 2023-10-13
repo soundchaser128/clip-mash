@@ -85,9 +85,12 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
         <h2 className="mb-2 mt-4 font-bold text-xl">All marker titles</h2>
         <div className="flex items-start flex-wrap flex-row gap-1">
           {markers.map((marker) => {
+            const isContainedInGroup = groups.find((g) =>
+              g.markers.find((m) => m.title === marker.title),
+            )
             return (
               <button
-                className="btn btn-secondary"
+                className={clsx("btn", !isContainedInGroup && "btn-secondary")}
                 key={marker.title}
                 onClick={() => onAddToGroup(marker)}
                 type="button"

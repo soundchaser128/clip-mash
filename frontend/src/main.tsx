@@ -3,16 +3,14 @@ import {
   StateMachineProvider,
   useStateMachine,
 } from "little-state-machine"
-import React, {useEffect, useRef, useState} from "react"
+import React from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
   isRouteErrorResponse,
-  Link,
   Outlet,
   RouterProvider,
   ScrollRestoration,
-  useLoaderData,
   useNavigate,
   useRouteError,
 } from "react-router-dom"
@@ -39,11 +37,10 @@ import {
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import MarkersPage from "./routes/library/markers"
-import {resetForm, updateForm} from "./routes/actions"
+import {resetForm} from "./routes/actions"
 import AddVideosPage from "./routes/library/add"
 import useNotification from "./hooks/useNotification"
-import {HiFolder, HiRocketLaunch} from "react-icons/hi2"
-import {FormStage, FormState} from "./types/form-state"
+import {FormStage} from "./types/form-state"
 import EditVideoModal from "./routes/library/videos.$id"
 import DownloadVideosPage from "./routes/library/add/download"
 import SelectVideos from "./routes/library/add/folder"

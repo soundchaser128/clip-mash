@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:once": "vitest run",
-    "generate": "orval --config ./orval.config.ts && orval --config ./orval-validation.config.ts"
+    "generate": "orval --config ./orval.config.ts"
   },
   "dependencies": {
     "@badrap/result": "^0.2.13",

@@ -23,7 +23,7 @@ import PreviewClips from "./routes/clips/clips"
 import ListVideos from "./routes/library/videos"
 import CreateLayout from "./routes/root"
 import Layout from "./components/Layout"
-import Music from "./routes/music"
+import Music from "./routes/music/MusicPage"
 import {
   clipsLoader,
   localMarkerLoader,
@@ -51,6 +51,9 @@ import FunscriptPage from "./routes/funscript"
 import DownloadVideoPage from "./routes/download-video"
 import SelectVideosPage from "./routes/library/select-videos"
 import HomePage from "./routes/home"
+import DownloadMusic from "./routes/music/DownloadMusic"
+import UploadMusic from "./routes/music/UploadMusic"
+import ReorderSongs from "./routes/music/ReorderSongs"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -214,6 +217,18 @@ const router = createBrowserRouter([
             path: "music",
             element: <Music />,
             loader: musicLoader,
+          },
+          {
+            path: "music/download",
+            element: <DownloadMusic />,
+          },
+          {
+            path: "music/upload",
+            element: <UploadMusic />,
+          },
+          {
+            path: "music/reorder",
+            element: <ReorderSongs />,
           },
           {
             path: "video-options",

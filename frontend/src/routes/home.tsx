@@ -53,13 +53,13 @@ const HomePage = () => {
               <input
                 type="text"
                 placeholder="Enter a project name (optional)"
-                className="input w-72 input-primary input-bordered join-item"
+                className="input input-lg w-72 input-primary input-bordered join-item"
                 value={project}
                 onChange={(e) => setProject(e.target.value)}
               />
               <Link
                 onClick={onNext}
-                className="btn btn-primary join-item"
+                className="btn btn-primary btn-lg join-item"
                 to="/library"
               >
                 <HiRocketLaunch className="mr-2 w-6 h-6" />
@@ -76,7 +76,7 @@ const HomePage = () => {
             />
             <button
               onClick={onLoadProject}
-              className="btn btn-primary w-64 self-center"
+              className="btn btn-lg btn-primary w-64 self-center"
             >
               <HiFolder className="mr-2 w-6 h-6" />
               Open project

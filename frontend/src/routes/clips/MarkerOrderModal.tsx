@@ -3,13 +3,7 @@ import React, {useCallback, useState} from "react"
 import Modal from "../../components/Modal"
 import DraggableCard from "../../components/DraggableCard"
 import {getSegmentStyle, pluralize} from "../../helpers"
-import {
-  HiCheck,
-  HiChevronRight,
-  HiMinus,
-  HiPlus,
-  HiTrash,
-} from "react-icons/hi2"
+import {HiCheck, HiChevronRight, HiPlus, HiTrash} from "react-icons/hi2"
 import {updateForm} from "../actions"
 import {MarkerDto} from "../../api"
 import {MarkerCount, MarkerGroup} from "../../types/types"
@@ -92,6 +86,9 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
     ]
     onSave(newGroups)
   }
+
+  // TODO make the markers to be added more interactive, i.e. add a plus icon
+  //  when the marker isn't part of a group yet etc.
 
   return (
     <div className="flex flex-col">

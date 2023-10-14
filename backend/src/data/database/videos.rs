@@ -32,6 +32,9 @@ impl VideosDatabase {
     }
 
     pub async fn delete_video(&self, id: &str) -> Result<()> {
+        sqlx::query!("DELETE FROM ffprobe_info WHERE video_id = $1", id)
+            .execute(&self.pool)
+            .await?;
         sqlx::query!("DELETE FROM markers WHERE video_id = $1", id)
             .execute(&self.pool)
             .await?;
@@ -183,12 +186,7 @@ impl VideosDatabase {
             let path = Utf8Path::new(&video.file_path);
             if !path.exists() {
                 info!("video {} does not exist, deleting", video.id);
-                sqlx::query!("DELETE FROM markers WHERE video_id = $1", video.id)
-                    .execute(&self.pool)
-                    .await?;
-                sqlx::query!("DELETE FROM videos WHERE id = $1", video.id)
-                    .execute(&self.pool)
-                    .await?;
+                self.delete_video(&video.id).await?;
                 count += 1;
             }
         }

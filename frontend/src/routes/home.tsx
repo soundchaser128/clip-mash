@@ -52,8 +52,8 @@ const HomePage = () => {
             <div className="join mt-4">
               <input
                 type="text"
-                placeholder="Enter a project name (optional)"
-                className="input input-lg w-72 input-primary input-bordered join-item"
+                placeholder="Project name (optional)"
+                className="input input-lg input-primary input-bordered join-item"
                 value={project}
                 onChange={(e) => setProject(e.target.value)}
               />
@@ -76,7 +76,7 @@ const HomePage = () => {
             />
             <button
               onClick={onLoadProject}
-              className="btn btn-lg btn-primary w-64 self-center"
+              className="btn btn-lg btn-primary self-center"
             >
               <HiFolder className="mr-2 w-6 h-6" />
               Open project

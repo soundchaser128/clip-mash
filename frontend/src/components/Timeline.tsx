@@ -14,6 +14,8 @@ interface Props {
   selectedIndex?: number
   fadeInactiveItems?: boolean
   time?: number
+  markPoints?: number[]
+  onMarkerClick?: (time: number, index: number) => void
 }
 
 const Timeline: React.FC<Props> = ({
@@ -23,6 +25,8 @@ const Timeline: React.FC<Props> = ({
   fadeInactiveItems,
   length,
   time,
+  markPoints,
+  onMarkerClick,
 }) => {
   const styles = items.map((item, index) => {
     const backgroundColor = getSegmentColor(index, items.length)
@@ -43,9 +47,18 @@ const Timeline: React.FC<Props> = ({
       {typeof time === "number" && (
         <span
           style={{left: `${(time / length) * 100}%`}}
-          className="top-0 absolute py-2 bg-black w-0.5 bg-opacity-75 h-9 z-10"
+          className="absolute -bottom-2 bg-gray-700 rounded-full w-4 h-4 z-10"
         />
       )}
+
+      {markPoints?.map((time, index) => (
+        <span
+          key={time}
+          style={{left: `${(time / length) * 100}%`}}
+          className="top-0 absolute py-2 bg-green-500 w-2 bg-opacity-50 h-10 z-10 cursor-pointer"
+          onClick={() => onMarkerClick && onMarkerClick(time, index)}
+        />
+      ))}
 
       {items.map((item, index) => {
         const style = styles[index]

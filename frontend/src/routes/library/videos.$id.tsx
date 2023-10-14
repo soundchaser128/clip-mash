@@ -9,7 +9,6 @@ import {
   HiCheck,
   HiPencilSquare,
   HiPlay,
-  HiSquaresPlus,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
 import {formatSeconds, isBetween, parseTimestamp} from "../../helpers"
@@ -29,6 +28,9 @@ import {
 } from "../../api"
 import {detectMarkers} from "../../api"
 import {useConfig} from "../../hooks/useConfig"
+import {useHotkeys} from "react-hotkeys-hook"
+import clsx from "clsx"
+import Kbd from "@/components/Kbd"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
@@ -40,12 +42,6 @@ function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   }
 }
 
-const Box: React.FC<{children: React.ReactNode}> = ({children}) => (
-  <div className="flex flex-col bg-base-200 py-4 px-6 rounded-lg w-2/3">
-    {children}
-  </div>
-)
-
 interface Inputs {
   id?: number
   title: string
@@ -56,57 +52,24 @@ interface Inputs {
 
 type FormMode = "hidden" | "create" | "edit"
 
-function CreateMarkerButtons({
-  onDetectMarkers,
-  onAddFullVideo,
-  threshold,
-  setThreshold,
-}: {
-  onDetectMarkers: () => void
-  onAddFullVideo: () => void
-  threshold: number
-  setThreshold: (value: number) => void
-}) {
+function KeyboardReference() {
   return (
-    <div className="flex flex-col h-full gap-6 items-center">
-      <Box>
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">
-              Marker detection threshold (lower means more markers)
-            </span>
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            className="range range-sm w-full"
-            step="5"
-            value={threshold}
-            onChange={(e) => setThreshold(e.target.valueAsNumber)}
-          />
-          <div className="w-full flex justify-between text-xs px-2 mb-4">
-            <span>0</span>
-            <span className="font-bold">{Math.round(threshold)}</span>
-            <span>100</span>
-          </div>
-        </div>
-        <button onClick={onDetectMarkers} className="btn btn-secondary">
-          <HiSquaresPlus className="mr-2" />
-          Detect markers
-        </button>
-        <p className="text-sm opacity-75 mt-2">
-          Detect markers by detecting scene changes (cuts in the video). Might
-          not be fully accurate. It does not work very well for PoV videos.
-        </p>
-      </Box>
-      <Box>
-        <p className="mb-2">Add a single marker that spans the entire video.</p>
-        <button className="btn btn-secondary" onClick={onAddFullVideo}>
-          <HiPlus className="mr-2" />
-          Add entire video
-        </button>
-      </Box>
+    <div className="flex flex-col h-full">
+      <h2 className="text-xl font-bold mb-4">Keyboard reference</h2>
+      <ul className="flex flex-col gap-2">
+        <li>
+          <Kbd keys="I" /> Add mark point
+        </li>
+        <li>
+          <Kbd keys="M F" separator=" " /> Add entire video
+        </li>
+        <li>
+          <Kbd keys="M N" separator=" " /> Open marker creation form
+        </li>
+        <li>
+          <Kbd keys="M S" separator=" " /> Split marker at current time
+        </li>
+      </ul>
     </div>
   )
 }
@@ -157,6 +120,7 @@ export default function EditVideoModal() {
   const [loading, setLoading] = useState(false)
   const [threshold, setThreshold] = useState(40)
   const [time, setTime] = useState(0)
+  const [markPoints, setMarkPoints] = useImmer<number[]>([])
   const config = useConfig()
 
   const markerStart = watch("start")
@@ -167,6 +131,55 @@ export default function EditVideoModal() {
 
   const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (e) => {
     setTime(e.currentTarget.currentTime)
+  }
+
+  const onAddMark = () => {
+    setMarkPoints((draft) => {
+      draft.push(videoRef.current!.currentTime)
+    })
+  }
+
+  const onRemoveMark = (t: number) => {
+    setMarkPoints((draft) => {
+      const idx = draft.findIndex((m) => m === t)
+      draft.splice(idx, 1)
+    })
+  }
+
+  const onAddFullVideo = async () => {
+    const duration = video.duration
+    const result = await createMarker(
+      video,
+      {
+        start: 0.0,
+        end: duration,
+        title: "Untitled",
+      },
+      duration,
+      0,
+      false,
+    )
+
+    if (result.isOk) {
+      const marker = result.unwrap()
+      setMarkers([marker])
+      revalidator.revalidate()
+    } else {
+      const error = result.error
+      console.error(error)
+    }
+  }
+
+  const onShowForm = (mode: FormMode, marker?: MarkerDto) => {
+    setFormMode(mode)
+    const start = mode === "create" ? videoRef.current?.currentTime : undefined
+    setValue("start", formatSeconds(marker?.start || start, "short"))
+    setValue("end", formatSeconds(marker?.end || undefined, "short"))
+    setValue("title", marker?.primaryTag || "")
+
+    if (marker) {
+      setEditedMarker(marker)
+    }
   }
 
   const onDetectMarkers = async () => {
@@ -225,18 +238,6 @@ export default function EditVideoModal() {
     }
   }
 
-  const onShowForm = (mode: FormMode, marker?: MarkerDto) => {
-    setFormMode(mode)
-    const start = mode === "create" ? videoRef.current?.currentTime : undefined
-    setValue("start", formatSeconds(marker?.start || start, "short"))
-    setValue("end", formatSeconds(marker?.end || undefined, "short"))
-    setValue("title", marker?.primaryTag || "")
-
-    if (marker) {
-      setEditedMarker(marker)
-    }
-  }
-
   const onSetCurrentTime = (field: "start" | "end") => {
     setValue(field, formatSeconds(videoRef.current?.currentTime || 0, "short"))
   }
@@ -285,29 +286,39 @@ export default function EditVideoModal() {
     }
   }
 
-  const onAddFullVideo = async () => {
-    const duration = video.duration
-    const result = await createMarker(
-      video,
-      {
-        start: 0.0,
-        end: duration,
-        title: "Untitled",
-      },
-      duration,
-      0,
-      false,
-    )
-
-    if (result.isOk) {
-      const marker = result.unwrap()
-      setMarkers([marker])
-      revalidator.revalidate()
-    } else {
-      const error = result.error
-      console.error(error)
+  const onConsumeMarkPoints = async () => {
+    const newMarkers: MarkerDto[] = []
+    const points = [...markPoints]
+    if (points[0] != 0.0) {
+      points.unshift(0.0)
     }
+
+    for (let i = 0; i < points.length; i++) {
+      const current = points[i]
+      const next = points[i + 1] || videoDuration!
+      const marker = await createMarker(
+        video,
+        {
+          start: current,
+          end: next,
+          title: "Untitled",
+        },
+        videoDuration!,
+        i,
+        false,
+      )
+      newMarkers.push(marker.unwrap())
+    }
+    // turn mark point timestamps into markers
+    setMarkers((draft) => {
+      draft.push(...newMarkers)
+    })
+    setMarkPoints([])
   }
+  useHotkeys("i", onAddMark)
+  useHotkeys("m f", onAddFullVideo)
+  useHotkeys("m n", () => onShowForm("create", undefined))
+  useHotkeys("m s ", onSplitMarker)
 
   return (
     <Modal isOpen onClose={onClose}>
@@ -449,21 +460,15 @@ export default function EditVideoModal() {
 
           {formMode === "hidden" && (
             <div>
-              <h2 className="text-3xl font-bold mb-4">Markers</h2>
-              <div className="overflow-x-auto">
-                {markers.length === 0 && !loading && (
-                  <CreateMarkerButtons
-                    onDetectMarkers={onDetectMarkers}
-                    onAddFullVideo={onAddFullVideo}
-                    threshold={threshold}
-                    setThreshold={setThreshold}
-                  />
-                )}
+              <div className="overflow-x-auto p-2">
+                <h2 className="text-3xl font-bold mb-4">Markers</h2>
+                {markers.length === 0 && !loading && <KeyboardReference />}
                 {loading && (
                   <Loader className="h-full w-full justify-center">
                     Detecting markers...
                   </Loader>
                 )}
+
                 {markers.length > 0 && (
                   <table className="table table-compact w-full">
                     <thead>
@@ -500,6 +505,15 @@ export default function EditVideoModal() {
             </div>
           )}
           <div className="w-full flex justify-between">
+            {markPoints.length > 0 && (
+              <button
+                onClick={onConsumeMarkPoints}
+                className="btn btn-success"
+                type="button"
+              >
+                <HiPlus /> Markers from points
+              </button>
+            )}
             {formMode === "hidden" ? (
               <div className="flex gap-2">
                 <button
@@ -542,6 +556,8 @@ export default function EditVideoModal() {
         }
         fadeInactiveItems
         time={time}
+        markPoints={markPoints}
+        onMarkerClick={(time) => onRemoveMark(time)}
       />
     </Modal>
   )

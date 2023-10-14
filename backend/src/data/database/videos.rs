@@ -232,6 +232,7 @@ impl VideosDatabase {
     async fn fetch_count(&self, query: &VideoSearchQuery) -> Result<i64> {
         let mut query_builder = QueryBuilder::new("SELECT COUNT(*) FROM videos v ");
         let mut first = true;
+
         if let Some(query) = &query.query {
             query_builder
                 .push("WHERE v.rowid IN (SELECT rowid FROM videos_fts WHERE videos_fts MATCH ");
@@ -248,6 +249,7 @@ impl VideosDatabase {
             }
             query_builder.push("v.source = ");
             query_builder.push_bind(source.to_string());
+            first = false;
         }
 
         if let Some(has_markers) = query.has_markers {
@@ -255,13 +257,14 @@ impl VideosDatabase {
                 if first {
                     query_builder.push("WHERE ");
                 } else {
-                    query_builder.push("AND ");
+                    query_builder.push(" AND ");
                 }
 
                 query_builder.push("v.id IN (SELECT DISTINCT video_id FROM markers) ");
+                first = false;
             }
         }
-
+        debug!("sql for count: '{}'", query_builder.sql());
         let query = query_builder.build();
         let count = query.fetch_one(&self.pool).await?.get::<i64, _>(0);
         Ok(count)

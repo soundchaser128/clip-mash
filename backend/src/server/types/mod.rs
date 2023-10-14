@@ -426,6 +426,7 @@ pub struct WeightedRandomClipOptions {
 pub struct EqualLengthClipOptions {
     pub clip_duration: f64,
     pub divisors: Vec<f64>,
+    pub length: Option<f64>,
 }
 
 #[derive(Deserialize, Debug, ToSchema)]

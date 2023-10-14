@@ -9,6 +9,7 @@ use super::ClipPicker;
 use crate::server::types::{Clip, WeightedRandomClipOptions};
 use crate::service::clip::length_picker::ClipLengthPicker;
 use crate::service::clip::state::{MarkerState, MarkerStateInfo};
+use crate::service::clip::trim_clips;
 use crate::service::Marker;
 
 pub struct WeightedRandomClipPicker;
@@ -96,14 +97,7 @@ impl ClipPicker for WeightedRandomClipPicker {
                 index += 1;
             }
         }
-        let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
-        if clips_duration > options.length {
-            let slack = (clips_duration - options.length) / clips.len() as f64;
-            info!("clip duration {clips_duration} longer than permitted maximum duration {}, making each clip {slack} shorter", options.length);
-            for clip in &mut clips {
-                clip.range.1 -= slack;
-            }
-        }
+        trim_clips(&mut clips, options.length);
 
         clips
     }

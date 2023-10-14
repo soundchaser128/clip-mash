@@ -6,7 +6,7 @@ use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
 use crate::server::types::{Clip, PmvClipOptions, RoundRobinClipOptions};
 use crate::service::clip::state::{MarkerState, MarkerStateInfo};
-use crate::service::clip::MIN_DURATION;
+use crate::service::clip::{trim_clips, MIN_DURATION};
 use crate::service::Marker;
 
 pub struct RoundRobinClipPicker;
@@ -95,13 +95,7 @@ impl ClipPicker for RoundRobinClipPicker {
             )
         }
 
-        if clips_duration > max_duration {
-            let slack = (clips_duration - max_duration) / clips.len() as f64;
-            info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");
-            for clip in &mut clips {
-                clip.range.1 -= slack;
-            }
-        }
+        trim_clips(&mut clips, options.length);
 
         clips
     }

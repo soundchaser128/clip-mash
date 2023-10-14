@@ -362,6 +362,7 @@ export interface ListVideoDtoPage {
 export interface EqualLengthClipOptions {
   clipDuration: number
   divisors: number[]
+  length?: number | null
 }
 
 export type EncodingEffort =

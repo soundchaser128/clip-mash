@@ -193,6 +193,17 @@ impl ClipService {
     }
 }
 
+fn trim_clips(clips: &mut Vec<Clip>, max_len: f64) {
+    let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
+    if clips_duration > max_len {
+        let slack = (clips_duration - max_len) / clips.len() as f64;
+        info!("clip duration {clips_duration} longer than permitted maximum duration {max_len}, making each clip {slack} shorter");
+        for clip in clips {
+            clip.range.1 -= slack;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use float_cmp::assert_approx_eq;
@@ -222,6 +233,7 @@ mod tests {
                 clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                     clip_duration: 30.0,
                     divisors: vec![2.0, 3.0, 4.0],
+                    length: None,
                 }),
                 order: ClipOrder::Scene,
             },
@@ -271,6 +283,7 @@ mod tests {
                 clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                     clip_duration: 30.0,
                     divisors: vec![2.0, 3.0, 4.0],
+                    length: None,
                 }),
                 order: ClipOrder::Scene,
             },

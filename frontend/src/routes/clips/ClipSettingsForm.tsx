@@ -62,7 +62,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
 
   const revalidator = useRevalidator()
   const {actions, state} = useStateMachine({updateForm})
-  const isPmv = state.data.songs?.length !== 0
+  const isPmv = state.data.clipStrategy === "roundRobin"
   const clipOrderType = watch("clipOrder.type")
 
   const onSubmit = (values: Inputs) => {

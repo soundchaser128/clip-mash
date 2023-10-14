@@ -102,20 +102,19 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
         <h2 className="mb-2 mt-4 font-bold text-xl">All marker titles</h2>
         <div className="flex items-start flex-wrap flex-row gap-1">
           {markers.map((marker) => {
-            const isContainedInGroup = groups.find((g) =>
+            const isContainedInGroup = !!groups.find((g) =>
               g.markers.find((m) => m.title === marker.title),
             )
+            const Icon = isContainedInGroup ? HiCheck : HiPlus
             return (
               <button
-                className={clsx(
-                  "btn btn-sm",
-                  !isContainedInGroup && "btn-secondary",
-                )}
+                className="btn btn-sm btn-secondary"
                 key={marker.title}
                 onClick={() => onAddToGroup(marker)}
                 type="button"
+                disabled={isContainedInGroup}
               >
-                <HiPlus className="mr-2" />
+                <Icon />
                 {marker.title}
               </button>
             )

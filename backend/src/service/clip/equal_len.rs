@@ -4,7 +4,7 @@ use tracing::info;
 
 use super::ClipPicker;
 use crate::server::types::{Clip, EqualLengthClipOptions};
-use crate::service::clip::MIN_DURATION;
+use crate::service::clip::{trim_clips, MIN_DURATION};
 use crate::service::Marker;
 
 pub struct EqualLengthClipPicker;
@@ -28,9 +28,17 @@ impl ClipPicker for EqualLengthClipPicker {
             .map(|d| (duration / d).max(MIN_DURATION))
             .collect();
         let mut clips = vec![];
+        let mut len = 0.0;
         for marker in markers {
             let start = marker.start_time;
             let end = marker.end_time;
+
+            if let Some(max_len) = options.length {
+                if len >= max_len {
+                    trim_clips(&mut clips, max_len);
+                    break;
+                }
+            }
 
             let mut index = 0;
             let mut offset = start;
@@ -54,6 +62,7 @@ impl ClipPicker for EqualLengthClipPicker {
                         marker_title: marker.title.clone(),
                     });
                     index += 1;
+                    len += duration;
                 }
                 offset += duration;
             }

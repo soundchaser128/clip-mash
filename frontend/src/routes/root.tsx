@@ -44,7 +44,7 @@ const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
         },
         {
           stage: FormStage.CreateVideo,
-          link: "/progress",
+          link: "/generate",
           content: "Create video",
         },
       ]}

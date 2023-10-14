@@ -41,25 +41,27 @@ const getClipLengths = (state: FormState): PmvClipOptions => {
 }
 
 const getClipSettings = (state: FormState): ClipPickerOptions => {
+  const songsLength =
+    state.songs && state.songs.length > 0
+      ? state.songs.reduce((sum, song) => sum + song.duration, 0)
+      : state.selectedMarkers!.reduce(
+          (sum, {selectedRange: [start, end]}) => sum + (end - start),
+          0,
+        )
   if (state.clipStrategy === "weightedRandom") {
     return {
       type: "weightedRandom",
       // @ts-expect-error form state needs to align with this
       weights: state.clipWeights!,
       clipLengths: getClipLengths(state),
-      length:
-        state.songs && state.songs.length > 0
-          ? state.songs.reduce((sum, song) => sum + song.duration, 0)
-          : state.selectedMarkers!.reduce(
-              (sum, {selectedRange: [start, end]}) => sum + (end - start),
-              0,
-            ),
+      length: songsLength,
     }
   } else if (state.clipStrategy === "equalLength") {
     return {
       type: "equalLength",
       clipDuration: state.clipDuration || 30,
       divisors: [2, 3, 4],
+      length: songsLength,
     }
   } else if (
     state.clipStrategy === "roundRobin" &&

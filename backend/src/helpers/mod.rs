@@ -31,6 +31,7 @@ where
     results
 }
 
+#[allow(unused)]
 pub async fn try_parallelize<T, I, F>(futures: I) -> Result<Vec<T>>
 where
     F: Future<Output = Result<T>> + Send,

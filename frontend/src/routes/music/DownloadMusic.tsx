@@ -1,4 +1,4 @@
-import {SongDto, downloadMusic, getBeats} from "@/api"
+import {downloadMusic, getBeats} from "@/api"
 import Field from "@/components/Field"
 import Loader from "@/components/Loader"
 import {useState} from "react"

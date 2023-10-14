@@ -295,7 +295,7 @@ impl VideosDatabase {
             source,
             has_markers,
         } = query_object;
-        info!("count: {} for query {:?}", count, query);
+        debug!("count: {} for query {:?}", count, query);
         let limit = params.limit();
         let offset = params.offset();
         let order_by = match params.sort.as_deref() {

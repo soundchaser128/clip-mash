@@ -385,6 +385,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "mock_instant",
+ "num_cpus",
  "opener",
  "ordered-float",
  "rand 0.8.5",

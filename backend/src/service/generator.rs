@@ -73,8 +73,7 @@ impl CompilationGenerator {
         database: Database,
     ) -> Result<Self> {
         let ffmpeg_path = ffmpeg_location.ffmpeg();
-        let encoding_optimization =
-            EncodingOptimizationService::new(ffmpeg_location.clone(), database.clone()).await;
+        let encoding_optimization = EncodingOptimizationService::new(database.clone());
         let streams_service = StreamUrlService::new(database.clone()).await;
         info!("using ffmpeg at {ffmpeg_path}");
         Ok(CompilationGenerator {

@@ -9,6 +9,7 @@ use sqlx::{FromRow, SqlitePool};
 use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
 
+use self::ffprobe::FfProbeInfoDatabase;
 use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
 use self::progress::ProgressDatabase;
@@ -18,6 +19,7 @@ use crate::server::types::{Beats, Progress, VideoLike};
 use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
 
+mod ffprobe;
 mod markers;
 mod music;
 mod progress;
@@ -215,6 +217,7 @@ pub struct Database {
     pub markers: MarkersDatabase,
     pub progress: ProgressDatabase,
     pub music: MusicDatabase,
+    pub ffprobe: FfProbeInfoDatabase,
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -237,6 +240,7 @@ impl Database {
             markers: MarkersDatabase::new(pool.clone()),
             progress: ProgressDatabase::new(pool.clone()),
             music: MusicDatabase::new(pool.clone()),
+            ffprobe: FfProbeInfoDatabase::new(pool.clone()),
             videos: VideosDatabase::new(pool),
         })
     }
@@ -247,6 +251,7 @@ impl Database {
             markers: MarkersDatabase::new(pool.clone()),
             progress: ProgressDatabase::new(pool.clone()),
             music: MusicDatabase::new(pool.clone()),
+            ffprobe: FfProbeInfoDatabase::new(pool.clone()),
             videos: VideosDatabase::new(pool),
         }
     }

@@ -137,9 +137,7 @@ pub async fn videos_need_encoding(
         video_ids.extend(all_ids);
     }
 
-    let service =
-        EncodingOptimizationService::new(state.ffmpeg_location.clone(), state.database.clone())
-            .await;
+    let service = EncodingOptimizationService::new(state.database.clone());
     let ids: Vec<_> = video_ids.iter().map(|s| s.as_str()).collect();
 
     let needs_encoding = service.needs_re_encode(&ids).await?;

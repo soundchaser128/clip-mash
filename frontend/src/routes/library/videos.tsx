@@ -52,6 +52,9 @@ export default function ListVideos() {
   const [sort, setSort] = useState(params.get("sort") ?? "markers")
   const {setQueryDebounced, addOrReplaceParam} = useDebouncedSetQuery()
   const [syncingVideo, setSyncingVideo] = useState<string>()
+  const [hasMarkers, setHasMarkers] = useState<string | undefined>(
+    params.get("hasMarkers") ?? "",
+  )
   const [query] = useSearchParams()
 
   useEffect(() => {
@@ -71,6 +74,16 @@ export default function ListVideos() {
   const onChangeSort = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSort(e.target.value)
     addOrReplaceParam("sort", e.target.value)
+  }
+
+  const onChangeHasMarkers = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    setHasMarkers(value)
+    if (value === "") {
+      addOrReplaceParam("hasMarkers", undefined)
+    } else {
+      addOrReplaceParam("hasMarkers", value)
+    }
   }
 
   const onChangeSource = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -205,6 +218,24 @@ export default function ListVideos() {
                 <option value="title">Video title</option>
                 <option value="created">Created on</option>
                 <option value="duration">Duration</option>
+              </select>
+            </div>
+
+            <div className="flex gap-1">
+              <label className="label">
+                <span className="label-text">Has markers</span>
+              </label>
+              <select
+                value={hasMarkers}
+                onChange={onChangeHasMarkers}
+                className="select select-sm select-bordered"
+              >
+                <option disabled value="none">
+                  Has markers
+                </option>
+                <option value="">All</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
               </select>
             </div>
           </div>

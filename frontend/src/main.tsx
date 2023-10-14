@@ -183,7 +183,7 @@ const router = createBrowserRouter([
           {
             path: "library",
             element: <ListVideos />,
-            loader: makeVideoLoader(false),
+            loader: makeVideoLoader({}),
             children: [
               {
                 path: ":id/markers",
@@ -206,7 +206,7 @@ const router = createBrowserRouter([
           {
             path: "/library/select",
             element: <SelectVideosPage />,
-            loader: makeVideoLoader(true),
+            loader: makeVideoLoader({hasMarkers: true}),
           },
           {
             path: "markers",

@@ -253,16 +253,18 @@ impl VideosDatabase {
         }
 
         if let Some(has_markers) = query.has_markers {
-            if has_markers {
-                if first {
-                    query_builder.push("WHERE ");
-                } else {
-                    query_builder.push(" AND ");
-                }
-
-                query_builder.push("v.id IN (SELECT DISTINCT video_id FROM markers) ");
-                first = false;
+            if first {
+                query_builder.push("WHERE ");
+            } else {
+                query_builder.push(" AND ");
             }
+
+            if has_markers {
+                query_builder.push("v.id IN (SELECT DISTINCT video_id FROM markers) ");
+            } else {
+                query_builder.push("v.id NOT IN (SELECT DISTINCT video_id FROM markers) ");
+            }
+            first = false;
         }
         debug!("sql for count: '{}'", query_builder.sql());
         let query = query_builder.build();
@@ -336,6 +338,8 @@ impl VideosDatabase {
         if let Some(has_markers) = has_markers {
             if has_markers {
                 query_builder.push(" HAVING marker_count > 0 ");
+            } else {
+                query_builder.push(" HAVING marker_count = 0 ");
             }
         }
 

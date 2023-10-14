@@ -5,6 +5,7 @@ import {
   ClipPickerOptions,
   ClipsResponse,
   CreateClipsBody,
+  ListVideosParams,
   PmvClipOptions,
   StashVideoDtoPage,
   VideoDto,
@@ -165,13 +166,25 @@ export const stashVideoLoader: LoaderFunction = async ({request}) => {
   return videos
 }
 
-export const makeVideoLoader: (withMarkers: boolean) => LoaderFunction =
-  (withMarkers) =>
+function parseBoolean(str: string | null): boolean | null {
+  if (str === "true") {
+    return true
+  } else if (str === "false") {
+    return false
+  } else {
+    return null
+  }
+}
+
+export const makeVideoLoader: (
+  params: Partial<ListVideosParams>,
+) => LoaderFunction =
+  (params) =>
   async ({request}) => {
     const url = new URL(request.url)
     const query = url.searchParams
     const videos = await listVideos({
-      hasMarkers: withMarkers ? true : null,
+      hasMarkers: params.hasMarkers || parseBoolean(query.get("hasMarkers")),
       page: Number(query.get("page")) || 0,
       size: DEFAULT_PAGE_LENGTH,
       query: query.get("query"),

@@ -115,6 +115,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                 onClick={() => onAddToGroup(marker)}
                 type="button"
               >
+                <HiPlus className="mr-2" />
                 {marker.title}
               </button>
             )

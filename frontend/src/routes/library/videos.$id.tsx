@@ -9,6 +9,9 @@ import {
   HiCheck,
   HiPencilSquare,
   HiPlay,
+  HiQuestionMarkCircle,
+  HiMagnifyingGlass,
+  HiChevronLeft,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
 import {formatSeconds, isBetween, parseTimestamp} from "../../helpers"
@@ -28,9 +31,8 @@ import {
 } from "../../api"
 import {detectMarkers} from "../../api"
 import {useConfig} from "../../hooks/useConfig"
-import {useHotkeys} from "react-hotkeys-hook"
-import clsx from "clsx"
 import Kbd from "@/components/Kbd"
+import useHotkeys from "@/hooks/useHotkeys"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
@@ -50,12 +52,36 @@ interface Inputs {
   createInStash?: boolean
 }
 
-type FormMode = "hidden" | "create" | "edit"
+type FormMode = "hidden" | "create" | "edit" | "help"
 
-function KeyboardReference() {
+function HelpPanel({onBack}: {onBack: () => void}) {
   return (
     <div className="flex flex-col h-full">
-      <h2 className="text-xl font-bold mb-4">Keyboard reference</h2>
+      <p className="text-sm link mb-2" onClick={onBack}>
+        <HiChevronLeft className="mr-1 inline" />
+        Back
+      </p>
+      <h2 className="text-xl font-bold mb-2">Information</h2>
+      <p className="mb-2">
+        This panel allows you to create, update and delete markers. Markers are
+        labelled sections of a video that will be used later on to create clips.
+        Only parts of the video that are part of a marker will be used for the
+        compilation.
+      </p>
+      <p className="mb-2">
+        You can create markers manually, or use the &quot;Detect markers&quot;
+        button to automatically create markers based on cuts in the video. You
+        can also split markers into two parts, or add the entire video as a
+        marker.
+      </p>
+
+      <p className="mb-4">
+        Mark points can be used to mark interesting points (cuts, scene
+        transitions) in a video and you can turn them into markers bu clicking
+        on the &quot;Markers from points&quot; button.
+      </p>
+
+      <h2 className="text-xl font-bold mb-2">Keyboard reference</h2>
       <ul className="flex flex-col gap-2">
         <li>
           <Kbd keys="I" /> Add mark point
@@ -122,6 +148,7 @@ export default function EditVideoModal() {
   const [time, setTime] = useState(0)
   const [markPoints, setMarkPoints] = useImmer<number[]>([])
   const config = useConfig()
+  const showingForm = formMode === "create" || formMode === "edit"
 
   const markerStart = watch("start")
 
@@ -333,7 +360,7 @@ export default function EditVideoModal() {
           onTimeUpdate={onTimeUpdate}
         />
         <div className="flex flex-col w-1/3 justify-between">
-          {formMode !== "hidden" && (
+          {showingForm && (
             <form
               className="w-full flex flex-col gap-2"
               onSubmit={handleSubmit(onSubmit)}
@@ -458,18 +485,68 @@ export default function EditVideoModal() {
             </form>
           )}
 
-          {formMode === "hidden" && (
+          {!showingForm && (
             <div>
               <div className="overflow-x-auto p-2">
-                <h2 className="text-3xl font-bold mb-4">Markers</h2>
-                {markers.length === 0 && !loading && <KeyboardReference />}
+                {formMode === "help" && (
+                  <HelpPanel onBack={() => setFormMode("hidden")} />
+                )}
                 {loading && (
                   <Loader className="h-full w-full justify-center">
                     Detecting markers...
                   </Loader>
                 )}
+                {formMode === "hidden" && (
+                  <>
+                    {markPoints.length > 0 && (
+                      <button
+                        onClick={onConsumeMarkPoints}
+                        className="btn btn-success"
+                        type="button"
+                      >
+                        <HiPlus /> Markers from points
+                      </button>
+                    )}
+                    {formMode === "hidden" && (
+                      <div className="flex w-full justify-between">
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => onShowForm("create")}
+                            className="btn btn-primary"
+                          >
+                            <HiPlus className="w-4 h-4 mr-2" />
+                            Add
+                          </button>
+                          <button
+                            disabled={markers.length === 0}
+                            onClick={onSplitMarker}
+                            className="btn btn-secondary"
+                          >
+                            <HiTag className="w-4 h-4 mr-2" />
+                            Split
+                          </button>
+                          <button
+                            onClick={onDetectMarkers}
+                            className="btn btn-secondary"
+                          >
+                            <HiMagnifyingGlass className="w-4 h-4 mr-2" />
+                            Detect
+                          </button>
+                        </div>
 
-                {markers.length > 0 && (
+                        <button
+                          onClick={() => setFormMode("help")}
+                          className="btn btn-secondary"
+                        >
+                          <HiQuestionMarkCircle className="w-4 h-4 mr-2" />
+                          Help
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {formMode === "hidden" && (
                   <table className="table table-compact w-full">
                     <thead>
                       <tr>
@@ -481,6 +558,15 @@ export default function EditVideoModal() {
                       </tr>
                     </thead>
                     <tbody>
+                      {markers.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="text-center">
+                            No markers yet. Add a marker by clicking on the
+                            &quot;Add&quot; button above.
+                          </td>
+                        </tr>
+                      )}
+
                       {markers.map((marker, idx) => (
                         <tr key={marker.id}>
                           <td>{idx + 1}</td>
@@ -505,40 +591,10 @@ export default function EditVideoModal() {
             </div>
           )}
           <div className="w-full flex justify-between">
-            {markPoints.length > 0 && (
-              <button
-                onClick={onConsumeMarkPoints}
-                className="btn btn-success"
-                type="button"
-              >
-                <HiPlus /> Markers from points
-              </button>
-            )}
-            {formMode === "hidden" ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onShowForm("create")}
-                  className="btn btn-primary"
-                >
-                  <HiTag className="w-4 h-4 mr-2" />
-                  Add new marker
-                </button>
-                <button
-                  disabled={markers.length === 0}
-                  onClick={onSplitMarker}
-                  className="btn btn-secondary"
-                >
-                  <HiTag className="w-4 h-4 mr-2" />
-                  Split marker
-                </button>
-              </div>
-            ) : (
-              <span />
-            )}
-
-            <button onClick={onDone} className="btn">
+            <span />
+            <button onClick={onDone} className="btn btn-success">
               <HiCheck className="mr-2" />
-              Close
+              Done
             </button>
           </div>
         </div>

@@ -237,6 +237,9 @@ impl VideoService {
                 let created_on = OffsetDateTime::parse(&scene.created_at, &Rfc3339)
                     .map(|time| time.unix_timestamp())
                     .ok();
+                let mut tags = scene.tags.iter().map(|t| t.name.as_str()).collect_vec();
+                tags.extend(scene.performers.iter().map(|p| p.name.as_str()));
+                let tags = tags.join(TAG_SEPARATOR);
 
                 CreateVideo {
                     id: generate_id(),
@@ -247,13 +250,7 @@ impl VideoService {
                     video_preview_image: Some(self.stash_api.get_screenshot_url(stash_id)),
                     stash_scene_id: Some(scene.id.parse().unwrap()),
                     title,
-                    tags: Some(
-                        scene
-                            .tags
-                            .iter()
-                            .map(|t| t.name.as_str())
-                            .join(TAG_SEPARATOR),
-                    ),
+                    tags: Some(tags),
                     created_on,
                 }
             })
@@ -324,7 +321,8 @@ impl VideoService {
                 .filter(|t| !t.is_empty() && video.video_title.as_deref() != Some(t));
             info!("setting video title to {new_title:?} (not changing if None)");
 
-            let new_tags: Vec<_> = scene.tags.iter().map(|t| t.name.clone()).collect();
+            let mut new_tags = scene.tags.iter().map(|t| t.name.clone()).collect_vec();
+            new_tags.extend(scene.performers.iter().map(|p| p.name.clone()));
             let new_tags = Some(new_tags).filter(|t| !t.is_empty());
 
             video.video_tags = new_tags.clone().map(|t| t.join(TAG_SEPARATOR));

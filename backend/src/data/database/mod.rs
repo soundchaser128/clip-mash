@@ -588,12 +588,12 @@ mod test {
         }
         let result = database
             .markers
-            .list_markers(Some(&[video.id]))
+            .list_markers(Some(&[video.id]), None)
             .await
             .unwrap();
         assert_eq!(5, result.len());
 
-        let result = database.markers.list_markers(None).await.unwrap();
+        let result = database.markers.list_markers(None, None).await.unwrap();
         assert_eq!(5, result.len());
     }
 

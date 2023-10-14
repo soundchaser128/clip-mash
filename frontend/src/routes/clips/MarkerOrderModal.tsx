@@ -110,7 +110,10 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
             )
             return (
               <button
-                className={clsx("btn", !isContainedInGroup && "btn-secondary")}
+                className={clsx(
+                  "btn btn-sm",
+                  !isContainedInGroup && "btn-secondary",
+                )}
                 key={marker.title}
                 onClick={() => onAddToGroup(marker)}
                 type="button"
@@ -134,7 +137,9 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
         <div className="w-full grid grid-flow-col auto-cols-fr gap-2">
           {groups.length === 0 && (
             <p className="text-center w-full">
-              No groups yet. Add a new group to get started.
+              No groups yet. Add a new group to get started. Select a group by
+              clicking on it, then add markers to it by clicking on the marker
+              titles above.
             </p>
           )}
           {groups.map((group) => {

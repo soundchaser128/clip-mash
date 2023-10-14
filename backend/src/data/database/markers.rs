@@ -232,6 +232,7 @@ impl MarkersDatabase {
     pub async fn list_markers(
         &self,
         video_ids: Option<&[String]>,
+        sort: Option<&str>,
     ) -> Result<Vec<DbMarkerWithVideo>> {
         info!("fetching markers with video ids {video_ids:?}");
         let mut query_builder = QueryBuilder::new(
@@ -250,7 +251,14 @@ impl MarkersDatabase {
             }
             list.push_unseparated(") ");
         }
-        query_builder.push("ORDER BY m.video_id ASC, m.index_within_video ASC");
+        query_builder.push("ORDER BY ");
+        let order = match sort {
+            Some("duration") => "(m.end_time - m.start_time DESC)",
+            Some("title") => "m.title ASC",
+            Some("created") => "m.marker_created_on DESC",
+            _ => "m.video_id ASC, m.index_within_video ASC",
+        };
+        query_builder.push(order);
         debug!("sql: '{}'", query_builder.sql());
         let query = query_builder.build();
         let records = query.fetch_all(&self.pool).await?;

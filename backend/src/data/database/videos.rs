@@ -301,6 +301,7 @@ impl VideosDatabase {
         let order_by = match params.sort.as_deref() {
             Some("title") => "v.video_title COLLATE NOCASE ASC",
             Some("created") => "v.video_created_on DESC",
+            Some("duration") => "v.duration DESC",
             _ => "marker_count DESC, v.video_title COLLATE NOCASE ASC",
         };
 

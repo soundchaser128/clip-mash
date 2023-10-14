@@ -345,7 +345,7 @@ pub async fn list_markers(
     let markers = state
         .database
         .markers
-        .list_markers(video_ids.as_deref())
+        .list_markers(video_ids.as_deref(), None)
         .await?;
     let converter = MarkerDtoConverter::new().await;
 

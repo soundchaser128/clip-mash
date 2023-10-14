@@ -173,6 +173,7 @@ export default function ListVideos() {
                 <option value="markers">Number of markers</option>
                 <option value="title">Video title</option>
                 <option value="created">Created on</option>
+                <option value="duration">Duration</option>
               </select>
             </div>
           </div>

@@ -287,7 +287,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
       <div className="flex w-full justify-between items-center mt-4">
         <WeightsModal clips={clips} />
 
-        <button type="submit" className="btn btn-primary">
+        <button type="submit" className="btn btn-success">
           <HiCheck className="mr-2" />
           Apply
         </button>

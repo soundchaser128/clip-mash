@@ -87,6 +87,11 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
     onSave(newGroups)
   }
 
+  const onRemoveGroup = (groupName: string) => {
+    const newGroups = groups.filter((g) => g.name !== groupName)
+    onSave(newGroups)
+  }
+
   return (
     <div className="flex flex-col">
       <h1 className="text-2xl font-bold mb-2">Marker groups</h1>

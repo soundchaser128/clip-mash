@@ -307,7 +307,7 @@ const SelectMarkers: React.FC = () => {
                   </strong>
                   <time dateTime={isoDate}>{humanDate}</time>
                 </p>
-                <div className="">
+                <div>
                   <div className="w-full">
                     <input
                       value={

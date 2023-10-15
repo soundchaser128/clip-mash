@@ -49,7 +49,9 @@ const getClipSettings = (state: FormState): ClipPickerOptions => {
           (sum, {selectedRange: [start, end]}) => sum + (end - start),
           0,
         )
-  if (state.clipStrategy === "weightedRandom") {
+  if (state.clipStrategy === "noSplit" || state.splitClips === false) {
+    return {type: "noSplit"}
+  } else if (state.clipStrategy === "weightedRandom") {
     return {
       type: "weightedRandom",
       // @ts-expect-error form state needs to align with this
@@ -74,8 +76,6 @@ const getClipSettings = (state: FormState): ClipPickerOptions => {
       clipLengths: getClipLengths(state),
       length: state.songs.reduce((sum, song) => sum + song.duration, 0),
     }
-  } else if (state.clipStrategy === "noSplit" || state.splitClips === false) {
-    return {type: "noSplit"}
   } else {
     return {
       type: "equalLength",

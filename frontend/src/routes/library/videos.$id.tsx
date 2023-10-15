@@ -585,7 +585,7 @@ export default function EditVideoModal() {
                             <td className="font-bold">{marker.primaryTag}</td>
                             <td>{formatSeconds(marker.start, "short")}</td>
                             <td>{formatSeconds(marker.end, "short")}</td>
-                            <td className="">
+                            <td>
                               <button
                                 onClick={() => onShowForm("edit", marker)}
                                 type="button"

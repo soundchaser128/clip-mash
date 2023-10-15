@@ -80,11 +80,11 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
   }
 
   const onAddNewGroup = () => {
-    const newGroups = [
-      ...groups,
-      {name: `Group ${groups.length + 1}`, markers: []},
-    ]
+    const newGroup = {name: `Group ${groups.length + 1}`, markers: []}
+
+    const newGroups = [...groups, newGroup]
     onSave(newGroups)
+    setSelected(newGroup)
   }
 
   const onRemoveGroup = (groupName: string) => {
@@ -162,6 +162,12 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                   >
                     {group.name} ({markerCount}{" "}
                     {pluralize("marker", markerCount)})
+                    <button
+                      onClick={() => onRemoveGroup(group.name)}
+                      className="btn btn-error btn-xs btn-square btn-ghost ml-1 text-red-500"
+                    >
+                      <HiTrash />
+                    </button>
                   </h3>
                   <ul className="text-base flex flex-wrap gap-1">
                     {group.markers.map((marker) => (
@@ -174,7 +180,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                           onClick={() => onRemoveFromGroup(marker, group.name)}
                           className="btn btn-error btn-xs btn-square btn-ghost ml-1 text-red-500"
                         >
-                          <HiTrash className="" />
+                          <HiTrash />
                         </button>
                       </li>
                     ))}

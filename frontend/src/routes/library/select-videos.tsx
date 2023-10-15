@@ -106,7 +106,7 @@ export default function ListVideos() {
       <div className="grid grid-cols-3 w-full">
         <span />
         <div className="place-self-center text-center mb-4">
-          <p className="">
+          <p>
             <strong>{state.data.videoIds?.length || "All"}</strong>{" "}
             {pluralize("video", state.data.videoIds?.length)} selected.
           </p>

@@ -309,8 +309,10 @@ pub async fn get_marker_preview(
 ) -> Result<impl IntoResponse, AppError> {
     use tower_http::services::ServeFile;
 
+    info!("getting preview image for marker {id}");
     let marker = state.database.markers.get_marker(id).await?;
     if let Some(preview_image) = marker.marker_preview_image {
+        info!("preview image found at {preview_image}");
         let result = ServeFile::new(preview_image).oneshot(request).await;
         Ok(result)
     } else {

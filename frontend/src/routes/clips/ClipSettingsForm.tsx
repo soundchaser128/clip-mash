@@ -58,7 +58,6 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
     defaultValues: initialValues,
   })
   const doSplitClips = watch("splitClips")
-  const measureCountType = watch("measureCountType")
 
   const revalidator = useRevalidator()
   const {actions, state} = useStateMachine({updateForm})

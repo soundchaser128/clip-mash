@@ -15,7 +15,7 @@ import {useImmer} from "use-immer"
 import clsx from "clsx"
 import {SongDto} from "@/api"
 import HelpModal from "@/components/HelpModal"
-import {FormStage} from "@/types/form-state"
+import {FormStage, FormState} from "@/types/form-state"
 import {ClipStrategy} from "@/types/types"
 import SongsTable from "./SongsTable"
 import {produce} from "immer"
@@ -124,15 +124,22 @@ export default function Music() {
 
   const onNextStage = () => {
     const nextStage = FormStage.VideoOptions
+    const anySongsSelected = selection.length > 0
 
-    actions.updateForm({
-      stage: nextStage,
-      songs: selection.map((id) => songs.find((s) => s.songId === id)!),
-      trimVideoForSongs: true,
-      musicVolume: formValues.musicVolume / 100.0,
-      clipStrategy: formValues.clipStrategy,
-    })
+    const update: Partial<FormState> = anySongsSelected
+      ? {
+          stage: nextStage,
+          songs: selection.map((id) => songs.find((s) => s.songId === id)!),
+          trimVideoForSongs: true,
+          musicVolume: formValues.musicVolume / 100.0,
+          clipStrategy: formValues.clipStrategy,
+        }
+      : {
+          stage: nextStage,
+          clipStrategy: "equalLength",
+        }
 
+    actions.updateForm(update)
     navigate("/video-options")
   }
 

@@ -507,7 +507,7 @@ export default function EditVideoModal() {
                         <div className="join join-vertical">
                           <button
                             onClick={() => onShowForm("create")}
-                            className="btn btn-sm btn-primary join-item"
+                            className="btn btn-sm btn-success join-item"
                           >
                             <HiPlus className="w-4 h-4 mr-2" />
                             Add

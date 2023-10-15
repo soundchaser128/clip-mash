@@ -12,14 +12,21 @@ interface Inputs {
   measureCountRandomEnd: number
 }
 
-const PmvSettingsForm: React.FC = () => {
-  const {register, watch} = useForm<Inputs>()
+interface Props {
+  onSubmit: (data: Inputs) => void
+  initialValues: Inputs
+}
+
+const PmvSettingsForm: React.FC<Props> = ({onSubmit, initialValues}) => {
+  const {register, watch, handleSubmit} = useForm<Inputs>({
+    defaultValues: initialValues,
+  })
 
   const doSplitClips = watch("splitClips")
   const measureCountType = watch("measureCountType")
 
   return (
-    <form>
+    <form onSubmit={handleSubmit(onSubmit)}>
       <div className="form-control">
         <label className="label">
           <span className="label-text">Beats per measure</span>

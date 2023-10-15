@@ -59,6 +59,11 @@ export type SplitMarkerParams = {
 
 export type DeleteMarker200 = unknown | null
 
+export type ListMarkerTitlesParams = {
+  count?: number | null
+  prefix?: string | null
+}
+
 export type ListMarkersParams = {
   videoIds?: string | null
 }
@@ -306,8 +311,6 @@ export type MeasureCountOneOfThree = {
   type: MeasureCountOneOfThreeType
 }
 
-export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
-
 export type MeasureCountOneOfType =
   (typeof MeasureCountOneOfType)[keyof typeof MeasureCountOneOfType]
 
@@ -320,6 +323,8 @@ export type MeasureCountOneOf = {
   count: number
   type: MeasureCountOneOfType
 }
+
+export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
 
 export interface MarkerDto {
   createdOn: number
@@ -344,6 +349,11 @@ export interface MarkerDtoPage {
   pageSize: number
   totalItems: number
   totalPages: number
+}
+
+export interface MarkerCount {
+  count: number
+  title: string
 }
 
 export interface ListVideoDto {
@@ -636,6 +646,14 @@ export const createNewMarker = (createMarkerRequest: CreateMarkerRequest) => {
   })
 }
 
+export const listMarkerTitles = (params?: ListMarkerTitlesParams) => {
+  return customInstance<MarkerCount[]>({
+    url: `/api/library/marker/title`,
+    method: "get",
+    params,
+  })
+}
+
 export const updateMarker = (id: number, updateMarker: UpdateMarker) => {
   return customInstance<MarkerDto>({
     url: `/api/library/marker/${id}`,
@@ -861,6 +879,9 @@ export type ListMarkersResult = NonNullable<
 >
 export type CreateNewMarkerResult = NonNullable<
   Awaited<ReturnType<typeof createNewMarker>>
+>
+export type ListMarkerTitlesResult = NonNullable<
+  Awaited<ReturnType<typeof listMarkerTitles>>
 >
 export type UpdateMarkerResult = NonNullable<
   Awaited<ReturnType<typeof updateMarker>>

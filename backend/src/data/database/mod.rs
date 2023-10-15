@@ -226,6 +226,12 @@ pub struct VideoUpdate {
     pub tags: Option<Vec<String>>,
 }
 
+#[derive(Serialize, ToSchema, Debug)]
+pub struct MarkerCount {
+    pub title: String,
+    pub count: i64,
+}
+
 impl Database {
     pub async fn new(path: &str) -> Result<Self> {
         let options = SqliteConnectOptions::from_str(&format!("sqlite:{path}?mode=rwc"))?

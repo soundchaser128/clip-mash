@@ -1,7 +1,7 @@
 use sqlx::{FromRow, QueryBuilder, SqliteExecutor, SqlitePool};
 use tracing::{debug, info};
 
-use super::{DbMarker, DbMarkerWithVideo};
+use super::{DbMarker, DbMarkerWithVideo, MarkerCount};
 use crate::data::database::unix_timestamp_now;
 use crate::server::types::{CreateMarker, UpdateMarker};
 use crate::Result;
@@ -293,5 +293,30 @@ impl MarkersDatabase {
         .fetch_all(&self.pool)
         .await?;
         Ok(markers)
+    }
+
+    pub async fn get_marker_titles(
+        &self,
+        count: i64,
+        prefix: Option<&str>,
+    ) -> Result<Vec<MarkerCount>> {
+        let prefix = prefix
+            .map(|s| format!("{}%", s))
+            .unwrap_or_else(|| "%".to_string());
+        let results = sqlx::query_as!(
+            MarkerCount,
+            "SELECT title, count(*) AS count
+            FROM markers
+            WHERE title != 'Untitled' AND title LIKE $1
+            GROUP BY title
+            ORDER BY count DESC
+            LIMIT $2",
+            prefix,
+            count
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(results)
     }
 }

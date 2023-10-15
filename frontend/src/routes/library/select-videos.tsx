@@ -105,10 +105,13 @@ export default function ListVideos() {
       <JumpToTop />
       <div className="grid grid-cols-3 w-full">
         <span />
-        <p className="place-self-center">
-          <strong>{state.data.videoIds?.length || "All"}</strong>{" "}
-          {pluralize("video", state.data.videoIds?.length)} selected.
-        </p>
+        <div className="place-self-center text-center mb-4">
+          <p className="">
+            <strong>{state.data.videoIds?.length || "All"}</strong>{" "}
+            {pluralize("video", state.data.videoIds?.length)} selected.
+          </p>
+          <p>Click on videos to add them to the selection.</p>
+        </div>
         <button
           className="btn btn-success place-self-end"
           onClick={onNextStage}

@@ -5,7 +5,7 @@ use super::handlers::music::SongUpload;
 use super::handlers::project::{CreateFunscriptBody, ProjectCreateResponse};
 use super::handlers::version::Version;
 use super::types::*;
-use crate::data::database::{VideoSource, VideoUpdate};
+use crate::data::database::{MarkerCount, VideoSource, VideoUpdate};
 use crate::server::handlers::{library, music, progress, project, stash, version};
 use crate::service::stash_config::StashConfig;
 use crate::service::video::AddVideosRequest;
@@ -28,6 +28,7 @@ use crate::service::video::AddVideosRequest;
         library::cleanup_videos,
         library::merge_stash_video,
         library::videos_need_encoding,
+        library::list_marker_titles,
         progress::get_progress_info,
         project::create_video,
         project::download_video,
@@ -95,6 +96,7 @@ use crate::service::video::AddVideosRequest;
             CreateMarkerRequest,
             SongUpload,
             Version,
+            MarkerCount,
         )
     ),
     tags(

@@ -161,7 +161,8 @@ export default function ListVideos() {
         </div>
         <div className="text-center">
           <p>
-            Found <strong>{initialVideos.totalItems}</strong> videos.
+            Showing <strong>{initialVideos.pageSize}</strong> /{" "}
+            <strong>{initialVideos.totalItems}</strong> videos.
           </p>
         </div>
         {videos.length > 0 && (

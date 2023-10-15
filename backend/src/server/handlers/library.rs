@@ -11,7 +11,7 @@ use tower::ServiceExt;
 use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::{VideoSearchQuery, VideoSource, VideoUpdate};
+use crate::data::database::{MarkerCount, VideoSearchQuery, VideoSource, VideoUpdate};
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -354,6 +354,34 @@ pub async fn list_markers(
         .map(|m| converter.from_db_with_video(m))
         .collect();
     Ok(Json(markers))
+}
+
+#[derive(Deserialize, IntoParams)]
+pub struct ListMarkerTitlesQuery {
+    pub count: Option<i64>,
+    pub prefix: Option<String>,
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/library/marker/title",
+    params(ListMarkerTitlesQuery),
+    responses(
+        (status = 200, description = "List marker titles", body = Vec<MarkerCount>),
+    )
+)]
+#[axum::debug_handler]
+pub async fn list_marker_titles(
+    Query(ListMarkerTitlesQuery { count, prefix }): Query<ListMarkerTitlesQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<MarkerCount>>, AppError> {
+    let count = count.unwrap_or(20);
+    let results = state
+        .database
+        .markers
+        .get_marker_titles(count, prefix.as_deref())
+        .await?;
+    Ok(Json(results))
 }
 
 fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str> {

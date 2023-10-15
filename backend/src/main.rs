@@ -121,6 +121,8 @@ async fn main() -> Result<()> {
         )
         // list all markers by video ID
         .route("/marker", get(handlers::library::list_markers))
+        // list marker titles and counts, for autocompletion
+        .route("/marker/title", get(handlers::library::list_marker_titles))
         // create new marker for video
         .route("/marker", post(handlers::library::create_new_marker))
         // update local marker

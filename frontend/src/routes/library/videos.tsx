@@ -47,7 +47,6 @@ export default function ListVideos() {
   const [source, setSource] = useState(params.get("source") || undefined)
   const [filter, setFilter] = useState(params.get("query") ?? "")
   const noVideos = videos.length === 0 && !filter && !isLoading && !source
-  const noVideosForFilter = videos.length === 0 && filter && !isLoading
   const revalidator = useRevalidator()
   const [sort, setSort] = useState(params.get("sort") ?? "markers")
   const {setQueryDebounced, addOrReplaceParam} = useDebouncedSetQuery()
@@ -56,6 +55,9 @@ export default function ListVideos() {
     params.get("hasMarkers") ?? "",
   )
   const [query] = useSearchParams()
+  const anyFilterSet = filter || source || hasMarkers
+
+  const noVideosForFilter = videos.length === 0 && anyFilterSet && !isLoading
 
   useEffect(() => {
     setVideos(initialVideos.content)

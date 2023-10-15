@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react"
+import React, {useEffect, useRef, useState} from "react"
 import {useForm, FieldErrors} from "react-hook-form"
 import {
   HiClock,
@@ -177,6 +177,10 @@ export default function EditVideoModal() {
   }
 
   const onAddFullVideo = async () => {
+    if (markers.length > 0) {
+      return
+    }
+
     const duration = video.duration
     const result = await createMarker(
       video,
@@ -317,6 +321,10 @@ export default function EditVideoModal() {
   }
 
   const onConsumeMarkPoints = async () => {
+    if (markPoints.length === 0) {
+      return
+    }
+
     const newMarkers: MarkerDto[] = []
     const points = [...markPoints]
     if (points[0] != 0.0) {
@@ -348,8 +356,14 @@ export default function EditVideoModal() {
   useHotkeys("i", onAddMark)
   useHotkeys("m f", onAddFullVideo)
   useHotkeys("m n", () => onShowForm("create", undefined))
-  useHotkeys("m s ", onSplitMarker)
+  useHotkeys("m s", onSplitMarker)
   useHotkeys("m i", onConsumeMarkPoints)
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.focus()
+    }
+  }, [videoRef])
 
   return (
     <Modal isOpen onClose={onClose}>

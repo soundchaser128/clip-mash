@@ -137,8 +137,8 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
           {groups.length === 0 && (
             <p className="text-center w-full">
               No groups yet. Add a new group to get started. Select a group by
-              clicking on it, then add markers to it by clicking on the marker
-              titles above.
+              clicking on its title, then add markers to it by clicking on the
+              marker titles above.
             </p>
           )}
           {groups.map((group) => {
@@ -148,16 +148,18 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
               0,
             )
             return (
-              <div
-                onClick={() => setSelected(group)}
+              <article
                 className={clsx(
-                  "card card-compact bg-base-100 border-2",
+                  "card card-compact bg-base-100 border-4",
                   enabled && "border-primary",
                 )}
                 key={group.name}
               >
                 <div className="card-body">
-                  <h3 className="card-title flex-grow-0">
+                  <h3
+                    onClick={() => setSelected(group)}
+                    className="card-title flex-grow-0 cursor-pointer hover:underline transition"
+                  >
                     {group.name} ({markerCount}{" "}
                     {pluralize("marker", markerCount)})
                   </h3>
@@ -178,7 +180,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                     ))}
                   </ul>
                 </div>
-              </div>
+              </article>
             )
           })}
         </div>

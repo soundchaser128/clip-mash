@@ -46,8 +46,8 @@ const Timeline: React.FC<Props> = ({
     <div className="flex h-10 mt-2 gap-0.5 relative w-full bg-base-200">
       {typeof time === "number" && (
         <span
-          style={{left: `${(time / length) * 100}%`}}
-          className="absolute -bottom-2 bg-gray-700 rounded-full w-4 h-4 z-10"
+          style={{left: `calc(${(time / length) * 100}% - 8px)`}}
+          className="absolute bottom-[-6px] bg-gray-700 rounded-full w-5 h-5 z-10 border-2 border-gray-400"
         />
       )}
 

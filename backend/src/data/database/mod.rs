@@ -783,4 +783,36 @@ mod test {
         let video = database.videos.get_video(&video.id).await.unwrap();
         assert!(video.is_none());
     }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn list_videos_has_markers(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video1 = persist_video(&database).await.unwrap();
+        let video2 = persist_video(&database).await.unwrap();
+        let video3 = persist_video(&database).await.unwrap();
+        persist_marker(&database, &video1.id, 0, 0.0, 15.0, false)
+            .await
+            .unwrap();
+        persist_marker(&database, &video2.id, 0, 0.0, 15.0, false)
+            .await
+            .unwrap();
+        let params = PageParameters::new(0, 10);
+        let (videos, _) = database
+            .videos
+            .list_videos(
+                VideoSearchQuery {
+                    has_markers: Some(true),
+                    ..Default::default()
+                },
+                &params,
+            )
+            .await
+            .unwrap();
+        assert_eq!(videos.len(), 2);
+        let ids: Vec<&str> = videos.iter().map(|v| v.video.id.as_str()).collect();
+        assert!(ids.contains(&video1.id.as_str()));
+        assert!(ids.contains(&video2.id.as_str()));
+        assert!(!ids.contains(&video3.id.as_str()));
+    }
 }

@@ -65,6 +65,8 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const isPmv = state.data.clipStrategy === "roundRobin"
   const clipOrderType = watch("clipOrder.type")
 
+  // TODO make different forms for different clip strategies
+
   const onSubmit = (values: Inputs) => {
     if (
       confirmBeforeSubmit &&
@@ -255,22 +257,24 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
         </>
       )}
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Clip order:</span>
-        </label>
-        <select
-          className="select select-bordered"
-          {...register("clipOrder.type")}
-        >
-          <option disabled value="none">
-            Select clip ordering
-          </option>
-          <option value="scene">Scene order</option>
-          <option value="fixed">Fixed</option>
-          <option value="random">Random</option>
-        </select>
-      </div>
+      {!isPmv && (
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Clip order:</span>
+          </label>
+          <select
+            className="select select-bordered"
+            {...register("clipOrder.type")}
+          >
+            <option disabled value="none">
+              Select clip ordering
+            </option>
+            <option value="scene">Scene order</option>
+            <option value="fixed">Fixed</option>
+            <option value="random">Random</option>
+          </select>
+        </div>
+      )}
 
       <div className="form-control">
         <label className="label">

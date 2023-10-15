@@ -87,9 +87,6 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
     onSave(newGroups)
   }
 
-  // TODO make the markers to be added more interactive, i.e. add a plus icon
-  //  when the marker isn't part of a group yet etc.
-
   return (
     <div className="flex flex-col">
       <h1 className="text-2xl font-bold mb-2">Marker groups</h1>

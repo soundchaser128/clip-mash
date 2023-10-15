@@ -56,7 +56,7 @@ type FormMode = "hidden" | "create" | "edit" | "help"
 
 function HelpPanel({onBack}: {onBack: () => void}) {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full text-sm">
       <p className="text-sm link mb-2" onClick={onBack}>
         <HiChevronLeft className="mr-1 inline" />
         Back
@@ -94,6 +94,9 @@ function HelpPanel({onBack}: {onBack: () => void}) {
         </li>
         <li>
           <Kbd keys="M S" separator=" " /> Split marker at current time
+        </li>
+        <li>
+          <Kbd keys="M I" separator=" " /> Turn mark points into markers
         </li>
       </ul>
     </div>
@@ -346,6 +349,7 @@ export default function EditVideoModal() {
   useHotkeys("m f", onAddFullVideo)
   useHotkeys("m n", () => onShowForm("create", undefined))
   useHotkeys("m s ", onSplitMarker)
+  useHotkeys("m i", onConsumeMarkPoints)
 
   return (
     <Modal isOpen onClose={onClose}>
@@ -470,7 +474,7 @@ export default function EditVideoModal() {
                 <div className="btn-group">
                   <button
                     onClick={() => setFormMode("hidden")}
-                    className="btn btn-secondary"
+                    className="btn btn-outline"
                     type="button"
                   >
                     <HiXMark className="mr-2" />
@@ -498,21 +502,12 @@ export default function EditVideoModal() {
                 )}
                 {formMode === "hidden" && (
                   <>
-                    {markPoints.length > 0 && (
-                      <button
-                        onClick={onConsumeMarkPoints}
-                        className="btn btn-success"
-                        type="button"
-                      >
-                        <HiPlus /> Markers from points
-                      </button>
-                    )}
                     {formMode === "hidden" && (
                       <div className="flex w-full justify-between">
-                        <div className="flex gap-1">
+                        <div className="join join-vertical">
                           <button
                             onClick={() => onShowForm("create")}
-                            className="btn btn-primary"
+                            className="btn btn-sm btn-primary join-item"
                           >
                             <HiPlus className="w-4 h-4 mr-2" />
                             Add
@@ -520,23 +515,31 @@ export default function EditVideoModal() {
                           <button
                             disabled={markers.length === 0}
                             onClick={onSplitMarker}
-                            className="btn btn-secondary"
+                            className="btn btn-sm btn-secondary join-item"
                           >
                             <HiTag className="w-4 h-4 mr-2" />
                             Split
                           </button>
                           <button
                             onClick={onDetectMarkers}
-                            className="btn btn-secondary"
+                            className="btn btn-sm btn-secondary join-item"
                           >
                             <HiMagnifyingGlass className="w-4 h-4 mr-2" />
                             Detect
+                          </button>
+                          <button
+                            onClick={onConsumeMarkPoints}
+                            className="btn btn-sm btn-success join-item"
+                            type="button"
+                            disabled={markPoints.length === 0}
+                          >
+                            <HiPlus /> Markers from points
                           </button>
                         </div>
 
                         <button
                           onClick={() => setFormMode("help")}
-                          className="btn btn-secondary"
+                          className="btn btn-sm btn-secondary"
                         >
                           <HiQuestionMarkCircle className="w-4 h-4 mr-2" />
                           Help

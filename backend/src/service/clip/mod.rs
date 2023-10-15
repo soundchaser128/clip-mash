@@ -404,4 +404,52 @@ mod tests {
         let total_duration: f64 = result.iter().map(|c| c.duration()).sum();
         assert_approx_eq!(f64, expected_length, total_duration, epsilon = 0.01);
     }
+
+    #[test]
+    #[traced_test]
+    fn test_concatenate_clips() {
+        let clips = vec![
+            Clip {
+                index_within_marker: 0,
+                index_within_video: 0,
+                marker_id: 1,
+                range: (0.0, 9.0),
+                source: VideoSource::Folder,
+                video_id: "video".into(),
+                marker_title: "One".into(),
+            },
+            Clip {
+                index_within_marker: 0,
+                index_within_video: 1,
+                marker_id: 2,
+                range: (9.0, 12.0),
+                source: VideoSource::Folder,
+                video_id: "video".into(),
+                marker_title: "Two".into(),
+            },
+            Clip {
+                index_within_marker: 0,
+                index_within_video: 2,
+                marker_id: 3,
+                range: (12.0, 15.0),
+                source: VideoSource::Folder,
+                video_id: "video".into(),
+                marker_title: "Three".into(),
+            },
+            Clip {
+                index_within_marker: 0,
+                index_within_video: 3,
+                marker_id: 4,
+                range: (15.0, 18.0),
+                source: VideoSource::Folder,
+                video_id: "video2".into(),
+                marker_title: "Four".into(),
+            },
+        ];
+        let service = ClipService::new();
+        let concatenated = service.concatenate_clips(clips);
+        assert_eq!(concatenated.len(), 2);
+        assert_eq!(concatenated[0].range, (0.0, 15.0));
+        assert_eq!(concatenated[1].range, (15.0, 18.0));
+    }
 }

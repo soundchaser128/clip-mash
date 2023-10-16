@@ -65,7 +65,7 @@ const VideoCard: React.FC<Props> = ({
         />
       </figure>
       <div className="card-body">
-        <h2 className="card-title">
+        <h2 className="card-title gap-0">
           {onEditTitle && (
             <EditableText
               value={video.video.title || video.video.fileName}

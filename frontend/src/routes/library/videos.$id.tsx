@@ -307,7 +307,6 @@ export default function EditVideoModal() {
   const onPlayMarker = (position: number) => {
     if (videoRef.current) {
       videoRef.current.currentTime = position
-      videoRef.current.play()
     }
   }
 
@@ -376,14 +375,22 @@ export default function EditVideoModal() {
   const onItemClick = (item: unknown, index: number) => {
     const marker = markers[index]
     onShowForm("edit", marker)
-    videoRef.current!.currentTime = marker.start
+    if (videoRef.current) {
+      videoRef.current.currentTime = marker.start
+    }
+  }
+
+  const onTimelineClick = (time: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = time
+    }
   }
 
   return (
     <Modal isOpen onClose={onClose}>
       <div className="flex gap-2">
         <video
-          className="w-2/3 max-h-[90vh]"
+          className="w-2/3 max-h-[82vh]"
           muted
           controls
           src={getVideoUrl(video, config)}
@@ -642,6 +649,7 @@ export default function EditVideoModal() {
         time={time}
         markPoints={markPoints}
         onMarkerClick={(time) => onRemoveMark(time)}
+        onTimelineClick={onTimelineClick}
       />
     </Modal>
   )

@@ -18,6 +18,7 @@ interface Props {
   time?: number
   markPoints?: number[]
   onMarkerClick?: (time: number, index: number) => void
+  onTimelineClick?: (time: number, e: React.MouseEvent) => void
 }
 
 const marginLeft = 4
@@ -78,6 +79,7 @@ const Timeline: React.FC<Props> = ({
   time,
   markPoints,
   onMarkerClick,
+  onTimelineClick,
 }) => {
   const styles = items.map((item, index) => {
     const backgroundColor = getSegmentColor(index, items.length)
@@ -98,11 +100,21 @@ const Timeline: React.FC<Props> = ({
       ? `calc(${(time / length) * 100}% - (1.25rem / 2))`
       : undefined
 
+  const handleTimelineClick = (e: React.MouseEvent) => {
+    if (onTimelineClick) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const time = (x / rect.width) * length
+      onTimelineClick(time, e)
+    }
+  }
+
   return (
     <section className="py-4">
       <div
-        className="flex h-[36px] relative w-full bg-base-200"
+        className="flex h-[36px] relative w-full bg-base-200 cursor-pointer"
         style={{marginLeft}}
+        onClick={handleTimelineClick}
       >
         {typeof time === "number" && (
           <span

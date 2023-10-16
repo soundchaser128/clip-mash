@@ -74,7 +74,7 @@ const VideoCard: React.FC<Props> = ({
           )}
           {!onEditTitle && (
             <span className="truncate">
-              (video.video.title || video.video.fileName)
+              {video.video.title || video.video.fileName}
             </span>
           )}
         </h2>

@@ -21,18 +21,19 @@ const Modal: React.FC<Props> = ({
   position = "off-center",
 }) => {
   useEffect(() => {
-    document.body.style.overflow = "hidden"
-    document.body.style.position = "fixed"
-    document.body.style.top = `-${window.scrollY}px`
-    document.body.style.paddingLeft = "72px"
-
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+      document.body.style.position = "fixed"
+      document.body.style.top = `-${window.scrollY}px`
+      document.body.style.paddingLeft = "72px"
+    }
     return () => {
       document.body.style.overflow = "unset"
       document.body.style.position = ""
       document.body.style.top = ""
       document.body.style.paddingLeft = ""
     }
-  }, [])
+  }, [isOpen])
   function handleClose() {
     onClose && onClose()
   }

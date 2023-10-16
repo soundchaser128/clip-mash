@@ -1,118 +1,66 @@
-import React, {useEffect, useRef, useState} from "react"
+import {useState} from "react"
+import clsx from "clsx"
 
-interface Props {
+export interface Props {
   options: string[]
-  value: string
   onChange: (value: string) => void
+  className?: string
+  placeholder?: string
 }
 
-export default function Autocomplete({options, value, onChange}: Props) {
-  const [showOptions, setShowOptions] = useState(false)
-  const [cursor, setCursor] = useState(-1)
-  const ref = useRef<HTMLDivElement>(null)
+const Autocomplete: React.FC<Props> = ({options, className, placeholder}) => {
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState("")
 
-  const select = (option: string) => {
-    onChange(option)
-    setShowOptions(false)
+  const onItemClick = (option: string) => {
+    setValue(option)
+    setOpen(false)
   }
 
-  const handleChange = (text: string) => {
-    onChange(text)
-    setCursor(-1)
-    if (!showOptions) {
-      setShowOptions(true)
-    }
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setValue(value)
   }
 
-  const filteredOptions = options.filter((option) => option.includes(value))
-
-  const moveCursorDown = () => {
-    if (cursor < filteredOptions.length - 1) {
-      setCursor((c) => c + 1)
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setOpen(false)
+    } else {
+      setOpen(true)
     }
   }
 
-  const moveCursorUp = () => {
-    if (cursor > 0) {
-      setCursor((c) => c - 1)
-    }
+  const onClick = () => {
+    setOpen(!open)
   }
-
-  const handleNav = (e: React.KeyboardEvent) => {
-    switch (e.key) {
-      case "ArrowUp":
-        moveCursorUp()
-        break
-      case "ArrowDown":
-        moveCursorDown()
-        break
-      case "Enter":
-        if (cursor >= 0 && cursor < filteredOptions.length) {
-          select(filteredOptions[cursor])
-        }
-        break
-    }
-  }
-
-  useEffect(() => {
-    const listener = (e: MouseEvent | FocusEvent) => {
-      // @ts-expect-error fixme
-      if (!ref.current!.contains(e.target)) {
-        setShowOptions(false)
-        setCursor(-1)
-      }
-    }
-
-    document.addEventListener("click", listener)
-    document.addEventListener("focusin", listener)
-    return () => {
-      document.removeEventListener("click", listener)
-      document.removeEventListener("focusin", listener)
-    }
-  }, [])
 
   return (
-    <div className="relative w-64" ref={ref}>
+    <div
+      className={clsx("dropdown", {
+        "dropdown-open": open,
+      })}
+    >
       <input
-        type="text"
-        className="w-full border-2 px-4 py-2 outline-none rounded-lg"
         value={value}
-        onChange={(e) => handleChange(e.target.value)}
-        onFocus={() => setShowOptions(true)}
-        onKeyDown={handleNav}
+        onChange={onInputChange}
+        placeholder={placeholder}
+        onBlur={() => setOpen(false)}
+        onKeyDown={onKeyDown}
+        className={clsx("input", className)}
+        onClick={onClick}
       />
 
-      <ul
-        className={`absolute w-full rounded-lg shadow-lg ${
-          !showOptions && "hidden"
-        } select-none`}
-      >
-        {filteredOptions.length > 0 ? (
-          filteredOptions.map((option, i, arr) => {
-            let className = "px-4 hover:bg-gray-100 "
-
-            if (i === 0) className += "pt-2 pb-1 rounded-t-lg"
-            else if (i === arr.length) className += "pt-1 pb-2 rounded-b-lg"
-            else className += "py-1"
-
-            if (cursor === i) {
-              className += " bg-gray-100"
-            }
-
-            return (
-              <li
-                className={className}
-                key={option}
-                onClick={() => select(option)}
-              >
-                {option}
-              </li>
-            )
-          })
-        ) : (
-          <li className="px-4 py-2 text-gray-500">No results</li>
-        )}
-      </ul>
+      <div className="dropdown-content z-10 bg-white w-full">
+        <ul className="menu flex-nowrap overflow-scroll bg-base-200 shadow-xl max-h-96">
+          {options.map((option) => (
+            <li onClick={() => onItemClick(option)} key={option}>
+              <button type="button">{option}</button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   )
 }
+
+export default Autocomplete

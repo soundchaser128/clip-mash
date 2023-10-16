@@ -28,11 +28,14 @@ import {
   deleteMarker,
   splitMarker,
   VideoDetailsDto,
+  MarkerCount,
+  listMarkerTitles,
 } from "../../api"
 import {detectMarkers} from "../../api"
 import {useConfig} from "../../hooks/useConfig"
 import Kbd from "@/components/Kbd"
 import useHotkeys from "@/hooks/useHotkeys"
+import Autocomplete from "@/components/Autocomplete"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
@@ -152,6 +155,13 @@ export default function EditVideoModal() {
   const [markPoints, setMarkPoints] = useImmer<number[]>([])
   const config = useConfig()
   const showingForm = formMode === "create" || formMode === "edit"
+  const [titles, setTitles] = useState<MarkerCount[]>([])
+
+  useEffect(() => {
+    listMarkerTitles({
+      count: 20,
+    }).then((data) => setTitles(data))
+  }, [])
 
   const markerStart = watch("start")
 
@@ -403,10 +413,10 @@ export default function EditVideoModal() {
                     {errors.title?.message}
                   </span>
                 </label>
-                <input
-                  type="text"
+                <Autocomplete
+                  options={titles.map((t) => t.title)}
                   placeholder="Type here..."
-                  className="input input-bordered"
+                  className="input-bordered w-full"
                   {...register("title", {required: true})}
                 />
               </div>

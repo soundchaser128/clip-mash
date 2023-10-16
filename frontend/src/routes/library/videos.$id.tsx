@@ -155,13 +155,11 @@ export default function EditVideoModal() {
   const [markPoints, setMarkPoints] = useImmer<number[]>([])
   const config = useConfig()
   const showingForm = formMode === "create" || formMode === "edit"
-  const [titles, setTitles] = useState<MarkerCount[]>([])
 
-  useEffect(() => {
-    listMarkerTitles({
-      count: 20,
-    }).then((data) => setTitles(data))
-  }, [])
+  const fetchMarkerTitles = async (prefix: string) => {
+    const result = await listMarkerTitles({prefix, count: 15})
+    return result.map((t) => t.title)
+  }
 
   const markerStart = watch("start")
 
@@ -414,10 +412,11 @@ export default function EditVideoModal() {
                   </span>
                 </label>
                 <Autocomplete
-                  options={titles.map((t) => t.title)}
                   placeholder="Type here..."
                   className="input-bordered w-full"
-                  {...register("title", {required: true})}
+                  control={control}
+                  name="title"
+                  fetchItems={fetchMarkerTitles}
                 />
               </div>
               <div className="form-control">

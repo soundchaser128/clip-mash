@@ -1,16 +1,30 @@
 import {useState} from "react"
 import clsx from "clsx"
+import {
+  Control,
+  Controller,
+  FieldError,
+  FieldValues,
+  Path,
+} from "react-hook-form"
 
 export interface Props {
-  options: string[]
+  options?: string[]
   onChange: (value: string) => void
   className?: string
   placeholder?: string
+  fetchItems: (prefix: string) => Promise<string[]>
 }
 
-const Autocomplete: React.FC<Props> = ({options, className, placeholder}) => {
+const Autocomplete: React.FC<Props> = ({
+  options: initialOptions,
+  className,
+  placeholder,
+  fetchItems,
+}) => {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState("")
+  const [options, setOptions] = useState(initialOptions || [])
 
   const onItemClick = (option: string) => {
     setValue(option)
@@ -22,7 +36,10 @@ const Autocomplete: React.FC<Props> = ({options, className, placeholder}) => {
     setValue(value)
   }
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const onKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const newItems = await fetchItems(e.currentTarget.value)
+    setOptions(newItems)
+
     if (e.key === "Enter") {
       setOpen(false)
     } else {
@@ -63,4 +80,42 @@ const Autocomplete: React.FC<Props> = ({options, className, placeholder}) => {
   )
 }
 
-export default Autocomplete
+interface ControlledProps<T extends FieldValues> {
+  error?: FieldError
+  control: Control<T>
+  name: Path<T>
+  options?: string[]
+  placeholder?: string
+  className?: string
+  fetchItems: (prefix: string) => Promise<string[]>
+}
+
+function ControlledAutocomplete<T extends FieldValues>({
+  control,
+  options,
+  error,
+  name,
+  placeholder,
+  className,
+  fetchItems,
+}: ControlledProps<T>) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({field}) => {
+        return (
+          <Autocomplete
+            className={className}
+            placeholder={placeholder}
+            options={options}
+            fetchItems={fetchItems}
+            {...field}
+          />
+        )
+      }}
+    />
+  )
+}
+
+export default ControlledAutocomplete

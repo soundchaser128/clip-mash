@@ -1,5 +1,6 @@
 import useHotkeys from "@/hooks/useHotkeys"
 import clsx from "clsx"
+import {useEffect} from "react"
 import {HiXMark} from "react-icons/hi2"
 
 interface Props {
@@ -19,6 +20,19 @@ const Modal: React.FC<Props> = ({
   size = "lg",
   position = "off-center",
 }) => {
+  useEffect(() => {
+    document.body.style.overflow = "hidden"
+    document.body.style.position = "fixed"
+    document.body.style.top = `-${window.scrollY}px`
+    document.body.style.paddingLeft = "72px"
+
+    return () => {
+      document.body.style.overflow = "unset"
+      document.body.style.position = ""
+      document.body.style.top = ""
+      document.body.style.paddingLeft = ""
+    }
+  }, [])
   function handleClose() {
     onClose && onClose()
   }

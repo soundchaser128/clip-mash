@@ -17,13 +17,13 @@ import {
   HiSpeakerXMark,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
-import {formatSeconds, isBetween, parseTimestamp} from "../../helpers"
-import Modal from "../../components/Modal"
+import {formatSeconds, isBetween, parseTimestamp} from "@/helpers"
+import Modal from "@/components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
-import TimestampInput from "../../components/TimestampInput"
+import TimestampInput from "@/components/TimestampInput"
 import {createMarker, updateMarker} from "./api"
-import Timeline from "../../components/Timeline"
-import Loader from "../../components/Loader"
+import Timeline from "@/components/Timeline"
+import Loader from "@/components/Loader"
 import {
   StashConfig,
   MarkerDto,
@@ -32,12 +32,11 @@ import {
   splitMarker,
   VideoDetailsDto,
   listMarkerTitles,
-} from "../../api"
-import {detectMarkers} from "../../api"
-import {useConfig} from "../../hooks/useConfig"
+  detectMarkers,
+} from "@/api"
+import {useConfig} from "@/hooks/useConfig"
 import Kbd from "@/components/Kbd"
 import useHotkeys from "@/hooks/useHotkeys"
-import Autocomplete from "@/components/Autocomplete"
 import clsx from "clsx"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
@@ -448,12 +447,10 @@ export default function EditVideoModal() {
                     {errors.title?.message}
                   </span>
                 </label>
-                <Autocomplete
+                <input
                   placeholder="Type here..."
                   className="input-bordered w-full"
-                  control={control}
-                  name="title"
-                  fetchItems={fetchMarkerTitles}
+                  {...register("title", {required: true})}
                 />
               </div>
               <div className="form-control">

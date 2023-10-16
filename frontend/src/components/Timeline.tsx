@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import {getSegmentColor, getSegmentTextColor} from "../helpers"
+import {formatSeconds, getSegmentColor, getSegmentTextColor} from "../helpers"
 import {useMemo, useRef} from "react"
 import * as d3 from "d3"
 
@@ -56,12 +56,12 @@ const TimeAxis = ({length}: {length: number}) => {
           <text
             key={value}
             style={{
-              fontSize: "10px",
+              fontSize: "12px",
               textAnchor: "middle",
               transform: "translateY(20px)",
             }}
           >
-            {value}
+            {value === 0 ? "0" : formatSeconds(value, "short")}
           </text>
         </g>
       ))}
@@ -88,19 +88,22 @@ const Timeline: React.FC<Props> = ({
       backgroundColor,
       color: textColor,
       width: `${widthPercent}%`,
-      left: `calc(${offset}%) + ${marginLeft}px`,
+      left: `calc(${offset}%)`,
       display: "absolute",
     } satisfies React.CSSProperties
   })
 
   const playheadPosition =
     typeof time === "number"
-      ? `calc(${(time / length) * 100}% + ${marginLeft}px - (1.25rem / 2))`
+      ? `calc(${(time / length) * 100}% - (1.25rem / 2))`
       : undefined
 
   return (
-    <section className="py-4 px-0.5">
-      <div className="flex h-[36px] mt-2 gap-0.5 relative w-full bg-base-200">
+    <section className="py-4">
+      <div
+        className="flex h-[36px] relative w-full bg-base-200"
+        style={{marginLeft}}
+      >
         {typeof time === "number" && (
           <span
             style={{left: playheadPosition}}
@@ -121,7 +124,7 @@ const Timeline: React.FC<Props> = ({
             <div
               key={index}
               className={clsx(
-                "absolute text-sm cursor-pointer text-white py-2 text-center",
+                "absolute text-sm cursor-pointer text-white text-center py-2 truncate",
                 !fadeInactiveItems && "hover:opacity-80",
                 index !== selectedIndex &&
                   fadeInactiveItems &&

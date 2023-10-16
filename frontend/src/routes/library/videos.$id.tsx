@@ -373,6 +373,12 @@ export default function EditVideoModal() {
     }
   }, [videoRef])
 
+  const onItemClick = (item: unknown, index: number) => {
+    const marker = markers[index]
+    onShowForm("edit", marker)
+    videoRef.current!.currentTime = marker.start
+  }
+
   return (
     <Modal isOpen onClose={onClose}>
       <div className="flex gap-2">
@@ -628,7 +634,7 @@ export default function EditVideoModal() {
           length: marker.end - marker.start,
           offset: marker.start,
         }))}
-        onItemClick={(item, index) => onShowForm("edit", markers[index])}
+        onItemClick={(item, index) => onItemClick(item, index)}
         selectedIndex={
           editedMarker ? markers.indexOf(editedMarker) : currentItemIndex
         }

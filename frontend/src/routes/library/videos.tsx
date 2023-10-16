@@ -142,6 +142,9 @@ export default function ListVideos() {
     setSyncingVideo(undefined)
   }
 
+  const startRange = initialVideos.pageNumber * initialVideos.pageSize + 1
+  const endRange = startRange + initialVideos.content.length - 1
+
   return (
     <>
       <JumpToTop />
@@ -161,8 +164,11 @@ export default function ListVideos() {
         </div>
         <div className="text-center">
           <p>
-            Showing <strong>{initialVideos.pageSize}</strong> /{" "}
-            <strong>{initialVideos.totalItems}</strong> videos.
+            Showing videos{" "}
+            <strong>
+              {startRange}-{endRange}
+            </strong>{" "}
+            of <strong>{initialVideos.totalItems}</strong>.
           </p>
         </div>
         {videos.length > 0 && (

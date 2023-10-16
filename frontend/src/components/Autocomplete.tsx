@@ -68,7 +68,7 @@ const Autocomplete: React.FC<Props> = ({
       />
 
       <div className="dropdown-content z-10 bg-white w-full">
-        <ul className="menu flex-nowrap overflow-scroll bg-base-200 shadow-xl max-h-96">
+        <ul className="menu flex-nowrap overflow-y-scroll bg-base-200 shadow-xl max-h-96">
           {options.map((option) => (
             <li onClick={() => onItemClick(option)} key={option}>
               <button type="button">{option}</button>

@@ -1,6 +1,5 @@
 import useHotkeys from "@/hooks/useHotkeys"
 import clsx from "clsx"
-import {useEffect} from "react"
 import {HiXMark} from "react-icons/hi2"
 
 interface Props {
@@ -20,14 +19,15 @@ const Modal: React.FC<Props> = ({
   size = "lg",
   position = "off-center",
 }) => {
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden"
-    }
-    return () => {
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen])
+  // useEffect(() => {
+  //   if (isOpen) {
+  //     document.body.style.overflow = "hidden"
+  //   }
+  //   return () => {
+  //     document.body.style.overflow = "unset"
+  //   }
+  // }, [isOpen])
+
   function handleClose() {
     onClose && onClose()
   }

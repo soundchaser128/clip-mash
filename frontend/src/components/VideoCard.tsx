@@ -72,7 +72,11 @@ const VideoCard: React.FC<Props> = ({
               onSave={onEditTitle}
             />
           )}
-          {!onEditTitle && (video.video.title || video.video.fileName)}
+          {!onEditTitle && (
+            <span className="truncate">
+              (video.video.title || video.video.fileName)
+            </span>
+          )}
         </h2>
         <ul className="flex flex-col gap-2 self-start">
           {tags.length > 0 && (

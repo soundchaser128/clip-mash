@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import {formatSeconds, getSegmentColor, getSegmentTextColor} from "../helpers"
-import {useMemo, useRef} from "react"
+import React, {useMemo, useRef} from "react"
 import * as d3 from "d3"
 
 interface Item {
@@ -71,6 +71,56 @@ const TimeAxis = ({length}: {length: number}) => {
   )
 }
 
+type TimelineSegmentsProps = Pick<
+  Props,
+  "items" | "selectedIndex" | "onItemClick" | "fadeInactiveItems" | "length"
+>
+
+const TimelineSegments: React.FC<TimelineSegmentsProps> = ({
+  items,
+  selectedIndex,
+  onItemClick,
+  fadeInactiveItems,
+  length,
+}) => {
+  const styles = useMemo(() => {
+    return items.map((item, index) => {
+      const backgroundColor = getSegmentColor(index, items.length)
+      const textColor = getSegmentTextColor(backgroundColor)
+      const widthPercent = (item.length / length) * 100
+      const offset = (item.offset / length) * 100
+      return {
+        backgroundColor,
+        color: textColor,
+        width: `${widthPercent}%`,
+        left: `calc(${offset}%)`,
+        display: "absolute",
+      } satisfies React.CSSProperties
+    })
+  }, [items, length])
+
+  return items.map((item, index) => {
+    const style = styles[index]
+    return (
+      <div
+        key={index}
+        className={clsx(
+          "absolute text-sm cursor-pointer text-white text-center py-2 truncate",
+          !fadeInactiveItems && "hover:opacity-80",
+          index !== selectedIndex &&
+            fadeInactiveItems &&
+            "opacity-30 hover:opacity-60",
+          index === selectedIndex && fadeInactiveItems && "opacity-100",
+        )}
+        style={style}
+        onClick={() => onItemClick(item, index)}
+      >
+        {item.label}
+      </div>
+    )
+  })
+}
+
 const Timeline: React.FC<Props> = ({
   items,
   onItemClick,
@@ -83,20 +133,6 @@ const Timeline: React.FC<Props> = ({
   onTimelineClick,
   className,
 }) => {
-  const styles = items.map((item, index) => {
-    const backgroundColor = getSegmentColor(index, items.length)
-    const textColor = getSegmentTextColor(backgroundColor)
-    const widthPercent = (item.length / length) * 100
-    const offset = (item.offset / length) * 100
-    return {
-      backgroundColor,
-      color: textColor,
-      width: `${widthPercent}%`,
-      left: `calc(${offset}%)`,
-      display: "absolute",
-    } satisfies React.CSSProperties
-  })
-
   const playheadPosition =
     typeof time === "number"
       ? `calc(${(time / length) * 100}% - (1.25rem / 2))`
@@ -132,26 +168,13 @@ const Timeline: React.FC<Props> = ({
             onClick={(e) => onMarkerClick && onMarkerClick(time, e)}
           />
         ))}
-        {items.map((item, index) => {
-          const style = styles[index]
-          return (
-            <div
-              key={index}
-              className={clsx(
-                "absolute text-sm cursor-pointer text-white text-center py-2 truncate",
-                !fadeInactiveItems && "hover:opacity-80",
-                index !== selectedIndex &&
-                  fadeInactiveItems &&
-                  "opacity-30 hover:opacity-60",
-                index === selectedIndex && fadeInactiveItems && "opacity-100",
-              )}
-              style={style}
-              onClick={() => onItemClick(item, index)}
-            >
-              {item.label}
-            </div>
-          )
-        })}
+        <TimelineSegments
+          items={items}
+          onItemClick={onItemClick}
+          selectedIndex={selectedIndex}
+          fadeInactiveItems={fadeInactiveItems}
+          length={length}
+        />
       </div>
       <TimeAxis length={length} />
     </section>

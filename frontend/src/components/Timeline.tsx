@@ -12,12 +12,13 @@ interface Item {
 interface Props {
   items: Item[]
   length: number
+  className?: string
   onItemClick: (item: Item, index: number) => void
   selectedIndex?: number
   fadeInactiveItems?: boolean
   time?: number
   markPoints?: number[]
-  onMarkerClick?: (time: number, index: number) => void
+  onMarkerClick?: (time: number, e: React.MouseEvent) => void
   onTimelineClick?: (time: number, e: React.MouseEvent) => void
 }
 
@@ -80,6 +81,7 @@ const Timeline: React.FC<Props> = ({
   markPoints,
   onMarkerClick,
   onTimelineClick,
+  className,
 }) => {
   const styles = items.map((item, index) => {
     const backgroundColor = getSegmentColor(index, items.length)
@@ -110,7 +112,7 @@ const Timeline: React.FC<Props> = ({
   }
 
   return (
-    <section className="py-4">
+    <section className={className}>
       <div
         className="flex h-[36px] relative w-full bg-base-200 cursor-pointer"
         style={{marginLeft}}
@@ -122,12 +124,12 @@ const Timeline: React.FC<Props> = ({
             className="absolute bottom-[-10px] bg-gray-700 rounded-full w-5 h-5 z-10 border-2 border-gray-400"
           />
         )}
-        {markPoints?.map((time, index) => (
+        {markPoints?.map((time) => (
           <span
             key={time}
             style={{left: `calc(${(time / length) * 100}% + ${marginLeft}px)`}}
             className="top-0 absolute py-2 bg-green-500 w-2 -translate-x-0.5 bg-opacity-50 h-[36px] z-10 cursor-pointer"
-            onClick={() => onMarkerClick && onMarkerClick(time, index)}
+            onClick={(e) => onMarkerClick && onMarkerClick(time, e)}
           />
         ))}
         {items.map((item, index) => {

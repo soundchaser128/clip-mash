@@ -12,6 +12,9 @@ import {
   HiQuestionMarkCircle,
   HiMagnifyingGlass,
   HiChevronLeft,
+  HiPause,
+  HiSpeakerWave,
+  HiSpeakerXMark,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
 import {formatSeconds, isBetween, parseTimestamp} from "../../helpers"
@@ -28,7 +31,6 @@ import {
   deleteMarker,
   splitMarker,
   VideoDetailsDto,
-  MarkerCount,
   listMarkerTitles,
 } from "../../api"
 import {detectMarkers} from "../../api"
@@ -36,6 +38,7 @@ import {useConfig} from "../../hooks/useConfig"
 import Kbd from "@/components/Kbd"
 import useHotkeys from "@/hooks/useHotkeys"
 import Autocomplete from "@/components/Autocomplete"
+import clsx from "clsx"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
@@ -155,6 +158,8 @@ export default function EditVideoModal() {
   const [markPoints, setMarkPoints] = useImmer<number[]>([])
   const config = useConfig()
   const showingForm = formMode === "create" || formMode === "edit"
+  const isPlaying = videoRef.current?.paused === false
+  const [isMuted, setIsMuted] = useState(videoRef.current?.muted)
 
   const fetchMarkerTitles = async (prefix: string) => {
     const result = await listMarkerTitles({prefix, count: 15})
@@ -177,7 +182,8 @@ export default function EditVideoModal() {
     })
   }
 
-  const onRemoveMark = (t: number) => {
+  const onRemoveMark = (t: number, e: React.MouseEvent) => {
+    e.stopPropagation()
     setMarkPoints((draft) => {
       const idx = draft.findIndex((m) => m === t)
       draft.splice(idx, 1)
@@ -360,11 +366,30 @@ export default function EditVideoModal() {
     })
     setMarkPoints([])
   }
+
+  const onTogglePlay = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play()
+      } else {
+        videoRef.current.pause()
+      }
+    }
+  }
+
+  const onToggleMuted = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted
+      setIsMuted(videoRef.current.muted)
+    }
+  }
+
   useHotkeys("i", onAddMark)
   useHotkeys("m f", onAddFullVideo)
   useHotkeys("m n", () => onShowForm("create", undefined))
   useHotkeys("m s", onSplitMarker)
   useHotkeys("m i", onConsumeMarkPoints)
+  useHotkeys("space", onTogglePlay)
 
   useEffect(() => {
     if (videoRef.current) {
@@ -391,12 +416,11 @@ export default function EditVideoModal() {
       <div className="flex gap-2">
         <video
           className="w-2/3 max-h-[82vh]"
-          muted
-          controls
           src={getVideoUrl(video, config)}
           ref={videoRef}
           onLoadedMetadata={onMetadataLoaded}
           onTimeUpdate={onTimeUpdate}
+          muted
         />
         <div className="flex flex-col w-1/3 justify-between">
           {showingForm && (
@@ -634,23 +658,51 @@ export default function EditVideoModal() {
           </div>
         </div>
       </div>
-      <Timeline
-        length={video.duration}
-        items={markers.map((marker) => ({
-          label: marker.primaryTag,
-          length: marker.end - marker.start,
-          offset: marker.start,
-        }))}
-        onItemClick={(item, index) => onItemClick(item, index)}
-        selectedIndex={
-          editedMarker ? markers.indexOf(editedMarker) : currentItemIndex
-        }
-        fadeInactiveItems
-        time={time}
-        markPoints={markPoints}
-        onMarkerClick={(time) => onRemoveMark(time)}
-        onTimelineClick={onTimelineClick}
-      />
+      <div className="flex gap-2 items-center w-full">
+        <button
+          onClick={onTogglePlay}
+          className={clsx("btn btn-square", {
+            "btn-success": !isPlaying,
+            "btn-neutral": isPlaying,
+          })}
+          type="button"
+        >
+          {isPlaying ? (
+            <HiPause className="w-5 h-5" />
+          ) : (
+            <HiPlay className="w-5 h-5" />
+          )}
+        </button>
+        <button
+          onClick={onToggleMuted}
+          className="btn btn-square"
+          type="button"
+        >
+          {isMuted ? (
+            <HiSpeakerWave className="w-5 h-5" />
+          ) : (
+            <HiSpeakerXMark className="w-5 h-5" />
+          )}
+        </button>
+        <Timeline
+          length={video.duration}
+          items={markers.map((marker) => ({
+            label: marker.primaryTag,
+            length: marker.end - marker.start,
+            offset: marker.start,
+          }))}
+          onItemClick={(item, index) => onItemClick(item, index)}
+          selectedIndex={
+            editedMarker ? markers.indexOf(editedMarker) : currentItemIndex
+          }
+          fadeInactiveItems
+          time={time}
+          markPoints={markPoints}
+          onMarkerClick={onRemoveMark}
+          onTimelineClick={onTimelineClick}
+          className="py-4 flex-grow"
+        />
+      </div>
     </Modal>
   )
 }

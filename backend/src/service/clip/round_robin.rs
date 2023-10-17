@@ -4,7 +4,7 @@ use tracing::info;
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
-use crate::server::types::{Clip, PmvClipOptions, RoundRobinClipOptions};
+use crate::server::types::{Clip, ClipLengthOptions, RoundRobinClipOptions};
 use crate::service::clip::state::{MarkerState, MarkerStateInfo};
 use crate::service::clip::{trim_clips, MIN_DURATION};
 use crate::service::Marker;
@@ -23,7 +23,7 @@ impl ClipPicker for RoundRobinClipPicker {
         info!("using RoundRobinClipPicker to make clips");
 
         let song_duration = match &options.clip_lengths {
-            PmvClipOptions::Songs(options) => {
+            ClipLengthOptions::Songs(options) => {
                 Some(options.songs.iter().map(|s| s.length as f64).sum())
             }
             _ => None,
@@ -39,7 +39,7 @@ impl ClipPicker for RoundRobinClipPicker {
         let max_duration = options.length;
         let mut clips = vec![];
         let mut marker_idx = 0;
-        let has_music = matches!(options.clip_lengths, PmvClipOptions::Songs(_));
+        let has_music = matches!(options.clip_lengths, ClipLengthOptions::Songs(_));
         let clip_lengths = ClipLengthPicker::new(options.clip_lengths, max_duration, rng);
         let clip_lengths = clip_lengths.durations();
         info!("clip lengths: {:?}", clip_lengths);
@@ -107,7 +107,7 @@ mod test {
     use tracing_test::traced_test;
 
     use crate::server::types::{
-        Beats, MeasureCount, PmvClipOptions, RoundRobinClipOptions, SongClipOptions,
+        Beats, ClipLengthOptions, MeasureCount, RoundRobinClipOptions, SongClipOptions,
     };
     use crate::service::clip::round_robin::RoundRobinClipPicker;
     use crate::service::clip::ClipPicker;
@@ -122,7 +122,7 @@ mod test {
 
         let options = RoundRobinClipOptions {
             length: song_duration,
-            clip_lengths: PmvClipOptions::Songs(SongClipOptions {
+            clip_lengths: ClipLengthOptions::Songs(SongClipOptions {
                 beats_per_measure: 4,
                 cut_after_measures: MeasureCount::Fixed { count: 4 },
                 songs,
@@ -151,7 +151,7 @@ mod test {
 
         let options = RoundRobinClipOptions {
             length: song_duration,
-            clip_lengths: PmvClipOptions::Songs(SongClipOptions {
+            clip_lengths: ClipLengthOptions::Songs(SongClipOptions {
                 beats_per_measure: 4,
                 cut_after_measures: MeasureCount::Fixed { count: 4 },
                 songs,

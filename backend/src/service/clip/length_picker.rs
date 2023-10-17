@@ -6,7 +6,7 @@ use rand::Rng;
 use tracing::{debug, info};
 
 use super::MIN_DURATION;
-use crate::server::types::{Beats, MeasureCount, PmvClipOptions};
+use crate::server::types::{Beats, ClipLengthOptions, MeasureCount};
 
 #[derive(Debug)]
 pub struct RandomizedClipLengthPicker<'a> {
@@ -150,9 +150,9 @@ pub enum ClipLengthPicker<'a> {
 }
 
 impl<'a> ClipLengthPicker<'a> {
-    pub fn new(options: PmvClipOptions, total_duration: f64, rng: &'a mut StdRng) -> Self {
+    pub fn new(options: ClipLengthOptions, total_duration: f64, rng: &'a mut StdRng) -> Self {
         match options {
-            PmvClipOptions::Randomized(options) => {
+            ClipLengthOptions::Randomized(options) => {
                 ClipLengthPicker::Randomized(RandomizedClipLengthPicker::new(
                     rng,
                     options.divisors,
@@ -160,12 +160,14 @@ impl<'a> ClipLengthPicker<'a> {
                     total_duration,
                 ))
             }
-            PmvClipOptions::Songs(options) => ClipLengthPicker::Songs(SongClipLengthPicker::new(
-                rng,
-                options.songs,
-                options.beats_per_measure,
-                options.cut_after_measures,
-            )),
+            ClipLengthOptions::Songs(options) => {
+                ClipLengthPicker::Songs(SongClipLengthPicker::new(
+                    rng,
+                    options.songs,
+                    options.beats_per_measure,
+                    options.cut_after_measures,
+                ))
+            }
         }
     }
 

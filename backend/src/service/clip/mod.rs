@@ -212,7 +212,7 @@ mod tests {
     use super::{ClipOrder, CreateClipsOptions};
     use crate::data::database::VideoSource;
     use crate::server::types::{
-        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, PmvClipOptions,
+        Clip, ClipLengthOptions, ClipOptions, ClipPickerOptions, EqualLengthClipOptions,
         RandomizedClipOptions, RoundRobinClipOptions,
     };
     use crate::service::clip::sort::ClipSorter;
@@ -349,7 +349,7 @@ mod tests {
             seed: None,
             clip_options: ClipOptions {
                 clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
-                    clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                    clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                         base_duration: 10.0,
                         divisors: vec![2.0, 3.0, 4.0],
                     }),
@@ -375,7 +375,7 @@ mod tests {
             seed: None,
             clip_options: ClipOptions {
                 clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
-                    clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                    clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                         base_duration: 10.0,
                         divisors: vec![2.0, 3.0, 4.0],
                     }),

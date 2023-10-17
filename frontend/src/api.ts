@@ -71,7 +71,7 @@ export type ListMarkersParams = {
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
 
 export interface WeightedRandomClipOptions {
-  clipLengths: PmvClipOptions
+  clipLengths: ClipLengthOptions
   length: number
   weights: WeightedRandomClipOptionsWeightsItemItem[][]
 }
@@ -237,6 +237,11 @@ export interface SelectedMarker {
   videoId: string
 }
 
+export interface RoundRobinClipOptions {
+  clipLengths: ClipLengthOptions
+  length: number
+}
+
 export interface RandomizedClipOptions {
   baseDuration: number
   divisors: number[]
@@ -255,43 +260,6 @@ export interface Progress {
   timestamp: string
   videoId: string
 }
-
-export type PmvClipOptionsOneOfFourAllOfType =
-  (typeof PmvClipOptionsOneOfFourAllOfType)[keyof typeof PmvClipOptionsOneOfFourAllOfType]
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const PmvClipOptionsOneOfFourAllOfType = {
-  songs: "songs",
-} as const
-
-export type PmvClipOptionsOneOfFourAllOf = {
-  type: PmvClipOptionsOneOfFourAllOfType
-}
-
-export type PmvClipOptionsOneOfFour = SongClipOptions &
-  PmvClipOptionsOneOfFourAllOf
-
-export type PmvClipOptions = PmvClipOptionsOneOf | PmvClipOptionsOneOfFour
-
-export interface RoundRobinClipOptions {
-  clipLengths: PmvClipOptions
-  length: number
-}
-
-export type PmvClipOptionsOneOfAllOfType =
-  (typeof PmvClipOptionsOneOfAllOfType)[keyof typeof PmvClipOptionsOneOfAllOfType]
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const PmvClipOptionsOneOfAllOfType = {
-  randomized: "randomized",
-} as const
-
-export type PmvClipOptionsOneOfAllOf = {
-  type: PmvClipOptionsOneOfAllOfType
-}
-
-export type PmvClipOptionsOneOf = RandomizedClipOptions &
-  PmvClipOptionsOneOfAllOf
 
 export interface NewId {
   id: string
@@ -512,19 +480,6 @@ export type ClipOrderOneOfSeven = {
   type: ClipOrderOneOfSevenType
 }
 
-export type ClipOrder =
-  | ClipOrderOneOf
-  | ClipOrderOneOfThree
-  | ClipOrderOneOfFive
-  | ClipOrderOneOfSeven
-
-export interface CreateClipsBody {
-  clipOrder: ClipOrder
-  clips: ClipOptions
-  markers: SelectedMarker[]
-  seed?: string | null
-}
-
 export type ClipOrderOneOfFiveType =
   (typeof ClipOrderOneOfFiveType)[keyof typeof ClipOrderOneOfFiveType]
 
@@ -549,6 +504,12 @@ export type ClipOrderOneOfThree = {
   type: ClipOrderOneOfThreeType
 }
 
+export type ClipOrder =
+  | ClipOrderOneOf
+  | ClipOrderOneOfThree
+  | ClipOrderOneOfFive
+  | ClipOrderOneOfSeven
+
 export type ClipOrderOneOfType =
   (typeof ClipOrderOneOfType)[keyof typeof ClipOrderOneOfType]
 
@@ -565,6 +526,47 @@ export interface ClipOptions {
   clipPicker: ClipPickerOptions
   order: ClipOrder
 }
+
+export interface CreateClipsBody {
+  clipOrder: ClipOrder
+  clips: ClipOptions
+  markers: SelectedMarker[]
+  seed?: string | null
+}
+
+export type ClipLengthOptionsOneOfFourAllOfType =
+  (typeof ClipLengthOptionsOneOfFourAllOfType)[keyof typeof ClipLengthOptionsOneOfFourAllOfType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ClipLengthOptionsOneOfFourAllOfType = {
+  songs: "songs",
+} as const
+
+export type ClipLengthOptionsOneOfFourAllOf = {
+  type: ClipLengthOptionsOneOfFourAllOfType
+}
+
+export type ClipLengthOptionsOneOfFour = SongClipOptions &
+  ClipLengthOptionsOneOfFourAllOf
+
+export type ClipLengthOptions =
+  | ClipLengthOptionsOneOf
+  | ClipLengthOptionsOneOfFour
+
+export type ClipLengthOptionsOneOfAllOfType =
+  (typeof ClipLengthOptionsOneOfAllOfType)[keyof typeof ClipLengthOptionsOneOfAllOfType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ClipLengthOptionsOneOfAllOfType = {
+  randomized: "randomized",
+} as const
+
+export type ClipLengthOptionsOneOfAllOf = {
+  type: ClipLengthOptionsOneOfAllOfType
+}
+
+export type ClipLengthOptionsOneOf = RandomizedClipOptions &
+  ClipLengthOptionsOneOfAllOf
 
 export type ClipRangeItem = number & number
 

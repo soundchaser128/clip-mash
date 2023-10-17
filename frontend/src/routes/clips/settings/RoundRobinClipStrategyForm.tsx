@@ -1,32 +1,13 @@
-import {ClipOrder} from "@/api"
-import {useForm} from "react-hook-form"
+import {useFormContext} from "react-hook-form"
+import {Inputs} from "../ClipSettingsForm"
 
-interface Inputs {
-  //   seed?: string
-  splitClips: boolean
-  //  clipDuration: number
-  beatsPerMeasure: number
-  measureCountType: "fixed" | "random"
-  measureCountFixed: number
-  measureCountRandomStart: number
-  measureCountRandomEnd: number
-}
+const RoundRobinClipStrategyForm: React.FC = () => {
+  const {register, watch} = useFormContext<Inputs>()
 
-interface Props {
-  onSubmit: (data: Inputs) => void
-  initialValues: Inputs
-}
-
-const PmvSettingsForm: React.FC<Props> = ({onSubmit, initialValues}) => {
-  const {register, watch, handleSubmit} = useForm<Inputs>({
-    defaultValues: initialValues,
-  })
-
-  const doSplitClips = watch("splitClips")
-  const measureCountType = watch("measureCountType")
+  const measureCountType = watch("roundRobin.clipLengths.cutAfterMeasures.type")
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <>
       <div className="form-control">
         <label className="label">
           <span className="label-text">Beats per measure</span>
@@ -34,8 +15,9 @@ const PmvSettingsForm: React.FC<Props> = ({onSubmit, initialValues}) => {
         <input
           type="number"
           className="input input-bordered"
-          disabled={!doSplitClips}
-          {...register("beatsPerMeasure", {valueAsNumber: true})}
+          {...register("roundRobin.clipLengths.beatsPerMeasure", {
+            valueAsNumber: true,
+          })}
         />
       </div>
       <div className="form-control">
@@ -44,7 +26,7 @@ const PmvSettingsForm: React.FC<Props> = ({onSubmit, initialValues}) => {
         </label>
         <select
           className="select select-bordered"
-          {...register("measureCountType")}
+          {...register("roundRobin.clipLengths.cutAfterMeasures.type")}
         >
           <option disabled value="none">
             Select how to cut...
@@ -62,7 +44,9 @@ const PmvSettingsForm: React.FC<Props> = ({onSubmit, initialValues}) => {
           <input
             type="number"
             className="input input-bordered"
-            {...register("measureCountFixed", {valueAsNumber: true})}
+            {...register("roundRobin.clipLengths.cutAfterMeasures.count", {
+              valueAsNumber: true,
+            })}
           />
         </div>
       )}
@@ -76,7 +60,7 @@ const PmvSettingsForm: React.FC<Props> = ({onSubmit, initialValues}) => {
             <input
               type="number"
               className="input input-bordered"
-              {...register("measureCountRandomStart", {
+              {...register("roundRobin.clipLengths.cutAfterMeasures.min", {
                 valueAsNumber: true,
               })}
             />
@@ -88,13 +72,15 @@ const PmvSettingsForm: React.FC<Props> = ({onSubmit, initialValues}) => {
             <input
               type="number"
               className="input input-bordered"
-              {...register("measureCountRandomEnd", {valueAsNumber: true})}
+              {...register("roundRobin.clipLengths.cutAfterMeasures.max", {
+                valueAsNumber: true,
+              })}
             />
           </div>
         </>
       )}
-    </form>
+    </>
   )
 }
 
-export default PmvSettingsForm
+export default RoundRobinClipStrategyForm

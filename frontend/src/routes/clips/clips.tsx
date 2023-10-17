@@ -29,13 +29,13 @@ interface ClipState {
   clip: Clip
 }
 
-interface TimelineProps {
+interface ClipsTimelineProps {
   clips: ClipState[]
   currentClipIndex: number
   setCurrentClipIndex: (n: number) => void
 }
 
-const Timeline: React.FC<TimelineProps> = ({
+const ClipsTimeline: React.FC<ClipsTimelineProps> = ({
   clips,
   currentClipIndex,
   setCurrentClipIndex,
@@ -270,26 +270,6 @@ function PreviewClips() {
           <ClipSettingsForm
             clips={clips.map((c) => c.clip)}
             onRemoveClip={onRemoveClip}
-            initialValues={{
-              clipDuration: state.data.clipDuration || 30,
-              clipOrder: state.data.clipOrder || {type: "scene"},
-              splitClips: state.data.splitClips || true,
-              seed: state.data.seed,
-              beatsPerMeasure: state.data.beatsPerMeasure || 4,
-              measureCountFixed:
-                state.data.cutAfterMeasures?.type === "fixed"
-                  ? state.data.cutAfterMeasures.count
-                  : 4,
-              measureCountRandomStart:
-                state.data.cutAfterMeasures?.type === "random"
-                  ? state.data.cutAfterMeasures.min
-                  : 2,
-              measureCountRandomEnd:
-                state.data.cutAfterMeasures?.type === "random"
-                  ? state.data.cutAfterMeasures.max
-                  : 4,
-              measureCountType: state.data.cutAfterMeasures?.type || "fixed",
-            }}
             onUndo={undo}
             onRedo={redo}
             canUndo={canUndo}
@@ -313,7 +293,7 @@ function PreviewClips() {
               type="button"
               className={clsx(
                 "btn btn-square btn-lg",
-                autoPlay ? "btn-warning" : "btn-success",
+                autoPlay ? "btn-neutral" : "btn-success",
               )}
               onClick={toggleAutoPlay}
             >
@@ -356,7 +336,7 @@ function PreviewClips() {
         </div>
       </div>
 
-      <Timeline
+      <ClipsTimeline
         clips={clips}
         currentClipIndex={currentClipIndex}
         setCurrentClipIndex={setCurrentClipIndex}

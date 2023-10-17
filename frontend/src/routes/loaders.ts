@@ -6,7 +6,7 @@ import {
   ClipsResponse,
   CreateClipsBody,
   ListVideosParams,
-  PmvClipOptions,
+  ClipLengthOptions,
   StashVideoDtoPage,
   VideoDto,
   VideoSource,
@@ -21,7 +21,7 @@ import {getNewId, getVideo, listMarkers} from "../api"
 
 export const DEFAULT_PAGE_LENGTH = 24
 
-const getClipLengths = (state: FormState): PmvClipOptions => {
+const getClipLengths = (state: FormState): ClipLengthOptions => {
   if (state.songs && state.songs.length) {
     return {
       type: "songs",

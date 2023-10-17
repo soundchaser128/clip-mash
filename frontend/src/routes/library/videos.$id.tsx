@@ -106,41 +106,58 @@ function HelpPanel({onBack}: {onBack: () => void}) {
   )
 }
 
-interface CreateMarkerFormProps {
-  formMode: FormMode
-}
-
-const CreateMarkerForm: React.FC<CreateMarkerFormProps> = ({formMode}) => {
-  const handleValidation = (values: Inputs) => {
-    const {start, end, title} = values
-    const errors: FieldErrors<Inputs> = {}
-    if ((end || 0) <= start) {
-      errors.end = {
-        type: "required",
-        message: "End must be after start",
-      }
+const handleValidation = (values: Inputs) => {
+  const {start, end, title} = values
+  const errors: FieldErrors<Inputs> = {}
+  if ((end || 0) <= start) {
+    errors.end = {
+      type: "required",
+      message: "End must be after start",
     }
-    if (!title || !title.trim()) {
-      errors.title = {
-        type: "required",
-        message: "Must enter a title",
-      }
-    }
-
-    return {
-      values,
-      errors,
+  }
+  if (!title || !title.trim()) {
+    errors.title = {
+      type: "required",
+      message: "Must enter a title",
     }
   }
 
+  return {
+    values,
+    errors,
+  }
+}
+
+export default function EditVideoModal() {
   const {
     register,
     handleSubmit,
     control,
     formState: {errors},
+    setError,
+    setValue,
   } = useForm<Inputs>({
     resolver: handleValidation,
   })
+
+  const navigate = useNavigate()
+  const {video, markers: videoMarkers} = useLoaderData() as VideoDetailsDto
+
+  const revalidator = useRevalidator()
+
+  const [markers, setMarkers] = useImmer<MarkerDto[]>(videoMarkers)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [formMode, setFormMode] = useState<FormMode>("hidden")
+  const [videoDuration, setVideoDuration] = useState<number>()
+  const [editedMarker, setEditedMarker] = useState<MarkerDto>()
+  const [loading, setLoading] = useState(false)
+  const [threshold, setThreshold] = useState(40)
+  const [time, setTime] = useState(0)
+  const [markPoints, setMarkPoints] = useImmer<number[]>([])
+  const config = useConfig()
+  const showingForm = formMode === "create" || formMode === "edit"
+  const isPlaying = videoRef.current?.paused === false
+  const [isMuted, setIsMuted] = useState(videoRef.current?.muted)
 
   const onSubmit = async (values: Inputs) => {
     const index =
@@ -190,132 +207,6 @@ const CreateMarkerForm: React.FC<CreateMarkerFormProps> = ({formMode}) => {
   const onSetCurrentTime = (field: "start" | "end") => {
     setValue(field, formatSeconds(videoRef.current?.currentTime || 0, "short"))
   }
-
-  return (
-    <form
-      className="w-full flex flex-col gap-2"
-      onSubmit={handleSubmit(onSubmit)}
-    >
-      <h2 className="text-xl font-bold">
-        {formMode === "create" ? "Add new" : "Edit"} marker
-      </h2>
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Marker title</span>
-          <span className="label-text-alt text-error">
-            {errors.title?.message}
-          </span>
-        </label>
-        <input
-          type="text"
-          placeholder="Type here..."
-          className="input input-bordered w-full"
-          {...register("title", {required: true})}
-        />
-      </div>
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Start time</span>
-        </label>
-        <div className="input-group w-full">
-          <TimestampInput name="start" control={control} error={errors.start} />
-
-          <button
-            onClick={() => onSetCurrentTime("start")}
-            className="btn"
-            type="button"
-          >
-            <HiClock className="mr-2" />
-            Set current time
-          </button>
-        </div>
-      </div>
-
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">End time</span>
-          <span className="label-text-alt text-error">
-            {errors.end?.message}
-          </span>
-        </label>
-        <div className="input-group w-full">
-          <TimestampInput name="end" control={control} error={errors.end} />
-
-          <button
-            onClick={() => onSetCurrentTime("end")}
-            className="btn"
-            type="button"
-          >
-            <HiClock className="mr-2" />
-            Set current time
-          </button>
-        </div>
-      </div>
-      {video.source === "Stash" && (
-        <div className="form-control">
-          <label className="label cursor-pointer">
-            <span className="label-text">Create marker in Stash as well?</span>
-
-            <input
-              type="checkbox"
-              className="checkbox checkbox-primary"
-              {...register("createInStash")}
-            />
-          </label>
-        </div>
-      )}
-
-      <div className="flex justify-between mt-2">
-        {formMode === "edit" ? (
-          <button
-            onClick={onRemoveMarker}
-            className="btn btn-error"
-            type="button"
-          >
-            <HiTrash className="mr-2" />
-            Remove marker
-          </button>
-        ) : (
-          <div />
-        )}
-        <div className="btn-group">
-          <button
-            onClick={() => setFormMode("hidden")}
-            className="btn btn-outline"
-            type="button"
-          >
-            <HiXMark className="mr-2" />
-            Cancel
-          </button>
-          <button className="btn btn-primary" type="submit">
-            <HiPlus className="mr-2" /> {formMode === "create" ? "Add" : "Save"}
-          </button>
-        </div>
-      </div>
-    </form>
-  )
-}
-
-export default function EditVideoModal() {
-  const navigate = useNavigate()
-  const {video, markers: videoMarkers} = useLoaderData() as VideoDetailsDto
-
-  const revalidator = useRevalidator()
-
-  const [markers, setMarkers] = useImmer<MarkerDto[]>(videoMarkers)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [formMode, setFormMode] = useState<FormMode>("hidden")
-  const [videoDuration, setVideoDuration] = useState<number>()
-  const [editedMarker, setEditedMarker] = useState<MarkerDto>()
-  const [loading, setLoading] = useState(false)
-  const [threshold, setThreshold] = useState(40)
-  const [time, setTime] = useState(0)
-  const [markPoints, setMarkPoints] = useImmer<number[]>([])
-  const config = useConfig()
-  const showingForm = formMode === "create" || formMode === "edit"
-  const isPlaying = videoRef.current?.paused === false
-  const [isMuted, setIsMuted] = useState(videoRef.current?.muted)
-
   const currentItemIndex = markers.findIndex((m) =>
     isBetween(time, m.start, m.end || videoDuration!),
   )
@@ -530,7 +421,120 @@ export default function EditVideoModal() {
           muted
         />
         <div className="flex flex-col w-1/3 justify-between">
-          {showingForm && <CreateMarkerForm />}
+          {showingForm && (
+            <form
+              className="w-full flex flex-col gap-2"
+              onSubmit={handleSubmit(onSubmit)}
+            >
+              <h2 className="text-xl font-bold">
+                {formMode === "create" ? "Add new" : "Edit"} marker
+              </h2>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Marker title</span>
+                  <span className="label-text-alt text-error">
+                    {errors.title?.message}
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Type here..."
+                  className="input input-bordered w-full"
+                  {...register("title", {required: true})}
+                />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Start time</span>
+                </label>
+                <div className="input-group w-full">
+                  <TimestampInput
+                    name="start"
+                    control={control}
+                    error={errors.start}
+                  />
+
+                  <button
+                    onClick={() => onSetCurrentTime("start")}
+                    className="btn"
+                    type="button"
+                  >
+                    <HiClock className="mr-2" />
+                    Set current time
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">End time</span>
+                  <span className="label-text-alt text-error">
+                    {errors.end?.message}
+                  </span>
+                </label>
+                <div className="input-group w-full">
+                  <TimestampInput
+                    name="end"
+                    control={control}
+                    error={errors.end}
+                  />
+
+                  <button
+                    onClick={() => onSetCurrentTime("end")}
+                    className="btn"
+                    type="button"
+                  >
+                    <HiClock className="mr-2" />
+                    Set current time
+                  </button>
+                </div>
+              </div>
+              {video.source === "Stash" && (
+                <div className="form-control">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">
+                      Create marker in Stash as well?
+                    </span>
+
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-primary"
+                      {...register("createInStash")}
+                    />
+                  </label>
+                </div>
+              )}
+
+              <div className="flex justify-between mt-2">
+                {formMode === "edit" ? (
+                  <button
+                    onClick={onRemoveMarker}
+                    className="btn btn-error"
+                    type="button"
+                  >
+                    <HiTrash className="mr-2" />
+                    Remove marker
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <div className="btn-group">
+                  <button
+                    onClick={() => setFormMode("hidden")}
+                    className="btn btn-outline"
+                    type="button"
+                  >
+                    <HiXMark className="mr-2" />
+                    Cancel
+                  </button>
+                  <button className="btn btn-primary" type="submit">
+                    <HiPlus className="mr-2" />{" "}
+                    {formMode === "create" ? "Add" : "Save"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
 
           {!showingForm && (
             <div>

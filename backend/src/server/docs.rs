@@ -67,7 +67,7 @@ use crate::service::video::AddVideosRequest;
             RoundRobinClipOptions,
             WeightedRandomClipOptions,
             EqualLengthClipOptions,
-            PmvClipOptions,
+            ClipLengthOptions,
             RandomizedClipOptions,
             SongClipOptions,
             MeasureCount,

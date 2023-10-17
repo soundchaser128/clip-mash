@@ -1,9 +1,9 @@
 import {useFormContext} from "react-hook-form"
 import {Inputs} from "../ClipSettingsForm"
+import {useStateMachine} from "little-state-machine"
 
-const RoundRobinClipStrategyForm: React.FC = () => {
+const MusicFormFields = () => {
   const {register, watch} = useFormContext<Inputs>()
-
   const measureCountType = watch("roundRobin.clipLengths.cutAfterMeasures.type")
 
   return (
@@ -81,6 +81,14 @@ const RoundRobinClipStrategyForm: React.FC = () => {
       )}
     </>
   )
+}
+
+const RoundRobinClipStrategyForm: React.FC = () => {
+  const {state} = useStateMachine()
+  const hasMusic = !!state.data.songs?.length
+  if (hasMusic) {
+    return <MusicFormFields />
+  }
 }
 
 export default RoundRobinClipStrategyForm

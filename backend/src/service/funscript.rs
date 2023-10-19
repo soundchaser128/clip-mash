@@ -248,8 +248,11 @@ impl ScriptBuilder {
             let duration = end - start;
 
             let script = match video.source {
-                VideoSource::Stash { .. } => {
-                    self.api.get_funscript(&clip.video_id.to_string()).await
+                VideoSource::Stash => {
+                    let stash_id = video
+                        .stash_scene_id
+                        .expect("stash scenes must have a stash scene ID set");
+                    self.api.get_funscript(stash_id).await
                 }
                 VideoSource::Download | VideoSource::Folder => {
                     let path = Utf8PathBuf::from(video.file_path).with_extension("funscript");

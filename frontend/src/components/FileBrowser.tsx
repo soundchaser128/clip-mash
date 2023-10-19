@@ -2,22 +2,24 @@ import {HiDocument, HiFolder} from "react-icons/hi2"
 import {FileSystemEntry} from "@/api"
 import clsx from "clsx"
 import {formatBytes} from "@/helpers"
-import {useState} from "react"
+import {Control, Controller, FieldValues, Path} from "react-hook-form"
 
-export interface Props {
+export interface Props<T extends FieldValues> {
   files: FileSystemEntry[]
-  onSelectItem: (file: FileSystemEntry) => void
-  currentPath: string
-  onPathChange: (path: string) => void
+  name: Path<T>
+  onSelectItem: (entry: FileSystemEntry) => void
+  control: Control<T>
 }
 
-const FileBrowser: React.FC<Props> = ({
+function FileBrowser<T extends FieldValues>({
   files,
   onSelectItem,
-  currentPath,
-  onPathChange,
-}) => {
-  const [value, setValue] = useState("")
+  name,
+  control,
+}: Props<T>) {
+  const handleSelectItem = (entry: FileSystemEntry) => {
+    onSelectItem(entry)
+  }
 
   return (
     <section className="w-full flex-grow">
@@ -25,11 +27,17 @@ const FileBrowser: React.FC<Props> = ({
         <label className="label">
           <span className="label-text">Path</span>
         </label>
-        <input
-          type="text"
-          value={value}
-          className="input input-bordered mb-4"
-          onChange={(e) => setValue(e.target.value)}
+        <Controller
+          name={name}
+          control={control}
+          render={({field}) => (
+            <input
+              type="text"
+              className="input input-bordered mb-4"
+              required
+              {...field}
+            />
+          )}
         />
       </div>
 
@@ -41,7 +49,7 @@ const FileBrowser: React.FC<Props> = ({
               disabled: file.type === "file",
             })}
           >
-            <button onClick={() => onSelectItem(file)} type="button">
+            <button onClick={() => handleSelectItem(file)} type="button">
               <span className="truncate">
                 {file.type === "directory" ? (
                   <HiFolder className="inline" />

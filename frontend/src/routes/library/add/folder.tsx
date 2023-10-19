@@ -9,16 +9,19 @@ import FileBrowser from "@/components/FileBrowser"
 interface Inputs {
   path: string
   recurse: boolean
-  fileName: string
 }
 
 export default function SelectVideos() {
   const navigate = useNavigate()
-  const [submitting, setSubmitting] = useState(false)
-  const {register, handleSubmit} = useForm<Inputs>({})
-  const [files, setFiles] = useState<ListFileEntriesResponse>()
   const [query, setQuery] = useSearchParams()
   const path = query.get("path")
+  const [submitting, setSubmitting] = useState(false)
+  const {register, handleSubmit, control, setValue} = useForm<Inputs>({
+    defaultValues: {
+      path: path || "",
+    },
+  })
+  const [files, setFiles] = useState<ListFileEntriesResponse>()
 
   const onSubmit = async (values: Inputs) => {
     setSubmitting(true)
@@ -40,6 +43,7 @@ export default function SelectVideos() {
   }, [path])
 
   const onSelectEntry = (path: string) => {
+    setValue("path", path)
     setQuery({path})
   }
 
@@ -52,10 +56,10 @@ export default function SelectVideos() {
         {!submitting && (
           <>
             <FileBrowser
-              currentPath={files?.directory || ""}
+              name="path"
               files={files?.entries || []}
               onSelectItem={(e) => onSelectEntry(e.fullPath)}
-              onPathChange={onSelectEntry}
+              control={control}
             />
             <div className="form-control justify-between w-full">
               <label className="label cursor-pointer">

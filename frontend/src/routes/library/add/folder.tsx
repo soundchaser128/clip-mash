@@ -1,9 +1,9 @@
 import {HiCheck} from "react-icons/hi2"
 import {useNavigate} from "react-router-dom"
 import {useForm} from "react-hook-form"
-import {useState} from "react"
+import {useEffect, useState} from "react"
 import Loader from "../../../components/Loader"
-import {addNewVideos} from "../../../api"
+import {addNewVideos, FileSystemEntry, listFileEntries} from "../../../api"
 import FileBrowser from "@/components/FileBrowser"
 
 interface Inputs {
@@ -16,6 +16,7 @@ export default function SelectVideos() {
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const {register, handleSubmit} = useForm<Inputs>({})
+  const [files, setFiles] = useState<FileSystemEntry[]>([])
 
   const onSubmit = async (values: Inputs) => {
     setSubmitting(true)
@@ -27,6 +28,15 @@ export default function SelectVideos() {
     navigate("/library")
   }
 
+  const fetchEntries = async (path?: string) => {
+    const entries = await listFileEntries({path})
+    return entries
+  }
+
+  useEffect(() => {
+    fetchEntries().then((entries) => setFiles(entries))
+  }, [])
+
   return (
     <>
       <form
@@ -37,7 +47,7 @@ export default function SelectVideos() {
           <>
             <FileBrowser
               currentPath="/Users/martin/MEGAsync Downloads"
-              files={[]}
+              files={files}
               onSelectItem={() => {}}
             />
             <div className="form-control justify-between w-full">

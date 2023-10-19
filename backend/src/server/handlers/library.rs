@@ -603,7 +603,7 @@ pub struct ListFileEntriesQuery {
     pub include_hidden: Option<bool>,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, ToSchema, PartialEq)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum FileSystemEntry {
     File { name: String, size: u64 },
@@ -622,6 +622,12 @@ impl FileSystemEntry {
                 size: metadata.len(),
             })
         }
+    }
+}
+
+impl PartialOrd for FileSystemEntry {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        todo!()
     }
 }
 

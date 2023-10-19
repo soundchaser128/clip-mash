@@ -2,13 +2,12 @@ import {HiCheck} from "react-icons/hi2"
 import {useNavigate, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {useEffect, useState} from "react"
-import Loader from "../../../components/Loader"
+import Loader from "@/components/Loader"
 import {
   addNewVideos,
   listFileEntries,
   ListFileEntriesResponse,
-  FileSystemEntry,
-} from "../../../api"
+} from "@/api"
 import FileBrowser from "@/components/FileBrowser"
 
 interface Inputs {

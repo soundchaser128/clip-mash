@@ -2,6 +2,7 @@ import {HiDocument, HiFolder} from "react-icons/hi2"
 import {FileSystemEntry} from "@/api"
 import clsx from "clsx"
 import {formatBytes} from "@/helpers"
+import { useState } from "react"
 
 export interface Props {
   files: FileSystemEntry[]
@@ -16,6 +17,8 @@ const FileBrowser: React.FC<Props> = ({
   currentPath,
   onPathChange,
 }) => {
+  const [value, setValue] = useState("")
+
   return (
     <section className="w-full flex-grow">
       <div className="form-control">
@@ -24,9 +27,9 @@ const FileBrowser: React.FC<Props> = ({
         </label>
         <input
           type="text"
-          value={currentPath}
+          value={value}
           className="input input-bordered mb-4"
-          onChange={(e) => onPathChange(e.target.value)}
+          onChange={(e) => setValue(e.target.value)}
         />
       </div>
 

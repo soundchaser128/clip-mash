@@ -88,6 +88,8 @@ const RoundRobinClipStrategyForm: React.FC = () => {
   const hasMusic = !!state.data.songs?.length
   if (hasMusic) {
     return <MusicFormFields />
+  } else {
+    return null
   }
 }
 

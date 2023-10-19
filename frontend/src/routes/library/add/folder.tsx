@@ -1,9 +1,14 @@
 import {HiCheck} from "react-icons/hi2"
-import {useNavigate} from "react-router-dom"
+import {useNavigate, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {useEffect, useState} from "react"
 import Loader from "../../../components/Loader"
-import {addNewVideos, FileSystemEntry, listFileEntries} from "../../../api"
+import {
+  addNewVideos,
+  listFileEntries,
+  ListFileEntriesResponse,
+  FileSystemEntry,
+} from "../../../api"
 import FileBrowser from "@/components/FileBrowser"
 
 interface Inputs {
@@ -16,7 +21,9 @@ export default function SelectVideos() {
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const {register, handleSubmit} = useForm<Inputs>({})
-  const [files, setFiles] = useState<FileSystemEntry[]>([])
+  const [files, setFiles] = useState<ListFileEntriesResponse>()
+  const [query, setQuery] = useSearchParams()
+  const path = query.get("path")
 
   const onSubmit = async (values: Inputs) => {
     setSubmitting(true)
@@ -34,21 +41,26 @@ export default function SelectVideos() {
   }
 
   useEffect(() => {
-    fetchEntries().then((entries) => setFiles(entries))
-  }, [])
+    fetchEntries(path || undefined).then((entries) => setFiles(entries))
+  }, [path])
+
+  const onSelectEntry = (path: string) => {
+    setQuery({path})
+  }
 
   return (
     <>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex gap-4 items-start flex-col self-center"
+        className="flex gap-4 items-start flex-col self-center w-[36rem] grow"
       >
         {!submitting && (
           <>
             <FileBrowser
-              currentPath="/Users/martin/MEGAsync Downloads"
-              files={files}
-              onSelectItem={() => {}}
+              currentPath={files?.directory || ""}
+              files={files?.entries || []}
+              onSelectItem={(e) => onSelectEntry(e.fullPath)}
+              onPathChange={onSelectEntry}
             />
             <div className="form-control justify-between w-full">
               <label className="label cursor-pointer">

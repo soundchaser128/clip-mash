@@ -70,7 +70,7 @@ export type ListMarkersParams = {
 
 export type ListFileEntriesParams = {
   path?: string | null
-  include_hidden?: boolean | null
+  includeHidden?: boolean | null
 }
 
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
@@ -223,12 +223,6 @@ export interface SongDto {
   url: string
 }
 
-export interface SongClipOptions {
-  beatsPerMeasure: number
-  cutAfterMeasures: MeasureCount
-  songs: Beats[]
-}
-
 export type SelectedMarkerSelectedRangeItem = number & number
 
 export interface SelectedMarker {
@@ -286,6 +280,12 @@ export type MeasureCountOneOfThree = {
 
 export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
 
+export interface SongClipOptions {
+  beatsPerMeasure: number
+  cutAfterMeasures: MeasureCount
+  songs: Beats[]
+}
+
 export type MeasureCountOneOfType =
   (typeof MeasureCountOneOfType)[keyof typeof MeasureCountOneOfType]
 
@@ -342,16 +342,23 @@ export interface ListVideoDtoPage {
   totalPages: number
 }
 
+export interface ListFileEntriesResponse {
+  directory: string
+  entries: FileSystemEntry[]
+}
+
 export type FileSystemEntryOneOfThreeType =
   (typeof FileSystemEntryOneOfThreeType)[keyof typeof FileSystemEntryOneOfThreeType]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const FileSystemEntryOneOfThreeType = {
-  directory: "directory",
+  file: "file",
 } as const
 
 export type FileSystemEntryOneOfThree = {
-  name: string
+  fileName: string
+  fullPath: string
+  size: number
   type: FileSystemEntryOneOfThreeType
 }
 
@@ -360,12 +367,12 @@ export type FileSystemEntryOneOfType =
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const FileSystemEntryOneOfType = {
-  file: "file",
+  directory: "directory",
 } as const
 
 export type FileSystemEntryOneOf = {
-  name: string
-  size: number
+  fileName: string
+  fullPath: string
   type: FileSystemEntryOneOfType
 }
 
@@ -666,7 +673,7 @@ export type AddVideosRequest =
   | AddVideosRequestOneOfFive
 
 export const listFileEntries = (params?: ListFileEntriesParams) => {
-  return customInstance<FileSystemEntry[]>({
+  return customInstance<ListFileEntriesResponse>({
     url: `/api/library/directory`,
     method: "get",
     params,

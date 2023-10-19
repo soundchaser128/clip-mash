@@ -1,12 +1,15 @@
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use axum::body::Body;
 use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
+use camino::Utf8PathBuf;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+use tokio::fs::DirEntry;
 use tower::ServiceExt;
 use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
@@ -592,4 +595,78 @@ pub async fn merge_stash_video(
     info!("new video after merging: {new_video:?}");
 
     Ok(Json(new_video))
+}
+
+#[derive(Deserialize, IntoParams)]
+pub struct ListFileEntriesQuery {
+    pub path: Option<String>,
+    pub include_hidden: Option<bool>,
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase", tag = "type")]
+pub enum FileSystemEntry {
+    File { name: String, size: u64 },
+    Directory { name: String },
+}
+
+impl FileSystemEntry {
+    pub async fn from(entry: DirEntry) -> crate::Result<Self> {
+        let metadata = entry.metadata().await?;
+        let name = entry.file_name().to_string_lossy().to_string();
+        if metadata.is_dir() {
+            Ok(FileSystemEntry::Directory { name })
+        } else {
+            Ok(FileSystemEntry::File {
+                name,
+                size: metadata.len(),
+            })
+        }
+    }
+}
+
+fn get_or_home_dir(path: Option<String>) -> PathBuf {
+    path.map(PathBuf::from)
+        .or(std::env::home_dir())
+        .unwrap_or_default()
+}
+
+// TODO for window as well
+fn is_hidden(file: &std::path::Path) -> bool {
+    file.file_name()
+        .and_then(|name| name.to_str())
+        .map(|name| name.starts_with('.'))
+        .unwrap_or(false)
+}
+
+#[axum::debug_handler]
+#[utoipa::path(
+    get,
+    path = "/api/library/directory",
+    params(ListFileEntriesQuery),
+    responses(
+        (status = 200, description = "List all files in the given path", body = Vec<FileSystemEntry>),
+    )
+)]
+pub async fn list_file_entries(
+    Query(ListFileEntriesQuery {
+        path,
+        include_hidden,
+    }): Query<ListFileEntriesQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    let path = get_or_home_dir(path);
+    let with_hidden = include_hidden.unwrap_or(false);
+
+    let mut entries = tokio::fs::read_dir(path).await?;
+    let mut files = vec![];
+    while let Some(entry) = entries.next_entry().await? {
+        if !with_hidden && is_hidden(&entry.path()) {
+            continue;
+        }
+
+        let entry = FileSystemEntry::from(entry).await?;
+        files.push(entry);
+    }
+
+    Ok(Json(files))
 }

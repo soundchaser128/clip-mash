@@ -68,6 +68,11 @@ export type ListMarkersParams = {
   videoIds?: string | null
 }
 
+export type ListFileEntriesParams = {
+  path?: string | null
+  include_hidden?: boolean | null
+}
+
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
 
 export interface WeightedRandomClipOptions {
@@ -279,6 +284,8 @@ export type MeasureCountOneOfThree = {
   type: MeasureCountOneOfThreeType
 }
 
+export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
+
 export type MeasureCountOneOfType =
   (typeof MeasureCountOneOfType)[keyof typeof MeasureCountOneOfType]
 
@@ -291,8 +298,6 @@ export type MeasureCountOneOf = {
   count: number
   type: MeasureCountOneOfType
 }
-
-export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
 
 export interface MarkerDto {
   createdOn: number
@@ -336,6 +341,35 @@ export interface ListVideoDtoPage {
   totalItems: number
   totalPages: number
 }
+
+export type FileSystemEntryOneOfThreeType =
+  (typeof FileSystemEntryOneOfThreeType)[keyof typeof FileSystemEntryOneOfThreeType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const FileSystemEntryOneOfThreeType = {
+  directory: "directory",
+} as const
+
+export type FileSystemEntryOneOfThree = {
+  name: string
+  type: FileSystemEntryOneOfThreeType
+}
+
+export type FileSystemEntryOneOfType =
+  (typeof FileSystemEntryOneOfType)[keyof typeof FileSystemEntryOneOfType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const FileSystemEntryOneOfType = {
+  file: "file",
+} as const
+
+export type FileSystemEntryOneOf = {
+  name: string
+  size: number
+  type: FileSystemEntryOneOfType
+}
+
+export type FileSystemEntry = FileSystemEntryOneOf | FileSystemEntryOneOfThree
 
 export interface EqualLengthClipOptions {
   clipDuration: number
@@ -631,6 +665,14 @@ export type AddVideosRequest =
   | AddVideosRequestOneOfThree
   | AddVideosRequestOneOfFive
 
+export const listFileEntries = (params?: ListFileEntriesParams) => {
+  return customInstance<FileSystemEntry[]>({
+    url: `/api/library/directory`,
+    method: "get",
+    params,
+  })
+}
+
 export const listMarkers = (params?: ListMarkersParams) => {
   return customInstance<MarkerDto[]>({
     url: `/api/library/marker`,
@@ -876,6 +918,9 @@ export const getVersion = () => {
   return customInstance<Version>({url: `/api/version`, method: "get"})
 }
 
+export type ListFileEntriesResult = NonNullable<
+  Awaited<ReturnType<typeof listFileEntries>>
+>
 export type ListMarkersResult = NonNullable<
   Awaited<ReturnType<typeof listMarkers>>
 >

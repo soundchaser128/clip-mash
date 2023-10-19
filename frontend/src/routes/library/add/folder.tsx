@@ -4,6 +4,7 @@ import {useForm} from "react-hook-form"
 import {useState} from "react"
 import Loader from "../../../components/Loader"
 import {addNewVideos} from "../../../api"
+import FileBrowser from "@/components/FileBrowser"
 
 interface Inputs {
   path: string
@@ -34,20 +35,11 @@ export default function SelectVideos() {
       >
         {!submitting && (
           <>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">
-                  Folder containing your videos
-                </span>
-              </label>
-              <input
-                required
-                type="text"
-                className="input input-bordered w-96"
-                placeholder="C:\Users\CoolUser\Videos\DefinitelyNotPorn"
-                {...register("path", {required: true, minLength: 3})}
-              />
-            </div>
+            <FileBrowser
+              currentPath="/Users/martin/MEGAsync Downloads"
+              files={[]}
+              onSelectItem={() => {}}
+            />
             <div className="form-control justify-between w-full">
               <label className="label cursor-pointer">
                 <span className="label-text">

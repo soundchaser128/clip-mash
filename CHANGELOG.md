@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 0.17.1
+- fix: Funscript generation with Stash videos was using the internal video ID instead of the Stash scene ID.
+
 ## 0.17.0
 - feat: Unified video library. You no longer need to choose between whether you want videos from Stash or from your local hard drive.
 - feat: Only re-encode clips when the source videos have different encoding parameters (width, height, FPS, codec). Clips will be

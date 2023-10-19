@@ -409,7 +409,7 @@ impl StashApi {
         Ok(new_marker_id.parse()?)
     }
 
-    pub async fn get_funscript(&self, scene_id: &str) -> Result<FunScript> {
+    pub async fn get_funscript(&self, scene_id: i64) -> Result<FunScript> {
         let url = format!("{}/scene/{}/funscript", self.api_url, scene_id);
         let response = self
             .client

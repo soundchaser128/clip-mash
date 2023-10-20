@@ -11,7 +11,7 @@ import {
   HiTrash,
 } from "react-icons/hi2"
 import {FormProvider, useForm} from "react-hook-form"
-import {Clip, ClipLengthOptions, ClipOrder} from "../../../api"
+import {ClipLengthOptions, ClipOrder} from "../../../api"
 import {ClipStrategy} from "@/types/types"
 import RoundRobinFields from "./RoundRobinFields"
 import {FormState} from "@/types/form-state"
@@ -198,7 +198,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
             <span className="label-text">Clip order</span>
           </label>
           <select
-            className="select select-primary"
+            className="select select-bordered"
             {...register("clipOrder.type")}
           >
             <option value="">Select...</option>
@@ -208,14 +208,14 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
           </select>
         </div>
 
-        {clipOrder === "fixed" && <MarkerOrderModal />}
+        {clipOrder === "fixed" && <MarkerOrderModal className="mt-4" />}
 
         <div className="form-control">
           <label className="label">
             <span className="label-text">Clip generation method</span>
           </label>
           <select
-            className="select select-primary"
+            className="select select-bordered"
             {...register("clipStrategy")}
           >
             <option value="">Select...</option>

@@ -264,7 +264,7 @@ const MarkerOrderForm: React.FC<MarkerOrderFormProps> = ({onSave, groups}) => {
   )
 }
 
-const MarkerOrderModal = () => {
+const MarkerOrderModal: React.FC<{className?: string}> = ({className}) => {
   const [open, setOpen] = useState(false)
   const {state, actions} = useStateMachine({updateForm})
   const initialTitles = getMarkerCounts(state.data.markers || [])
@@ -338,7 +338,7 @@ const MarkerOrderModal = () => {
       <button
         onClick={() => setOpen(true)}
         type="button"
-        className="btn btn-primary mt-2"
+        className={clsx("btn btn-primary", className)}
       >
         Set marker order
       </button>

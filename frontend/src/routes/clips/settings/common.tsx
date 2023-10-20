@@ -93,7 +93,7 @@ export const MusicFormFields: React.FC<{
 export const RandomizedLengthFormFields: React.FC<{
   strategy: "roundRobin" | "weightedRandom"
 }> = ({strategy}) => {
-  const {register, watch} = useFormContext<ClipFormInputs>()
+  const {register} = useFormContext<ClipFormInputs>()
   return (
     <>
       <input

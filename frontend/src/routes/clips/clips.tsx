@@ -11,12 +11,7 @@ import {
 } from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
-import {
-  clamp,
-  formatSeconds,
-  getSegmentColor,
-  getSegmentTextColor,
-} from "../../helpers"
+import {clamp, formatSeconds, getSegmentStyle} from "../../helpers"
 import {ClipsLoaderData} from "../loaders"
 import {Clip} from "../../api"
 import {FormStage} from "../../types/form-state"
@@ -52,15 +47,8 @@ const ClipsTimeline: React.FC<ClipsTimelineProps> = ({
     sceneIds.sort()
     const sceneColors = new Map()
     sceneIds.forEach((id, index) => {
-      const backgroundColor = getSegmentColor(index, sceneIds.length)
-      const color = getSegmentTextColor(backgroundColor)
-      sceneColors.set(id, [
-        {
-          backgroundColor,
-          color,
-        },
-        index,
-      ])
+      const styles = getSegmentStyle(index, sceneIds.length)
+      sceneColors.set(id, [styles, index])
     })
 
     return [segments, sceneColors]
@@ -75,12 +63,13 @@ const ClipsTimeline: React.FC<ClipsTimelineProps> = ({
           <div
             key={index}
             className={clsx(
-              "flex justify-center items-center text-sm cursor-pointer text-white",
+              "flex justify-center items-center text-sm cursor-pointer text-white tooltip tooltip-bottom",
               index !== currentClipIndex && "opacity-30 hover:opacity-60",
-              index === currentClipIndex && "opacity-100",
+              index === currentClipIndex && "opacity-100 ",
             )}
             style={{width, ...style}}
             onClick={() => setCurrentClipIndex(index)}
+            data-tip={clip.markerTitle}
           >
             {sceneId + 1}
           </div>
@@ -266,7 +255,7 @@ function PreviewClips() {
           onTimeUpdate={onVideoTimeUpdate}
           ref={videoRef}
         />
-        <section className="flex flex-col px-4 py-2 w-1/4 bg-base-200 justify-between">
+        <section className="flex flex-col px-4 py-2 w-2/5 bg-base-200 justify-between">
           <ClipSettingsForm
             onRemoveClip={onRemoveClip}
             onUndo={undo}

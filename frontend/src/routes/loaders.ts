@@ -19,7 +19,6 @@ import {
 import {FormState} from "../types/form-state"
 import {getNewId, getVideo, listMarkers} from "../api"
 import {ClipFormInputs} from "./clips/settings/ClipSettingsForm"
-import invariant from "tiny-invariant"
 
 export const DEFAULT_PAGE_LENGTH = 24
 
@@ -44,7 +43,6 @@ const markerLength = (state: FormState): number => {
 }
 
 const getClipLengths = (
-  hasMusic: boolean,
   options: {clipLengths?: ClipLengthOptions},
   state: FormState,
 ): ClipLengthOptions => {
@@ -56,8 +54,7 @@ const getClipLengths = (
     }
   }
 
-  if (hasMusic) {
-    invariant(options.clipLengths.type === "songs")
+  if (options.clipLengths.type === "songs") {
     return {
       type: "songs",
       songs:
@@ -69,7 +66,6 @@ const getClipLengths = (
       cutAfterMeasures: options.clipLengths.cutAfterMeasures,
     }
   } else {
-    invariant(options.clipLengths.type === "randomized")
     return {
       type: "randomized",
       baseDuration: options.clipLengths.baseDuration,
@@ -92,41 +88,35 @@ const getClipPickerOptions = (
 
   switch (inputs.clipStrategy) {
     case "roundRobin": {
-      const length = inputs.roundRobin.useMusic
+      const length = state.songs?.length
         ? songsLength(state)
         : markerLength(state)
       return {
         type: "roundRobin",
         length,
-        clipLengths: getClipLengths(
-          inputs.roundRobin.useMusic || false,
-          inputs.roundRobin,
-          state,
-        ),
+        clipLengths: getClipLengths(inputs.roundRobin, state),
         lenientDuration: !inputs.roundRobin.useMusic,
       }
     }
     case "weightedRandom": {
-      const length = inputs.weightedRandom.useMusic
+      const length = state.songs?.length
         ? songsLength(state)
         : markerLength(state)
       return {
         type: "weightedRandom",
-        clipLengths: getClipLengths(
-          inputs.weightedRandom.useMusic || false,
-          inputs.weightedRandom,
-          state,
-        ),
+        clipLengths: getClipLengths(inputs.weightedRandom, state),
         length,
         // @ts-expect-error type definitions don't align
         weights: state.clipWeights!,
       }
     }
     case "equalLength": {
+      const length = state.songs?.length ? songsLength(state) : undefined
       return {
         type: "equalLength",
         clipDuration: inputs.equalLength.clipDuration,
         divisors: [2, 3, 4],
+        length,
       }
     }
     case "noSplit": {

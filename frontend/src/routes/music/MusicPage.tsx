@@ -16,7 +16,6 @@ import clsx from "clsx"
 import {SongDto} from "@/api"
 import HelpModal from "@/components/HelpModal"
 import {FormStage, FormState} from "@/types/form-state"
-import {ClipStrategy} from "@/types/types"
 import SongsTable from "./SongsTable"
 import {produce} from "immer"
 

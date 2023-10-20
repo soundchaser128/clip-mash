@@ -3,7 +3,13 @@ import React, {useCallback, useState} from "react"
 import Modal from "@/components/Modal"
 import DraggableCard from "@/components/DraggableCard"
 import {getSegmentStyle, pluralize} from "@/helpers"
-import {HiCheck, HiChevronRight, HiPlus, HiTrash} from "react-icons/hi2"
+import {
+  HiBarsArrowDown,
+  HiCheck,
+  HiChevronRight,
+  HiPlus,
+  HiTrash,
+} from "react-icons/hi2"
 import {updateForm} from "../actions"
 import {MarkerDto, MarkerCount, MarkerGroup} from "@/api"
 import {produce} from "immer"
@@ -340,6 +346,7 @@ const MarkerOrderModal: React.FC<{className?: string}> = ({className}) => {
         type="button"
         className={clsx("btn btn-primary", className)}
       >
+        <HiBarsArrowDown />
         Set marker order
       </button>
       <Modal position="top" size="md" isOpen={open} onClose={onClose}>

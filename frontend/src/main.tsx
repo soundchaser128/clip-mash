@@ -68,7 +68,14 @@ const TroubleshootingInfo = () => {
     <div>
       <h2 className="text-xl mb-2 font-bold">What you can do</h2>
       <ul className="list-disc list-inside">
-        <li>Refresh the page.</li>
+        <li>
+          <span
+            className="link link-primary"
+            onClick={() => window.location.reload()}
+          >
+            Reload the page.
+          </span>
+        </li>
         <li>
           <span className="link link-primary" onClick={onReset}>
             Reset the page state.

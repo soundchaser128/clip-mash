@@ -7,13 +7,3 @@ export interface JsonError {
 }
 
 export type ClipStrategy = ClipOptions["clipPicker"]["type"]
-
-export interface MarkerCount {
-  title: string
-  count: number
-}
-
-export interface MarkerGroup {
-  markers: MarkerCount[]
-  name: string
-}

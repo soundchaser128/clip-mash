@@ -1,14 +1,15 @@
 import {useStateMachine} from "little-state-machine"
 import React, {useCallback, useState} from "react"
-import Modal from "../../components/Modal"
-import DraggableCard from "../../components/DraggableCard"
-import {getSegmentStyle, pluralize} from "../../helpers"
+import Modal from "@/components/Modal"
+import DraggableCard from "@/components/DraggableCard"
+import {getSegmentStyle, pluralize} from "@/helpers"
 import {HiCheck, HiChevronRight, HiPlus, HiTrash} from "react-icons/hi2"
 import {updateForm} from "../actions"
-import {MarkerDto} from "../../api"
-import {MarkerCount, MarkerGroup} from "../../types/types"
+import {MarkerDto, MarkerCount, MarkerGroup} from "@/api"
 import {produce} from "immer"
 import clsx from "clsx"
+import {useFormContext} from "react-hook-form"
+import {ClipFormInputs} from "./settings/ClipSettingsForm"
 
 function getMarkerCounts(markers: MarkerDto[]): MarkerCount[] {
   const counts = new Map<string, number>()
@@ -267,7 +268,12 @@ const MarkerOrderModal = () => {
   const [open, setOpen] = useState(false)
   const {state, actions} = useStateMachine({updateForm})
   const initialTitles = getMarkerCounts(state.data.markers || [])
-  const groups = state.data.markerGroups || []
+  const stateOrder = state.data.clipOptions?.clipOrder
+  const groups =
+    stateOrder?.type === "fixed" ? stateOrder?.markerTitleGroups : []
+
+  const {setValue} = useFormContext<ClipFormInputs>()
+
   const [stage, setStage] = useState<Stage>("groups")
 
   const onClose = () => {
@@ -275,20 +281,34 @@ const MarkerOrderModal = () => {
   }
 
   const onSaveGroups = (groups: MarkerGroup[]) => {
+    const newState = {
+      ...state.data.clipOptions!,
+      clipOrder: {
+        type: "fixed" as const,
+        markerTitleGroups: groups,
+      },
+    }
+
+    setValue("clipOrder.markerTitleGroups", groups)
+
     actions.updateForm({
-      markerGroups: groups,
+      clipOptions: newState,
     })
   }
 
   const onSaveOrder = (groups: MarkerGroup[]) => {
-    actions.updateForm({
-      markerGroups: groups,
+    const newState = {
+      ...state.data.clipOptions!,
       clipOrder: {
-        type: "fixed",
-        markerTitleGroups: groups.map((group) =>
-          group.markers.map((m) => m.title),
-        ),
+        type: "fixed" as const,
+        markerTitleGroups: groups,
       },
+    }
+
+    setValue("clipOrder.markerTitleGroups", groups)
+
+    actions.updateForm({
+      clipOptions: newState,
     })
     onClose()
     setStage("groups")

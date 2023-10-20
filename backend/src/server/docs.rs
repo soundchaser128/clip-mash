@@ -101,6 +101,8 @@ use crate::service::video::AddVideosRequest;
             MarkerCount,
             FileSystemEntry,
             ListFileEntriesResponse,
+            MarkerTitle,
+            MarkerGroup,
         )
     ),
     tags(

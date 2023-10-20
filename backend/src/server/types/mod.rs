@@ -81,6 +81,20 @@ impl<T: Serialize + ToSchema<'static>> Page<T> {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct MarkerTitle {
+    pub title: String,
+    pub count: usize,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct MarkerGroup {
+    pub markers: Vec<MarkerTitle>,
+    pub name: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "kebab-case", tag = "type")]
 pub enum ClipOrder {
     Random,
@@ -88,7 +102,7 @@ pub enum ClipOrder {
     NoOp,
     #[serde(rename_all = "camelCase")]
     Fixed {
-        marker_title_groups: Vec<Vec<String>>,
+        marker_title_groups: Vec<MarkerGroup>,
     },
 }
 

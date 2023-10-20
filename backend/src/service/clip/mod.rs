@@ -174,7 +174,10 @@ impl ClipService {
                 marker_title_groups,
             } => {
                 let sorter = sort::FixedOrderClipSorter {
-                    marker_title_groups,
+                    marker_title_groups: marker_title_groups
+                        .into_iter()
+                        .map(|m| m.markers.into_iter().map(|s| s.title).collect())
+                        .collect(),
                 };
                 sorter.sort_clips(clips, &mut rng)
             }

@@ -300,6 +300,16 @@ export type MeasureCountOneOf = {
   type: MeasureCountOneOfType
 }
 
+export interface MarkerTitle {
+  count: number
+  title: string
+}
+
+export interface MarkerGroup {
+  markers: MarkerTitle[]
+  name: string
+}
+
 export interface MarkerDto {
   createdOn: number
   end: number
@@ -518,7 +528,7 @@ export const ClipOrderOneOfSevenType = {
 } as const
 
 export type ClipOrderOneOfSeven = {
-  markerTitleGroups: string[][]
+  markerTitleGroups: MarkerGroup[]
   type: ClipOrderOneOfSevenType
 }
 

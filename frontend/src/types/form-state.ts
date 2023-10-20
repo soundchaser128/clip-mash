@@ -1,4 +1,4 @@
-import {ClipFormInputs} from "@/routes/clips/ClipSettingsForm"
+import {ClipFormInputs} from "@/routes/clips/settings/ClipSettingsForm"
 import {
   Clip,
   ClipOrder,
@@ -43,6 +43,8 @@ export interface FormState {
   videoCodec?: VideoCodec
   videoQuality?: VideoQuality
   encodingEffort?: EncodingEffort
+  markerGroups: MarkerGroup[]
+  clipWeights?: [string, number][]
 
   clipOptions?: ClipFormInputs
 }

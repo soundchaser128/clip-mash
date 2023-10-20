@@ -1,5 +1,5 @@
 import {useFormContext} from "react-hook-form"
-import {ClipFormInputs} from "../ClipSettingsForm"
+import {ClipFormInputs} from "./ClipSettingsForm"
 import {useStateMachine} from "little-state-machine"
 
 const MusicFormFields = () => {
@@ -12,6 +12,10 @@ const MusicFormFields = () => {
         <label className="label">
           <span className="label-text">Beats per measure</span>
         </label>
+        <input
+          type="hidden"
+          {...register("roundRobin.clipLengths.type", {value: "songs"})}
+        />
         <input
           type="number"
           className="input input-bordered"
@@ -87,6 +91,10 @@ const RandomizedLengthFormFields: React.FC = () => {
   const {register, watch} = useFormContext<ClipFormInputs>()
   return (
     <>
+      <input
+        type="hidden"
+        {...register("roundRobin.clipLengths.type", {value: "randomized"})}
+      />
       <div className="form-field">
         <label className="label">
           <span className="label-text">Maximum clip length</span>

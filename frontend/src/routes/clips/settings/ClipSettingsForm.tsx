@@ -1,15 +1,15 @@
 import {useStateMachine} from "little-state-machine"
 import React from "react"
 import {useRevalidator} from "react-router-dom"
-import {updateForm} from "../actions"
+import {updateForm} from "../../actions"
 import {HiRocketLaunch} from "react-icons/hi2"
 import {FormProvider, useForm} from "react-hook-form"
-import {Clip, ClipLengthOptions} from "../../api"
+import {Clip, ClipLengthOptions} from "../../../api"
 import {ClipStrategy} from "@/types/types"
-import RoundRobinClipStrategyForm from "./settings/RoundRobinClipStrategyForm"
+import RoundRobinFields from "./RoundRobinFields"
 import {FormState} from "@/types/form-state"
+import WeightedRandomFields from "./WeightedRandomFields"
 
-// TODO default values for type == roundRobin
 const initialValues = (state: FormState): ClipFormInputs =>
   state.clipOptions || {
     clipStrategy: "equalLength",
@@ -125,7 +125,20 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
           </select>
         </div>
 
-        {clipStrategy === "roundRobin" && <RoundRobinClipStrategyForm />}
+        {clipStrategy === "roundRobin" && <RoundRobinFields />}
+        {clipStrategy === "weightedRandom" && <WeightedRandomFields />}
+
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Random seed</span>
+          </label>
+          <input
+            className="input input-primary"
+            type="text"
+            {...register("seed")}
+          />
+        </div>
+
         <div className="flex flex-row justify-between mt-4">
           <span />
           <button type="submit" className="btn btn-success ">

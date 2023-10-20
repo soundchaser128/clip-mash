@@ -22,7 +22,7 @@ import {Clip} from "../../api"
 import {FormStage} from "../../types/form-state"
 import useUndo from "use-undo"
 import {produce} from "immer"
-import ClipSettingsForm from "./ClipSettingsForm"
+import ClipSettingsForm from "./settings/ClipSettingsForm"
 
 interface ClipState {
   included: boolean

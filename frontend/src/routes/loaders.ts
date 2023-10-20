@@ -18,7 +18,7 @@ import {
 } from "../api"
 import {FormState} from "../types/form-state"
 import {getNewId, getVideo, listMarkers} from "../api"
-import {ClipFormInputs} from "./clips/ClipSettingsForm"
+import {ClipFormInputs} from "./clips/settings/ClipSettingsForm"
 import invariant from "tiny-invariant"
 
 export const DEFAULT_PAGE_LENGTH = 24
@@ -50,6 +50,7 @@ const getClipLengths = (
   options: {clipLengths?: ClipLengthOptions},
   state: FormState,
 ): ClipLengthOptions => {
+  console.log(options.clipLengths)
   if (!options.clipLengths || !options.clipLengths.type) {
     return {
       type: "randomized",

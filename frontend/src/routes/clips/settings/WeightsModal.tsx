@@ -1,13 +1,13 @@
 import {useStateMachine} from "little-state-machine"
 import React, {useMemo, useState} from "react"
 import {useRevalidator} from "react-router-dom"
-import {updateForm} from "../actions"
+import {updateForm} from "../../actions"
 import {HiCog8Tooth} from "react-icons/hi2"
 import clsx from "clsx"
-import {pluralize} from "../../helpers"
-import Modal from "../../components/Modal"
+import {pluralize} from "../../../helpers"
+import Modal from "../../../components/Modal"
 import {useImmer} from "use-immer"
-import {Clip} from "../../api"
+import {Clip} from "../../../api"
 
 interface WeightsModalProps {
   className?: string
@@ -70,9 +70,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
     }
   })
 
-  const [enabled, setEnabled] = useState(
-    state.data.clipStrategy === "weightedRandom",
-  )
+  const enabled = true
   const [open, setOpen] = useState(false)
 
   const onWeightChange = (title: string, weight: number) => {
@@ -89,13 +87,13 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
     if (enabled) {
       actions.updateForm({
         clipWeights: weights,
-        clipStrategy: "weightedRandom",
+        // clipStrategy: "weightedRandom",
       })
 
       revalidator.revalidate()
     } else {
       actions.updateForm({
-        clipStrategy: "roundRobin",
+        // clipStrategy: "roundRobin",
       })
     }
   }
@@ -118,17 +116,6 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
         </p>
 
         <div className="flex flex-col gap-4 items-center">
-          <div className="form-control w-72">
-            <label className="label cursor-pointer">
-              <span className="label-text">Enable marker ratios</span>
-              <input
-                type="checkbox"
-                className="checkbox checkbox-primary"
-                onChange={(e) => setEnabled(e.target.checked)}
-                checked={enabled}
-              />
-            </label>
-          </div>
           {weights.map(([title, weight]) => {
             const count = markerCounts.get(title)
             const markerLabel = pluralize("marker", count?.total ?? 0)

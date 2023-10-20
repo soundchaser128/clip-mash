@@ -16,7 +16,7 @@ import VideoCard from "../../components/VideoCard"
 import {useConfig} from "../../hooks/useConfig"
 import useDebouncedSetQuery from "../../hooks/useDebouncedQuery"
 import JumpToTop from "../../components/JumpToTop"
-import {pluralize} from "../../helpers"
+import {formatSeconds, pluralize} from "../../helpers"
 
 export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
@@ -33,6 +33,11 @@ export default function ListVideos() {
   const noVideosForFilter = videos.length === 0 && filter && !isLoading
   const [sort, setSort] = useState(params.get("sort") ?? "markers")
   const {setQueryDebounced, addOrReplaceParam} = useDebouncedSetQuery()
+  const videoDurations =
+    state.data.videoIds?.map(
+      (id) => videos.find((v) => v.video.id === id)?.video.duration ?? 0,
+    ) || []
+  const totalDuration = videoDurations.reduce((a, b) => a + b, 0)
 
   useEffect(() => {
     setVideos(initialVideos.content)
@@ -109,6 +114,10 @@ export default function ListVideos() {
           <p>
             <strong>{state.data.videoIds?.length || "All"}</strong>{" "}
             {pluralize("video", state.data.videoIds?.length)} selected.
+          </p>
+          <p>
+            Total duration:{" "}
+            <strong>{formatSeconds(totalDuration, "short")}</strong>.
           </p>
           <p>Click on videos to add them to the selection.</p>
         </div>

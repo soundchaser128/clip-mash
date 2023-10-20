@@ -9,6 +9,7 @@ import {ClipStrategy} from "@/types/types"
 import RoundRobinClipStrategyForm from "./settings/RoundRobinClipStrategyForm"
 import {FormState} from "@/types/form-state"
 
+// TODO default values for type == roundRobin
 const initialValues = (state: FormState): ClipFormInputs =>
   state.clipOptions || {
     clipStrategy: "equalLength",
@@ -25,7 +26,7 @@ interface CommonInputs {
 interface RoundRobinFormInputs {
   clipStrategy: "roundRobin"
   roundRobin: {
-    clipLengths: ClipLengthOptions
+    clipLengths?: ClipLengthOptions
     useMusic?: boolean
   }
 }

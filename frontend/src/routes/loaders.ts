@@ -45,6 +45,41 @@ const markerLength = (state: FormState): number => {
   )
 }
 
+const getClipLengths = (
+  hasMusic: boolean,
+  options: {clipLengths?: ClipLengthOptions},
+  state: FormState,
+): ClipLengthOptions => {
+  if (!options.clipLengths || !options.clipLengths.type) {
+    return {
+      type: "randomized",
+      baseDuration: 20,
+      divisors: [2, 3, 4],
+    }
+  }
+
+  if (hasMusic) {
+    invariant(options.clipLengths.type === "songs")
+    return {
+      type: "songs",
+      songs:
+        state.songs?.map((s) => ({
+          offsets: s.beats,
+          length: s.duration,
+        })) || [],
+      beatsPerMeasure: options.clipLengths.beatsPerMeasure,
+      cutAfterMeasures: options.clipLengths.cutAfterMeasures,
+    }
+  } else {
+    invariant(options.clipLengths.type === "randomized")
+    return {
+      type: "randomized",
+      baseDuration: options.clipLengths.baseDuration,
+      divisors: [2, 3, 4],
+    }
+  }
+}
+
 const getClipPickerOptions = (
   inputs: ClipFormInputs | undefined,
   state: FormState,
@@ -65,7 +100,11 @@ const getClipPickerOptions = (
       return {
         type: "roundRobin",
         length,
-        clipLengths: inputs.roundRobin.clipLengths,
+        clipLengths: getClipLengths(
+          inputs.roundRobin.useMusic || false,
+          inputs.roundRobin,
+          state,
+        ),
       }
     }
     case "weightedRandom": {

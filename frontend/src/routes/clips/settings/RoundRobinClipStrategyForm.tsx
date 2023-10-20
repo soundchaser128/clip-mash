@@ -106,21 +106,28 @@ const RandomizedLengthFormFields: React.FC = () => {
 const RoundRobinClipStrategyForm: React.FC = () => {
   const {state} = useStateMachine()
   const {register, watch} = useFormContext<ClipFormInputs>()
+  const hasSongs = state.data.songs?.length || 0 > 0
   const useMusic = watch("roundRobin.useMusic")
 
   return (
     <>
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Use music for clip generation?</span>
-          <input
-            type="checkbox"
-            className="checkbox"
-            {...register("roundRobin.useMusic")}
-          />
-        </label>
-      </div>
-      {useMusic ? <MusicFormFields /> : <RandomizedLengthFormFields />}
+      {hasSongs && (
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Use music for clip generation?</span>
+            <input
+              type="checkbox"
+              className="checkbox"
+              {...register("roundRobin.useMusic")}
+            />
+          </label>
+        </div>
+      )}
+      {useMusic && hasSongs ? (
+        <MusicFormFields />
+      ) : (
+        <RandomizedLengthFormFields />
+      )}
     </>
   )
 }

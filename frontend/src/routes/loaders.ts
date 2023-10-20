@@ -19,6 +19,7 @@ import {
 import {FormState} from "../types/form-state"
 import {getNewId, getVideo, listMarkers} from "../api"
 import {ClipFormInputs} from "./clips/ClipSettingsForm"
+import invariant from "tiny-invariant"
 
 export const DEFAULT_PAGE_LENGTH = 24
 
@@ -29,43 +30,75 @@ export interface ClipsLoaderData {
   beatOffsets?: number[]
 }
 
-const getClipPickerOptions = (inputs: ClipFormInputs): ClipPickerOptions => {
-  const type = inputs.clipStrategy!
-  const options: Partial<ClipPickerOptions> = {type}
+const asCompleteClipOptions = <T extends Partial<ClipPickerOptions>>(t: T) => t
 
-  switch (options.type) {
-    case "roundRobin": {
-      options.clipLengths = inputs.roundRobin!.clipLengths
-      // todo length
-      break
-    }
-    case "weightedRandom": {
-      options.clipLengths = inputs.weightedRandom!.clipLengths
-      options.weights = inputs.weightedRandom!.weights
-      // todo length
-      break
-    }
-    case "equalLength": {
-      break
-    }
-    case "noSplit": {
-      // nothing to do
-      break
+const songsLength = (state: FormState): number => {
+  return state.songs?.reduce((len, song) => len + song.duration, 0) || 0
+}
+
+const markerLength = (state: FormState): number => {
+  return (
+    state.markers?.reduce(
+      (len, marker) => len + (marker.end - marker.start),
+      0,
+    ) || 0
+  )
+}
+
+const getClipPickerOptions = (
+  inputs: ClipFormInputs | undefined,
+  state: FormState,
+): ClipPickerOptions => {
+  if (!inputs) {
+    return {
+      type: "equalLength",
+      clipDuration: 20,
+      divisors: [2, 3, 4],
     }
   }
 
-  return options as ClipPickerOptions
+  switch (inputs.clipStrategy) {
+    case "roundRobin": {
+      const length = inputs.roundRobin.useMusic
+        ? songsLength(state)
+        : markerLength(state)
+      return {
+        type: "roundRobin",
+        length,
+        clipLengths: inputs.roundRobin.clipLengths,
+      }
+    }
+    case "weightedRandom": {
+      const length = inputs.weightedRandom.useMusic
+        ? songsLength(state)
+        : markerLength(state)
+      return {
+        type: "weightedRandom",
+        clipLengths: inputs.weightedRandom.clipLengths,
+        length,
+        // @ts-expect-error weird typescript generation
+        weights: inputs.weightedRandom.weights,
+      }
+    }
+    case "equalLength": {
+      return {
+        type: "equalLength",
+        clipDuration: inputs.equalLength.clipDuration,
+        divisors: [2, 3, 4],
+      }
+    }
+    case "noSplit": {
+      return {
+        type: "noSplit",
+      }
+    }
+  }
 }
 
 export const clipsLoader: LoaderFunction = async () => {
   const state = getFormState()!
 
   const clipOrder = state.clipOrder || {type: "scene"}
-  const defaultClipPicker = {
-    type: "equalLength",
-    clipDuration: 30,
-    divisors: [2, 3, 4],
-  }
 
   const body = {
     clipOrder,
@@ -73,7 +106,7 @@ export const clipsLoader: LoaderFunction = async () => {
     seed: state.clipOptions?.seed,
     clips: {
       order: state.clipOrder || {type: "scene"},
-      clipPicker: getClipPickerOptions(state.clipOptions!),
+      clipPicker: getClipPickerOptions(state.clipOptions!, state),
     },
   } satisfies CreateClipsBody
 

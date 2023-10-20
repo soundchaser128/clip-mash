@@ -4,27 +4,59 @@ import {useRevalidator} from "react-router-dom"
 import {updateForm} from "../actions"
 import {HiRocketLaunch} from "react-icons/hi2"
 import {FormProvider, useForm} from "react-hook-form"
-import {Clip, ClipLengthOptions, ClipPickerOptions} from "../../api"
+import {Clip, ClipLengthOptions} from "../../api"
 import {ClipStrategy} from "@/types/types"
 import RoundRobinClipStrategyForm from "./settings/RoundRobinClipStrategyForm"
 import {FormState} from "@/types/form-state"
 
-const initialValues = (state: FormState): ClipFormInputs => ({})
+const initialValues = (state: FormState): ClipFormInputs =>
+  state.clipOptions || {
+    clipStrategy: "equalLength",
+    equalLength: {
+      clipDuration: 30,
+    },
+  }
 
-export interface ClipFormInputs {
+interface CommonInputs {
+  clipStrategy: ClipStrategy
   seed?: string
-  clipStrategy?: ClipStrategy
-  roundRobin?: {
+}
+
+interface RoundRobinFormInputs {
+  clipStrategy: "roundRobin"
+  roundRobin: {
     clipLengths: ClipLengthOptions
     useMusic?: boolean
   }
+}
 
-  weightedRandom?: {
-    clipLengths: ClipLengthOptions
-    // todo
-    weights: any
+interface EqualLengthFormInputs {
+  clipStrategy: "equalLength"
+  equalLength: {
+    clipDuration: number
   }
 }
+
+interface WeightedRandomFormInputs {
+  clipStrategy: "weightedRandom"
+  weightedRandom: {
+    clipLengths: ClipLengthOptions
+    weights: [string, number][]
+    useMusic?: boolean
+  }
+}
+
+interface NoSplitFormInputs {
+  clipStrategy: "noSplit"
+}
+
+export type ClipFormInputs = CommonInputs &
+  (
+    | RoundRobinFormInputs
+    | EqualLengthFormInputs
+    | WeightedRandomFormInputs
+    | NoSplitFormInputs
+  )
 
 interface SettingsFormProps {
   clips: Clip[]
@@ -68,11 +100,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
     ) {
       return
     }
-
-    actions.updateForm({
-      clipOptions: values,
-    })
-
+    actions.updateForm({clipOptions: values})
     revalidator.revalidate()
   }
 

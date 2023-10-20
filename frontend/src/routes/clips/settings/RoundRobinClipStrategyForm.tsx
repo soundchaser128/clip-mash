@@ -94,7 +94,7 @@ const RandomizedLengthFormFields: React.FC = () => {
         <input
           type="number"
           className="input input-bordered w-full"
-          {...register("clipPicker.clipLengths.baseDuration", {
+          {...register("roundRobin.clipLengths.baseDuration", {
             valueAsNumber: true,
           })}
         />

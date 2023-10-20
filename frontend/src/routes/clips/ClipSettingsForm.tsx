@@ -14,7 +14,16 @@ const initialValues = (state: FormState): ClipFormInputs => ({})
 export interface ClipFormInputs {
   seed?: string
   clipStrategy?: ClipStrategy
-  clipPicker?: ClipPickerOptions
+  roundRobin?: {
+    clipLengths: ClipLengthOptions
+    useMusic?: boolean
+  }
+
+  weightedRandom?: {
+    clipLengths: ClipLengthOptions
+    // todo
+    weights: any
+  }
 }
 
 interface SettingsFormProps {

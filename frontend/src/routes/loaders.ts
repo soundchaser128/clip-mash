@@ -18,6 +18,7 @@ import {
 } from "../api"
 import {FormState} from "../types/form-state"
 import {getNewId, getVideo, listMarkers} from "../api"
+import {ClipFormInputs} from "./clips/ClipSettingsForm"
 
 export const DEFAULT_PAGE_LENGTH = 24
 
@@ -28,10 +29,43 @@ export interface ClipsLoaderData {
   beatOffsets?: number[]
 }
 
+const getClipPickerOptions = (inputs: ClipFormInputs): ClipPickerOptions => {
+  const type = inputs.clipStrategy!
+  const options: Partial<ClipPickerOptions> = {type}
+
+  switch (options.type) {
+    case "roundRobin": {
+      options.clipLengths = inputs.roundRobin!.clipLengths
+      // todo length
+      break
+    }
+    case "weightedRandom": {
+      options.clipLengths = inputs.weightedRandom!.clipLengths
+      options.weights = inputs.weightedRandom!.weights
+      // todo length
+      break
+    }
+    case "equalLength": {
+      break
+    }
+    case "noSplit": {
+      // nothing to do
+      break
+    }
+  }
+
+  return options as ClipPickerOptions
+}
+
 export const clipsLoader: LoaderFunction = async () => {
   const state = getFormState()!
 
   const clipOrder = state.clipOrder || {type: "scene"}
+  const defaultClipPicker = {
+    type: "equalLength",
+    clipDuration: 30,
+    divisors: [2, 3, 4],
+  }
 
   const body = {
     clipOrder,
@@ -39,11 +73,7 @@ export const clipsLoader: LoaderFunction = async () => {
     seed: state.clipOptions?.seed,
     clips: {
       order: state.clipOrder || {type: "scene"},
-      clipPicker: state.clipOptions?.clipPicker || {
-        type: "equalLength",
-        clipDuration: 30,
-        divisors: [2, 3, 4],
-      },
+      clipPicker: getClipPickerOptions(state.clipOptions!),
     },
   } satisfies CreateClipsBody
 

@@ -1,14 +1,23 @@
 import {useStateMachine} from "little-state-machine"
-import React from "react"
+import React, {useEffect} from "react"
 import {useRevalidator} from "react-router-dom"
 import {updateForm} from "../../actions"
-import {HiRocketLaunch} from "react-icons/hi2"
+import {
+  HiArrowUturnLeft,
+  HiArrowUturnRight,
+  HiBackward,
+  HiForward,
+  HiRocketLaunch,
+  HiTrash,
+} from "react-icons/hi2"
 import {FormProvider, useForm} from "react-hook-form"
-import {Clip, ClipLengthOptions} from "../../../api"
+import {Clip, ClipLengthOptions, ClipOrder} from "../../../api"
 import {ClipStrategy} from "@/types/types"
 import RoundRobinFields from "./RoundRobinFields"
 import {FormState} from "@/types/form-state"
 import WeightedRandomFields from "./WeightedRandomFields"
+import EqualLengthFields from "./EqualLengthFields"
+import MarkerOrderModal from "../MarkerOrderModal"
 
 const initialValues = (state: FormState): ClipFormInputs =>
   state.clipOptions || {
@@ -16,10 +25,12 @@ const initialValues = (state: FormState): ClipFormInputs =>
     equalLength: {
       clipDuration: 30,
     },
+    clipOrder: {type: "scene"},
   }
 
 interface CommonInputs {
   clipStrategy: ClipStrategy
+  clipOrder: ClipOrder
   seed?: string
 }
 
@@ -60,7 +71,6 @@ export type ClipFormInputs = CommonInputs &
   )
 
 interface SettingsFormProps {
-  clips: Clip[]
   onRemoveClip: () => void
   onUndo: () => void
   onRedo: () => void
@@ -73,7 +83,6 @@ interface SettingsFormProps {
 }
 
 const ClipSettingsForm: React.FC<SettingsFormProps> = ({
-  clips,
   onRemoveClip,
   onUndo,
   onRedo,
@@ -88,9 +97,10 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const formContext = useForm<ClipFormInputs>({
     defaultValues: initialValues(state.data),
   })
-  const {register, watch, handleSubmit} = formContext
+  const {register, watch, handleSubmit, setValue} = formContext
   const revalidator = useRevalidator()
   const clipStrategy = watch("clipStrategy")
+  const clipOrder = watch("clipOrder.type")
 
   const onSubmit = (values: ClipFormInputs) => {
     if (
@@ -105,10 +115,101 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
     revalidator.revalidate()
   }
 
+  useEffect(() => {
+    switch (clipStrategy) {
+      case "equalLength":
+        setValue("equalLength.clipDuration", 15)
+        break
+      case "roundRobin":
+        setValue("roundRobin.clipLengths.baseDuration", 15)
+        setValue("roundRobin.clipLengths.type", "randomized")
+        break
+      case "weightedRandom":
+        setValue("weightedRandom.clipLengths.baseDuration", 15)
+        setValue("weightedRandom.clipLengths.type", "randomized")
+        break
+    }
+  }, [clipStrategy, setValue])
+
   return (
     <FormProvider {...formContext}>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
         <h2 className="text-xl font-bold">Settings</h2>
+        <div className="w-full flex justify-between mb-4 mt-2">
+          <div className="join">
+            <div className="tooltip" data-tip="Undo">
+              <button
+                disabled={!canUndo}
+                onClick={onUndo}
+                type="button"
+                className="join-item btn btn-sm btn-ghost btn-square"
+              >
+                <HiArrowUturnLeft />
+              </button>
+            </div>
+            <div className="tooltip" data-tip="Redo">
+              <button
+                disabled={!canRedo}
+                onClick={onRedo}
+                type="button"
+                className="join-item btn btn-sm btn-ghost btn-square"
+              >
+                <HiArrowUturnRight />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <div className="join">
+              <div className="tooltip" data-tip="Move clip left">
+                <button
+                  disabled={!canShiftLeft}
+                  onClick={() => onShiftClips("left")}
+                  className="btn btn-sm btn-ghost join-item"
+                  type="button"
+                >
+                  <HiBackward />
+                </button>
+              </div>
+              <div className="tooltip" data-tip="Move clip right">
+                <button
+                  disabled={!canShiftRight}
+                  onClick={() => onShiftClips("right")}
+                  className="btn btn-sm btn-ghost join-item"
+                  type="button"
+                >
+                  <HiForward />
+                </button>
+              </div>
+            </div>
+            <div className="tooltip" data-tip="Delete current clip">
+              <button
+                onClick={onRemoveClip}
+                type="button"
+                className="btn btn-sm btn-error"
+              >
+                <HiTrash />
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Clip order</span>
+          </label>
+          <select
+            className="select select-primary"
+            {...register("clipOrder.type")}
+          >
+            <option value="">Select...</option>
+            <option value="scene">Scene order</option>
+            <option value="random">Random</option>
+            <option value="fixed">Fixed</option>
+          </select>
+        </div>
+
+        {clipOrder === "fixed" && <MarkerOrderModal />}
+
         <div className="form-control">
           <label className="label">
             <span className="label-text">Clip generation method</span>
@@ -127,14 +228,16 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
 
         {clipStrategy === "roundRobin" && <RoundRobinFields />}
         {clipStrategy === "weightedRandom" && <WeightedRandomFields />}
+        {clipStrategy === "equalLength" && <EqualLengthFields />}
 
         <div className="form-control">
           <label className="label">
             <span className="label-text">Random seed</span>
           </label>
           <input
-            className="input input-primary"
+            className="input input-bordered"
             type="text"
+            placeholder="Enter a value to control random number generation (optional)"
             {...register("seed")}
           />
         </div>

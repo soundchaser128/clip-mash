@@ -239,6 +239,7 @@ export interface SelectedMarker {
 export interface RoundRobinClipOptions {
   clipLengths: ClipLengthOptions
   length: number
+  lenientDuration: boolean
 }
 
 export interface RandomizedClipOptions {

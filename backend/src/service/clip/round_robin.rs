@@ -21,20 +21,21 @@ impl ClipPicker for RoundRobinClipPicker {
         rng: &mut StdRng,
     ) -> Vec<Clip> {
         info!("using RoundRobinClipPicker to make clips");
-
         let song_duration = match &options.clip_lengths {
             ClipLengthOptions::Songs(options) => {
                 Some(options.songs.iter().map(|s| s.length as f64).sum())
             }
             _ => None,
         };
-        let marker_duration = markers.iter().map(|m| m.duration()).sum::<f64>();
-        assert!(
-            marker_duration >= options.length,
-            "marker duration {} must be greater or equal to target duration {}",
-            marker_duration,
-            options.length
-        );
+        if !options.lenient_duration {
+            let marker_duration = markers.iter().map(|m| m.duration()).sum::<f64>();
+            assert!(
+                marker_duration >= options.length,
+                "marker duration {} must be greater or equal to target duration {}",
+                marker_duration,
+                options.length
+            );
+        }
 
         let max_duration = options.length;
         let mut clips = vec![];
@@ -127,6 +128,7 @@ mod test {
                 cut_after_measures: MeasureCount::Fixed { count: 4 },
                 songs,
             }),
+            lenient_duration: false,
         };
         let markers = fixtures::markers();
         let mut rng = create_seeded_rng(None);
@@ -156,6 +158,7 @@ mod test {
                 cut_after_measures: MeasureCount::Fixed { count: 4 },
                 songs,
             }),
+            lenient_duration: false,
         };
 
         let markers = fixtures::markers();

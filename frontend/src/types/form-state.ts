@@ -3,14 +3,13 @@ import {
   Clip,
   ClipOrder,
   EncodingEffort,
-  MeasureCount,
   SelectedMarker,
   VideoCodec,
   VideoQuality,
   SongDto,
   MarkerDto,
 } from "../api"
-import {ClipStrategy, MarkerGroup} from "./types"
+import {MarkerGroup} from "./types"
 
 export enum FormStage {
   Start = 0,
@@ -31,7 +30,6 @@ export interface FormState {
   markers?: MarkerDto[]
   videoIds?: string[]
   recurse?: boolean
-  clipOrder?: ClipOrder
   outputResolution?: [number, number]
   outputFps?: number
   selectedMarkers?: SelectedMarker[]
@@ -43,7 +41,7 @@ export interface FormState {
   videoCodec?: VideoCodec
   videoQuality?: VideoQuality
   encodingEffort?: EncodingEffort
-  markerGroups: MarkerGroup[]
+  markerGroups?: MarkerGroup[]
   clipWeights?: [string, number][]
 
   clipOptions?: ClipFormInputs

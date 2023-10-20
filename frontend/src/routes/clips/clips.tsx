@@ -257,7 +257,7 @@ function PreviewClips() {
         />
       )}
 
-      <div className="flex">
+      <section className="flex">
         <video
           className="w-3/4 h-[650px]"
           src={clipUrl}
@@ -266,9 +266,8 @@ function PreviewClips() {
           onTimeUpdate={onVideoTimeUpdate}
           ref={videoRef}
         />
-        <div className="flex flex-col px-4 py-2 w-1/4 bg-base-200 justify-between">
+        <section className="flex flex-col px-4 py-2 w-1/4 bg-base-200 justify-between">
           <ClipSettingsForm
-            clips={clips.map((c) => c.clip)}
             onRemoveClip={onRemoveClip}
             onUndo={undo}
             onRedo={redo}
@@ -279,62 +278,63 @@ function PreviewClips() {
             canShiftRight={currentClipIndex < clips.length - 1}
             confirmBeforeSubmit={manualChangesMade}
           />
-
-          <div className="btn-group justify-center">
-            <button
-              type="button"
-              className="btn btn-square btn-lg"
-              onClick={() => setCurrentClipIndex((i) => i - 1)}
-              disabled={currentClipIndex === 0}
-            >
-              <HiBackward />
-            </button>
-            <button
-              type="button"
-              className={clsx(
-                "btn btn-square btn-lg",
-                autoPlay ? "btn-neutral" : "btn-success",
-              )}
-              onClick={toggleAutoPlay}
-            >
-              {autoPlay ? <HiPause /> : <HiPlay />}
-            </button>
-            <button
-              type="button"
-              className="btn btn-square btn-lg"
-              onClick={() => setCurrentClipIndex((i) => i + 1)}
-              disabled={currentClipIndex >= clips.length - 1}
-            >
-              <HiForward />
-            </button>
-          </div>
-          <div className="form-control">
-            <label className="label cursor-pointer">
-              <span className="label-text mr-2">Mute video</span>
-              <input
-                type="checkbox"
-                className="toggle"
-                checked={videoMuted}
-                onChange={(e) => setVideoMuted(e.target.checked)}
-              />
-            </label>
-          </div>
-
-          {isPmv && (
+          <div className="flex flex-col">
+            <div className="btn-group justify-center">
+              <button
+                type="button"
+                className="btn btn-square btn-lg"
+                onClick={() => setCurrentClipIndex((i) => i - 1)}
+                disabled={currentClipIndex === 0}
+              >
+                <HiBackward />
+              </button>
+              <button
+                type="button"
+                className={clsx(
+                  "btn btn-square btn-lg",
+                  autoPlay ? "btn-neutral" : "btn-success",
+                )}
+                onClick={toggleAutoPlay}
+              >
+                {autoPlay ? <HiPause /> : <HiPlay />}
+              </button>
+              <button
+                type="button"
+                className="btn btn-square btn-lg"
+                onClick={() => setCurrentClipIndex((i) => i + 1)}
+                disabled={currentClipIndex >= clips.length - 1}
+              >
+                <HiForward />
+              </button>
+            </div>
             <div className="form-control">
               <label className="label cursor-pointer">
-                <span className="label-text mr-2">Enable music</span>
+                <span className="label-text mr-2">Mute video</span>
                 <input
                   type="checkbox"
                   className="toggle"
-                  checked={withMusic}
-                  onChange={(e) => setWithMusic(e.target.checked)}
+                  checked={videoMuted}
+                  onChange={(e) => setVideoMuted(e.target.checked)}
                 />
               </label>
             </div>
-          )}
-        </div>
-      </div>
+
+            {isPmv && (
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text mr-2">Enable music</span>
+                  <input
+                    type="checkbox"
+                    className="toggle"
+                    checked={withMusic}
+                    onChange={(e) => setWithMusic(e.target.checked)}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+        </section>
+      </section>
 
       <ClipsTimeline
         clips={clips}

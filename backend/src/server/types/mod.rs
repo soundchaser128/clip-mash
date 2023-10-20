@@ -411,6 +411,7 @@ impl ClipPickerOptions {
 pub struct RoundRobinClipOptions {
     pub length: f64,
     pub clip_lengths: ClipLengthOptions,
+    pub lenient_duration: bool,
 }
 
 #[derive(Deserialize, Debug, Serialize, ToSchema)]

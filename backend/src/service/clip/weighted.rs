@@ -170,6 +170,7 @@ mod tests {
                 base_duration: 30.0,
                 divisors: vec![2.0, 3.0, 4.0],
             }),
+            lenient_duration: false,
         };
 
         let mut rng = create_seeded_rng(None);

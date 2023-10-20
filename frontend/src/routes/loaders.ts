@@ -30,8 +30,6 @@ export interface ClipsLoaderData {
   beatOffsets?: number[]
 }
 
-const asCompleteClipOptions = <T extends Partial<ClipPickerOptions>>(t: T) => t
-
 const songsLength = (state: FormState): number => {
   return state.songs?.reduce((len, song) => len + song.duration, 0) || 0
 }
@@ -50,7 +48,6 @@ const getClipLengths = (
   options: {clipLengths?: ClipLengthOptions},
   state: FormState,
 ): ClipLengthOptions => {
-  console.log(options.clipLengths)
   if (!options.clipLengths || !options.clipLengths.type) {
     return {
       type: "randomized",
@@ -106,6 +103,7 @@ const getClipPickerOptions = (
           inputs.roundRobin,
           state,
         ),
+        lenientDuration: !inputs.roundRobin.useMusic,
       }
     }
     case "weightedRandom": {
@@ -114,10 +112,14 @@ const getClipPickerOptions = (
         : markerLength(state)
       return {
         type: "weightedRandom",
-        clipLengths: inputs.weightedRandom.clipLengths,
+        clipLengths: getClipLengths(
+          inputs.weightedRandom.useMusic || false,
+          inputs.weightedRandom,
+          state,
+        ),
         length,
-        // @ts-expect-error weird typescript generation
-        weights: inputs.weightedRandom.weights,
+        // @ts-expect-error type definitions don't align
+        weights: state.clipWeights!,
       }
     }
     case "equalLength": {
@@ -138,14 +140,14 @@ const getClipPickerOptions = (
 export const clipsLoader: LoaderFunction = async () => {
   const state = getFormState()!
 
-  const clipOrder = state.clipOrder || {type: "scene"}
+  const clipOrder = state.clipOptions?.clipOrder || {type: "scene"}
 
   const body = {
     clipOrder,
     markers: state.selectedMarkers!.filter((m) => m.selected),
     seed: state.clipOptions?.seed,
     clips: {
-      order: state.clipOrder || {type: "scene"},
+      order: clipOrder,
       clipPicker: getClipPickerOptions(state.clipOptions!, state),
     },
   } satisfies CreateClipsBody

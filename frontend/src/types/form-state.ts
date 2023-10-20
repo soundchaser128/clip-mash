@@ -1,3 +1,4 @@
+import {ClipFormInputs} from "@/routes/clips/ClipSettingsForm"
 import {
   Clip,
   ClipOrder,
@@ -31,24 +32,17 @@ export interface FormState {
   videoIds?: string[]
   recurse?: boolean
   clipOrder?: ClipOrder
-  clipDuration?: number
   outputResolution?: [number, number]
   outputFps?: number
   selectedMarkers?: SelectedMarker[]
-  splitClips?: boolean
   fileName?: string
   clips?: Clip[]
   interactive?: boolean
-  seed?: string
   songs?: SongDto[]
   musicVolume?: number
-  trimVideoForSongs?: boolean
-  beatsPerMeasure?: number
-  cutAfterMeasures?: MeasureCount
-  clipStrategy?: ClipStrategy
-  clipWeights?: Array<[string, number]>
   videoCodec?: VideoCodec
   videoQuality?: VideoQuality
   encodingEffort?: EncodingEffort
-  markerGroups?: MarkerGroup[]
+
+  clipOptions?: ClipFormInputs
 }

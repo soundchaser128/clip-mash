@@ -22,7 +22,6 @@ import {produce} from "immer"
 
 interface MusicSettingsInputs {
   musicVolume: number
-  clipStrategy: ClipStrategy
 }
 
 interface MusicSettingsFormProps {
@@ -64,18 +63,6 @@ const MusicSettingsForm: React.FC<MusicSettingsFormProps> = ({
           <span>100%</span>
         </div>
       </div>
-      <div className="form-control self-start">
-        <label className="label">
-          <span className="label-text">Clip generation strategy</span>
-        </label>
-        <select
-          className="select select-bordered"
-          {...register("clipStrategy")}
-        >
-          <option value="roundRobin">Music-based (cut on the beat)</option>
-          <option value="equalLength">Random lengths (default)</option>
-        </select>
-      </div>
     </form>
   )
 }
@@ -88,7 +75,6 @@ export default function Music() {
     state.data.songs?.map((song) => song.songId) || [],
   )
   const [formValues, setFormValues] = useState<MusicSettingsInputs>({
-    clipStrategy: state.data.clipStrategy || "roundRobin",
     musicVolume: state.data.musicVolume ? state.data.musicVolume * 100 : 75,
   })
   const navigate = useNavigate()
@@ -130,13 +116,10 @@ export default function Music() {
       ? {
           stage: nextStage,
           songs: selection.map((id) => songs.find((s) => s.songId === id)!),
-          trimVideoForSongs: true,
           musicVolume: formValues.musicVolume / 100.0,
-          clipStrategy: formValues.clipStrategy,
         }
       : {
           stage: nextStage,
-          clipStrategy: "equalLength",
         }
 
     actions.updateForm(update)

@@ -21,70 +21,6 @@ import {getNewId, getVideo, listMarkers} from "../api"
 
 export const DEFAULT_PAGE_LENGTH = 24
 
-const getClipLengths = (state: FormState): ClipLengthOptions => {
-  if (state.songs && state.songs.length) {
-    return {
-      type: "songs",
-      beatsPerMeasure: state.beatsPerMeasure || 4,
-      cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
-      songs: state.songs.map((song) => ({
-        length: song.duration,
-        offsets: song.beats,
-      })),
-    }
-  } else {
-    return {
-      type: "randomized",
-      baseDuration: state.clipDuration || 30,
-      divisors: [2, 3, 4],
-    }
-  }
-}
-
-const getClipSettings = (state: FormState): ClipPickerOptions => {
-  const songsLength =
-    state.songs && state.songs.length > 0
-      ? state.songs.reduce((sum, song) => sum + song.duration, 0)
-      : state.selectedMarkers!.reduce(
-          (sum, {selectedRange: [start, end]}) => sum + (end - start),
-          0,
-        )
-  if (state.clipStrategy === "noSplit" || state.splitClips === false) {
-    return {type: "noSplit"}
-  } else if (state.clipStrategy === "weightedRandom") {
-    return {
-      type: "weightedRandom",
-      // @ts-expect-error form state needs to align with this
-      weights: state.clipWeights!,
-      clipLengths: getClipLengths(state),
-      length: songsLength,
-    }
-  } else if (state.clipStrategy === "equalLength") {
-    return {
-      type: "equalLength",
-      clipDuration: state.clipDuration || 30,
-      divisors: [2, 3, 4],
-      length: songsLength,
-    }
-  } else if (
-    state.clipStrategy === "roundRobin" &&
-    state.songs &&
-    state.songs.length > 0
-  ) {
-    return {
-      type: "roundRobin",
-      clipLengths: getClipLengths(state),
-      length: state.songs.reduce((sum, song) => sum + song.duration, 0),
-    }
-  } else {
-    return {
-      type: "equalLength",
-      clipDuration: state.clipDuration || 30,
-      divisors: [2, 3, 4],
-    }
-  }
-}
-
 export interface ClipsLoaderData {
   clips: Clip[]
   streams: Record<string, string>
@@ -100,10 +36,14 @@ export const clipsLoader: LoaderFunction = async () => {
   const body = {
     clipOrder,
     markers: state.selectedMarkers!.filter((m) => m.selected),
-    seed: state.seed || null,
+    seed: state.clipOptions?.seed,
     clips: {
-      clipPicker: getClipSettings(state),
-      order: clipOrder,
+      order: state.clipOrder || {type: "scene"},
+      clipPicker: state.clipOptions?.clipPicker || {
+        type: "equalLength",
+        clipDuration: 30,
+        divisors: [2, 3, 4],
+      },
     },
   } satisfies CreateClipsBody
 

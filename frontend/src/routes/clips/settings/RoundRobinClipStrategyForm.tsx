@@ -1,9 +1,9 @@
 import {useFormContext} from "react-hook-form"
-import {Inputs} from "../ClipSettingsForm"
+import {ClipFormInputs} from "../ClipSettingsForm"
 import {useStateMachine} from "little-state-machine"
 
 const MusicFormFields = () => {
-  const {register, watch} = useFormContext<Inputs>()
+  const {register, watch} = useFormContext<ClipFormInputs>()
   const measureCountType = watch("roundRobin.clipLengths.cutAfterMeasures.type")
 
   return (
@@ -83,14 +83,46 @@ const MusicFormFields = () => {
   )
 }
 
+const RandomizedLengthFormFields: React.FC = () => {
+  const {register, watch} = useFormContext<ClipFormInputs>()
+  return (
+    <>
+      <div className="form-field">
+        <label className="label">
+          <span className="label-text">Maximum clip length</span>
+        </label>
+        <input
+          type="number"
+          className="input input-bordered w-full"
+          {...register("clipPicker.clipLengths.baseDuration", {
+            valueAsNumber: true,
+          })}
+        />
+      </div>
+    </>
+  )
+}
+
 const RoundRobinClipStrategyForm: React.FC = () => {
   const {state} = useStateMachine()
-  const hasMusic = !!state.data.songs?.length
-  if (hasMusic) {
-    return <MusicFormFields />
-  } else {
-    return null
-  }
+  const {register, watch} = useFormContext<ClipFormInputs>()
+  const useMusic = watch("roundRobin.useMusic")
+
+  return (
+    <>
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text">Use music for clip generation?</span>
+          <input
+            type="checkbox"
+            className="checkbox"
+            {...register("roundRobin.useMusic")}
+          />
+        </label>
+      </div>
+      {useMusic ? <MusicFormFields /> : <RandomizedLengthFormFields />}
+    </>
+  )
 }
 
 export default RoundRobinClipStrategyForm

@@ -13,6 +13,7 @@ interface Inputs {
 
 export default function SelectVideos() {
   const navigate = useNavigate()
+  const [files, setFiles] = useState<ListFileEntriesResponse>()
   const [query, setQuery] = useSearchParams()
   const path = query.get("path")
   const [submitting, setSubmitting] = useState(false)
@@ -21,7 +22,6 @@ export default function SelectVideos() {
       path: path || "",
     },
   })
-  const [files, setFiles] = useState<ListFileEntriesResponse>()
 
   const onSubmit = async (values: Inputs) => {
     setSubmitting(true)
@@ -35,6 +35,7 @@ export default function SelectVideos() {
 
   const fetchEntries = async (path?: string) => {
     const entries = await listFileEntries({path})
+    setValue("path", entries.directory)
     return entries
   }
 

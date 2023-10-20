@@ -1,3 +1,6 @@
+use std::cmp::Ordering;
+use std::mem::discriminant;
+
 use axum::extract::Query;
 use axum::response::IntoResponse;
 use axum::Json;
@@ -21,7 +24,7 @@ pub struct ListFileEntriesResponse {
     pub directory: String,
 }
 
-#[derive(Serialize, ToSchema, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Serialize, ToSchema, PartialEq, Eq, Debug)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum FileSystemEntry {
     #[serde(rename_all = "camelCase")]
@@ -35,6 +38,39 @@ pub enum FileSystemEntry {
         full_path: String,
         size: u64,
     },
+}
+
+impl PartialOrd for FileSystemEntry {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self, other) {
+            (
+                FileSystemEntry::Directory { file_name: a, .. },
+                FileSystemEntry::Directory { file_name: b, .. },
+            ) => {
+                let a = a.to_lowercase();
+                let b = b.to_lowercase();
+                a.partial_cmp(&b)
+            }
+            (
+                FileSystemEntry::Directory { file_name: a, .. },
+                FileSystemEntry::File { file_name: b, .. },
+            ) => {
+                let a = a.to_lowercase();
+                let b = b.to_lowercase();
+                a.partial_cmp(&b)
+            }
+            (FileSystemEntry::File { .. }, FileSystemEntry::Directory { .. }) => {
+                Some(Ordering::Greater)
+            }
+            (FileSystemEntry::File { .. }, FileSystemEntry::File { .. }) => Some(Ordering::Less),
+        }
+    }
+}
+
+impl Ord for FileSystemEntry {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
+    }
 }
 
 impl FileSystemEntry {

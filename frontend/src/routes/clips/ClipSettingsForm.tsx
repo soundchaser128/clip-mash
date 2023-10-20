@@ -2,35 +2,19 @@ import {useStateMachine} from "little-state-machine"
 import React from "react"
 import {useRevalidator} from "react-router-dom"
 import {updateForm} from "../actions"
-import {
-  HiArrowUturnLeft,
-  HiArrowUturnRight,
-  HiBackward,
-  HiCheck,
-  HiForward,
-  HiRocketLaunch,
-  HiTrash,
-} from "react-icons/hi2"
+import {HiRocketLaunch} from "react-icons/hi2"
 import {FormProvider, useForm} from "react-hook-form"
-import {Clip, ClipLengthOptions, ClipOrder} from "../../api"
-import WeightsModal from "./WeightsModal"
-import MarkerOrderModal from "./MarkerOrderModal"
+import {Clip, ClipLengthOptions, ClipPickerOptions} from "../../api"
 import {ClipStrategy} from "@/types/types"
 import RoundRobinClipStrategyForm from "./settings/RoundRobinClipStrategyForm"
 import {FormState} from "@/types/form-state"
 
-const initialValues = (state: FormState): Inputs => ({
-  seed: state.seed,
-  clipStrategy: state.clipStrategy,
-})
+const initialValues = (state: FormState): ClipFormInputs => ({})
 
-export interface Inputs {
+export interface ClipFormInputs {
   seed?: string
   clipStrategy?: ClipStrategy
-  roundRobin?: {
-    length: number
-    clipLengths: ClipLengthOptions
-  }
+  clipPicker?: ClipPickerOptions
 }
 
 interface SettingsFormProps {
@@ -59,14 +43,14 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   confirmBeforeSubmit,
 }) => {
   const {actions, state} = useStateMachine({updateForm})
-  const formContext = useForm<Inputs>({
+  const formContext = useForm<ClipFormInputs>({
     defaultValues: initialValues(state.data),
   })
   const {register, watch, handleSubmit} = formContext
   const revalidator = useRevalidator()
   const clipStrategy = watch("clipStrategy")
 
-  const onSubmit = (values: Inputs) => {
+  const onSubmit = (values: ClipFormInputs) => {
     if (
       confirmBeforeSubmit &&
       !window.confirm(
@@ -75,21 +59,10 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
     ) {
       return
     }
-    // actions.updateForm({
-    //   clipDuration: values.clipDuration,
-    //   clipOrder: state.data.clipOrder,
-    //   splitClips: values.splitClips,
-    //   seed: values.seed,
-    //   beatsPerMeasure: values.beatsPerMeasure,
-    //   cutAfterMeasures:
-    //     values.measureCountType === "fixed"
-    //       ? {type: "fixed", count: values.measureCountFixed}
-    //       : {
-    //           type: "random",
-    //           min: values.measureCountRandomStart,
-    //           max: values.measureCountRandomEnd,
-    //         },
-    // })
+
+    actions.updateForm({
+      clipOptions: values,
+    })
 
     revalidator.revalidate()
   }

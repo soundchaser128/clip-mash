@@ -51,17 +51,19 @@ impl PartialOrd for FileSystemEntry {
                 a.partial_cmp(&b)
             }
             (
-                FileSystemEntry::Directory { file_name: a, .. },
+                FileSystemEntry::File { file_name: a, .. },
                 FileSystemEntry::File { file_name: b, .. },
             ) => {
                 let a = a.to_lowercase();
                 let b = b.to_lowercase();
                 a.partial_cmp(&b)
             }
+            (FileSystemEntry::Directory { .. }, FileSystemEntry::File { .. }) => {
+                Some(Ordering::Less)
+            }
             (FileSystemEntry::File { .. }, FileSystemEntry::Directory { .. }) => {
                 Some(Ordering::Greater)
             }
-            (FileSystemEntry::File { .. }, FileSystemEntry::File { .. }) => Some(Ordering::Less),
         }
     }
 }
@@ -99,11 +101,25 @@ fn get_or_home_dir(path: Option<String>) -> Utf8PathBuf {
 }
 
 // TODO for window as well
+#[cfg(not(target_os = "windows"))]
 fn is_hidden(file: &std::path::Path) -> bool {
     file.file_name()
         .and_then(|name| name.to_str())
         .map(|name| name.starts_with('.'))
         .unwrap_or(false)
+}
+
+#[cfg(target_os = "windows")]
+fn is_hidden(file: &std::path::Path) -> bool {
+    use std::os::windows::fs::MetadataExt;
+    const FILE_ATTRIBUTE_HIDDEN: u32 = 0x2;
+
+    let metadata = file.metadata();
+    if let Ok(metadata) = metadata {
+        metadata.file_attributes() & FILE_ATTRIBUTE_HIDDEN > 0
+    } else {
+        false
+    }
 }
 
 #[axum::debug_handler]

@@ -1,8 +1,7 @@
 import {useStateMachine} from "little-state-machine"
-import React, {useCallback, useState} from "react"
+import React, {useState} from "react"
 import Modal from "@/components/Modal"
-import DraggableCard from "@/components/DraggableCard"
-import {getSegmentStyle, pluralize} from "@/helpers"
+import {pluralize} from "@/helpers"
 import {
   HiBarsArrowDown,
   HiCheck,
@@ -31,20 +30,18 @@ function getMarkerCounts(markers: MarkerDto[]): MarkerCount[] {
   return groups
 }
 
-type Stage = "groups" | "order"
-
 interface MarkerGroupsFormProps {
   markers: MarkerCount[]
   groups: MarkerGroup[]
-  onSave: (groups: MarkerGroup[]) => void
-  onNext: (groups: MarkerGroup[], markers: MarkerCount[]) => void
+  onSave: (groups: MarkerGroup[], markers: MarkerCount[]) => void
+  onClose: (groups: MarkerGroup[], markers: MarkerCount[]) => void
 }
 
 const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
   markers,
   onSave,
   groups,
-  onNext,
+  onClose,
 }) => {
   const [selected, setSelected] = useState<MarkerGroup | undefined>(
     groups?.at(0),
@@ -66,7 +63,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
       group.markers.push(marker)
     })
 
-    onSave(newGroups)
+    onSave(newGroups, markers)
   }
 
   const onRemoveFromGroup = (marker: MarkerCount, groupName: string) => {
@@ -78,11 +75,11 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
       group.markers = group.markers.filter((m) => m.title !== marker.title)
     })
 
-    onSave(newGroups)
+    onSave(newGroups, markers)
   }
 
   const onReset = () => {
-    onSave([])
+    onSave([], markers)
     setSelected(undefined)
   }
 
@@ -90,13 +87,13 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
     const newGroup = {name: `Group ${groups.length + 1}`, markers: []}
 
     const newGroups = [...groups, newGroup]
-    onSave(newGroups)
+    onSave(newGroups, markers)
     setSelected(newGroup)
   }
 
   const onRemoveGroup = (groupName: string) => {
     const newGroups = groups.filter((g) => g.name !== groupName)
-    onSave(newGroups)
+    onSave(newGroups, markers)
   }
 
   return (
@@ -124,7 +121,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                 disabled={isContainedInGroup}
               >
                 <Icon />
-                {marker.title}
+                {marker.title} ({marker.count})
               </button>
             )
           })}
@@ -205,68 +202,15 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
         </button>
 
         <button
-          onClick={() => onNext(groups, markers)}
+          onClick={() => onClose(groups, markers)}
           type="button"
           className="btn btn-success"
         >
-          Next
+          Save
           <HiChevronRight className="ml-1" />
         </button>
       </div>
     </div>
-  )
-}
-
-interface MarkerOrderFormProps {
-  groups: MarkerGroup[]
-  onSave: (groups: MarkerGroup[]) => void
-}
-
-const MarkerOrderForm: React.FC<MarkerOrderFormProps> = ({onSave, groups}) => {
-  const onNext = () => {
-    onSave(groups)
-  }
-
-  const moveCard = useCallback(
-    (dragIndex: number, hoverIndex: number) => {
-      const newGroups = produce(groups, (draft) => {
-        const temp = draft[dragIndex]
-        draft.splice(dragIndex, 1)
-        draft.splice(hoverIndex, 0, temp)
-      })
-      onSave(newGroups)
-    },
-    [groups, onSave],
-  )
-
-  return (
-    <>
-      <h1 className="text-2xl font-bold mb-2">Marker order</h1>
-      <div className="flex flex-col gap-4 self-center">
-        <ul className="flex items-start flex-col gap-1">
-          {groups.map((group, idx) => (
-            <DraggableCard
-              className="w-full text-center px-4 py-1 rounded-full cursor-pointer"
-              style={getSegmentStyle(idx, groups.length)}
-              key={group.name}
-              id={group.name}
-              moveCard={moveCard}
-              text={group.name}
-              index={idx}
-            />
-          ))}
-        </ul>
-        <section className="flex flex-col"></section>
-      </div>
-      <button
-        type="button"
-        onClick={onNext}
-        className="self-end btn btn-success mt-4"
-      >
-        <HiCheck className="mr-2" />
-        Save
-      </button>
-    </>
   )
 }
 
@@ -280,9 +224,7 @@ const MarkerOrderModal: React.FC<{className?: string}> = ({className}) => {
 
   const {setValue} = useFormContext<ClipFormInputs>()
 
-  const [stage, setStage] = useState<Stage>("groups")
-
-  const onClose = () => {
+  const closeModal = () => {
     setOpen(false)
   }
 
@@ -302,25 +244,7 @@ const MarkerOrderModal: React.FC<{className?: string}> = ({className}) => {
     })
   }
 
-  const onSaveOrder = (groups: MarkerGroup[]) => {
-    const newState = {
-      ...state.data.clipOptions!,
-      clipOrder: {
-        type: "fixed" as const,
-        markerTitleGroups: groups,
-      },
-    }
-
-    setValue("clipOrder.markerTitleGroups", groups)
-
-    actions.updateForm({
-      clipOptions: newState,
-    })
-    onClose()
-    setStage("groups")
-  }
-
-  const onNext = (groups: MarkerGroup[], markerTitles: MarkerCount[]) => {
+  const onClose = (groups: MarkerGroup[], markerTitles: MarkerCount[]) => {
     for (const marker of markerTitles) {
       // if no group contains this marker, make a group with just this marker
       const containedInGroup = groups.find((g) =>
@@ -335,8 +259,7 @@ const MarkerOrderModal: React.FC<{className?: string}> = ({className}) => {
     }
 
     onSaveGroups(groups)
-
-    setStage("order")
+    closeModal()
   }
 
   return (
@@ -349,18 +272,13 @@ const MarkerOrderModal: React.FC<{className?: string}> = ({className}) => {
         <HiBarsArrowDown />
         Set marker order
       </button>
-      <Modal position="top" size="md" isOpen={open} onClose={onClose}>
-        {stage === "groups" && (
-          <MarkerGroupsForm
-            groups={groups}
-            markers={initialTitles}
-            onSave={onSaveGroups}
-            onNext={onNext}
-          />
-        )}
-        {stage === "order" && (
-          <MarkerOrderForm groups={groups} onSave={onSaveOrder} />
-        )}
+      <Modal position="top" size="md" isOpen={open} onClose={closeModal}>
+        <MarkerGroupsForm
+          groups={groups}
+          markers={initialTitles}
+          onSave={onSaveGroups}
+          onClose={onClose}
+        />
       </Modal>
     </>
   )

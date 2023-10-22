@@ -551,6 +551,7 @@
   "clip_options": {
     "clipPicker": {
       "type": "roundRobin",
+      "lenientDuration": false,
       "length": 1084.0275,
       "clipLengths": {
         "type": "songs",

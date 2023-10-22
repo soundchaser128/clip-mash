@@ -97,7 +97,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const formContext = useForm<ClipFormInputs>({
     defaultValues: initialValues(state.data),
   })
-  const {register, watch, handleSubmit, setValue} = formContext
+  const {register, watch, handleSubmit, setValue, formState} = formContext
   const revalidator = useRevalidator()
   const clipStrategy = watch("clipStrategy")
   const clipOrder = watch("clipOrder.type")

@@ -2,7 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import React, {useMemo, useState} from "react"
 import {useRevalidator} from "react-router-dom"
 import {updateForm} from "../../actions"
-import {HiCog8Tooth} from "react-icons/hi2"
+import {HiCheck, HiCog8Tooth} from "react-icons/hi2"
 import clsx from "clsx"
 import {pluralize} from "../../../helpers"
 import Modal from "../../../components/Modal"
@@ -54,6 +54,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
     const markerTitles = Array.from(
       new Set(state.data.selectedMarkers?.map((m) => m.title.trim())),
     ).sort()
+
     if (state.data.clipWeights) {
       return state.data.clipWeights.filter(([title]) =>
         markerTitles.includes(title),
@@ -87,14 +88,9 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
     if (enabled) {
       actions.updateForm({
         clipWeights: weights,
-        // clipStrategy: "weightedRandom",
       })
 
       revalidator.revalidate()
-    } else {
-      actions.updateForm({
-        // clipStrategy: "roundRobin",
-      })
     }
   }
 
@@ -130,9 +126,9 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
                 key={title}
               >
                 <label className="label">
-                  <span className="label-text font-semibold">
-                    {title} ({count?.total} {markerLabel}, {count?.current}{" "}
-                    {clipLabel})
+                  <span className="label-text">
+                    <strong>{title}</strong> ({count?.total} {markerLabel},{" "}
+                    {count?.current} {clipLabel})
                   </span>
                 </label>
                 <input
@@ -156,7 +152,8 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
             )
           })}
 
-          <button onClick={onClose} className="btn btn-primary self-end">
+          <button onClick={onClose} className="btn btn-success self-end">
+            <HiCheck />
             Done
           </button>
         </div>

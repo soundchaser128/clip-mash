@@ -1,5 +1,5 @@
 import {formatDuration} from "date-fns"
-import {ListVideoDto, SelectedMarker} from "./api"
+import {SelectedMarker} from "./api"
 import {FormState} from "./types/form-state"
 import {scaleSequential} from "d3-scale"
 import {interpolatePlasma} from "d3-scale-chromatic"

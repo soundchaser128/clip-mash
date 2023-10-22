@@ -115,10 +115,6 @@ export default function ListVideos() {
             <strong>{state.data.videoIds?.length || "All"}</strong>{" "}
             {pluralize("video", state.data.videoIds?.length)} selected.
           </p>
-          <p>
-            Total duration:{" "}
-            <strong>{formatSeconds(totalDuration, "short")}</strong>.
-          </p>
           <p>Click on videos to add them to the selection.</p>
         </div>
         <button

@@ -12,7 +12,7 @@ const RoundRobinClipStrategyForm: React.FC = () => {
   return (
     <>
       {hasSongs && (
-        <div className="form-control">
+        <div className="form-control mt-2">
           <label className="label">
             <span className="label-text">Use music for clip generation?</span>
             <input

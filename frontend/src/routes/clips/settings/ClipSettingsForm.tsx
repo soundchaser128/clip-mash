@@ -19,14 +19,41 @@ import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"
 
-const initialValues = (state: FormState): ClipFormInputs =>
-  state.clipOptions || {
-    clipStrategy: "equalLength",
-    equalLength: {
-      clipDuration: 30,
-    },
-    clipOrder: {type: "scene"},
+const initialValues = (state: FormState): ClipFormInputs => {
+  if (state.clipOptions) {
+    return state.clipOptions
   }
+
+  if (state.songs?.length) {
+    return {
+      clipStrategy: "roundRobin",
+      roundRobin: {
+        useMusic: true,
+        clipLengths: {
+          type: "songs",
+          beatsPerMeasure: 4,
+          songs: state.songs.map((s) => ({
+            offsets: s.beats,
+            length: s.duration,
+          })),
+          cutAfterMeasures: {
+            type: "fixed",
+            count: 4,
+          },
+        },
+      },
+      clipOrder: {type: "scene"},
+    }
+  } else {
+    return {
+      clipStrategy: "equalLength",
+      equalLength: {
+        clipDuration: 30,
+      },
+      clipOrder: {type: "scene"},
+    }
+  }
+}
 
 interface CommonInputs {
   clipStrategy: ClipStrategy

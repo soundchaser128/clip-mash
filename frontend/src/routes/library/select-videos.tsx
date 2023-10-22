@@ -16,7 +16,7 @@ import VideoCard from "../../components/VideoCard"
 import {useConfig} from "../../hooks/useConfig"
 import useDebouncedSetQuery from "../../hooks/useDebouncedQuery"
 import JumpToTop from "../../components/JumpToTop"
-import {formatSeconds, pluralize} from "../../helpers"
+import {pluralize} from "../../helpers"
 
 export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})

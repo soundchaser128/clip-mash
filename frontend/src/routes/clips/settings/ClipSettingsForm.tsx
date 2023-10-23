@@ -128,6 +128,8 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const revalidator = useRevalidator()
   const clipStrategy = watch("clipStrategy")
   const clipOrder = watch("clipOrder.type")
+  const useMusic =
+    watch("roundRobin.useMusic") || watch("weightedRandom.useMusic")
 
   const onSubmit = (values: ClipFormInputs) => {
     if (
@@ -143,20 +145,57 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   }
 
   useEffect(() => {
-    switch (clipStrategy) {
-      case "equalLength":
-        setValue("equalLength.clipDuration", 15)
-        break
-      case "roundRobin":
-        setValue("roundRobin.clipLengths.baseDuration", 15)
-        setValue("roundRobin.clipLengths.type", "randomized")
-        break
-      case "weightedRandom":
-        setValue("weightedRandom.clipLengths.baseDuration", 15)
-        setValue("weightedRandom.clipLengths.type", "randomized")
-        break
+    if (!useMusic) {
+      switch (clipStrategy) {
+        case "equalLength":
+          setValue("equalLength.clipDuration", 15)
+          break
+        case "roundRobin":
+          setValue("roundRobin.clipLengths.baseDuration", 15)
+          setValue("roundRobin.clipLengths.type", "randomized")
+          break
+        case "weightedRandom":
+          setValue("weightedRandom.clipLengths.baseDuration", 15)
+          setValue("weightedRandom.clipLengths.type", "randomized")
+          break
+      }
+    } else {
+      switch (clipStrategy) {
+        case "equalLength":
+          setValue("equalLength.clipDuration", 15)
+          break
+
+        case "roundRobin":
+          setValue("roundRobin.clipLengths.type", "songs")
+          setValue("roundRobin.clipLengths.cutAfterMeasures.type", "fixed")
+          setValue("roundRobin.clipLengths.cutAfterMeasures.count", 4)
+          setValue("roundRobin.clipLengths.beatsPerMeasure", 4)
+          setValue(
+            "roundRobin.clipLengths.songs",
+            state.data.songs?.map((s) => ({
+              offsets: s.beats,
+              length: s.duration,
+            })) || [],
+          )
+          break
+
+        case "weightedRandom":
+          setValue("weightedRandom.clipLengths.type", "songs")
+          setValue("weightedRandom.clipLengths.cutAfterMeasures.type", "fixed")
+          setValue("weightedRandom.clipLengths.cutAfterMeasures.count", 4)
+          setValue("weightedRandom.clipLengths.beatsPerMeasure", 4)
+          setValue("weightedRandom.weights", [])
+          setValue(
+            "weightedRandom.clipLengths.songs",
+            state.data.songs?.map((s) => ({
+              offsets: s.beats,
+              length: s.duration,
+            })) || [],
+          )
+          break
+      }
     }
-  }, [clipStrategy, setValue])
+  }, [clipStrategy, setValue, useMusic, state.data.songs])
 
   return (
     <FormProvider {...formContext}>

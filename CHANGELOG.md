@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.17.2
 - fix: Crash when notifications aren't available
 
 ## 0.17.1

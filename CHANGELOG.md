@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- fix: Crash when notifications aren't available
 
 ## 0.17.1
 - fix: Funscript generation with Stash videos was using the internal video ID instead of the Stash scene ID.

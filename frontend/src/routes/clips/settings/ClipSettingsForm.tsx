@@ -19,7 +19,7 @@ import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"
 
-const initialValues = (state: FormState): ClipFormInputs => {
+export const getDefaultOptions = (state: FormState): ClipFormInputs => {
   if (state.clipOptions) {
     return state.clipOptions
   }
@@ -122,9 +122,9 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
 }) => {
   const {actions, state} = useStateMachine({updateForm})
   const formContext = useForm<ClipFormInputs>({
-    defaultValues: initialValues(state.data),
+    defaultValues: getDefaultOptions(state.data),
   })
-  const {register, watch, handleSubmit, setValue, formState} = formContext
+  const {register, watch, handleSubmit, setValue} = formContext
   const revalidator = useRevalidator()
   const clipStrategy = watch("clipStrategy")
   const clipOrder = watch("clipOrder.type")
@@ -200,7 +200,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   return (
     <FormProvider {...formContext}>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
-        <h2 className="text-xl font-bold">Settings</h2>
+        <h2 className="text-xl font-bold">Clips</h2>
         <div className="w-full flex justify-between mb-4 mt-2">
           <div className="join">
             <div className="tooltip" data-tip="Undo">

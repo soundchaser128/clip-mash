@@ -18,7 +18,10 @@ import {
 } from "../api"
 import {FormState} from "../types/form-state"
 import {getNewId, getVideo, listMarkers} from "../api"
-import {ClipFormInputs} from "./clips/settings/ClipSettingsForm"
+import {
+  ClipFormInputs,
+  getDefaultOptions,
+} from "./clips/settings/ClipSettingsForm"
 
 export const DEFAULT_PAGE_LENGTH = 24
 
@@ -130,15 +133,17 @@ const getClipPickerOptions = (
 export const clipsLoader: LoaderFunction = async () => {
   const state = getFormState()!
 
-  const clipOrder = state.clipOptions?.clipOrder || {type: "scene"}
+  const options = state.clipOptions || getDefaultOptions(state)
+  const clipOrder = options.clipOrder || {type: "scene"}
+  const seed = options.seed?.length === 0 ? undefined : options.seed
 
   const body = {
     clipOrder,
     markers: state.selectedMarkers!.filter((m) => m.selected),
-    seed: state.clipOptions?.seed,
+    seed,
     clips: {
       order: clipOrder,
-      clipPicker: getClipPickerOptions(state.clipOptions!, state),
+      clipPicker: getClipPickerOptions(options, state),
     },
   } satisfies CreateClipsBody
 

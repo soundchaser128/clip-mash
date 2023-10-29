@@ -85,7 +85,7 @@ function PreviewClips() {
   const [manualChangesMade, setManualChangesMade] = useState(false)
 
   const {actions, state} = useStateMachine({updateForm})
-  const loaderData = useLoaderData() as ClipsLoaderData
+  const loaderData = useLoaderData() as ClipsLoaderData | undefined
   const initialClips = wasRevalidated
     ? loaderData.clips
     : state.data.clips || loaderData.clips

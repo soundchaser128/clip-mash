@@ -22,6 +22,7 @@ export const MusicFormFields: React.FC<{
         <input
           type="number"
           className="input input-bordered"
+          required
           {...register(`${strategy}.clipLengths.beatsPerMeasure`, {
             valueAsNumber: true,
           })}
@@ -51,6 +52,7 @@ export const MusicFormFields: React.FC<{
           <input
             type="number"
             className="input input-bordered"
+            required
             {...register(`${strategy}.clipLengths.cutAfterMeasures.count`, {
               valueAsNumber: true,
             })}
@@ -67,6 +69,7 @@ export const MusicFormFields: React.FC<{
             <input
               type="number"
               className="input input-bordered"
+              required
               {...register(`${strategy}.clipLengths.cutAfterMeasures.min`, {
                 valueAsNumber: true,
               })}
@@ -79,6 +82,7 @@ export const MusicFormFields: React.FC<{
             <input
               type="number"
               className="input input-bordered"
+              required
               {...register(`${strategy}.clipLengths.cutAfterMeasures.max`, {
                 valueAsNumber: true,
               })}
@@ -102,11 +106,12 @@ export const RandomizedLengthFormFields: React.FC<{
       />
       <div className="form-field">
         <label className="label">
-          <span className="label-text">Maximum clip length</span>
+          <span className="label-text">Maximum clip length (seconds)</span>
         </label>
         <input
           type="number"
           className="input input-bordered w-full"
+          required
           {...register(`${strategy}.clipLengths.baseDuration`, {
             valueAsNumber: true,
           })}

@@ -1,8 +1,13 @@
 import {useStateMachine} from "little-state-machine"
-import {Link, useLoaderData, useNavigate} from "react-router-dom"
+import {
+  Link,
+  useLoaderData,
+  useNavigate,
+  useRouteLoaderData,
+} from "react-router-dom"
 import {updateForm} from "./actions"
 import {useEffect, useRef, useState} from "react"
-import {FormStage, FormState} from "../types/form-state"
+import {FormStage, FormState, SerializedFormState} from "../types/form-state"
 import Layout from "../components/Layout"
 import {HiFolder, HiRocketLaunch} from "react-icons/hi2"
 
@@ -12,6 +17,7 @@ const HomePage = () => {
   const [project, setProject] = useState(state.data?.fileName || "")
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
+  const version = useRouteLoaderData("root") as string
 
   useEffect(() => {
     actions.updateForm({videoId})
@@ -32,9 +38,19 @@ const HomePage = () => {
     const file = e.target.files?.item(0)
     if (file) {
       const text = await file.text()
-      const json = JSON.parse(text) as FormState
+      const formState = JSON.parse(text) as SerializedFormState
+      if (formState.clipMashVersion !== version) {
+        alert(
+          `This project was created with ClipMash version ${formState.clipMashVersion}. ` +
+            `You are using version ${version}. ` +
+            `Please download the latest version of ClipMash to open this project.`,
+        )
+        return
+      }
+
       // TODO validate
-      actions.updateForm(json)
+      actions.updateForm(formState)
+      // TODO navigate to latest stage of the form
       navigate("/library")
     }
   }

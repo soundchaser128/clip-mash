@@ -1,11 +1,16 @@
 import {useStateMachine} from "little-state-machine"
 import React from "react"
-import {Outlet, useNavigate, useNavigation} from "react-router-dom"
+import {
+  Outlet,
+  useNavigate,
+  useNavigation,
+  useRouteLoaderData,
+} from "react-router-dom"
 import {HiOutlineDocumentArrowDown, HiXMark} from "react-icons/hi2"
 import {resetForm} from "./actions"
 import Layout from "../components/Layout"
 import Steps from "../components/Steps"
-import {FormState, FormStage} from "../types/form-state"
+import {FormState, FormStage, SerializedFormState} from "../types/form-state"
 
 const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
   return (
@@ -52,7 +57,7 @@ const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
   )
 }
 
-const saveProjectToDisk = async (fileName: string, data: FormState) => {
+function saveFileToDisk<T>(fileName: string, data: T) {
   const json = JSON.stringify(data)
   const blob = new Blob([json], {type: "application/json"})
   const href = URL.createObjectURL(blob)
@@ -67,6 +72,8 @@ const saveProjectToDisk = async (fileName: string, data: FormState) => {
 
 const AssistantLayout: React.FC = () => {
   const {actions, state} = useStateMachine({resetForm})
+  const version = useRouteLoaderData("root") as string
+
   const onReset = () => {
     if (
       confirm(
@@ -77,9 +84,16 @@ const AssistantLayout: React.FC = () => {
       navigate("/")
     }
   }
+
   const onSaveToDisk = async () => {
-    const projectName = `${state.data.videoId}.json`
-    await saveProjectToDisk(projectName, state.data)
+    const projectName = `${state.data.fileName || "Compilation"} - ${
+      state.data.videoId
+    }.json`
+    const data: SerializedFormState = {
+      ...state.data,
+      clipMashVersion: version,
+    }
+    saveFileToDisk(projectName, data)
   }
 
   const navigate = useNavigate()

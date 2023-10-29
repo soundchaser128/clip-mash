@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import React, {useEffect, useState} from "react"
+import React, {useEffect} from "react"
 import {useRevalidator} from "react-router-dom"
 import {updateForm} from "../../actions"
 import {
@@ -123,6 +123,7 @@ interface SettingsFormProps {
   canShiftLeft: boolean
   canShiftRight: boolean
   confirmBeforeSubmit: boolean
+  setHelpOpen: (open: boolean) => void
 }
 
 const ClipSettingsForm: React.FC<SettingsFormProps> = ({
@@ -135,18 +136,33 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   canShiftLeft,
   canShiftRight,
   confirmBeforeSubmit,
+  setHelpOpen,
 }) => {
   const {actions, state} = useStateMachine({updateForm})
   const formContext = useForm<ClipFormInputs>({
     defaultValues: getDefaultOptions(state.data),
+    mode: "onChange",
   })
   const {register, watch, handleSubmit, setValue} = formContext
   const revalidator = useRevalidator()
   const clipStrategy = watch("clipStrategy")
   const clipOrder = watch("clipOrder.type")
   const useMusic = watch("useMusic")
-  const [showingHelp, setShowingHelp] = useState(false)
   const hasSongs = state.data.songs?.length || 0 > 0
+
+  const isValid = (values: ClipFormInputs) => {
+    if (values.clipStrategy === "weightedRandom") {
+      if (!values.weightedRandom.weights?.length) {
+        return false
+      }
+    }
+
+    if (values.clipOrder.type === "fixed") {
+      if (!values.clipOrder.markerTitleGroups?.length) {
+        return false
+      }
+    }
+  }
 
   const onSubmit = (values: ClipFormInputs) => {
     if (
@@ -157,6 +173,10 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
     ) {
       return
     }
+    if (!isValid(values)) {
+      return
+    }
+
     actions.updateForm({clipOptions: values})
     revalidator.revalidate()
   }
@@ -219,11 +239,16 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
         <div className="flex justify-between mb-2">
           <h1 className="text-2xl font-bold">Clips</h1>
-          <button type="button" className="btn btn-sm btn-secondary">
+          <button
+            type="button"
+            className="btn btn-sm btn-secondary"
+            onClick={() => setHelpOpen(true)}
+          >
             <HiQuestionMarkCircle />
             Help
           </button>
         </div>
+
         <div className="w-full flex justify-between mb-4 mt-2">
           <div className="join">
             <div className="tooltip" data-tip="Undo">

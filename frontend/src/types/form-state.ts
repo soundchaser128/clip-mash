@@ -43,3 +43,7 @@ export interface FormState {
   clipWeights?: [string, number][]
   clipOptions?: ClipFormInputs
 }
+
+export interface SerializedFormState extends FormState {
+  clipMashVersion: string
+}

@@ -143,25 +143,36 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
     defaultValues: getDefaultOptions(state.data),
     mode: "onChange",
   })
-  const {register, watch, handleSubmit, setValue} = formContext
+  const {register, watch, handleSubmit, setValue, formState, setError} =
+    formContext
   const revalidator = useRevalidator()
   const clipStrategy = watch("clipStrategy")
   const clipOrder = watch("clipOrder.type")
   const useMusic = watch("useMusic")
   const hasSongs = state.data.songs?.length || 0 > 0
 
-  const isValid = (values: ClipFormInputs) => {
+  const validate = (values: ClipFormInputs) => {
+    let valid = true
+
     if (values.clipStrategy === "weightedRandom") {
       if (!values.weightedRandom.weights?.length) {
-        return false
+        setError("weightedRandom.weights", {
+          message: "You must add at least one weight",
+        })
+        valid = false
       }
     }
 
     if (values.clipOrder.type === "fixed") {
       if (!values.clipOrder.markerTitleGroups?.length) {
-        return false
+        setError("clipOrder.markerTitleGroups", {
+          message: "You must add at least one marker group",
+        })
+        valid = false
       }
     }
+
+    return valid
   }
 
   const onSubmit = (values: ClipFormInputs) => {
@@ -173,7 +184,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
     ) {
       return
     }
-    if (!isValid(values)) {
+    if (!validate(values)) {
       return
     }
 
@@ -372,7 +383,11 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
 
         <div className="flex flex-row justify-between mt-4">
           <span />
-          <button type="submit" className="btn btn-success ">
+          <button
+            disabled={!formState.isValid}
+            type="submit"
+            className="btn btn-success "
+          >
             <HiRocketLaunch />
             Generate
           </button>

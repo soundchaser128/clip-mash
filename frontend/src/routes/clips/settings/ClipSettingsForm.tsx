@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import React, {useEffect} from "react"
+import React, {useEffect, useState} from "react"
 import {useRevalidator} from "react-router-dom"
 import {updateForm} from "../../actions"
 import {
@@ -7,6 +7,7 @@ import {
   HiArrowUturnRight,
   HiBackward,
   HiForward,
+  HiQuestionMarkCircle,
   HiRocketLaunch,
   HiTrash,
 } from "react-icons/hi2"
@@ -19,6 +20,21 @@ import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"
 
+const clipGenerationOptions = (useMusic: boolean) => {
+  if (useMusic) {
+    return [
+      {value: "roundRobin", label: "Round-robin"},
+      {value: "weightedRandom", label: "Weighted random"},
+    ]
+  } else {
+    return [
+      {value: "equalLength", label: "Equal length"},
+      {value: "weightedRandom", label: "Weighted random"},
+      {value: "noSplit", label: "No splitting"},
+    ]
+  }
+}
+
 export const getDefaultOptions = (state: FormState): ClipFormInputs => {
   if (state.clipOptions) {
     return state.clipOptions
@@ -26,9 +42,9 @@ export const getDefaultOptions = (state: FormState): ClipFormInputs => {
 
   if (state.songs?.length) {
     return {
+      useMusic: true,
       clipStrategy: "roundRobin",
       roundRobin: {
-        useMusic: true,
         clipLengths: {
           type: "songs",
           beatsPerMeasure: 4,
@@ -46,6 +62,7 @@ export const getDefaultOptions = (state: FormState): ClipFormInputs => {
     }
   } else {
     return {
+      useMusic: false,
       clipStrategy: "equalLength",
       equalLength: {
         clipDuration: 30,
@@ -59,13 +76,13 @@ interface CommonInputs {
   clipStrategy: ClipStrategy
   clipOrder: ClipOrder
   seed?: string
+  useMusic?: boolean
 }
 
 interface RoundRobinFormInputs {
   clipStrategy: "roundRobin"
   roundRobin: {
     clipLengths?: ClipLengthOptions
-    useMusic?: boolean
   }
 }
 
@@ -81,7 +98,6 @@ interface WeightedRandomFormInputs {
   weightedRandom: {
     clipLengths: ClipLengthOptions
     weights: [string, number][]
-    useMusic?: boolean
   }
 }
 
@@ -128,8 +144,9 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const revalidator = useRevalidator()
   const clipStrategy = watch("clipStrategy")
   const clipOrder = watch("clipOrder.type")
-  const useMusic =
-    watch("roundRobin.useMusic") || watch("weightedRandom.useMusic")
+  const useMusic = watch("useMusic")
+  const [showingHelp, setShowingHelp] = useState(false)
+  const hasSongs = state.data.songs?.length || 0 > 0
 
   const onSubmit = (values: ClipFormInputs) => {
     if (
@@ -200,7 +217,13 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   return (
     <FormProvider {...formContext}>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col mb-4">
-        <h2 className="text-xl font-bold">Clips</h2>
+        <div className="flex justify-between mb-2">
+          <h1 className="text-2xl font-bold">Clips</h1>
+          <button type="button" className="btn btn-sm btn-secondary">
+            <HiQuestionMarkCircle />
+            Help
+          </button>
+        </div>
         <div className="w-full flex justify-between mb-4 mt-2">
           <div className="join">
             <div className="tooltip" data-tip="Undo">
@@ -276,6 +299,19 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
 
         {clipOrder === "fixed" && <MarkerOrderModal className="mt-4" />}
 
+        {hasSongs && (
+          <div className="form-control mt-2">
+            <label className="label">
+              <span className="label-text">Use music for clip generation?</span>
+              <input
+                type="checkbox"
+                className="checkbox"
+                {...register("useMusic")}
+              />
+            </label>
+          </div>
+        )}
+
         <div className="form-control">
           <label className="label">
             <span className="label-text">Clip generation method</span>
@@ -285,10 +321,11 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
             {...register("clipStrategy")}
           >
             <option value="">Select...</option>
-            <option value="roundRobin">Round-robin</option>
-            <option value="weightedRandom">Weighted random</option>
-            <option value="equalLength">Equal length</option>
-            <option value="noSplit">No splitting</option>
+            {clipGenerationOptions(useMusic ?? false).map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </select>
         </div>
 

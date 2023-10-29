@@ -1,5 +1,5 @@
 import {LoaderFunction} from "react-router-dom"
-import {getFormState} from "../helpers"
+import {getFormState} from "@/helpers"
 import {
   Clip,
   ClipPickerOptions,
@@ -15,9 +15,11 @@ import {
   listSongs,
   listStashVideos,
   listVideos,
-} from "../api"
-import {FormState} from "../types/form-state"
-import {getNewId, getVideo, listMarkers} from "../api"
+  getNewId,
+  getVideo,
+  listMarkers,
+} from "@/api"
+import {FormState} from "@/types/form-state"
 import {
   ClipFormInputs,
   getDefaultOptions,
@@ -98,7 +100,7 @@ const getClipPickerOptions = (
         type: "roundRobin",
         length,
         clipLengths: getClipLengths(inputs.roundRobin, state),
-        lenientDuration: !inputs.roundRobin.useMusic,
+        lenientDuration: !inputs.useMusic,
       }
     }
     case "weightedRandom": {

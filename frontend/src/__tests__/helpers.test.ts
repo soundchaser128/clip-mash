@@ -29,7 +29,9 @@ describe("formatSeconds", () => {
     expect(formatSeconds(60 * 60 * 2 + 10, "short")).toBe("02:00:10")
     expect(formatSeconds(0.5, "short-with-ms")).toBe("00:00.500")
     expect(formatSeconds(0.5, "short")).toBe("00:00")
-    expect(formatSeconds(60 * 60 * 2 + 10.5, "short-with-ms") ).toBe("02:00:10.500")
+    expect(formatSeconds(60 * 60 * 2 + 10.5, "short-with-ms")).toBe(
+      "02:00:10.500",
+    )
   })
 
   it("should format hours/seconds in long format", () => {

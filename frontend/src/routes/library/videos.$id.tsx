@@ -205,7 +205,10 @@ export default function EditVideoModal() {
   }
 
   const onSetCurrentTime = (field: "start" | "end") => {
-    setValue(field, formatSeconds(videoRef.current?.currentTime || 0, "short-with-ms"))
+    setValue(
+      field,
+      formatSeconds(videoRef.current?.currentTime || 0, "short-with-ms"),
+    )
   }
   const currentItemIndex = markers.findIndex((m) =>
     isBetween(time, m.start, m.end || videoDuration!),
@@ -616,8 +619,12 @@ export default function EditVideoModal() {
                           <tr key={marker.id}>
                             <td>{idx + 1}</td>
                             <td className="font-bold">{marker.primaryTag}</td>
-                            <td>{formatSeconds(marker.start, "short-with-ms")}</td>
-                            <td>{formatSeconds(marker.end, "short-with-ms")}</td>
+                            <td>
+                              {formatSeconds(marker.start, "short-with-ms")}
+                            </td>
+                            <td>
+                              {formatSeconds(marker.end, "short-with-ms")}
+                            </td>
                             <td>
                               <button
                                 onClick={() => onShowForm("edit", marker)}

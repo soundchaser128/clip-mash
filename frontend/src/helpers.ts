@@ -106,7 +106,8 @@ export function formatSeconds(
   }
 }
 
-const durationRegex = /^(?<hours>(\d+):)?(?<minutes>\d+):(?<seconds>\d+)\.?(?<millis>\d*)$/
+const durationRegex =
+  /^(?<hours>(\d+):)?(?<minutes>\d+):(?<seconds>\d+)\.?(?<millis>\d*)$/
 
 export function parseTimestamp(input: string | number): number {
   if (typeof input === "string") {

@@ -205,7 +205,7 @@ export default function EditVideoModal() {
   }
 
   const onSetCurrentTime = (field: "start" | "end") => {
-    setValue(field, formatSeconds(videoRef.current?.currentTime || 0, "short"))
+    setValue(field, formatSeconds(videoRef.current?.currentTime || 0, "short-with-ms"))
   }
   const currentItemIndex = markers.findIndex((m) =>
     isBetween(time, m.start, m.end || videoDuration!),
@@ -260,8 +260,8 @@ export default function EditVideoModal() {
   const onShowForm = (mode: FormMode, marker?: MarkerDto) => {
     setFormMode(mode)
     const start = mode === "create" ? videoRef.current?.currentTime : undefined
-    setValue("start", formatSeconds(marker?.start || start, "short"))
-    setValue("end", formatSeconds(marker?.end || undefined, "short"))
+    setValue("start", formatSeconds(marker?.start || start, "short-with-ms"))
+    setValue("end", formatSeconds(marker?.end || undefined, "short-with-ms"))
     setValue("title", marker?.primaryTag || "")
 
     if (marker) {
@@ -616,8 +616,8 @@ export default function EditVideoModal() {
                           <tr key={marker.id}>
                             <td>{idx + 1}</td>
                             <td className="font-bold">{marker.primaryTag}</td>
-                            <td>{formatSeconds(marker.start, "short")}</td>
-                            <td>{formatSeconds(marker.end, "short")}</td>
+                            <td>{formatSeconds(marker.start, "short-with-ms")}</td>
+                            <td>{formatSeconds(marker.end, "short-with-ms")}</td>
                             <td>
                               <button
                                 onClick={() => onShowForm("edit", marker)}
@@ -637,14 +637,18 @@ export default function EditVideoModal() {
             </div>
           )}
           <div className="w-full flex justify-between">
-            <button onClick={onDeleteAll} className="btn btn-error">
-              <HiTrash className="mr-2" />
-              Delete all
-            </button>
-            <button onClick={onDone} className="btn btn-success">
-              <HiCheck className="mr-2" />
-              Done
-            </button>
+            {formMode === "hidden" && (
+              <>
+                <button onClick={onDeleteAll} className="btn btn-error">
+                  <HiTrash className="mr-2" />
+                  Delete all
+                </button>
+                <button onClick={onDone} className="btn btn-success">
+                  <HiCheck className="mr-2" />
+                  Done
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

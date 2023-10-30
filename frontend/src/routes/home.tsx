@@ -7,7 +7,7 @@ import {
 } from "react-router-dom"
 import {updateForm} from "./actions"
 import {useEffect, useRef, useState} from "react"
-import {FormStage, FormState, SerializedFormState} from "../types/form-state"
+import {FormStage, SerializedFormState} from "../types/form-state"
 import Layout from "../components/Layout"
 import {HiFolder, HiRocketLaunch} from "react-icons/hi2"
 

@@ -24,7 +24,12 @@ interface Props {
 
 const marginLeft = 4
 
-const TimeAxis = ({length}: {length: number}) => {
+interface TimeAxisProps {
+  length: number
+  onClick: (e: React.MouseEvent) => void
+}
+
+const TimeAxis = ({length, onClick}: TimeAxisProps) => {
   const svgRef = useRef<SVGSVGElement>(null)
   const width = svgRef.current?.getBoundingClientRect().width || 0
   const range = [0, width]
@@ -44,7 +49,12 @@ const TimeAxis = ({length}: {length: number}) => {
   }, [domainDep, rangeDep, width])
 
   return (
-    <svg ref={svgRef} height={22} className="w-full z-20">
+    <svg
+      onClick={onClick}
+      ref={svgRef}
+      height={22}
+      className="w-full z-20 cursor-pointer select-none"
+    >
       <path
         d={["M", range[0] + marginLeft, 6, "v", -6, "H", range[1], "v", 6].join(
           " ",
@@ -150,9 +160,8 @@ const Timeline: React.FC<Props> = ({
   return (
     <section className={className}>
       <div
-        className="flex h-[36px] relative w-full bg-base-200 cursor-pointer"
+        className="flex h-[36px] relative w-full bg-base-200"
         style={{marginLeft}}
-        onClick={handleTimelineClick}
       >
         {typeof time === "number" && (
           <span
@@ -176,7 +185,7 @@ const Timeline: React.FC<Props> = ({
           length={length}
         />
       </div>
-      <TimeAxis length={length} />
+      <TimeAxis onClick={handleTimelineClick} length={length} />
     </section>
   )
 }

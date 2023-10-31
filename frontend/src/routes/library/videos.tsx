@@ -8,8 +8,7 @@ import {
   HiTrash,
   HiXMark,
 } from "react-icons/hi2"
-import {useEffect, useState} from "react"
-import {useImmer} from "use-immer"
+import {useState} from "react"
 import {updateForm} from "../actions"
 import {
   Link,
@@ -21,7 +20,6 @@ import {
   useSearchParams,
 } from "react-router-dom"
 import {
-  ListVideoDto,
   ListVideoDtoPage,
   cleanupVideos,
   deleteVideo,
@@ -38,7 +36,7 @@ import JumpToTop from "../../components/JumpToTop"
 export default function ListVideos() {
   const {actions} = useStateMachine({updateForm})
   const initialVideos = useLoaderData() as ListVideoDtoPage
-  const [videos, setVideos] = useImmer<ListVideoDto[]>(initialVideos.content)
+  const videos = initialVideos.content
   const navigate = useNavigate()
   const navigation = useNavigation()
   const config = useConfig()
@@ -58,10 +56,6 @@ export default function ListVideos() {
   const anyFilterSet = filter || source || hasMarkers
 
   const noVideosForFilter = videos.length === 0 && anyFilterSet && !isLoading
-
-  useEffect(() => {
-    setVideos(initialVideos.content)
-  }, [initialVideos, setVideos])
 
   const onOpenModal = (videoId: string) => {
     const queryString = query.toString()

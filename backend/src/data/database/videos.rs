@@ -297,6 +297,7 @@ impl VideosDatabase {
             query,
             source,
             has_markers,
+            is_interactive,
         } = query_object;
         debug!("count: {} for query {:?}", count, query);
         let limit = params.limit();
@@ -332,6 +333,16 @@ impl VideosDatabase {
             }
             query_builder.push("v.source = ");
             query_builder.push_bind(source.to_string());
+        }
+
+        if let Some(interactive) = is_interactive {
+            if first {
+                query_builder.push("WHERE ");
+            } else {
+                query_builder.push("AND ");
+            }
+            query_builder.push("v.interactive = ");
+            query_builder.push_bind(interactive);
         }
 
         query_builder.push(" GROUP BY v.id ");

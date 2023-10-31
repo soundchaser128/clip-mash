@@ -113,6 +113,7 @@ pub struct VideoSearchQuery {
     pub query: Option<String>,
     pub source: Option<VideoSource>,
     pub has_markers: Option<bool>,
+    pub is_interactive: Option<bool>,
 }
 
 #[derive(Debug, Clone)]

@@ -18,7 +18,9 @@ function useDebouncedSetQuery({
   const [params, setParams] = useSearchParams()
 
   const setQuery = (value: string) => {
-    setParams({[parameterName]: value})
+    if (value.trim().length > 0) {
+      setParams({[parameterName]: value})
+    }
   }
 
   const addOrReplaceParam = (key: string, value: QueryValue) => {
@@ -37,7 +39,9 @@ function useDebouncedSetQuery({
           }
           break
         case "string":
-          qs.set(key, value)
+          if (value.trim().length > 0) {
+            qs.set(key, value)
+          }
           break
         case "undefined":
           qs.delete(key)

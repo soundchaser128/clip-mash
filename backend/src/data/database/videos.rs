@@ -333,6 +333,7 @@ impl VideosDatabase {
             }
             query_builder.push("v.source = ");
             query_builder.push_bind(source.to_string());
+            first = false;
         }
 
         if let Some(interactive) = is_interactive {
@@ -343,6 +344,7 @@ impl VideosDatabase {
             }
             query_builder.push("v.interactive = ");
             query_builder.push_bind(interactive);
+            first = false;
         }
 
         query_builder.push(" GROUP BY v.id ");

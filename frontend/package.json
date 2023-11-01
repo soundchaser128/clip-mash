@@ -13,6 +13,7 @@
     "type-check": "tsc",
     "type-check:watch": "tsc --watch",
     "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "test": "vitest",
     "test:once": "vitest run",
     "generate": "orval --config ./orval.config.ts"

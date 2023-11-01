@@ -7,13 +7,11 @@ import Pagination from "./Pagination"
 import useDebouncedSetQuery, {QueryPairs} from "@/hooks/useDebouncedQuery"
 import {useEffect} from "react"
 import {useConfig} from "@/hooks/useConfig"
-import clsx from "clsx"
 
 interface Props {
   editableTitles?: boolean
   actionChildren?: (video: ListVideoDto) => React.ReactNode
   onVideoClick: (id: string) => void
-  filterChildren?: React.ReactNode
   hideMarkerCountFilter?: boolean
 }
 
@@ -22,14 +20,18 @@ interface FilterInputs {
   sort: string
   hasMarkers?: string
   isInteractive?: string
-  source: string
+  source?: string
+}
+
+const EMPTY_VALUES: FilterInputs = {
+  query: "",
+  sort: "markers",
 }
 
 const VideoGrid: React.FC<Props> = ({
   editableTitles,
   actionChildren,
   onVideoClick,
-  filterChildren,
   hideMarkerCountFilter,
 }) => {
   const page = useLoaderData() as ListVideoDtoPage
@@ -38,7 +40,7 @@ const VideoGrid: React.FC<Props> = ({
   const config = useConfig()
   const {addOrReplaceParams, setQueryDebounced} = useDebouncedSetQuery()
   const videos = page.content
-  const {register, handleSubmit, watch} = useForm<FilterInputs>({
+  const {register, handleSubmit, watch, reset} = useForm<FilterInputs>({
     mode: "onChange",
     defaultValues: Object.fromEntries(params.entries()),
   })
@@ -54,7 +56,6 @@ const VideoGrid: React.FC<Props> = ({
     !values.source
   const noVideos = videos.length === 0 && formEmpty && !isLoading
   const noVideosForFilter = videos.length === 0 && !formEmpty && !isLoading
-  console.log({formEmpty, noVideos, noVideosForFilter})
 
   const onSubmit = (values: FilterInputs) => {
     const hasQuery = !!values.query?.trim()
@@ -166,6 +167,14 @@ const VideoGrid: React.FC<Props> = ({
                 <option value="false">No</option>
               </select>
             </div>
+            <button
+              type="button"
+              onClick={() => reset(EMPTY_VALUES)}
+              className="tooltip flex items-center hover:bg-gray-200 rounded-full p-2"
+              data-tip="Reset values"
+            >
+              <HiXMark />
+            </button>
           </div>
         </form>
       )}

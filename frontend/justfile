@@ -1,0 +1,15 @@
+check:
+    npm run type-check
+    npm run format-check
+    npm run lint
+    npm run test:once
+
+build:
+    npm run build
+
+format:
+    npm run format
+    npm run lint:fix
+
+start:
+    npm run dev

@@ -36,26 +36,38 @@ const VideoGrid: React.FC<Props> = ({
   const config = useConfig()
   const {addOrReplaceParams, setQueryDebounced} = useDebouncedSetQuery()
   const videos = page.content
-  const {register, handleSubmit, watch, formState} = useForm<FilterInputs>({
+  const {register, handleSubmit, watch} = useForm<FilterInputs>({
     mode: "onChange",
     defaultValues: Object.fromEntries(params.entries()),
   })
 
   const navigation = useNavigation()
   const isLoading = navigation.state === "loading"
-  const noVideos = false // videos.length === 0 && !formState.isDirty && !isLoading
-  const noVideosForFilter = false
+  const values = watch()
+  const formEmpty =
+    !values.query?.trim() &&
+    !values.sort &&
+    !values.hasMarkers &&
+    !values.isInteractive &&
+    !values.source
+  const noVideos = videos.length === 0 && formEmpty && !isLoading
+  const noVideosForFilter = videos.length === 0 && !formEmpty && !isLoading
+  console.log({formEmpty, noVideos, noVideosForFilter})
 
   const onSubmit = (values: FilterInputs) => {
-    if (values.query?.trim()) {
-      setQueryDebounced(values.query)
-    }
-    addOrReplaceParams([
+    const hasQuery = !!values.query?.trim()
+    const update = [
       ["sort", values.sort],
       ["hasMarkers", values.hasMarkers],
       ["isInteractive", values.isInteractive],
       ["source", values.source === "All" ? undefined : values.source],
-    ])
+    ]
+    if (hasQuery) {
+      setQueryDebounced(values.query.trim())
+    } else {
+      update.push(["query", undefined])
+    }
+    addOrReplaceParams(update)
   }
 
   const onEditTitle = async (id: string, title: string) => {

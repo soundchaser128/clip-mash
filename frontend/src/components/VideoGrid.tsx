@@ -4,7 +4,7 @@ import {useLoaderData, useNavigation, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {HiFolder, HiXMark} from "react-icons/hi2"
 import Pagination from "./Pagination"
-import useDebouncedSetQuery from "@/hooks/useDebouncedQuery"
+import useDebouncedSetQuery, {QueryPairs} from "@/hooks/useDebouncedQuery"
 import {useEffect} from "react"
 import {useConfig} from "@/hooks/useConfig"
 import clsx from "clsx"
@@ -56,7 +56,7 @@ const VideoGrid: React.FC<Props> = ({
 
   const onSubmit = (values: FilterInputs) => {
     const hasQuery = !!values.query?.trim()
-    const update = [
+    const update: QueryPairs = [
       ["sort", values.sort],
       ["hasMarkers", values.hasMarkers],
       ["isInteractive", values.isInteractive],

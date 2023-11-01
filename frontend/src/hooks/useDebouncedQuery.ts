@@ -7,6 +7,10 @@ interface Options {
   parameterName?: string
 }
 
+export type QueryValue = string | boolean | undefined
+export type QueryPair = [string, QueryValue]
+export type QueryPairs = QueryPair[]
+
 function useDebouncedSetQuery({
   wait = 500,
   parameterName = "query",
@@ -17,16 +21,11 @@ function useDebouncedSetQuery({
     setParams({[parameterName]: value})
   }
 
-  const addOrReplaceParam = (
-    key: string,
-    value: string | boolean | undefined,
-  ) => {
+  const addOrReplaceParam = (key: string, value: QueryValue) => {
     addOrReplaceParams([[key, value]])
   }
 
-  const addOrReplaceParams = (
-    pairs: [string, string | boolean | undefined][],
-  ) => {
+  const addOrReplaceParams = (pairs: QueryPairs) => {
     const qs = new URLSearchParams(params)
     for (const [key, value] of pairs) {
       switch (typeof value) {

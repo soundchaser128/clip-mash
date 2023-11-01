@@ -14,6 +14,7 @@ interface Props {
   actionChildren?: (video: ListVideoDto) => React.ReactNode
   onVideoClick: (id: string) => void
   filterChildren?: React.ReactNode
+  hideMarkerCountFilter?: boolean
 }
 
 interface FilterInputs {
@@ -29,6 +30,7 @@ const VideoGrid: React.FC<Props> = ({
   actionChildren,
   onVideoClick,
   filterChildren,
+  hideMarkerCountFilter,
 }) => {
   const page = useLoaderData() as ListVideoDtoPage
   const [params] = useSearchParams()
@@ -84,20 +86,16 @@ const VideoGrid: React.FC<Props> = ({
       {!noVideos && (
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className={clsx("w-full grid", {
-            "grid-cols-3": !!filterChildren,
-            "grid-cols-2": !filterChildren,
-          })}
+          className="flex items-center w-full justify-between"
         >
           <input
-            type="text"
+            type="text grow"
             placeholder="Filter..."
             className="input input-primary w-full lg:w-96"
             {...register("query")}
           />
-          {filterChildren}
 
-          <div className="flex gap-1 place-self-end">
+          <div className="flex gap-1">
             <div className="flex gap-1">
               <label className="label">
                 <span className="label-text">Video source</span>
@@ -133,14 +131,32 @@ const VideoGrid: React.FC<Props> = ({
                 <option value="duration">Duration</option>
               </select>
             </div>
+            {!hideMarkerCountFilter && (
+              <div className="flex gap-1">
+                <label className="label">
+                  <span className="label-text">Has markers</span>
+                </label>
+                <select
+                  className="select select-sm select-bordered"
+                  {...register("hasMarkers")}
+                >
+                  <option disabled value="none">
+                    Has markers
+                  </option>
+                  <option value="">All</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            )}
 
             <div className="flex gap-1">
               <label className="label">
-                <span className="label-text">Has markers</span>
+                <span className="label-text">Interactive</span>
               </label>
               <select
                 className="select select-sm select-bordered"
-                {...register("hasMarkers")}
+                {...register("isInteractive")}
               >
                 <option disabled value="none">
                   Has markers

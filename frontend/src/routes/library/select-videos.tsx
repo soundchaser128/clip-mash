@@ -58,8 +58,17 @@ export default function ListVideos() {
   return (
     <>
       <JumpToTop />
-      <div className="grid grid-cols-3 w-full">
-        <span />
+      <div className="grid grid-cols-3 w-full my-4 items-center">
+        <div className="flex gap-2 justify-start">
+          <button onClick={onDeselectAll} className="btn btn-error">
+            <HiXMark className="mr-1" />
+            Deselect all
+          </button>
+          <button onClick={onSelectAll} className="btn btn-secondary">
+            <HiCheck className="mr-1" />
+            Select all
+          </button>
+        </div>
         <div className="place-self-center text-center mb-4">
           <p>
             <strong>{state.data.videoIds?.length || "All"}</strong>{" "}
@@ -68,7 +77,7 @@ export default function ListVideos() {
           <p>Click on videos to add them to the selection.</p>
         </div>
         <button
-          className="btn btn-success place-self-end"
+          className="btn btn-success place-self-end self-center"
           onClick={onNextStage}
         >
           Next
@@ -77,19 +86,8 @@ export default function ListVideos() {
       </div>
 
       <VideoGrid
+        hideMarkerCountFilter
         onVideoClick={onToggleCheckbox}
-        filterChildren={
-          <div className="flex gap-2 justify-center">
-            <button onClick={onDeselectAll} className="btn btn-error">
-              <HiXMark className="mr-1" />
-              Deselect all
-            </button>
-            <button onClick={onSelectAll} className="btn btn-secondary">
-              <HiCheck className="mr-1" />
-              Select all
-            </button>
-          </div>
-        }
         actionChildren={(video) => (
           <>
             <div className="form-control">

@@ -232,6 +232,8 @@ export const makeVideoLoader: (
       query: query.get("query"),
       sort: query.get("sort"),
       source: query.get("source") as VideoSource | null,
+      isInteractive:
+        params.isInteractive || parseBoolean(query.get("isInteractive")),
     })
 
     return videos

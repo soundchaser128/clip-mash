@@ -17,12 +17,32 @@ function useDebouncedSetQuery({
     setParams({[parameterName]: value})
   }
 
-  const addOrReplaceParam = (key: string, value: string | undefined) => {
+  const addOrReplaceParam = (
+    key: string,
+    value: string | boolean | undefined,
+  ) => {
+    addOrReplaceParams([[key, value]])
+  }
+
+  const addOrReplaceParams = (
+    pairs: [string, string | boolean | undefined][],
+  ) => {
     const qs = new URLSearchParams(params)
-    if (typeof value !== "undefined") {
-      qs.set(key, value)
-    } else {
-      qs.delete(key)
+    for (const [key, value] of pairs) {
+      switch (typeof value) {
+        case "boolean":
+          if (value) {
+            qs.set(key, value.toString())
+          } else {
+            qs.delete(key)
+          }
+          break
+        case "string":
+          qs.set(key, value)
+          break
+        case "undefined":
+          qs.delete(key)
+      }
     }
     setParams(qs)
   }
@@ -32,6 +52,7 @@ function useDebouncedSetQuery({
   return {
     setQueryDebounced: debounced,
     addOrReplaceParam,
+    addOrReplaceParams,
   }
 }
 

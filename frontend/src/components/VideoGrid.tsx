@@ -1,42 +1,99 @@
-import {ListVideoDto, ListVideoDtoPage} from "@/api"
+import {ListVideoDto, ListVideoDtoPage, updateVideo} from "@/api"
 import VideoCard from "./VideoCard"
-import {useLoaderData} from "react-router-dom"
+import {useLoaderData, useNavigation, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {HiFolder, HiXMark} from "react-icons/hi2"
 import Pagination from "./Pagination"
+import useDebouncedSetQuery from "@/hooks/useDebouncedQuery"
+import {useEffect} from "react"
+import {useConfig} from "@/hooks/useConfig"
+import clsx from "clsx"
 
-interface Props {}
+interface Props {
+  editableTitles?: boolean
+  actionChildren?: (video: ListVideoDto) => React.ReactNode
+  onVideoClick: (id: string) => void
+  filterChildren?: React.ReactNode
+}
 
 interface FilterInputs {
   query: string
   sort: string
-  hasMarkers?: boolean
-  isInteractive?: boolean
+  hasMarkers?: string
+  isInteractive?: string
+  source: string
 }
 
-const VideoGrid: React.FC<Props> = () => {
+const VideoGrid: React.FC<Props> = ({
+  editableTitles,
+  actionChildren,
+  onVideoClick,
+  filterChildren,
+}) => {
   const page = useLoaderData() as ListVideoDtoPage
+  const [params] = useSearchParams()
+
+  const config = useConfig()
+  const {addOrReplaceParams, setQueryDebounced} = useDebouncedSetQuery()
   const videos = page.content
-  const {handleSubmit} = useForm<FilterInputs>()
-  const noVideos = false
+  const {register, handleSubmit, watch, formState} = useForm<FilterInputs>({
+    mode: "onChange",
+    defaultValues: Object.fromEntries(params.entries()),
+  })
+
+  const navigation = useNavigation()
+  const isLoading = navigation.state === "loading"
+  const noVideos = false // videos.length === 0 && !formState.isDirty && !isLoading
   const noVideosForFilter = false
+
+  const onSubmit = (values: FilterInputs) => {
+    if (values.query?.trim()) {
+      setQueryDebounced(values.query)
+    }
+    addOrReplaceParams([
+      ["sort", values.sort],
+      ["hasMarkers", values.hasMarkers],
+      ["isInteractive", values.isInteractive],
+      ["source", values.source === "All" ? undefined : values.source],
+    ])
+  }
+
+  const onEditTitle = async (id: string, title: string) => {
+    await updateVideo(id, {title})
+  }
+
+  useEffect(() => {
+    const subscription = watch(() => handleSubmit(onSubmit)())
+    return () => subscription.unsubscribe()
+  }, [handleSubmit, watch])
 
   return (
     <>
       {!noVideos && (
-        <div className="w-full grid grid-cols-2">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className={clsx("w-full grid", {
+            "grid-cols-3": !!filterChildren,
+            "grid-cols-2": !filterChildren,
+          })}
+        >
           <input
             type="text"
             placeholder="Filter..."
             className="input input-primary w-full lg:w-96"
+            {...register("query")}
           />
+          {filterChildren}
 
-          <div className="flex gap-2 place-self-end">
+          <div className="flex gap-1 place-self-end">
             <div className="flex gap-1">
               <label className="label">
                 <span className="label-text">Video source</span>
               </label>
-              <select className="select select-sm select-bordered">
+              <select
+                className="select select-sm select-bordered"
+                {...register("source")}
+              >
                 <option disabled value="none">
                   Filter video source
                 </option>
@@ -51,7 +108,10 @@ const VideoGrid: React.FC<Props> = () => {
               <label className="label">
                 <span className="label-text">Sort by</span>
               </label>
-              <select className="select select-sm select-bordered">
+              <select
+                className="select select-sm select-bordered"
+                {...register("sort")}
+              >
                 <option disabled value="none">
                   Sort by...
                 </option>
@@ -66,7 +126,10 @@ const VideoGrid: React.FC<Props> = () => {
               <label className="label">
                 <span className="label-text">Has markers</span>
               </label>
-              <select className="select select-sm select-bordered">
+              <select
+                className="select select-sm select-bordered"
+                {...register("hasMarkers")}
+              >
                 <option disabled value="none">
                   Has markers
                 </option>
@@ -76,7 +139,7 @@ const VideoGrid: React.FC<Props> = () => {
               </select>
             </div>
           </div>
-        </div>
+        </form>
       )}
 
       {noVideos && (
@@ -100,7 +163,14 @@ const VideoGrid: React.FC<Props> = () => {
           <VideoCard
             key={video.video.id}
             video={video}
-            actionChildren={<></>}
+            actionChildren={actionChildren && actionChildren(video)}
+            stashConfig={config}
+            onImageClick={onVideoClick}
+            onEditTitle={
+              editableTitles
+                ? (title) => onEditTitle(video.video.id, title)
+                : undefined
+            }
           />
         ))}
       </section>

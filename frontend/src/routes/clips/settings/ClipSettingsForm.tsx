@@ -19,6 +19,8 @@ import {FormState} from "@/types/form-state"
 import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"
+import Toast from "@/components/Toast"
+import {useCreateToast} from "@/hooks/useToast"
 
 const clipGenerationOptions = (useMusic: boolean) => {
   if (useMusic) {
@@ -141,6 +143,8 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const {actions, state} = useStateMachine({updateForm})
   const formContext = useForm<ClipFormInputs>({
     defaultValues: getDefaultOptions(state.data),
+    mode: "onChange",
+    reValidateMode: "onChange",
   })
   const {register, watch, handleSubmit, setValue, formState, setError} =
     formContext
@@ -149,6 +153,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const clipOrder = watch("clipOrder.type")
   const useMusic = watch("useMusic")
   const hasSongs = state.data.songs?.length || 0 > 0
+  const createToast = useCreateToast()
 
   const validate = (values: ClipFormInputs) => {
     let valid = true
@@ -175,16 +180,21 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   }
 
   const onSubmit = (values: ClipFormInputs) => {
+    console.log("validating", values)
     if (
       confirmBeforeSubmit &&
       !window.confirm(
         "You have made manual changes to the clips, this would reset them. Are you sure you want to re-generate the clips?",
       )
     ) {
-      return false
+      return
     }
     if (!validate(values)) {
-      return false
+      createToast({
+        message: "There are errors in the form.",
+        type: "error",
+      })
+      return
     }
 
     actions.updateForm({clipOptions: values})

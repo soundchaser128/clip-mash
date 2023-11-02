@@ -8,6 +8,8 @@ import {pluralize} from "../../../helpers"
 import Modal from "../../../components/Modal"
 import {useImmer} from "use-immer"
 import {Clip} from "../../../api"
+import {useFormContext} from "react-hook-form"
+import {ClipFormInputs} from "./ClipSettingsForm"
 
 interface WeightsModalProps {
   className?: string
@@ -22,6 +24,12 @@ interface MarkerCount {
 const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
   const revalidator = useRevalidator()
   const {state, actions} = useStateMachine({updateForm})
+  const {
+    formState: {errors},
+    setValue,
+  } = useFormContext<ClipFormInputs>()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const weightsError = (errors as any).weightedRandom?.weights
 
   const markerCounts = useMemo(() => {
     const counts = new Map<string, MarkerCount>()
@@ -80,6 +88,8 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
       if (index !== -1) {
         draft[index][1] = weight / 100
       }
+
+      setValue("weightedRandom.weights", draft)
     })
   }
 
@@ -89,7 +99,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
       actions.updateForm({
         clipWeights: weights,
       })
-
+      setValue("weightedRandom.weights", weights)
       revalidator.revalidate()
     }
   }
@@ -104,6 +114,13 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
         <HiCog8Tooth className="mr-2" />
         Adjust marker ratios
       </button>
+      {weightsError && (
+        <p className="label">
+          <span className="label-text-alt text-error">
+            {weightsError.message}
+          </span>
+        </p>
+      )}
       <Modal position="top" size="fluid" isOpen={open} onClose={onClose}>
         <h1 className="text-2xl font-bold mb-2">Marker ratios</h1>
         <p className="text-sm mb-4">

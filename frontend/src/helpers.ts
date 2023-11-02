@@ -167,7 +167,7 @@ export function clamp(value: number, lower: number, upper: number): number {
 }
 
 export const dateTimeFormat = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "long",
+  dateStyle: "medium",
   timeStyle: "short",
 })
 

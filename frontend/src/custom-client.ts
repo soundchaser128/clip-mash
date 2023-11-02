@@ -37,7 +37,14 @@ export const customInstance = async <T>({
     return response.json()
   } else {
     const text = await response.text()
-    throw json({error: text, request: url}, {status: response.status})
+    throw json(
+      {error: text, request: url},
+      {
+        status: response.status,
+        headers: response.headers,
+        statusText: response.statusText,
+      },
+    )
   }
 }
 

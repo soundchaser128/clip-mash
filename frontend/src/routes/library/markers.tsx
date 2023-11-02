@@ -276,7 +276,10 @@ const SelectMarkers: React.FC = () => {
                 {videoPreview !== marker.id && (
                   <img
                     src={marker.screenshotUrl}
-                    className="aspect-[16/9] object-cover object-top w-full cursor-pointer"
+                    className={clsx(
+                      "aspect-[16/9] object-cover object-top w-full cursor-pointer",
+                      !selectedMarker.selected && "grayscale",
+                    )}
                     onClick={() => onCheckboxToggle(marker.id)}
                     width={499}
                     height={281}

@@ -54,6 +54,7 @@ import HomePage from "./routes/home"
 import DownloadMusic from "./routes/music/DownloadMusic"
 import UploadMusic from "./routes/music/UploadMusic"
 import ReorderSongs from "./routes/music/ReorderSongs"
+import {ToastProvider} from "./hooks/useToast"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -281,7 +282,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <StateMachineProvider>
       <DndProvider backend={HTML5Backend}>
         <ConfigProvider>
-          <RouterProvider router={router} />
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
         </ConfigProvider>
       </DndProvider>
     </StateMachineProvider>

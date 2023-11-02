@@ -222,7 +222,12 @@ const MarkerOrderModal: React.FC<{className?: string}> = ({className}) => {
   const groups =
     stateOrder?.type === "fixed" ? stateOrder?.markerTitleGroups : []
 
-  const {setValue} = useFormContext<ClipFormInputs>()
+  const {
+    setValue,
+    formState: {errors},
+  } = useFormContext<ClipFormInputs>()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markerGroupsError = (errors?.clipOrder as any)?.markerTitleGroups
 
   const closeModal = () => {
     setOpen(false)
@@ -280,6 +285,13 @@ const MarkerOrderModal: React.FC<{className?: string}> = ({className}) => {
           onClose={onClose}
         />
       </Modal>
+      {markerGroupsError && (
+        <p className="label">
+          <span className="label-text-alt text-error">
+            {markerGroupsError.message}
+          </span>
+        </p>
+      )}
     </>
   )
 }

@@ -13,6 +13,7 @@ interface Props {
   actionChildren?: (video: ListVideoDto) => React.ReactNode
   onVideoClick: (id: string) => void
   hideMarkerCountFilter?: boolean
+  isVideoDisabled?: (video: ListVideoDto) => boolean
 }
 
 interface FilterInputs {
@@ -33,6 +34,7 @@ const VideoGrid: React.FC<Props> = ({
   actionChildren,
   onVideoClick,
   hideMarkerCountFilter,
+  isVideoDisabled,
 }) => {
   const page = useLoaderData() as ListVideoDtoPage
   const [params] = useSearchParams()
@@ -203,6 +205,7 @@ const VideoGrid: React.FC<Props> = ({
             actionChildren={actionChildren && actionChildren(video)}
             stashConfig={config}
             onImageClick={onVideoClick}
+            disabled={isVideoDisabled ? isVideoDisabled(video) : false}
             onEditTitle={
               editableTitles
                 ? (title) => onEditTitle(video.video.id, title)

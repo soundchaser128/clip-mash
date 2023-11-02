@@ -2,7 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import {HiCheck, HiChevronRight, HiXMark} from "react-icons/hi2"
 import {updateForm} from "../actions"
 import {useLoaderData, useNavigate} from "react-router-dom"
-import {ListVideoDtoPage} from "../../api"
+import {ListVideoDto, ListVideoDtoPage} from "../../api"
 import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
 import {pluralize} from "../../helpers"
@@ -55,6 +55,12 @@ export default function ListVideos() {
     actions.updateForm({videoIds: Array.from(newIds)})
   }
 
+  const isVideoDisabled = (video: ListVideoDto): boolean => {
+    const videoIds = state.data.videoIds ?? []
+    const allSelected = videoIds.length === 0
+    return !allSelected && !videoIds.includes(video.video.id)
+  }
+
   return (
     <>
       <JumpToTop />
@@ -88,6 +94,7 @@ export default function ListVideos() {
       <VideoGrid
         hideMarkerCountFilter
         onVideoClick={onToggleCheckbox}
+        isVideoDisabled={isVideoDisabled}
         actionChildren={(video) => (
           <>
             <div className="form-control">

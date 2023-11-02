@@ -79,8 +79,8 @@ const VideoCard: React.FC<Props> = ({
           )}
         </h2>
         <ul className="flex flex-col gap-2 self-start">
-          {tags.length > 0 && (
-            <li>
+          <li>
+            {tags.length > 0 && (
               <span className="inline-flex flex-wrap gap-y-1 gap-x-0.5 ">
                 {tags.map((tag) => (
                   <span key={tag} className="badge">
@@ -88,8 +88,11 @@ const VideoCard: React.FC<Props> = ({
                   </span>
                 ))}
               </span>
-            </li>
-          )}
+            )}
+            {tags.length === 0 && (
+              <span className="text-gray-400">No tags</span>
+            )}
+          </li>
           <li>
             <HiAdjustmentsVertical className="inline mr-2" />
             Interactive:{" "}

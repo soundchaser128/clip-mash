@@ -101,6 +101,12 @@ function HelpPanel({onBack}: {onBack: () => void}) {
         <li>
           <Kbd keys="M I" separator=" " /> Turn mark points into markers
         </li>
+        <li>
+          <Kbd keys="Space" /> Play/pause video
+        </li>
+        <li>
+          <Kbd keys="V M" separator=" " /> Toggle mute
+        </li>
       </ul>
     </div>
   )
@@ -377,6 +383,7 @@ export default function EditVideoModal() {
   useHotkeys("m s", onSplitMarker)
   useHotkeys("m i", onConsumeMarkPoints)
   useHotkeys("space", onTogglePlay)
+  useHotkeys("v m", onToggleMuted)
 
   useEffect(() => {
     if (videoRef.current) {

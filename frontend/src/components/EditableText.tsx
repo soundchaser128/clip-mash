@@ -51,8 +51,11 @@ const EditableText: React.FC<Props> = ({
     return (
       <>
         <span className={clsx("truncate", className)}>{value}</span>
-        <button className="btn btn-sm btn-square ml-1">
-          <HiPencil onClick={() => setMode("edit")} title="Edit" />
+        <button
+          onClick={() => setMode("edit")}
+          className="btn btn-sm btn-square ml-1"
+        >
+          <HiPencil title="Edit" />
         </button>
       </>
     )

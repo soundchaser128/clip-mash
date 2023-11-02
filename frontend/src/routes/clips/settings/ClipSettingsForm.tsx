@@ -141,7 +141,6 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const {actions, state} = useStateMachine({updateForm})
   const formContext = useForm<ClipFormInputs>({
     defaultValues: getDefaultOptions(state.data),
-    mode: "onChange",
   })
   const {register, watch, handleSubmit, setValue, formState, setError} =
     formContext
@@ -182,14 +181,15 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
         "You have made manual changes to the clips, this would reset them. Are you sure you want to re-generate the clips?",
       )
     ) {
-      return
+      return false
     }
     if (!validate(values)) {
-      return
+      return false
     }
 
     actions.updateForm({clipOptions: values})
     revalidator.revalidate()
+    return true
   }
 
   useEffect(() => {

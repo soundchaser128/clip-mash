@@ -19,8 +19,6 @@ import {FormState} from "@/types/form-state"
 import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"
-import Toast from "@/components/Toast"
-import {useCreateToast} from "@/hooks/useToast"
 
 const clipGenerationOptions = (useMusic: boolean) => {
   if (useMusic) {
@@ -153,7 +151,6 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const clipOrder = watch("clipOrder.type")
   const useMusic = watch("useMusic")
   const hasSongs = state.data.songs?.length || 0 > 0
-  const createToast = useCreateToast()
 
   const validate = (values: ClipFormInputs) => {
     let valid = true
@@ -190,10 +187,6 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
       return
     }
     if (!validate(values)) {
-      createToast({
-        message: "There are errors in the form.",
-        type: "error",
-      })
       return
     }
 

@@ -23,8 +23,6 @@ export default function SelectVideos() {
     },
   })
 
-  const [error, setError] = useState<Error>()
-
   const onSubmit = async (values: Inputs) => {
     setSubmitting(true)
     await addNewVideos({
@@ -41,16 +39,12 @@ export default function SelectVideos() {
     return entries
   }
 
-  const handleError = (error: unknown) => {
-    console.error(error)
-  }
-
   useEffect(() => {
     fetchEntries(path || undefined)
       .then((entries) => setFiles(entries))
       .catch((error: unknown) => {
         if (error instanceof Response) {
-          error.json().then(handleError)
+          error.json()
         } else {
           console.error(error)
         }
@@ -68,7 +62,6 @@ export default function SelectVideos() {
         onSubmit={handleSubmit(onSubmit)}
         className="flex gap-4 items-start flex-col self-center w-[36rem] grow"
       >
-        {error && <div className="alert alert-error">{error.message}</div>}
         {!submitting && (
           <>
             <FileBrowser

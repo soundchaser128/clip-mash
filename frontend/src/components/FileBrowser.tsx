@@ -22,7 +22,7 @@ function FileBrowser<T extends FieldValues>({
   }
 
   return (
-    <section className="w-full flex-grow">
+    <section className="w-full flex-grow flex max-h-[55vh] flex-col">
       <div className="form-control">
         <label className="label">
           <span className="label-text">Path</span>
@@ -41,7 +41,7 @@ function FileBrowser<T extends FieldValues>({
         />
       </div>
 
-      <ul className="menu bg-base-200 rounded-box w-full">
+      <ul className="menu bg-base-200 rounded-box w-full overflow-y-scroll flex-nowrap">
         {files.map((file) => (
           <li
             key={file.fileName}

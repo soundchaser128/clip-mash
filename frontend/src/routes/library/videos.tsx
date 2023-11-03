@@ -26,6 +26,8 @@ import {FormStage} from "../../types/form-state"
 
 import JumpToTop from "../../components/JumpToTop"
 import VideoGrid from "@/components/VideoGrid"
+import PageInfo from "@/components/PageInfo"
+import AddTagModal from "@/components/AddTagModal"
 
 export default function ListVideos() {
   const {actions} = useStateMachine({updateForm})
@@ -82,9 +84,6 @@ export default function ListVideos() {
     setSyncingVideo(undefined)
   }
 
-  const startRange = page.pageNumber * page.pageSize + 1
-  const endRange = startRange + page.content.length - 1
-
   return (
     <>
       <JumpToTop />
@@ -104,20 +103,7 @@ export default function ListVideos() {
         </div>
         <div className="">
           {videos.length > 0 && (
-            <>
-              <p className="mb-1 text-center">
-                Showing videos{" "}
-                <strong>
-                  {startRange}-{endRange}
-                </strong>{" "}
-                of <strong>{page.totalItems}</strong>.
-              </p>
-              <p className="text-sm">
-                Click on a video to add or edit its markers. Use the search
-                query, filters and pagination buttons to find the videos you are
-                interested in. Once you are done, click Next.
-              </p>
-            </>
+            <PageInfo page={page} className="mb-1 text-center" />
           )}
         </div>
         {videos.length > 0 && (
@@ -133,6 +119,7 @@ export default function ListVideos() {
 
       <VideoGrid
         editableTitles
+        editableTags
         onVideoClick={onOpenModal}
         actionChildren={(video) => (
           <>

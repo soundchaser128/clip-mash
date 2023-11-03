@@ -7,6 +7,7 @@ import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
 import {pluralize} from "../../helpers"
 import VideoGrid from "@/components/VideoGrid"
+import PageInfo from "@/components/PageInfo"
 
 export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
@@ -76,6 +77,7 @@ export default function ListVideos() {
           </button>
         </div>
         <div className="place-self-center text-center mb-4">
+          <PageInfo page={page} />
           <p>
             <strong>{state.data.videoIds?.length || "All"}</strong>{" "}
             {pluralize("video", state.data.videoIds?.length)} selected.

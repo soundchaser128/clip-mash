@@ -3,7 +3,7 @@ import clsx from "clsx"
 import {useEffect} from "react"
 import {HiXMark} from "react-icons/hi2"
 
-interface Props {
+export interface ModalProps {
   isOpen: boolean
   onClose?: () => void
   children?: React.ReactNode
@@ -12,7 +12,7 @@ interface Props {
   position?: "top" | "off-center"
 }
 
-const Modal: React.FC<Props> = ({
+const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   children,

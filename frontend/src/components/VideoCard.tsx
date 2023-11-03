@@ -6,6 +6,7 @@ import {
   HiCalendar,
   HiCheck,
   HiClock,
+  HiPlus,
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
@@ -20,6 +21,7 @@ interface Props {
   onEditTitle?: (title: string) => void
   onImageClick?: (id: string) => void
   disabled?: boolean
+  onAddTag?: (video: ListVideoDto) => void
 }
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
@@ -39,6 +41,7 @@ const VideoCard: React.FC<Props> = ({
   onEditTitle,
   onImageClick,
   disabled,
+  onAddTag,
 }) => {
   const tags = video.video.tags?.filter(Boolean) ?? []
   const date = new Date(video.video.createdOn * 1000)
@@ -65,8 +68,8 @@ const VideoCard: React.FC<Props> = ({
           onClick={() => onImageClick && onImageClick(video.video.id)}
         />
       </figure>
-      <div className="card-body">
-        <h2 className="card-title gap-0">
+      <div className="card-body gap-0">
+        <h2 className="card-title">
           {onEditTitle && (
             <EditableText
               value={video.video.title || video.video.fileName}
@@ -79,10 +82,10 @@ const VideoCard: React.FC<Props> = ({
             </span>
           )}
         </h2>
-        <ul className="flex flex-col gap-2 self-start">
-          <li>
+        <ul className="flex flex-col gap-2 self-start mb-2">
+          <li className="mb-2 flex items-center">
             {tags.length > 0 && (
-              <span className="inline-flex flex-wrap gap-y-1 gap-x-0.5 ">
+              <span className="inline-flex flex-wrap gap-y-1 gap-x-0.5 -ml-2">
                 {tags.map((tag) => (
                   <span key={tag} className="badge">
                     {tag}
@@ -92,6 +95,15 @@ const VideoCard: React.FC<Props> = ({
             )}
             {tags.length === 0 && (
               <span className="text-gray-400">No tags</span>
+            )}
+            {onAddTag && (
+              <button
+                onClick={() => onAddTag(video)}
+                type="button"
+                className="btn btn-square btn-success btn-xs ml-2"
+              >
+                <HiPlus />
+              </button>
             )}
           </li>
           <li>

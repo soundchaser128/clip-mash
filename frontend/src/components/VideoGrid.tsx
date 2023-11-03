@@ -5,11 +5,13 @@ import {useForm} from "react-hook-form"
 import {HiFolder, HiXMark} from "react-icons/hi2"
 import Pagination from "./Pagination"
 import useDebouncedSetQuery, {QueryPairs} from "@/hooks/useDebouncedQuery"
-import {useEffect} from "react"
+import {useEffect, useState} from "react"
 import {useConfig} from "@/hooks/useConfig"
+import AddTagModal from "./AddTagModal"
 
 interface Props {
   editableTitles?: boolean
+  editableTags?: boolean
   actionChildren?: (video: ListVideoDto) => React.ReactNode
   onVideoClick: (id: string) => void
   hideMarkerCountFilter?: boolean
@@ -32,6 +34,7 @@ const EMPTY_VALUES: FilterInputs = {
 
 const VideoGrid: React.FC<Props> = ({
   editableTitles,
+  editableTags,
   actionChildren,
   onVideoClick,
   hideMarkerCountFilter,
@@ -40,6 +43,9 @@ const VideoGrid: React.FC<Props> = ({
 }) => {
   const page = useLoaderData() as ListVideoDtoPage
   const [params] = useSearchParams()
+  const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
+    undefined,
+  )
 
   const config = useConfig()
   const {addOrReplaceParams, setQueryDebounced} = useDebouncedSetQuery()
@@ -79,6 +85,10 @@ const VideoGrid: React.FC<Props> = ({
 
   const onEditTitle = async (id: string, title: string) => {
     await updateVideo(id, {title})
+  }
+
+  const onShowTagModal = (video: ListVideoDto) => {
+    setEditingTags(video)
   }
 
   useEffect(() => {
@@ -183,6 +193,11 @@ const VideoGrid: React.FC<Props> = ({
         </form>
       )}
 
+      <AddTagModal
+        video={editingTags}
+        onClose={() => setEditingTags(undefined)}
+      />
+
       {noVideos && (
         <div className="flex flex-col items-center justify-center mt-8">
           <HiFolder className="text-8xl" />
@@ -214,6 +229,9 @@ const VideoGrid: React.FC<Props> = ({
               editableTitles
                 ? (title) => onEditTitle(video.video.id, title)
                 : undefined
+            }
+            onAddTag={
+              editableTags ? (video) => onShowTagModal(video) : undefined
             }
           />
         ))}

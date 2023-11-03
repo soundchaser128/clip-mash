@@ -16,3 +16,6 @@ check:
     just backend check
     just frontend check
 
+build:
+    just frontend build
+    just backend build

@@ -116,9 +116,11 @@ export default function Music() {
           stage: nextStage,
           songs: selection.map((id) => songs.find((s) => s.songId === id)!),
           musicVolume: formValues.musicVolume / 100.0,
+          clipOptions: undefined,
         }
       : {
           stage: nextStage,
+          clipOptions: undefined,
         }
 
     actions.updateForm(update)

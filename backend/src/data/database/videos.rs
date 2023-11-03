@@ -252,6 +252,17 @@ impl VideosDatabase {
             first = false;
         }
 
+        if let Some(interactive) = query.is_interactive {
+            if first {
+                query_builder.push("WHERE ");
+            } else {
+                query_builder.push("AND ");
+            }
+            query_builder.push("v.interactive = ");
+            query_builder.push_bind(interactive);
+            first = false;
+        }
+
         if let Some(has_markers) = query.has_markers {
             if first {
                 query_builder.push("WHERE ");

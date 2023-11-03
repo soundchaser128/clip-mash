@@ -19,6 +19,7 @@ const AddTagModal: React.FC<Props> = ({video, onClose}) => {
       await updateVideo(video.video.id, {tags: [...video.video.tags, tag]})
       onClose()
       revalidator.revalidate()
+      setTag("")
     }
   }
 
@@ -36,6 +37,7 @@ const AddTagModal: React.FC<Props> = ({video, onClose}) => {
             placeholder="Enter new tag"
             value={tag}
             onChange={(e) => setTag(e.target.value)}
+            autoFocus
           />
         </div>
         <button className="btn btn-success self-end mt-2" type="submit">

@@ -19,3 +19,7 @@ check:
 build:
     just frontend build
     just backend build
+
+setup:
+    just frontend setup
+    just backend setup

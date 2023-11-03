@@ -24,9 +24,9 @@ const AddTagModal: React.FC<Props> = ({video, onClose}) => {
   }
 
   return (
-    <Modal size="md" onClose={onClose} isOpen={!!video}>
+    <Modal size="fluid" onClose={onClose} isOpen={!!video}>
       <h2 className="font-bold text-2xl mb-4">Add tag to video</h2>
-      <form onSubmit={onSubmit} className="flex flex-col self-center">
+      <form onSubmit={onSubmit} className="flex flex-col self-center px-8">
         <div className="form-control">
           <label className="label">
             <span className="label-text">Tag</span>

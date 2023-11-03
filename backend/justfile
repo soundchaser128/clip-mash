@@ -10,3 +10,7 @@ start:
 
 build:
     cargo build --release
+
+setup:
+    cargo install sqlx-cli
+    sqlx migrate run

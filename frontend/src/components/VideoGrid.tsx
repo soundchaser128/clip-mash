@@ -226,12 +226,14 @@ const VideoGrid: React.FC<Props> = ({
             onImageClick={onVideoClick}
             disabled={isVideoDisabled ? isVideoDisabled(video) : false}
             onEditTitle={
-              editableTitles
+              editableTitles && video.video.source !== "Stash"
                 ? (title) => onEditTitle(video.video.id, title)
                 : undefined
             }
             onAddTag={
-              editableTags ? (video) => onShowTagModal(video) : undefined
+              editableTags && video.video.source !== "Stash"
+                ? (video) => onShowTagModal(video)
+                : undefined
             }
           />
         ))}

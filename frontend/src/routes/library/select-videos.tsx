@@ -95,6 +95,7 @@ export default function ListVideos() {
         hideMarkerCountFilter
         onVideoClick={onToggleCheckbox}
         isVideoDisabled={isVideoDisabled}
+        noVideosFoundMessage="No videos with markers found. Try going back to the library and adding some markers."
         actionChildren={(video) => (
           <>
             <div className="form-control">

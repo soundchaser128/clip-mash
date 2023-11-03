@@ -102,14 +102,23 @@ export default function ListVideos() {
             </button>
           )}
         </div>
-        <div className="text-center">
-          <p>
-            Showing videos{" "}
-            <strong>
-              {startRange}-{endRange}
-            </strong>{" "}
-            of <strong>{page.totalItems}</strong>.
-          </p>
+        <div className="">
+          {videos.length > 0 && (
+            <>
+              <p className="mb-1 text-center">
+                Showing videos{" "}
+                <strong>
+                  {startRange}-{endRange}
+                </strong>{" "}
+                of <strong>{page.totalItems}</strong>.
+              </p>
+              <p className="text-sm">
+                Click on a video to add or edit its markers. Use the search
+                query, filters and pagination buttons to find the videos you are
+                interested in. Once you are done, click Next.
+              </p>
+            </>
+          )}
         </div>
         {videos.length > 0 && (
           <button

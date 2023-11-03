@@ -14,6 +14,7 @@ interface Props {
   onVideoClick: (id: string) => void
   hideMarkerCountFilter?: boolean
   isVideoDisabled?: (video: ListVideoDto) => boolean
+  noVideosFoundMessage?: string
 }
 
 interface FilterInputs {
@@ -35,6 +36,7 @@ const VideoGrid: React.FC<Props> = ({
   onVideoClick,
   hideMarkerCountFilter,
   isVideoDisabled,
+  noVideosFoundMessage,
 }) => {
   const page = useLoaderData() as ListVideoDtoPage
   const [params] = useSearchParams()
@@ -185,7 +187,9 @@ const VideoGrid: React.FC<Props> = ({
         <div className="flex flex-col items-center justify-center mt-8">
           <HiFolder className="text-8xl" />
           <h1 className="text-xl">No videos found</h1>
-          <p>Add some videos with the button above!</p>
+          <p>
+            {noVideosFoundMessage || "Add some videos with the button above!"}
+          </p>
         </div>
       )}
 

@@ -6,6 +6,7 @@ import {
   HiBarsArrowDown,
   HiCheck,
   HiChevronRight,
+  HiInformationCircle,
   HiPlus,
   HiTrash,
 } from "react-icons/hi2"
@@ -46,6 +47,8 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
   const [selected, setSelected] = useState<MarkerGroup | undefined>(
     groups?.at(0),
   )
+
+  const hasUntitledMrakers = markers.some((m) => m.title === "Untitled")
 
   const onAddToGroup = (marker: MarkerCount) => {
     if (!selected) {
@@ -99,6 +102,15 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
   return (
     <div className="flex flex-col">
       <h1 className="text-2xl font-bold mb-2">Marker groups</h1>
+      {hasUntitledMrakers && (
+        <div className="alert alert-info my-2">
+          <HiInformationCircle className="w-6 h-6" />
+          You have at least one marker called &quot;Untitled&quot;, which is the
+          default title for a newly created marker. This feature works best if
+          you can give each marker a meaningful title.
+        </div>
+      )}
+
       <p>
         You can group multiple markers together, so that they appear together in
         the finished compilation. You can also change the order of the groups in

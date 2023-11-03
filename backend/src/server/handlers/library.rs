@@ -11,7 +11,7 @@ use tower::ServiceExt;
 use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::{VideoSearchQuery, VideoSource, VideoUpdate};
+use crate::data::database::{MarkerCount, VideoSearchQuery, VideoSource, VideoUpdate};
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -137,9 +137,7 @@ pub async fn videos_need_encoding(
         video_ids.extend(all_ids);
     }
 
-    let service =
-        EncodingOptimizationService::new(state.ffmpeg_location.clone(), state.database.clone())
-            .await;
+    let service = EncodingOptimizationService::new(state.database.clone());
     let ids: Vec<_> = video_ids.iter().map(|s| s.as_str()).collect();
 
     let needs_encoding = service.needs_re_encode(&ids).await?;
@@ -311,8 +309,10 @@ pub async fn get_marker_preview(
 ) -> Result<impl IntoResponse, AppError> {
     use tower_http::services::ServeFile;
 
+    info!("getting preview image for marker {id}");
     let marker = state.database.markers.get_marker(id).await?;
     if let Some(preview_image) = marker.marker_preview_image {
+        info!("preview image found at {preview_image}");
         let result = ServeFile::new(preview_image).oneshot(request).await;
         Ok(result)
     } else {
@@ -345,7 +345,7 @@ pub async fn list_markers(
     let markers = state
         .database
         .markers
-        .list_markers(video_ids.as_deref())
+        .list_markers(video_ids.as_deref(), None)
         .await?;
     let converter = MarkerDtoConverter::new().await;
 
@@ -354,6 +354,34 @@ pub async fn list_markers(
         .map(|m| converter.from_db_with_video(m))
         .collect();
     Ok(Json(markers))
+}
+
+#[derive(Deserialize, IntoParams)]
+pub struct ListMarkerTitlesQuery {
+    pub count: Option<i64>,
+    pub prefix: Option<String>,
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/library/marker/title",
+    params(ListMarkerTitlesQuery),
+    responses(
+        (status = 200, description = "List marker titles", body = Vec<MarkerCount>),
+    )
+)]
+#[axum::debug_handler]
+pub async fn list_marker_titles(
+    Query(ListMarkerTitlesQuery { count, prefix }): Query<ListMarkerTitlesQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<MarkerCount>>, AppError> {
+    let count = count.unwrap_or(20);
+    let results = state
+        .database
+        .markers
+        .get_marker_titles(count, prefix.as_deref())
+        .await?;
+    Ok(Json(results))
 }
 
 fn validate_marker(marker: &CreateMarker) -> HashMap<&'static str, &'static str> {

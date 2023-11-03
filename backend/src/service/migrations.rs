@@ -7,6 +7,7 @@ use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::preview_image::PreviewGenerator;
 use crate::data::database::{AllVideosFilter, Database, VideoUpdate};
+use crate::helpers::parallelize;
 use crate::service::commands::ffprobe;
 use crate::Result;
 
@@ -152,6 +153,26 @@ impl Migrator {
         Ok(())
     }
 
+    async fn populate_ffprobe_info(&self) -> Result<()> {
+        let videos = self.database.ffprobe.get_videos_without_info().await?;
+
+        let ffprobe_infos = parallelize(videos.into_iter().map(|video| {
+            let ffmpeg_location = self.ffmpeg_location.clone();
+            async move {
+                let ffprobe = ffprobe(&video.file_path, &ffmpeg_location).await;
+                (video.id, ffprobe)
+            }
+        }))
+        .await;
+        for (video_id, ffprobe) in ffprobe_infos {
+            if let Ok(ffprobe) = ffprobe {
+                self.database.ffprobe.set_info(&video_id, &ffprobe).await?;
+            }
+        }
+
+        Ok(())
+    }
+
     pub async fn run(&self) -> Result<()> {
         info!("running migrations");
         let start = Instant::now();
@@ -165,6 +186,7 @@ impl Migrator {
             self.generate_marker_preview_images(),
             self.database.progress.cleanup_progress(),
             self.initialize_video_titles(),
+            self.populate_ffprobe_info(),
         )?;
 
         let elapsed = start.elapsed();

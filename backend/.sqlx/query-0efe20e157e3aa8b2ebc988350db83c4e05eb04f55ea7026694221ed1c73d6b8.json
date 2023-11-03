@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT title, count(*) AS count\n            FROM markers\n            WHERE title != 'Untitled' AND title LIKE $1\n            GROUP BY title\n            ORDER BY count DESC\n            LIMIT $2",
+  "describe": {
+    "columns": [
+      {
+        "name": "title",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "count",
+        "ordinal": 1,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "0efe20e157e3aa8b2ebc988350db83c4e05eb04f55ea7026694221ed1c73d6b8"
+}

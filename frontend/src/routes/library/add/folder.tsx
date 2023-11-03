@@ -1,20 +1,27 @@
 import {HiCheck} from "react-icons/hi2"
-import {useNavigate} from "react-router-dom"
+import {useNavigate, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
-import {useState} from "react"
-import Loader from "../../../components/Loader"
-import {addNewVideos} from "../../../api"
+import {useEffect, useState} from "react"
+import Loader from "@/components/Loader"
+import {addNewVideos, listFileEntries, ListFileEntriesResponse} from "@/api"
+import FileBrowser from "@/components/FileBrowser"
 
 interface Inputs {
   path: string
   recurse: boolean
-  fileName: string
 }
 
 export default function SelectVideos() {
   const navigate = useNavigate()
+  const [files, setFiles] = useState<ListFileEntriesResponse>()
+  const [query, setQuery] = useSearchParams()
+  const path = query.get("path")
   const [submitting, setSubmitting] = useState(false)
-  const {register, handleSubmit} = useForm<Inputs>({})
+  const {register, handleSubmit, control, setValue} = useForm<Inputs>({
+    defaultValues: {
+      path: path || "",
+    },
+  })
 
   const onSubmit = async (values: Inputs) => {
     setSubmitting(true)
@@ -26,28 +33,43 @@ export default function SelectVideos() {
     navigate("/library")
   }
 
+  const fetchEntries = async (path?: string) => {
+    const entries = await listFileEntries({path})
+    setValue("path", entries.directory)
+    return entries
+  }
+
+  useEffect(() => {
+    fetchEntries(path || undefined)
+      .then((entries) => setFiles(entries))
+      .catch((error: unknown) => {
+        if (error instanceof Response) {
+          error.json()
+        } else {
+          console.error(error)
+        }
+      })
+  }, [path])
+
+  const onSelectEntry = (path: string) => {
+    setValue("path", path)
+    setQuery({path})
+  }
+
   return (
     <>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex gap-4 items-start flex-col self-center"
+        className="flex gap-4 items-start flex-col self-center w-[36rem] grow"
       >
         {!submitting && (
           <>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">
-                  Folder containing your videos
-                </span>
-              </label>
-              <input
-                required
-                type="text"
-                className="input input-bordered w-96"
-                placeholder="C:\Users\CoolUser\Videos\DefinitelyNotPorn"
-                {...register("path", {required: true, minLength: 3})}
-              />
-            </div>
+            <FileBrowser
+              name="path"
+              files={files?.entries || []}
+              onSelectItem={(e) => onSelectEntry(e.fullPath)}
+              control={control}
+            />
             <div className="form-control justify-between w-full">
               <label className="label cursor-pointer">
                 <span className="label-text">

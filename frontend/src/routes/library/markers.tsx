@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useState} from "react"
-import {useLoaderData, useNavigate} from "react-router-dom"
+import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import clsx from "clsx"
 import {useImmer} from "use-immer"
 import {
@@ -25,6 +25,7 @@ import useFuse from "../../hooks/useFuse"
 const SelectMarkers: React.FC = () => {
   const initialMarkers = useLoaderData() as MarkerDto[]
   const {actions, state} = useStateMachine({updateForm})
+  const revalidator = useRevalidator()
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(
     () => {
@@ -40,7 +41,6 @@ const SelectMarkers: React.FC = () => {
             selectedRange: [m.start, m.end],
             title: m.primaryTag,
             loops: 1,
-            // TODO
             source: m.source,
           } satisfies SelectedMarker,
         ])
@@ -147,15 +147,26 @@ const SelectMarkers: React.FC = () => {
 
       // Set loops to match the longest selected marker
       for (const selectedMarker of Object.values(draft)) {
-        if (!selectedMarker.selected) continue
+        if (!selectedMarker.selected) {
+          continue
+        }
         const [start, end] = selectedMarker.selectedRange
-        selectedMarker.loops = Math.floor(longestSelectedMarker / (end - start))
+        if (end - start === 0) {
+          continue
+        }
+        const numLoops = Math.floor(longestSelectedMarker / (end - start))
+        selectedMarker.loops = numLoops
       }
     })
   }
 
-  const onUpdateTitle = (id: number, title: string) => {
-    updateMarker(id, {title})
+  const onUpdateTitle = async (id: number, title: string) => {
+    await updateMarker(id, {title})
+    setSelection((draft) => {
+      const marker = draft[id]
+      marker.title = title
+    })
+    revalidator.revalidate()
   }
 
   return (
@@ -265,7 +276,10 @@ const SelectMarkers: React.FC = () => {
                 {videoPreview !== marker.id && (
                   <img
                     src={marker.screenshotUrl}
-                    className="aspect-[16/9] object-cover object-top w-full cursor-pointer"
+                    className={clsx(
+                      "aspect-[16/9] object-cover object-top w-full cursor-pointer",
+                      !selectedMarker.selected && "grayscale",
+                    )}
                     onClick={() => onCheckboxToggle(marker.id)}
                     width={499}
                     height={281}
@@ -302,7 +316,7 @@ const SelectMarkers: React.FC = () => {
                   </strong>
                   <time dateTime={isoDate}>{humanDate}</time>
                 </p>
-                <div className="">
+                <div>
                   <div className="w-full">
                     <input
                       value={

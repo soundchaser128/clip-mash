@@ -69,20 +69,20 @@ function VideoOptions() {
         )}
         {needsEncode && (
           <div className="flex flex-col gap-4 self-center max-w-lg">
-            <div className="form-control">
+            <div className="form-control w-full">
               <label className="label">
                 <span className="label-text">Output resolution</span>
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
-                  className="input input-bordered"
+                  className="input input-bordered w-1/2"
                   {...register("outputWidth", {valueAsNumber: true})}
                 />
                 <span>x</span>
                 <input
                   type="number"
-                  className="input input-bordered"
+                  className="input input-bordered w-1/2"
                   {...register("outputHeight", {valueAsNumber: true})}
                 />
                 <button

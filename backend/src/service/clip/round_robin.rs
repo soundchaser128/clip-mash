@@ -4,9 +4,9 @@ use tracing::info;
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
-use crate::server::types::{Clip, PmvClipOptions, RoundRobinClipOptions};
+use crate::server::types::{Clip, ClipLengthOptions, RoundRobinClipOptions};
 use crate::service::clip::state::{MarkerState, MarkerStateInfo};
-use crate::service::clip::MIN_DURATION;
+use crate::service::clip::{trim_clips, MIN_DURATION};
 use crate::service::Marker;
 
 pub struct RoundRobinClipPicker;
@@ -21,25 +21,26 @@ impl ClipPicker for RoundRobinClipPicker {
         rng: &mut StdRng,
     ) -> Vec<Clip> {
         info!("using RoundRobinClipPicker to make clips");
-
         let song_duration = match &options.clip_lengths {
-            PmvClipOptions::Songs(options) => {
+            ClipLengthOptions::Songs(options) => {
                 Some(options.songs.iter().map(|s| s.length as f64).sum())
             }
             _ => None,
         };
-        let marker_duration = markers.iter().map(|m| m.duration()).sum::<f64>();
-        assert!(
-            marker_duration >= options.length,
-            "marker duration {} must be greater or equal to target duration {}",
-            marker_duration,
-            options.length
-        );
+        if !options.lenient_duration {
+            let marker_duration = markers.iter().map(|m| m.duration()).sum::<f64>();
+            assert!(
+                marker_duration >= options.length,
+                "marker duration {} must be greater or equal to target duration {}",
+                marker_duration,
+                options.length
+            );
+        }
 
         let max_duration = options.length;
         let mut clips = vec![];
         let mut marker_idx = 0;
-        let has_music = matches!(options.clip_lengths, PmvClipOptions::Songs(_));
+        let has_music = matches!(options.clip_lengths, ClipLengthOptions::Songs(_));
         let clip_lengths = ClipLengthPicker::new(options.clip_lengths, max_duration, rng);
         let clip_lengths = clip_lengths.durations();
         info!("clip lengths: {:?}", clip_lengths);
@@ -76,6 +77,7 @@ impl ClipPicker for RoundRobinClipPicker {
                         range: (start, end),
                         source: marker.source,
                         video_id: marker.video_id.clone(),
+                        marker_title: marker.title.clone(),
                     });
                 }
 
@@ -94,13 +96,7 @@ impl ClipPicker for RoundRobinClipPicker {
             )
         }
 
-        if clips_duration > max_duration {
-            let slack = (clips_duration - max_duration) / clips.len() as f64;
-            info!("clip duration {clips_duration} longer than permitted maximum duration {max_duration}, making each clip {slack} shorter");
-            for clip in &mut clips {
-                clip.range.1 -= slack;
-            }
-        }
+        trim_clips(&mut clips, options.length);
 
         clips
     }
@@ -112,7 +108,7 @@ mod test {
     use tracing_test::traced_test;
 
     use crate::server::types::{
-        Beats, MeasureCount, PmvClipOptions, RoundRobinClipOptions, SongClipOptions,
+        Beats, ClipLengthOptions, MeasureCount, RoundRobinClipOptions, SongClipOptions,
     };
     use crate::service::clip::round_robin::RoundRobinClipPicker;
     use crate::service::clip::ClipPicker;
@@ -127,11 +123,12 @@ mod test {
 
         let options = RoundRobinClipOptions {
             length: song_duration,
-            clip_lengths: PmvClipOptions::Songs(SongClipOptions {
+            clip_lengths: ClipLengthOptions::Songs(SongClipOptions {
                 beats_per_measure: 4,
                 cut_after_measures: MeasureCount::Fixed { count: 4 },
                 songs,
             }),
+            lenient_duration: false,
         };
         let markers = fixtures::markers();
         let mut rng = create_seeded_rng(None);
@@ -156,11 +153,12 @@ mod test {
 
         let options = RoundRobinClipOptions {
             length: song_duration,
-            clip_lengths: PmvClipOptions::Songs(SongClipOptions {
+            clip_lengths: ClipLengthOptions::Songs(SongClipOptions {
                 beats_per_measure: 4,
                 cut_after_measures: MeasureCount::Fixed { count: 4 },
                 songs,
             }),
+            lenient_duration: false,
         };
 
         let markers = fixtures::markers();

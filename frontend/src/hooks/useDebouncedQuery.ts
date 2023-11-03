@@ -7,6 +7,10 @@ interface Options {
   parameterName?: string
 }
 
+export type QueryValue = string | boolean | undefined
+export type QueryPair = [string, QueryValue]
+export type QueryPairs = QueryPair[]
+
 function useDebouncedSetQuery({
   wait = 500,
   parameterName = "query",
@@ -14,15 +18,34 @@ function useDebouncedSetQuery({
   const [params, setParams] = useSearchParams()
 
   const setQuery = (value: string) => {
-    setParams({[parameterName]: value})
+    if (value.trim().length > 0) {
+      setParams({[parameterName]: value})
+    }
   }
 
-  const addOrReplaceParam = (key: string, value: string | undefined) => {
+  const addOrReplaceParam = (key: string, value: QueryValue) => {
+    addOrReplaceParams([[key, value]])
+  }
+
+  const addOrReplaceParams = (pairs: QueryPairs) => {
     const qs = new URLSearchParams(params)
-    if (typeof value !== "undefined") {
-      qs.set(key, value)
-    } else {
-      qs.delete(key)
+    for (const [key, value] of pairs) {
+      switch (typeof value) {
+        case "boolean":
+          if (value) {
+            qs.set(key, value.toString())
+          } else {
+            qs.delete(key)
+          }
+          break
+        case "string":
+          if (value.trim().length > 0) {
+            qs.set(key, value)
+          }
+          break
+        case "undefined":
+          qs.delete(key)
+      }
     }
     setParams(qs)
   }
@@ -32,6 +55,7 @@ function useDebouncedSetQuery({
   return {
     setQueryDebounced: debounced,
     addOrReplaceParam,
+    addOrReplaceParams,
   }
 }
 

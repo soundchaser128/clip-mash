@@ -1,6 +1,15 @@
 # Changelog
 
 ## Unreleased
+- feat: Allow sorting clips by putting markers into groups.
+- feat: Save and load project data from disk
+- feat: Persist ffprobe JSON info in the database, in a separate table
+- chore: Replace react-hotkeys-hook with Mousetrap
+- feat: Rework marker creation UI
+- feat: Add keyboard shortcuts to marker creation page
+- feat: Add file browser UI to select paths to add to library
+- fix: When two adjacent clips are from the same video and have the same end- and start points, they will be combined into a single clip
+- feat: Allow adding tags to existing videos
 
 ## 0.17.2
 - fix: Crash when notifications aren't available

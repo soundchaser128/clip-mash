@@ -3,16 +3,14 @@ import {
   StateMachineProvider,
   useStateMachine,
 } from "little-state-machine"
-import React, {useEffect, useState} from "react"
+import React from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
   isRouteErrorResponse,
-  Link,
   Outlet,
   RouterProvider,
   ScrollRestoration,
-  useLoaderData,
   useNavigate,
   useRouteError,
 } from "react-router-dom"
@@ -21,11 +19,11 @@ import "./index.css"
 
 import VideoOptions, {videoOptionsLoader} from "./routes/video-options"
 import Progress from "./routes/progress"
-import PreviewClips from "./routes/clips"
+import PreviewClips from "./routes/clips/clips"
 import ListVideos from "./routes/library/videos"
 import CreateLayout from "./routes/root"
 import Layout from "./components/Layout"
-import Music from "./routes/music"
+import Music from "./routes/music/MusicPage"
 import {
   clipsLoader,
   localMarkerLoader,
@@ -39,10 +37,9 @@ import {
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import MarkersPage from "./routes/library/markers"
-import {resetForm, updateForm} from "./routes/actions"
+import {resetForm} from "./routes/actions"
 import AddVideosPage from "./routes/library/add"
 import useNotification from "./hooks/useNotification"
-import {HiRocketLaunch} from "react-icons/hi2"
 import {FormStage} from "./types/form-state"
 import EditVideoModal from "./routes/library/videos.$id"
 import DownloadVideosPage from "./routes/library/add/download"
@@ -53,6 +50,11 @@ import StashConfigPage from "./routes/stash-config"
 import FunscriptPage from "./routes/funscript"
 import DownloadVideoPage from "./routes/download-video"
 import SelectVideosPage from "./routes/library/select-videos"
+import HomePage from "./routes/home"
+import DownloadMusic from "./routes/music/DownloadMusic"
+import UploadMusic from "./routes/music/UploadMusic"
+import ReorderSongs from "./routes/music/ReorderSongs"
+import {ToastProvider} from "./hooks/useToast"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -67,7 +69,14 @@ const TroubleshootingInfo = () => {
     <div>
       <h2 className="text-xl mb-2 font-bold">What you can do</h2>
       <ul className="list-disc list-inside">
-        <li>Refresh the page.</li>
+        <li>
+          <span
+            className="link link-primary"
+            onClick={() => window.location.reload()}
+          >
+            Reload the page.
+          </span>
+        </li>
         <li>
           <span className="link link-primary" onClick={onReset}>
             Reset the page state.
@@ -159,61 +168,6 @@ const Init = () => {
   )
 }
 
-const HomePage = () => {
-  const videoId = useLoaderData() as string
-  const {actions, state} = useStateMachine({updateForm})
-  const [project, setProject] = useState(state.data?.fileName || "")
-
-  useEffect(() => {
-    actions.updateForm({videoId})
-  }, [actions, videoId])
-
-  const onNext = () => {
-    actions.updateForm({
-      stage: FormStage.ListVideos,
-      fileName: project,
-    })
-  }
-
-  return (
-    <Layout>
-      <div className="hero">
-        <div className="hero-content self-center">
-          <div className="max-w-md flex flex-col">
-            <img src="/logo.png" className="w-40 self-center" />
-            <p className="mt-2 text-lg text-center opacity-60">
-              ClipMash helps you create video compilations.
-            </p>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Project name</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Enter a project name (optional)"
-                className="input input-primary input-bordered"
-                value={project}
-                onChange={(e) => setProject(e.target.value)}
-              />
-            </div>
-
-            <div className="self-center btn-group">
-              <Link
-                onClick={onNext}
-                className="btn btn-lg btn-primary w-52 mt-4"
-                to="/library"
-              >
-                <HiRocketLaunch className="mr-2 w-6 h-6" />
-                Start
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Layout>
-  )
-}
-
 const router = createBrowserRouter([
   {
     path: "/",
@@ -237,7 +191,7 @@ const router = createBrowserRouter([
           {
             path: "library",
             element: <ListVideos />,
-            loader: makeVideoLoader(false),
+            loader: makeVideoLoader({}),
             children: [
               {
                 path: ":id/markers",
@@ -260,7 +214,7 @@ const router = createBrowserRouter([
           {
             path: "/library/select",
             element: <SelectVideosPage />,
-            loader: makeVideoLoader(true),
+            loader: makeVideoLoader({hasMarkers: true}),
           },
           {
             path: "markers",
@@ -271,6 +225,18 @@ const router = createBrowserRouter([
             path: "music",
             element: <Music />,
             loader: musicLoader,
+          },
+          {
+            path: "music/download",
+            element: <DownloadMusic />,
+          },
+          {
+            path: "music/upload",
+            element: <UploadMusic />,
+          },
+          {
+            path: "music/reorder",
+            element: <ReorderSongs />,
           },
           {
             path: "video-options",
@@ -316,7 +282,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <StateMachineProvider>
       <DndProvider backend={HTML5Backend}>
         <ConfigProvider>
-          <RouterProvider router={router} />
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
         </ConfigProvider>
       </DndProvider>
     </StateMachineProvider>

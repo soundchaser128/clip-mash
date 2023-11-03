@@ -18,6 +18,7 @@ use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource, VideoUpdate};
 use crate::data::stash_api::{MarkerLike, StashApi, StashMarker};
+use crate::helpers::parallelize;
 use crate::server::handlers::AppState;
 use crate::server::types::{CreateMarker, ListVideoDto, UpdateMarker};
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
@@ -33,9 +34,17 @@ const VIDEO_EXTENSIONS: &[&str] = &["mp4", "m4v", "webm"];
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum AddVideosRequest {
-    Local { path: String, recurse: bool },
-    Download { urls: Vec<String> },
-    Stash { scene_ids: Vec<i64> },
+    Local {
+        path: String,
+        recurse: bool,
+    },
+    Download {
+        urls: Vec<String>,
+    },
+    #[serde(rename_all = "camelCase")]
+    Stash {
+        scene_ids: Vec<i64>,
+    },
 }
 
 pub struct VideoService {
@@ -74,7 +83,7 @@ impl VideoService {
         .await?
     }
 
-    async fn add_local_video(&self, path: &Utf8Path) -> Result<Option<DbVideo>> {
+    async fn add_local_video(&self, path: Utf8PathBuf) -> Result<Option<DbVideo>> {
         let video_exists = self
             .database
             .videos
@@ -83,7 +92,7 @@ impl VideoService {
         info!("video at path '{path}' exists: {video_exists}");
         if !video_exists {
             let interactive = path.with_extension("funscript").is_file();
-            let ffprobe = ffprobe(path.as_ref(), &self.ffmpeg_location).await;
+            let ffprobe = ffprobe(path.as_str(), &self.ffmpeg_location).await;
             if let Err(e) = ffprobe {
                 warn!("skipping video {path} because ffprobe failed with error {e}");
                 return Ok(None);
@@ -115,6 +124,7 @@ impl VideoService {
             };
             info!("inserting new video {create_video:#?}");
             let video = self.database.videos.persist_video(&create_video).await?;
+            self.database.ffprobe.set_info(&video.id, &ffprobe).await?;
             Ok(Some(video))
         } else {
             Ok(None)
@@ -128,17 +138,21 @@ impl VideoService {
     ) -> Result<Vec<DbVideo>> {
         let start = Instant::now();
         let entries = self.gather_files(path.as_ref().to_owned(), recurse).await?;
-        let mut videos = vec![];
         debug!("found files {entries:?} (recurse = {recurse})");
+        let mut futures = vec![];
         for path in entries {
             if let Some(extension) = path.extension() {
                 if VIDEO_EXTENSIONS.contains(&extension) {
-                    if let Some(video) = self.add_local_video(&path).await? {
-                        videos.push(video);
-                    }
+                    futures.push(self.add_local_video(path));
                 }
             }
         }
+        let videos = parallelize(futures)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect_vec();
         let elapsed = start.elapsed();
         info!(
             "added {videos} videos in {elapsed:?}",
@@ -204,7 +218,9 @@ impl VideoService {
         };
         info!("persisting downloaded video {video:#?}");
 
-        self.database.videos.persist_video(&video).await
+        let video = self.database.videos.persist_video(&video).await?;
+        self.database.ffprobe.set_info(&video.id, &ffprobe).await?;
+        Ok(video)
     }
 
     async fn persist_stash_video(&self, scene_ids: Vec<i64>) -> Result<Vec<DbVideo>> {
@@ -216,10 +232,22 @@ impl VideoService {
             .iter()
             .flat_map(|s| StashMarker::from_scene(s.clone(), &stash_config.api_key))
             .collect();
+        let scene_urls = scenes
+            .iter()
+            .map(|s| self.stash_api.get_stream_url(s.id.parse().unwrap()))
+            .collect_vec();
+        let ffprobe_info = parallelize(
+            scene_urls
+                .into_iter()
+                .map(|url| ffprobe(url, &self.ffmpeg_location))
+                .collect_vec(),
+        )
+        .await;
 
         let create_videos: Vec<_> = scenes
             .into_iter()
-            .map(|scene| {
+            .zip(ffprobe_info)
+            .map(|(scene, ffprobe)| {
                 let title = scene
                     .title
                     .filter(|t| !t.is_empty())
@@ -229,9 +257,14 @@ impl VideoService {
                 let created_on = OffsetDateTime::parse(&scene.created_at, &Rfc3339)
                     .map(|time| time.unix_timestamp())
                     .ok();
+                let mut tags = scene.tags.iter().map(|t| t.name.as_str()).collect_vec();
+                tags.extend(scene.performers.iter().map(|p| p.name.as_str()));
+                let tags = tags.join(TAG_SEPARATOR);
+                let id = generate_id();
+                let ffprobe_info = ffprobe.ok();
 
-                CreateVideo {
-                    id: generate_id(),
+                let create_video = CreateVideo {
+                    id,
                     file_path: self.stash_api.get_stream_url(scene.id.parse().unwrap()),
                     interactive: scene.interactive,
                     source: VideoSource::Stash,
@@ -239,21 +272,21 @@ impl VideoService {
                     video_preview_image: Some(self.stash_api.get_screenshot_url(stash_id)),
                     stash_scene_id: Some(scene.id.parse().unwrap()),
                     title,
-                    tags: Some(
-                        scene
-                            .tags
-                            .iter()
-                            .map(|t| t.name.as_str())
-                            .join(TAG_SEPARATOR),
-                    ),
+                    tags: Some(tags),
                     created_on,
-                }
+                };
+
+                (create_video, ffprobe_info)
             })
             .collect();
 
         let mut videos = vec![];
-        for request in &create_videos {
-            let result = self.database.videos.persist_video(request).await?;
+        for (create_video, ffprobe) in &create_videos {
+            let id = create_video.id.clone();
+            let result = self.database.videos.persist_video(create_video).await?;
+            if let Some(ffprobe) = ffprobe {
+                self.database.ffprobe.set_info(&id, &ffprobe).await?;
+            }
             videos.push(result);
         }
 
@@ -316,7 +349,8 @@ impl VideoService {
                 .filter(|t| !t.is_empty() && video.video_title.as_deref() != Some(t));
             info!("setting video title to {new_title:?} (not changing if None)");
 
-            let new_tags: Vec<_> = scene.tags.iter().map(|t| t.name.clone()).collect();
+            let mut new_tags = scene.tags.iter().map(|t| t.name.clone()).collect_vec();
+            new_tags.extend(scene.performers.iter().map(|p| p.name.clone()));
             let new_tags = Some(new_tags).filter(|t| !t.is_empty());
 
             video.video_tags = new_tags.clone().map(|t| t.join(TAG_SEPARATOR));

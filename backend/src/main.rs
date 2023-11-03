@@ -30,31 +30,20 @@ pub type Result<T> = std::result::Result<T, Report>;
 // 100 MB
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
-fn setup_logger() {
-    use tracing_subscriber::prelude::*;
-    use tracing_subscriber::EnvFilter;
-
-    if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "info");
-    }
-    let file_appender = tracing_appender::rolling::daily("./logs", "clip-mash.log");
-
-    tracing_subscriber::fmt()
-        .with_writer(file_appender.and(std::io::stdout))
-        .with_ansi(true)
-        .with_env_filter(EnvFilter::from_default_env())
-        .compact()
-        .init();
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     use server::{handlers, static_files};
     use service::commands::ffmpeg;
     use service::migrations;
 
+    use crate::helpers::log;
+
     color_eyre::install()?;
-    setup_logger();
+    log::setup_logger();
+    if let Err(e) = log::cleanup_logs() {
+        warn!("failed to cleanup logs: {}", e);
+    }
+
     let version = env!("CARGO_PKG_VERSION");
     info!("starting clip-mash v{}", version);
 
@@ -121,6 +110,8 @@ async fn main() -> Result<()> {
         )
         // list all markers by video ID
         .route("/marker", get(handlers::library::list_markers))
+        // list marker titles and counts, for autocompletion
+        .route("/marker/title", get(handlers::library::list_marker_titles))
         // create new marker for video
         .route("/marker", post(handlers::library::create_new_marker))
         // update local marker
@@ -133,7 +124,8 @@ async fn main() -> Result<()> {
             get(handlers::library::get_marker_preview),
         )
         // split local marker
-        .route("/marker/:id/split", post(handlers::library::split_marker));
+        .route("/marker/:id/split", post(handlers::library::split_marker))
+        .route("/directory", get(handlers::files::list_file_entries));
 
     let project_routes = Router::new()
         .route("/clips", post(handlers::project::fetch_clips))

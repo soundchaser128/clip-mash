@@ -43,7 +43,7 @@ function Progress() {
       }
       setProgress(data)
     },
-    [navigate, sendNotification, videoId],
+    [navigate, videoId],
   )
 
   const openEventSource = useCallback(() => {
@@ -120,10 +120,10 @@ function Progress() {
               File name: <strong>{fileName}</strong>
             </p>
           </div>
-          <a onClick={onSubmit} className="btn btn-lg btn-success">
+          <button onClick={onSubmit} className="btn btn-lg btn-success">
             <HiRocketLaunch className="mr-2 w-6 h-6" />
             Create video
-          </a>
+          </button>
         </>
       )}
 

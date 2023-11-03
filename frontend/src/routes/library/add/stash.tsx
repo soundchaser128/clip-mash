@@ -41,7 +41,7 @@ const AddStashVideoPage: React.FC = () => {
     setAddingVideo(video.id)
     const body: AddVideosRequest = {
       type: "stash",
-      scene_ids: [parseInt(video.id)],
+      sceneIds: [parseInt(video.id)],
     }
 
     await addNewVideos(body)
@@ -53,7 +53,7 @@ const AddStashVideoPage: React.FC = () => {
     setAddingVideo(true)
     const body: AddVideosRequest = {
       type: "stash",
-      scene_ids: data.content
+      sceneIds: data.content
         .filter((video) => !video.existsInDatabase)
         .map((video) => parseInt(video.id)),
     }

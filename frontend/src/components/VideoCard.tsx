@@ -6,6 +6,7 @@ import {
   HiCalendar,
   HiCheck,
   HiClock,
+  HiPlus,
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
@@ -20,6 +21,7 @@ interface Props {
   onEditTitle?: (title: string) => void
   onImageClick?: (id: string) => void
   disabled?: boolean
+  onAddTag?: (video: ListVideoDto) => void
 }
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
@@ -39,6 +41,7 @@ const VideoCard: React.FC<Props> = ({
   onEditTitle,
   onImageClick,
   disabled,
+  onAddTag,
 }) => {
   const tags = video.video.tags?.filter(Boolean) ?? []
   const date = new Date(video.video.createdOn * 1000)
@@ -57,6 +60,7 @@ const VideoCard: React.FC<Props> = ({
           className={clsx(
             "aspect-[16/9] object-cover w-full",
             onImageClick && "cursor-pointer",
+            disabled && "grayscale",
           )}
           src={getPreview(video.video, stashConfig)}
           width={499}
@@ -64,7 +68,7 @@ const VideoCard: React.FC<Props> = ({
           onClick={() => onImageClick && onImageClick(video.video.id)}
         />
       </figure>
-      <div className="card-body">
+      <div className="card-body gap-0">
         <h2 className="card-title">
           {onEditTitle && (
             <EditableText
@@ -72,20 +76,36 @@ const VideoCard: React.FC<Props> = ({
               onSave={onEditTitle}
             />
           )}
-          {!onEditTitle && (video.video.title || video.video.fileName)}
+          {!onEditTitle && (
+            <span className="truncate">
+              {video.video.title || video.video.fileName}
+            </span>
+          )}
         </h2>
-        <ul className="flex flex-col gap-2 self-start">
-          {tags.length > 0 && (
-            <li>
-              <span className="inline-flex flex-wrap gap-y-1 gap-x-0.5 ">
+        <ul className="flex flex-col gap-2 self-start mb-2">
+          <li className="mb-2 flex items-center">
+            {tags.length > 0 && (
+              <span className="inline-flex flex-wrap gap-y-1 gap-x-0.5 -ml-2">
                 {tags.map((tag) => (
                   <span key={tag} className="badge">
                     {tag}
                   </span>
                 ))}
               </span>
-            </li>
-          )}
+            )}
+            {tags.length === 0 && (
+              <span className="text-gray-400">No tags</span>
+            )}
+            {onAddTag && (
+              <button
+                onClick={() => onAddTag(video)}
+                type="button"
+                className="btn btn-square btn-success btn-xs ml-2"
+              >
+                <HiPlus />
+              </button>
+            )}
+          </li>
           <li>
             <HiAdjustmentsVertical className="inline mr-2" />
             Interactive:{" "}

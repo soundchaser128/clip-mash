@@ -1,7 +1,7 @@
-use sqlx::{FromRow, QueryBuilder, SqlitePool};
+use sqlx::{FromRow, QueryBuilder, SqliteExecutor, SqlitePool};
 use tracing::{debug, info};
 
-use super::{DbMarker, DbMarkerWithVideo};
+use super::{DbMarker, DbMarkerWithVideo, MarkerCount};
 use crate::data::database::unix_timestamp_now;
 use crate::server::types::{CreateMarker, UpdateMarker};
 use crate::Result;
@@ -49,7 +49,11 @@ impl MarkersDatabase {
         .map_err(From::from)
     }
 
-    pub async fn create_new_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
+    async fn create_new_marker_with_executor<'a, E: SqliteExecutor<'a>>(
+        &self,
+        marker: CreateMarker,
+        executor: E,
+    ) -> Result<DbMarker> {
         let created_on = marker.created_on.unwrap_or_else(|| unix_timestamp_now());
         let inserted_value = sqlx::query!(
             "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video, marker_preview_image, marker_created_on, marker_stash_id)
@@ -66,7 +70,7 @@ impl MarkersDatabase {
                 marker.marker_stash_id,
 
         )
-        .fetch_one(&self.pool)
+        .fetch_one(executor)
         .await?;
 
         let marker = DbMarker {
@@ -84,6 +88,11 @@ impl MarkersDatabase {
         info!("newly updated or inserted marker: {marker:?}");
 
         Ok(marker)
+    }
+
+    pub async fn create_new_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
+        self.create_new_marker_with_executor(marker, &self.pool)
+            .await
     }
 
     pub async fn update_marker(&self, id: i64, update: UpdateMarker) -> Result<DbMarker> {
@@ -173,20 +182,33 @@ impl MarkersDatabase {
 
         let rowid = marker.rowid.expect("marker must have rowid");
 
-        futures::try_join!(
-            self.create_new_marker(new_marker_1),
-            self.create_new_marker(new_marker_2),
-            self.delete_marker(rowid),
-        )?;
+        let mut tx = self.pool.begin().await?;
+
+        self.create_new_marker_with_executor(new_marker_1, &mut *tx)
+            .await?;
+        self.create_new_marker_with_executor(new_marker_2, &mut *tx)
+            .await?;
+        self.delete_marker_with_executor(rowid, &mut *tx).await?;
+
+        tx.commit().await?;
 
         Ok(marker.video_id)
     }
 
-    pub async fn delete_marker(&self, id: i64) -> Result<()> {
+    async fn delete_marker_with_executor<'a, E: SqliteExecutor<'a>>(
+        &self,
+        id: i64,
+        executor: E,
+    ) -> Result<()> {
+        info!("deleting marker with id {}", id);
         sqlx::query!("DELETE FROM markers WHERE rowid = $1", id)
-            .execute(&self.pool)
+            .execute(executor)
             .await?;
         Ok(())
+    }
+
+    pub async fn delete_marker(&self, id: i64) -> Result<()> {
+        self.delete_marker_with_executor(id, &self.pool).await
     }
 
     #[allow(unused)]
@@ -210,6 +232,7 @@ impl MarkersDatabase {
     pub async fn list_markers(
         &self,
         video_ids: Option<&[String]>,
+        sort: Option<&str>,
     ) -> Result<Vec<DbMarkerWithVideo>> {
         info!("fetching markers with video ids {video_ids:?}");
         let mut query_builder = QueryBuilder::new(
@@ -228,7 +251,14 @@ impl MarkersDatabase {
             }
             list.push_unseparated(") ");
         }
-        query_builder.push("ORDER BY m.video_id ASC, m.index_within_video ASC");
+        query_builder.push("ORDER BY ");
+        let order = match sort {
+            Some("duration") => "(m.end_time - m.start_time DESC)",
+            Some("title") => "m.title ASC",
+            Some("created") => "m.marker_created_on DESC",
+            _ => "m.video_id ASC, m.index_within_video ASC",
+        };
+        query_builder.push(order);
         debug!("sql: '{}'", query_builder.sql());
         let query = query_builder.build();
         let records = query.fetch_all(&self.pool).await?;
@@ -263,5 +293,30 @@ impl MarkersDatabase {
         .fetch_all(&self.pool)
         .await?;
         Ok(markers)
+    }
+
+    pub async fn get_marker_titles(
+        &self,
+        count: i64,
+        prefix: Option<&str>,
+    ) -> Result<Vec<MarkerCount>> {
+        let prefix = prefix
+            .map(|s| format!("{}%", s))
+            .unwrap_or_else(|| "%".to_string());
+        let results = sqlx::query_as!(
+            MarkerCount,
+            "SELECT title, count(*) AS count
+            FROM markers
+            WHERE title != 'Untitled' AND title LIKE $1
+            GROUP BY title
+            ORDER BY count DESC
+            LIMIT $2",
+            prefix,
+            count
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(results)
     }
 }

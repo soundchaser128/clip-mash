@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM ffprobe_info WHERE video_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "7cdcf0724fa5c58e3f53abc3b0196c7ebb462841c75042df9ce274619bd4c105"
+}

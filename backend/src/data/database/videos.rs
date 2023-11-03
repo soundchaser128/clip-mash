@@ -32,6 +32,9 @@ impl VideosDatabase {
     }
 
     pub async fn delete_video(&self, id: &str) -> Result<()> {
+        sqlx::query!("DELETE FROM ffprobe_info WHERE video_id = $1", id)
+            .execute(&self.pool)
+            .await?;
         sqlx::query!("DELETE FROM markers WHERE video_id = $1", id)
             .execute(&self.pool)
             .await?;
@@ -183,12 +186,7 @@ impl VideosDatabase {
             let path = Utf8Path::new(&video.file_path);
             if !path.exists() {
                 info!("video {} does not exist, deleting", video.id);
-                sqlx::query!("DELETE FROM markers WHERE video_id = $1", video.id)
-                    .execute(&self.pool)
-                    .await?;
-                sqlx::query!("DELETE FROM videos WHERE id = $1", video.id)
-                    .execute(&self.pool)
-                    .await?;
+                self.delete_video(&video.id).await?;
                 count += 1;
             }
         }
@@ -234,6 +232,7 @@ impl VideosDatabase {
     async fn fetch_count(&self, query: &VideoSearchQuery) -> Result<i64> {
         let mut query_builder = QueryBuilder::new("SELECT COUNT(*) FROM videos v ");
         let mut first = true;
+
         if let Some(query) = &query.query {
             query_builder
                 .push("WHERE v.rowid IN (SELECT rowid FROM videos_fts WHERE videos_fts MATCH ");
@@ -250,20 +249,35 @@ impl VideosDatabase {
             }
             query_builder.push("v.source = ");
             query_builder.push_bind(source.to_string());
+            first = false;
+        }
+
+        if let Some(interactive) = query.is_interactive {
+            if first {
+                query_builder.push("WHERE ");
+            } else {
+                query_builder.push("AND ");
+            }
+            query_builder.push("v.interactive = ");
+            query_builder.push_bind(interactive);
+            first = false;
         }
 
         if let Some(has_markers) = query.has_markers {
-            if has_markers {
-                if first {
-                    query_builder.push("WHERE ");
-                } else {
-                    query_builder.push("AND ");
-                }
-
-                query_builder.push("v.id IN (SELECT DISTINCT video_id FROM markers) ");
+            if first {
+                query_builder.push("WHERE ");
+            } else {
+                query_builder.push(" AND ");
             }
-        }
 
+            if has_markers {
+                query_builder.push("v.id IN (SELECT DISTINCT video_id FROM markers) ");
+            } else {
+                query_builder.push("v.id NOT IN (SELECT DISTINCT video_id FROM markers) ");
+            }
+            first = false;
+        }
+        debug!("sql for count: '{}'", query_builder.sql());
         let query = query_builder.build();
         let count = query.fetch_one(&self.pool).await?.get::<i64, _>(0);
         Ok(count)
@@ -294,13 +308,15 @@ impl VideosDatabase {
             query,
             source,
             has_markers,
+            is_interactive,
         } = query_object;
-        info!("count: {} for query {:?}", count, query);
+        debug!("count: {} for query {:?}", count, query);
         let limit = params.limit();
         let offset = params.offset();
         let order_by = match params.sort.as_deref() {
             Some("title") => "v.video_title COLLATE NOCASE ASC",
             Some("created") => "v.video_created_on DESC",
+            Some("duration") => "v.duration DESC",
             _ => "marker_count DESC, v.video_title COLLATE NOCASE ASC",
         };
 
@@ -328,12 +344,26 @@ impl VideosDatabase {
             }
             query_builder.push("v.source = ");
             query_builder.push_bind(source.to_string());
+            first = false;
+        }
+
+        if let Some(interactive) = is_interactive {
+            if first {
+                query_builder.push("WHERE ");
+            } else {
+                query_builder.push("AND ");
+            }
+            query_builder.push("v.interactive = ");
+            query_builder.push_bind(interactive);
+            first = false;
         }
 
         query_builder.push(" GROUP BY v.id ");
         if let Some(has_markers) = has_markers {
             if has_markers {
                 query_builder.push(" HAVING marker_count > 0 ");
+            } else {
+                query_builder.push(" HAVING marker_count = 0 ");
             }
         }
 

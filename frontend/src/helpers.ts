@@ -3,6 +3,7 @@ import {SelectedMarker} from "./api"
 import {FormState} from "./types/form-state"
 import {scaleSequential} from "d3-scale"
 import {interpolatePlasma} from "d3-scale-chromatic"
+import React from "react"
 
 export function getFormState(): FormState | null {
   const json = sessionStorage.getItem("form-state")
@@ -37,10 +38,23 @@ export function getSegmentTextColor(color: string): string {
   }
 }
 
-type DurationFormat = "long" | "short"
+export function getSegmentStyle(
+  index: number,
+  count: number,
+): React.CSSProperties {
+  const color = getSegmentColor(index, count)
+  const textColor = getSegmentTextColor(color)
 
-function padNumber(n: number): string {
-  return n.toString().padStart(2, "0")
+  return {
+    backgroundColor: color,
+    color: textColor,
+  }
+}
+
+type DurationFormat = "long" | "short" | "short-with-ms"
+
+function padNumber(n: number, padding = 2): string {
+  return n.toString().padStart(padding, "0")
 }
 
 export function formatSeconds(
@@ -57,14 +71,17 @@ export function formatSeconds(
   if (duration === 0) {
     if (durationFormat === "long") {
       return "0 seconds"
-    } else {
+    } else if (durationFormat === "short") {
       return "00:00"
+    } else {
+      return "00:00.0000"
     }
   }
 
   const hours = Math.floor(duration / 3600)
   const minutes = Math.floor((duration % 3600) / 60)
   const seconds = Math.floor(duration % 60)
+  const milliseconds = Math.floor((duration % 1) * 1000)
 
   if (durationFormat === "long") {
     return formatDuration(
@@ -76,25 +93,36 @@ export function formatSeconds(
       {format: ["hours", "minutes", "seconds"]},
     )
   } else {
+    let result = `${padNumber(minutes)}:${padNumber(seconds)}`
     if (hours > 0) {
-      return `${padNumber(hours)}:${padNumber(minutes)}:${padNumber(seconds)}`
-    } else {
-      return `${padNumber(minutes)}:${padNumber(seconds)}`
+      result = `${padNumber(hours)}:${result}`
     }
+
+    if (durationFormat === "short-with-ms") {
+      result = `${result}.${padNumber(milliseconds, 3)}`
+    }
+
+    return result
   }
 }
 
+const durationRegex =
+  /^(?<hours>(\d+):)?(?<minutes>\d+):(?<seconds>\d+)\.?(?<millis>\d*)$/
+
 export function parseTimestamp(input: string | number): number {
   if (typeof input === "string") {
-    let seconds: number
-    if (input.match(/^\d+:\d+:\d+$/)) {
-      const [hh, mm, ss] = input.split(":").map((x) => parseInt(x, 10))
-      seconds = ss + mm * 60 + hh * 60 * 60
+    const match = input.match(durationRegex)
+    if (match?.groups) {
+      const {hours, minutes, seconds, millis} = match.groups
+      const hoursInt = parseInt(hours || "0", 10)
+      const minutesInt = parseInt(minutes, 10)
+      const secondsInt = parseInt(seconds, 10)
+      const millisInt = parseInt(millis || "0", 10)
+
+      return hoursInt * 3600 + minutesInt * 60 + secondsInt + millisInt / 1000
     } else {
-      const [mm, ss] = input.split(":").map((x) => parseInt(x, 10))
-      seconds = ss + mm * 60
+      return 0
     }
-    return seconds
   } else {
     return input
   }
@@ -139,6 +167,16 @@ export function clamp(value: number, lower: number, upper: number): number {
 }
 
 export const dateTimeFormat = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "long",
+  dateStyle: "medium",
   timeStyle: "short",
 })
+
+// format number of bytes as human readable string
+export function formatBytes(bytes: number): string {
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"]
+  if (bytes === 0) {
+    return "0 Bytes"
+  }
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`
+}

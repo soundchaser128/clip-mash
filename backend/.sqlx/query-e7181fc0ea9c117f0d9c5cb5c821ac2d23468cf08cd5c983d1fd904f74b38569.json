@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO ffprobe_info (video_id, info) \n             VALUES ($1, $2)\n             ON CONFLICT (video_id) DO UPDATE SET info = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "e7181fc0ea9c117f0d9c5cb5c821ac2d23468cf08cd5c983d1fd904f74b38569"
+}

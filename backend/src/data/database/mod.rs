@@ -9,6 +9,7 @@ use sqlx::{FromRow, SqlitePool};
 use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
 
+use self::ffprobe::FfProbeInfoDatabase;
 use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
 use self::progress::ProgressDatabase;
@@ -18,6 +19,7 @@ use crate::server::types::{Beats, Progress, VideoLike};
 use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
 
+mod ffprobe;
 mod markers;
 mod music;
 mod progress;
@@ -111,6 +113,7 @@ pub struct VideoSearchQuery {
     pub query: Option<String>,
     pub source: Option<VideoSource>,
     pub has_markers: Option<bool>,
+    pub is_interactive: Option<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -215,12 +218,19 @@ pub struct Database {
     pub markers: MarkersDatabase,
     pub progress: ProgressDatabase,
     pub music: MusicDatabase,
+    pub ffprobe: FfProbeInfoDatabase,
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
 pub struct VideoUpdate {
     pub title: Option<String>,
     pub tags: Option<Vec<String>>,
+}
+
+#[derive(Serialize, ToSchema, Debug)]
+pub struct MarkerCount {
+    pub title: String,
+    pub count: i64,
 }
 
 impl Database {
@@ -237,6 +247,7 @@ impl Database {
             markers: MarkersDatabase::new(pool.clone()),
             progress: ProgressDatabase::new(pool.clone()),
             music: MusicDatabase::new(pool.clone()),
+            ffprobe: FfProbeInfoDatabase::new(pool.clone()),
             videos: VideosDatabase::new(pool),
         })
     }
@@ -247,6 +258,7 @@ impl Database {
             markers: MarkersDatabase::new(pool.clone()),
             progress: ProgressDatabase::new(pool.clone()),
             music: MusicDatabase::new(pool.clone()),
+            ffprobe: FfProbeInfoDatabase::new(pool.clone()),
             videos: VideosDatabase::new(pool),
         }
     }
@@ -588,12 +600,12 @@ mod test {
         }
         let result = database
             .markers
-            .list_markers(Some(&[video.id]))
+            .list_markers(Some(&[video.id]), None)
             .await
             .unwrap();
         assert_eq!(5, result.len());
 
-        let result = database.markers.list_markers(None).await.unwrap();
+        let result = database.markers.list_markers(None, None).await.unwrap();
         assert_eq!(5, result.len());
     }
 
@@ -777,5 +789,37 @@ mod test {
         database.videos.delete_video(&video.id).await.unwrap();
         let video = database.videos.get_video(&video.id).await.unwrap();
         assert!(video.is_none());
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn list_videos_has_markers(pool: SqlitePool) {
+        let database = Database::with_pool(pool);
+        let video1 = persist_video(&database).await.unwrap();
+        let video2 = persist_video(&database).await.unwrap();
+        let video3 = persist_video(&database).await.unwrap();
+        persist_marker(&database, &video1.id, 0, 0.0, 15.0, false)
+            .await
+            .unwrap();
+        persist_marker(&database, &video2.id, 0, 0.0, 15.0, false)
+            .await
+            .unwrap();
+        let params = PageParameters::new(0, 10);
+        let (videos, _) = database
+            .videos
+            .list_videos(
+                VideoSearchQuery {
+                    has_markers: Some(true),
+                    ..Default::default()
+                },
+                &params,
+            )
+            .await
+            .unwrap();
+        assert_eq!(videos.len(), 2);
+        let ids: Vec<&str> = videos.iter().map(|v| v.video.id.as_str()).collect();
+        assert!(ids.contains(&video1.id.as_str()));
+        assert!(ids.contains(&video2.id.as_str()));
+        assert!(!ids.contains(&video3.id.as_str()));
     }
 }

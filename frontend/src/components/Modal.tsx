@@ -1,29 +1,39 @@
+import useHotkeys from "@/hooks/useHotkeys"
 import clsx from "clsx"
-import {useHotkeys} from "react-hotkeys-hook"
+import {useEffect} from "react"
 import {HiXMark} from "react-icons/hi2"
 
-interface Props {
+export interface ModalProps {
   isOpen: boolean
   onClose?: () => void
   children?: React.ReactNode
   className?: string
-  size?: "full-screen" | "fluid"
+  size?: "md" | "lg" | "fluid"
   position?: "top" | "off-center"
 }
 
-const Modal: React.FC<Props> = ({
+const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   children,
   className,
-  size = "full-screen",
+  size = "lg",
   position = "off-center",
 }) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    }
+    return () => {
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen])
+
   function handleClose() {
     onClose && onClose()
   }
 
-  useHotkeys("esc", handleClose, [isOpen])
+  useHotkeys("esc", handleClose)
 
   if (!isOpen) {
     return null
@@ -37,13 +47,14 @@ const Modal: React.FC<Props> = ({
         !isOpen && "hidden",
       )}
     >
-      <div className="fixed inset-0 bg-black opacity-50"></div>
+      <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
       <div
         className={clsx(
           "fixed left-1/2 transform -translate-x-1/2",
-          size === "full-screen" && "w-[95vw] top-4 h-[90vh]",
-          size !== "full-screen" && position === "off-center" && "top-32",
-          size !== "full-screen" && position === "top" && "top-4",
+          size === "lg" && "w-[95vw] top-4 h-[90vh]",
+          size !== "lg" && position === "off-center" && "top-32",
+          size !== "lg" && position === "top" && "top-4",
+          size === "md" && "w-[50vw]",
         )}
       >
         <div

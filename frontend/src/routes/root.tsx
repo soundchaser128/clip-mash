@@ -1,11 +1,16 @@
 import {useStateMachine} from "little-state-machine"
 import React from "react"
-import {Outlet, useNavigate, useNavigation} from "react-router-dom"
-import {HiXMark} from "react-icons/hi2"
+import {
+  Outlet,
+  useNavigate,
+  useNavigation,
+  useRouteLoaderData,
+} from "react-router-dom"
+import {HiOutlineDocumentArrowDown, HiXMark} from "react-icons/hi2"
 import {resetForm} from "./actions"
 import Layout from "../components/Layout"
 import Steps from "../components/Steps"
-import {FormState, FormStage} from "../types/form-state"
+import {FormState, FormStage, SerializedFormState} from "../types/form-state"
 
 const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
   return (
@@ -44,7 +49,7 @@ const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
         },
         {
           stage: FormStage.CreateVideo,
-          link: "/progress",
+          link: "/generate",
           content: "Create video",
         },
       ]}
@@ -52,8 +57,23 @@ const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
   )
 }
 
+function saveFileToDisk<T>(fileName: string, data: T) {
+  const json = JSON.stringify(data)
+  const blob = new Blob([json], {type: "application/json"})
+  const href = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = href
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(href)
+}
+
 const AssistantLayout: React.FC = () => {
   const {actions, state} = useStateMachine({resetForm})
+  const version = useRouteLoaderData("root") as string
+
   const onReset = () => {
     if (
       confirm(
@@ -64,6 +84,18 @@ const AssistantLayout: React.FC = () => {
       navigate("/")
     }
   }
+
+  const onSaveToDisk = async () => {
+    const projectName = `${state.data.fileName || "Compilation"} - ${
+      state.data.videoId
+    }.json`
+    const data: SerializedFormState = {
+      ...state.data,
+      clipMashVersion: version,
+    }
+    saveFileToDisk(projectName, data)
+  }
+
   const navigate = useNavigate()
   const navigation = useNavigation()
   const isLoading = navigation.state === "loading"
@@ -78,6 +110,10 @@ const AssistantLayout: React.FC = () => {
           <button onClick={onReset} className="btn btn-sm btn-error">
             <HiXMark className="w-5 h-5 mr-2" />
             Reset
+          </button>
+          <button onClick={onSaveToDisk} className="btn btn-sm btn-success">
+            <HiOutlineDocumentArrowDown className="mr-2 w-6 h-6" />
+            Save project
           </button>
         </div>
 

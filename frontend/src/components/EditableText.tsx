@@ -1,3 +1,4 @@
+import clsx from "clsx"
 import React, {useState} from "react"
 import {HiCheck, HiPencil} from "react-icons/hi2"
 
@@ -49,12 +50,13 @@ const EditableText: React.FC<Props> = ({
   } else {
     return (
       <>
-        <span className={className}>{value}</span>{" "}
-        <HiPencil
+        <span className={clsx("truncate", className)}>{value}</span>
+        <button
           onClick={() => setMode("edit")}
-          title="Edit"
-          className="w-4 h-4 cursor-pointer inline"
-        />
+          className="btn btn-sm btn-square ml-1"
+        >
+          <HiPencil title="Edit" />
+        </button>
       </>
     )
   }

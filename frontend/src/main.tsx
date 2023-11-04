@@ -55,6 +55,8 @@ import DownloadMusic from "./routes/music/DownloadMusic"
 import UploadMusic from "./routes/music/UploadMusic"
 import ReorderSongs from "./routes/music/ReorderSongs"
 import {ToastProvider} from "./hooks/useToast"
+import useSessionStorage from "./hooks/useSessionStorage"
+import {HiCheck, HiXMark} from "react-icons/hi2"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -160,7 +162,7 @@ const ErrorBoundary = () => {
 const RootElement = () => {
   const [updateDeclined, setUpdateDeclined] = useSessionStorage(
     "updateDeclined",
-    false
+    false,
   )
   const navigate = useNavigate()
   const [updating, setUpdating] = useState(false)

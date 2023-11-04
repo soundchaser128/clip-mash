@@ -1,3 +1,5 @@
+use reqwest::Client;
+
 use crate::data::database::Database;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::directories::Directories;

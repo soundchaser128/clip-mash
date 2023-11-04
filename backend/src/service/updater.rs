@@ -7,12 +7,13 @@ use std::{fs, process};
 
 use axum::body::Bytes;
 use camino::Utf8Path;
-use clip_mash_types::AppVersion;
 use color_eyre::eyre::bail;
 use reqwest::Client;
 use semver::Version;
+use serde::Serialize;
 use serde_json::Value;
 use tracing::info;
+use utoipa::ToSchema;
 
 use crate::data::database::Database;
 use crate::server::handlers::AppState;
@@ -77,6 +78,13 @@ fn unzip_file(bytes: Bytes, destination: impl AsRef<Utf8Path>) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AppVersion {
+    pub new_version: String,
+    pub current_version: String,
+    pub needs_update: bool,
 }
 
 pub struct Updater {

@@ -10,8 +10,8 @@ pub mod options_converter;
 pub mod preview_image;
 pub mod scene_detection;
 pub mod stash_config;
-pub mod updater;
 pub mod streams;
+pub mod updater;
 pub mod video;
 
 #[cfg(test)]

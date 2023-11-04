@@ -7,8 +7,9 @@ use super::handlers::project::{CreateFunscriptBody, ProjectCreateResponse};
 use super::handlers::version::Version;
 use super::types::*;
 use crate::data::database::{MarkerCount, VideoSource, VideoUpdate};
-use crate::server::handlers::{files, library, music, progress, project, stash, version};
+use crate::server::handlers::{files, library, music, progress, project, stash, version, updater};
 use crate::service::stash_config::StashConfig;
+use crate::service::updater::AppVersion;
 use crate::service::video::AddVideosRequest;
 
 #[derive(OpenApi)]
@@ -47,6 +48,7 @@ use crate::service::video::AddVideosRequest;
         music::upload_music,
         music::download_music,
         version::get_version,
+        updater::check_for_updates,
     ),
     components(
         schemas(
@@ -103,6 +105,7 @@ use crate::service::video::AddVideosRequest;
             ListFileEntriesResponse,
             MarkerTitle,
             MarkerGroup,
+            AppVersion,
         )
     ),
     tags(

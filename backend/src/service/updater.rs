@@ -81,6 +81,7 @@ fn unzip_file(bytes: Bytes, destination: impl AsRef<Utf8Path>) -> Result<()> {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct AppVersion {
     pub new_version: String,
     pub current_version: String,
@@ -103,25 +104,19 @@ impl From<Arc<AppState>> for Updater {
 
 impl Updater {
     async fn fetch_release(&self) -> Result<Value> {
-        if let Some(release) = self.database.latest_release().await? {
-            info!("found cached release JSON");
-            Ok(release)
-        } else {
-            let url = format!(
-                "https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO_NAME}/releases/latest"
-            );
-            info!("sending request to {url}");
-            let response = self
-                .client
-                .get(&url)
-                .header("User-Agent", "clip-mash")
-                .send()
-                .await?
-                .error_for_status()?;
-            let release = response.json::<Value>().await?;
-            self.database.persist_release(&release).await?;
-            Ok(release)
-        }
+        let url = format!(
+            "https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO_NAME}/releases/latest"
+        );
+        info!("sending request to {url}");
+        let response = self
+            .client
+            .get(&url)
+            .header("User-Agent", "clip-mash")
+            .send()
+            .await?
+            .error_for_status()?;
+        let release = response.json::<Value>().await?;
+        Ok(release)
     }
 
     pub async fn check_for_updates(&self) -> Result<AppVersion> {

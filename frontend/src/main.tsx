@@ -57,6 +57,7 @@ import ReorderSongs from "./routes/music/ReorderSongs"
 import {ToastProvider} from "./hooks/useToast"
 import useSessionStorage from "./hooks/useSessionStorage"
 import {HiCheck, HiXMark} from "react-icons/hi2"
+import {AppVersion} from "./api"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})

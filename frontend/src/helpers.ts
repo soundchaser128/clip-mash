@@ -1,8 +1,9 @@
-import {format, formatDuration, getTime, parse} from "date-fns"
-import {SelectedMarker} from "./types.generated"
-import {FormState} from "./types/types"
+import {formatDuration} from "date-fns"
+import {SelectedMarker} from "./api"
+import {FormState} from "./types/form-state"
 import {scaleSequential} from "d3-scale"
 import {interpolatePlasma} from "d3-scale-chromatic"
+import React from "react"
 
 export function getFormState(): FormState | null {
   const json = sessionStorage.getItem("form-state")
@@ -22,11 +23,43 @@ export function getSegmentColor(index: number, count: number): string {
   return colorScale(index)
 }
 
-type DurationFormat = "long" | "short"
+export function getSegmentTextColor(color: string): string {
+  const [r, g, b] = color
+    .slice(1)
+    .match(/.{1,2}/g)!
+    .map((x) => parseInt(x, 16))
+
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+  if (luma < 140) {
+    return "#ffffff"
+  } else {
+    return "#000000"
+  }
+}
+
+export function getSegmentStyle(
+  index: number,
+  count: number,
+): React.CSSProperties {
+  const color = getSegmentColor(index, count)
+  const textColor = getSegmentTextColor(color)
+
+  return {
+    backgroundColor: color,
+    color: textColor,
+  }
+}
+
+type DurationFormat = "long" | "short" | "short-with-ms"
+
+function padNumber(n: number, padding = 2): string {
+  return n.toString().padStart(padding, "0")
+}
 
 export function formatSeconds(
-  input: number | [number, number] | undefined,
-  durationFormat: DurationFormat = "long"
+  input: number | [number, number] | number[] | undefined,
+  durationFormat: DurationFormat = "long",
 ): string {
   let duration = 0
   if (typeof input === "number") {
@@ -38,31 +71,58 @@ export function formatSeconds(
   if (duration === 0) {
     if (durationFormat === "long") {
       return "0 seconds"
-    } else {
+    } else if (durationFormat === "short") {
       return "00:00"
+    } else {
+      return "00:00.0000"
     }
   }
 
-  const date = new Date(duration * 1000)
+  const hours = Math.floor(duration / 3600)
+  const minutes = Math.floor((duration % 3600) / 60)
+  const seconds = Math.floor(duration % 60)
+  const milliseconds = Math.floor((duration % 1) * 1000)
+
   if (durationFormat === "long") {
     return formatDuration(
       {
-        hours: date.getUTCHours(),
-        minutes: date.getUTCMinutes(),
-        seconds: date.getUTCSeconds(),
+        hours,
+        minutes,
+        seconds,
       },
-      {format: ["hours", "minutes", "seconds"]}
+      {format: ["hours", "minutes", "seconds"]},
     )
   } else {
-    return format(duration * 1000, "mm:ss")
+    let result = `${padNumber(minutes)}:${padNumber(seconds)}`
+    if (hours > 0) {
+      result = `${padNumber(hours)}:${result}`
+    }
+
+    if (durationFormat === "short-with-ms") {
+      result = `${result}.${padNumber(milliseconds, 3)}`
+    }
+
+    return result
   }
 }
 
+const durationRegex =
+  /^(?<hours>(\d+):)?(?<minutes>\d+):(?<seconds>\d+)\.?(?<millis>\d*)$/
+
 export function parseTimestamp(input: string | number): number {
   if (typeof input === "string") {
-    const date = parse(input, "mm:ss", 0)
-    const millis = getTime(date)
-    return millis / 1000.0
+    const match = input.match(durationRegex)
+    if (match?.groups) {
+      const {hours, minutes, seconds, millis} = match.groups
+      const hoursInt = parseInt(hours || "0", 10)
+      const minutesInt = parseInt(minutes, 10)
+      const secondsInt = parseInt(seconds, 10)
+      const millisInt = parseInt(millis || "0", 10)
+
+      return hoursInt * 3600 + minutesInt * 60 + secondsInt + millisInt / 1000
+    } else {
+      return 0
+    }
   } else {
     return input
   }
@@ -82,7 +142,41 @@ export function sumDurations(markers?: HasDuration[]): number {
       .reduce(
         (sum, {selectedRange: [start, end], loops}) =>
           sum + (end - start) * loops,
-        0
+        0,
       )
   }
+}
+
+export function pluralize(
+  word: string,
+  count: number | undefined | null,
+): string {
+  return count === 1 ? word : `${word}s`
+}
+
+export function isBetween(
+  value: number,
+  lower: number,
+  upper: number,
+): boolean {
+  return value >= lower && value <= upper
+}
+
+export function clamp(value: number, lower: number, upper: number): number {
+  return Math.min(Math.max(value, lower), upper)
+}
+
+export const dateTimeFormat = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeStyle: "short",
+})
+
+// format number of bytes as human readable string
+export function formatBytes(bytes: number): string {
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"]
+  if (bytes === 0) {
+    return "0 Bytes"
+  }
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`
 }

@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 use color_eyre::eyre::bail;
 use graphql_client::{GraphQLQuery, Response};
 use ordered_float::OrderedFloat;
@@ -5,46 +7,20 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
-use self::find_markers_query::{
-    CriterionModifier, FindFilterType, FindMarkersQueryFindSceneMarkersSceneMarkers,
-    FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneMarkers,
-    FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams, HierarchicalMultiCriterionInput,
-    MultiCriterionInput, SceneMarkerFilterType,
-};
-use self::find_performers_query::FindPerformersQueryFindPerformersPerformers;
+use self::create_marker::SceneMarkerCreateInput;
+use self::create_tag::TagCreateInput;
 use self::find_scenes_query::{
     FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
     FindScenesQueryFindScenesScenesSceneStreams,
 };
-use self::find_tags_query::FindTagsQueryFindTagsTags;
+use super::database::{unix_timestamp_now, DbMarker};
+use crate::server::types::PageParameters;
 use crate::service::funscript::FunScript;
-use crate::service::stash_config::Config;
+use crate::service::stash_config::StashConfig;
 use crate::util::add_api_key;
 use crate::Result;
 
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "graphql/schema.json",
-    query_path = "graphql/find_tags.graphql",
-    response_derives = "Debug"
-)]
-pub struct FindTagsQuery;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "graphql/schema.json",
-    query_path = "graphql/find_markers.graphql",
-    response_derives = "Debug, Clone"
-)]
-pub struct FindMarkersQuery;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "graphql/schema.json",
-    query_path = "graphql/find_performers.graphql",
-    response_derives = "Debug"
-)]
-pub struct FindPerformersQuery;
+type Time = String;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -61,6 +37,30 @@ pub struct FindScenesQuery;
     response_derives = "Debug"
 )]
 struct HealthCheckQuery;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/create_marker.graphql",
+    response_derives = "Debug"
+)]
+struct CreateMarker;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/create_tag.graphql",
+    response_derives = "Debug"
+)]
+struct CreateTag;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "graphql/schema.json",
+    query_path = "graphql/get_tag.graphql",
+    response_derives = "Debug"
+)]
+struct GetTag;
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -85,26 +85,11 @@ impl From<FindScenesQueryFindScenesScenesSceneStreams> for SceneStream {
     }
 }
 
-impl From<FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams> for SceneStream {
-    fn from(stream: FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneStreams) -> Self {
-        SceneStream {
-            url: stream.url,
-            label: stream.label,
-        }
-    }
-}
-
-trait MarkerInfo {
+trait HasStart {
     fn start(&self) -> f64;
 }
 
-impl MarkerInfo for &FindScenesQueryFindScenesScenesSceneMarkers {
-    fn start(&self) -> f64 {
-        self.seconds
-    }
-}
-
-impl MarkerInfo for &FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneMarkers {
+impl HasStart for &FindScenesQueryFindScenesScenesSceneMarkers {
     fn start(&self) -> f64 {
         self.seconds
     }
@@ -112,13 +97,19 @@ impl MarkerInfo for &FindMarkersQueryFindSceneMarkersSceneMarkersSceneSceneMarke
 
 fn compute_end<M>(start: f64, markers: impl IntoIterator<Item = M>, duration: f64) -> f64
 where
-    M: MarkerInfo,
+    M: HasStart,
 {
     markers
         .into_iter()
         .find(|m| m.start() > start)
         .map(|m| m.start())
         .unwrap_or(duration)
+}
+
+pub trait MarkerLike {
+    fn start(&self) -> f64;
+
+    fn end(&self) -> f64;
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -137,10 +128,21 @@ pub struct StashMarker {
     pub screenshot_url: String,
     pub stream_url: String,
     pub index_within_video: usize,
+    pub created_on: i64,
+}
+
+impl MarkerLike for StashMarker {
+    fn start(&self) -> f64 {
+        self.start
+    }
+
+    fn end(&self) -> f64 {
+        self.end
+    }
 }
 
 impl StashMarker {
-    fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Self> {
+    pub fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Self> {
         let duration = scene
             .files
             .iter()
@@ -179,44 +181,13 @@ impl StashMarker {
                 screenshot_url: add_api_key(&m.screenshot, api_key),
                 stream_url: add_api_key(&m.stream, api_key),
                 index_within_video: idx,
+                created_on: unix_timestamp_now(),
             })
             .collect()
     }
-
-    fn from_marker(m: FindMarkersQueryFindSceneMarkersSceneMarkers, api_key: &str) -> Self {
-        let duration = m
-            .scene
-            .files
-            .iter()
-            .max_by_key(|f| OrderedFloat(f.duration))
-            .map(|f| f.duration)
-            .unwrap_or_default();
-        let index = m
-            .scene
-            .scene_markers
-            .iter()
-            .position(|n| m.id == n.id)
-            .expect("marker must exist within its own scene");
-
-        StashMarker {
-            id: m.id,
-            primary_tag: m.primary_tag.name,
-            scene_id: m.scene.id,
-            streams: m.scene.scene_streams.into_iter().map(From::from).collect(),
-            start: m.seconds,
-            end: compute_end(m.seconds, &m.scene.scene_markers, duration),
-            file_name: m.scene.files.into_iter().map(|f| f.basename).next(),
-            performers: m.scene.performers.into_iter().map(|p| p.name).collect(),
-            scene_interactive: m.scene.interactive,
-            scene_title: m.scene.title,
-            tags: m.tags.into_iter().map(|m| m.name).collect(),
-            screenshot_url: add_api_key(&m.screenshot, api_key),
-            stream_url: add_api_key(&m.stream, api_key),
-            index_within_video: index,
-        }
-    }
 }
 
+#[derive(Clone)]
 pub struct StashApi {
     api_url: String,
     api_key: String,
@@ -232,13 +203,17 @@ impl StashApi {
         }
     }
 
-    pub async fn load_config() -> Result<Self> {
-        let config = Config::get_or_empty().await;
-        Ok(StashApi::new(&config.stash_url, &config.api_key))
+    pub async fn load_config() -> Self {
+        let config = StashConfig::get_or_empty().await;
+        StashApi::new(&config.stash_url, &config.api_key)
     }
 
-    pub fn from_config(config: &Config) -> Self {
-        StashApi::new(&config.stash_url, &config.api_key)
+    pub async fn load_config_or_fail() -> Result<Self> {
+        if let Ok(config) = StashConfig::get().await {
+            Ok(StashApi::new(&config.stash_url, &config.api_key))
+        } else {
+            bail!("no stash config found")
+        }
     }
 
     pub async fn health(&self) -> Result<String> {
@@ -258,8 +233,14 @@ impl StashApi {
         Ok(serde_json::to_string(&status)?)
     }
 
-    pub async fn find_scenes(&self) -> Result<Vec<FindScenesQueryFindScenesScenes>> {
-        let variables = find_scenes_query::Variables { scene_ids: None };
+    pub async fn find_scene(&self, scene_id: i64) -> Result<FindScenesQueryFindScenesScenes> {
+        let variables = find_scenes_query::Variables {
+            scene_ids: Some(vec![scene_id]),
+            query: None,
+            page: 0,
+            page_size: 1,
+            has_markers: None,
+        };
         let request_body = FindScenesQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
         let response = self
@@ -271,27 +252,47 @@ impl StashApi {
             .await?
             .error_for_status()?;
         let response: Response<find_scenes_query::ResponseData> = response.json().await?;
-        let scenes = response.data.unwrap().find_scenes.scenes;
 
-        Ok(scenes)
+        match response.data {
+            Some(scenes) => Ok(scenes.find_scenes.scenes.into_iter().next().unwrap()),
+            None => bail!("no scene found"),
+        }
     }
 
-    pub async fn get_marker(&self, video_id: &str, marker_id: i64) -> Result<StashMarker> {
-        let mut scenes = self.find_scenes_by_ids(vec![video_id.parse()?]).await?;
-        if scenes.len() != 1 {
-            bail!("found {} scenes for ID {video_id}", scenes.len());
-        }
-        let markers = StashMarker::from_scene(scenes.remove(0), &self.api_key);
-        if markers.is_empty() {
-            bail!("no marker found for video ID {video_id} and marker ID {marker_id}")
-        } else {
-            let string_id = marker_id.to_string();
-            if let Some(marker) = markers.into_iter().find(|m| m.id == string_id) {
-                Ok(marker)
-            } else {
-                bail!("no marker with ID {marker_id} found in scene {video_id}")
-            }
-        }
+    pub async fn find_scenes(
+        &self,
+        page: &PageParameters,
+        query: Option<String>,
+        with_markers: Option<bool>,
+    ) -> Result<(Vec<FindScenesQueryFindScenesScenes>, usize)> {
+        let variables = find_scenes_query::Variables {
+            page_size: page.size(),
+            page: page.page(),
+            query,
+            scene_ids: None,
+            has_markers: match with_markers {
+                Some(true) => Some("true".into()),
+                _ => None,
+            },
+        };
+        let request_body = FindScenesQuery::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+        let response: Response<find_scenes_query::ResponseData> = response.json().await?;
+        debug!("stash response: {:#?}", response);
+        let (scenes, count) = response
+            .data
+            .map(|r| (r.find_scenes.scenes, r.find_scenes.count as usize))
+            .unwrap_or_default();
+
+        Ok((scenes, count))
     }
 
     pub async fn find_scenes_by_ids(
@@ -300,6 +301,10 @@ impl StashApi {
     ) -> Result<Vec<FindScenesQueryFindScenesScenes>> {
         let variables = find_scenes_query::Variables {
             scene_ids: Some(ids),
+            query: None,
+            page: 0,
+            page_size: -1,
+            has_markers: None,
         };
         let request_body = FindScenesQuery::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
@@ -319,91 +324,20 @@ impl StashApi {
         }
     }
 
-    pub async fn find_tags(&self) -> Result<Vec<FindTagsQueryFindTagsTags>> {
-        let variables = find_tags_query::Variables {};
-        let request_body = FindTagsQuery::build_query(variables);
-        let url = format!("{}/graphql", self.api_url);
-        debug!("url = '{url}', api key = '{}'", self.api_key);
-
-        let response = self
-            .client
-            .post(url)
-            .json(&request_body)
-            .header("ApiKey", &self.api_key)
-            .send()
-            .await?
-            .error_for_status()?;
-        let response: Response<find_tags_query::ResponseData> = response.json().await?;
-        let tags = response.data.unwrap().find_tags.tags;
-
-        Ok(tags)
-    }
-
-    pub async fn find_markers(
-        &self,
-        ids: Vec<String>,
-        mode: FilterMode,
-        include_all: bool,
-    ) -> Result<Vec<StashMarker>> {
-        let mut scene_filter = SceneMarkerFilterType {
-            created_at: None,
-            scene_created_at: None,
-            scene_updated_at: None,
-            updated_at: None,
-            performers: None,
-            scene_date: None,
-            scene_tags: None,
-            tag_id: None,
-            tags: None,
+    pub async fn add_tag(&self, tag: String) -> Result<String> {
+        let variables = create_tag::Variables {
+            input: TagCreateInput {
+                name: tag,
+                description: None,
+                aliases: None,
+                child_ids: None,
+                ignore_auto_tag: None,
+                image: None,
+                parent_ids: None,
+            },
         };
 
-        match mode {
-            FilterMode::Performers => {
-                scene_filter.performers = Some(MultiCriterionInput {
-                    modifier: if include_all {
-                        CriterionModifier::INCLUDES_ALL
-                    } else {
-                        CriterionModifier::INCLUDES
-                    },
-                    value: Some(ids),
-                });
-            }
-            FilterMode::Tags => {
-                scene_filter.tags = Some(HierarchicalMultiCriterionInput {
-                    depth: None,
-                    modifier: if include_all {
-                        CriterionModifier::INCLUDES_ALL
-                    } else {
-                        CriterionModifier::INCLUDES
-                    },
-                    value: Some(ids),
-                });
-            }
-            FilterMode::Scenes => {
-                let ids = ids
-                    .into_iter()
-                    .map(|s| s.parse().expect("id must be a valid integer"))
-                    .collect();
-                let scenes = self.find_scenes_by_ids(ids).await?;
-
-                return Ok(scenes
-                    .into_iter()
-                    .flat_map(|s| StashMarker::from_scene(s, &self.api_key))
-                    .collect());
-            }
-        }
-        let variables = find_markers_query::Variables {
-            filter: Some(FindFilterType {
-                per_page: Some(-1),
-                page: None,
-                q: None,
-                sort: None,
-                direction: None,
-            }),
-            scene_marker_filter: Some(scene_filter),
-        };
-
-        let request_body = FindMarkersQuery::build_query(variables);
+        let request_body = CreateTag::build_query(variables);
         let url = format!("{}/graphql", self.api_url);
         let response = self
             .client
@@ -413,19 +347,69 @@ impl StashApi {
             .send()
             .await?
             .error_for_status()?;
-
-        let response: Response<find_markers_query::ResponseData> = response.json().await?;
-        let markers = response.data.unwrap();
-        let markers = markers
-            .find_scene_markers
-            .scene_markers
-            .into_iter()
-            .map(|m| StashMarker::from_marker(m, &self.api_key))
-            .collect();
-        Ok(markers)
+        let response: Response<create_tag::ResponseData> = response.json().await?;
+        debug!("stash response: {:#?}", response);
+        Ok(response.data.unwrap().tag_create.unwrap().id)
     }
 
-    pub async fn get_funscript(&self, scene_id: &str) -> Result<FunScript> {
+    pub async fn get_tag_id(&self, tag: String) -> Result<Option<String>> {
+        let variables = get_tag::Variables { tag };
+
+        let request_body = GetTag::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+        let response: Response<get_tag::ResponseData> = response.json().await?;
+        debug!("stash response: {:#?}", response);
+
+        Ok(response
+            .data
+            .map(|r| r.find_tags.tags)
+            .and_then(|mut r| if r.is_empty() { None } else { r.pop() })
+            .map(|r| r.id))
+    }
+
+    pub async fn add_marker(&self, marker: DbMarker, scene_id: String) -> Result<i64> {
+        let tag_id = self.get_tag_id(marker.title.clone()).await?;
+        let tag_id = match tag_id {
+            Some(id) => id,
+            None => self.add_tag(marker.title.clone()).await?,
+        };
+
+        let variables = create_marker::Variables {
+            marker: SceneMarkerCreateInput {
+                scene_id,
+                primary_tag_id: tag_id,
+                title: marker.title,
+                seconds: marker.start_time,
+                tag_ids: None,
+            },
+        };
+
+        let request_body = CreateMarker::build_query(variables);
+        let url = format!("{}/graphql", self.api_url);
+        let response = self
+            .client
+            .post(url)
+            .json(&request_body)
+            .header("ApiKey", &self.api_key)
+            .send()
+            .await?
+            .error_for_status()?;
+        let response: Response<create_marker::ResponseData> = response.json().await?;
+        debug!("stash response: {:#?}", response);
+        let new_marker_id = response.data.unwrap().scene_marker_create.unwrap().id;
+
+        Ok(new_marker_id.parse()?)
+    }
+
+    pub async fn get_funscript(&self, scene_id: i64) -> Result<FunScript> {
         let url = format!("{}/scene/{}/funscript", self.api_url, scene_id);
         let response = self
             .client
@@ -440,24 +424,14 @@ impl StashApi {
         Ok(response)
     }
 
-    pub async fn find_performers(
-        &self,
-    ) -> Result<Vec<FindPerformersQueryFindPerformersPerformers>> {
-        let variables = find_performers_query::Variables {};
-        let request_body = FindPerformersQuery::build_query(variables);
-        let url = format!("{}/graphql", self.api_url);
-        let response = self
-            .client
-            .post(url)
-            .json(&request_body)
-            .header("ApiKey", &self.api_key)
-            .send()
-            .await?
-            .error_for_status()?;
+    pub fn get_screenshot_url(&self, id: i64) -> String {
+        let url = format!("{}/scene/{}/screenshot", self.api_url, id);
+        add_api_key(&url, &self.api_key)
+    }
 
-        let response: Response<find_performers_query::ResponseData> = response.json().await?;
-        let performers = response.data.unwrap();
-        Ok(performers.find_performers.performers)
+    pub fn get_stream_url(&self, id: i64) -> String {
+        let url = format!("{}/scene/{}/stream", self.api_url, id);
+        add_api_key(&url, &self.api_key)
     }
 }
 

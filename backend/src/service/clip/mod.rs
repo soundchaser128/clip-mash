@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 use std::time::Instant;
 
-use clip_mash_types::{Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use itertools::Itertools;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
@@ -9,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use super::Marker;
+use crate::server::types::{Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use crate::service::clip::equal_len::EqualLengthClipPicker;
 use crate::service::clip::round_robin::RoundRobinClipPicker;
 use crate::service::clip::sort::{ClipSorter, RandomClipSorter, SceneOrderClipSorter};
@@ -71,12 +71,13 @@ fn markers_to_clips(markers: Vec<Marker>) -> Vec<Clip> {
     markers
         .into_iter()
         .map(|marker| Clip {
-            source: marker.video_id.source(),
+            source: marker.source,
             video_id: marker.video_id.clone(),
             marker_id: marker.id,
             range: (marker.start_time, marker.end_time),
             index_within_marker: 0,
             index_within_video: marker.index_within_video,
+            marker_title: marker.title.clone(),
         })
         .collect()
 }
@@ -106,6 +107,26 @@ impl ClipService {
         Self {}
     }
 
+    fn concatenate_clips(&self, clips: Vec<Clip>) -> Vec<Clip> {
+        let mut output = Vec::new();
+        let mut iter = clips.into_iter();
+
+        if let Some(mut current) = iter.next() {
+            for next in iter {
+                if current.range.1 == next.range.0 && current.video_id == next.video_id {
+                    current.range = (current.range.0, next.range.1);
+                } else {
+                    output.push(current);
+                    current = next;
+                }
+            }
+
+            output.push(current);
+        }
+
+        output
+    }
+
     pub fn arrange_clips(&self, mut options: CreateClipsOptions) -> ClipsResult {
         let start = Instant::now();
         options.normalize_video_indices();
@@ -115,7 +136,7 @@ impl ClipService {
             .clip_options
             .clip_picker
             .songs()
-            .map(|songs| normalize_beat_offsets(songs));
+            .map(normalize_beat_offsets);
 
         if options.clip_options.clip_picker.has_music() {
             info!("options have music, not sorting clips");
@@ -145,8 +166,19 @@ impl ClipService {
                 let sorter = RandomClipSorter;
                 sorter.sort_clips(clips, &mut rng)
             }
-            ClipOrder::SceneOrder => {
+            ClipOrder::Scene => {
                 let sorter = SceneOrderClipSorter;
+                sorter.sort_clips(clips, &mut rng)
+            }
+            ClipOrder::Fixed {
+                marker_title_groups,
+            } => {
+                let sorter = sort::FixedOrderClipSorter {
+                    marker_title_groups: marker_title_groups
+                        .into_iter()
+                        .map(|m| m.markers.into_iter().map(|s| s.title).collect())
+                        .collect(),
+                };
                 sorter.sort_clips(clips, &mut rng)
             }
             ClipOrder::NoOp => clips,
@@ -155,6 +187,8 @@ impl ClipService {
         let elapsed = start.elapsed();
         info!("generated {} clips in {:?}", clips.len(), elapsed);
 
+        let clips = self.concatenate_clips(clips);
+
         ClipsResult {
             clips,
             beat_offsets,
@@ -162,20 +196,31 @@ impl ClipService {
     }
 }
 
+fn trim_clips(clips: &mut Vec<Clip>, max_len: f64) {
+    let clips_duration: f64 = clips.iter().map(|c| c.duration()).sum();
+    if clips_duration > max_len {
+        let slack = (clips_duration - max_len) / clips.len() as f64;
+        info!("clip duration {clips_duration} longer than permitted maximum duration {max_len}, making each clip {slack} shorter");
+        for clip in clips {
+            clip.range.1 -= slack;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use clip_mash_types::{
-        Clip, ClipOptions, ClipPickerOptions, EqualLengthClipOptions, MarkerId, PmvClipOptions,
-        RandomizedClipOptions, RoundRobinClipOptions, VideoSource,
-    };
     use float_cmp::assert_approx_eq;
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
+    use crate::data::database::VideoSource;
+    use crate::server::types::{
+        Clip, ClipLengthOptions, ClipOptions, ClipPickerOptions, EqualLengthClipOptions,
+        RandomizedClipOptions, RoundRobinClipOptions,
+    };
     use crate::service::clip::sort::ClipSorter;
     use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
     use crate::service::fixtures::{create_marker_video_id, create_marker_with_loops};
-    use crate::service::VideoId;
     use crate::util::create_seeded_rng;
 
     #[traced_test]
@@ -191,8 +236,9 @@ mod tests {
                 clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                     clip_duration: 30.0,
                     divisors: vec![2.0, 3.0, 4.0],
+                    length: None,
                 }),
-                order: ClipOrder::SceneOrder,
+                order: ClipOrder::Scene,
             },
         };
         let service = ClipService::new();
@@ -214,7 +260,7 @@ mod tests {
             seed: None,
             clip_options: ClipOptions {
                 clip_picker: ClipPickerOptions::NoSplit,
-                order: ClipOrder::SceneOrder,
+                order: ClipOrder::Scene,
             },
         };
         let service = ClipService::new();
@@ -229,57 +275,38 @@ mod tests {
     fn test_normalize_video_indices() {
         let mut options = CreateClipsOptions {
             markers: vec![
-                create_marker_video_id(1, 140.0, 190.0, 5, "v2".into()),
-                create_marker_video_id(2, 1.0, 17.0, 0, "v1".into()),
-                create_marker_video_id(3, 80.0, 120.0, 3, "v2".into()),
-                create_marker_video_id(4, 1.0, 15.0, 0, "v3".into()),
-                create_marker_video_id(5, 20.0, 60.0, 3, "v1".into()),
+                create_marker_video_id(1, 140.0, 190.0, 5, "v2"),
+                create_marker_video_id(2, 1.0, 17.0, 0, "v1"),
+                create_marker_video_id(3, 80.0, 120.0, 3, "v2"),
+                create_marker_video_id(4, 1.0, 15.0, 0, "v3"),
+                create_marker_video_id(5, 20.0, 60.0, 3, "v1"),
             ],
             seed: None,
             clip_options: ClipOptions {
                 clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                     clip_duration: 30.0,
                     divisors: vec![2.0, 3.0, 4.0],
+                    length: None,
                 }),
-                order: ClipOrder::SceneOrder,
+                order: ClipOrder::Scene,
             },
         };
 
         options.normalize_video_indices();
 
-        let marker = options
-            .markers
-            .iter()
-            .find(|m| m.id == MarkerId::LocalFile(1))
-            .unwrap();
+        let marker = options.markers.iter().find(|m| m.id == 1).unwrap();
         assert_eq!(marker.index_within_video, 1);
 
-        let marker = options
-            .markers
-            .iter()
-            .find(|m| m.id == MarkerId::LocalFile(2))
-            .unwrap();
+        let marker = options.markers.iter().find(|m| m.id == 2).unwrap();
         assert_eq!(marker.index_within_video, 0);
 
-        let marker = options
-            .markers
-            .iter()
-            .find(|m| m.id == MarkerId::LocalFile(3))
-            .unwrap();
+        let marker = options.markers.iter().find(|m| m.id == 3).unwrap();
         assert_eq!(marker.index_within_video, 0);
 
-        let marker = options
-            .markers
-            .iter()
-            .find(|m| m.id == MarkerId::LocalFile(4))
-            .unwrap();
+        let marker = options.markers.iter().find(|m| m.id == 4).unwrap();
         assert_eq!(marker.index_within_video, 0);
 
-        let marker = options
-            .markers
-            .iter()
-            .find(|m| m.id == MarkerId::LocalFile(5))
-            .unwrap();
+        let marker = options.markers.iter().find(|m| m.id == 5).unwrap();
         assert_eq!(marker.index_within_video, 1);
     }
 
@@ -290,18 +317,20 @@ mod tests {
             Clip {
                 index_within_marker: 0,
                 index_within_video: 0,
-                marker_id: MarkerId::LocalFile(1),
+                marker_id: 1,
                 range: (0.0, 9.0),
-                source: VideoSource::LocalFile,
-                video_id: VideoId::LocalFile("video".into()),
+                source: VideoSource::Folder,
+                video_id: "video".into(),
+                marker_title: "One".into(),
             },
             Clip {
                 index_within_marker: 0,
                 index_within_video: 0,
-                marker_id: MarkerId::LocalFile(2),
+                marker_id: 2,
                 range: (1.0, 12.0),
-                source: VideoSource::LocalFile,
-                video_id: VideoId::LocalFile("video".into()),
+                source: VideoSource::Folder,
+                video_id: "video".into(),
+                marker_title: "Two".into(),
             },
         ];
         let mut rng = create_seeded_rng(None);
@@ -323,13 +352,14 @@ mod tests {
             seed: None,
             clip_options: ClipOptions {
                 clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
-                    clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                    clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                         base_duration: 10.0,
                         divisors: vec![2.0, 3.0, 4.0],
                     }),
                     length: 30.0,
+                    lenient_duration: false,
                 }),
-                order: ClipOrder::SceneOrder,
+                order: ClipOrder::Scene,
             },
         };
         let service = ClipService::new();
@@ -349,13 +379,14 @@ mod tests {
             seed: None,
             clip_options: ClipOptions {
                 clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
-                    clip_lengths: PmvClipOptions::Randomized(RandomizedClipOptions {
+                    clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                         base_duration: 10.0,
                         divisors: vec![2.0, 3.0, 4.0],
                     }),
                     length: 30.0,
+                    lenient_duration: false,
                 }),
-                order: ClipOrder::SceneOrder,
+                order: ClipOrder::Scene,
             },
         };
         let options = options.apply_marker_loops();
@@ -377,5 +408,53 @@ mod tests {
         let expected_length = 1084.0275;
         let total_duration: f64 = result.iter().map(|c| c.duration()).sum();
         assert_approx_eq!(f64, expected_length, total_duration, epsilon = 0.01);
+    }
+
+    #[test]
+    #[traced_test]
+    fn test_concatenate_clips() {
+        let clips = vec![
+            Clip {
+                index_within_marker: 0,
+                index_within_video: 0,
+                marker_id: 1,
+                range: (0.0, 9.0),
+                source: VideoSource::Folder,
+                video_id: "video".into(),
+                marker_title: "One".into(),
+            },
+            Clip {
+                index_within_marker: 0,
+                index_within_video: 1,
+                marker_id: 2,
+                range: (9.0, 12.0),
+                source: VideoSource::Folder,
+                video_id: "video".into(),
+                marker_title: "Two".into(),
+            },
+            Clip {
+                index_within_marker: 0,
+                index_within_video: 2,
+                marker_id: 3,
+                range: (12.0, 15.0),
+                source: VideoSource::Folder,
+                video_id: "video".into(),
+                marker_title: "Three".into(),
+            },
+            Clip {
+                index_within_marker: 0,
+                index_within_video: 3,
+                marker_id: 4,
+                range: (15.0, 18.0),
+                source: VideoSource::Folder,
+                video_id: "video2".into(),
+                marker_title: "Four".into(),
+            },
+        ];
+        let service = ClipService::new();
+        let concatenated = service.concatenate_clips(clips);
+        assert_eq!(concatenated.len(), 2);
+        assert_eq!(concatenated[0].range, (0.0, 15.0));
+        assert_eq!(concatenated[1].range, (15.0, 18.0));
     }
 }

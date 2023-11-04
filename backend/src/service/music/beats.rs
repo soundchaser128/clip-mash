@@ -3,11 +3,11 @@ use std::time::Instant;
 
 use aubio::{OnsetMode, Smpl, Tempo};
 use camino::{Utf8Path, Utf8PathBuf};
-use clip_mash_types::Beats;
 use color_eyre::eyre::eyre;
 use hound::WavReader;
 use tracing::info;
 
+use crate::server::types::Beats;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::util::commandline_error;
 use crate::Result as AppResult;
@@ -50,7 +50,7 @@ fn convert_to_wav(source: impl AsRef<Utf8Path>, ffmpeg: &FfmpegLocation) -> AppR
 pub fn detect_beats(file: impl AsRef<Utf8Path>, ffmpeg: &FfmpegLocation) -> AppResult<Beats> {
     let start = Instant::now();
     let file = file.as_ref();
-    let wav_file = convert_to_wav(file, &ffmpeg)?;
+    let wav_file = convert_to_wav(file, ffmpeg)?;
     let reader = WavReader::open(wav_file)?;
     let format = reader.spec();
     let duration = reader.duration();

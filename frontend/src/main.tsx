@@ -14,46 +14,47 @@ import {
   useNavigate,
   useRouteError,
 } from "react-router-dom"
+import "inter-ui/inter.css"
 import "./index.css"
-import SelectCriteria from "./routes/stash/filter/root"
-import SelectMarkers, {
-  loader as markerLoader,
-} from "./routes/stash/select-markers"
-import VideoOptions from "./routes/video-options"
+
+import VideoOptions, {videoOptionsLoader} from "./routes/video-options"
 import Progress from "./routes/progress"
-import PreviewClips from "./routes/clips"
-import Performers, {
-  loader as performerLoader,
-} from "./routes/stash/filter/performers"
-import Tags, {loader as tagsLoader} from "./routes/stash/filter/tags"
-import Scenes, {loader as scenesLoader} from "./routes/stash/filter/scenes"
-import SelectVideoPath from "./routes/local/path"
-import SelectSource from "./routes"
-import SelectMode from "./routes/select-mode"
-import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
-import EditVideoModal from "./routes/local/videos.$id"
-import StashRoot from "./routes/root"
+import PreviewClips from "./routes/clips/clips"
+import ListVideos from "./routes/library/videos"
+import CreateLayout from "./routes/root"
 import Layout from "./components/Layout"
-import Music from "./routes/music"
-import ConfigPage from "./routes/stash/config"
+import Music from "./routes/music/MusicPage"
 import {
-  configLoader,
   clipsLoader,
   localMarkerLoader,
   newIdLoader,
-  videoDetailsLoader,
   musicLoader,
   versionLoader,
+  videoDetailsLoader,
+  stashVideoLoader,
+  makeVideoLoader,
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
-import {AppVersion, SongDto} from "./types.generated"
-import useSessionStorage from "./hooks/useSessionStorage"
-import {HiCheck, HiXMark} from "react-icons/hi2"
-import MarkersPage from "./routes/local/markers"
+import MarkersPage from "./routes/library/markers"
 import {resetForm} from "./routes/actions"
-import DownloadVideosPage from "./routes/local/download"
+import AddVideosPage from "./routes/library/add"
 import useNotification from "./hooks/useNotification"
+import {FormStage} from "./types/form-state"
+import EditVideoModal from "./routes/library/videos.$id"
+import DownloadVideosPage from "./routes/library/add/download"
+import SelectVideos from "./routes/library/add/folder"
+import AddStashVideoPage from "./routes/library/add/stash"
+import {ConfigProvider} from "./hooks/useConfig"
+import StashConfigPage from "./routes/stash-config"
+import FunscriptPage from "./routes/funscript"
+import DownloadVideoPage from "./routes/download-video"
+import SelectVideosPage from "./routes/library/select-videos"
+import HomePage from "./routes/home"
+import DownloadMusic from "./routes/music/DownloadMusic"
+import UploadMusic from "./routes/music/UploadMusic"
+import ReorderSongs from "./routes/music/ReorderSongs"
+import {ToastProvider} from "./hooks/useToast"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -68,7 +69,14 @@ const TroubleshootingInfo = () => {
     <div>
       <h2 className="text-xl mb-2 font-bold">What you can do</h2>
       <ul className="list-disc list-inside">
-        <li>Refresh the page.</li>
+        <li>
+          <span
+            className="link link-primary"
+            onClick={() => window.location.reload()}
+          >
+            Reload the page.
+          </span>
+        </li>
         <li>
           <span className="link link-primary" onClick={onReset}>
             Reset the page state.
@@ -234,34 +242,43 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <SelectSource />,
+        element: <HomePage />,
         loader: newIdLoader,
       },
       {
-        path: "/stash/config",
-        element: <ConfigPage />,
-      },
-      {
-        path: "local",
-        element: <StashRoot />,
+        element: <CreateLayout />,
         children: [
           {
-            path: "path",
-            element: <SelectVideoPath />,
+            path: "stash/config",
+            element: <StashConfigPage />,
           },
           {
-            path: "videos/download",
-            element: <DownloadVideosPage />,
-          },
-          {
-            path: "videos",
+            path: "library",
             element: <ListVideos />,
-            loader: listVideosLoader,
+            loader: makeVideoLoader({}),
+            children: [
+              {
+                path: ":id/markers",
+                element: <EditVideoModal />,
+                loader: videoDetailsLoader,
+              },
+            ],
           },
           {
-            path: "videos/:id",
-            element: <EditVideoModal />,
-            loader: videoDetailsLoader,
+            path: "library/add",
+            element: <AddVideosPage />,
+          },
+          {path: "library/add/download", element: <DownloadVideosPage />},
+          {path: "library/add/folder", element: <SelectVideos />},
+          {
+            path: "library/add/stash",
+            element: <AddStashVideoPage />,
+            loader: stashVideoLoader,
+          },
+          {
+            path: "/library/select",
+            element: <SelectVideosPage />,
+            loader: makeVideoLoader({hasMarkers: true}),
           },
           {
             path: "markers",
@@ -269,46 +286,26 @@ const router = createBrowserRouter([
             loader: localMarkerLoader,
           },
           {
-            path: "options",
+            path: "music",
+            element: <Music />,
+            loader: musicLoader,
+          },
+          {
+            path: "music/download",
+            element: <DownloadMusic />,
+          },
+          {
+            path: "music/upload",
+            element: <UploadMusic />,
+          },
+          {
+            path: "music/reorder",
+            element: <ReorderSongs />,
+          },
+          {
+            path: "video-options",
             element: <VideoOptions />,
-          },
-        ],
-      },
-      {
-        path: "stash",
-        element: <StashRoot />,
-        loader: configLoader,
-        children: [
-          {
-            path: "mode",
-            element: <SelectMode />,
-          },
-          {
-            path: "filter",
-            element: <SelectCriteria />,
-            id: "select-root",
-            children: [
-              {
-                path: "performers",
-                element: <Performers />,
-                loader: performerLoader,
-              },
-              {
-                path: "tags",
-                element: <Tags />,
-                loader: tagsLoader,
-              },
-              {
-                path: "scenes",
-                element: <Scenes />,
-                loader: scenesLoader,
-              },
-            ],
-          },
-          {
-            path: "markers",
-            element: <SelectMarkers />,
-            loader: markerLoader,
+            loader: videoOptionsLoader,
           },
           {
             path: "clips",
@@ -316,17 +313,16 @@ const router = createBrowserRouter([
             loader: clipsLoader,
           },
           {
-            path: "video-options",
-            element: <VideoOptions />,
-          },
-          {
-            path: "progress",
+            path: "generate",
             element: <Progress />,
           },
           {
-            path: "music",
-            element: <Music />,
-            loader: musicLoader,
+            path: ":id/download",
+            element: <DownloadVideoPage />,
+          },
+          {
+            path: ":id/funscript",
+            element: <FunscriptPage />,
           },
         ],
       },
@@ -337,20 +333,24 @@ const router = createBrowserRouter([
 createStore(
   {
     data: {
-      source: undefined,
+      stage: FormStage.Start,
     },
   },
   {
     name: "form-state",
-  }
+  },
 )
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <StateMachineProvider>
       <DndProvider backend={HTML5Backend}>
-        <RouterProvider router={router} />
+        <ConfigProvider>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </ConfigProvider>
       </DndProvider>
     </StateMachineProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 )

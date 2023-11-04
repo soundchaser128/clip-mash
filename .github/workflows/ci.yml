@@ -22,7 +22,15 @@ jobs:
       run: sudo apt-get update && sudo apt-get -y --no-install-recommends install ffmpeg
     - name: Build Node
       run: cd frontend && npm ci && npm run format-check && npm run lint && npm run test && npm run build
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: "backend -> target"
+    - name: Install cargo-nextest
+      uses: baptiste0928/cargo-install@v1
+      with:
+        crate: cargo-nextest
+        locked: true
     - name: Test Rust
       env:
         SQLX_OFFLINE: "true"
-      run: cd backend && cargo fmt --check --all && cargo test --all
+      run: cd backend && cargo fmt --check --all && cargo nextest run --retries=3

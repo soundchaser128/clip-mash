@@ -3,22 +3,23 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use tracing::info;
+use utoipa::ToSchema;
 
 use super::directories::Directories;
 use crate::Result;
 
 lazy_static! {
-    static ref CONFIG: Mutex<Option<Config>> = Default::default();
+    static ref CONFIG: Mutex<Option<StashConfig>> = Default::default();
 }
 
-#[derive(Debug, Serialize, Clone, Deserialize)]
+#[derive(Debug, Serialize, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct Config {
+pub struct StashConfig {
     pub stash_url: String,
     pub api_key: String,
 }
 
-impl Config {
+impl StashConfig {
     fn load(directories: &Directories) -> Result<Self> {
         use std::fs;
 
@@ -30,7 +31,7 @@ impl Config {
         Ok(config)
     }
 
-    pub async fn get() -> Result<Config> {
+    pub async fn get() -> Result<StashConfig> {
         let config = CONFIG.lock().await;
 
         config.as_ref().cloned().ok_or_else(|| {
@@ -38,12 +39,12 @@ impl Config {
         })
     }
 
-    pub async fn get_or_empty() -> Config {
+    pub async fn get_or_empty() -> StashConfig {
         let config = CONFIG.lock().await;
         let config = config.as_ref().cloned();
         match config {
             Some(c) => c,
-            None => Config {
+            None => StashConfig {
                 api_key: Default::default(),
                 stash_url: Default::default(),
             },
@@ -52,7 +53,7 @@ impl Config {
 }
 
 pub async fn init(directories: &Directories) {
-    match Config::load(directories) {
+    match StashConfig::load(directories) {
         Ok(config) => {
             let mut global = CONFIG.lock().await;
             global.replace(config);
@@ -63,7 +64,7 @@ pub async fn init(directories: &Directories) {
     }
 }
 
-pub async fn set_config(config: Config, directories: &Directories) -> Result<()> {
+pub async fn set_config(config: StashConfig, directories: &Directories) -> Result<()> {
     use tokio::fs;
 
     let file_content = serde_json::to_string_pretty(&config)?;

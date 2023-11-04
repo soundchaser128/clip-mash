@@ -1,12 +1,19 @@
-use camino::Utf8Path;
-use serde::Deserialize;
-use tracing::info;
+use serde::{Deserialize, Serialize};
+use tracing::{debug, info};
 
 use super::ffmpeg::FfmpegLocation;
 use crate::util::commandline_error;
 use crate::Result;
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Eq)]
+pub struct VideoParameters {
+    pub fps: String,
+    pub width: i64,
+    pub height: i64,
+    pub codec: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct FfProbe {
     pub streams: Vec<Stream>,
     pub format: Format,
@@ -19,9 +26,27 @@ impl FfProbe {
             .as_deref()
             .and_then(|n| n.parse::<f64>().ok())
     }
+
+    pub fn video_parameters(self) -> VideoParameters {
+        let video_stream = self
+            .streams
+            .iter()
+            .find(|s| s.codec_type.as_deref() == Some("video"));
+
+        VideoParameters {
+            fps: video_stream
+                .map(|s| s.avg_frame_rate.clone())
+                .unwrap_or_else(|| "N/A".into()),
+            width: video_stream.and_then(|s| s.width).unwrap_or_default(),
+            height: video_stream.and_then(|s| s.height).unwrap_or_default(),
+            codec: video_stream
+                .and_then(|s| s.codec_name.clone())
+                .unwrap_or_else(|| "N/A".into()),
+        }
+    }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Stream {
     pub index: i64,
     pub codec_name: Option<String>,
@@ -76,12 +101,12 @@ pub struct Stream {
     pub side_data_list: Vec<SideData>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SideData {
     pub side_data_type: String,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Disposition {
     pub default: i64,
     pub dub: i64,
@@ -97,7 +122,7 @@ pub struct Disposition {
     pub timed_thumbnails: i64,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct StreamTags {
     pub language: Option<String>,
     pub creation_time: Option<String>,
@@ -105,7 +130,7 @@ pub struct StreamTags {
     pub encoder: Option<String>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Format {
     pub filename: String,
     pub nb_streams: i64,
@@ -128,7 +153,7 @@ impl Format {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct FormatTags {
     #[serde(rename = "WMFSDKNeeded")]
     pub wmfsdkneeded: Option<String>,
@@ -145,10 +170,11 @@ pub struct FormatTags {
     pub encoder: Option<String>,
 }
 
-pub async fn ffprobe(path: impl AsRef<Utf8Path>, location: &FfmpegLocation) -> Result<FfProbe> {
+pub async fn ffprobe(path: impl AsRef<str>, location: &FfmpegLocation) -> Result<FfProbe> {
     use tokio::process::Command;
 
-    // TODO use ffmpeg path
+    info!("running ffprobe on {}", path.as_ref());
+
     let args = &[
         "-v",
         "error",
@@ -156,10 +182,9 @@ pub async fn ffprobe(path: impl AsRef<Utf8Path>, location: &FfmpegLocation) -> R
         "json",
         "-show_format",
         "-show_streams",
-        path.as_ref().as_str(),
+        path.as_ref(),
     ];
-
-    info!("running ffprobe with args {args:?}");
+    debug!("running ffprobe with args {args:?}");
     let output = Command::new(location.ffprobe()).args(args).output().await?;
     if output.status.success() {
         let json = serde_json::from_slice(&output.stdout)?;

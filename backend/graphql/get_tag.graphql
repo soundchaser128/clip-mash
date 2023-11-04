@@ -1,0 +1,8 @@
+query GetTag($tag: String!) {
+  findTags(tag_filter: {name: {value: $tag, modifier: EQUALS}}) {
+    count
+    tags {
+      id
+    }
+  }
+}

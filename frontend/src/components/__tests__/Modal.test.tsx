@@ -2,14 +2,14 @@ import React from "react"
 import {render} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import Modal from "../Modal"
-import {vi} from "vitest"
+import {vi, describe, it, expect} from "vitest"
 
 describe("Modal", () => {
   it("renders children when isOpen is true", () => {
     const screen = render(
       <Modal isOpen>
         <div>Test Content</div>
-      </Modal>
+      </Modal>,
     )
 
     expect(screen.getByText("Test Content")).toBeInTheDocument()
@@ -19,7 +19,7 @@ describe("Modal", () => {
     const screen = render(
       <Modal isOpen={false}>
         <div>Test Content</div>
-      </Modal>
+      </Modal>,
     )
 
     expect(screen.queryByText("Test Content")).not.toBeInTheDocument()
@@ -31,7 +31,7 @@ describe("Modal", () => {
     const screen = render(
       <Modal isOpen={true} onClose={handleClose}>
         <div>Test Content</div>
-      </Modal>
+      </Modal>,
     )
     await userEvent.click(screen.getByRole("button"))
 
@@ -42,7 +42,7 @@ describe("Modal", () => {
     const screen = render(
       <Modal isOpen={true} className="test-class">
         <div>Test Content</div>
-      </Modal>
+      </Modal>,
     )
 
     expect(screen.getByTestId("modal-content")).toHaveClass("test-class")

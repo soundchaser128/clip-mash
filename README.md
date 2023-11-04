@@ -23,6 +23,13 @@ The app requires `ffmpeg` to run, and will attempt to download it, if it isn't i
 This currently only works for Windows and Linux systems, Mac users will have to install it either by 
 downloading the executable and placing it into their `$PATH` or installing it with `brew install ffmpeg`.
 
+## Docker
+To run the app in Docker, try the following:
+```sh
+docker run -p 5174:5174 --mount type=bind,source=<ENTER-DATA_DIRECTORY_HERE>,destination=/app/data ghcr.io/soundchaser128/clip-mash:latest
+```
+
+
 ## Troubleshooting
 ### ClipMash doesn't start, it only shows a console window for a fraction of a second and nothing else happens
 This seems to happen sometimes on Windows when ClipMash can't download the ffmpeg and ffprobe executables. You can solve it 

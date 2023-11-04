@@ -1,7 +1,67 @@
 # Changelog
 
 ## Unreleased
+- feat: Allow sorting clips by putting markers into groups.
+- feat: Save and load project data from disk
+- feat: Persist ffprobe JSON info in the database, in a separate table
+- chore: Replace react-hotkeys-hook with Mousetrap
+- feat: Rework marker creation UI
+- feat: Add keyboard shortcuts to marker creation page
+- feat: Add file browser UI to select paths to add to library
+- fix: When two adjacent clips are from the same video and have the same end- and start points, they will be combined into a single clip
+- feat: Allow adding tags to existing videos
+
+## 0.17.2
+- fix: Crash when notifications aren't available
+
+## 0.17.1
+- fix: Funscript generation with Stash videos was using the internal video ID instead of the Stash scene ID.
+
+## 0.17.0
+- feat: Unified video library. You no longer need to choose between whether you want videos from Stash or from your local hard drive.
+- feat: Only re-encode clips when the source videos have different encoding parameters (width, height, FPS, codec). Clips will be
+  created losslessly, without re-encoding if the source videos' encoding parameters are the same.
+- fix: Bug when trying to add markers in videos longer than an hour
+- feat: Pressing ESC now closes modal windows
+- feat: Clicking on a marker or a video's image now selects/deselects it
+- fix: Marker video preview now shows the correct time range of the video
+- fix: Select all/Deselect all on the marker page now only selects the currently visible markers
+- feat: Add basic sorting options to the video library page
+- feat: Resolution can now be set freely via input fields, allowing more exotic resolutions and vertical videos, for example.
+- feat: Greatly improve OpenAPI docs. 
+- refactor: Use OpenAPI generated client for the frontend
+- feat: Allow filtering videos by source
+
+## 0.16.1
+- fix: add tooltips, don't run onSubmit when shifting clips around
+
+## 0.16.0
+- feat: allow removing and rearranging clips (unless the video has its cuts synced to music)
+
+## 0.15.1
+- fix(docker): ffmpeg wasn't working when the input source was a URL that had to be DNS resolved
+
+## 0.15.0
+- feat: Add beat-based funscript generator
+- feat: Allow splitting markers
+- feat: Add OpenAPI docs (WIP)
+- feat: Improve progress handling
+- chore: Split up videos folder into downloaded videos, generated clip fragments and finished compilations
+- chore: Removed typescript interface generation, to be replaced by OpenAPI-generated client (WIP)
+- fix: A song's detected beats weren't being persisted to the database in some cases
+- feat: Add dark mode
+- feat: Added Dockerfile and published generated image to `ghcr.io/soundchaser128/clip-mash`
+- refactor: Change progress endpoints to require the ID of the generated video and store the progress in the database
+- feat: Improve ETA calculations
+
+## 0.14.0
+- feat: Auotmated marker creation by detecting scene changes
+- fix: Add encoding parameters (resolution and codec name) to clip filenames
+
+## 0.13.0
 - feat: show version number in footer
+- chore: update frontend and backend dependency versions
+- feat: add (almost) lossless encoding setting
 
 ## 0.12.0
 - feat: Allow specifying video encoding parameters (codec, quality and encoding effort)

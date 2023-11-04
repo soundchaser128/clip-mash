@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM progress WHERE done = true AND timestamp < datetime('now', '-7 day')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "c677ea82fa9f6041cd05f60521387b42964aaba511d77e2acf5227586086410c"
+}

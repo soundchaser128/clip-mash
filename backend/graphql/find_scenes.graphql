@@ -1,11 +1,13 @@
-query FindScenesQuery($scene_ids: [Int!]) {
+query FindScenesQuery($query: String, $page: Int!, $page_size: Int!, $scene_ids: [Int!], $has_markers: String) {
   findScenes(
-    scene_filter: {has_markers: "true"}
-    scene_ids: $scene_ids
-    filter: {per_page: -1, sort: "created_at", direction: DESC}
+    filter: {per_page: $page_size, page: $page, sort: "created_at", direction: DESC, q: $query},
+    scene_ids: $scene_ids,
+    scene_filter: {has_markers: $has_markers}
   ) {
+    count
     scenes {
       id
+      created_at
       title
       rating100
       interactive

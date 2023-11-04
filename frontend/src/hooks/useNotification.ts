@@ -9,12 +9,15 @@ export default function useNotification() {
   const windowVisible = useVisibility()
 
   useEffect(() => {
-    if (Notification.permission === "default") {
-      Notification.requestPermission().then((permission) => {
-        if (permission === "granted") {
-          new Notification("Notifications enabled.", options)
-        }
-      })
+    const notificationExists = "Notification" in window
+    if (notificationExists) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then((permission) => {
+          if (permission === "granted") {
+            new Notification("Notifications enabled.", options)
+          }
+        })
+      }
     }
   }, [])
 
@@ -27,7 +30,7 @@ export default function useNotification() {
         })
       }
     },
-    [windowVisible]
+    [windowVisible],
   )
 
   return sendNotification

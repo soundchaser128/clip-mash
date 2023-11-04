@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT info FROM ffprobe_info WHERE video_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "info",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "bc78d8b1e4fe023f788e11e8e5efd3524ddc955e1c51f389dc350d2e6204548b"
+}

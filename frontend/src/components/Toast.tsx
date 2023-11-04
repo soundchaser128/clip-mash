@@ -1,41 +1,64 @@
 import clsx from "clsx"
 import {useState} from "react"
-import {HiXMark} from "react-icons/hi2"
+import {
+  HiCheck,
+  HiExclamationCircle,
+  HiExclamationTriangle,
+  HiInformationCircle,
+  HiXMark,
+} from "react-icons/hi2"
+
+export type ToastType = "success" | "error" | "warning" | "info"
 
 interface Props {
   children: React.ReactNode
-  type: "success" | "error" | "warning" | "info"
-  icon?: React.ReactNode
-  dismissable?: boolean
+  type: ToastType
 }
 
-const Toast: React.FC<Props> = ({
-  children,
-  type = "info",
-  icon,
-  dismissable = true,
-}) => {
-  const [dismissed, setDismissed] = useState(false)
-  if (dismissable && dismissed) {
+const Toast: React.FC<Props> = ({type, children}) => {
+  const [visible, setVisible] = useState(true)
+
+  const onClose = () => {
+    setVisible(false)
+  }
+
+  if (!visible) {
     return null
   }
 
-  const alertClass = clsx("alert shadow-lg relative", {
-    "alert-success": type === "success",
-    "alert-error": type === "error",
-    "alert-warning": type === "warning",
-    "alert-info": type === "info",
-  })
+  let Icon
+  switch (type) {
+    case "success":
+      Icon = HiCheck
+      break
+    case "error":
+      Icon = HiExclamationCircle
+      break
+    case "warning":
+      Icon = HiExclamationTriangle
+      break
+    case "info":
+      Icon = HiInformationCircle
+      break
+  }
 
   return (
-    <div className="toast toast-top toast-center">
-      <div className={alertClass}>
+    <div className="toast toast-top toast-center text-lg z-50">
+      <div
+        className={clsx("relative alert shadow-xl min-w-[400px]", {
+          "alert-success": type === "success",
+          "alert-error": type === "error",
+          "alert-warning": type === "warning",
+          "alert-info": type === "info",
+        })}
+      >
+        <Icon className="w-8 h-8" />
+        <div className="w-full text-center">{children}</div>
+
         <HiXMark
-          onClick={() => setDismissed(true)}
-          className="absolute top-0 right-0 m-2 w-3 h-3 cursor-pointer"
+          onClick={onClose}
+          className="w-4 h-4 absolute top-2 right-2 cursor-pointer"
         />
-        {icon}
-        <p>{children}</p>
       </div>
     </div>
   )

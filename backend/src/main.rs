@@ -8,38 +8,28 @@ use axum::Router;
 use color_eyre::Report;
 use reqwest::Client;
 use tracing::{info, warn};
+use utoipa::OpenApi;
+use utoipa_rapidoc::RapiDoc;
+use utoipa_redoc::{Redoc, Servable};
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::data::database::Database;
+use crate::server::docs::ApiDoc;
 use crate::server::handlers::AppState;
 use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
 
 mod data;
+mod helpers;
 mod server;
 mod service;
-mod util;
+
+pub use helpers::util;
 
 pub type Result<T> = std::result::Result<T, Report>;
 
 // 100 MB
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
-
-fn setup_logger() {
-    use tracing_subscriber::prelude::*;
-    use tracing_subscriber::EnvFilter;
-
-    if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "info");
-    }
-    let file_appender = tracing_appender::rolling::daily("./logs", "clip-mash.log");
-
-    tracing_subscriber::fmt()
-        .with_writer(file_appender.and(std::io::stdout))
-        .with_ansi(true)
-        .with_env_filter(EnvFilter::from_default_env())
-        .compact()
-        .init();
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -47,8 +37,14 @@ async fn main() -> Result<()> {
     use service::commands::ffmpeg;
     use service::migrations;
 
+    use crate::helpers::log;
+
     color_eyre::install()?;
-    setup_logger();
+    log::setup_logger();
+    if let Err(e) = log::cleanup_logs() {
+        warn!("failed to cleanup logs: {}", e);
+    }
+
     let version = env!("CARGO_PKG_VERSION");
     info!("starting clip-mash v{}", version);
 
@@ -59,9 +55,10 @@ async fn main() -> Result<()> {
 
     service::stash_config::init(&directories).await;
 
-    let generator = CompilationGenerator::new(directories.clone(), &ffmpeg_location).await?;
     let database_file = directories.database_file();
     let database = Database::new(database_file.as_str()).await?;
+    let generator =
+        CompilationGenerator::new(directories.clone(), &ffmpeg_location, database.clone()).await?;
     migrations::run_async(
         database.clone(),
         directories.clone(),
@@ -76,60 +73,115 @@ async fn main() -> Result<()> {
         reqwest: Client::new(),
     });
 
-    let stash_routes = Router::new()
-        .route("/health", get(handlers::stash::get_health))
-        .route("/tags", get(handlers::stash::fetch_tags))
-        .route("/performers", get(handlers::stash::fetch_performers))
-        .route("/scenes", get(handlers::stash::fetch_scenes))
-        .route("/markers", get(handlers::stash::fetch_markers))
-        .route("/config", get(handlers::stash::get_config))
-        .route("/config", post(handlers::stash::set_config));
-
-    let local_routes = Router::new()
-        .route("/video", get(handlers::local::list_videos))
-        .route("/video", post(handlers::local::add_new_videos))
-        .route("/video/:id", get(handlers::local::get_video))
-        .route("/video/:id/file", get(handlers::local::get_video_file))
+    let library_routes = Router::new()
+        // list all videos (paginated, with search)
+        .route("/video", get(handlers::library::list_videos))
+        // add new videos either via stash, local or url
+        .route("/video", post(handlers::library::add_new_videos))
+        // returns whether a set of videos need to be re-encoded or not
+        .route(
+            "/video/need-encoding",
+            post(handlers::library::videos_need_encoding),
+        )
+        // update video metadata
+        .route("/video/:id", put(handlers::library::update_video))
+        // sync a single video with stash
+        .route(
+            "/video/:id/stash/merge",
+            post(handlers::library::merge_stash_video),
+        )
+        // remove videos that don't exist on disk
+        .route("/video/cleanup", post(handlers::library::cleanup_videos))
+        // list videos on stash
+        .route("/video/stash", get(handlers::library::list_stash_videos))
+        // get details on a single video
+        .route("/video/:id", get(handlers::library::get_video))
+        // delete a video
+        .route("/video/:id", delete(handlers::library::delete_video))
+        // detect markers in a video
+        .route(
+            "/video/:id/detect-markers",
+            post(handlers::library::detect_markers),
+        )
+        // stream the video file
+        .route("/video/:id/file", get(handlers::library::get_video_file))
+        // get the generated preview image
         .route(
             "/video/:id/preview",
-            get(handlers::local::get_video_preview),
+            get(handlers::library::get_video_preview),
         )
-        .route("/video/marker", get(handlers::local::list_markers))
-        .route("/video/marker", post(handlers::local::create_new_marker))
-        .route("/video/marker", put(handlers::local::update_marker))
-        .route("/video/marker/:id", delete(handlers::local::delete_marker))
+        // list all markers by video ID
+        .route("/marker", get(handlers::library::list_markers))
+        // list marker titles and counts, for autocompletion
+        .route("/marker/title", get(handlers::library::list_marker_titles))
+        // create new marker for video
+        .route("/marker", post(handlers::library::create_new_marker))
+        // update local marker
+        .route("/marker/:id", put(handlers::library::update_marker))
+        // delete local marker
+        .route("/marker/:id", delete(handlers::library::delete_marker))
+        // get the generated preview image for a marker
         .route(
-            "/video/marker/:id/preview",
-            get(handlers::local::get_marker_preview),
+            "/marker/:id/preview",
+            get(handlers::library::get_marker_preview),
         )
-        .route("/video/download", post(handlers::local::download_video));
+        // split local marker
+        .route("/marker/:id/split", post(handlers::library::split_marker))
+        .route("/directory", get(handlers::files::list_file_entries));
+
+    let project_routes = Router::new()
+        .route("/clips", post(handlers::project::fetch_clips))
+        .route("/id", get(handlers::project::get_new_id))
+        .route("/create", post(handlers::project::create_video))
+        .route(
+            "/funscript/beat",
+            post(handlers::project::get_beat_funscript),
+        )
+        .route(
+            "/funscript/combined",
+            post(handlers::project::get_combined_funscript),
+        )
+        .route("/finished", get(handlers::project::list_finished_videos))
+        .route("/download", get(handlers::project::download_video));
+
+    let stash_routes = Router::new()
+        .route("/config", get(handlers::stash::get_config))
+        .route("/config", post(handlers::stash::set_config))
+        .route("/health", get(handlers::stash::get_health));
 
     let api_routes = Router::new()
-        .nest("/local", local_routes)
+        .nest("/project", project_routes)
+        .nest("/library", library_routes)
         .nest("/stash", stash_routes)
-        .route("/version", get(handlers::common::get_version))
-        .route("/clips", post(handlers::common::fetch_clips))
-        .route("/create", post(handlers::common::create_video))
-        .route("/progress", get(handlers::common::get_progress))
-        .route("/download", get(handlers::common::download_video))
-        .route("/funscript", post(handlers::common::get_funscript))
-        .route("/song", get(handlers::common::list_songs))
-        .route("/song/:id/stream", get(handlers::common::stream_song))
-        .route("/song/download", post(handlers::common::download_music))
-        .route("/song/upload", post(handlers::common::upload_music))
-        .route("/song/:id/beats", get(handlers::common::get_beats))
-        .route("/directory/open", get(handlers::common::open_folder))
-        .route("/self/version", get(handlers::common::check_for_updates))
-        .route("/self/update", post(handlers::common::self_update))
-        .route("/id", get(handlers::common::get_new_id));
+        .route("/version", get(handlers::version::get_version))
+        .route(
+            "/progress/:id/stream",
+            get(handlers::progress::get_progress_stream),
+        )
+        .route(
+            "/progress/:id/info",
+            get(handlers::progress::get_progress_info),
+        )
+        .route("/song", get(handlers::music::list_songs))
+        .route("/song/:id/stream", get(handlers::music::stream_song))
+        .route("/song/download", post(handlers::music::download_music))
+        .route("/song/upload", post(handlers::music::upload_music))
+        .route("/song/:id/beats", get(handlers::music::get_beats));
 
     let app = Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
+        // There is no need to create `RapiDoc::with_openapi` because the OpenApi is served
+        // via SwaggerUi instead we only make rapidoc to point to the existing doc.
+        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"))
         .nest("/api", api_routes)
         .fallback_service(static_files::service())
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
         .with_state(state);
 
-    let host = env::args().nth(1).unwrap_or_else(|| "[::1]".to_string());
+    let host = env::args()
+        .nth(1)
+        .unwrap_or_else(|| "127.0.0.1".to_string());
     let addr = format!("{host}:5174");
     info!("running at {}", addr);
 

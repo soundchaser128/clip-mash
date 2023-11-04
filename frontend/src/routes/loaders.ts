@@ -1,90 +1,31 @@
-import {LoaderFunction, json} from "react-router-dom"
-import {getFormState} from "../helpers"
-import invariant from "tiny-invariant"
-import {FormState, StateHelpers} from "../types/types"
+import {LoaderFunction} from "react-router-dom"
+import {getFormState} from "@/helpers"
 import {
-  AppVersion,
   Clip,
   ClipPickerOptions,
   ClipsResponse,
   CreateClipsBody,
-  NewId,
-  PmvClipOptions,
-  SongDto,
+  ListVideosParams,
+  ClipLengthOptions,
+  StashVideoDtoPage,
   VideoDto,
-} from "../types.generated"
+  VideoSource,
+  fetchClips,
+  getVersion,
+  listSongs,
+  listStashVideos,
+  listVideos,
+  getNewId,
+  getVideo,
+  listMarkers,
+} from "@/api"
+import {FormState} from "@/types/form-state"
+import {
+  ClipFormInputs,
+  getDefaultOptions,
+} from "./clips/settings/ClipSettingsForm"
 
-export const configLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/stash/config")
-  if (response.ok) {
-    const config = await response.json()
-    return config
-  } else {
-    const error = await response.text()
-    throw json({error, request: "/api/stash/config"}, {status: 500})
-  }
-}
-
-const getClipLengths = (state: FormState): PmvClipOptions => {
-  if (state.songs && state.songs.length) {
-    return {
-      type: "songs",
-      beatsPerMeasure: state.beatsPerMeasure || 4,
-      cutAfterMeasures: state.cutAfterMeasures || {type: "fixed", count: 4},
-      songs: state.songs.map((song) => ({
-        length: song.duration,
-        offsets: song.beats,
-      })),
-    }
-  } else {
-    return {
-      type: "randomized",
-      baseDuration: state.clipDuration || 30,
-      divisors: [2, 3, 4],
-    }
-  }
-}
-
-const getClipSettings = (state: FormState): ClipPickerOptions => {
-  if (state.clipStrategy === "weightedRandom") {
-    return {
-      type: "weightedRandom",
-      weights: state.clipWeights!,
-      clipLengths: getClipLengths(state),
-      length:
-        state.songs && state.songs.length > 0
-          ? state.songs.reduce((sum, song) => sum + song.duration, 0)
-          : state.selectedMarkers!.reduce(
-              (sum, {selectedRange: [start, end]}) => sum + (end - start),
-              0
-            ),
-    }
-  } else if (state.clipStrategy === "equalLength") {
-    return {
-      type: "equalLength",
-      clipDuration: state.clipDuration || 30,
-      divisors: [2, 3, 4],
-    }
-  } else if (
-    state.clipStrategy === "roundRobin" &&
-    state.songs &&
-    state.songs.length > 0
-  ) {
-    return {
-      type: "roundRobin",
-      clipLengths: getClipLengths(state),
-      length: state.songs.reduce((sum, song) => sum + song.duration, 0),
-    }
-  } else if (state.clipStrategy === "noSplit") {
-    return {type: "noSplit"}
-  } else {
-    return {
-      type: "equalLength",
-      clipDuration: state.clipDuration || 30,
-      divisors: [2, 3, 4],
-    }
-  }
-}
+export const DEFAULT_PAGE_LENGTH = 24
 
 export interface ClipsLoaderData {
   clips: Clip[]
@@ -93,94 +34,207 @@ export interface ClipsLoaderData {
   beatOffsets?: number[]
 }
 
+const songsLength = (state: FormState): number => {
+  return state.songs?.reduce((len, song) => len + song.duration, 0) || 0
+}
+
+const markerLength = (state: FormState): number => {
+  return (
+    state.markers?.reduce(
+      (len, marker) => len + (marker.end - marker.start),
+      0,
+    ) || 0
+  )
+}
+
+const getClipLengths = (
+  options: {clipLengths?: ClipLengthOptions},
+  state: FormState,
+): ClipLengthOptions => {
+  if (!options.clipLengths || !options.clipLengths.type) {
+    return {
+      type: "randomized",
+      baseDuration: 20,
+      divisors: [2, 3, 4],
+    }
+  }
+
+  if (options.clipLengths.type === "songs") {
+    return {
+      type: "songs",
+      songs:
+        state.songs?.map((s) => ({
+          offsets: s.beats,
+          length: s.duration,
+        })) || [],
+      beatsPerMeasure: options.clipLengths.beatsPerMeasure,
+      cutAfterMeasures: options.clipLengths.cutAfterMeasures,
+    }
+  } else {
+    return {
+      type: "randomized",
+      baseDuration: options.clipLengths.baseDuration,
+      divisors: [2, 3, 4],
+    }
+  }
+}
+
+const getClipPickerOptions = (
+  inputs: ClipFormInputs | undefined,
+  state: FormState,
+): ClipPickerOptions => {
+  if (!inputs) {
+    return {
+      type: "equalLength",
+      clipDuration: 20,
+      divisors: [2, 3, 4],
+    }
+  }
+
+  switch (inputs.clipStrategy) {
+    case "roundRobin": {
+      const length = state.songs?.length
+        ? songsLength(state)
+        : markerLength(state)
+      return {
+        type: "roundRobin",
+        length,
+        clipLengths: getClipLengths(inputs.roundRobin, state),
+        lenientDuration: !inputs.useMusic,
+      }
+    }
+    case "weightedRandom": {
+      const length = state.songs?.length
+        ? songsLength(state)
+        : markerLength(state)
+      return {
+        type: "weightedRandom",
+        clipLengths: getClipLengths(inputs.weightedRandom, state),
+        length,
+        // @ts-expect-error type definitions don't align
+        weights: state.clipWeights!,
+      }
+    }
+    case "equalLength": {
+      const length = state.songs?.length ? songsLength(state) : undefined
+      return {
+        type: "equalLength",
+        clipDuration: inputs.equalLength.clipDuration,
+        divisors: [2, 3, 4],
+        length,
+      }
+    }
+    case "noSplit": {
+      return {
+        type: "noSplit",
+      }
+    }
+  }
+}
+
 export const clipsLoader: LoaderFunction = async () => {
   const state = getFormState()!
 
+  const options = state.clipOptions || getDefaultOptions(state)
+  const clipOrder = options.clipOrder || {type: "scene"}
+  const seed = options.seed?.length === 0 ? undefined : options.seed
+
   const body = {
-    clipOrder: state.clipOrder || "scene-order",
+    clipOrder,
     markers: state.selectedMarkers!.filter((m) => m.selected),
-    seed: state.seed || null,
+    seed,
     clips: {
-      clipPicker: getClipSettings(state),
-      order: state.clipOrder || "scene-order",
+      order: clipOrder,
+      clipPicker: getClipPickerOptions(options, state),
     },
   } satisfies CreateClipsBody
 
-  const response = await fetch("/api/clips", {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: {"content-type": "application/json"},
+  const data: ClipsResponse = await fetchClips(body)
+
+  const videos: Record<string, VideoDto> = {}
+  data.videos.forEach((s) => {
+    videos[s.id] = s
   })
-  if (response.ok) {
-    const data: ClipsResponse = await response.json()
 
-    const videos: Record<string, VideoDto> = {}
-    data.videos.forEach((s) => {
-      videos[s.id.id] = s
-    })
-
-    return {
-      ...data,
-      videos,
-    } // satisfies ClipsLoaderData
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/clips"}, {status: 500})
+  return {
+    ...data,
+    videos,
   }
 }
 
-export const localMarkerLoader: LoaderFunction = async ({request}) => {
-  const formState = getFormState()!
-  invariant(StateHelpers.isLocalFiles(formState))
-  const params = new URL(request.url).search
+export const localMarkerLoader: LoaderFunction = async () => {
+  const state = getFormState()
 
-  const response = await fetch(`/api/local/video/marker${params}`)
-  if (response.ok) {
-    const json = await response.json()
-    return json
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/local/video/marker"}, {status: 500})
-  }
-}
-
-export const loadNewId = async () => {
-  const response = await fetch("/api/id")
-  if (response.ok) {
-    const data = (await response.json()) as NewId
-    return data.id
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: "/api/id"}, {status: 500})
-  }
+  const videoIds = (state?.videoIds ?? []).join(",")
+  const markers = listMarkers({videoIds})
+  return markers
 }
 
 export const newIdLoader: LoaderFunction = async () => {
-  const id = await loadNewId()
-
-  return id
+  const data = await getNewId()
+  return data.id
 }
 
 export const videoDetailsLoader: LoaderFunction = async ({params}) => {
   const {id} = params
-  const response = await fetch(`/api/local/video/${id}`)
-  if (response.ok) {
-    const data = await response.json()
-    return data
-  } else {
-    const text = await response.text()
-    throw json({error: text, request: `/api/video/${id}`}, {status: 500})
-  }
+  const data = await getVideo(id!)
+  return data
 }
 
 export const musicLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/song")
-  const data = (await response.json()) as SongDto[]
+  const data = await listSongs()
+
   return data
 }
 
 export const versionLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/self/version")
-  const data = (await response.json()) as AppVersion
-  return data
+  const response = await getVersion()
+  return response.version
 }
+
+export type StashLoaderData = StashVideoDtoPage
+
+export const stashVideoLoader: LoaderFunction = async ({request}) => {
+  const url = new URL(request.url)
+  const query = url.searchParams.get("query")
+  const withMarkers = url.searchParams.get("withMarkers") === "true"
+  const videos = await listStashVideos({
+    query,
+    page: Number(url.searchParams.get("page")) || 1,
+    size: DEFAULT_PAGE_LENGTH,
+    withMarkers: withMarkers ? true : null,
+  })
+
+  return videos
+}
+
+function parseBoolean(str: string | null): boolean | null {
+  if (str === "true") {
+    return true
+  } else if (str === "false") {
+    return false
+  } else {
+    return null
+  }
+}
+
+export const makeVideoLoader: (
+  params: Partial<ListVideosParams>,
+) => LoaderFunction =
+  (params) =>
+  async ({request}) => {
+    const url = new URL(request.url)
+    const query = url.searchParams
+    const videos = await listVideos({
+      hasMarkers: params.hasMarkers || parseBoolean(query.get("hasMarkers")),
+      page: Number(query.get("page")) || 0,
+      size: DEFAULT_PAGE_LENGTH,
+      query: query.get("query"),
+      sort: query.get("sort"),
+      source: query.get("source") as VideoSource | null,
+      isInteractive:
+        params.isInteractive || parseBoolean(query.get("isInteractive")),
+    })
+
+    return videos
+  }

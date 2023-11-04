@@ -1,20 +1,18 @@
 use std::sync::Arc;
 
-use axum::{
-    extract::{Query, State},
-    response::IntoResponse,
-    Json,
-};
+use axum::extract::{Query, State};
+use axum::response::IntoResponse;
+use axum::Json;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tracing::error;
+use utoipa::IntoParams;
 
-use crate::{
-    server::{error::AppError, handlers::AppState},
-    service::updater::{self, Updater},
-};
+use crate::server::error::AppError;
+use crate::server::handlers::AppState;
+use crate::service::updater::{self, Updater};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct SelfUpdateQuery {
     pub tag: Option<String>,
 }
@@ -23,6 +21,7 @@ pub struct SelfUpdateQuery {
 #[utoipa::path(
     post,
     path = "/api/self/update",
+    params(SelfUpdateQuery),
     responses(
         (status = 200, description = "Successfully updated itself", body = ()),
     )

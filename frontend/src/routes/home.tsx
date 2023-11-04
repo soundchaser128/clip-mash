@@ -10,6 +10,7 @@ import {useEffect, useRef, useState} from "react"
 import {FormStage, SerializedFormState} from "../types/form-state"
 import Layout from "../components/Layout"
 import {HiFolder, HiRocketLaunch} from "react-icons/hi2"
+import {AppVersion} from "@/api"
 
 const HomePage = () => {
   const videoId = useLoaderData() as string
@@ -17,7 +18,7 @@ const HomePage = () => {
   const [project, setProject] = useState(state.data?.fileName || "")
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
-  const version = useRouteLoaderData("root") as string
+  const version = useRouteLoaderData("root") as AppVersion
 
   useEffect(() => {
     actions.updateForm({videoId})
@@ -39,7 +40,7 @@ const HomePage = () => {
     if (file) {
       const text = await file.text()
       const formState = JSON.parse(text) as SerializedFormState
-      if (formState.clipMashVersion !== version) {
+      if (formState.clipMashVersion !== version.currentVersion) {
         alert(
           `This project was created with ClipMash version ${formState.clipMashVersion}. ` +
             `You are using version ${version}. ` +

@@ -7,7 +7,7 @@ use super::handlers::project::{CreateFunscriptBody, ProjectCreateResponse};
 use super::handlers::version::Version;
 use super::types::*;
 use crate::data::database::{MarkerCount, VideoSource, VideoUpdate};
-use crate::server::handlers::{files, library, music, progress, project, stash, version, updater};
+use crate::server::handlers::{files, library, music, progress, project, stash, updater, version};
 use crate::service::stash_config::StashConfig;
 use crate::service::updater::AppVersion;
 use crate::service::video::AddVideosRequest;
@@ -49,6 +49,7 @@ use crate::service::video::AddVideosRequest;
         music::download_music,
         version::get_version,
         updater::check_for_updates,
+        updater::self_update,
     ),
     components(
         schemas(

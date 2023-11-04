@@ -16,6 +16,12 @@ export type DownloadMusicParams = {
   url: string
 }
 
+export type SelfUpdate200 = unknown | null
+
+export type SelfUpdateParams = {
+  tag?: string | null
+}
+
 export type DownloadVideoParams = {
   videoId: string
 }
@@ -894,6 +900,14 @@ export const checkForUpdates = () => {
   return customInstance<AppVersion>({url: `/api/self/update`, method: "get"})
 }
 
+export const selfUpdate = (params?: SelfUpdateParams) => {
+  return customInstance<SelfUpdate200>({
+    url: `/api/self/update`,
+    method: "post",
+    params,
+  })
+}
+
 export const listSongs = () => {
   return customInstance<SongDto[]>({url: `/api/song`, method: "get"})
 }
@@ -1020,6 +1034,9 @@ export type GetCombinedFunscriptResult = NonNullable<
 export type GetNewIdResult = NonNullable<Awaited<ReturnType<typeof getNewId>>>
 export type CheckForUpdatesResult = NonNullable<
   Awaited<ReturnType<typeof checkForUpdates>>
+>
+export type SelfUpdateResult = NonNullable<
+  Awaited<ReturnType<typeof selfUpdate>>
 >
 export type ListSongsResult = NonNullable<Awaited<ReturnType<typeof listSongs>>>
 export type DownloadMusicResult = NonNullable<

@@ -18,6 +18,7 @@ import {
   getNewId,
   getVideo,
   listMarkers,
+  checkForUpdates,
 } from "@/api"
 import {FormState} from "@/types/form-state"
 import {
@@ -188,8 +189,8 @@ export const musicLoader: LoaderFunction = async () => {
 }
 
 export const versionLoader: LoaderFunction = async () => {
-  const response = await getVersion()
-  return response.version
+  const response = await checkForUpdates()
+  return response
 }
 
 export type StashLoaderData = StashVideoDtoPage

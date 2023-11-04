@@ -11,8 +11,8 @@ pub mod music;
 pub mod progress;
 pub mod project;
 pub mod stash;
-pub mod version;
 pub mod updater;
+pub mod version;
 
 pub struct AppState {
     pub generator: CompilationGenerator,

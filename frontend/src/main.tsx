@@ -57,7 +57,7 @@ import ReorderSongs from "./routes/music/ReorderSongs"
 import {ToastProvider} from "./hooks/useToast"
 import useSessionStorage from "./hooks/useSessionStorage"
 import {HiCheck, HiXMark} from "react-icons/hi2"
-import {AppVersion} from "./api"
+import {AppVersion, selfUpdate} from "./api"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -167,23 +167,12 @@ const RootElement = () => {
   )
   const navigate = useNavigate()
   const [updating, setUpdating] = useState(false)
-  useNotification()
 
-  useEffect(() => {
-    if (Notification.permission === "default") {
-      Notification.requestPermission().then((permission) => {
-        if (permission === "granted") {
-          new Notification("Notifications enabled.", {
-            icon: "/android-chrome-192x192.png",
-          })
-        }
-      })
-    }
-  }, [])
+  useNotification()
 
   const onSelfUpdate = async () => {
     setUpdating(true)
-    await fetch("/api/self/update", {method: "POST"})
+    await selfUpdate()
     setUpdating(false)
     window.location.reload()
   }

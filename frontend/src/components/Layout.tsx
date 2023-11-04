@@ -4,6 +4,7 @@ import {useRouteLoaderData} from "react-router-dom"
 import ThemeSwitcher from "./ThemeSwitcher"
 import {useToast} from "@/hooks/useToast"
 import Toast from "./Toast"
+import {AppVersion} from "@/api"
 
 interface Props {
   children: React.ReactNode
@@ -16,7 +17,7 @@ const styles = {
 }
 
 const Layout: React.FC<Props> = ({children, isLoading}) => {
-  const version = useRouteLoaderData("root") as string
+  const version = useRouteLoaderData("root") as AppVersion
   const toast = useToast()
 
   return (
@@ -25,7 +26,7 @@ const Layout: React.FC<Props> = ({children, isLoading}) => {
         <Toast type={toast.data.type}>{toast.data.message}</Toast>
       )}
       <main className={styles.main}>{children}</main>
-      <Footer version={version} />
+      <Footer version={version.currentVersion} />
       <ThemeSwitcher />
     </div>
   )

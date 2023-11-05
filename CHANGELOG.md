@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.18.0
 - feat: Allow sorting clips by putting markers into groups.
 - feat: Save and load project data from disk
 - feat: Persist ffprobe JSON info in the database, in a separate table

@@ -39,6 +39,7 @@ use crate::service::video::AddVideosRequest;
         project::get_combined_funscript,
         project::get_new_id,
         project::list_finished_videos,
+        project::generate_description,
         stash::get_config,
         stash::get_health,
         stash::set_config,

@@ -7,6 +7,8 @@ import {
 } from "react-icons/hi2"
 import {Link} from "react-router-dom"
 import ExternalLink from "../components/ExternalLink"
+import {CreateVideoBody, generateDescription} from "@/api"
+import {saveBlobToDisk} from "@/helpers"
 
 const DownloadVideoPage = () => {
   const {state} = useStateMachine()
@@ -15,7 +17,23 @@ const DownloadVideoPage = () => {
   const videoId = state.data.videoId!
 
   const onGenerateDescription = async () => {
-    // const description = await description
+    const data = {
+      clips: state.data.clips!,
+      fileName: state.data.fileName!,
+      songIds: state.data.songs?.map((s) => s.songId) || [],
+      videoId: state.data.videoId!,
+      encodingEffort: state.data.encodingEffort!,
+      outputFps: state.data.outputFps!,
+      outputResolution: state.data.outputResolution!,
+      selectedMarkers: state.data.selectedMarkers!,
+      videoCodec: state.data.videoCodec!,
+      videoQuality: state.data.videoQuality!,
+      musicVolume: state.data.musicVolume,
+    } satisfies CreateVideoBody
+
+    const description = await generateDescription("markdown", data)
+    const blob = new Blob([description], {type: "text/plain"})
+    saveBlobToDisk("description.md", blob)
   }
 
   return (

@@ -1,8 +1,10 @@
 use lazy_static::lazy_static;
-use serde::Serialize;
-use tera::{Context, Tera};
+use serde::{Deserialize, Serialize};
+use tera::Tera;
 
 use super::generator::CompilationOptions;
+
+mod markdown;
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -19,6 +21,12 @@ lazy_static! {
 
 pub trait DescriptionGenerator {
     fn generate(&self, options: TemplateContext) -> String;
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[serde(rename_all = "camelCase")]
+pub enum DescriptionType {
+    Markdown,
 }
 
 #[derive(Serialize, Debug)]
@@ -40,32 +48,9 @@ impl From<&CompilationOptions> for TemplateContext {
     }
 }
 
-pub struct MarkdownDescriptionGenerator;
-
-impl DescriptionGenerator for MarkdownDescriptionGenerator {
-    fn generate(&self, options: TemplateContext) -> String {
-        let mut context = Context::new();
-        context.insert("video", &options);
-        TEMPLATES
-            .render("description.md", &context)
-            .expect("failed to render markdown")
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{DescriptionGenerator, MarkdownDescriptionGenerator, TemplateContext};
-
-    #[test]
-    fn test_markdown_description() {
-        let options = TemplateContext {
-            title: "test".to_string(),
-            width: 1920,
-            height: 1080,
-            fps: 30,
-        };
-
-        let description = MarkdownDescriptionGenerator.generate(options);
-        println!("description: {}", description);
+pub fn render_description(options: &CompilationOptions, ty: DescriptionType) -> String {
+    let context = TemplateContext::from(options);
+    match ty {
+        DescriptionType::Markdown => markdown::MarkdownDescriptionGenerator.generate(context),
     }
 }

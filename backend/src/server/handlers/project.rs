@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use axum::body::StreamBody;
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
 use camino::Utf8PathBuf;
 use color_eyre::eyre::eyre;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
 use utoipa::{IntoParams, ToSchema};
@@ -15,6 +15,7 @@ use super::AppState;
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
+use crate::service::description_generator::DescriptionType;
 use crate::service::funscript::{self, FunScript, ScriptBuilder};
 use crate::service::options_converter::OptionsConverterService;
 use crate::service::streams::{LocalVideoSource, StreamUrlService};
@@ -256,4 +257,35 @@ pub async fn get_beat_funscript(
     let script = funscript::create_beat_script(beats, body.stroke_type);
 
     Ok(Json(script))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/project/description/{type}",
+    params(
+        ("type" = DescriptionType, Path, description = "The type of the description to generate")
+    ),
+    request_body = CreateVideoBody,
+    responses(
+        (status = 200, description = "Generate a description for the video", body = String),
+    )
+)]
+#[axum::debug_handler]
+pub async fn generate_description(
+    Path(description_type): Path<DescriptionType>,
+    State(state): State<Arc<AppState>>,
+    Json(body): Json<CreateVideoBody>,
+) -> Result<impl IntoResponse, AppError> {
+    use axum::http::header;
+    use axum::response::AppendHeaders;
+
+    use crate::service::description_generator::render_description;
+
+    let service = OptionsConverterService::new(state.database.clone());
+    let options = service.convert_compilation_options(body).await?;
+    let description = render_description(&options, description_type);
+
+    // TODO
+    let headers = AppendHeaders([(header::CONTENT_TYPE, "text/plain".to_string())]);
+    Ok((headers, description))
 }

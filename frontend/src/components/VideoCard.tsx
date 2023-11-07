@@ -13,6 +13,7 @@ import {
 import {dateTimeFormat, formatSeconds} from "../helpers"
 import React from "react"
 import EditableText from "./EditableText"
+import HoverVideo from "./HoverVideo"
 
 interface Props {
   video: ListVideoDto
@@ -31,6 +32,16 @@ function getPreview(video: VideoDto, config?: StashConfig): string {
     }`
   } else {
     return `/api/library/video/${video.id}/preview`
+  }
+}
+
+function getVideo(video: VideoDto, config?: StashConfig): string {
+  if (video.source === "Stash" && config) {
+    return `${config.stashUrl}/scene/${video.stashSceneId!}/stream?apikey=${
+      config.apiKey
+    }`
+  } else {
+    return `/api/library/video/${video.id}/file`
   }
 }
 
@@ -56,7 +67,7 @@ const VideoCard: React.FC<Props> = ({
       )}
     >
       <figure>
-        <img
+        {/* <img
           className={clsx(
             "aspect-[16/9] object-cover w-full",
             onImageClick && "cursor-pointer",
@@ -65,7 +76,13 @@ const VideoCard: React.FC<Props> = ({
           src={getPreview(video.video, stashConfig)}
           width={499}
           height={281}
-          onClick={() => onImageClick && onImageClick(video.video.id)}
+          onClick={}
+        /> */}
+        <HoverVideo
+          onImageClick={() => onImageClick && onImageClick(video.video.id)}
+          imageSource={getPreview(video.video, stashConfig)}
+          videoSource={getVideo(video.video, stashConfig)}
+          disabled={disabled}
         />
       </figure>
       <div className="card-body gap-0">

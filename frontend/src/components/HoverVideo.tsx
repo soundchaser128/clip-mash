@@ -15,14 +15,13 @@ export default function HoverVideo({
   onImageClick,
   disabled,
 }: Props) {
-  const classes = clsx(
-    "aspect-[16/9] object-cover w-full",
-    disabled && "grayscale",
-  )
+  const classes = clsx("aspect-[16/9] object-cover w-full", {
+    grayscale: disabled,
+  })
 
   return (
     <HoverVideoPlayer
-      className="w-full"
+      className={clsx("w-full", onImageClick && "cursor-pointer")}
       videoSrc={videoSource}
       pausedOverlay={
         <img onClick={onImageClick} src={imageSource} className={classes} />
@@ -33,7 +32,6 @@ export default function HoverVideo({
       muted
       preload="none"
       unloadVideoOnPaused
-      restartOnPaused
       onClick={onImageClick}
     />
   )

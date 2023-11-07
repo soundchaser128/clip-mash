@@ -62,8 +62,8 @@ pub fn debug_output(output: Output) {
 }
 
 pub fn generate_id() -> String {
-    const ADJECTIVES: &str = include_str!("../../data/adjectives.txt");
-    const ANIMALS: &str = include_str!("../../data/animals.txt");
+    const ADJECTIVES: &str = include_str!("../../data/words/adjectives.txt");
+    const ANIMALS: &str = include_str!("../../data/words/animals.txt");
 
     lazy_static! {
         static ref ADJECTIVE_LIST: Vec<&'static str> =

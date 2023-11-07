@@ -3,4 +3,3 @@
 *.sqlite3-wal
 .vscode
 .DS_Store
-/backend/data

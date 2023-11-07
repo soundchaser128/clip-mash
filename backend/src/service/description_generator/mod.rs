@@ -1,34 +1,71 @@
+use lazy_static::lazy_static;
+use serde::Serialize;
+use tera::{Context, Tera};
+
 use super::generator::CompilationOptions;
 
+lazy_static! {
+    pub static ref TEMPLATES: Tera = {
+        let tera = match Tera::new("data/templates/*") {
+            Ok(t) => t,
+            Err(e) => {
+                println!("Parsing error(s): {}", e);
+                ::std::process::exit(1);
+            }
+        };
+        tera
+    };
+}
+
 pub trait DescriptionGenerator {
-    fn generate(&self, options: &CompilationOptions) -> String;
+    fn generate(&self, options: TemplateContext) -> String;
+}
+
+#[derive(Serialize, Debug)]
+pub struct TemplateContext {
+    pub title: String,
+    pub width: u32,
+    pub height: u32,
+    pub fps: u32,
+}
+
+impl From<&CompilationOptions> for TemplateContext {
+    fn from(options: &CompilationOptions) -> Self {
+        Self {
+            title: options.file_name.clone(),
+            width: options.output_resolution.0,
+            height: options.output_resolution.1,
+            fps: options.output_fps,
+        }
+    }
 }
 
 pub struct MarkdownDescriptionGenerator;
 
 impl DescriptionGenerator for MarkdownDescriptionGenerator {
-    fn generate(&self, options: &CompilationOptions) -> String {
-        let mut description = String::new();
+    fn generate(&self, options: TemplateContext) -> String {
+        let mut context = Context::new();
+        context.insert("video", &options);
+        TEMPLATES
+            .render("description.md", &context)
+            .expect("failed to render markdown")
+    }
+}
 
-        description.push_str(&format!("# Compilation '{}'\n\n", options.file_name));
-        description.push_str("## Video details\n\n");
-        // description.push_str(
-        //     "- Resolution: **{} x {}**\n",
-        //     options.output_resolution.0,
-        //     options.output_resolution.1,
-        // );
-        description.push_str(&format!("- **{}** FPS\n", options.output_fps));
+#[cfg(test)]
+mod tests {
+    use super::{DescriptionGenerator, MarkdownDescriptionGenerator, TemplateContext};
 
-        for (index, clip) in options.clips.iter().enumerate() {
-            description.push_str(&format!(
-                "## Clip {} / {}\n\n",
-                index + 1,
-                options.clips.len()
-            ));
-            description.push_str(&format!("- Marker title: {}\n", clip.marker_title));
-            // description.push_str(&format!("- Video title: {}\n", ));
-        }
+    #[test]
+    fn test_markdown_description() {
+        let options = TemplateContext {
+            title: "test".to_string(),
+            width: 1920,
+            height: 1080,
+            fps: 30,
+        };
 
-        description
+        let description = MarkdownDescriptionGenerator.generate(options);
+        println!("description: {}", description);
     }
 }

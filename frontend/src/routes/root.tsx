@@ -11,6 +11,7 @@ import {resetForm} from "./actions"
 import Layout from "../components/Layout"
 import Steps from "../components/Steps"
 import {FormState, FormStage, SerializedFormState} from "../types/form-state"
+import {saveJsonToDisk} from "@/helpers"
 
 const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
   return (
@@ -57,19 +58,6 @@ const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
   )
 }
 
-function saveFileToDisk<T>(fileName: string, data: T) {
-  const json = JSON.stringify(data)
-  const blob = new Blob([json], {type: "application/json"})
-  const href = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = href
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(href)
-}
-
 const AssistantLayout: React.FC = () => {
   const {actions, state} = useStateMachine({resetForm})
   const version = useRouteLoaderData("root") as string
@@ -93,7 +81,7 @@ const AssistantLayout: React.FC = () => {
       ...state.data,
       clipMashVersion: version,
     }
-    saveFileToDisk(projectName, data)
+    saveJsonToDisk(projectName, data)
   }
 
   const navigate = useNavigate()

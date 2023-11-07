@@ -1,6 +1,10 @@
-import clsx from "clsx"
 import {useStateMachine} from "little-state-machine"
-import {HiArrowDown, HiCodeBracket, HiHeart} from "react-icons/hi2"
+import {
+  HiArrowDown,
+  HiCodeBracket,
+  HiDocumentText,
+  HiHeart,
+} from "react-icons/hi2"
 import {Link} from "react-router-dom"
 import ExternalLink from "../components/ExternalLink"
 
@@ -9,6 +13,10 @@ const DownloadVideoPage = () => {
   const numSongs = state.data.songs?.length || 0
   const interactive = numSongs > 0 || state.data.interactive
   const videoId = state.data.videoId!
+
+  const onGenerateDescription = async () => {
+    // const description = await description
+  }
 
   return (
     <div className="mt-2 w-full self-center flex flex-col items-center">
@@ -23,13 +31,7 @@ const DownloadVideoPage = () => {
             </>
           )}
         </p>
-        <div
-          className={clsx(
-            "grid gap-2 w-full",
-            interactive && "grid-cols-3",
-            !interactive && "grid-cols-2",
-          )}
-        >
+        <div className="grid grid-flow-col gap-2 w-full">
           <div className="flex flex-col">
             <a
               href={`/api/project/download?videoId=${encodeURIComponent(
@@ -41,6 +43,15 @@ const DownloadVideoPage = () => {
               <HiArrowDown className="w-6 h-6 mr-2" />
               Download video
             </a>
+          </div>
+          <div className="flex flex-col">
+            <button
+              onClick={onGenerateDescription}
+              className="btn btn-success btn-lg"
+            >
+              <HiDocumentText className="w-6 h-6 mr-2" />
+              Generate description
+            </button>
           </div>
           {interactive && (
             <div className="flex flex-col">

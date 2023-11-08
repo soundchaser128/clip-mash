@@ -11,7 +11,7 @@ use super::directories::Directories;
 use super::encoding_optimization::EncodingOptimizationService;
 use super::streams::{LocalVideoSource, StreamUrlService};
 use super::Marker;
-use crate::data::database::{Database, DbSong};
+use crate::data::database::{Database, DbSong, DbVideo};
 use crate::helpers::estimator::Estimator;
 use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
@@ -30,6 +30,7 @@ pub struct CompilationOptions {
     pub video_codec: VideoCodec,
     pub video_quality: VideoQuality,
     pub encoding_effort: EncodingEffort,
+    pub videos: Vec<DbVideo>,
 }
 
 fn get_clip_file_name(

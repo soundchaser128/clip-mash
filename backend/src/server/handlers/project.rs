@@ -285,7 +285,7 @@ pub async fn generate_description(
 
     let service = OptionsConverterService::new(state.database.clone());
     let options = service.convert_compilation_options(body).await?;
-    let description = render_description(&options, description_type);
+    let description = render_description(&options, description_type)?;
 
     Ok(Json(DescriptionData { body: description }))
 }

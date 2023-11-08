@@ -1,28 +1,14 @@
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use tera::Tera;
 use utoipa::ToSchema;
 
 use super::generator::CompilationOptions;
-use crate::server::types::Clip;
+use crate::server::types::VideoCodec;
+use crate::Result;
 
 mod markdown;
 
-lazy_static! {
-    pub static ref TEMPLATES: Tera = {
-        let tera = match Tera::new("data/templates/*") {
-            Ok(t) => t,
-            Err(e) => {
-                println!("Parsing error(s): {}", e);
-                ::std::process::exit(1);
-            }
-        };
-        tera
-    };
-}
-
 pub trait DescriptionGenerator {
-    fn generate(&self, options: TemplateContext) -> String;
+    fn generate(&self, options: TemplateContext) -> Result<String>;
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, ToSchema)]
@@ -36,17 +22,7 @@ pub struct ClipInfo {
     pub start: f64,
     pub end: f64,
     pub marker_title: String,
-    // pub video_title: String,
-}
-
-impl From<Clip> for ClipInfo {
-    fn from(value: Clip) -> Self {
-        ClipInfo {
-            start: value.range.0,
-            end: value.range.1,
-            marker_title: value.marker_title,
-        }
-    }
+    pub video_title: String,
 }
 
 #[derive(Serialize, Debug)]
@@ -56,6 +32,7 @@ pub struct TemplateContext {
     pub height: u32,
     pub fps: u32,
     pub clips: Vec<ClipInfo>,
+    pub codec: VideoCodec,
 }
 
 impl From<&CompilationOptions> for TemplateContext {
@@ -65,17 +42,31 @@ impl From<&CompilationOptions> for TemplateContext {
             width: options.output_resolution.0,
             height: options.output_resolution.1,
             fps: options.output_fps,
+            codec: options.video_codec,
             clips: options
                 .clips
                 .clone()
                 .into_iter()
-                .map(|c| c.into())
+                .map(|clip| {
+                    let video_title = options
+                        .videos
+                        .iter()
+                        .find(|v| v.id == clip.video_id)
+                        .and_then(|v| v.video_title.clone())
+                        .unwrap_or_else(|| "unknown".to_string());
+                    ClipInfo {
+                        start: clip.range.0,
+                        end: clip.range.1,
+                        marker_title: clip.marker_title,
+                        video_title,
+                    }
+                })
                 .collect(),
         }
     }
 }
 
-pub fn render_description(options: &CompilationOptions, ty: DescriptionType) -> String {
+pub fn render_description(options: &CompilationOptions, ty: DescriptionType) -> Result<String> {
     let context = TemplateContext::from(options);
     match ty {
         DescriptionType::Markdown => markdown::MarkdownDescriptionGenerator.generate(context),

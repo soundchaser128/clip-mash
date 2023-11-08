@@ -508,7 +508,7 @@ impl VideoDetailsDtoConverter {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Copy, ToSchema)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum VideoCodec {
     Av1,

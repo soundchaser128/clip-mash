@@ -3,6 +3,7 @@ use utoipa::ToSchema;
 
 use super::generator::CompilationOptions;
 use crate::server::types::VideoCodec;
+use crate::util::StrExt;
 use crate::Result;
 
 mod markdown;
@@ -53,6 +54,7 @@ impl From<&CompilationOptions> for TemplateContext {
                         .iter()
                         .find(|v| v.id == clip.video_id)
                         .and_then(|v| v.video_title.clone())
+                        .map(|t| t.limit_length(45))
                         .unwrap_or_else(|| "unknown".to_string());
                     ClipInfo {
                         start: clip.range.0,

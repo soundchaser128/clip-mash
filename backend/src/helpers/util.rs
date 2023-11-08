@@ -90,6 +90,20 @@ pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
     a + (b - a) * t
 }
 
+pub trait StrExt {
+    fn limit_length(&self, max_length: usize) -> String;
+}
+
+impl StrExt for str {
+    fn limit_length(&self, max_length: usize) -> String {
+        if self.len() > max_length {
+            format!("{}…", &self[..max_length])
+        } else {
+            self.to_string()
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use regex::Regex;

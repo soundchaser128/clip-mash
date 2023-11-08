@@ -29,7 +29,7 @@ interface FilterInputs {
 
 const EMPTY_VALUES: FilterInputs = {
   query: "",
-  sort: "markers",
+  sort: "title",
 }
 
 const VideoGrid: React.FC<Props> = ({

@@ -9,6 +9,6 @@ Created with [ClipMash](https://github.com/soundchaser128/clip-mash).
 ## Clips
 | Video | Description | Start | End |
 | ----- | ----------- | ----- | --- |
-{% for clip in video.clips %}
-  | {{ clip.video_title }} | {{clip.marker_title}} | {{ clip.start }} | {{ clip.end }} |
-{% endfor %}
+{% for clip in video.clips -%}
+| {{ clip.video_title }} | {{clip.marker_title}} | {{ clip.start }} | {{ clip.end }} |
+{% endfor -%}

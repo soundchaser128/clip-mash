@@ -4,6 +4,7 @@ use tera::Tera;
 use utoipa::ToSchema;
 
 use super::generator::CompilationOptions;
+use crate::server::types::Clip;
 
 mod markdown;
 
@@ -31,11 +32,30 @@ pub enum DescriptionType {
 }
 
 #[derive(Serialize, Debug)]
+pub struct ClipInfo {
+    pub start: f64,
+    pub end: f64,
+    pub marker_title: String,
+    // pub video_title: String,
+}
+
+impl From<Clip> for ClipInfo {
+    fn from(value: Clip) -> Self {
+        ClipInfo {
+            start: value.range.0,
+            end: value.range.1,
+            marker_title: value.marker_title,
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
 pub struct TemplateContext {
     pub title: String,
     pub width: u32,
     pub height: u32,
     pub fps: u32,
+    pub clips: Vec<ClipInfo>,
 }
 
 impl From<&CompilationOptions> for TemplateContext {
@@ -45,6 +65,12 @@ impl From<&CompilationOptions> for TemplateContext {
             width: options.output_resolution.0,
             height: options.output_resolution.1,
             fps: options.output_fps,
+            clips: options
+                .clips
+                .clone()
+                .into_iter()
+                .map(|c| c.into())
+                .collect(),
         }
     }
 }

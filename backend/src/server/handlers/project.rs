@@ -6,7 +6,7 @@ use axum::response::IntoResponse;
 use axum::Json;
 use camino::Utf8PathBuf;
 use color_eyre::eyre::eyre;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, info};
 use utoipa::{IntoParams, ToSchema};

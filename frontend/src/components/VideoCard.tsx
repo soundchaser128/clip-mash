@@ -67,17 +67,6 @@ const VideoCard: React.FC<Props> = ({
       )}
     >
       <figure>
-        {/* <img
-          className={clsx(
-            "aspect-[16/9] object-cover w-full",
-            onImageClick && "cursor-pointer",
-            disabled && "grayscale",
-          )}
-          src={getPreview(video.video, stashConfig)}
-          width={499}
-          height={281}
-          onClick={}
-        /> */}
         <HoverVideo
           onImageClick={() => onImageClick && onImageClick(video.video.id)}
           imageSource={getPreview(video.video, stashConfig)}

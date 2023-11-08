@@ -1,6 +1,7 @@
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use tera::Tera;
+use utoipa::ToSchema;
 
 use super::generator::CompilationOptions;
 
@@ -23,7 +24,7 @@ pub trait DescriptionGenerator {
     fn generate(&self, options: TemplateContext) -> String;
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum DescriptionType {
     Markdown,

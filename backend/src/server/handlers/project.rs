@@ -259,6 +259,11 @@ pub async fn get_beat_funscript(
     Ok(Json(script))
 }
 
+#[derive(Serialize, ToSchema)]
+pub struct DescriptionData {
+    pub body: String,
+}
+
 #[utoipa::path(
     post,
     path = "/api/project/description/{type}",
@@ -267,7 +272,7 @@ pub async fn get_beat_funscript(
     ),
     request_body = CreateVideoBody,
     responses(
-        (status = 200, description = "Generate a description for the video", body = String),
+        (status = 200, description = "Generate a description for the video", body = DescriptionData),
     )
 )]
 #[axum::debug_handler]
@@ -276,16 +281,11 @@ pub async fn generate_description(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateVideoBody>,
 ) -> Result<impl IntoResponse, AppError> {
-    use axum::http::header;
-    use axum::response::AppendHeaders;
-
     use crate::service::description_generator::render_description;
 
     let service = OptionsConverterService::new(state.database.clone());
     let options = service.convert_compilation_options(body).await?;
     let description = render_description(&options, description_type);
 
-    // TODO
-    let headers = AppendHeaders([(header::CONTENT_TYPE, "text/plain".to_string())]);
-    Ok((headers, description))
+    Ok(Json(DescriptionData { body: description }))
 }

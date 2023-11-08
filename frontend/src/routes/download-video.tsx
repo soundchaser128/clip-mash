@@ -31,8 +31,8 @@ const DownloadVideoPage = () => {
       musicVolume: state.data.musicVolume,
     } satisfies CreateVideoBody
 
-    const description = await generateDescription("markdown", data)
-    const blob = new Blob([description], {type: "text/plain"})
+    const response = await generateDescription("markdown", data)
+    const blob = new Blob([response.body], {type: "text/plain"})
     saveBlobToDisk("description.md", blob)
   }
 

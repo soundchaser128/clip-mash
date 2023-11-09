@@ -412,10 +412,13 @@ export type DescriptionType =
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const DescriptionType = {
   markdown: "markdown",
+  json: "json",
+  yaml: "yaml",
 } as const
 
 export interface DescriptionData {
   body: string
+  contentType: string
 }
 
 export type CreateVideoBodyOutputResolutionItem = number & number

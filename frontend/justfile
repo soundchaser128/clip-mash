@@ -9,10 +9,12 @@ build:
 
 format:
     npm run format
-    npm run lint:fix
 
 start:
     npm run dev
 
 setup:
     npm install
+
+fix: 
+    npm run lint:fix

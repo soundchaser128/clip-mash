@@ -260,8 +260,10 @@ pub async fn get_beat_funscript(
 }
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct DescriptionData {
     pub body: String,
+    pub content_type: String,
 }
 
 #[utoipa::path(
@@ -287,5 +289,8 @@ pub async fn generate_description(
     let options = service.convert_compilation_options(body).await?;
     let description = render_description(&options, description_type)?;
 
-    Ok(Json(DescriptionData { body: description }))
+    Ok(Json(DescriptionData {
+        body: description,
+        content_type: description_type.content_type().to_string(),
+    }))
 }

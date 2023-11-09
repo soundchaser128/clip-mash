@@ -6,7 +6,9 @@ use crate::server::types::VideoCodec;
 use crate::util::StrExt;
 use crate::Result;
 
+mod json;
 mod markdown;
+mod yaml;
 
 pub trait DescriptionGenerator {
     fn generate(&self, options: TemplateContext) -> Result<String>;
@@ -16,6 +18,18 @@ pub trait DescriptionGenerator {
 #[serde(rename_all = "camelCase")]
 pub enum DescriptionType {
     Markdown,
+    Json,
+    Yaml,
+}
+
+impl DescriptionType {
+    pub fn content_type(&self) -> &'static str {
+        match self {
+            Self::Markdown => "text/markdown",
+            Self::Json => "application/json",
+            Self::Yaml => "application/yaml",
+        }
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -72,5 +86,7 @@ pub fn render_description(options: &CompilationOptions, ty: DescriptionType) -> 
     let context = TemplateContext::from(options);
     match ty {
         DescriptionType::Markdown => markdown::MarkdownDescriptionGenerator.generate(context),
+        DescriptionType::Json => json::JsonDescriptionGenerator.generate(context),
+        DescriptionType::Yaml => yaml::YamlDescriptionGenerator.generate(context),
     }
 }

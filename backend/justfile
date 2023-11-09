@@ -14,3 +14,6 @@ build:
 setup:
     cargo install sqlx-cli
     sqlx migrate run
+
+fix:
+    cargo fix --allow-staged

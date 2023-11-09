@@ -31,9 +31,28 @@ const DownloadVideoPage = () => {
       musicVolume: state.data.musicVolume,
     } satisfies CreateVideoBody
 
-    const response = await generateDescription("markdown", data)
-    const blob = new Blob([response.body], {type: "text/plain"})
-    saveBlobToDisk("description.md", blob)
+    const response = await generateDescription("yaml", data)
+    const blob = new Blob([response.body], {type: response.contentType})
+    let extension
+    switch (response.contentType) {
+      case "text/markdown":
+        extension = "md"
+        break
+      case "application/json":
+        extension = "json"
+        break
+      case "application/yaml":
+        extension = "yaml"
+        break
+      default:
+        extension = "txt"
+    }
+
+    const fileName = `${state.data.fileName || "Compilation"} [${
+      state.data.videoId
+    }].${extension}`
+
+    saveBlobToDisk(fileName, blob)
   }
 
   return (

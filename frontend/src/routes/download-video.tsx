@@ -1,13 +1,13 @@
 import {useStateMachine} from "little-state-machine"
 import {
-  HiArrowDown,
+  HiArrowDownTray,
   HiCodeBracket,
   HiDocumentText,
   HiHeart,
 } from "react-icons/hi2"
 import {Link} from "react-router-dom"
 import ExternalLink from "../components/ExternalLink"
-import {CreateVideoBody, generateDescription} from "@/api"
+import {CreateVideoBody, DescriptionType, generateDescription} from "@/api"
 import {saveBlobToDisk} from "@/helpers"
 
 const DownloadVideoPage = () => {
@@ -16,7 +16,7 @@ const DownloadVideoPage = () => {
   const interactive = numSongs > 0 || state.data.interactive
   const videoId = state.data.videoId!
 
-  const onGenerateDescription = async () => {
+  const onGenerateDescription = async (format: DescriptionType) => {
     const data = {
       clips: state.data.clips!,
       fileName: state.data.fileName!,
@@ -31,7 +31,7 @@ const DownloadVideoPage = () => {
       musicVolume: state.data.musicVolume,
     } satisfies CreateVideoBody
 
-    const response = await generateDescription("yaml", data)
+    const response = await generateDescription(format, data)
     const blob = new Blob([response.body], {type: response.contentType})
     let extension
     switch (response.contentType) {
@@ -50,7 +50,7 @@ const DownloadVideoPage = () => {
 
     const fileName = `${state.data.fileName || "Compilation"} [${
       state.data.videoId
-    }].${extension}`
+    }] - Description.${extension}`
 
     saveBlobToDisk(fileName, blob)
   }
@@ -68,49 +68,59 @@ const DownloadVideoPage = () => {
             </>
           )}
         </p>
-        <div className="grid grid-flow-col gap-2 w-full">
-          <div className="flex flex-col">
-            <a
-              href={`/api/project/download?videoId=${encodeURIComponent(
-                videoId,
-              )}`}
-              className="btn btn-success btn-lg"
-              download
+        <section className="flex flex-col gap-2">
+          <a
+            href={`/api/project/download?videoId=${encodeURIComponent(
+              videoId,
+            )}`}
+            className="btn btn-success btn-lg"
+            download
+          >
+            <HiArrowDownTray className="w-6 h-6 mr-2" />
+            Download video
+          </a>
+          <div className="join self-center">
+            <ExternalLink
+              href="https://ko-fi.com/soundchaser128"
+              className="btn btn-secondary join-item"
             >
-              <HiArrowDown className="w-6 h-6 mr-2" />
-              Download video
-            </a>
-          </div>
-          <div className="flex flex-col">
-            <button
-              onClick={onGenerateDescription}
-              className="btn btn-success btn-lg"
-            >
-              <HiDocumentText className="w-6 h-6 mr-2" />
-              Generate description
-            </button>
-          </div>
-          {interactive && (
-            <div className="flex flex-col">
+              <HiHeart className="w-6 h-6 mr-2" />
+              Support the developer
+            </ExternalLink>
+            <details className="dropdown">
+              <summary className="btn w-full mb-1 join-item">
+                <HiDocumentText className="w-6 h-6 mr-2" />
+                Generate description
+              </summary>
+              <ul className="p-2 shadow-xl menu dropdown-content z-[1] bg-base-200 rounded-box w-full">
+                <li>
+                  <button onClick={() => onGenerateDescription("markdown")}>
+                    Markdown
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => onGenerateDescription("json")}>
+                    JSON
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => onGenerateDescription("yaml")}>
+                    YAML
+                  </button>
+                </li>
+              </ul>
+            </details>
+            {interactive && (
               <Link
-                className="btn btn-primary btn-lg"
+                className="btn btn-primary join-item"
                 to={`/${videoId}/funscript`}
               >
                 <HiCodeBracket className="w-6 h-6 mr-2" />
                 Create funscript
               </Link>
-            </div>
-          )}
-          <div className="flex flex-col">
-            <ExternalLink
-              href="https://ko-fi.com/soundchaser128"
-              className="btn btn-lg btn-secondary"
-            >
-              <HiHeart className="w-6 h-6 mr-2" />
-              Support the developer
-            </ExternalLink>
+            )}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   )

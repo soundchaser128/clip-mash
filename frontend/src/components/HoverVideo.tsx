@@ -24,7 +24,13 @@ export default function HoverVideo({
       className={clsx("w-full", onImageClick && "cursor-pointer")}
       videoSrc={videoSource}
       pausedOverlay={
-        <img onClick={onImageClick} src={imageSource} className={classes} />
+        <img
+          width={499}
+          height={280}
+          onClick={onImageClick}
+          src={imageSource}
+          className={classes}
+        />
       }
       loadingOverlay={<Loader />}
       videoClassName={classes}

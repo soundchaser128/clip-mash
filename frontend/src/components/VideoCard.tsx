@@ -11,7 +11,7 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import {dateTimeFormat, formatSeconds} from "../helpers"
-import React from "react"
+import React, {useState} from "react"
 import EditableText from "./EditableText"
 import HoverVideo from "./HoverVideo"
 
@@ -58,10 +58,11 @@ const VideoCard: React.FC<Props> = ({
   const date = new Date(video.video.createdOn * 1000)
   const isoDate = date.toISOString()
   const humanDate = dateTimeFormat.format(date)
+
   return (
     <article
       className={clsx(
-        "card card-compact shadow-xl bg-base-200",
+        "card card-compact shadow-xl bg-base-200 transition-transform duration-150 hover:scale-105 hover:z-50",
         video.markerCount > 0 && "ring-4 ring-green-500",
         disabled && "opacity-50",
       )}
@@ -88,6 +89,7 @@ const VideoCard: React.FC<Props> = ({
             </span>
           )}
         </h2>
+
         <ul className="flex flex-col gap-2 self-start mb-2">
           <li className="mb-2 flex items-center">
             {tags.length > 0 && (
@@ -143,6 +145,7 @@ const VideoCard: React.FC<Props> = ({
             </strong>
           </li>
         </ul>
+
         <div className="card-actions justify-between grow items-end">
           {actionChildren}
         </div>

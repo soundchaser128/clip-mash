@@ -14,6 +14,8 @@ export default function ListVideos() {
   const page = useLoaderData() as ListVideoDtoPage
   const videos = page.content
   const navigate = useNavigate()
+  const count = state.data.videoIds?.length ?? 0
+  const nextDisabled = count === 0
 
   const onNextStage = () => {
     const interactive = videos
@@ -58,8 +60,7 @@ export default function ListVideos() {
 
   const isVideoDisabled = (video: ListVideoDto): boolean => {
     const videoIds = state.data.videoIds ?? []
-    const allSelected = videoIds.length === 0
-    return !allSelected && !videoIds.includes(video.video.id)
+    return !videoIds.includes(video.video.id)
   }
 
   return (
@@ -79,7 +80,7 @@ export default function ListVideos() {
         <div className="place-self-center text-center mb-4">
           <PageInfo page={page} />
           <p>
-            <strong>{state.data.videoIds?.length || "All"}</strong>{" "}
+            <strong>{count}</strong>{" "}
             {pluralize("video", state.data.videoIds?.length)} selected.
           </p>
           <p>Click on videos to add them to the selection.</p>
@@ -87,6 +88,7 @@ export default function ListVideos() {
         <button
           className="btn btn-success place-self-end self-center"
           onClick={onNextStage}
+          disabled={nextDisabled}
         >
           Next
           <HiChevronRight className="ml-1" />

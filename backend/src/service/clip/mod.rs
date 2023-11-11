@@ -22,6 +22,7 @@ mod sort;
 mod state;
 mod weighted;
 
+// TODO make this configurable
 const MIN_DURATION: f64 = 1.5;
 
 pub trait ClipPicker {

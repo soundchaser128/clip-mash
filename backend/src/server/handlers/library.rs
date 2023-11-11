@@ -342,6 +342,9 @@ pub async fn list_markers(
     let video_ids: Option<Vec<_>> = body
         .video_ids
         .map(|ids| ids.split(',').map(String::from).collect());
+    if video_ids.is_none() || video_ids.as_ref().unwrap().is_empty() {
+        return Ok(Json(vec![]));
+    }
     let markers = state
         .database
         .markers

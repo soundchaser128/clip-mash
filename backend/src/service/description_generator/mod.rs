@@ -52,32 +52,38 @@ pub struct TemplateContext {
 
 impl From<&CompilationOptions> for TemplateContext {
     fn from(options: &CompilationOptions) -> Self {
+        let mut position = 0.0;
+        let clips = options
+            .clips
+            .clone()
+            .into_iter()
+            .map(|clip| {
+                let start = position;
+                let end = position + clip.range.1 - clip.range.0;
+                position = end;
+                let video_title = options
+                    .videos
+                    .iter()
+                    .find(|v| v.id == clip.video_id)
+                    .and_then(|v| v.video_title.clone())
+                    .map(|t| t.limit_length(45))
+                    .unwrap_or_else(|| "unknown".to_string());
+                ClipInfo {
+                    start,
+                    end,
+                    marker_title: clip.marker_title,
+                    video_title,
+                }
+            })
+            .collect();
+
         Self {
             title: options.file_name.clone(),
             width: options.output_resolution.0,
             height: options.output_resolution.1,
             fps: options.output_fps,
             codec: options.video_codec,
-            clips: options
-                .clips
-                .clone()
-                .into_iter()
-                .map(|clip| {
-                    let video_title = options
-                        .videos
-                        .iter()
-                        .find(|v| v.id == clip.video_id)
-                        .and_then(|v| v.video_title.clone())
-                        .map(|t| t.limit_length(45))
-                        .unwrap_or_else(|| "unknown".to_string());
-                    ClipInfo {
-                        start: clip.range.0,
-                        end: clip.range.1,
-                        marker_title: clip.marker_title,
-                        video_title,
-                    }
-                })
-                .collect(),
+            clips,
         }
     }
 }

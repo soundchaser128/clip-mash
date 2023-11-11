@@ -11,7 +11,7 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import {dateTimeFormat, formatSeconds} from "../helpers"
-import React, {useState} from "react"
+import React from "react"
 import EditableText from "./EditableText"
 import HoverVideo from "./HoverVideo"
 
@@ -23,6 +23,7 @@ interface Props {
   onImageClick?: (id: string) => void
   disabled?: boolean
   onAddTag?: (video: ListVideoDto) => void
+  zoomOnHover?: boolean
 }
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
@@ -53,6 +54,7 @@ const VideoCard: React.FC<Props> = ({
   onImageClick,
   disabled,
   onAddTag,
+  zoomOnHover,
 }) => {
   const tags = video.video.tags?.filter(Boolean) ?? []
   const date = new Date(video.video.createdOn * 1000)
@@ -62,9 +64,11 @@ const VideoCard: React.FC<Props> = ({
   return (
     <article
       className={clsx(
-        "card card-compact shadow-xl bg-base-200 transition-transform duration-150 hover:scale-105 hover:z-50",
+        "card card-compact shadow-xl bg-base-200",
         video.markerCount > 0 && "ring-4 ring-green-500",
         disabled && "opacity-50",
+        zoomOnHover &&
+          "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
       )}
     >
       <figure>

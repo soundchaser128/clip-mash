@@ -7,6 +7,7 @@ interface Props {
   imageSource: string
   onImageClick?: () => void
   disabled?: boolean
+  className?: string
 }
 
 export default function HoverVideo({
@@ -14,8 +15,9 @@ export default function HoverVideo({
   imageSource,
   onImageClick,
   disabled,
+  className,
 }: Props) {
-  const classes = clsx("aspect-[16/9] object-cover w-full", {
+  const classes = clsx(className, "aspect-[16/9] object-cover w-full", {
     grayscale: disabled,
   })
 

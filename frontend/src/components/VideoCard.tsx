@@ -60,16 +60,18 @@ const VideoCard: React.FC<Props> = ({
 }) => {
   if (hideDetails) {
     return (
-      <article>
-        <figure>
-          <HoverVideo
-            onImageClick={() => onImageClick && onImageClick(video.video.id)}
-            imageSource={getPreview(video.video, stashConfig)}
-            videoSource={getVideo(video.video, stashConfig)}
-            disabled={disabled}
-          />
-        </figure>
-      </article>
+      <HoverVideo
+        onImageClick={() => onImageClick && onImageClick(video.video.id)}
+        imageSource={getPreview(video.video, stashConfig)}
+        videoSource={getVideo(video.video, stashConfig)}
+        disabled={disabled}
+        className={clsx(
+          "rounded-2xl",
+          video.markerCount > 0 && "ring ring-green-500",
+          zoomOnHover &&
+            "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
+        )}
+      />
     )
   }
 
@@ -81,8 +83,8 @@ const VideoCard: React.FC<Props> = ({
   return (
     <article
       className={clsx(
-        "card card-compact shadow-xl bg-base-200",
-        video.markerCount > 0 && "ring-4 ring-green-500",
+        "card card-compact bg-base-200",
+        video.markerCount > 0 && "ring ring-green-500",
         disabled && "opacity-50",
         zoomOnHover &&
           "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",

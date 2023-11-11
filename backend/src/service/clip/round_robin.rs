@@ -6,7 +6,7 @@ use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
 use crate::server::types::{Clip, ClipLengthOptions, RoundRobinClipOptions};
 use crate::service::clip::state::{MarkerState, MarkerStateInfo};
-use crate::service::clip::{trim_clips, MIN_DURATION};
+use crate::service::clip::trim_clips;
 use crate::service::Marker;
 
 pub struct RoundRobinClipPicker;
@@ -41,7 +41,9 @@ impl ClipPicker for RoundRobinClipPicker {
         let mut clips = vec![];
         let mut marker_idx = 0;
         let has_music = matches!(options.clip_lengths, ClipLengthOptions::Songs(_));
-        let clip_lengths = ClipLengthPicker::new(options.clip_lengths, max_duration, rng);
+        let min_duration = options.min_clip_duration.unwrap_or(1.5);
+        let clip_lengths =
+            ClipLengthPicker::new(options.clip_lengths, max_duration, min_duration, rng);
         let clip_lengths = clip_lengths.durations();
         info!("clip lengths: {:?}", clip_lengths);
 
@@ -64,7 +66,7 @@ impl ClipPicker for RoundRobinClipPicker {
                     start
                 );
                 let duration = end - start;
-                if (has_music && duration > 0.0) || (!has_music && duration >= MIN_DURATION) {
+                if (has_music && duration > 0.0) || (!has_music && duration >= min_duration) {
                     info!(
                         "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
                         marker.video_id, marker.title
@@ -129,6 +131,7 @@ mod test {
                 songs,
             }),
             lenient_duration: false,
+            min_clip_duration: None,
         };
         let markers = fixtures::markers();
         let mut rng = create_seeded_rng(None);
@@ -159,6 +162,7 @@ mod test {
                 songs,
             }),
             lenient_duration: false,
+            min_clip_duration: None,
         };
 
         let markers = fixtures::markers();

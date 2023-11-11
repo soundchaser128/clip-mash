@@ -426,6 +426,7 @@ pub struct RoundRobinClipOptions {
     pub length: f64,
     pub clip_lengths: ClipLengthOptions,
     pub lenient_duration: bool,
+    pub min_clip_duration: Option<f64>,
 }
 
 #[derive(Deserialize, Debug, Serialize, ToSchema)]
@@ -434,6 +435,7 @@ pub struct WeightedRandomClipOptions {
     pub weights: Vec<(String, f64)>,
     pub length: f64,
     pub clip_lengths: ClipLengthOptions,
+    pub min_clip_duration: Option<f64>,
 }
 
 #[derive(Deserialize, Serialize, Debug, ToSchema)]
@@ -442,6 +444,7 @@ pub struct EqualLengthClipOptions {
     pub clip_duration: f64,
     pub divisors: Vec<f64>,
     pub length: Option<f64>,
+    pub min_clip_duration: Option<f64>,
 }
 
 #[derive(Deserialize, Debug, ToSchema)]

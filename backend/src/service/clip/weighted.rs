@@ -60,7 +60,9 @@ impl ClipPicker for WeightedRandomClipPicker {
         let distribution = WeightedIndex::new(choices.iter().map(|item| item.1))
             .expect("could not build distribution");
         let mut clips = vec![];
-        let clip_lengths = ClipLengthPicker::new(options.clip_lengths, options.length, rng);
+        let min_duration = options.min_clip_duration.unwrap_or(1.5);
+        let clip_lengths =
+            ClipLengthPicker::new(options.clip_lengths, options.length, min_duration, rng);
         let durations = clip_lengths.durations();
         let mut marker_state = MarkerState::new(markers, durations, options.length);
         let mut index = 0;
@@ -140,6 +142,7 @@ mod tests {
             }),
             length: target_duration,
             weights: weights.clone(),
+            min_clip_duration: None,
         };
 
         let markers = vec![
@@ -171,6 +174,7 @@ mod tests {
                 divisors: vec![2.0, 3.0, 4.0],
             }),
             lenient_duration: false,
+            min_clip_duration: None,
         };
 
         let mut rng = create_seeded_rng(None);
@@ -191,6 +195,7 @@ mod tests {
             }),
             weights,
             length: video_duration,
+            min_clip_duration: None,
         };
 
         let clips = picker.pick_clips(markers, options, &mut rng);
@@ -217,6 +222,7 @@ mod tests {
                 base_duration: 30.0,
                 divisors: vec![2.0, 3.0, 4.0],
             }),
+            min_clip_duration: None,
         };
         let markers = fixtures::other_markers();
         let mut rng = create_seeded_rng(None);
@@ -237,6 +243,7 @@ mod tests {
     #[test]
     fn test_weighted_marker_infinite_loop_bug() {
         let options = WeightedRandomClipOptions {
+            min_clip_duration: None,
             weights: vec![
                 ("Cowgirl".into(), 1.0),
                 ("Doggy Style".into(), 1.0),
@@ -268,6 +275,7 @@ mod tests {
             fixtures::create_marker("C", 0.0, 30.0, 2),
         ];
         let options = WeightedRandomClipOptions {
+            min_clip_duration: None,
             weights: vec![
                 ("A".to_string(), 1.0),
                 ("B".to_string(), 2.0),
@@ -289,6 +297,7 @@ mod tests {
     fn test_validate_options_zero_weight() {
         let markers = vec![fixtures::create_marker("A", 0.0, 30.0, 0)];
         let options = WeightedRandomClipOptions {
+            min_clip_duration: None,
             weights: vec![("A".to_string(), 0.0)],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
@@ -306,6 +315,7 @@ mod tests {
     fn test_validate_options_missing_marker() {
         let markers = vec![fixtures::create_marker("A", 0.0, 30.0, 0)];
         let options = WeightedRandomClipOptions {
+            min_clip_duration: None,
             weights: vec![("B".to_string(), 1.0)],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
@@ -323,6 +333,7 @@ mod tests {
     fn test_validate_options_missing_weight() {
         let markers = vec![fixtures::create_marker("A", 0.0, 30.0, 0)];
         let options = WeightedRandomClipOptions {
+            min_clip_duration: None,
             weights: vec![],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
@@ -353,6 +364,7 @@ mod tests {
             markers.push(fixtures::create_marker("Cowgirl", start, end, index))
         }
         let options = WeightedRandomClipOptions {
+            min_clip_duration: None,
             weights: vec![("Cowgirl".to_string(), 1.0), ("Blowjob".to_string(), 1.0)],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,

@@ -232,7 +232,7 @@ const VideoGrid: React.FC<Props> = ({
         </div>
       )}
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-1 w-full my-4">
         {videos.map((video) => (
           <VideoCard
             key={video.video.id}

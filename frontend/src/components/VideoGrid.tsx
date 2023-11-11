@@ -46,6 +46,7 @@ const VideoGrid: React.FC<Props> = ({
   const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
     undefined,
   )
+  const [showingDetails, setShowingDetails] = useState(false)
 
   const config = useConfig()
   const {addOrReplaceParams, setQueryDebounced} = useDebouncedSetQuery()
@@ -193,6 +194,21 @@ const VideoGrid: React.FC<Props> = ({
         </form>
       )}
 
+      <div className="w-full flex justify-end">
+        <span />
+        <div className="flex items-center gap-1">
+          <label className="label">
+            <span className="label-text">Show details</span>
+          </label>
+          <input
+            type="checkbox"
+            className="toggle toggle-secondary"
+            checked={showingDetails}
+            onChange={(e) => setShowingDetails(e.target.checked)}
+          />
+        </div>
+      </div>
+
       <AddTagModal
         video={editingTags}
         onClose={() => setEditingTags(undefined)}
@@ -235,6 +251,7 @@ const VideoGrid: React.FC<Props> = ({
                 ? (video) => onShowTagModal(video)
                 : undefined
             }
+            hideDetails={!showingDetails}
           />
         ))}
       </section>

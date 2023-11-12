@@ -157,13 +157,14 @@ export default function EditVideoModal() {
   const [videoDuration, setVideoDuration] = useState<number>()
   const [editedMarker, setEditedMarker] = useState<MarkerDto>()
   const [loading, setLoading] = useState(false)
-  const [threshold, setThreshold] = useState(40)
+  const threshold = 40
   const [time, setTime] = useState(0)
   const [markPoints, setMarkPoints] = useImmer<number[]>([])
   const config = useConfig()
   const showingForm = formMode === "create" || formMode === "edit"
   const isPlaying = videoRef.current?.paused === false
   const [isMuted, setIsMuted] = useState(videoRef.current?.muted)
+  const [modalOpen, setModalOpen] = useState(true)
 
   const onSubmit = async (values: Inputs) => {
     const index =
@@ -311,6 +312,7 @@ export default function EditVideoModal() {
 
   const onClose = () => {
     revalidator.revalidate()
+    setModalOpen(false)
     navigate(-1)
   }
 
@@ -420,7 +422,7 @@ export default function EditVideoModal() {
   }
 
   return (
-    <Modal isOpen onClose={onClose}>
+    <Modal isOpen={modalOpen} onClose={onClose}>
       <div className="flex gap-2">
         <video
           className="w-2/3 max-h-[82vh]"

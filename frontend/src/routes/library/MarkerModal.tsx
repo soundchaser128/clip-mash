@@ -177,6 +177,8 @@ export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
   })
 
   const {video: data, loading: videoLoading, error} = useVideoDetails(videoId)
+  const {video} = data || {}
+
   const revalidator = useRevalidator()
 
   const [markers, setMarkers] = useImmer<MarkerDto[]>(data?.markers || [])
@@ -307,8 +309,6 @@ export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
   if (!data || videoLoading) {
     return null
   }
-
-  const {video} = data
 
   const onSubmit = async (values: Inputs) => {
     const index =

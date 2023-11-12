@@ -27,7 +27,7 @@ import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
 import VideoGrid from "@/components/VideoGrid"
 import PageInfo from "@/components/PageInfo"
-import EditVideoModal from "./videos.$id"
+import EditVideoModal from "./MarkerModal"
 
 export default function ListVideos() {
   const {actions} = useStateMachine({updateForm})

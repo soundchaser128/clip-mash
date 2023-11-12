@@ -32,6 +32,7 @@ mod tests {
             fps: 30,
             clips: vec![],
             codec: VideoCodec::H264,
+            videos: vec![],
         };
 
         let description = MarkdownDescriptionGenerator

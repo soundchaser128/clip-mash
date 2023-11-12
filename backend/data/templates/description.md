@@ -12,3 +12,10 @@ Created with [ClipMash](https://github.com/soundchaser128/clip-mash).
 {% for clip in video.clips -%}
 | {{ clip.video_title }} | {{clip.marker_title}} | {{ clip.start }} | {{ clip.end }} |
 {% endfor -%}
+
+## Videos
+| Source | Title | Interactive |
+| ------ | ----- | ----------- |
+{% for video in video.videos -%}
+| {{ video.source }} | {{ video.title }} | {{ video.interactive }}
+{% endfor -%}

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::generator::CompilationOptions;
+use crate::data::database::VideoSource;
 use crate::server::types::VideoCodec;
 use crate::util::StrExt;
 use crate::Result;
@@ -12,6 +13,18 @@ mod yaml;
 
 pub trait DescriptionGenerator {
     fn generate(&self, options: TemplateContext) -> Result<String>;
+}
+
+fn format_timestamp(value: f64) -> String {
+    let hours = value.floor() as u32 / 3600;
+    let minutes = value.floor() as u32 / 60;
+    let seconds = value.floor() as u32 % 60;
+    let milliseconds = (value.fract() * 1000.0).floor() as u32;
+
+    format!(
+        "{:02}:{:02}:{:02}.{:03}",
+        hours, minutes, seconds, milliseconds
+    )
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, ToSchema)]
@@ -34,10 +47,17 @@ impl DescriptionType {
 
 #[derive(Serialize, Debug)]
 pub struct ClipInfo {
-    pub start: f64,
-    pub end: f64,
+    pub start: String,
+    pub end: String,
     pub marker_title: String,
     pub video_title: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct VideoInfo {
+    pub source: VideoSource,
+    pub title: String,
+    pub interactive: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -48,6 +68,7 @@ pub struct TemplateContext {
     pub fps: u32,
     pub clips: Vec<ClipInfo>,
     pub codec: VideoCodec,
+    pub videos: Vec<VideoInfo>,
 }
 
 impl From<&CompilationOptions> for TemplateContext {
@@ -65,12 +86,12 @@ impl From<&CompilationOptions> for TemplateContext {
                     .videos
                     .iter()
                     .find(|v| v.id == clip.video_id)
-                    .and_then(|v| v.video_title.clone())
+                    .map(|v| v.video_title.as_ref().unwrap_or(&v.id).to_string())
                     .map(|t| t.limit_length(45))
                     .unwrap_or_else(|| "unknown".to_string());
                 ClipInfo {
-                    start,
-                    end,
+                    start: format_timestamp(start),
+                    end: format_timestamp(end),
                     marker_title: clip.marker_title,
                     video_title,
                 }
@@ -78,12 +99,24 @@ impl From<&CompilationOptions> for TemplateContext {
             .collect();
 
         Self {
-            title: options.file_name.clone(),
+            title: Some(&options.file_name)
+                .filter(|s| s.is_empty())
+                .unwrap_or(&options.video_id)
+                .to_string(),
             width: options.output_resolution.0,
             height: options.output_resolution.1,
             fps: options.output_fps,
             codec: options.video_codec,
             clips,
+            videos: options
+                .videos
+                .iter()
+                .map(|v| VideoInfo {
+                    source: v.source.clone(),
+                    title: v.video_title.as_ref().unwrap_or(&v.id).to_string(),
+                    interactive: v.interactive,
+                })
+                .collect(),
         }
     }
 }

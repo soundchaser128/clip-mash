@@ -2,6 +2,7 @@ import useHotkeys from "@/hooks/useHotkeys"
 import clsx from "clsx"
 import {useEffect} from "react"
 import {HiXMark} from "react-icons/hi2"
+import {animated, useTransition} from "@react-spring/web"
 
 export interface ModalProps {
   isOpen: boolean
@@ -35,6 +36,21 @@ const Modal: React.FC<ModalProps> = ({
 
   useHotkeys("esc", handleClose)
 
+  const transition = useTransition(isOpen, {
+    from: {
+      scale: 0,
+      opacity: 0,
+    },
+    enter: {
+      scale: 1,
+      opacity: 1,
+    },
+    leave: {
+      scale: 0,
+      opacity: 0,
+    },
+  })
+
   if (!isOpen) {
     return null
   }
@@ -57,15 +73,20 @@ const Modal: React.FC<ModalProps> = ({
           size === "md" && "w-[50vw]",
         )}
       >
-        <div
-          data-testid="modal-content"
-          className={clsx(
-            "bg-base-100 rounded-lg p-4 flex flex-col overflow-y-auto max-h-[95vh]",
-            className,
-          )}
-        >
-          {children}
-        </div>
+        {transition((style, isOpen) =>
+          isOpen ? (
+            <animated.div
+              style={style}
+              data-testid="modal-content"
+              className={clsx(
+                "bg-base-100 rounded-lg p-4 flex flex-col overflow-y-auto max-h-[95vh]",
+                className,
+              )}
+            >
+              {children}
+            </animated.div>
+          ) : null,
+        )}
 
         <button
           data-testid="modal-close-button"

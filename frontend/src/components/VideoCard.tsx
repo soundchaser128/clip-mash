@@ -67,7 +67,7 @@ const VideoCard: React.FC<Props> = ({
         disabled={disabled}
         className={clsx(
           "rounded-2xl",
-          video.markerCount > 0 && "ring ring-green-500",
+          // video.markerCount > 0 && "ring ring-green-500",
           zoomOnHover &&
             "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
         )}

@@ -57,16 +57,19 @@ const Modal: React.FC<ModalProps> = ({
 
   const transition = useTransition(isOpen, {
     from: {
-      // scale: 0,
+      scale: 0,
       opacity: 0,
+      x: "-50%",
     },
     enter: {
-      // scale: 1,
+      scale: 1,
       opacity: 1,
+      x: "-50%",
     },
     leave: {
-      // scale: 0,
+      scale: 0,
       opacity: 0,
+      x: "-50%",
     },
   })
 
@@ -100,11 +103,7 @@ const Modal: React.FC<ModalProps> = ({
               size !== "lg" && position === "top" && "top-4",
               size === "md" && "w-[50vw]",
             )}
-            style={{
-              ...style,
-              transform: "translateX(-50%)",
-              transformOrigin: "center",
-            }}
+            style={style}
           >
             <div
               data-testid="modal-content"

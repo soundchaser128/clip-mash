@@ -192,13 +192,6 @@ const router = createBrowserRouter([
             path: "library",
             element: <ListVideos />,
             loader: makeVideoLoader({}),
-            children: [
-              {
-                path: ":id/markers",
-                element: <EditVideoModal />,
-                loader: videoDetailsLoader,
-              },
-            ],
           },
           {
             path: "library/add",

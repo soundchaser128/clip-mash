@@ -8,6 +8,7 @@ import useDebouncedSetQuery, {QueryPairs} from "@/hooks/useDebouncedQuery"
 import {useEffect, useState} from "react"
 import {useConfig} from "@/hooks/useConfig"
 import AddTagModal from "./AddTagModal"
+import clsx from "clsx"
 
 interface Props {
   editableTitles?: boolean
@@ -232,7 +233,12 @@ const VideoGrid: React.FC<Props> = ({
         </div>
       )}
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-1 w-full my-4">
+      <section
+        className={clsx("grid grid-cols-1 lg:grid-cols-3 w-full my-4", {
+          "gap-3": showingDetails,
+          "gap-1": !showingDetails,
+        })}
+      >
         {videos.map((video) => (
           <VideoCard
             key={video.video.id}

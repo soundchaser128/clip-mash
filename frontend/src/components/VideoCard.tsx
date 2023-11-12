@@ -83,7 +83,7 @@ const VideoCard: React.FC<Props> = ({
   return (
     <article
       className={clsx(
-        "card card-compact bg-base-200",
+        "card card-compact bg-base-200 shadow-xl",
         video.markerCount > 0 && "ring ring-green-500",
         disabled && "opacity-50",
         zoomOnHover &&

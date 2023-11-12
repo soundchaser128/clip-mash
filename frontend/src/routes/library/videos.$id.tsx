@@ -308,7 +308,7 @@ export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
     return null
   }
 
-  const {video, markers: videoMarkers} = data || {}
+  const {video} = data
 
   const onSubmit = async (values: Inputs) => {
     const index =

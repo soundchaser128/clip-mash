@@ -32,7 +32,6 @@ import {
   splitMarker,
   VideoDetailsDto,
   detectMarkers,
-  getVideo,
 } from "@/api"
 import {useConfig} from "@/hooks/useConfig"
 import Kbd from "@/components/Kbd"
@@ -40,12 +39,12 @@ import useHotkeys from "@/hooks/useHotkeys"
 import clsx from "clsx"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
-  if (video?.source === "Stash" && config) {
+  if (video.source === "Stash" && config) {
     return `${config.stashUrl}/scene/${video.stashSceneId!}/stream?apikey=${
       config.apiKey
     }`
   } else {
-    return `/api/library/video/${video?.id}/file`
+    return `/api/library/video/${video.id}/file`
   }
 }
 
@@ -135,36 +134,7 @@ const handleValidation = (values: Inputs) => {
   }
 }
 
-const useVideoDetails = (id: string | undefined) => {
-  const [video, setVideo] = useState<VideoDetailsDto>()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error>()
-
-  useEffect(() => {
-    if (!id) {
-      return
-    }
-    setLoading(true)
-    getVideo(id)
-      .then((data) => setVideo(data))
-      .catch((error) => setError(error as Error))
-      .finally(() => setLoading(false))
-  }, [id])
-
-  return {
-    video,
-    loading,
-    error,
-  }
-}
-
-interface Props {
-  videoId?: string
-  onClose: () => void
-  isOpen: boolean
-}
-
-export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
+export default function MarkerModal() {
   const {
     register,
     handleSubmit,
@@ -176,12 +146,12 @@ export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
     resolver: handleValidation,
   })
 
-  const {video: data, loading: videoLoading, error} = useVideoDetails(videoId)
-  const {video} = data || {}
+  const navigate = useNavigate()
+  const {video, markers: videoMarkers} = useLoaderData() as VideoDetailsDto
 
   const revalidator = useRevalidator()
 
-  const [markers, setMarkers] = useImmer<MarkerDto[]>(data?.markers || [])
+  const [markers, setMarkers] = useImmer<MarkerDto[]>(videoMarkers)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [formMode, setFormMode] = useState<FormMode>("hidden")
   const [videoDuration, setVideoDuration] = useState<number>()
@@ -195,9 +165,76 @@ export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
   const isPlaying = videoRef.current?.paused === false
   const [isMuted, setIsMuted] = useState(videoRef.current?.muted)
 
+  const onSubmit = async (values: Inputs) => {
+    const index =
+      formMode === "create"
+        ? markers.length
+        : markers.findIndex((m) => m.id === editedMarker?.id)
+
+    if (index === -1) {
+      throw new Error("could not find edited marker's ID in marker array")
+    }
+
+    const result =
+      formMode === "create"
+        ? await createMarker(
+            video,
+            values,
+            videoDuration!,
+            index,
+            values.createInStash ?? false,
+          )
+        : await updateMarker(editedMarker!.id, values)
+
+    if (result.isOk) {
+      const marker = result.unwrap()
+      setMarkers((draft) => {
+        if (formMode === "create") {
+          draft.push(marker)
+        } else if (formMode === "edit") {
+          const idx = draft.findIndex((m) => m.id === marker.id)
+          draft[idx] = marker
+        }
+      })
+      setFormMode("hidden")
+      revalidator.revalidate()
+    } else {
+      const err = result.error
+      if (typeof err.error === "object") {
+        for (const key in err.error) {
+          setError(key as keyof Inputs, {
+            message: err.error[key],
+          })
+        }
+      }
+    }
+  }
+
+  const onSetCurrentTime = (field: "start" | "end") => {
+    setValue(
+      field,
+      formatSeconds(videoRef.current?.currentTime || 0, "short-with-ms"),
+    )
+  }
+  const currentItemIndex = markers.findIndex((m) =>
+    isBetween(time, m.start, m.end || videoDuration!),
+  )
+
+  const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (e) => {
+    setTime(e.currentTarget.currentTime)
+  }
+
   const onAddMark = () => {
     setMarkPoints((draft) => {
       draft.push(videoRef.current!.currentTime)
+    })
+  }
+
+  const onRemoveMark = (t: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setMarkPoints((draft) => {
+      const idx = draft.findIndex((m) => m === t)
+      draft.splice(idx, 1)
     })
   }
 
@@ -227,6 +264,54 @@ export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
       const error = result.error
       console.error(error)
     }
+  }
+
+  const onShowForm = (mode: FormMode, marker?: MarkerDto) => {
+    setFormMode(mode)
+    const start = mode === "create" ? videoRef.current?.currentTime : undefined
+    setValue("start", formatSeconds(marker?.start || start, "short-with-ms"))
+    setValue("end", formatSeconds(marker?.end || undefined, "short-with-ms"))
+    setValue("title", marker?.primaryTag || "")
+
+    if (marker) {
+      setEditedMarker(marker)
+    }
+  }
+
+  const onDetectMarkers = async () => {
+    setLoading(true)
+
+    const data = await detectMarkers(video.id, {
+      threshold: threshold / 100,
+    })
+    setMarkers(markers.concat(data))
+    setLoading(false)
+    revalidator.revalidate()
+  }
+
+  const onRemoveMarker = async () => {
+    const toRemove = editedMarker!.id
+    setMarkers((draft) => {
+      const idx = draft.findIndex((m) => m.id === toRemove)
+      draft.splice(idx, 1)
+    })
+    await deleteMarker(toRemove)
+    setFormMode("hidden")
+    revalidator.revalidate()
+  }
+
+  const onDone = () => {
+    onClose()
+  }
+
+  const onMetadataLoaded: React.ReactEventHandler<HTMLVideoElement> = (e) => {
+    const duration = e.currentTarget.duration
+    setVideoDuration(duration)
+  }
+
+  const onClose = () => {
+    revalidator.revalidate()
+    navigate(-1)
   }
 
   const onSplitMarker = async () => {
@@ -306,120 +391,6 @@ export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
     }
   }, [videoRef])
 
-  if (!data || videoLoading) {
-    return null
-  }
-
-  const onSubmit = async (values: Inputs) => {
-    const index =
-      formMode === "create"
-        ? markers.length
-        : markers.findIndex((m) => m.id === editedMarker?.id)
-
-    if (index === -1) {
-      throw new Error("could not find edited marker's ID in marker array")
-    }
-
-    const result =
-      formMode === "create"
-        ? await createMarker(
-            video,
-            values,
-            videoDuration!,
-            index,
-            values.createInStash ?? false,
-          )
-        : await updateMarker(editedMarker!.id, values)
-
-    if (result.isOk) {
-      const marker = result.unwrap()
-      setMarkers((draft) => {
-        if (formMode === "create") {
-          draft.push(marker)
-        } else if (formMode === "edit") {
-          const idx = draft.findIndex((m) => m.id === marker.id)
-          draft[idx] = marker
-        }
-      })
-      setFormMode("hidden")
-      revalidator.revalidate()
-    } else {
-      const err = result.error
-      if (typeof err.error === "object") {
-        for (const key in err.error) {
-          setError(key as keyof Inputs, {
-            message: err.error[key],
-          })
-        }
-      }
-    }
-  }
-
-  const onSetCurrentTime = (field: "start" | "end") => {
-    setValue(
-      field,
-      formatSeconds(videoRef.current?.currentTime || 0, "short-with-ms"),
-    )
-  }
-  const currentItemIndex = markers.findIndex((m) =>
-    isBetween(time, m.start, m.end || videoDuration!),
-  )
-
-  const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (e) => {
-    setTime(e.currentTarget.currentTime)
-  }
-
-  const onRemoveMark = (t: number, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setMarkPoints((draft) => {
-      const idx = draft.findIndex((m) => m === t)
-      draft.splice(idx, 1)
-    })
-  }
-
-  const onShowForm = (mode: FormMode, marker?: MarkerDto) => {
-    setFormMode(mode)
-    const start = mode === "create" ? videoRef.current?.currentTime : undefined
-    setValue("start", formatSeconds(marker?.start || start, "short-with-ms"))
-    setValue("end", formatSeconds(marker?.end || undefined, "short-with-ms"))
-    setValue("title", marker?.primaryTag || "")
-
-    if (marker) {
-      setEditedMarker(marker)
-    }
-  }
-
-  const onDetectMarkers = async () => {
-    setLoading(true)
-
-    const data = await detectMarkers(video.id, {
-      threshold: threshold / 100,
-    })
-    setMarkers(markers.concat(data))
-    setLoading(false)
-    revalidator.revalidate()
-  }
-
-  const onRemoveMarker = async () => {
-    const toRemove = editedMarker!.id
-    setMarkers((draft) => {
-      const idx = draft.findIndex((m) => m.id === toRemove)
-      draft.splice(idx, 1)
-    })
-    await deleteMarker(toRemove)
-    setFormMode("hidden")
-    revalidator.revalidate()
-  }
-
-  const onDone = () => {
-    onClose()
-  }
-
-  const onMetadataLoaded: React.ReactEventHandler<HTMLVideoElement> = (e) => {
-    const duration = e.currentTarget.duration
-    setVideoDuration(duration)
-  }
-
   const onItemClick = (item: unknown, index: number) => {
     const marker = markers[index]
     onShowForm("edit", marker)
@@ -449,7 +420,7 @@ export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen onClose={onClose}>
       <div className="flex gap-2">
         <video
           className="w-2/3 max-h-[82vh]"
@@ -528,7 +499,7 @@ export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
                   </button>
                 </div>
               </div>
-              {video?.source === "Stash" && (
+              {video.source === "Stash" && (
                 <div className="form-control">
                   <label className="label cursor-pointer">
                     <span className="label-text">
@@ -722,7 +693,7 @@ export default function EditVideoModal({videoId, onClose, isOpen}: Props) {
           )}
         </button>
         <Timeline
-          length={video?.duration}
+          length={video.duration}
           items={markers.map((marker) => ({
             label: marker.primaryTag,
             length: marker.end - marker.start,

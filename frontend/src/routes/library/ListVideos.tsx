@@ -27,7 +27,6 @@ import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
 import VideoGrid from "@/components/VideoGrid"
 import PageInfo from "@/components/PageInfo"
-import EditVideoModal from "./MarkerModal"
 
 export default function ListVideos() {
   const {actions} = useStateMachine({updateForm})
@@ -37,10 +36,10 @@ export default function ListVideos() {
   const [syncingVideo, setSyncingVideo] = useState<string>()
   const videos = page.content
   const [query] = useSearchParams()
-  const [editingVideo, setEditingVideo] = useState<string | undefined>()
 
   const onOpenModal = (videoId: string) => {
-    setEditingVideo(videoId)
+    const queryString = query.toString()
+    navigate(`/library/${videoId}/markers?${queryString}`)
   }
 
   const onNextStage = () => {
@@ -87,15 +86,7 @@ export default function ListVideos() {
   return (
     <>
       <JumpToTop />
-
-      {editingVideo && (
-        <EditVideoModal
-          onClose={() => setEditingVideo(undefined)}
-          isOpen={Boolean(editingVideo)}
-          videoId={editingVideo}
-        />
-      )}
-
+      <Outlet />
       <div className="my-4 grid grid-cols-3 items-center">
         <div className="flex gap-2">
           <Link to="add" className="btn btn-accent">

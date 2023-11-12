@@ -32,6 +32,7 @@ import {
   versionLoader,
   stashVideoLoader,
   makeVideoLoader,
+  videoDetailsLoader,
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
@@ -53,6 +54,7 @@ import UploadMusic from "./routes/music/UploadMusic"
 import ReorderSongs from "./routes/music/ReorderSongs"
 import {ToastProvider} from "./hooks/useToast"
 import HomePage from "./routes/HomePage"
+import MarkerModal from "./routes/library/MarkerModal"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -190,6 +192,13 @@ const router = createBrowserRouter([
             path: "library",
             element: <ListVideos />,
             loader: makeVideoLoader({}),
+            children: [
+              {
+                path: ":id/markers",
+                element: <MarkerModal />,
+                loader: videoDetailsLoader,
+              },
+            ],
           },
           {
             path: "library/add",

@@ -3,12 +3,13 @@ use std::env;
 use camino::Utf8PathBuf;
 use time::macros::format_description;
 use tracing::info;
+use tracing_appender::non_blocking::WorkerGuard;
 
 use crate::Result;
 
 const LOGS_DIR: &str = "./logs";
 
-pub fn setup_logger() {
+pub fn setup_logger() -> WorkerGuard {
     use tracing_subscriber::prelude::*;
     use tracing_subscriber::EnvFilter;
 
@@ -16,13 +17,16 @@ pub fn setup_logger() {
         env::set_var("RUST_LOG", "info");
     }
     let file_appender = tracing_appender::rolling::daily(LOGS_DIR, "clip-mash.log");
+    let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
     tracing_subscriber::fmt()
-        .with_writer(file_appender.and(std::io::stdout))
+        .with_writer(non_blocking.and(std::io::stdout))
         .with_ansi(true)
         .with_env_filter(EnvFilter::from_default_env())
         .compact()
         .init();
+
+    guard
 }
 
 pub fn cleanup_logs() -> Result<()> {

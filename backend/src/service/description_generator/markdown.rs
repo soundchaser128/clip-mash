@@ -1,4 +1,5 @@
 use tera::{Context, Tera};
+use tracing::info;
 
 use super::{DescriptionGenerator, TemplateContext};
 use crate::Result;
@@ -7,6 +8,7 @@ pub struct MarkdownDescriptionGenerator;
 
 impl DescriptionGenerator for MarkdownDescriptionGenerator {
     fn generate(&self, options: TemplateContext) -> Result<String> {
+        info!("Generating Markdown description");
         let mut context = Context::new();
         context.insert("video", &options);
         Tera::one_off(

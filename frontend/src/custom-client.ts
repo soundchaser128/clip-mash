@@ -27,9 +27,21 @@ export const customInstance = async <T>({
     fullUrl += "?" + search.toString()
   }
 
+  let requestBody = undefined
+
+  if (data instanceof FormData) {
+    requestBody = data
+    // bug: multipart/form-data doesn't seem to work with the backend
+    if (headers) {
+      delete headers["Content-Type"]
+    }
+  } else if (typeof data !== "undefined") {
+    requestBody = JSON.stringify(data)
+  }
+
   const response = await fetch(fullUrl, {
     method,
-    body: data ? JSON.stringify(data) : undefined,
+    body: requestBody,
     headers,
   })
 

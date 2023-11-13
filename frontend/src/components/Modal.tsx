@@ -11,6 +11,7 @@ export interface ModalProps {
   className?: string
   size?: "md" | "lg" | "fluid"
   position?: "top" | "off-center"
+  onAnimationFinished?: () => void
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -18,6 +19,7 @@ const Modal: React.FC<ModalProps> = ({
   onClose,
   children,
   className,
+  onAnimationFinished,
   size = "lg",
   position = "off-center",
 }) => {
@@ -70,6 +72,11 @@ const Modal: React.FC<ModalProps> = ({
       scale: 0,
       opacity: 0,
       x: "-50%",
+    },
+    onRest: () => {
+      if (isOpen) {
+        onAnimationFinished && onAnimationFinished()
+      }
     },
   })
 

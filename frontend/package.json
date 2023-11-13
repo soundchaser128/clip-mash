@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@badrap/result": "^0.2.13",
+    "@react-hook/resize-observer": "^1.2.6",
     "@react-spring/web": "^9.7.3",
     "clsx": "^2.0.0",
     "d3": "^7.8.5",

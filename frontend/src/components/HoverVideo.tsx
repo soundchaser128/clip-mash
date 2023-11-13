@@ -8,6 +8,7 @@ interface Props {
   onImageClick?: () => void
   disabled?: boolean
   className?: string
+  overlay?: JSX.Element
 }
 
 export default function HoverVideo({
@@ -16,6 +17,7 @@ export default function HoverVideo({
   onImageClick,
   disabled,
   className,
+  overlay,
 }: Props) {
   const classes = clsx(className, "aspect-[16/9] object-cover w-full h-full", {
     grayscale: disabled,
@@ -42,6 +44,7 @@ export default function HoverVideo({
       preload="none"
       unloadVideoOnPaused
       onClick={onImageClick}
+      hoverOverlay={overlay}
     />
   )
 }

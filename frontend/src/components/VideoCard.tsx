@@ -15,6 +15,23 @@ import React from "react"
 import EditableText from "./EditableText"
 import HoverVideo from "./HoverVideo"
 
+const OverlayText: React.FC<{
+  children: React.ReactNode
+  className?: string
+}> = ({children, className}) => {
+  return (
+    <span
+      style={{textShadow: "3px 3px 5px rgba(0, 0, 0, 1)"}}
+      className={clsx(
+        "absolute text-lg text-white truncate max-w-full",
+        className,
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
 interface Props {
   video: ListVideoDto
   stashConfig?: StashConfig
@@ -67,10 +84,24 @@ const VideoCard: React.FC<Props> = ({
         disabled={disabled}
         className={clsx(
           "rounded-2xl",
-          // video.markerCount > 0 && "ring ring-green-500",
           zoomOnHover &&
             "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
         )}
+        overlay={
+          <>
+            <OverlayText className="top-2 left-2">
+              {video.video.title}
+            </OverlayText>
+            <OverlayText className="bottom-2 right-2">
+              <HiClock className="inline mr-2" />
+              {formatSeconds(video.video.duration)}
+            </OverlayText>
+            <OverlayText className="left-2 bottom-2">
+              <HiTag className="inline mr-2" />
+              Markers: <strong>{video.markerCount}</strong>
+            </OverlayText>
+          </>
+        }
       />
     )
   }

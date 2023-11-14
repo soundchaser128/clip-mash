@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.19.0
 - feat: Description generator: Generate text descriptions (Markdown, JSON or YAML) for finished compilations
 - feat: Play video when hovering over the preview image (video library, video select page, marker list page)
 - fix: Make sure logs are written to the files, even if the application crashes during startup.

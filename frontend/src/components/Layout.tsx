@@ -4,6 +4,7 @@ import {useRouteLoaderData} from "react-router-dom"
 import ThemeSwitcher from "./ThemeSwitcher"
 import {useToast} from "@/hooks/useToast"
 import Toast from "./Toast"
+import SentryInfo from "./SentryInfo"
 
 interface Props {
   children: React.ReactNode
@@ -21,6 +22,7 @@ const Layout: React.FC<Props> = ({children, isLoading}) => {
 
   return (
     <div className={clsx(styles.root, isLoading && "opacity-25")}>
+      <SentryInfo />
       {toast?.data && (
         <Toast type={toast.data.type}>{toast.data.message}</Toast>
       )}

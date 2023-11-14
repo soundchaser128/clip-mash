@@ -39,7 +39,9 @@ async fn main() -> Result<()> {
     use crate::helpers::log;
 
     color_eyre::install()?;
-    let _guard = log::setup_logger();
+    let _log_guard = log::setup_logger();
+    let _sentry_guard = helpers::sentry::setup();
+
     if let Err(e) = log::cleanup_logs() {
         warn!("failed to cleanup logs: {}", e);
     }

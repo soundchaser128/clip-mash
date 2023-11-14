@@ -10,6 +10,7 @@ import {useEffect, useRef, useState} from "react"
 import {FormStage, SerializedFormState} from "../types/form-state"
 import Layout from "../components/Layout"
 import {HiFolder, HiRocketLaunch} from "react-icons/hi2"
+import SentryInfo from "@/components/SentryInfo"
 
 const HomePage = () => {
   const videoId = useLoaderData() as string

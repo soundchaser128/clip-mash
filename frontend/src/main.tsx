@@ -55,6 +55,7 @@ import ReorderSongs from "./routes/music/ReorderSongs"
 import {ToastProvider} from "./hooks/useToast"
 import HomePage from "./routes/HomePage"
 import MarkerModal from "./routes/library/MarkerModal"
+import Sentry from "./sentry"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -276,6 +277,8 @@ createStore(
     name: "form-state",
   },
 )
+
+Sentry.setup()
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

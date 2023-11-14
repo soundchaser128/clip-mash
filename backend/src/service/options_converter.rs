@@ -61,6 +61,13 @@ impl OptionsConverterService {
         body: CreateVideoBody,
     ) -> Result<CompilationOptions> {
         let songs = self.resolve_songs(&body.song_ids).await?;
+        let video_ids = body
+            .selected_markers
+            .iter()
+            .map(|m| m.video_id.as_str())
+            .collect::<HashSet<_>>();
+        let video_ids = video_ids.into_iter().collect::<Vec<_>>();
+        let videos = self.db.videos.get_videos_by_ids(&video_ids).await?;
 
         Ok(CompilationOptions {
             video_id: body.video_id,
@@ -74,6 +81,7 @@ impl OptionsConverterService {
             video_codec: body.video_codec,
             encoding_effort: body.encoding_effort,
             video_quality: body.video_quality,
+            videos,
         })
     }
 

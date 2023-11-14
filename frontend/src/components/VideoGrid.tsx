@@ -8,6 +8,7 @@ import useDebouncedSetQuery, {QueryPairs} from "@/hooks/useDebouncedQuery"
 import {useEffect, useState} from "react"
 import {useConfig} from "@/hooks/useConfig"
 import AddTagModal from "./AddTagModal"
+import clsx from "clsx"
 
 interface Props {
   editableTitles?: boolean
@@ -29,7 +30,7 @@ interface FilterInputs {
 
 const EMPTY_VALUES: FilterInputs = {
   query: "",
-  sort: "markers",
+  sort: "title",
 }
 
 const VideoGrid: React.FC<Props> = ({
@@ -46,6 +47,7 @@ const VideoGrid: React.FC<Props> = ({
   const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
     undefined,
   )
+  const [showingDetails, setShowingDetails] = useState(false)
 
   const config = useConfig()
   const {addOrReplaceParams, setQueryDebounced} = useDebouncedSetQuery()
@@ -193,6 +195,21 @@ const VideoGrid: React.FC<Props> = ({
         </form>
       )}
 
+      <div className="w-full flex justify-end">
+        <span />
+        <div className="flex items-center gap-1">
+          <label className="label">
+            <span className="label-text">Show details</span>
+          </label>
+          <input
+            type="checkbox"
+            className="toggle toggle-secondary"
+            checked={showingDetails}
+            onChange={(e) => setShowingDetails(e.target.checked)}
+          />
+        </div>
+      </div>
+
       <AddTagModal
         video={editingTags}
         onClose={() => setEditingTags(undefined)}
@@ -216,7 +233,12 @@ const VideoGrid: React.FC<Props> = ({
         </div>
       )}
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
+      <section
+        className={clsx("grid grid-cols-1 lg:grid-cols-3 w-full my-4", {
+          "gap-3": showingDetails,
+          "gap-1": !showingDetails,
+        })}
+      >
         {videos.map((video) => (
           <VideoCard
             key={video.video.id}
@@ -235,6 +257,7 @@ const VideoGrid: React.FC<Props> = ({
                 ? (video) => onShowTagModal(video)
                 : undefined
             }
+            hideDetails={!showingDetails}
           />
         ))}
       </section>

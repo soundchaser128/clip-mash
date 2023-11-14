@@ -21,6 +21,7 @@ import JumpToTop from "../../components/JumpToTop"
 import EditableText from "../../components/EditableText"
 import {updateMarker} from "../../api"
 import useFuse from "../../hooks/useFuse"
+import HoverVideo from "@/components/HoverVideo"
 
 const SelectMarkers: React.FC = () => {
   const initialMarkers = useLoaderData() as MarkerDto[]
@@ -48,7 +49,6 @@ const SelectMarkers: React.FC = () => {
     },
   )
   const [filter, setFilter] = useState("")
-  const [videoPreview, setVideoPreview] = useState<number>()
   const navigate = useNavigate()
   const markers = useFuse({
     query: filter,
@@ -58,15 +58,6 @@ const SelectMarkers: React.FC = () => {
 
   const [maxMarkerLength, setMaxMarkerLength] = useState<number>()
   const allDisabled = Object.values(selection).every((m) => !m.selected)
-
-  const onVideoPreviewChange = (id: number, checked: boolean) => {
-    if (checked) {
-      setVideoPreview(id)
-    } else {
-      setVideoPreview(undefined)
-    }
-  }
-
   const totalDuration = formatSeconds(sumDurations(Object.values(selection)))
 
   const onCheckboxChange = (id: number, checked: boolean) => {
@@ -264,27 +255,12 @@ const SelectMarkers: React.FC = () => {
               )}
             >
               <figure>
-                {videoPreview === marker.id && (
-                  <video
-                    muted
-                    autoPlay
-                    src={streamUrl}
-                    width={499}
-                    height={281}
-                  />
-                )}
-                {videoPreview !== marker.id && (
-                  <img
-                    src={marker.screenshotUrl}
-                    className={clsx(
-                      "aspect-[16/9] object-cover object-top w-full cursor-pointer",
-                      !selectedMarker.selected && "grayscale",
-                    )}
-                    onClick={() => onCheckboxToggle(marker.id)}
-                    width={499}
-                    height={281}
-                  />
-                )}
+                <HoverVideo
+                  videoSource={streamUrl}
+                  imageSource={marker.screenshotUrl}
+                  onImageClick={() => onCheckboxToggle(marker.id)}
+                  disabled={!selectedMarker.selected}
+                />
               </figure>
 
               <div className="card-body">
@@ -349,20 +325,6 @@ const SelectMarkers: React.FC = () => {
                           onChange={(e) =>
                             onCheckboxChange(marker.id, e.target.checked)
                           }
-                        />
-                      </label>
-                    </div>
-                    <div className="form-control">
-                      <label className="label cursor-pointer">
-                        <span className="label-text">Video preview</span>
-                        <input
-                          onChange={(e) =>
-                            onVideoPreviewChange(marker.id, e.target.checked)
-                          }
-                          checked={videoPreview === marker.id}
-                          disabled={!selectedMarker.selected}
-                          type="checkbox"
-                          className="toggle toggle-sm"
                         />
                       </label>
                     </div>

@@ -13,6 +13,21 @@ import {
 import {dateTimeFormat, formatSeconds} from "../helpers"
 import React from "react"
 import EditableText from "./EditableText"
+import HoverVideo from "./HoverVideo"
+
+const OverlayText: React.FC<{
+  children: React.ReactNode
+  className?: string
+}> = ({children, className}) => {
+  return (
+    <span
+      style={{textShadow: "3px 3px 5px rgba(0, 0, 0, 1)"}}
+      className={clsx("absolute text-white truncate max-w-full", className)}
+    >
+      {children}
+    </span>
+  )
+}
 
 interface Props {
   video: ListVideoDto
@@ -22,6 +37,8 @@ interface Props {
   onImageClick?: (id: string) => void
   disabled?: boolean
   onAddTag?: (video: ListVideoDto) => void
+  zoomOnHover?: boolean
+  hideDetails?: boolean
 }
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
@@ -34,6 +51,16 @@ function getPreview(video: VideoDto, config?: StashConfig): string {
   }
 }
 
+function getVideo(video: VideoDto, config?: StashConfig): string {
+  if (video.source === "Stash" && config) {
+    return `${config.stashUrl}/scene/${video.stashSceneId!}/stream?apikey=${
+      config.apiKey
+    }`
+  } else {
+    return `/api/library/video/${video.id}/file`
+  }
+}
+
 const VideoCard: React.FC<Props> = ({
   video,
   stashConfig,
@@ -42,33 +69,64 @@ const VideoCard: React.FC<Props> = ({
   onImageClick,
   disabled,
   onAddTag,
+  zoomOnHover,
+  hideDetails,
 }) => {
+  if (hideDetails) {
+    return (
+      <HoverVideo
+        onImageClick={() => onImageClick && onImageClick(video.video.id)}
+        imageSource={getPreview(video.video, stashConfig)}
+        videoSource={getVideo(video.video, stashConfig)}
+        disabled={disabled}
+        className={clsx(
+          "rounded-2xl",
+          zoomOnHover &&
+            "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
+        )}
+        overlay={
+          <>
+            <OverlayText className="top-2 left-2">
+              {video.video.title}
+            </OverlayText>
+            <OverlayText className="bottom-2 right-2">
+              <HiClock className="inline mr-2" />
+              {formatSeconds(video.video.duration)}
+            </OverlayText>
+            <OverlayText className="left-2 bottom-2">
+              <HiTag className="inline mr-2" />
+              Markers: <strong>{video.markerCount}</strong>
+            </OverlayText>
+          </>
+        }
+      />
+    )
+  }
+
   const tags = video.video.tags?.filter(Boolean) ?? []
   const date = new Date(video.video.createdOn * 1000)
   const isoDate = date.toISOString()
   const humanDate = dateTimeFormat.format(date)
+
   return (
     <article
       className={clsx(
-        "card card-compact shadow-xl bg-base-200",
-        video.markerCount > 0 && "ring-4 ring-green-500",
+        "card card-compact bg-base-200 shadow-xl",
+        video.markerCount > 0 && "ring ring-green-500",
         disabled && "opacity-50",
+        zoomOnHover &&
+          "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
       )}
     >
       <figure>
-        <img
-          className={clsx(
-            "aspect-[16/9] object-cover w-full",
-            onImageClick && "cursor-pointer",
-            disabled && "grayscale",
-          )}
-          src={getPreview(video.video, stashConfig)}
-          width={499}
-          height={281}
-          onClick={() => onImageClick && onImageClick(video.video.id)}
+        <HoverVideo
+          onImageClick={() => onImageClick && onImageClick(video.video.id)}
+          imageSource={getPreview(video.video, stashConfig)}
+          videoSource={getVideo(video.video, stashConfig)}
+          disabled={disabled}
         />
       </figure>
-      <div className="card-body gap-0">
+      <section className="card-body gap-0">
         <h2 className="card-title">
           {onEditTitle && (
             <EditableText
@@ -137,10 +195,11 @@ const VideoCard: React.FC<Props> = ({
             </strong>
           </li>
         </ul>
+
         <div className="card-actions justify-between grow items-end">
           {actionChildren}
         </div>
-      </div>
+      </section>
     </article>
   )
 }

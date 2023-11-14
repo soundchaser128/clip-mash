@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- feat: Description generator: Generate text descriptions (Markdown, JSON or YAML) for finished compilations
+- feat: Play video when hovering over the preview image (video library, video select page, marker list page)
+- fix: Make sure logs are written to the files, even if the application crashes during startup.
+- fix: Music upload from disk didn't work
+- feat: Start adding some animations with react-spring
+- feat: Hide details in the video grid per default and add a toggle to show them
 
 ## 0.18.0
 - feat: Allow sorting clips by putting markers into groups.

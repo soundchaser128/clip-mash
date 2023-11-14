@@ -62,8 +62,8 @@ pub fn debug_output(output: Output) {
 }
 
 pub fn generate_id() -> String {
-    const ADJECTIVES: &str = include_str!("../../data/adjectives.txt");
-    const ANIMALS: &str = include_str!("../../data/animals.txt");
+    const ADJECTIVES: &str = include_str!("../../data/words/adjectives.txt");
+    const ANIMALS: &str = include_str!("../../data/words/animals.txt");
 
     lazy_static! {
         static ref ADJECTIVE_LIST: Vec<&'static str> =
@@ -88,6 +88,20 @@ pub fn format_duration(seconds: f64) -> String {
 
 pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
     a + (b - a) * t
+}
+
+pub trait StrExt {
+    fn limit_length(&self, max_length: usize) -> String;
+}
+
+impl StrExt for str {
+    fn limit_length(&self, max_length: usize) -> String {
+        if self.len() > max_length {
+            format!("{}…", &self[..max_length])
+        } else {
+            self.to_string()
+        }
+    }
 }
 
 #[cfg(test)]

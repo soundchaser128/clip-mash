@@ -17,11 +17,11 @@ import {
 import "inter-ui/inter.css"
 import "./index.css"
 
-import VideoOptions, {videoOptionsLoader} from "./routes/video-options"
-import Progress from "./routes/progress"
-import PreviewClips from "./routes/clips/clips"
-import ListVideos from "./routes/library/videos"
-import CreateLayout from "./routes/root"
+import VideoOptions, {videoOptionsLoader} from "./routes/VideoOptions"
+import Progress from "./routes/CreateVideoPage"
+import PreviewClips from "./routes/clips/ClipPreviewPage"
+import ListVideos from "./routes/library/ListVideos"
+import CreateLayout from "./routes/Layout"
 import Layout from "./components/Layout"
 import Music from "./routes/music/MusicPage"
 import {
@@ -30,31 +30,31 @@ import {
   newIdLoader,
   musicLoader,
   versionLoader,
-  videoDetailsLoader,
   stashVideoLoader,
   makeVideoLoader,
+  videoDetailsLoader,
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
-import MarkersPage from "./routes/library/markers"
+import MarkersPage from "./routes/library/SelectMarkers"
 import {resetForm} from "./routes/actions"
-import AddVideosPage from "./routes/library/add"
+import AddVideosPage from "./routes/library/add/AddVideosPaage"
 import useNotification from "./hooks/useNotification"
 import {FormStage} from "./types/form-state"
-import EditVideoModal from "./routes/library/videos.$id"
-import DownloadVideosPage from "./routes/library/add/download"
-import SelectVideos from "./routes/library/add/folder"
-import AddStashVideoPage from "./routes/library/add/stash"
+import DownloadVideosPage from "./routes/library/add/DownloadVideosPage"
+import SelectVideos from "./routes/library/add/AddLocalVideosPage"
+import AddStashVideoPage from "./routes/library/add/AddStashVideoPage"
 import {ConfigProvider} from "./hooks/useConfig"
-import StashConfigPage from "./routes/stash-config"
-import FunscriptPage from "./routes/funscript"
-import DownloadVideoPage from "./routes/download-video"
-import SelectVideosPage from "./routes/library/select-videos"
-import HomePage from "./routes/home"
+import StashConfigPage from "./routes/StashConfig"
+import FunscriptPage from "./routes/FunscriptPage"
+import DownloadVideoPage from "./routes/DownloadFinishedVideo"
+import SelectVideosPage from "./routes/library/SelectVideos"
 import DownloadMusic from "./routes/music/DownloadMusic"
 import UploadMusic from "./routes/music/UploadMusic"
 import ReorderSongs from "./routes/music/ReorderSongs"
 import {ToastProvider} from "./hooks/useToast"
+import HomePage from "./routes/HomePage"
+import MarkerModal from "./routes/library/MarkerModal"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -195,7 +195,7 @@ const router = createBrowserRouter([
             children: [
               {
                 path: ":id/markers",
-                element: <EditVideoModal />,
+                element: <MarkerModal />,
                 loader: videoDetailsLoader,
               },
             ],

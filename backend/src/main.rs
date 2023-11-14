@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
     use crate::helpers::log;
 
     color_eyre::install()?;
-    log::setup_logger();
+    let _guard = log::setup_logger();
     if let Err(e) = log::cleanup_logs() {
         warn!("failed to cleanup logs: {}", e);
     }
@@ -140,7 +140,11 @@ async fn main() -> Result<()> {
             post(handlers::project::get_combined_funscript),
         )
         .route("/finished", get(handlers::project::list_finished_videos))
-        .route("/download", get(handlers::project::download_video));
+        .route("/download", get(handlers::project::download_video))
+        .route(
+            "/description/:type",
+            post(handlers::project::generate_description),
+        );
 
     let stash_routes = Router::new()
         .route("/config", get(handlers::stash::get_config))

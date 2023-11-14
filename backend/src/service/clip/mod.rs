@@ -22,7 +22,7 @@ mod sort;
 mod state;
 mod weighted;
 
-const MIN_DURATION: f64 = 1.5;
+// const MIN_DURATION: f64 = 1.5;
 
 pub trait ClipPicker {
     type Options;
@@ -237,6 +237,7 @@ mod tests {
                     clip_duration: 30.0,
                     divisors: vec![2.0, 3.0, 4.0],
                     length: None,
+                    min_clip_duration: None,
                 }),
                 order: ClipOrder::Scene,
             },
@@ -287,6 +288,7 @@ mod tests {
                     clip_duration: 30.0,
                     divisors: vec![2.0, 3.0, 4.0],
                     length: None,
+                    min_clip_duration: None,
                 }),
                 order: ClipOrder::Scene,
             },
@@ -358,6 +360,7 @@ mod tests {
                     }),
                     length: 30.0,
                     lenient_duration: false,
+                    min_clip_duration: None,
                 }),
                 order: ClipOrder::Scene,
             },
@@ -385,6 +388,7 @@ mod tests {
                     }),
                     length: 30.0,
                     lenient_duration: false,
+                    min_clip_duration: None,
                 }),
                 order: ClipOrder::Scene,
             },

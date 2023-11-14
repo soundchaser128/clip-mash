@@ -23,3 +23,7 @@ build:
 setup:
     just frontend setup
     just backend setup
+
+fix:
+    just backend fix
+    just frontend fix

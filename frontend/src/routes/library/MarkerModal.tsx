@@ -134,7 +134,7 @@ const handleValidation = (values: Inputs) => {
   }
 }
 
-export default function EditVideoModal() {
+export default function MarkerModal() {
   const {
     register,
     handleSubmit,
@@ -157,13 +157,14 @@ export default function EditVideoModal() {
   const [videoDuration, setVideoDuration] = useState<number>()
   const [editedMarker, setEditedMarker] = useState<MarkerDto>()
   const [loading, setLoading] = useState(false)
-  const [threshold, setThreshold] = useState(40)
+  const threshold = 40
   const [time, setTime] = useState(0)
   const [markPoints, setMarkPoints] = useImmer<number[]>([])
   const config = useConfig()
   const showingForm = formMode === "create" || formMode === "edit"
   const isPlaying = videoRef.current?.paused === false
   const [isMuted, setIsMuted] = useState(videoRef.current?.muted)
+  const [animationFinished, setAnimationFinished] = useState(false)
 
   const onSubmit = async (values: Inputs) => {
     const index =

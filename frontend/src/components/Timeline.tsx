@@ -1,7 +1,8 @@
 import clsx from "clsx"
 import {formatSeconds, getSegmentColor, getSegmentTextColor} from "../helpers"
-import React, {useMemo, useRef} from "react"
+import React, {Ref, RefObject, useMemo, useRef} from "react"
 import * as d3 from "d3"
+import useContainerSize from "@/hooks/useContainerSize"
 
 interface Item {
   label: string
@@ -31,7 +32,8 @@ interface TimeAxisProps {
 
 const TimeAxis = ({length, onClick}: TimeAxisProps) => {
   const svgRef = useRef<SVGSVGElement>(null)
-  const width = svgRef.current?.getBoundingClientRect().width || 0
+  // @ts-expect-error this type definition is too strict, works fine
+  const {width} = useContainerSize(svgRef)
   const range = [0, width]
   const domain = [0, length]
   const domainDep = domain.join(",")

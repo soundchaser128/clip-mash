@@ -1,5 +1,6 @@
 pub mod clip;
 pub mod commands;
+pub mod description_generator;
 pub mod directories;
 pub mod encoding_optimization;
 pub mod funscript;

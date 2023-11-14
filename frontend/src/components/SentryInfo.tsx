@@ -32,10 +32,10 @@ export default function SentryInfo() {
       </span>
 
       <div className="join">
-        <button onClick={onClose} className="btn btn-ghost join-item">
-          Close
+        <button onClick={onClose} className="btn btn-primary join-item">
+          Enable
         </button>
-        <button onClick={onDisable} className="btn btn-primary join-item">
+        <button onClick={onDisable} className="btn btn-secondary join-item">
           Disable
         </button>
       </div>

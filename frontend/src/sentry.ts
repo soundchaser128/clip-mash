@@ -30,6 +30,7 @@ const Sentry = {
           tracePropagationTargets: ["localhost"],
         }),
         new sentry.Replay(),
+        new sentry.BrowserProfilingIntegration(),
       ],
       tracesSampleRate: 1.0,
       replaysSessionSampleRate: 0.1,

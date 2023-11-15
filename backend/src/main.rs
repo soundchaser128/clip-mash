@@ -8,8 +8,6 @@ use axum::Router;
 use color_eyre::Report;
 use tracing::{info, warn};
 use utoipa::OpenApi;
-use utoipa_rapidoc::RapiDoc;
-use utoipa_redoc::{Redoc, Servable};
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::data::database::Database;
@@ -17,6 +15,7 @@ use crate::server::docs::ApiDoc;
 use crate::server::handlers::AppState;
 use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
+use crate::service::new_version_checker::NewVersionChecker;
 
 mod data;
 mod helpers;
@@ -71,6 +70,7 @@ async fn main() -> Result<()> {
         database,
         directories,
         ffmpeg_location,
+        new_version_checker: NewVersionChecker::new(),
     });
 
     let library_routes = Router::new()
@@ -174,10 +174,6 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
-        // There is no need to create `RapiDoc::with_openapi` because the OpenApi is served
-        // via SwaggerUi instead we only make rapidoc to point to the existing doc.
-        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"))
         .nest("/api", api_routes)
         .fallback_service(static_files::service())
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))

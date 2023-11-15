@@ -21,23 +21,24 @@ export default function SentryInfo() {
   }
 
   return (
-    <div className="alert self-center my-4 max-w-2xl">
-      <HiInformationCircle className="w-8 h-8" />
-      <span>
-        ClipMash uses{" "}
-        <a className="link" href="https://sentry.io">
-          Sentry
-        </a>{" "}
-        to collect anonymous error reports. You can disable this here.
-      </span>
-
-      <div className="join">
-        <button onClick={onClose} className="btn btn-primary join-item">
-          Enable
-        </button>
-        <button onClick={onDisable} className="btn btn-secondary join-item">
-          Disable
-        </button>
+    <div className="toast toast-center toast-top z-20">
+      <div className="alert shadow-xl">
+        <HiInformationCircle className="w-8 h-8" />
+        <span>
+          ClipMash uses{" "}
+          <a className="link" href="https://sentry.io">
+            Sentry
+          </a>{" "}
+          to collect anonymous error reports.
+        </span>
+        <div className="join">
+          <button onClick={onClose} className="btn btn-primary join-item">
+            Enable
+          </button>
+          <button onClick={onDisable} className="btn btn-secondary join-item">
+            Disable
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -21,7 +21,7 @@ const OverlayText: React.FC<{
 }> = ({children, className}) => {
   return (
     <span
-      style={{textShadow: "3px 3px 5px rgba(0, 0, 0, 1)"}}
+      style={{textShadow: "0px 0px 8px black"}}
       className={clsx("absolute text-white truncate max-w-full", className)}
     >
       {children}

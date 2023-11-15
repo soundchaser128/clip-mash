@@ -13,7 +13,6 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -58,3 +57,6 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          secret-envs: 
+            - "CLIP_MASH_SENTRY_URI=${{ secrets.CLIP_MASH_SENTRY_URI }}"
+            - "VITE_CLIP_MASH_FRONTEND_SENTRY_URI=${{ secrets.VITE_CLIP_MASH_FRONTEND_SENTRY_URI }}"

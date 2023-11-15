@@ -155,7 +155,8 @@ async fn run() -> Result<()> {
         .route("/song/:id/stream", get(handlers::music::stream_song))
         .route("/song/download", post(handlers::music::download_music))
         .route("/song/upload", post(handlers::music::upload_music))
-        .route("/song/:id/beats", get(handlers::music::get_beats));
+        .route("/song/:id/beats", get(handlers::music::get_beats))
+        .route("/debug/sentry-error", post(handlers::debug::sentry_error));
 
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))

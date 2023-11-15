@@ -177,7 +177,6 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   }
 
   const onSubmit = (values: ClipFormInputs) => {
-    console.log("validating", values)
     if (
       confirmBeforeSubmit &&
       !window.confirm(

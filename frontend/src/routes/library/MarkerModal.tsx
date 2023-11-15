@@ -164,7 +164,6 @@ export default function MarkerModal() {
   const showingForm = formMode === "create" || formMode === "edit"
   const isPlaying = videoRef.current?.paused === false
   const [isMuted, setIsMuted] = useState(videoRef.current?.muted)
-  const [animationFinished, setAnimationFinished] = useState(false)
 
   const onSubmit = async (values: Inputs) => {
     const index =

@@ -81,7 +81,6 @@ const Autocomplete: React.FC<Props> = ({
 }
 
 interface ControlledProps<T extends FieldValues> {
-  error?: FieldError
   control: Control<T>
   name: Path<T>
   options?: string[]
@@ -93,7 +92,6 @@ interface ControlledProps<T extends FieldValues> {
 function ControlledAutocomplete<T extends FieldValues>({
   control,
   options,
-  error,
   name,
   placeholder,
   className,

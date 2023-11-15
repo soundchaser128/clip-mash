@@ -1,4 +1,3 @@
-import {HiInformationCircle} from "react-icons/hi2"
 import Sentry from "@/sentry"
 import {useState} from "react"
 import Toast from "./Toast"

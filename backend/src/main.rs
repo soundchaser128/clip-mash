@@ -206,7 +206,7 @@ fn main() -> Result<()> {
         .build()?
         .block_on(async {
             if let Err(e) = run().await {
-                error!("failed to run: {}", e);
+                error!("failed to run: {e:?}");
             }
         });
 

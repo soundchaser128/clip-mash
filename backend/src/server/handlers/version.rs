@@ -12,7 +12,7 @@ use crate::service::new_version_checker::AppVersion;
     get,
     path = "/api/version",
     responses(
-        (status = 200, description = "Return the version of the application", body= AppVersion)
+        (status = 200, description = "Return the version of the application", body = AppVersion)
     )
 )]
 pub async fn get_version(State(state): State<Arc<AppState>>) -> Result<Json<AppVersion>, AppError> {

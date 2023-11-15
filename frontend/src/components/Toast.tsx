@@ -15,9 +15,16 @@ interface Props {
   type?: ToastType
   hideCloseButton?: boolean
   onClose?: () => void
+  className?: string
 }
 
-const Toast: React.FC<Props> = ({type, children, hideCloseButton, onClose}) => {
+const Toast: React.FC<Props> = ({
+  type,
+  children,
+  hideCloseButton,
+  onClose,
+  className,
+}) => {
   const [visible, setVisible] = useState(true)
 
   const handleClose = () => {
@@ -48,12 +55,16 @@ const Toast: React.FC<Props> = ({type, children, hideCloseButton, onClose}) => {
   return (
     <div className="toast toast-top toast-center text-lg z-50">
       <div
-        className={clsx("relative alert shadow-xl min-w-[400px]", {
-          "alert-success": type === "success",
-          "alert-error": type === "error",
-          "alert-warning": type === "warning",
-          "alert-info": type === "info",
-        })}
+        className={clsx(
+          "relative alert shadow-xl min-w-[400px]",
+          {
+            "alert-success": type === "success",
+            "alert-error": type === "error",
+            "alert-warning": type === "warning",
+            "alert-info": type === "info",
+          },
+          className,
+        )}
       >
         <Icon className="w-8 h-8" />
         <div className="w-full text-center">{children}</div>

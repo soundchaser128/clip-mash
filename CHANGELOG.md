@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- feat: Add Sentry integration to frontend and backend to track errors.
+- feat: Check for updates on startup, show a notification if there's a new version.
 
 ## 0.19.0
 - feat: Description generator: Generate text descriptions (Markdown, JSON or YAML) for finished compilations

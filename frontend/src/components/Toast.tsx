@@ -12,10 +12,11 @@ export type ToastType = "success" | "error" | "warning" | "info"
 
 interface Props {
   children: React.ReactNode
-  type: ToastType
+  type?: ToastType
+  hideCloseButton?: boolean
 }
 
-const Toast: React.FC<Props> = ({type, children}) => {
+const Toast: React.FC<Props> = ({type, children, hideCloseButton}) => {
   const [visible, setVisible] = useState(true)
 
   const onClose = () => {
@@ -37,7 +38,7 @@ const Toast: React.FC<Props> = ({type, children}) => {
     case "warning":
       Icon = HiExclamationTriangle
       break
-    case "info":
+    default:
       Icon = HiInformationCircle
       break
   }
@@ -55,10 +56,12 @@ const Toast: React.FC<Props> = ({type, children}) => {
         <Icon className="w-8 h-8" />
         <div className="w-full text-center">{children}</div>
 
-        <HiXMark
-          onClick={onClose}
-          className="w-4 h-4 absolute top-2 right-2 cursor-pointer"
-        />
+        {!hideCloseButton && (
+          <HiXMark
+            onClick={onClose}
+            className="w-4 h-4 absolute top-2 right-2 cursor-pointer"
+          />
+        )}
       </div>
     </div>
   )

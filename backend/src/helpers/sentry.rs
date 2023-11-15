@@ -6,13 +6,6 @@ use tracing::info;
 const DISABLE_SENTRY: &str = "CLIP_MASH_DISABLE_SENTRY";
 
 pub fn setup() -> Option<ClientInitGuard> {
-    let is_debug_build = cfg!(debug_assertions);
-
-    if is_debug_build {
-        info!("Debug build, not initializing Sentry");
-        return None;
-    }
-
     if env::var(DISABLE_SENTRY).is_ok() {
         info!(
             "Environment variable {} is set, not initializing Sentry",

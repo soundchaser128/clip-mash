@@ -656,7 +656,7 @@ export interface Beats {
 export interface AppVersion {
   currentVersion: string
   needsUpdate: boolean
-  newVersion: string
+  newestVersion: string
 }
 
 export type AddVideosRequestOneOfFiveType =

@@ -6,7 +6,7 @@ use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 use color_eyre::Report;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -29,27 +29,12 @@ pub type Result<T> = std::result::Result<T, Report>;
 // 100 MB
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
-#[tokio::main]
-async fn main() -> Result<()> {
+async fn run() -> Result<()> {
     use server::{handlers, static_files};
     use service::commands::ffmpeg;
     use service::migrations;
 
-    use crate::helpers::log;
-
-    color_eyre::install()?;
-    let _log_guard = log::setup_logger();
-    let _sentry_guard = helpers::sentry::setup();
-
-    if let Err(e) = log::cleanup_logs() {
-        warn!("failed to cleanup logs: {}", e);
-    }
-
-    let version = env!("CARGO_PKG_VERSION");
-    info!("starting clip-mash v{}", version);
-
     let directories = Directories::new()?;
-
     let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
     info!("using ffmpeg at {ffmpeg_location:?}");
 
@@ -198,6 +183,32 @@ async fn main() -> Result<()> {
     axum::Server::bind(&addr.parse().unwrap())
         .serve(app.into_make_service())
         .await?;
+
+    Ok(())
+}
+
+fn main() -> Result<()> {
+    use crate::helpers::{log, sentry};
+
+    color_eyre::install()?;
+    let _log_guard = log::setup_logger();
+    let _sentry_guard = sentry::setup();
+
+    if let Err(e) = log::cleanup_logs() {
+        warn!("failed to cleanup logs: {}", e);
+    }
+
+    let version = env!("CARGO_PKG_VERSION");
+    info!("starting clip-mash v{}", version);
+
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?
+        .block_on(async {
+            if let Err(e) = run().await {
+                error!("failed to run: {}", e);
+            }
+        });
 
     Ok(())
 }

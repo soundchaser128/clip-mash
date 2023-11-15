@@ -6,6 +6,7 @@ import {useToast} from "@/hooks/useToast"
 import Toast from "./Toast"
 import SentryInfo from "./SentryInfo"
 import {AppVersion} from "@/api"
+import UpdateAvailableAlert from "./UpdateAvailableAlert"
 
 interface Props {
   children: React.ReactNode
@@ -24,6 +25,7 @@ const Layout: React.FC<Props> = ({children, isLoading}) => {
   return (
     <div className={clsx(styles.root, isLoading && "opacity-25")}>
       <SentryInfo />
+      <UpdateAvailableAlert />
       {toast?.data && (
         <Toast type={toast.data.type}>{toast.data.message}</Toast>
       )}

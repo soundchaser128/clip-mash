@@ -14,13 +14,15 @@ interface Props {
   children: React.ReactNode
   type?: ToastType
   hideCloseButton?: boolean
+  onClose?: () => void
 }
 
-const Toast: React.FC<Props> = ({type, children, hideCloseButton}) => {
+const Toast: React.FC<Props> = ({type, children, hideCloseButton, onClose}) => {
   const [visible, setVisible] = useState(true)
 
-  const onClose = () => {
+  const handleClose = () => {
     setVisible(false)
+    onClose && onClose()
   }
 
   if (!visible) {
@@ -58,7 +60,7 @@ const Toast: React.FC<Props> = ({type, children, hideCloseButton}) => {
 
         {!hideCloseButton && (
           <HiXMark
-            onClick={onClose}
+            onClick={handleClose}
             className="w-4 h-4 absolute top-2 right-2 cursor-pointer"
           />
         )}

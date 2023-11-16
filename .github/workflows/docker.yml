@@ -1,9 +1,16 @@
 name: Docker
 
+# on:
+#   push:
+#     tags:
+#       - v[0-9]+.*
+
+# temporary
 on:
   push:
-    tags:
-      - v[0-9]+.*
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -57,6 +64,6 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          secret-envs: 
-            - "CLIP_MASH_SENTRY_URI=${{ secrets.CLIP_MASH_SENTRY_URI }}"
-            - "VITE_CLIP_MASH_FRONTEND_SENTRY_URI=${{ secrets.VITE_CLIP_MASH_FRONTEND_SENTRY_URI }}"
+          secret-envs: |
+            CLIP_MASH_SENTRY_URI=${{ secrets.CLIP_MASH_SENTRY_URI }}
+            VITE_CLIP_MASH_FRONTEND_SENTRY_URI=${{ secrets.VITE_CLIP_MASH_FRONTEND_SENTRY_URI }}

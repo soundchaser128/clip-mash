@@ -528,16 +528,16 @@ export default function MarkerModal() {
                 ) : (
                   <div />
                 )}
-                <div className="btn-group">
+                <div className="join">
                   <button
                     onClick={() => setFormMode("hidden")}
-                    className="btn btn-outline"
+                    className="btn btn-outline join-item"
                     type="button"
                   >
                     <HiXMark className="mr-2" />
                     Cancel
                   </button>
-                  <button className="btn btn-primary" type="submit">
+                  <button className="btn btn-primary join-item" type="submit">
                     <HiPlus className="mr-2" />{" "}
                     {formMode === "create" ? "Add" : "Save"}
                   </button>

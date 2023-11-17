@@ -4,6 +4,7 @@ import {useForm} from "react-hook-form"
 import {useLoaderData} from "react-router-dom"
 import ExternalLink from "../components/ExternalLink"
 import {getHealth, setConfig} from "../api"
+import {HiCheck, HiCheckBadge, HiCheckCircle, HiCog} from "react-icons/hi2"
 
 interface Inputs {
   stashUrl: string
@@ -60,7 +61,7 @@ function StashConfigPage() {
 
   return (
     <section className="py-4 flex flex-col min-h-screen">
-      <h1 className="text-5xl text-primary font-bold mb-4 text-center">
+      <h1 className="text-3xl text-primary font-bold mb-4 text-center">
         Stash configuration setup
       </h1>
       <form
@@ -106,9 +107,11 @@ function StashConfigPage() {
             type="button"
             className="btn btn-secondary"
           >
+            <HiCog className="w-6 h-6" />
             Test credentials
           </button>
           <button type="submit" className="btn btn-success">
+            <HiCheckCircle className="w-6 h-6" />
             Submit
           </button>
         </div>

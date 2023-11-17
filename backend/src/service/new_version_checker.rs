@@ -3,7 +3,6 @@ use serde::Serialize;
 use serde_json::Value;
 use tokio::sync::Mutex;
 use tracing::{debug, info};
-use utoipa::openapi::info;
 use utoipa::ToSchema;
 
 use crate::Result;

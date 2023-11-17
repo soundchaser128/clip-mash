@@ -1,16 +1,9 @@
 name: Docker
 
-# on:
-#   push:
-#     tags:
-#       - v[0-9]+.*
-
-# temporary
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+      - v[0-9]+.*
 
 env:
   # Use docker.io for Docker Hub if empty

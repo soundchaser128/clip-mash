@@ -32,6 +32,8 @@ jobs:
         with:
           node-version: "18.x"
       - run: cd frontend && npm ci && npm run build --if-present && cd ..
+        env:
+          VITE_CLIP_MASH_FRONTEND_SENTRY_URI: ${{ secrets.VITE_CLIP_MASH_FRONTEND_SENTRY_URI }}
 
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
@@ -41,3 +43,4 @@ jobs:
           manifest_path: backend/Cargo.toml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLIP_MASH_SENTRY_URI: ${{ secrets.CLIP_MASH_SENTRY_URI }}

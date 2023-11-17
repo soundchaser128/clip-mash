@@ -13,7 +13,6 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -52,9 +51,12 @@ jobs:
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
-        uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          secret-envs: |
+            CLIP_MASH_SENTRY_URI=${{ secrets.CLIP_MASH_SENTRY_URI }}
+            VITE_CLIP_MASH_FRONTEND_SENTRY_URI=${{ secrets.VITE_CLIP_MASH_FRONTEND_SENTRY_URI }}

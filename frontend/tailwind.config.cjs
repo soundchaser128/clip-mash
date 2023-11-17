@@ -14,7 +14,7 @@ module.exports = {
       {
         "clip-mash-dark": {
           // eslint-disable-next-line @typescript-eslint/no-var-requires
-          ...require("daisyui/src/theming/themes")["[data-theme=dark]"],
+          ...require("daisyui/src/theming/themes")["dark"],
           primary: "hsl(260,100%,70%)",
           secondary: "#dd77d0",
         },
@@ -22,7 +22,7 @@ module.exports = {
       {
         "clip-mash-light": {
           // eslint-disable-next-line @typescript-eslint/no-var-requires
-          ...require("daisyui/src/theming/themes")["[data-theme=light]"],
+          ...require("daisyui/src/theming/themes")["light"],
           primary: "#471AA0",
           secondary: "#dd77d0",
         },

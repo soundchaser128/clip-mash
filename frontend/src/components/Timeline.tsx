@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import {formatSeconds, getSegmentColor, getSegmentTextColor} from "../helpers"
-import React, {Ref, RefObject, useMemo, useRef} from "react"
+import React, {useMemo, useRef} from "react"
 import * as d3 from "d3"
 import useContainerSize from "@/hooks/useContainerSize"
 

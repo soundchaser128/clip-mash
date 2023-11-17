@@ -1,6 +1,6 @@
 [package]
 name = "clip-mash"
-version = "0.19.0"
+version = "0.20.0-pre.2"
 edition = "2021"
 
 [dependencies]
@@ -24,6 +24,8 @@ rand = "0.8.5"
 regex = "1.9.6"
 reqwest = { version = "0.11.22", features = ["json"] }
 sanitise-file-name = "1.0.0"
+semver = "1.0.20"
+sentry = "0.31.8"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
 serde_yaml = "0.9.27"
@@ -39,8 +41,6 @@ tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 url = { version = "2.4.1", features = ["serde"] }
 utoipa = { version = "4.0.0", features = ["axum_extras"] }
-utoipa-rapidoc = { version = "1.0.0", features = ["axum"] }
-utoipa-redoc = { version = "1.0.0", features = ["axum"] }
 utoipa-swagger-ui = { version = "4.0.0", features = ["axum"] }
 walkdir = "2.4.0"
 webbrowser = "0.8.11"

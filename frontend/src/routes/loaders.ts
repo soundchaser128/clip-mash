@@ -188,8 +188,7 @@ export const musicLoader: LoaderFunction = async () => {
 }
 
 export const versionLoader: LoaderFunction = async () => {
-  const response = await getVersion()
-  return response.version
+  return await getVersion()
 }
 
 export type StashLoaderData = StashVideoDtoPage

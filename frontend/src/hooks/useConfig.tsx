@@ -18,7 +18,11 @@ export const ConfigProvider: React.FC<{children: React.ReactNode}> = ({
   const [currentConfig, setCurrentConfig] = useState<StashConfig>()
 
   useEffect(() => {
-    getConfig().then((config) => setCurrentConfig(config))
+    if (!currentConfig) {
+      getConfig()
+        .then((config) => setCurrentConfig(config))
+        .catch((e) => console.error(e))
+    }
   }, [])
 
   return (

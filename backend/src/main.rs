@@ -6,10 +6,8 @@ use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 use color_eyre::Report;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 use utoipa::OpenApi;
-use utoipa_rapidoc::RapiDoc;
-use utoipa_redoc::{Redoc, Servable};
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::data::database::Database;
@@ -17,6 +15,7 @@ use crate::server::docs::ApiDoc;
 use crate::server::handlers::AppState;
 use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
+use crate::service::new_version_checker::NewVersionChecker;
 
 mod data;
 mod helpers;
@@ -30,25 +29,12 @@ pub type Result<T> = std::result::Result<T, Report>;
 // 100 MB
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
-#[tokio::main]
-async fn main() -> Result<()> {
+async fn run() -> Result<()> {
     use server::{handlers, static_files};
     use service::commands::ffmpeg;
     use service::migrations;
 
-    use crate::helpers::log;
-
-    color_eyre::install()?;
-    let _guard = log::setup_logger();
-    if let Err(e) = log::cleanup_logs() {
-        warn!("failed to cleanup logs: {}", e);
-    }
-
-    let version = env!("CARGO_PKG_VERSION");
-    info!("starting clip-mash v{}", version);
-
     let directories = Directories::new()?;
-
     let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
     info!("using ffmpeg at {ffmpeg_location:?}");
 
@@ -69,6 +55,7 @@ async fn main() -> Result<()> {
         database,
         directories,
         ffmpeg_location,
+        new_version_checker: NewVersionChecker::new(),
     });
 
     let library_routes = Router::new()
@@ -168,14 +155,11 @@ async fn main() -> Result<()> {
         .route("/song/:id/stream", get(handlers::music::stream_song))
         .route("/song/download", post(handlers::music::download_music))
         .route("/song/upload", post(handlers::music::upload_music))
-        .route("/song/:id/beats", get(handlers::music::get_beats));
+        .route("/song/:id/beats", get(handlers::music::get_beats))
+        .route("/debug/sentry-error", post(handlers::debug::sentry_error));
 
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
-        // There is no need to create `RapiDoc::with_openapi` because the OpenApi is served
-        // via SwaggerUi instead we only make rapidoc to point to the existing doc.
-        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"))
         .nest("/api", api_routes)
         .fallback_service(static_files::service())
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
@@ -200,6 +184,32 @@ async fn main() -> Result<()> {
     axum::Server::bind(&addr.parse().unwrap())
         .serve(app.into_make_service())
         .await?;
+
+    Ok(())
+}
+
+fn main() -> Result<()> {
+    use crate::helpers::{log, sentry};
+
+    color_eyre::install()?;
+    let _log_guard = log::setup_logger();
+    let _sentry_guard = sentry::setup();
+
+    if let Err(e) = log::cleanup_logs() {
+        warn!("failed to cleanup logs: {}", e);
+    }
+
+    let version = env!("CARGO_PKG_VERSION");
+    info!("starting clip-mash v{}", version);
+
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?
+        .block_on(async {
+            if let Err(e) = run().await {
+                error!("failed to run: {e:?}");
+            }
+        });
 
     Ok(())
 }

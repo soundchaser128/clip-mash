@@ -12,6 +12,7 @@ import Layout from "../components/Layout"
 import Steps from "../components/Steps"
 import {FormState, FormStage, SerializedFormState} from "../types/form-state"
 import {saveJsonToDisk} from "@/helpers"
+import {AppVersion} from "@/api"
 
 const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
   return (
@@ -60,7 +61,7 @@ const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
 
 const AssistantLayout: React.FC = () => {
   const {actions, state} = useStateMachine({resetForm})
-  const version = useRouteLoaderData("root") as string
+  const version = useRouteLoaderData("root") as AppVersion
 
   const onReset = () => {
     if (
@@ -79,7 +80,7 @@ const AssistantLayout: React.FC = () => {
     }.json`
     const data: SerializedFormState = {
       ...state.data,
-      clipMashVersion: version,
+      clipMashVersion: version.currentVersion,
     }
     saveJsonToDisk(projectName, data)
   }

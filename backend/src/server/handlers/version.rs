@@ -1,21 +1,21 @@
-use axum::Json;
-use serde::Serialize;
-use utoipa::ToSchema;
+use std::sync::Arc;
 
-#[derive(Serialize, ToSchema)]
-pub struct Version {
-    pub version: &'static str,
-}
+use axum::extract::State;
+use axum::Json;
+
+use crate::server::error::AppError;
+use crate::server::handlers::AppState;
+use crate::service::new_version_checker::AppVersion;
 
 #[axum::debug_handler]
 #[utoipa::path(
     get,
     path = "/api/version",
     responses(
-        (status = 200, description = "Return the version of the application", body= Version)
+        (status = 200, description = "Return the version of the application", body = AppVersion)
     )
 )]
-pub async fn get_version() -> Json<Version> {
-    let version = env!("CARGO_PKG_VERSION");
-    Json(Version { version })
+pub async fn get_version(State(state): State<Arc<AppState>>) -> Result<Json<AppVersion>, AppError> {
+    let data = state.new_version_checker.check_for_updates().await?;
+    Ok(Json(data))
 }

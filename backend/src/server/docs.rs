@@ -4,11 +4,11 @@ use super::handlers::files::{FileSystemEntry, ListFileEntriesResponse};
 use super::handlers::library::{CreateMarkerRequest, VideoCleanupResponse};
 use super::handlers::music::SongUpload;
 use super::handlers::project::{CreateFunscriptBody, DescriptionData, ProjectCreateResponse};
-use super::handlers::version::Version;
 use super::types::*;
 use crate::data::database::{MarkerCount, VideoSource, VideoUpdate};
 use crate::server::handlers::{files, library, music, progress, project, stash, version};
 use crate::service::description_generator::DescriptionType;
+use crate::service::new_version_checker::AppVersion;
 use crate::service::stash_config::StashConfig;
 use crate::service::video::AddVideosRequest;
 
@@ -99,7 +99,7 @@ use crate::service::video::AddVideosRequest;
             VideoDetailsDto,
             CreateMarkerRequest,
             SongUpload,
-            Version,
+            AppVersion,
             MarkerCount,
             FileSystemEntry,
             ListFileEntriesResponse,

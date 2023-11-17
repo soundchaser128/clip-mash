@@ -55,6 +55,8 @@ import ReorderSongs from "./routes/music/ReorderSongs"
 import {ToastProvider} from "./hooks/useToast"
 import HomePage from "./routes/HomePage"
 import MarkerModal from "./routes/library/MarkerModal"
+import Sentry from "./sentry"
+import SentryDebug from "./routes/SentryDebug"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -260,6 +262,10 @@ const router = createBrowserRouter([
             path: ":id/funscript",
             element: <FunscriptPage />,
           },
+          {
+            path: "/sentry-debug",
+            element: <SentryDebug />,
+          },
         ],
       },
     ],
@@ -276,6 +282,8 @@ createStore(
     name: "form-state",
   },
 )
+
+Sentry.setup()
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

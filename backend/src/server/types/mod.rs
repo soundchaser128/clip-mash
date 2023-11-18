@@ -121,12 +121,18 @@ pub struct Clip {
 
 impl Clip {
     pub fn range_millis(&self) -> (u32, u32) {
-        ((self.range.0 as u32) * 1000, (self.range.1 as u32) * 1000)
+        let start = (self.range.0 * 1000.0).round() as u32;
+        let end = (self.range.1 * 1000.0).round() as u32;
+        (start, end)
     }
 
     pub fn duration(&self) -> f64 {
         let (start, end) = self.range;
         end - start
+    }
+
+    pub fn duration_millis(&self) -> u32 {
+        (self.duration() * 1000.0) as u32
     }
 }
 

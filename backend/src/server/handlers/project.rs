@@ -231,7 +231,7 @@ pub async fn get_combined_funscript(
     let script_builder = ScriptBuilder::new().await;
     let service = OptionsConverterService::new(state.database.clone());
     let clips = service.convert_clips(body.clips).await?;
-    let script = script_builder.combine_scripts(clips).await?;
+    let script = script_builder.create_combined_funscript(clips).await?;
 
     Ok(Json(script))
 }
@@ -254,7 +254,7 @@ pub async fn get_beat_funscript(
         .into_iter()
         .filter_map(|s| s.beats.and_then(|b| serde_json::from_str(&b).ok()))
         .collect();
-    let script = funscript::create_beat_script(beats, body.stroke_type);
+    let script = funscript::create_beat_funscript(beats, body.stroke_type);
 
     Ok(Json(script))
 }

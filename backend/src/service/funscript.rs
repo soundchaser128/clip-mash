@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use camino::{Utf8Path, Utf8PathBuf};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{debug, info, warn};
@@ -11,7 +14,7 @@ use crate::Result;
 
 // Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FSPoint {
     pub pos: i32,
@@ -21,7 +24,7 @@ pub struct FSPoint {
 
 /// properties about a pressure simulator
 /// that can be used to input points in a .funscript
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SimulatorPresets {
     pub name: String,
@@ -34,7 +37,7 @@ pub struct SimulatorPresets {
     pub color: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 #[serde(rename_all = "camelCase", default)]
 pub struct OFSMetadata {
     pub creator: String,
@@ -53,7 +56,7 @@ pub struct OFSMetadata {
 }
 
 /// a serializable and deserializable .funscript file
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase", default)]
 pub struct FunScript {
     pub version: String,
@@ -199,7 +202,7 @@ impl BeatState {
     }
 }
 
-pub fn create_beat_script(songs: Vec<Beats>, stroke_type: StrokeType) -> FunScript {
+pub fn create_beat_funscript(songs: Vec<Beats>, stroke_type: StrokeType) -> FunScript {
     let mut actions = vec![];
 
     let mut state = 0;
@@ -229,6 +232,44 @@ pub fn create_beat_script(songs: Vec<Beats>, stroke_type: StrokeType) -> FunScri
     }
 }
 
+struct FunScriptSegment<'a> {
+    script: &'a FunScript,
+    clip_start: u32,
+    clip_end: u32,
+    offset: u32,
+}
+
+fn combine_scripts(segments: Vec<FunScriptSegment>) -> FunScript {
+    let mut resulting_actions = vec![];
+
+    for segment in segments {
+        let start = segment.clip_start;
+        let end = segment.clip_end;
+        let offset = segment.offset;
+
+        let actions = segment
+            .script
+            .actions
+            .iter()
+            .filter(|s| s.at >= start && s.at <= end)
+            .map(|a| FSPoint {
+                at: (a.at - start) + offset,
+                pos: a.pos,
+            });
+        resulting_actions.extend(actions);
+    }
+
+    let version = env!("CARGO_PKG_VERSION");
+    FunScript {
+        actions: resulting_actions,
+        metadata: Some(OFSMetadata {
+            creator: format!("clip-mash v{}", version),
+            ..Default::default()
+        }),
+        ..Default::default()
+    }
+}
+
 pub struct ScriptBuilder {
     api: StashApi,
 }
@@ -239,13 +280,13 @@ impl ScriptBuilder {
         Self { api }
     }
 
-    pub async fn combine_scripts(&self, clips: Vec<(DbVideo, Clip)>) -> Result<FunScript> {
-        let mut resulting_actions = vec![];
-        let mut offset = 0;
+    async fn fetch_funscripts(&self, videos: &[&DbVideo]) -> Result<HashMap<String, FunScript>> {
+        let mut map = HashMap::new();
 
-        for (video, clip) in clips {
-            let (start, end) = clip.range_millis();
-            let duration = end - start;
+        for video in videos {
+            if map.contains_key(&video.id) {
+                continue;
+            }
 
             let script = match video.source {
                 VideoSource::Stash => {
@@ -255,49 +296,55 @@ impl ScriptBuilder {
                     self.api.get_funscript(stash_id).await
                 }
                 VideoSource::Download | VideoSource::Folder => {
-                    let path = Utf8PathBuf::from(video.file_path).with_extension("funscript");
+                    let path =
+                        Utf8PathBuf::from(video.file_path.clone()).with_extension("funscript");
                     info!("trying to load funscript from {}", path);
                     FunScript::load(path).await
                 }
             };
+
             match script {
                 Ok(script) => {
-                    let actions: Vec<_> = script
-                        .actions
-                        .into_iter()
-                        .filter(|a| a.at >= start && a.at <= end)
-                        .map(|action| FSPoint {
-                            pos: action.pos,
-                            at: (action.at - start) + offset,
-                        })
-                        .collect();
-
-                    resulting_actions.extend(actions);
-                    offset += duration;
+                    map.insert(video.id.clone(), script);
                 }
                 Err(e) => {
-                    warn!(
-                        "failed to get .funscript for scene ID {}: {}",
-                        clip.video_id, e
-                    )
+                    warn!("failed to get .funscript for scene ID {}: {}", video.id, e);
                 }
             }
         }
 
-        let version = env!("CARGO_PKG_VERSION");
+        Ok(map)
+    }
 
-        let script = FunScript {
-            actions: resulting_actions,
-            metadata: Some(OFSMetadata {
-                creator: format!("clip-mash v{}", version),
-                ..Default::default()
-            }),
-            ..Default::default()
-        };
+    pub async fn create_combined_funscript(
+        &self,
+        clips: Vec<(DbVideo, Clip)>,
+    ) -> Result<FunScript> {
+        let mut offset = 0;
+        let mut segments = vec![];
+        let videos: Vec<_> = clips
+            .iter()
+            .map(|(video, _)| video)
+            .unique_by(|v| v.id.as_str())
+            .collect();
+        let funscripts = self.fetch_funscripts(&videos).await?;
 
-        info!("generated funscript with {} actions", script.actions.len());
+        for (video, clip) in clips {
+            let (start, end) = clip.range_millis();
+            let duration = clip.duration_millis();
+            if let Some(script) = funscripts.get(&video.id) {
+                segments.push(FunScriptSegment {
+                    script,
+                    clip_start: start,
+                    clip_end: end,
+                    offset,
+                });
+            }
 
-        Ok(script)
+            offset += duration;
+        }
+
+        Ok(combine_scripts(segments))
     }
 }
 
@@ -307,11 +354,46 @@ mod test {
 
     use super::StrokeType;
     use crate::server::types::Beats;
-    use crate::service::funscript::create_beat_script;
+    use crate::service::funscript::{
+        combine_scripts, create_beat_funscript, FunScript, FunScriptSegment,
+    };
+    use crate::Result;
+
+    #[traced_test]
+    #[tokio::test]
+    async fn test_create_combined_script() -> Result<()> {
+        let script_1 = FunScript::load("data/funscripts/dokkaebi.funscript").await?;
+        let script_2 = FunScript::load("data/funscripts/rachel-amber.funscript").await?;
+
+        let combined = combine_scripts(vec![
+            FunScriptSegment {
+                script: &script_1,
+                clip_start: 0,
+                clip_end: 1000,
+                offset: 0,
+            },
+            FunScriptSegment {
+                script: &script_2,
+                clip_start: 0,
+                clip_end: 1000,
+                offset: 1000,
+            },
+            FunScriptSegment {
+                script: &script_1,
+                clip_start: 1000,
+                clip_end: 2000,
+                offset: 2000,
+            },
+        ]);
+
+        dbg!(combined);
+
+        Ok(())
+    }
 
     #[traced_test]
     #[test]
-    fn test_create_beat_script_basic() {
+    fn test_create_beat_funscript_basic() {
         let beats = vec![
             Beats {
                 length: 1.0,
@@ -323,7 +405,7 @@ mod test {
             },
         ];
 
-        let script = create_beat_script(beats, StrokeType::EveryNth { n: 1 });
+        let script = create_beat_funscript(beats, StrokeType::EveryNth { n: 1 });
 
         assert_eq!(script.actions.len(), 7);
         assert_eq!(script.actions[0].pos, 0);
@@ -350,7 +432,7 @@ mod test {
 
     #[traced_test]
     #[test]
-    fn test_create_beat_script_accelerate() {
+    fn test_create_beat_funscript_accelerate() {
         let len1 = 8.0_f32;
         let len2 = 12.0_f32;
         let beats = vec![
@@ -364,7 +446,7 @@ mod test {
             },
         ];
 
-        let _script = create_beat_script(
+        let _script = create_beat_funscript(
             beats,
             StrokeType::Accelerate {
                 start_strokes_per_beat: 1.0,

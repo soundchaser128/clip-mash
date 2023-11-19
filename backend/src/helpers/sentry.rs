@@ -18,6 +18,7 @@ pub fn setup() -> Option<ClientInitGuard> {
                 uri,
                 sentry::ClientOptions {
                     release: sentry::release_name!(),
+                    traces_sample_rate: 0.2,
                     ..Default::default()
                 },
             ));

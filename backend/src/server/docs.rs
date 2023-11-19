@@ -8,6 +8,7 @@ use super::types::*;
 use crate::data::database::{MarkerCount, VideoSource, VideoUpdate};
 use crate::server::handlers::{files, library, music, progress, project, stash, version};
 use crate::service::description_generator::DescriptionType;
+use crate::service::directories::FolderType;
 use crate::service::new_version_checker::AppVersion;
 use crate::service::stash_config::StashConfig;
 use crate::service::video::AddVideosRequest;
@@ -32,6 +33,7 @@ use crate::service::video::AddVideosRequest;
         library::videos_need_encoding,
         library::list_marker_titles,
         files::list_file_entries,
+        files::get_file_stats,
         progress::get_progress_info,
         project::create_video,
         project::download_video,
@@ -107,6 +109,7 @@ use crate::service::video::AddVideosRequest;
             MarkerGroup,
             DescriptionType,
             DescriptionData,
+            FolderType,
         )
     ),
     tags(

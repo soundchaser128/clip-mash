@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
+use std::sync::Arc;
 
-use axum::extract::Query;
+use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
 use camino::{Utf8Path, Utf8PathBuf};
@@ -9,6 +10,7 @@ use tokio::fs::DirEntry;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::server::error::AppError;
+use crate::server::handlers::AppState;
 
 #[derive(Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
@@ -167,4 +169,19 @@ pub async fn list_file_entries(
         directory: path.to_string(),
         entries: files,
     }))
+}
+
+#[axum::debug_handler]
+#[utoipa::path(
+    get,
+    path = "/api/library/stats",
+    responses(
+        (status = 200, description = "Get the size of all folders", body = HashMap<FolderType, u64>),
+    )
+)]
+pub async fn get_file_stats(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let stats = state.directories.stats().await?;
+    Ok(Json(stats))
 }

@@ -1,14 +1,16 @@
+use std::collections::HashMap;
 use std::fs;
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use directories::ProjectDirs;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::info;
+use utoipa::ToSchema;
 
 use crate::Result;
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum FolderType {
     TempVideo,
@@ -178,5 +180,40 @@ impl Directories {
         );
         info!("temporary video directory: {}", self.temp_video_dir());
         info!("database file: {}", self.database_file());
+    }
+
+    pub async fn stats(&self) -> Result<HashMap<FolderType, u64>> {
+        use self::FolderType::*;
+
+        let mut map = HashMap::new();
+        let folder_types = [
+            TempVideo,
+            CompilationVideo,
+            DownloadedVideo,
+            Music,
+            Database,
+            Config,
+        ];
+
+        for ty in folder_types {
+            let path = self.get(ty);
+            let folder_size: u64 = tokio::task::spawn_blocking(move || {
+                let mut size = 0;
+                for entry in walkdir::WalkDir::new(&path) {
+                    let entry = entry?;
+                    if entry.file_type().is_file() {
+                        let metadata = entry.metadata()?;
+                        size += metadata.len();
+                    }
+                }
+
+                Ok::<u64, color_eyre::Report>(size)
+            })
+            .await??;
+
+            map.insert(ty, folder_size);
+        }
+
+        Ok(map)
     }
 }

@@ -45,7 +45,6 @@ import DownloadVideosPage from "./routes/library/add/DownloadVideosPage"
 import SelectVideos from "./routes/library/add/AddLocalVideosPage"
 import AddStashVideoPage from "./routes/library/add/AddStashVideoPage"
 import {ConfigProvider} from "./hooks/useConfig"
-import StashConfigPage from "./routes/StashConfig"
 import FunscriptPage from "./routes/FunscriptPage"
 import DownloadVideoPage from "./routes/DownloadFinishedVideo"
 import SelectVideosPage from "./routes/library/SelectVideos"
@@ -191,10 +190,6 @@ const router = createBrowserRouter([
       {
         element: <CreateLayout />,
         children: [
-          {
-            path: "stash/config",
-            element: <StashConfigPage />,
-          },
           {
             path: "library",
             element: <ListVideos />,

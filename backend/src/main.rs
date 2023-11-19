@@ -112,7 +112,8 @@ async fn run() -> Result<()> {
         )
         // split local marker
         .route("/marker/:id/split", post(handlers::library::split_marker))
-        .route("/directory", get(handlers::files::list_file_entries));
+        .route("/directory", get(handlers::files::list_file_entries))
+        .route("/stats", get(handlers::files::get_file_stats));
 
     let project_routes = Router::new()
         .route("/clips", post(handlers::project::fetch_clips))

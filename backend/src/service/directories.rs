@@ -182,18 +182,11 @@ impl Directories {
         info!("database file: {}", self.database_file());
     }
 
-    pub async fn stats(&self) -> Result<HashMap<FolderType, u64>> {
+    pub async fn stats(&self) -> Result<Vec<(FolderType, u64)>> {
         use self::FolderType::*;
 
         let mut map = HashMap::new();
-        let folder_types = [
-            TempVideo,
-            CompilationVideo,
-            DownloadedVideo,
-            Music,
-            Database,
-            Config,
-        ];
+        let folder_types = [TempVideo, CompilationVideo, DownloadedVideo, Music];
 
         for ty in folder_types {
             let path = self.get(ty);
@@ -213,7 +206,9 @@ impl Directories {
 
             map.insert(ty, folder_size);
         }
+        let mut tuples: Vec<_> = map.into_iter().collect();
+        tuples.sort_by_key(|(_, size)| std::cmp::Reverse(*size));
 
-        Ok(map)
+        Ok(tuples)
     }
 }

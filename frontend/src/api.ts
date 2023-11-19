@@ -40,7 +40,7 @@ export type ListStashVideosParams = {
   dir?: SortDirection | null
 }
 
-export type GetFileStats200 = {[key: string]: number}
+export type GetFileStats200ItemItem = FolderType & number
 
 export type SplitMarkerParams = {
   /**
@@ -776,7 +776,7 @@ export const splitMarker = (id: number, params: SplitMarkerParams) => {
 }
 
 export const getFileStats = () => {
-  return customInstance<GetFileStats200>({
+  return customInstance<GetFileStats200ItemItem[][]>({
     url: `/api/library/stats`,
     method: "get",
   })

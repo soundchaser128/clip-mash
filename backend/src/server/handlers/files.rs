@@ -176,7 +176,7 @@ pub async fn list_file_entries(
     get,
     path = "/api/library/stats",
     responses(
-        (status = 200, description = "Get the size of all folders", body = HashMap<FolderType, u64>),
+        (status = 200, description = "Get the size of all folders", body = Vec<(FolderType, u64)>),
     )
 )]
 pub async fn get_file_stats(

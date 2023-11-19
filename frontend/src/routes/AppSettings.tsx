@@ -3,7 +3,7 @@ import {useCallback, useEffect, useState} from "react"
 import {useForm} from "react-hook-form"
 import ExternalLink from "../components/ExternalLink"
 import {FolderType, getFileStats, getHealth, setConfig} from "../api"
-import {HiCheckCircle, HiCog} from "react-icons/hi2"
+import {HiCheckCircle, HiCog, HiTrash} from "react-icons/hi2"
 import {useConfig} from "@/hooks/useConfig"
 import Loader from "@/components/Loader"
 import {formatBytes} from "@/helpers"
@@ -18,7 +18,7 @@ interface HealthResult {
   message: string
 }
 
-type FileStats = Record<FolderType, number>
+type FolderStats = [FolderType, number][]
 
 const folderTypeNames: Record<FolderType, string> = {
   [FolderType.compilationVideo]: "Finished compilation videos",
@@ -30,16 +30,20 @@ const folderTypeNames: Record<FolderType, string> = {
 }
 
 const useFileStats = () => {
-  const [stats, setStats] = useState<FileStats>()
+  const [stats, setStats] = useState<FolderStats>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error>()
 
   useEffect(() => {
+    if (stats) {
+      return
+    }
+
     getFileStats()
-      .then((stats) => setStats(stats as FileStats))
+      .then((stats) => setStats(stats as unknown as FolderStats))
       .catch((e) => setError(e as Error))
       .finally(() => setLoading(false))
-  }, [])
+  }, [stats])
 
   return {stats, loading, error}
 }
@@ -101,13 +105,20 @@ function StashConfigPage() {
                 <tr>
                   <th>Folder type</th>
                   <th>Size</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(stats).map(([type, size]) => (
+                {stats.map(([type, size]) => (
                   <tr key={type}>
                     <th>{folderTypeNames[type as FolderType]}</th>
-                    <td>{formatBytes(size)}</td>
+                    <td className="text-right">{formatBytes(size)}</td>
+                    <td>
+                      <button className="btn btn-sm btn-error">
+                        <HiTrash />
+                        Clean up
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

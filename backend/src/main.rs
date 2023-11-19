@@ -164,6 +164,8 @@ async fn run() -> Result<()> {
         .nest("/api", api_routes)
         .fallback_service(static_files::service())
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
+        .layer(sentry_tower::NewSentryLayer::new_from_top())
+        .layer(sentry_tower::SentryHttpLayer::with_transaction())
         .with_state(state);
 
     let host = env::args()

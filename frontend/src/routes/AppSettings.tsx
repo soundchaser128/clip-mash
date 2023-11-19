@@ -29,7 +29,10 @@ const folderTypeNames: Record<FolderType, string> = {
   [FolderType.tempVideo]: "Temporary video files",
 }
 
-const canCleanup = [FolderType.tempVideo, FolderType.compilationVideo]
+const canCleanup: FolderType[] = [
+  FolderType.tempVideo,
+  FolderType.compilationVideo,
+]
 
 const useFileStats = () => {
   const [stats, setStats] = useState<FolderStats>()

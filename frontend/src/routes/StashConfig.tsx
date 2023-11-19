@@ -4,7 +4,7 @@ import {useForm} from "react-hook-form"
 import {useLoaderData} from "react-router-dom"
 import ExternalLink from "../components/ExternalLink"
 import {getHealth, setConfig} from "../api"
-import {HiCheck, HiCheckBadge, HiCheckCircle, HiCog} from "react-icons/hi2"
+import {HiCheckCircle, HiCog} from "react-icons/hi2"
 
 interface Inputs {
   stashUrl: string

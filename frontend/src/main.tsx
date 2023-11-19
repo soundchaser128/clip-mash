@@ -57,6 +57,7 @@ import HomePage from "./routes/HomePage"
 import MarkerModal from "./routes/library/MarkerModal"
 import Sentry from "./sentry"
 import SentryDebug from "./routes/SentryDebug"
+import AppSettingsPage from "./routes/AppSettings"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -182,6 +183,10 @@ const router = createBrowserRouter([
         index: true,
         element: <HomePage />,
         loader: newIdLoader,
+      },
+      {
+        path: "/settings",
+        element: <AppSettingsPage />,
       },
       {
         element: <CreateLayout />,

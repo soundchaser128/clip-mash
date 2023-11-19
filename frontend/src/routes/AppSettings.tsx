@@ -29,6 +29,8 @@ const folderTypeNames: Record<FolderType, string> = {
   [FolderType.tempVideo]: "Temporary video files",
 }
 
+const canCleanup = [FolderType.tempVideo, FolderType.compilationVideo]
+
 const useFileStats = () => {
   const [stats, setStats] = useState<FolderStats>()
   const [loading, setLoading] = useState(true)
@@ -114,10 +116,12 @@ function StashConfigPage() {
                     <th>{folderTypeNames[type as FolderType]}</th>
                     <td className="text-right">{formatBytes(size)}</td>
                     <td>
-                      <button className="btn btn-sm btn-error">
-                        <HiTrash />
-                        Clean up
-                      </button>
+                      {canCleanup.includes(type) && (
+                        <button className="btn btn-sm btn-error">
+                          <HiTrash />
+                          Clean up
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

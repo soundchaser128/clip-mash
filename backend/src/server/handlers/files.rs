@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
 use camino::{Utf8Path, Utf8PathBuf};
@@ -11,6 +11,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
+use crate::service::directories::FolderType;
 
 #[derive(Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
@@ -184,4 +185,24 @@ pub async fn get_file_stats(
 ) -> Result<impl IntoResponse, AppError> {
     let stats = state.directories.stats().await?;
     Ok(Json(stats))
+}
+
+#[axum::debug_handler]
+#[utoipa::path(
+    post,
+    path = "/api/library/cleanup/{folder_type}",
+    params(
+        ("folder_type" = FolderType, Path, description = "The type of folder to clean up")
+    ),
+    responses(
+        (status = 200, description = "Cleanup the given folder", body = ()),
+    )
+)]
+pub async fn cleanup_folder(
+    Path(folder_type): Path<FolderType>,
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    state.directories.cleanup(folder_type).await?;
+
+    Ok(Json(()))
 }

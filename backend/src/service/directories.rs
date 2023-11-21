@@ -21,6 +21,15 @@ pub enum FolderType {
     Config,
 }
 
+impl FolderType {
+    pub fn can_cleanup(&self) -> bool {
+        match self {
+            FolderType::TempVideo | FolderType::CompilationVideo => true,
+            _ => false,
+        }
+    }
+}
+
 trait DirectorySupplier {
     fn cache_dir(&self) -> &Utf8Path;
     fn config_dir(&self) -> &Utf8Path;
@@ -210,5 +219,25 @@ impl Directories {
         tuples.sort_by_key(|(_, size)| std::cmp::Reverse(*size));
 
         Ok(tuples)
+    }
+
+    pub async fn cleanup(&self, folder_type: FolderType) -> Result<()> {
+        if !folder_type.can_cleanup() {
+            info!("cannot cleanup folder type {:?}", folder_type);
+            return Ok(());
+        }
+
+        let path = self.get(folder_type);
+        info!("cleaning up folder {:?}", path);
+        let mut stream = tokio::fs::read_dir(&path).await?;
+        while let Some(entry) = stream.next_entry().await? {
+            let path = Utf8PathBuf::from_path_buf(entry.path()).expect("must be utf-8 path");
+            if path.is_file() && path.extension() == Some("mp4") {
+                info!("cleaning up file {:?}", path);
+                tokio::fs::remove_file(path).await?;
+            }
+        }
+
+        Ok(())
     }
 }

@@ -75,6 +75,10 @@ async fn run() -> Result<()> {
             "/video/:id/stash/merge",
             post(handlers::library::merge_stash_video),
         )
+        .route(
+            "/cleanup/:folder_type",
+            post(handlers::files::cleanup_folder),
+        )
         // remove videos that don't exist on disk
         .route("/video/cleanup", post(handlers::library::cleanup_videos))
         // list videos on stash

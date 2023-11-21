@@ -2,11 +2,18 @@ import clsx from "clsx"
 import {useCallback, useEffect, useState} from "react"
 import {useForm} from "react-hook-form"
 import ExternalLink from "../components/ExternalLink"
-import {FolderType, getFileStats, getHealth, setConfig} from "../api"
+import {
+  FolderType,
+  cleanupVideos,
+  getFileStats,
+  getHealth,
+  setConfig,
+} from "../api"
 import {HiCheckCircle, HiCog, HiTrash} from "react-icons/hi2"
 import {useConfig} from "@/hooks/useConfig"
 import Loader from "@/components/Loader"
 import {formatBytes} from "@/helpers"
+import {cleanup} from "@testing-library/react"
 
 interface Inputs {
   stashUrl: string
@@ -96,6 +103,14 @@ function StashConfigPage() {
     })
     setHealthResult(response)
   }, [urlValue, apiKeyValue])
+
+  const onCleanup = (type: FolderType) => {
+    if (!canCleanup.includes(type)) {
+      return
+    }
+
+    cleanupFolder(type)
+  }
 
   return (
     <div className="flex flex-col pt-4">

@@ -4,7 +4,7 @@ import {useForm} from "react-hook-form"
 import ExternalLink from "../components/ExternalLink"
 import {
   FolderType,
-  cleanupVideos,
+  cleanupFolder,
   getFileStats,
   getHealth,
   setConfig,
@@ -13,7 +13,6 @@ import {HiCheckCircle, HiCog, HiTrash} from "react-icons/hi2"
 import {useConfig} from "@/hooks/useConfig"
 import Loader from "@/components/Loader"
 import {formatBytes} from "@/helpers"
-import {cleanup} from "@testing-library/react"
 
 interface Inputs {
   stashUrl: string
@@ -104,12 +103,12 @@ function StashConfigPage() {
     setHealthResult(response)
   }, [urlValue, apiKeyValue])
 
-  const onCleanup = (type: FolderType) => {
+  const onCleanup = (type: FolderType) => async () => {
     if (!canCleanup.includes(type)) {
       return
     }
 
-    cleanupFolder(type)
+    await cleanupFolder(type)
   }
 
   return (
@@ -135,7 +134,10 @@ function StashConfigPage() {
                     <td className="text-right">{formatBytes(size)}</td>
                     <td>
                       {canCleanup.includes(type) && (
-                        <button className="btn btn-sm btn-error">
+                        <button
+                          onClick={onCleanup(type)}
+                          className="btn btn-sm btn-error"
+                        >
                           <HiTrash />
                           Clean up
                         </button>

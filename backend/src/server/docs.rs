@@ -34,6 +34,7 @@ use crate::service::video::AddVideosRequest;
         library::list_marker_titles,
         files::list_file_entries,
         files::get_file_stats,
+        files::cleanup_folder,
         progress::get_progress_info,
         project::create_video,
         project::download_video,

@@ -40,6 +40,17 @@ export type ListStashVideosParams = {
   dir?: SortDirection | null
 }
 
+export type ListVideosParams = {
+  query?: string | null
+  source?: VideoSource | null
+  hasMarkers?: boolean | null
+  isInteractive?: boolean | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
 export type GetFileStats200ItemItem = FolderType & number
 
 export type SplitMarkerParams = {
@@ -64,6 +75,8 @@ export type ListFileEntriesParams = {
   path?: string | null
   includeHidden?: boolean | null
 }
+
+export type CleanupFolder200 = unknown | null
 
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
 
@@ -150,8 +163,6 @@ export type StrokeTypeOneOfThree = {
   accelerate: StrokeTypeOneOfThreeAccelerate
 }
 
-export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
-
 /**
  * Creates a stroke every `n` beats
  */
@@ -163,6 +174,8 @@ export type StrokeTypeOneOf = {
   /** Creates a stroke every `n` beats */
   everyNth: StrokeTypeOneOfEveryNth
 }
+
+export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
 
 export interface StashVideoDto {
   createdOn: number
@@ -199,17 +212,6 @@ export const SortDirection = {
   asc: "asc",
   desc: "desc",
 } as const
-
-export type ListVideosParams = {
-  query?: string | null
-  source?: VideoSource | null
-  hasMarkers?: boolean | null
-  isInteractive?: boolean | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
 
 export interface SongUpload {
   file: Blob
@@ -718,6 +720,13 @@ export type AddVideosRequest =
   | AddVideosRequestOneOfThree
   | AddVideosRequestOneOfFive
 
+export const cleanupFolder = (folderType: FolderType) => {
+  return customInstance<CleanupFolder200>({
+    url: `/api/library/cleanup/${folderType}`,
+    method: "post",
+  })
+}
+
 export const listFileEntries = (params?: ListFileEntriesParams) => {
   return customInstance<ListFileEntriesResponse>({
     url: `/api/library/directory`,
@@ -990,6 +999,9 @@ export const getVersion = () => {
   return customInstance<AppVersion>({url: `/api/version`, method: "get"})
 }
 
+export type CleanupFolderResult = NonNullable<
+  Awaited<ReturnType<typeof cleanupFolder>>
+>
 export type ListFileEntriesResult = NonNullable<
   Awaited<ReturnType<typeof listFileEntries>>
 >

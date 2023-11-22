@@ -27,7 +27,12 @@ const Layout: React.FC<Props> = ({children, isLoading}) => {
       <SentryInfo />
       <UpdateAvailableAlert />
       {toast?.data && (
-        <Toast type={toast.data.type}>{toast.data.message}</Toast>
+        <Toast
+          onClose={() => toast.setToastData(undefined)}
+          type={toast.data.type}
+        >
+          {toast.data.message}
+        </Toast>
       )}
       <main className={styles.main}>{children}</main>
       <Footer version={version.currentVersion} />

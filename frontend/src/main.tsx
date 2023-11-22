@@ -184,12 +184,13 @@ const router = createBrowserRouter([
         loader: newIdLoader,
       },
       {
-        path: "/settings",
-        element: <AppSettingsPage />,
-      },
-      {
         element: <CreateLayout />,
         children: [
+          {
+            path: "/settings",
+            element: <AppSettingsPage />,
+          },
+
           {
             path: "library",
             element: <ListVideos />,

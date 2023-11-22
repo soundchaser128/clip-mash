@@ -1,12 +1,13 @@
 import {useStateMachine} from "little-state-machine"
 import React from "react"
 import {
+  Link,
   Outlet,
   useNavigate,
   useNavigation,
   useRouteLoaderData,
 } from "react-router-dom"
-import {HiOutlineDocumentArrowDown, HiXMark} from "react-icons/hi2"
+import {HiCog, HiOutlineDocumentArrowDown, HiXMark} from "react-icons/hi2"
 import {resetForm} from "./actions"
 import Layout from "../components/Layout"
 import Steps from "../components/Steps"
@@ -104,6 +105,10 @@ const AssistantLayout: React.FC = () => {
             <HiOutlineDocumentArrowDown className="mr-2 w-6 h-6" />
             Save project
           </button>
+
+          <Link to="/settings" className="btn btn-sm">
+            <HiCog /> Settings
+          </Link>
         </div>
 
         <LocalFileSteps state={state.data} />

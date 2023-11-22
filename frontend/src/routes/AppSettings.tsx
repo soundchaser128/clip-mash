@@ -13,6 +13,8 @@ import {HiCheckCircle, HiCog, HiTrash} from "react-icons/hi2"
 import {useConfig} from "@/hooks/useConfig"
 import Loader from "@/components/Loader"
 import {formatBytes} from "@/helpers"
+import {useRevalidator} from "react-router-dom"
+import {useCreateToast} from "@/hooks/useToast"
 
 interface Inputs {
   stashUrl: string
@@ -44,6 +46,11 @@ const useFileStats = () => {
   const [stats, setStats] = useState<FolderStats>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error>()
+  const [counter, setCounter] = useState(0)
+
+  const refetch = useCallback(() => {
+    setCounter((c) => c + 1)
+  }, [])
 
   useEffect(() => {
     if (stats) {
@@ -54,9 +61,9 @@ const useFileStats = () => {
       .then((stats) => setStats(stats as unknown as FolderStats))
       .catch((e) => setError(e as Error))
       .finally(() => setLoading(false))
-  }, [stats])
+  }, [stats, counter])
 
-  return {stats, loading, error}
+  return {stats, loading, error, refetch}
 }
 
 async function testCredentials(inputs: Inputs): Promise<HealthResult> {
@@ -75,7 +82,7 @@ async function testCredentials(inputs: Inputs): Promise<HealthResult> {
 
 function StashConfigPage() {
   const config = useConfig()
-  const {stats, loading} = useFileStats()
+  const {stats, loading, refetch} = useFileStats()
   const {watch, register, handleSubmit} = useForm<Inputs>({
     defaultValues: config,
   })
@@ -83,6 +90,7 @@ function StashConfigPage() {
   const apiKeyValue = watch("apiKey")
   const settingsPage = `${urlValue}/settings?tab=security`
   const [healthResult, setHealthResult] = useState<HealthResult>()
+  const createToast = useCreateToast()
 
   const onSubmit = async (inputs: Inputs) => {
     const health = await testCredentials(inputs)
@@ -91,7 +99,6 @@ function StashConfigPage() {
 
     if (health.success) {
       await setConfig(inputs)
-      window.location.href = "/library/add/stash"
     }
   }
 
@@ -108,17 +115,29 @@ function StashConfigPage() {
       return
     }
 
-    await cleanupFolder(type)
+    try {
+      await cleanupFolder(type)
+      createToast({
+        type: "success",
+        message: "Finished cleaning up.",
+      })
+      refetch()
+    } catch (e) {
+      createToast({
+        type: "error",
+        message: "Error cleaning up: " + (e as Error).message,
+      })
+    }
   }
 
   return (
-    <div className="flex flex-col pt-4">
+    <div className="flex flex-col pt-4 max-w-xl ml-auto mr-auto">
       <h1 className="text-3xl font-bold mb-4 text-center">Settings</h1>
 
-      <section className="flex flex-col">
-        <h2 className="text-xl font-bold mb-2 text-center">File statistics</h2>
+      <section className="flex flex-col mb-4  ">
+        <h2 className="text-xl font-bold mb-2">File statistics</h2>
         {!loading && stats && (
-          <div className="max-w-lg self-center">
+          <div className="self-center">
             <table className="table">
               <thead>
                 <tr>
@@ -152,14 +171,9 @@ function StashConfigPage() {
         {loading && <Loader />}
       </section>
 
-      <section className="flex flex-col min-h-screen">
-        <h2 className="text-xl font-bold mb-2 text-center">
-          Stash configuration
-        </h2>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="max-w-lg w-full self-center"
-        >
+      <section className="flex flex-col ">
+        <h2 className="text-xl font-bold mb-2">Stash configuration</h2>
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full self-center">
           <div className="form-control">
             <label className="label">
               <span className="label-text">URL of your Stash instance:</span>

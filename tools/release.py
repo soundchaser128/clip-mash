@@ -22,7 +22,7 @@ class ChangeLogEntry:
 
     def __str__(self):
         return f"ChangeLogEntry(version={self.version}, entries={self.entries})"
-    
+
     def markdown(self):
         string = f"## {self.version}\n"
         for entry in self.entries:
@@ -50,11 +50,9 @@ class ChangeLog:
             for sibling in h2.next_siblings:
                 if sibling.name == "h2":
                     break
-                text = sibling.text.strip()
-                if text:
-                    lines = text.split("\n")
-                    for line in lines:
-                        entries_html.append(line.strip())
+                if sibling.name == "ul":
+                    for li in sibling.find_all("li"):
+                        entries_html.append(li.text.strip())
             entries.append(ChangeLogEntry(version, entries_html))
         return ChangeLog(entries)
 
@@ -65,7 +63,7 @@ class ChangeLog:
             for line in entry.entries:
                 string += f"  {line}\n"
         return string
-    
+
     def markdown(self):
         string = "# Changelog\n"
         for entry in self.entries:

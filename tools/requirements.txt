@@ -1,2 +1,6 @@
+beautifulsoup4==4.12.2
+importlib-metadata==6.8.0
 Markdown==3.5.1
 semver==3.0.2
+soupsieve==2.5
+zipp==3.17.0

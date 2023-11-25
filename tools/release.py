@@ -1,8 +1,9 @@
 import re
 from pathlib import Path
+from typing import List
 from semver import Version
+from bs4 import BeautifulSoup
 import subprocess
-import os
 import sys
 import markdown
 
@@ -11,7 +12,68 @@ cargo_toml_version_regex = re.compile(r'^version = "(?P<version>.*)"$', re.MULTI
 dry_run = False
 
 
-def cmd(command):
+class ChangeLogEntry:
+    version: str
+    entries: List[str]
+
+    def __init__(self, version: str, entries: List[str]):
+        self.version = version
+        self.entries = entries
+
+    def __str__(self):
+        return f"ChangeLogEntry(version={self.version}, entries={self.entries})"
+    
+    def markdown(self):
+        string = f"## {self.version}\n"
+        for entry in self.entries:
+            string += f"- {entry}\n"
+        string += "\n"
+        return string
+
+
+class ChangeLog:
+    entries: List[ChangeLogEntry]
+
+    def __init__(self, entries: List[ChangeLogEntry]):
+        self.entries = entries
+
+    @staticmethod
+    def parse(path: Path):
+        with open(path, "r") as f:
+            string = f.read()
+        html = markdown.markdown(string)
+        soup = BeautifulSoup(html, "html.parser")
+        entries = []
+        for h2 in soup.find_all("h2"):
+            version = h2.text
+            entries_html = []
+            for sibling in h2.next_siblings:
+                if sibling.name == "h2":
+                    break
+                text = sibling.text.strip()
+                if text:
+                    lines = text.split("\n")
+                    for line in lines:
+                        entries_html.append(line.strip())
+            entries.append(ChangeLogEntry(version, entries_html))
+        return ChangeLog(entries)
+
+    def __str__(self):
+        string = ""
+        for entry in self.entries:
+            string += f"{entry.version}\n"
+            for line in entry.entries:
+                string += f"  {line}\n"
+        return string
+    
+    def markdown(self):
+        string = "# Changelog\n"
+        for entry in self.entries:
+            string += entry.markdown()
+        return string
+
+
+def cmd(command: List[str]):
     if dry_run:
         print(" ".join(command))
     else:
@@ -52,31 +114,16 @@ def update_cargo_toml(type: str):
     return version
 
 
-def update_changelog():
-    # find every entry under the "Unreleased" heading
-    with open("CHANGELOG.md", "r") as f:
-        changelog = f.read()
-    document = markdown.markdown(changelog)
-    print(document)
-    unreleased = document.find("Unreleased")
-    if unreleased == -1:
-        raise Exception("Could not find Unreleased section in CHANGELOG.md")
-    next_heading = document.find("<h2>", unreleased + 1)
-    if next_heading == -1:
-        next_heading = len(document)
-    entries = document[unreleased:next_heading]
-    # print(entries) 
-
-
 def main():
-    args = sys.argv[1:]
-    if len(args) != 1:
-        print("Usage: release.py <pre|patch|minor|major>")
-        sys.exit(1)
+    # args = sys.argv[1:]
+    # if len(args) != 1:
+    #     print("Usage: release.py <pre|patch|minor|major>")
+    #     sys.exit(1)
 
-    type = args[0]
+    # type = args[0]
 
-    update_changelog()
+    change_log = ChangeLog.parse(Path("../CHANGELOG.md"))
+    print(change_log.markdown())
 
     # os.chdir("backend")
     # try:

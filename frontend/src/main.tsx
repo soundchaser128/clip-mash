@@ -53,7 +53,7 @@ import UploadMusic from "./routes/music/UploadMusic"
 import ReorderSongs from "./routes/music/ReorderSongs"
 import {ToastProvider} from "./hooks/useToast"
 import HomePage from "./routes/HomePage"
-import MarkerModal from "./routes/library/MarkerModal"
+import VideoMarkersPage from "./routes/library/VideoMarkersPage"
 import Sentry from "./sentry"
 import SentryDebug from "./routes/SentryDebug"
 import AppSettingsPage from "./routes/AppSettings"
@@ -195,13 +195,11 @@ const router = createBrowserRouter([
             path: "library",
             element: <ListVideos />,
             loader: makeVideoLoader({}),
-            children: [
-              {
-                path: ":id/markers",
-                element: <MarkerModal />,
-                loader: videoDetailsLoader,
-              },
-            ],
+          },
+          {
+            path: "library/:id/markers",
+            element: <VideoMarkersPage />,
+            loader: videoDetailsLoader,
           },
           {
             path: "library/add",

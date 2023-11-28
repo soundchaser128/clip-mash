@@ -134,7 +134,7 @@ const handleValidation = (values: Inputs) => {
   }
 }
 
-export default function MarkerModal() {
+export default function VideoMarkersPage() {
   const {
     register,
     handleSubmit,
@@ -420,7 +420,7 @@ export default function MarkerModal() {
   }
 
   return (
-    <Modal isOpen onClose={onClose}>
+    <>
       <div className="flex gap-2">
         <video
           className="w-2/3 max-h-[82vh]"
@@ -711,6 +711,6 @@ export default function MarkerModal() {
           className="py-4 flex-grow"
         />
       </div>
-    </Modal>
+    </>
   )
 }

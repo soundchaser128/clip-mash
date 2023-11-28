@@ -86,7 +86,6 @@ export default function ListVideos() {
   return (
     <>
       <JumpToTop />
-      <Outlet />
       <div className="my-4 grid grid-cols-3 items-center">
         <div className="flex gap-2">
           <Link to="add" className="btn btn-success">

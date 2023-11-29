@@ -6,6 +6,7 @@ use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 use color_eyre::Report;
+use mimalloc::MiMalloc;
 use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -16,6 +17,9 @@ use crate::server::handlers::AppState;
 use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
 use crate::service::new_version_checker::NewVersionChecker;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 mod data;
 mod helpers;

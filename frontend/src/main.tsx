@@ -45,7 +45,6 @@ import DownloadVideosPage from "./routes/library/add/DownloadVideosPage"
 import SelectVideos from "./routes/library/add/AddLocalVideosPage"
 import AddStashVideoPage from "./routes/library/add/AddStashVideoPage"
 import {ConfigProvider} from "./hooks/useConfig"
-import StashConfigPage from "./routes/StashConfig"
 import FunscriptPage from "./routes/FunscriptPage"
 import DownloadVideoPage from "./routes/DownloadFinishedVideo"
 import SelectVideosPage from "./routes/library/SelectVideos"
@@ -54,9 +53,10 @@ import UploadMusic from "./routes/music/UploadMusic"
 import ReorderSongs from "./routes/music/ReorderSongs"
 import {ToastProvider} from "./hooks/useToast"
 import HomePage from "./routes/HomePage"
-import MarkerModal from "./routes/library/MarkerModal"
+import VideoMarkersPage from "./routes/library/VideoMarkersPage"
 import Sentry from "./sentry"
 import SentryDebug from "./routes/SentryDebug"
+import AppSettingsPage from "./routes/AppSettings"
 
 const TroubleshootingInfo = () => {
   const {actions} = useStateMachine({resetForm})
@@ -187,20 +187,19 @@ const router = createBrowserRouter([
         element: <CreateLayout />,
         children: [
           {
-            path: "stash/config",
-            element: <StashConfigPage />,
+            path: "/settings",
+            element: <AppSettingsPage />,
           },
+
           {
             path: "library",
             element: <ListVideos />,
             loader: makeVideoLoader({}),
-            children: [
-              {
-                path: ":id/markers",
-                element: <MarkerModal />,
-                loader: videoDetailsLoader,
-              },
-            ],
+          },
+          {
+            path: "library/:id/markers",
+            element: <VideoMarkersPage />,
+            loader: videoDetailsLoader,
           },
           {
             path: "library/add",

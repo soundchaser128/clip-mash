@@ -4,6 +4,11 @@ const localStorageVar = "sentryEnabled"
 
 const Sentry = {
   get enabled(): boolean | null {
+    const isDev = !import.meta.env.PROD
+    if (isDev) {
+      return false
+    }
+
     const value = localStorage.getItem(localStorageVar)
     if (value === null) {
       return null

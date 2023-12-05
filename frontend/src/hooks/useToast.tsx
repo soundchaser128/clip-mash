@@ -7,7 +7,7 @@ interface ToastData {
 }
 
 interface ToastContextData {
-  setToastData: (data: ToastData) => void
+  setToastData: (data: ToastData | undefined) => void
   data?: ToastData
 }
 

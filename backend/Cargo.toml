@@ -1,6 +1,6 @@
 [package]
 name = "clip-mash"
-version = "0.20.0"
+version = "0.21.0-pre.1"
 edition = "2021"
 
 [dependencies]
@@ -17,6 +17,7 @@ hound = "3.5.1"
 include_dir = "0.7.3"
 itertools = "0.11.0"
 lazy_static = "1.4.0"
+mimalloc = "0.1.39"
 num_cpus = "1.16.0"
 opener = "0.6.1"
 ordered-float = "4.1.0"
@@ -25,7 +26,8 @@ regex = "1.9.6"
 reqwest = { version = "0.11.22", features = ["json"] }
 sanitise-file-name = "1.0.0"
 semver = "1.0.20"
-sentry = "0.31.8"
+sentry = { version = "0.31.8", features = ["debug-images"] }
+sentry-tower = { version = "0.31.8", features = ["axum-matched-path"] }
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
 serde_yaml = "0.9.27"
@@ -62,3 +64,6 @@ tracing-test = "0.2.4"
 mock_instant = "0.3.1"
 graphql-parser = "0.4.0"
 wiremock = "0.5.19"
+
+[profile.release]
+debug = true

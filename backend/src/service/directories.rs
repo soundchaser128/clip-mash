@@ -1,14 +1,16 @@
+use std::collections::HashMap;
 use std::fs;
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use directories::ProjectDirs;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::info;
+use utoipa::ToSchema;
 
 use crate::Result;
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum FolderType {
     TempVideo,
@@ -17,6 +19,15 @@ pub enum FolderType {
     Music,
     Database,
     Config,
+}
+
+impl FolderType {
+    pub fn can_cleanup(&self) -> bool {
+        match self {
+            FolderType::TempVideo | FolderType::CompilationVideo => true,
+            _ => false,
+        }
+    }
 }
 
 trait DirectorySupplier {
@@ -178,5 +189,55 @@ impl Directories {
         );
         info!("temporary video directory: {}", self.temp_video_dir());
         info!("database file: {}", self.database_file());
+    }
+
+    pub async fn stats(&self) -> Result<Vec<(FolderType, u64)>> {
+        use self::FolderType::*;
+
+        let mut map = HashMap::new();
+        let folder_types = [TempVideo, CompilationVideo, DownloadedVideo, Music];
+
+        for ty in folder_types {
+            let path = self.get(ty);
+            let folder_size: u64 = tokio::task::spawn_blocking(move || {
+                let mut size = 0;
+                for entry in walkdir::WalkDir::new(&path) {
+                    let entry = entry?;
+                    if entry.file_type().is_file() {
+                        let metadata = entry.metadata()?;
+                        size += metadata.len();
+                    }
+                }
+
+                Ok::<u64, color_eyre::Report>(size)
+            })
+            .await??;
+
+            map.insert(ty, folder_size);
+        }
+        let mut tuples: Vec<_> = map.into_iter().collect();
+        tuples.sort_by_key(|(_, size)| std::cmp::Reverse(*size));
+
+        Ok(tuples)
+    }
+
+    pub async fn cleanup(&self, folder_type: FolderType) -> Result<()> {
+        if !folder_type.can_cleanup() {
+            info!("cannot cleanup folder type {:?}", folder_type);
+            return Ok(());
+        }
+
+        let path = self.get(folder_type);
+        info!("cleaning up folder {:?}", path);
+        let mut stream = tokio::fs::read_dir(&path).await?;
+        while let Some(entry) = stream.next_entry().await? {
+            let path = Utf8PathBuf::from_path_buf(entry.path()).expect("must be utf-8 path");
+            if path.is_file() && path.extension() == Some("mp4") {
+                info!("cleaning up file {:?}", path);
+                tokio::fs::remove_file(path).await?;
+            }
+        }
+
+        Ok(())
     }
 }

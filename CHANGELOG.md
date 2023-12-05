@@ -130,7 +130,7 @@
 - chore: Rename app to ClipMash
 - chore: Added eslint setup for Typescript code
 
-# 0.5.1
+## 0.5.1
 - docs: Added updated screenshots
 - chore: Fixed clippy warnings
 - fix: crash when reaching the end of the list of clips

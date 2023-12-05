@@ -6,6 +6,7 @@ use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 use color_eyre::Report;
+use mimalloc::MiMalloc;
 use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -16,6 +17,9 @@ use crate::server::handlers::AppState;
 use crate::service::directories::Directories;
 use crate::service::generator::CompilationGenerator;
 use crate::service::new_version_checker::NewVersionChecker;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 mod data;
 mod helpers;
@@ -75,6 +79,10 @@ async fn run() -> Result<()> {
             "/video/:id/stash/merge",
             post(handlers::library::merge_stash_video),
         )
+        .route(
+            "/cleanup/:folder_type",
+            post(handlers::files::cleanup_folder),
+        )
         // remove videos that don't exist on disk
         .route("/video/cleanup", post(handlers::library::cleanup_videos))
         // list videos on stash
@@ -112,7 +120,8 @@ async fn run() -> Result<()> {
         )
         // split local marker
         .route("/marker/:id/split", post(handlers::library::split_marker))
-        .route("/directory", get(handlers::files::list_file_entries));
+        .route("/directory", get(handlers::files::list_file_entries))
+        .route("/stats", get(handlers::files::get_file_stats));
 
     let project_routes = Router::new()
         .route("/clips", post(handlers::project::fetch_clips))
@@ -163,6 +172,8 @@ async fn run() -> Result<()> {
         .nest("/api", api_routes)
         .fallback_service(static_files::service())
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
+        .layer(sentry_tower::NewSentryLayer::new_from_top())
+        .layer(sentry_tower::SentryHttpLayer::with_transaction())
         .with_state(state);
 
     let host = env::args()

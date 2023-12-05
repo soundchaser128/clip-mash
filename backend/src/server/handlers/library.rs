@@ -5,6 +5,7 @@ use axum::body::Body;
 use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
+use camino::Utf8Path;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use tower::ServiceExt;
@@ -227,6 +228,20 @@ pub async fn delete_video(
     Path(id): Path<String>,
     state: State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
+    use tokio::fs;
+
+    let video = state.database.videos.get_video(&id).await?;
+    if let Some(video) = video {
+        if video.source == VideoSource::Download {
+            let path = Utf8Path::new(&video.file_path);
+            if let Err(e) = fs::remove_file(&path).await {
+                warn!("failed to delete downloaded video at {path}: {e:?}");
+            }
+
+            info!("deleted downloaded video at {path}");
+        }
+    }
+
     state.database.videos.delete_video(&id).await?;
     Ok(Json("OK"))
 }

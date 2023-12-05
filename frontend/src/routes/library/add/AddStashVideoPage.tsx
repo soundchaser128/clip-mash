@@ -26,7 +26,7 @@ const AddStashVideoPage: React.FC = () => {
 
   useEffect(() => {
     if (!config) {
-      navigate("/stash/config")
+      navigate("/settings")
     }
   }, [config, navigate])
 

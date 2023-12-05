@@ -190,7 +190,7 @@ impl StashMarker {
 #[derive(Clone)]
 pub struct StashApi {
     api_url: String,
-    api_key: String,
+    api_key: Option<String>,
     client: Client,
 }
 

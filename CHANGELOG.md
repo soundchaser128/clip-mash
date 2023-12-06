@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- feat: added separate settings page
+- feat: allow cleaning up temporary files
 
 ## 0.20.0
 - feat: Add Sentry integration to frontend and backend to track errors.

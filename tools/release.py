@@ -5,11 +5,12 @@ from semver import Version
 from bs4 import BeautifulSoup
 import subprocess
 import sys
+import os
 import markdown
 
 cargo_toml_path = Path("Cargo.toml")
 cargo_toml_version_regex = re.compile(r'^version = "(?P<version>.*)"$', re.MULTILINE)
-dry_run = False
+dry_run = True
 
 
 class ChangeLogEntry:
@@ -70,6 +71,14 @@ class ChangeLog:
             string += entry.markdown()
         return string
 
+    def new_release(self, version: str):
+        unreleased = self.entries[0]
+        if unreleased.version != "Unreleased":
+            raise Exception("No unreleased section found")
+        new_version = ChangeLogEntry(version, unreleased.entries)
+        self.entries.insert(1, new_version)
+        unreleased.entries = []
+
 
 def cmd(command: List[str]):
     if dry_run:
@@ -113,36 +122,35 @@ def update_cargo_toml(type: str):
 
 
 def main():
-    # args = sys.argv[1:]
-    # if len(args) != 1:
-    #     print("Usage: release.py <pre|patch|minor|major>")
-    #     sys.exit(1)
+    args = sys.argv[1:]
+    if len(args) != 1:
+        print("Usage: release.py <pre|patch|minor|major>")
+        sys.exit(1)
 
-    # type = args[0]
+    type = args[0]
+    os.chdir("backend")
+    try:
+        new_version = update_cargo_toml(type)
+        if type != "pre":
+            change_log = ChangeLog.parse(Path("../CHANGELOG.md"))
+            change_log.new_release(str(new_version))
+            with open(Path("../CHANGELOG.md"), "w") as f:
+                f.write(change_log.markdown())
 
-    change_log = ChangeLog.parse(Path("../CHANGELOG.md"))
-    print(change_log.markdown())
+        # Run cargo check to update Cargo.lock
+        cmd(["cargo", "check"])
 
-    # os.chdir("backend")
-    # try:
-    #     new_version = update_cargo_toml(type)
-    #     if type != "pre":
-    #         update_changelog()
+        # Push a commit to the repo with the new version
+        cmd(["git", "add", ".."])
+        cmd(["git", "commit", "-m", f"chore: Prepare release {new_version}"])
+        cmd(["git", "push"])
 
-    #     # Run cargo check to update Cargo.lock
-    #     cmd(["cargo", "check"])
-
-    #     # Push a commit to the repo with the new version
-    #     cmd(["git", "add", ".."])
-    #     cmd(["git", "commit", "-m", f"chore: Prepare release {new_version}"])
-    #     cmd(["git", "push"])
-
-    #     # Create a tag
-    #     cmd(["git", "tag", f"v{new_version}"])
-    #     # Push the tag
-    #     cmd(["git", "push", "--tags"])
-    # finally:
-    #     os.chdir("..")
+        # Create a tag
+        cmd(["git", "tag", f"v{new_version}"])
+        # Push the tag
+        cmd(["git", "push", "--tags"])
+    finally:
+        os.chdir("..")
 
 
 if __name__ == "__main__":

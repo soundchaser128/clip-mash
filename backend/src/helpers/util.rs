@@ -24,9 +24,11 @@ pub fn create_seeded_rng(seed: Option<&str>) -> StdRng {
     StdRng::seed_from_u64(seed)
 }
 
-pub fn add_api_key(url: &str, api_key: &str) -> String {
+pub fn add_api_key(url: &str, api_key: Option<&str>) -> String {
     let mut url = Url::parse(url).expect("invalid url");
-    url.query_pairs_mut().append_pair("apikey", api_key);
+    if let Some(api_key) = api_key {
+        url.query_pairs_mut().append_pair("apikey", api_key);
+    }
     url.to_string()
 }
 
@@ -128,7 +130,7 @@ mod test {
 
     #[test]
     fn test_add_api_key() {
-        let result = add_api_key("http://localhost:3001", "super-secret-123");
+        let result = add_api_key("http://localhost:3001", Some("super-secret-123"));
         assert_eq!(result, "http://localhost:3001/?apikey=super-secret-123");
     }
 

@@ -31,7 +31,7 @@ pub async fn get_config() -> impl IntoResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ConfigQuery {
     url: String,
-    api_key: String,
+    api_key: Option<String>,
 }
 
 #[utoipa::path(
@@ -47,7 +47,7 @@ pub struct ConfigQuery {
 pub async fn get_health(
     Query(ConfigQuery { url, api_key }): Query<ConfigQuery>,
 ) -> Result<impl IntoResponse, AppError> {
-    let api = StashApi::new(&url, &api_key);
+    let api = StashApi::new(url, api_key);
     let result = api.health().await?;
     Ok(Json(result))
 }

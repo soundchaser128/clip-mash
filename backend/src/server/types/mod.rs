@@ -17,7 +17,7 @@ use crate::util::{add_api_key, expect_file_name};
 
 pub struct StashSceneWrapper<'a> {
     pub scene: FindScenesQueryFindScenesScenes,
-    pub api_key: &'a str,
+    pub api_key: Option<&'a str>,
 }
 
 impl<'a> From<StashSceneWrapper<'a>> for StashScene {

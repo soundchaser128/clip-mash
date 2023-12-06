@@ -230,7 +230,7 @@ impl VideoService {
         let scenes = self.stash_api.find_scenes_by_ids(scene_ids).await?;
         let stash_markers: Vec<_> = scenes
             .iter()
-            .flat_map(|s| StashMarker::from_scene(s.clone(), &stash_config.api_key))
+            .flat_map(|s| StashMarker::from_scene(s.clone(), stash_config.api_key.as_deref()))
             .collect();
         let scene_urls = scenes
             .iter()
@@ -342,7 +342,8 @@ impl VideoService {
 
         if let Some(stash_scene_id) = video.stash_scene_id {
             let scene = self.stash_api.find_scene(stash_scene_id).await?;
-            let scene_markers = StashMarker::from_scene(scene.clone(), &stash_config.api_key);
+            let scene_markers =
+                StashMarker::from_scene(scene.clone(), stash_config.api_key.as_deref());
 
             let new_title = scene
                 .title

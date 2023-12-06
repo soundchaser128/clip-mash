@@ -16,7 +16,7 @@ lazy_static! {
 #[serde(rename_all = "camelCase")]
 pub struct StashConfig {
     pub stash_url: String,
-    pub api_key: String,
+    pub api_key: Option<String>,
 }
 
 impl StashConfig {

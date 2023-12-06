@@ -13,7 +13,6 @@ import {HiCheckCircle, HiCog, HiTrash} from "react-icons/hi2"
 import {useConfig} from "@/hooks/useConfig"
 import Loader from "@/components/Loader"
 import {formatBytes} from "@/helpers"
-import {useRevalidator} from "react-router-dom"
 import {useCreateToast} from "@/hooks/useToast"
 
 interface Inputs {
@@ -190,14 +189,13 @@ function StashConfigPage() {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">API key:</span>
+              <span className="label-text">API key (optional):</span>
             </label>
             <input
               type="text"
               placeholder="eyJhbGc..."
               className="input input-bordered"
-              required
-              {...register("apiKey", {required: true})}
+              {...register("apiKey")}
             />
             <label className="label">
               <span className="label-text-alt">

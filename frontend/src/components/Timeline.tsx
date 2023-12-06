@@ -73,6 +73,7 @@ const TimeAxis = ({length, onClick}: TimeAxisProps) => {
               fontSize: "12px",
               textAnchor: "middle",
               transform: "translateY(20px)",
+              fill: "var(--fallback-bc,oklch(var(--bc)/1))",
             }}
           >
             {value === 0 ? "0" : formatSeconds(value, "short")}

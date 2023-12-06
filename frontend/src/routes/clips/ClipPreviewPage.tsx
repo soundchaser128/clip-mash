@@ -301,10 +301,10 @@ function PreviewClips() {
                 setHelpOpen={setHelpOpen}
               />
               <div className="flex flex-col">
-                <div className="btn-group justify-center">
+                <div className="join justify-center">
                   <button
                     type="button"
-                    className="btn btn-square btn-lg"
+                    className="btn btn-square btn-lg join-item"
                     onClick={() => setCurrentClipIndex((i) => i - 1)}
                     disabled={currentClipIndex === 0}
                   >
@@ -313,7 +313,7 @@ function PreviewClips() {
                   <button
                     type="button"
                     className={clsx(
-                      "btn btn-square btn-lg",
+                      "btn btn-square btn-lg join-item",
                       autoPlay ? "btn-neutral" : "btn-success",
                     )}
                     onClick={toggleAutoPlay}
@@ -322,7 +322,7 @@ function PreviewClips() {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-square btn-lg"
+                    className="btn btn-square btn-lg join-item"
                     onClick={() => setCurrentClipIndex((i) => i + 1)}
                     disabled={currentClipIndex >= clips.length - 1}
                   >

@@ -18,7 +18,6 @@ import {
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
 import {formatSeconds, isBetween} from "@/helpers"
-import Modal from "@/components/Modal"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import TimestampInput from "@/components/TimestampInput"
 import {createMarker, updateMarker} from "./api"

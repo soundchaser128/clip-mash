@@ -199,7 +199,8 @@ function StashConfigPage() {
             />
             <label className="label">
               <span className="label-text-alt">
-                Navigate to{" "}
+                The API key is only required when authentication in Stash is
+                enabled. Navigate to{" "}
                 <ExternalLink href={settingsPage}>{settingsPage}</ExternalLink>{" "}
                 to retrieve your API key.
               </span>

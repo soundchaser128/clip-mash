@@ -320,20 +320,23 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
             </div>
           </div>
         </div>
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Clip order</span>
-          </label>
-          <select
-            className="select select-bordered"
-            {...register("clipOrder.type")}
-          >
-            <option value="">Select...</option>
-            <option value="scene">Scene order</option>
-            <option value="random">Random</option>
-            <option value="fixed">Fixed</option>
-          </select>
-        </div>
+
+        {!useMusic && (
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Clip order</span>
+            </label>
+            <select
+              className="select select-bordered"
+              {...register("clipOrder.type")}
+            >
+              <option value="">Select...</option>
+              <option value="scene">Scene order</option>
+              <option value="random">Random</option>
+              <option value="fixed">Fixed</option>
+            </select>
+          </div>
+        )}
 
         {clipOrder === "fixed" && <MarkerOrderModal className="mt-4" />}
 

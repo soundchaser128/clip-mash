@@ -1,8 +1,12 @@
 import {useFormContext} from "react-hook-form"
 import {ClipFormInputs} from "./ClipSettingsForm"
+import {ClipDurationField} from "./common"
 
-const EqualLengthFields: React.FC = () => {
+const EqualLengthFields: React.FC<{totalClipDuration: number}> = ({
+  totalClipDuration,
+}) => {
   const {register} = useFormContext<ClipFormInputs>()
+
   return (
     <>
       <div className="form-control">
@@ -15,6 +19,8 @@ const EqualLengthFields: React.FC = () => {
           {...register("equalLength.clipDuration", {valueAsNumber: true})}
         />
       </div>
+
+      <ClipDurationField totalClipDuration={totalClipDuration} />
     </>
   )
 }

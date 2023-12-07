@@ -19,6 +19,7 @@ import {FormState} from "@/types/form-state"
 import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"
+import {sumDurations} from "@/helpers"
 
 const clipGenerationOptions = (useMusic: boolean) => {
   if (useMusic) {
@@ -68,6 +69,7 @@ export const getDefaultOptions = (state: FormState): ClipFormInputs => {
         clipDuration: 30,
       },
       clipOrder: {type: "scene"},
+      maxDuration: sumDurations(state.selectedMarkers || []),
     }
   }
 }
@@ -77,6 +79,7 @@ interface CommonInputs {
   clipOrder: ClipOrder
   seed?: string
   useMusic?: boolean
+  maxDuration?: number
 }
 
 interface RoundRobinFormInputs {
@@ -151,6 +154,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const clipOrder = watch("clipOrder.type")
   const useMusic = watch("useMusic")
   const hasSongs = state.data.songs?.length || 0 > 0
+  const totalClipDuration = sumDurations(state.data.selectedMarkers || [])
 
   const validate = (values: ClipFormInputs) => {
     let valid = true
@@ -370,9 +374,15 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
           </select>
         </div>
 
-        {clipStrategy === "roundRobin" && <RoundRobinFields />}
-        {clipStrategy === "weightedRandom" && <WeightedRandomFields />}
-        {clipStrategy === "equalLength" && <EqualLengthFields />}
+        {clipStrategy === "roundRobin" && (
+          <RoundRobinFields totalClipDuration={totalClipDuration} />
+        )}
+        {clipStrategy === "weightedRandom" && (
+          <WeightedRandomFields totalClipDuration={totalClipDuration} />
+        )}
+        {clipStrategy === "equalLength" && (
+          <EqualLengthFields totalClipDuration={totalClipDuration} />
+        )}
 
         <div className="form-control">
           <label className="label">

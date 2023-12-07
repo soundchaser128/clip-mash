@@ -95,7 +95,7 @@ const getClipPickerOptions = (
     case "roundRobin": {
       const length = state.songs?.length
         ? songsLength(state)
-        : markerLength(state)
+        : inputs?.maxDuration || markerLength(state)
       return {
         type: "roundRobin",
         length,
@@ -106,7 +106,7 @@ const getClipPickerOptions = (
     case "weightedRandom": {
       const length = state.songs?.length
         ? songsLength(state)
-        : markerLength(state)
+        : inputs?.maxDuration || markerLength(state)
       return {
         type: "weightedRandom",
         clipLengths: getClipLengths(inputs.weightedRandom, state),
@@ -116,7 +116,9 @@ const getClipPickerOptions = (
       }
     }
     case "equalLength": {
-      const length = state.songs?.length ? songsLength(state) : undefined
+      const length = state.songs?.length
+        ? songsLength(state)
+        : inputs?.maxDuration
       return {
         type: "equalLength",
         clipDuration: inputs.equalLength.clipDuration,

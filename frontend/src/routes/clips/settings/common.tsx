@@ -1,5 +1,36 @@
 import {useFormContext} from "react-hook-form"
 import {ClipFormInputs} from "./ClipSettingsForm"
+import React from "react"
+import {formatSeconds} from "@/helpers"
+
+export const ClipDurationField: React.FC<{
+  totalClipDuration: number
+}> = ({totalClipDuration}) => {
+  const {register, watch} = useFormContext<ClipFormInputs>()
+  const currentDuration = watch("maxDuration")
+
+  return (
+    <div className="form-field">
+      <label className="label">
+        <span className="label-text">Compilation length</span>
+      </label>
+      <input
+        type="range"
+        className="range range-primary w-full"
+        min={0}
+        max={totalClipDuration}
+        required
+        {...register("maxDuration", {
+          valueAsNumber: true,
+        })}
+      />
+      <div className="text-xs text-center">
+        {formatSeconds(currentDuration, "short")} /{" "}
+        {formatSeconds(totalClipDuration, "short")}
+      </div>
+    </div>
+  )
+}
 
 export const MusicFormFields: React.FC<{
   strategy: "roundRobin" | "weightedRandom"
@@ -96,7 +127,8 @@ export const MusicFormFields: React.FC<{
 
 export const RandomizedLengthFormFields: React.FC<{
   strategy: "roundRobin" | "weightedRandom"
-}> = ({strategy}) => {
+  totalClipDuration: number
+}> = ({strategy, totalClipDuration}) => {
   const {register} = useFormContext<ClipFormInputs>()
   return (
     <>
@@ -118,21 +150,7 @@ export const RandomizedLengthFormFields: React.FC<{
         />
       </div>
 
-      {/* <div className="form-field">
-        <label className="label">
-          <span className="label-text">
-            Compilation length
-          </span>
-        </label>
-        <input
-          type="range"
-          className="range range-primary w-full"
-          required
-          {...register(`todo`, {
-            valueAsNumber: true,
-          })}
-        />
-      </div> */}
+      <ClipDurationField totalClipDuration={totalClipDuration} />
     </>
   )
 }

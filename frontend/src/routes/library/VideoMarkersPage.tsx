@@ -376,6 +376,12 @@ export default function VideoMarkersPage() {
     }
   }
 
+  const onJump = (seconds: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime += seconds
+    }
+  }
+
   useHotkeys("i", onAddMark)
   useHotkeys("m f", onAddFullVideo)
   useHotkeys("m n", () => onShowForm("create", undefined))
@@ -383,6 +389,8 @@ export default function VideoMarkersPage() {
   useHotkeys("m i", onConsumeMarkPoints)
   useHotkeys("space", onTogglePlay)
   useHotkeys("v m", onToggleMuted)
+  useHotkeys("right", () => onJump(5))
+  useHotkeys("left", () => onJump(-5))
 
   useEffect(() => {
     if (videoRef.current) {

@@ -15,9 +15,10 @@ import {
   HiPause,
   HiSpeakerWave,
   HiSpeakerXMark,
+  HiArrowRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
-import {formatSeconds, isBetween} from "@/helpers"
+import {formatSeconds, isBetween, parseTimestamp} from "@/helpers"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import TimestampInput from "@/components/TimestampInput"
 import {createMarker, updateMarker} from "./api"
@@ -51,7 +52,7 @@ interface Inputs {
   id?: number
   title: string
   start: string
-  end?: string
+  end: string
   createInStash?: boolean
 }
 
@@ -106,6 +107,12 @@ function HelpPanel({onBack}: {onBack: () => void}) {
         <li>
           <Kbd keys="V M" separator=" " /> Toggle mute
         </li>
+        <li>
+          <Kbd keys="‹" /> Jump forward 5 seconds
+        </li>
+        <li>
+          <Kbd keys="›" /> Jump backward 5 seconds
+        </li>
       </ul>
     </div>
   )
@@ -141,9 +148,13 @@ export default function VideoMarkersPage() {
     formState: {errors},
     setError,
     setValue,
+    watch,
   } = useForm<Inputs>({
     resolver: handleValidation,
   })
+
+  const startPosition = watch("start")
+  const endPosition = watch("end")
 
   const navigate = useNavigate()
   const {video, markers: videoMarkers} = useLoaderData() as VideoDetailsDto
@@ -274,6 +285,12 @@ export default function VideoMarkersPage() {
 
     if (marker) {
       setEditedMarker(marker)
+    }
+  }
+
+  const onSetVideoPosition = (seconds: string) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = parseTimestamp(seconds)
     }
   }
 
@@ -464,21 +481,30 @@ export default function VideoMarkersPage() {
                 <label className="label">
                   <span className="label-text">Start time</span>
                 </label>
-                <div className="input-group w-full">
+                <div className="flex w-full">
                   <TimestampInput
                     name="start"
                     control={control}
                     error={errors.start}
                   />
 
-                  <button
-                    onClick={() => onSetCurrentTime("start")}
-                    className="btn"
-                    type="button"
-                  >
-                    <HiClock className="mr-2" />
-                    Set current time
-                  </button>
+                  <div className="join">
+                    <button
+                      onClick={() => onSetCurrentTime("start")}
+                      className="btn join-item"
+                      type="button"
+                    >
+                      <HiClock className="mr-2" />
+                      Set current time
+                    </button>
+                    <button
+                      onClick={() => onSetVideoPosition(startPosition)}
+                      className="btn join-item"
+                      type="button"
+                    >
+                      <HiArrowRight /> Go to
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -489,21 +515,31 @@ export default function VideoMarkersPage() {
                     {errors.end?.message}
                   </span>
                 </label>
-                <div className="input-group w-full">
+                <div className="flex w-full">
                   <TimestampInput
                     name="end"
                     control={control}
                     error={errors.end}
                   />
 
-                  <button
-                    onClick={() => onSetCurrentTime("end")}
-                    className="btn"
-                    type="button"
-                  >
-                    <HiClock className="mr-2" />
-                    Set current time
-                  </button>
+                  <div className="join">
+                    <button
+                      onClick={() => onSetCurrentTime("end")}
+                      className="btn"
+                      type="button"
+                    >
+                      <HiClock className="mr-2" />
+                      Set current time
+                    </button>
+
+                    <button
+                      onClick={() => onSetVideoPosition(endPosition)}
+                      className="btn join-item"
+                      type="button"
+                    >
+                      <HiArrowRight /> Go to
+                    </button>
+                  </div>
                 </div>
               </div>
               {video.source === "Stash" && (

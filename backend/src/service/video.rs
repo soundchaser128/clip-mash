@@ -259,6 +259,9 @@ impl VideoService {
                     .ok();
                 let mut tags = scene.tags.iter().map(|t| t.name.as_str()).collect_vec();
                 tags.extend(scene.performers.iter().map(|p| p.name.as_str()));
+                if let Some(studio) = &scene.studio {
+                    tags.push(studio.name.as_str());
+                }
                 let tags = tags.join(TAG_SEPARATOR);
                 let id = generate_id();
                 let ffprobe_info = ffprobe.ok();

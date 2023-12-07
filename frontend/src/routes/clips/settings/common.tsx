@@ -117,6 +117,22 @@ export const RandomizedLengthFormFields: React.FC<{
           })}
         />
       </div>
+
+      {/* <div className="form-field">
+        <label className="label">
+          <span className="label-text">
+            Compilation length
+          </span>
+        </label>
+        <input
+          type="range"
+          className="range range-primary w-full"
+          required
+          {...register(`todo`, {
+            valueAsNumber: true,
+          })}
+        />
+      </div> */}
     </>
   )
 }

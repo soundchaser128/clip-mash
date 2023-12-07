@@ -4,3 +4,5 @@
 .vscode
 .DS_Store
 /backend/clip-mash-data
+.idea
+*.iml

@@ -34,7 +34,10 @@ const DownloadVideosPage: React.FC = () => {
   const [videoCount, setVideoCount] = useState<number>()
 
   const onSubmit = async (values: Inputs) => {
-    const urls = values.urls.split(splitRegex).map((res) => res.trim())
+    const urls = values.urls
+      .split(splitRegex)
+      .map((res) => res.trim())
+      .filter((u) => u.length > 0)
     setVideoCount(urls.length)
     const errors = []
     for (const url of urls) {

@@ -462,7 +462,7 @@ export default function VideoMarkersPage() {
           onTimeUpdate={onTimeUpdate}
           muted
         />
-        <div className="flex flex-col w-1/3 justify-between">
+        <div className="flex flex-col w-1/3 justify-between max-h-[60vh] overflow-scroll relative">
           {showingForm && (
             <form
               className="w-full flex flex-col gap-2"
@@ -598,107 +598,103 @@ export default function VideoMarkersPage() {
           )}
 
           {!showingForm && (
-            <div>
-              <div className="overflow-x-auto p-2">
-                {formMode === "help" && (
-                  <HelpPanel onBack={() => setFormMode("hidden")} />
-                )}
-                {loading && (
-                  <Loader className="h-full w-full justify-center">
-                    Detecting markers...
-                  </Loader>
-                )}
-                {formMode === "hidden" && !loading && (
-                  <>
-                    <div className="flex w-full justify-between">
-                      <div className="grid grid-cols-2 gap-0.5">
-                        <button
-                          onClick={() => onShowForm("create")}
-                          className="btn btn-sm btn-success"
-                        >
-                          <HiPlus className="w-4 h-4 mr-2" />
-                          Add
-                        </button>
-                        <button
-                          disabled={markers.length === 0}
-                          onClick={onSplitMarker}
-                          className="btn btn-sm btn-primary"
-                        >
-                          <HiTag className="w-4 h-4 mr-2" />
-                          Split
-                        </button>
-                        <button
-                          onClick={onDetectMarkers}
-                          className="btn btn-sm btn-primary"
-                          disabled={markers.length > 0}
-                        >
-                          <HiMagnifyingGlass className="w-4 h-4 mr-2" />
-                          Detect
-                        </button>
-                        <button
-                          onClick={onConsumeMarkPoints}
-                          className="btn btn-sm btn-success"
-                          type="button"
-                          disabled={markPoints.length === 0}
-                        >
-                          <HiPlus /> From points
-                        </button>
-                      </div>
-
+            <div className="overflow-x-auto p-2">
+              {formMode === "help" && (
+                <HelpPanel onBack={() => setFormMode("hidden")} />
+              )}
+              {loading && (
+                <Loader className="h-full w-full justify-center">
+                  Detecting markers...
+                </Loader>
+              )}
+              {formMode === "hidden" && !loading && (
+                <>
+                  <div className="flex w-full justify-between">
+                    <div className="grid grid-cols-2 gap-0.5">
                       <button
-                        onClick={() => setFormMode("help")}
-                        className="btn btn-sm btn-secondary"
+                        onClick={() => onShowForm("create")}
+                        className="btn btn-sm btn-success"
                       >
-                        <HiQuestionMarkCircle className="w-4 h-4 mr-2" />
-                        Help
+                        <HiPlus className="w-4 h-4 mr-2" />
+                        Add
+                      </button>
+                      <button
+                        disabled={markers.length === 0}
+                        onClick={onSplitMarker}
+                        className="btn btn-sm btn-primary"
+                      >
+                        <HiTag className="w-4 h-4 mr-2" />
+                        Split
+                      </button>
+                      <button
+                        onClick={onDetectMarkers}
+                        className="btn btn-sm btn-primary"
+                        disabled={markers.length > 0}
+                      >
+                        <HiMagnifyingGlass className="w-4 h-4 mr-2" />
+                        Detect
+                      </button>
+                      <button
+                        onClick={onConsumeMarkPoints}
+                        className="btn btn-sm btn-success"
+                        type="button"
+                        disabled={markPoints.length === 0}
+                      >
+                        <HiPlus /> From points
                       </button>
                     </div>
-                    <table className="table table-compact w-full">
-                      <thead>
-                        <tr>
-                          <th></th>
-                          <th>Tag</th>
-                          <th>Start</th>
-                          <th>End</th>
-                          <th>Edit</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {markers.length === 0 && (
-                          <tr>
-                            <td colSpan={5} className="text-center">
-                              No markers yet. Click the Help button for
-                              information on how to add markers.
-                            </td>
-                          </tr>
-                        )}
 
-                        {markers.map((marker, idx) => (
-                          <tr key={marker.id}>
-                            <td>{idx + 1}</td>
-                            <td className="font-bold">{marker.primaryTag}</td>
-                            <td>
-                              {formatSeconds(marker.start, "short-with-ms")}
-                            </td>
-                            <td>
-                              {formatSeconds(marker.end, "short-with-ms")}
-                            </td>
-                            <td>
-                              <button
-                                onClick={() => onShowForm("edit", marker)}
-                                type="button"
-                                className="btn btn-sm btn-square btn-primary"
-                              >
-                                <HiPencilSquare className="inline" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
-                )}
-              </div>
+                    <button
+                      onClick={() => setFormMode("help")}
+                      className="btn btn-sm btn-secondary"
+                    >
+                      <HiQuestionMarkCircle className="w-4 h-4 mr-2" />
+                      Help
+                    </button>
+                  </div>
+                  <table className="table table-compact w-full">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Tag</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Edit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {markers.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="text-center">
+                            No markers yet. Click the Help button for
+                            information on how to add markers.
+                          </td>
+                        </tr>
+                      )}
+
+                      {markers.map((marker, idx) => (
+                        <tr key={marker.id}>
+                          <td>{idx + 1}</td>
+                          <td className="font-bold">{marker.primaryTag}</td>
+                          <td>
+                            {formatSeconds(marker.start, "short-with-ms")}
+                          </td>
+                          <td>{formatSeconds(marker.end, "short-with-ms")}</td>
+                          <td>
+                            <button
+                              onClick={() => onShowForm("edit", marker)}
+                              type="button"
+                              className="btn btn-sm btn-square btn-primary"
+                            >
+                              <HiPencilSquare className="inline" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
             </div>
           )}
           <div className="w-full flex justify-between">

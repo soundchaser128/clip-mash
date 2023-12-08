@@ -108,10 +108,16 @@ function HelpPanel({onBack}: {onBack: () => void}) {
           <Kbd keys="V M" separator=" " /> Toggle mute
         </li>
         <li>
-          <Kbd keys="‹" /> Jump forward 5 seconds
+          <Kbd keys="‹" /> Jump forwards 5 seconds
         </li>
         <li>
-          <Kbd keys="›" /> Jump backward 5 seconds
+          <Kbd keys="›" /> Jump backwards 5 seconds
+        </li>
+        <li>
+          <Kbd keys="L" /> Jump forwards 0.5 seconds
+        </li>
+        <li>
+          <Kbd keys="K" /> Jump backwards 0.5 seconds
         </li>
       </ul>
     </div>
@@ -406,6 +412,8 @@ export default function VideoMarkersPage() {
   useHotkeys("m i", onConsumeMarkPoints)
   useHotkeys("space", onTogglePlay)
   useHotkeys("v m", onToggleMuted)
+  useHotkeys("k", () => onJump(-0.5))
+  useHotkeys("l", () => onJump(0.5))
   useHotkeys("right", () => onJump(5))
   useHotkeys("left", () => onJump(-5))
 

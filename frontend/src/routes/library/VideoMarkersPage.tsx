@@ -37,6 +37,12 @@ import {useConfig} from "@/hooks/useConfig"
 import Kbd from "@/components/Kbd"
 import useHotkeys from "@/hooks/useHotkeys"
 import clsx from "clsx"
+import {
+  Player,
+  PlayerContextProvider,
+  PlayerControls,
+  usePlayer,
+} from "@/components/VideoPlayer"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
@@ -146,7 +152,7 @@ const handleValidation = (values: Inputs) => {
   }
 }
 
-export default function VideoMarkersPage() {
+function VideoMarkersPage() {
   const {
     register,
     handleSubmit,
@@ -159,6 +165,8 @@ export default function VideoMarkersPage() {
     resolver: handleValidation,
   })
 
+  const {state, dispatch} = usePlayer()
+
   const startPosition = watch("start")
   const endPosition = watch("end")
 
@@ -168,18 +176,27 @@ export default function VideoMarkersPage() {
   const revalidator = useRevalidator()
 
   const [markers, setMarkers] = useImmer<MarkerDto[]>(videoMarkers)
-  const videoRef = useRef<HTMLVideoElement>(null)
   const [formMode, setFormMode] = useState<FormMode>("hidden")
-  const [videoDuration, setVideoDuration] = useState<number>()
   const [editedMarker, setEditedMarker] = useState<MarkerDto>()
   const [loading, setLoading] = useState(false)
   const threshold = 40
-  const [time, setTime] = useState(0)
   const [markPoints, setMarkPoints] = useImmer<number[]>([])
   const config = useConfig()
   const showingForm = formMode === "create" || formMode === "edit"
-  const isPlaying = videoRef.current?.paused === false
-  const [isMuted, setIsMuted] = useState(videoRef.current?.muted)
+
+  const onSetCurrentTime = (field: "start" | "end") => {
+    const time = state.currentTime
+    if (time) {
+      setValue(field, formatSeconds(time, "short-with-ms"))
+    }
+  }
+
+  const onSetVideoPosition = (time: string) => {
+    const parsed = parseTimestamp(time)
+    if (parsed) {
+      dispatch({type: "setCurrentTime", payload: parsed})
+    }
+  }
 
   const onSubmit = async (values: Inputs) => {
     const index =
@@ -196,7 +213,7 @@ export default function VideoMarkersPage() {
         ? await createMarker(
             video,
             values,
-            videoDuration!,
+            state.duration,
             index,
             values.createInStash ?? false,
           )
@@ -226,23 +243,13 @@ export default function VideoMarkersPage() {
     }
   }
 
-  const onSetCurrentTime = (field: "start" | "end") => {
-    setValue(
-      field,
-      formatSeconds(videoRef.current?.currentTime || 0, "short-with-ms"),
-    )
-  }
   const currentItemIndex = markers.findIndex((m) =>
-    isBetween(time, m.start, m.end || videoDuration!),
+    isBetween(state.currentTime, m.start, m.end || state.duration),
   )
-
-  const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (e) => {
-    setTime(e.currentTarget.currentTime)
-  }
 
   const onAddMark = () => {
     setMarkPoints((draft) => {
-      draft.push(videoRef.current!.currentTime)
+      draft.push(state.currentTime)
     })
   }
 
@@ -284,19 +291,13 @@ export default function VideoMarkersPage() {
 
   const onShowForm = (mode: FormMode, marker?: MarkerDto) => {
     setFormMode(mode)
-    const start = mode === "create" ? videoRef.current?.currentTime : undefined
+    const start = mode === "create" ? state.currentTime : undefined
     setValue("start", formatSeconds(marker?.start || start, "short-with-ms"))
     setValue("end", formatSeconds(marker?.end || undefined, "short-with-ms"))
     setValue("title", marker?.primaryTag || "")
 
     if (marker) {
       setEditedMarker(marker)
-    }
-  }
-
-  const onSetVideoPosition = (seconds: string) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = parseTimestamp(seconds)
     }
   }
 
@@ -326,18 +327,13 @@ export default function VideoMarkersPage() {
     onClose()
   }
 
-  const onMetadataLoaded: React.ReactEventHandler<HTMLVideoElement> = (e) => {
-    const duration = e.currentTarget.duration
-    setVideoDuration(duration)
-  }
-
   const onClose = () => {
     revalidator.revalidate()
     navigate(-1)
   }
 
   const onSplitMarker = async () => {
-    const currentTime = videoRef.current?.currentTime || 0
+    const currentTime = state.currentTime || 0
     const currentMarker = markers.find((m) =>
       isBetween(currentTime, m.start, m.end),
     )
@@ -361,7 +357,7 @@ export default function VideoMarkersPage() {
 
     for (let i = 0; i < points.length; i++) {
       const current = points[i]
-      const next = points[i + 1] || videoDuration!
+      const next = points[i + 1] || state.duration!
       const marker = await createMarker(
         video,
         {
@@ -369,7 +365,7 @@ export default function VideoMarkersPage() {
           end: next,
           title: "Untitled",
         },
-        videoDuration!,
+        state.duration,
         i,
         false,
       )
@@ -382,59 +378,20 @@ export default function VideoMarkersPage() {
     setMarkPoints([])
   }
 
-  const onTogglePlay = () => {
-    if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play()
-      } else {
-        videoRef.current.pause()
-      }
-    }
-  }
-
-  const onToggleMuted = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted
-      setIsMuted(videoRef.current.muted)
-    }
-  }
-
-  const onJump = (seconds: number) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime += seconds
-    }
-  }
-
   useHotkeys("i", onAddMark)
   useHotkeys("m f", onAddFullVideo)
   useHotkeys("m n", () => onShowForm("create", undefined))
   useHotkeys("m s", onSplitMarker)
   useHotkeys("m i", onConsumeMarkPoints)
-  useHotkeys("space", onTogglePlay)
-  useHotkeys("v m", onToggleMuted)
-  useHotkeys("k", () => onJump(-0.5))
-  useHotkeys("l", () => onJump(0.5))
-  useHotkeys("right", () => onJump(5))
-  useHotkeys("left", () => onJump(-5))
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.focus()
-    }
-  }, [videoRef])
 
   const onItemClick = (item: unknown, index: number) => {
     const marker = markers[index]
     onShowForm("edit", marker)
-    if (videoRef.current) {
-      videoRef.current.currentTime = marker.start
-    }
+    dispatch({type: "setCurrentTime", payload: marker.start})
   }
 
   const onTimelineClick = (time: number) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = time
-    }
+    dispatch({type: "setCurrentTime", payload: time})
   }
 
   const onDeleteAll = async () => {
@@ -454,13 +411,9 @@ export default function VideoMarkersPage() {
   return (
     <>
       <div className="flex gap-2">
-        <video
+        <Player
           className="w-2/3 max-h-[82vh]"
           src={getVideoUrl(video, config)}
-          ref={videoRef}
-          onLoadedMetadata={onMetadataLoaded}
-          onTimeUpdate={onTimeUpdate}
-          muted
         />
         <div className="flex flex-col w-1/3 justify-between max-h-[60vh] overflow-scroll relative">
           {showingForm && (
@@ -714,31 +667,7 @@ export default function VideoMarkersPage() {
         </div>
       </div>
       <div className="flex gap-2 items-center w-full">
-        <button
-          onClick={onTogglePlay}
-          className={clsx("btn btn-square", {
-            "btn-success": !isPlaying,
-            "btn-neutral": isPlaying,
-          })}
-          type="button"
-        >
-          {isPlaying ? (
-            <HiPause className="w-5 h-5" />
-          ) : (
-            <HiPlay className="w-5 h-5" />
-          )}
-        </button>
-        <button
-          onClick={onToggleMuted}
-          className="btn btn-square"
-          type="button"
-        >
-          {isMuted ? (
-            <HiSpeakerWave className="w-5 h-5" />
-          ) : (
-            <HiSpeakerXMark className="w-5 h-5" />
-          )}
-        </button>
+        <PlayerControls />
         <Timeline
           length={video.duration}
           items={markers.map((marker) => ({
@@ -751,7 +680,7 @@ export default function VideoMarkersPage() {
             editedMarker ? markers.indexOf(editedMarker) : currentItemIndex
           }
           fadeInactiveItems
-          time={time}
+          time={state.currentTime}
           markPoints={markPoints}
           onMarkerClick={onRemoveMark}
           onTimelineClick={onTimelineClick}
@@ -759,5 +688,13 @@ export default function VideoMarkersPage() {
         />
       </div>
     </>
+  )
+}
+
+export default function WrappedVideoMarkersPage() {
+  return (
+    <PlayerContextProvider>
+      <VideoMarkersPage />
+    </PlayerContextProvider>
   )
 }

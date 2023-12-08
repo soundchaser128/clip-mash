@@ -1,6 +1,6 @@
 import useHotkeys from "@/hooks/useHotkeys"
 import clsx from "clsx"
-import React, {useContext, useReducer} from "react"
+import React, {useContext, useEffect, useReducer} from "react"
 import {useRef, useState} from "react"
 import {HiPause, HiPlay, HiSpeakerWave, HiSpeakerXMark} from "react-icons/hi2"
 
@@ -16,6 +16,7 @@ interface PlayerState {
   currentTime: number
   duration: number
   playbackRate: number
+  videoElement?: HTMLVideoElement
 }
 
 const initialState: PlayerState = {
@@ -35,6 +36,7 @@ const PlayerContext = React.createContext<{
 })
 
 type PlayerAction =
+  | {type: "init"; payload: HTMLVideoElement}
   | {type: "play"}
   | {type: "pause"}
   | {type: "mute"}
@@ -44,7 +46,7 @@ type PlayerAction =
   | {type: "setPlaybackRate"; payload: number}
 
 export function PlayerContextProvider({children}: {children: React.ReactNode}) {
-  const reducer = (state: PlayerState, action: PlayerAction) => {
+  function reducer(state: PlayerState, action: PlayerAction): PlayerState {
     switch (action.type) {
       case "play":
         return {...state, isPlaying: true}
@@ -60,6 +62,8 @@ export function PlayerContextProvider({children}: {children: React.ReactNode}) {
         return {...state, currentTime: action.payload}
       case "setPlaybackRate":
         return {...state, playbackRate: action.payload}
+      case "init":
+        return {...state, videoElement: action.payload}
       default:
         return state
     }
@@ -82,34 +86,70 @@ export function Player({src, className, ...rest}: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const {dispatch} = usePlayer()
 
-  const onTogglePlay = () => {
+  useEffect(() => {
     if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play()
+      dispatch({type: "init", payload: videoRef.current})
+    }
+  }, [dispatch])
+
+  const onLoadedMetadata = () => {
+    if (videoRef.current) {
+      dispatch({type: "setDuration", payload: videoRef.current.duration})
+    }
+  }
+
+  const onTimeUpdate = () => {
+    if (videoRef.current) {
+      dispatch({type: "setCurrentTime", payload: videoRef.current.currentTime})
+    }
+  }
+
+  return (
+    <video
+      {...rest}
+      onLoadedMetadata={onLoadedMetadata}
+      onTimeUpdate={onTimeUpdate}
+      className={className}
+      src={src}
+      ref={videoRef}
+      muted
+    />
+  )
+}
+
+export function PlayerControls() {
+  const {state, dispatch} = usePlayer()
+  const {isPlaying, isMuted} = state
+  const videoElement = state.videoElement
+
+  const onTogglePlay = () => {
+    if (videoElement) {
+      if (videoElement.paused) {
+        videoElement.play()
         dispatch({type: "play"})
       } else {
-        videoRef.current.pause()
+        videoElement.pause()
         dispatch({type: "pause"})
       }
     }
   }
 
   const onToggleMuted = () => {
-    if (videoRef.current) {
-      if (videoRef.current.muted) {
-        videoRef.current.muted = false
+    if (videoElement) {
+      if (videoElement.muted) {
+        videoElement.muted = false
         dispatch({type: "unmute"})
       } else {
-        videoRef.current.muted = true
+        videoElement.muted = true
         dispatch({type: "mute"})
       }
     }
   }
 
   const onJump = (seconds: number) => {
-    if (videoRef.current) {
-      const newTime = videoRef.current.currentTime + seconds
-      videoRef.current.currentTime = newTime
+    if (videoElement) {
+      const newTime = videoElement.currentTime + seconds
+      videoElement.currentTime = newTime
       dispatch({type: "setCurrentTime", payload: newTime})
     }
   }
@@ -122,15 +162,7 @@ export function Player({src, className, ...rest}: Props) {
   useHotkeys("left", () => onJump(-5))
 
   return (
-    <video {...rest} className={className} src={src} ref={videoRef} muted />
-  )
-}
-
-export function PlayerControls() {
-  const {state, dispatch} = usePlayer()
-  const {isPlaying, isMuted} = state
-  return (
-    <div className="flex gap-2 items-center w-full">
+    <>
       <button
         onClick={onTogglePlay}
         className={clsx("btn btn-square", {
@@ -152,6 +184,6 @@ export function PlayerControls() {
           <HiSpeakerXMark className="w-5 h-5" />
         )}
       </button>
-    </div>
+    </>
   )
 }

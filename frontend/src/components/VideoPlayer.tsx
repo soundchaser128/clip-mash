@@ -43,6 +43,7 @@ type PlayerAction =
   | {type: "unmute"}
   | {type: "setDuration"; payload: number}
   | {type: "setCurrentTime"; payload: number}
+  | {type: "setPosition"; payload: number}
   | {type: "setPlaybackRate"; payload: number}
 
 export function PlayerContextProvider({children}: {children: React.ReactNode}) {
@@ -60,7 +61,13 @@ export function PlayerContextProvider({children}: {children: React.ReactNode}) {
         return {...state, duration: action.payload}
       case "setCurrentTime":
         return {...state, currentTime: action.payload}
+      case "setPosition":
+        if (state.videoElement) {
+          state.videoElement.currentTime = action.payload
+        }
+        return {...state, currentTime: action.payload}
       case "setPlaybackRate":
+        state.videoElement!.playbackRate = action.payload
         return {...state, playbackRate: action.payload}
       case "init":
         return {...state, videoElement: action.payload}

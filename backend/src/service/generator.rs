@@ -56,6 +56,7 @@ struct CreateClip<'a> {
     quality: VideoQuality,
     effort: EncodingEffort,
     re_encode: bool,
+    pad_blurred: bool,
 }
 
 #[derive(Clone)]
@@ -84,6 +85,19 @@ impl CompilationGenerator {
             encoding_optimization,
             stream_urls: streams_service,
         })
+    }
+
+    fn blurred_padding_filter(
+        &self,
+        source_aspect_ratio: (u32, u32),
+        target_aspect_ratio: (u32, u32),
+    ) -> String {
+        let sigma = 80;
+        let brightness = -0.125;
+        let (sw, sh) = source_aspect_ratio;
+        let (tw, th) = target_aspect_ratio;
+
+        format!("split[original][copy];[copy]scale=ih*{sw}/{sh}:-1,crop=h=iw*{tw}/{th},gblur=sigma={sigma},eq=brightness={brightness}[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2")
     }
 
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {
@@ -155,11 +169,15 @@ impl CompilationGenerator {
     async fn create_clip(&self, clip: CreateClip<'_>) -> Result<()> {
         let clip_str = clip.duration.to_string();
         let seconds_str = clip.start.to_string();
-        let filter = format!("scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:-1:-1:color=black,fps={fps}",
+        let filter = if clip.pad_blurred {
+            todo!("blurred padding")
+        } else {
+            format!("scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:-1:-1:color=black,fps={fps}",
             width=clip.width,
             height=clip.height,
             fps=clip.fps,
-        );
+        )
+        };
 
         let mut args = vec![
             "-hide_banner",
@@ -250,6 +268,10 @@ impl CompilationGenerator {
                 .iter()
                 .find(|m| &m.id == marker_id)
                 .expect(&format!("no marker with ID {marker_id} found"));
+
+            let video_metadata = self.database.ffprobe.get_info(&marker.video_id).await?;
+            let video = video_metadata.video_parameters();
+
             let url = &stream_urls[&marker.video_id];
             let (width, height) = options.output_resolution;
             let out_file = video_dir.join(get_clip_file_name(
@@ -261,6 +283,8 @@ impl CompilationGenerator {
             ));
             if !out_file.is_file() {
                 info!("creating clip {} / {} at {out_file}", index + 1, total);
+                let aspect_ratio_mismatch =
+                    (width as f64 / height as f64) != (video.width as f64 / video.height as f64);
                 self.create_clip(CreateClip {
                     url,
                     start: *start,
@@ -273,6 +297,7 @@ impl CompilationGenerator {
                     quality: options.video_quality,
                     effort: options.encoding_effort,
                     re_encode: needs_re_encode,
+                    pad_blurred: false,
                 })
                 .await?;
             } else {

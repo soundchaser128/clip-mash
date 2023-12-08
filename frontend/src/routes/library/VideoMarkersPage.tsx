@@ -166,6 +166,7 @@ function VideoMarkersPage() {
   })
 
   const {state, dispatch} = usePlayer()
+  // console.log(state)
 
   const startPosition = watch("start")
   const endPosition = watch("end")
@@ -194,7 +195,7 @@ function VideoMarkersPage() {
   const onSetVideoPosition = (time: string) => {
     const parsed = parseTimestamp(time)
     if (parsed) {
-      dispatch({type: "setCurrentTime", payload: parsed})
+      dispatch({type: "setPosition", payload: parsed})
     }
   }
 
@@ -387,11 +388,11 @@ function VideoMarkersPage() {
   const onItemClick = (item: unknown, index: number) => {
     const marker = markers[index]
     onShowForm("edit", marker)
-    dispatch({type: "setCurrentTime", payload: marker.start})
+    dispatch({type: "setPosition", payload: marker.start})
   }
 
   const onTimelineClick = (time: number) => {
-    dispatch({type: "setCurrentTime", payload: time})
+    dispatch({type: "setPosition", payload: time})
   }
 
   const onDeleteAll = async () => {

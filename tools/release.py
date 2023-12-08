@@ -10,7 +10,7 @@ import markdown
 
 cargo_toml_path = Path("Cargo.toml")
 cargo_toml_version_regex = re.compile(r'^version = "(?P<version>.*)"$', re.MULTILINE)
-dry_run = True
+dry_run = False
 
 
 class ChangeLogEntry:

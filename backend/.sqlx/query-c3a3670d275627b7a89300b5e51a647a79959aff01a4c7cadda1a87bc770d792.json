@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE progress SET done = true, message = $1 WHERE video_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c3a3670d275627b7a89300b5e51a647a79959aff01a4c7cadda1a87bc770d792"
+}

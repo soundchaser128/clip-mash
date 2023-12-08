@@ -104,9 +104,7 @@ impl CompilationGenerator {
         let tw = target_aspect.numer();
         let th = target_aspect.denom();
 
-        // split[original][copy];[copy]scale=ih*16/9:-1,crop=h=iw*9/16,gblur=sigma=20[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2'
-        // split[original][copy];[copy]scale=ih*155/192:-1,crop=h=iw*16/9,gblur=sigma=80,eq=brightness=-0.125[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2,fps=30
-        format!("split[original][copy];[copy]scale=ih*{sw}/{sh}:-1,crop=h=iw*{th}/{tw},gblur=sigma={sigma},eq=brightness={brightness}[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2,fps={fps}")
+        format!("split[original][copy];[copy]scale=ih*{tw}/{th}:-1,crop=h=iw*{th}/{tw},gblur=sigma={sigma},eq=brightness={brightness}[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2,fps={fps}")
     }
 
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {

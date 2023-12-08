@@ -1,13 +1,14 @@
 import useHotkeys from "@/hooks/useHotkeys"
 import clsx from "clsx"
 import React, {useContext, useEffect, useReducer} from "react"
-import {useRef, useState} from "react"
+import {useRef} from "react"
 import {HiPause, HiPlay, HiSpeakerWave, HiSpeakerXMark} from "react-icons/hi2"
 
-interface Props extends React.HTMLAttributes<HTMLVideoElement> {
+interface Props {
   src: string
   className?: string
   wrapperClassName?: string
+  autoPlay?: boolean
 }
 
 interface PlayerState {

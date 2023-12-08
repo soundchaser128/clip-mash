@@ -2,9 +2,10 @@ use std::ffi::OsStr;
 use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};
+use fraction::Ratio;
 use itertools::Itertools;
 use tokio::process::Command;
-use tracing::{debug, enabled, info, Level};
+use tracing::{debug, enabled, error, info, Level};
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
@@ -56,7 +57,8 @@ struct CreateClip<'a> {
     quality: VideoQuality,
     effort: EncodingEffort,
     re_encode: bool,
-    pad_blurred: bool,
+    video_width: u32,
+    video_height: u32,
 }
 
 #[derive(Clone)]
@@ -89,15 +91,22 @@ impl CompilationGenerator {
 
     fn blurred_padding_filter(
         &self,
-        source_aspect_ratio: (u32, u32),
-        target_aspect_ratio: (u32, u32),
+        source_aspect: Ratio<u32>,
+        target_aspect: Ratio<u32>,
+        fps: f64,
     ) -> String {
         let sigma = 80;
         let brightness = -0.125;
-        let (sw, sh) = source_aspect_ratio;
-        let (tw, th) = target_aspect_ratio;
 
-        format!("split[original][copy];[copy]scale=ih*{sw}/{sh}:-1,crop=h=iw*{tw}/{th},gblur=sigma={sigma},eq=brightness={brightness}[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2")
+        let sw = source_aspect.numer();
+        let sh = source_aspect.denom();
+
+        let tw = target_aspect.numer();
+        let th = target_aspect.denom();
+
+        // split[original][copy];[copy]scale=ih*16/9:-1,crop=h=iw*9/16,gblur=sigma=20[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2'
+        // split[original][copy];[copy]scale=ih*155/192:-1,crop=h=iw*16/9,gblur=sigma=80,eq=brightness=-0.125[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2,fps=30
+        format!("split[original][copy];[copy]scale=ih*{sw}/{sh}:-1,crop=h=iw*{th}/{tw},gblur=sigma={sigma},eq=brightness={brightness}[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2,fps={fps}")
     }
 
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {
@@ -169,8 +178,11 @@ impl CompilationGenerator {
     async fn create_clip(&self, clip: CreateClip<'_>) -> Result<()> {
         let clip_str = clip.duration.to_string();
         let seconds_str = clip.start.to_string();
-        let filter = if clip.pad_blurred {
-            todo!("blurred padding")
+
+        let video = Ratio::new(clip.video_width, clip.video_height);
+        let target = Ratio::new(clip.width, clip.height);
+        let filter = if target != video {
+            self.blurred_padding_filter(video, target, clip.fps)
         } else {
             format!("scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:-1:-1:color=black,fps={fps}",
             width=clip.width,
@@ -283,23 +295,33 @@ impl CompilationGenerator {
             ));
             if !out_file.is_file() {
                 info!("creating clip {} / {} at {out_file}", index + 1, total);
-                let aspect_ratio_mismatch =
-                    (width as f64 / height as f64) != (video.width as f64 / video.height as f64);
-                self.create_clip(CreateClip {
-                    url,
-                    start: *start,
-                    duration: end - start,
-                    width,
-                    height,
-                    fps: options.output_fps as f64,
-                    out_file: &out_file,
-                    codec: options.video_codec,
-                    quality: options.video_quality,
-                    effort: options.encoding_effort,
-                    re_encode: needs_re_encode,
-                    pad_blurred: false,
-                })
-                .await?;
+                let result = self
+                    .create_clip(CreateClip {
+                        url,
+                        start: *start,
+                        duration: end - start,
+                        width,
+                        height,
+                        fps: options.output_fps as f64,
+                        out_file: &out_file,
+                        codec: options.video_codec,
+                        quality: options.video_quality,
+                        effort: options.encoding_effort,
+                        re_encode: needs_re_encode,
+                        video_width: video.width as u32,
+                        video_height: video.height as u32,
+                    })
+                    .await;
+                if let Err(e) = result {
+                    error!("error while creating clip: {}", e);
+                    let error = e.to_string();
+                    self.database
+                        .progress
+                        .progress_error(&options.video_id, &error)
+                        .await?;
+
+                    return Err(e);
+                }
             } else {
                 info!("clip {out_file} already exists, skipping");
             }

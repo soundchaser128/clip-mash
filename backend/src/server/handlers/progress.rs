@@ -46,3 +46,21 @@ pub async fn get_progress_info(
     let progress = state.database.progress.get_progress(&id).await?;
     Ok(Json(progress))
 }
+
+#[utoipa::path(
+    delete,
+    path = "/api/progress/{id}",
+    params(
+        ("id" = String, Path, description = "The project ID to delete the progress of")
+    ),
+    responses(
+        (status = 200, description = "Returns nothing if successful", body = ()),
+    )
+)]
+pub async fn delete_progress(
+    Path(id): Path<String>,
+    state: State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    state.database.progress.delete_progress(&id).await?;
+    Ok(())
+}

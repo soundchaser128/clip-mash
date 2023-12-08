@@ -160,6 +160,7 @@ async fn run() -> Result<()> {
             "/progress/:id/info",
             get(handlers::progress::get_progress_info),
         )
+        .route("/progress/:id", delete(handlers::progress::delete_progress))
         .route("/song", get(handlers::music::list_songs))
         .route("/song/:id/stream", get(handlers::music::stream_song))
         .route("/song/download", post(handlers::music::download_music))

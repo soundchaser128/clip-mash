@@ -1,10 +1,18 @@
 import {useStateMachine} from "little-state-machine"
 import {useCallback, useEffect, useRef, useState} from "react"
-import {HiRocketLaunch} from "react-icons/hi2"
+import {HiExclamationCircle, HiRocketLaunch} from "react-icons/hi2"
 import {formatSeconds, pluralize} from "../helpers"
-import {CreateVideoBody, Progress, createVideo, getProgressInfo} from "../api"
+import {
+  CreateVideoBody,
+  Progress,
+  createVideo,
+  deleteProgress,
+  getProgressInfo,
+} from "../api"
 import useNotification from "../hooks/useNotification"
 import {useNavigate} from "react-router-dom"
+import TroubleshootingInfo from "@/components/TroubleshootingInfo"
+import ExternalLink from "@/components/ExternalLink"
 
 const TWO_MINUTES = 120
 const ONE_HOUR = 3600
@@ -33,13 +41,23 @@ function Progress() {
   const eventSource = useRef<EventSource>()
   const {videoId} = state.data
   const navigate = useNavigate()
+  const [error, setError] = useState<string>()
 
   const handleProgress = useCallback(
     (data: Progress) => {
-      if (data.done) {
+      if (data.done && data.message === "Finished!") {
         eventSource.current?.close()
         sendNotification("Success", "Video generation finished!")
         navigate(`/${videoId}/download`)
+      } else if (data.done) {
+        eventSource.current?.close()
+        setError(data.message)
+        deleteProgress(state.data.videoId!).then(() => {
+          sendNotification(
+            "Error",
+            "Video generation failed. See the page for details.",
+          )
+        })
       }
       setProgress(data)
     },
@@ -127,7 +145,22 @@ function Progress() {
         </>
       )}
 
-      {progress && (
+      {error && (
+        <div>
+          <h2 className="text-2xl mb-1 font-bold">Error</h2>
+          <p className="mb-4">
+            Sorry, something went wrong creating your video. Please create an
+            issue on{" "}
+            <ExternalLink href="https://github.com/soundchaser128/clip-mash/issues">
+              GitHub
+            </ExternalLink>{" "}
+            and include the following information:
+          </p>
+          <pre className="text-sm">{error}</pre>
+        </div>
+      )}
+
+      {progress && !error && (
         <div className="w-full">
           <progress
             className="progress h-6 progress-primary w-full"

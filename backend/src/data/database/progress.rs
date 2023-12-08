@@ -75,6 +75,26 @@ impl ProgressDatabase {
         Ok(())
     }
 
+    pub async fn progress_error(&self, video_id: &str, message: &str) -> Result<()> {
+        sqlx::query!(
+            "UPDATE progress SET done = true, message = $1 WHERE video_id = $2",
+            message,
+            video_id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_progress(&self, video_id: &str) -> Result<()> {
+        sqlx::query!("DELETE FROM progress WHERE video_id = $1", video_id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
     pub async fn cleanup_progress(&self) -> Result<()> {
         info!("deleting all progress entries older than 7 days");
         sqlx::query!(

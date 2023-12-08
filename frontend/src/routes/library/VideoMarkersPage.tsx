@@ -416,7 +416,7 @@ function VideoMarkersPage() {
           className="w-2/3 max-h-[82vh]"
           src={getVideoUrl(video, config)}
         />
-        <div className="flex flex-col w-1/3 justify-between max-h-[60vh] overflow-scroll relative">
+        <div className="flex flex-col w-1/3 justify-between max-h-[60vh] relative">
           {showingForm && (
             <form
               className="w-full flex flex-col gap-2"

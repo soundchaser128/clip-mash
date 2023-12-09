@@ -42,15 +42,27 @@ pub fn expect_file_name(path: &str) -> String {
 pub fn commandline_error<T>(command_name: &str, output: Output) -> crate::Result<T> {
     use color_eyre::eyre::eyre;
 
-    let stdout = std::str::from_utf8(&output.stdout).unwrap();
-    let stderr = std::str::from_utf8(&output.stderr).unwrap();
-    Err(eyre!(
-        "command {} failed with exit code {}, stdout:\n'{}'\nstderr:\n'{}'",
+    let mut message = format!(
+        "Command '{}' failed with exit code {}.",
         command_name,
-        output.status.code().unwrap_or(1),
-        stdout,
-        stderr
-    ))
+        output.status.code().unwrap_or(1)
+    );
+
+    if let Some(stdout) = std::str::from_utf8(&output.stdout).ok() {
+        if !stdout.is_empty() {
+            message.push_str("\nProcess standard output:\n");
+            message.push_str(stdout);
+        }
+    }
+
+    if let Some(stderr) = std::str::from_utf8(&output.stderr).ok() {
+        if !stderr.is_empty() {
+            message.push_str("\nProcess error output:\n");
+            message.push_str(stderr);
+        }
+    }
+
+    Err(eyre!(message))
 }
 
 pub fn debug_output(output: Output) {

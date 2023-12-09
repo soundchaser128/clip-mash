@@ -5,6 +5,7 @@ import {useEffect, useState} from "react"
 import Loader from "@/components/Loader"
 import {addNewVideos, listFileEntries, ListFileEntriesResponse} from "@/api"
 import FileBrowser from "@/components/FileBrowser"
+import {useCreateToast} from "@/hooks/useToast"
 
 interface Inputs {
   path: string
@@ -22,6 +23,8 @@ export default function SelectVideos() {
       path: path || "",
     },
   })
+
+  const createToast = useCreateToast()
 
   const onSubmit = async (values: Inputs) => {
     setSubmitting(true)
@@ -42,12 +45,19 @@ export default function SelectVideos() {
   useEffect(() => {
     fetchEntries(path || undefined)
       .then((entries) => setFiles(entries))
-      .catch((error: unknown) => {
-        if (error instanceof Response) {
-          error.json()
-        } else {
-          console.error(error)
+      .catch(async (error: unknown) => {
+        let message
+        if (error instanceof Error) {
+          message = error.message
+        } else if (error instanceof Response) {
+          const object = (await error.json()) as {error: string}
+          const payload = JSON.parse(object.error) as {error: string}
+          message = payload.error
         }
+        createToast({
+          message: `Could not access path '${path}': ${message}`,
+          type: "error",
+        })
       })
   }, [path])
 

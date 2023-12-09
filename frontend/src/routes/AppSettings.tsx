@@ -133,44 +133,7 @@ function AppConfigPage() {
     <div className="flex flex-col pt-4 max-w-xl ml-auto mr-auto">
       <h1 className="text-3xl font-bold mb-4 text-center">Settings</h1>
 
-      <section className="flex flex-col mb-4  ">
-        <h2 className="text-xl font-bold mb-2">File statistics</h2>
-        {!loading && stats && (
-          <div className="self-center">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Folder type</th>
-                  <th>Size</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats.map(([type, size]) => (
-                  <tr key={type}>
-                    <th>{folderTypeNames[type as FolderType]}</th>
-                    <td className="text-right">{formatBytes(size)}</td>
-                    <td>
-                      {canCleanup.includes(type) && (
-                        <button
-                          onClick={onCleanup(type)}
-                          className="btn btn-sm btn-error"
-                        >
-                          <HiTrash />
-                          Clean up
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {loading && <Loader />}
-      </section>
-
-      <section className="flex flex-col ">
+      <section className="flex flex-col mb-4">
         <h2 className="text-xl font-bold mb-2">Stash configuration</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="w-full self-center">
           <div className="form-control">
@@ -236,6 +199,43 @@ function AppConfigPage() {
             </div>
           )}
         </form>
+      </section>
+
+      <section className="flex flex-col">
+        <h2 className="text-xl font-bold mb-2">File statistics</h2>
+        {!loading && stats && (
+          <div className="self-center">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Folder type</th>
+                  <th>Size</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.map(([type, size]) => (
+                  <tr key={type}>
+                    <th>{folderTypeNames[type as FolderType]}</th>
+                    <td className="text-right">{formatBytes(size)}</td>
+                    <td>
+                      {canCleanup.includes(type) && (
+                        <button
+                          onClick={onCleanup(type)}
+                          className="btn btn-sm btn-error"
+                        >
+                          <HiTrash />
+                          Clean up
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {loading && <Loader />}
       </section>
     </div>
   )

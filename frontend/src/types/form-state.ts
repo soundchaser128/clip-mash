@@ -8,6 +8,7 @@ import {
   VideoQuality,
   SongDto,
   MarkerDto,
+  PaddingType,
 } from "../api"
 
 export enum FormStage {
@@ -42,6 +43,7 @@ export interface FormState {
   encodingEffort?: EncodingEffort
   clipWeights?: [string, number][]
   clipOptions?: ClipFormInputs
+  padding?: PaddingType
 }
 
 export interface SerializedFormState extends FormState {

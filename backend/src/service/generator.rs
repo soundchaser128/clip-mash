@@ -5,9 +5,8 @@ use camino::{Utf8Path, Utf8PathBuf};
 use fraction::Ratio;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use time::format_description::modifier::Padding;
 use tokio::process::Command;
-use tracing::{debug, error, info, Level};
+use tracing::{debug, info, Level};
 use utoipa::ToSchema;
 
 use super::commands::ffmpeg::FfmpegLocation;
@@ -197,7 +196,7 @@ impl CompilationGenerator {
         let video = Ratio::new(clip.video_width, clip.video_height);
         let target = Ratio::new(clip.width, clip.height);
 
-        let filter = match (clip.padding, (target != video)) {
+        let filter = match (clip.padding, target != video) {
             (PaddingType::Blur, true) => {
                 self.blurred_padding_filter((clip.width, clip.height), target, clip.fps)
             }
@@ -306,13 +305,15 @@ impl CompilationGenerator {
 
             let url = &stream_urls[&marker.video_id];
             let (width, height) = options.output_resolution;
-            let out_file = video_dir.join(get_clip_file_name(
-                &marker.video_id,
-                *start,
-                *end,
-                options.video_codec,
-                options.output_resolution,
-            ));
+            let out_file = video_dir
+                .join(get_clip_file_name(
+                    &marker.video_id,
+                    *start,
+                    *end,
+                    options.video_codec,
+                    options.output_resolution,
+                ))
+                .canonicalize_utf8()?;
             if !out_file.is_file() {
                 info!("creating clip {} / {} at {out_file}", index + 1, total);
                 let result = self
@@ -335,7 +336,6 @@ impl CompilationGenerator {
                     })
                     .await;
                 if let Err(e) = result {
-                    error!("error while creating clip: {}", e);
                     let error = e.to_string();
                     self.database
                         .progress

@@ -275,6 +275,7 @@ impl CompilationGenerator {
             .await?;
         let video_dir = self.directories.temp_video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
+        let video_dir = video_dir.canonicalize_utf8()?;
         let video_ids = self.get_video_ids(&options);
         let stream_urls = self
             .stream_urls
@@ -305,15 +306,13 @@ impl CompilationGenerator {
 
             let url = &stream_urls[&marker.video_id];
             let (width, height) = options.output_resolution;
-            let out_file = video_dir
-                .join(get_clip_file_name(
-                    &marker.video_id,
-                    *start,
-                    *end,
-                    options.video_codec,
-                    options.output_resolution,
-                ))
-                .canonicalize_utf8()?;
+            let out_file = video_dir.join(get_clip_file_name(
+                &marker.video_id,
+                *start,
+                *end,
+                options.video_codec,
+                options.output_resolution,
+            ));
             if !out_file.is_file() {
                 info!("creating clip {} / {} at {out_file}", index + 1, total);
                 let result = self

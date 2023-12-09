@@ -17,7 +17,7 @@ import {useCreateToast} from "@/hooks/useToast"
 
 interface Inputs {
   stashUrl: string
-  apiKey: string
+  apiKey?: string | null
 }
 
 interface HealthResult {
@@ -93,7 +93,7 @@ function AppConfigPage() {
 
   const onSubmit = async (inputs: Inputs) => {
     const health = await testCredentials(inputs)
-    inputs.apiKey = inputs.apiKey.trim()
+    inputs.apiKey = inputs.apiKey?.trim()
     inputs.stashUrl = inputs.stashUrl.trim()
 
     if (health.success) {

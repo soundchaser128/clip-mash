@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react"
+import React, {useState} from "react"
 import {useForm, FieldErrors} from "react-hook-form"
 import {
   HiClock,
@@ -8,13 +8,9 @@ import {
   HiTag,
   HiCheck,
   HiPencilSquare,
-  HiPlay,
   HiQuestionMarkCircle,
   HiMagnifyingGlass,
   HiChevronLeft,
-  HiPause,
-  HiSpeakerWave,
-  HiSpeakerXMark,
   HiArrowRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
@@ -36,7 +32,6 @@ import {
 import {useConfig} from "@/hooks/useConfig"
 import Kbd from "@/components/Kbd"
 import useHotkeys from "@/hooks/useHotkeys"
-import clsx from "clsx"
 import {
   Player,
   PlayerContextProvider,

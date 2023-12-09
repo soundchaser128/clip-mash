@@ -1,8 +1,4 @@
-import {
-  createStore,
-  StateMachineProvider,
-  useStateMachine,
-} from "little-state-machine"
+import {createStore, StateMachineProvider} from "little-state-machine"
 import React from "react"
 import ReactDOM from "react-dom/client"
 import {
@@ -11,7 +7,6 @@ import {
   Outlet,
   RouterProvider,
   ScrollRestoration,
-  useNavigate,
   useRouteError,
 } from "react-router-dom"
 import "inter-ui/inter.css"
@@ -37,7 +32,6 @@ import {
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
 import MarkersPage from "./routes/library/SelectMarkers"
-import {resetForm} from "./routes/actions"
 import AddVideosPage from "./routes/library/add/AddVideosPaage"
 import useNotification from "./hooks/useNotification"
 import {FormStage} from "./types/form-state"

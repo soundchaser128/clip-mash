@@ -1,6 +1,6 @@
 import {useStateMachine} from "little-state-machine"
 import {useCallback, useEffect, useRef, useState} from "react"
-import {HiExclamationCircle, HiRocketLaunch} from "react-icons/hi2"
+import {HiRocketLaunch} from "react-icons/hi2"
 import {formatSeconds, pluralize} from "../helpers"
 import {
   CreateVideoBody,
@@ -11,7 +11,6 @@ import {
 } from "../api"
 import useNotification from "../hooks/useNotification"
 import {useNavigate} from "react-router-dom"
-import TroubleshootingInfo from "@/components/TroubleshootingInfo"
 import ExternalLink from "@/components/ExternalLink"
 
 const TWO_MINUTES = 120

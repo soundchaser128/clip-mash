@@ -5,7 +5,8 @@ use camino::{Utf8Path, Utf8PathBuf};
 use fraction::Ratio;
 use itertools::Itertools;
 use tokio::process::Command;
-use tracing::{debug, enabled, error, info, Level};
+use tracing::{debug, error, info, Level};
+use utoipa::openapi::info;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
@@ -91,24 +92,27 @@ impl CompilationGenerator {
 
     fn blurred_padding_filter(
         &self,
-        source_aspect: Ratio<u32>,
+        target_size: (u32, u32),
         target_aspect: Ratio<u32>,
         fps: f64,
     ) -> String {
         let sigma = 80;
         let brightness = -0.125;
 
-        let sw = source_aspect.numer();
-        let sh = source_aspect.denom();
+        let (px_w, px_h) = target_size;
 
         let tw = target_aspect.numer();
         let th = target_aspect.denom();
 
-        format!("split[original][copy];[copy]scale=ih*{tw}/{th}:-1,crop=h=iw*{th}/{tw},gblur=sigma={sigma},eq=brightness={brightness}[blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2,fps={fps}")
+        format!("
+            split[original][copy];
+            [copy]scale=ih*{tw}/{th}:-1,crop=h=iw*{th}/{tw},gblur=sigma={sigma},eq=brightness={brightness}
+            [blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2,fps={fps},scale={px_w}:{px_h}
+        ")
     }
 
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {
-        if enabled!(Level::DEBUG) {
+        if tracing::enabled!(Level::DEBUG) {
             let string = args.iter().map(|s| s.as_ref().to_string_lossy()).join(" ");
             debug!("running command '{} {}'", self.ffmpeg_path, string);
         }
@@ -180,7 +184,7 @@ impl CompilationGenerator {
         let video = Ratio::new(clip.video_width, clip.video_height);
         let target = Ratio::new(clip.width, clip.height);
         let filter = if target != video {
-            self.blurred_padding_filter(video, target, clip.fps)
+            self.blurred_padding_filter((clip.width, clip.height), target, clip.fps)
         } else {
             format!("scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:-1:-1:color=black,fps={fps}",
             width=clip.width,

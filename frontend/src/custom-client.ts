@@ -1,8 +1,10 @@
 import {json} from "react-router-dom"
 
+type Method = "get" | "post" | "put" | "delete" | "patch"
+
 interface Params {
   url: string
-  method: "get" | "post" | "put" | "delete" | "patch"
+  method: Uppercase<Method> | Lowercase<Method>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params?: Record<string, any>
   data?: unknown

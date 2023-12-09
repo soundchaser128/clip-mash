@@ -6,7 +6,6 @@ use fraction::Ratio;
 use itertools::Itertools;
 use tokio::process::Command;
 use tracing::{debug, error, info, Level};
-use utoipa::openapi::info;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;

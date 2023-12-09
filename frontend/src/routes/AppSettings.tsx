@@ -79,7 +79,7 @@ async function testCredentials(inputs: Inputs): Promise<HealthResult> {
   }
 }
 
-function StashConfigPage() {
+function AppConfigPage() {
   const config = useConfig()
   const {stats, loading, refetch} = useFileStats()
   const {watch, register, handleSubmit} = useForm<Inputs>({
@@ -241,4 +241,4 @@ function StashConfigPage() {
   )
 }
 
-export default StashConfigPage
+export default AppConfigPage

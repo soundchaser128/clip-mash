@@ -39,7 +39,7 @@ impl PreviewGenerator {
         let destination = self
             .directories
             .preview_image_dir()
-            .join(format!("{}_{}.png", video_id, offset_seconds));
+            .join(format!("{}_{}.webp", video_id, offset_seconds));
         self.generate_preview_inner(video_path, destination, offset_seconds)
             .await
     }
@@ -62,6 +62,7 @@ impl PreviewGenerator {
             .extra_arg("-frames:v")
             .extra_arg("1")
             .start(offset_seconds)
+            .video_filter("scale=800:-1")
             .run()
             .await?;
 

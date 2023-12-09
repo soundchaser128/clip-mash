@@ -4,8 +4,11 @@ use std::time::Instant;
 use camino::{Utf8Path, Utf8PathBuf};
 use fraction::Ratio;
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
+use time::format_description::modifier::Padding;
 use tokio::process::Command;
 use tracing::{debug, error, info, Level};
+use utoipa::ToSchema;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
@@ -32,6 +35,8 @@ pub struct CompilationOptions {
     pub video_quality: VideoQuality,
     pub encoding_effort: EncodingEffort,
     pub videos: Vec<DbVideo>,
+    pub padding: PaddingType,
+    pub force_re_encode: bool,
 }
 
 fn get_clip_file_name(
@@ -42,6 +47,13 @@ fn get_clip_file_name(
     (x_res, y_res): (u32, u32),
 ) -> String {
     format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}.mp4")
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum PaddingType {
+    Black,
+    Blur,
 }
 
 #[derive(Debug)]
@@ -59,6 +71,8 @@ struct CreateClip<'a> {
     re_encode: bool,
     video_width: u32,
     video_height: u32,
+    padding: PaddingType,
+    force_re_encode: bool,
 }
 
 #[derive(Clone)]
@@ -95,7 +109,7 @@ impl CompilationGenerator {
         target_aspect: Ratio<u32>,
         fps: f64,
     ) -> String {
-        let sigma = 80;
+        let sigma = 120;
         let brightness = -0.125;
 
         let (px_w, px_h) = target_size;
@@ -182,14 +196,19 @@ impl CompilationGenerator {
 
         let video = Ratio::new(clip.video_width, clip.video_height);
         let target = Ratio::new(clip.width, clip.height);
-        let filter = if target != video {
-            self.blurred_padding_filter((clip.width, clip.height), target, clip.fps)
-        } else {
-            format!("scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:-1:-1:color=black,fps={fps}",
-            width=clip.width,
-            height=clip.height,
-            fps=clip.fps,
-        )
+
+        let filter = match (clip.padding, (target != video)) {
+            (PaddingType::Blur, true) => {
+                self.blurred_padding_filter((clip.width, clip.height), target, clip.fps)
+            }
+            _ => format!(
+                "scale={width}:{height}:force_original_aspect_ratio=decrease,
+                pad={width}:{height}:-1:-1:color=black,
+                fps={fps}",
+                width = clip.width,
+                height = clip.height,
+                fps = clip.fps
+            ),
         };
 
         let mut args = vec![
@@ -203,7 +222,7 @@ impl CompilationGenerator {
             "-t",
             clip_str.as_str(),
         ];
-        if clip.re_encode {
+        if clip.re_encode || clip.force_re_encode {
             args.extend(self.video_encoding_parameters(clip.codec, clip.quality, clip.effort));
             args.extend(&["-acodec", "aac", "-vf", &filter, "-ar", "48000"]);
         } else {
@@ -311,6 +330,8 @@ impl CompilationGenerator {
                         re_encode: needs_re_encode,
                         video_width: video.width as u32,
                         video_height: video.height as u32,
+                        padding: options.padding,
+                        force_re_encode: options.force_re_encode,
                     })
                     .await;
                 if let Err(e) = result {

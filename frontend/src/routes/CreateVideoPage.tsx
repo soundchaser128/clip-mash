@@ -105,6 +105,9 @@ function Progress() {
       videoCodec: state.data.videoCodec!,
       videoQuality: state.data.videoQuality!,
       musicVolume: state.data.musicVolume,
+      // todo: add these to the UI
+      padding: "blur",
+      forceReEncode: false,
     } satisfies CreateVideoBody
 
     await createVideo(data)

@@ -12,6 +12,7 @@ use crate::data::database::{
 };
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashApi;
+use crate::service::generator::PaddingType;
 use crate::service::video::TAG_SEPARATOR;
 use crate::util::{add_api_key, expect_file_name};
 
@@ -566,6 +567,8 @@ pub struct CreateVideoBody {
     pub video_codec: VideoCodec,
     pub video_quality: VideoQuality,
     pub encoding_effort: EncodingEffort,
+    pub padding: PaddingType,
+    pub force_re_encode: bool,
 }
 
 #[derive(Serialize, Debug)]

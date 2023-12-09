@@ -29,6 +29,9 @@ const DownloadVideoPage = () => {
       videoCodec: state.data.videoCodec!,
       videoQuality: state.data.videoQuality!,
       musicVolume: state.data.musicVolume,
+      // todo: add these to the UI
+      padding: "blur",
+      forceReEncode: false,
     } satisfies CreateVideoBody
 
     const response = await generateDescription(format, data)

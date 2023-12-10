@@ -12,7 +12,7 @@ import {resetForm} from "./actions"
 import Layout from "../components/Layout"
 import Steps from "../components/Steps"
 import {FormState, FormStage, SerializedFormState} from "../types/form-state"
-import {saveJsonToDisk} from "@/helpers"
+import {saveJsonToDisk} from "@/helpers/json"
 import {AppVersion} from "@/api"
 
 const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {

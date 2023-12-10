@@ -1,15 +1,15 @@
 import {useStateMachine} from "little-state-machine"
 import {useForm} from "react-hook-form"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, FormState} from "../types/form-state"
+import {FormStage, FormState} from "@/types/form-state"
 import {updateForm} from "./actions"
 import {
   HiArrowsRightLeft,
   HiChevronRight,
   HiInformationCircle,
 } from "react-icons/hi2"
-import {videosNeedEncoding} from "../api"
-import {getFormState} from "../helpers"
+import {videosNeedEncoding} from "@/api"
+import {getFormState} from "@/helpers/form"
 
 export const videoOptionsLoader: LoaderFunction = async () => {
   const formState = getFormState()!

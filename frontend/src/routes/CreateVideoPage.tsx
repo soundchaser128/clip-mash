@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useCallback, useEffect, useRef, useState} from "react"
 import {HiRocketLaunch} from "react-icons/hi2"
-import {formatSeconds, pluralize} from "../helpers"
+import {formatSeconds} from "../helpers/time"
 import {
   CreateVideoBody,
   Progress,
@@ -12,6 +12,7 @@ import {
 import useNotification from "../hooks/useNotification"
 import {useNavigate} from "react-router-dom"
 import ExternalLink from "@/components/ExternalLink"
+import {pluralize} from "@/helpers/formatting"
 
 const TWO_MINUTES = 120
 const ONE_HOUR = 3600

@@ -12,13 +12,15 @@ import {
 } from "react-icons/hi2"
 import clsx from "clsx"
 import {useRef} from "react"
-import {clamp, formatSeconds, getSegmentStyle} from "@/helpers"
+import {getSegmentStyle} from "@/helpers/style"
+import {clamp} from "@/helpers/math"
 import {ClipsLoaderData} from "../loaders"
 import {Clip} from "@/api"
 import {FormStage} from "@/types/form-state"
 import useUndo from "use-undo"
 import {produce} from "immer"
 import ClipSettingsForm from "./settings/ClipSettingsForm"
+import {formatSeconds} from "@/helpers/time"
 
 const HelpText: React.FC<{onBack: () => void}> = ({onBack}) => {
   return (

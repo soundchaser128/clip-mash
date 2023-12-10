@@ -1,5 +1,5 @@
 import {LoaderFunction} from "react-router-dom"
-import {getFormState} from "@/helpers"
+import {getFormState} from "@/helpers/form"
 import {
   Clip,
   ClipPickerOptions,

@@ -1,8 +1,9 @@
 import clsx from "clsx"
-import {formatSeconds, getSegmentColor, getSegmentTextColor} from "../helpers"
 import React, {useMemo, useRef} from "react"
 import * as d3 from "d3"
 import useContainerSize from "@/hooks/useContainerSize"
+import {formatSeconds} from "@/helpers/time"
+import {getSegmentColor, getSegmentTextColor} from "@/helpers/style"
 
 interface Item {
   label: string

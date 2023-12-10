@@ -19,7 +19,7 @@ import {FormState} from "@/types/form-state"
 import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"
-import {sumDurations} from "@/helpers"
+import {sumDurations} from "@/helpers/time"
 
 const clipGenerationOptions = (useMusic: boolean) => {
   if (useMusic) {

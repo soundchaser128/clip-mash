@@ -1,7 +1,7 @@
 import {useFormContext} from "react-hook-form"
 import {ClipFormInputs} from "./ClipSettingsForm"
 import React from "react"
-import {formatSeconds} from "@/helpers"
+import {formatSeconds} from "@/helpers/time"
 
 export const ClipDurationField: React.FC<{
   totalClipDuration: number

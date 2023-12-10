@@ -12,7 +12,7 @@ import {
 import {HiCheckCircle, HiCog, HiTrash} from "react-icons/hi2"
 import {useConfig} from "@/hooks/useConfig"
 import Loader from "@/components/Loader"
-import {formatBytes} from "@/helpers"
+import {formatBytes} from "@/helpers/formatting"
 import {useCreateToast} from "@/hooks/useToast"
 
 interface Inputs {

@@ -8,7 +8,7 @@ import {
 import {Link} from "react-router-dom"
 import ExternalLink from "../components/ExternalLink"
 import {CreateVideoBody, DescriptionType, generateDescription} from "@/api"
-import {saveBlobToDisk} from "@/helpers"
+import {saveBlobToDisk} from "@/helpers/json"
 
 const DownloadVideoPage = () => {
   const {state} = useStateMachine()

@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import React, {useState} from "react"
 import Modal from "@/components/Modal"
-import {pluralize} from "@/helpers"
+import {pluralize} from "@/helpers/formatting"
 import {
   HiBarsArrowDown,
   HiCheck,

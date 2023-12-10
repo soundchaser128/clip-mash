@@ -5,7 +5,7 @@ import {useNavigate} from "react-router"
 import useNotification from "../../../hooks/useNotification"
 import Loader from "../../../components/Loader"
 import {useState} from "react"
-import {pluralize} from "../../../helpers"
+import {pluralize} from "@/helpers/formatting"
 import {AddVideosRequest, addNewVideos} from "../../../api"
 
 type Inputs = {urls: string}

@@ -3,7 +3,7 @@ import {
   formatSeconds,
   sumDurations,
   HasDuration,
-} from "../helpers"
+} from "../helpers/time"
 import {describe, expect, it} from "vitest"
 
 describe("parseTimestamp", () => {

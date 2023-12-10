@@ -1,6 +1,6 @@
 import {SongDto} from "@/api"
 import ExternalLink from "@/components/ExternalLink"
-import {formatSeconds} from "@/helpers"
+import {formatSeconds} from "@/helpers/time"
 
 function calcBPM(song: SongDto): string {
   return ((song.beats.length / song.duration) * 60.0).toFixed(0)

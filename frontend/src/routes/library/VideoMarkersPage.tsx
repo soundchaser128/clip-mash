@@ -14,7 +14,7 @@ import {
   HiArrowRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
-import {formatSeconds, isBetween, parseTimestamp} from "@/helpers"
+import {formatSeconds, parseTimestamp} from "@/helpers/time"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import TimestampInput from "@/components/TimestampInput"
 import {createMarker, updateMarker} from "./api"
@@ -38,6 +38,7 @@ import {
   PlayerControls,
   usePlayer,
 } from "@/components/VideoPlayer"
+import {isBetween} from "@/helpers/math"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {

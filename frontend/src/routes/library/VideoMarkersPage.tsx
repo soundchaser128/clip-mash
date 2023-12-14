@@ -191,7 +191,7 @@ function VideoMarkersPage() {
   const onSetVideoPosition = (time: string) => {
     const parsed = parseTimestamp(time)
     if (parsed) {
-      dispatch({type: "setPosition", payload: parsed})
+      dispatch({type: "jump", payload: parsed})
     }
   }
 
@@ -384,11 +384,11 @@ function VideoMarkersPage() {
   const onItemClick = (item: unknown, index: number) => {
     const marker = markers[index]
     onShowForm("edit", marker)
-    dispatch({type: "setPosition", payload: marker.start})
+    dispatch({type: "jump", payload: marker.start})
   }
 
   const onTimelineClick = (time: number) => {
-    dispatch({type: "setPosition", payload: time})
+    dispatch({type: "jump", payload: time})
   }
 
   const onDeleteAll = async () => {

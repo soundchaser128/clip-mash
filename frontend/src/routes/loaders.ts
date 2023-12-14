@@ -27,6 +27,8 @@ import {
 
 export const DEFAULT_PAGE_LENGTH = 24
 
+const DEFAULT_DIVISORS = [1.5, 2, 3]
+
 export interface ClipsLoaderData {
   clips: Clip[]
   streams: Record<string, string>
@@ -55,7 +57,7 @@ const getClipLengths = (
     return {
       type: "randomized",
       baseDuration: 20,
-      divisors: [2, 3, 4],
+      divisors: DEFAULT_DIVISORS,
     }
   }
 
@@ -74,7 +76,7 @@ const getClipLengths = (
     return {
       type: "randomized",
       baseDuration: options.clipLengths.baseDuration,
-      divisors: [2, 3, 4],
+      divisors: DEFAULT_DIVISORS,
     }
   }
 }
@@ -87,7 +89,8 @@ const getClipPickerOptions = (
     return {
       type: "equalLength",
       clipDuration: 20,
-      divisors: [2, 3, 4],
+      divisors: DEFAULT_DIVISORS,
+      minClipDuration: 1.5,
     }
   }
 
@@ -101,6 +104,7 @@ const getClipPickerOptions = (
         length,
         clipLengths: getClipLengths(inputs.roundRobin, state),
         lenientDuration: !inputs.useMusic,
+        minClipDuration: inputs.minClipDuration,
       }
     }
     case "weightedRandom": {
@@ -113,6 +117,7 @@ const getClipPickerOptions = (
         length,
         // @ts-expect-error type definitions don't align
         weights: state.clipWeights!,
+        minClipDuration: inputs.minClipDuration,
       }
     }
     case "equalLength": {
@@ -122,8 +127,9 @@ const getClipPickerOptions = (
       return {
         type: "equalLength",
         clipDuration: inputs.equalLength.clipDuration,
-        divisors: [2, 3, 4],
+        divisors: DEFAULT_DIVISORS,
         length,
+        minClipDuration: inputs.minClipDuration,
       }
     }
     case "noSplit": {

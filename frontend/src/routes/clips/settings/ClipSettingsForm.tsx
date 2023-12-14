@@ -60,6 +60,7 @@ export const getDefaultOptions = (state: FormState): ClipFormInputs => {
         },
       },
       clipOrder: {type: "scene"},
+      minClipDuration: 1.5,
     }
   } else {
     return {
@@ -70,6 +71,7 @@ export const getDefaultOptions = (state: FormState): ClipFormInputs => {
       },
       clipOrder: {type: "scene"},
       maxDuration: sumDurations(state.selectedMarkers || []),
+      minClipDuration: 1.5,
     }
   }
 }
@@ -80,6 +82,7 @@ interface CommonInputs {
   seed?: string
   useMusic?: boolean
   maxDuration?: number
+  minClipDuration?: number
 }
 
 interface RoundRobinFormInputs {

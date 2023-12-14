@@ -129,6 +129,7 @@ function PreviewClips() {
 
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
+  // TODO don't crash when clips are empty
   const currentClip = clips[currentClipIndex].clip
   const streamUrl = streams[currentClip.videoId]
   const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
@@ -243,7 +244,7 @@ function PreviewClips() {
           <p>
             Current clip duration:{" "}
             <span className="font-semibold">
-              {formatSeconds(currentClip.range, "short")}
+              {formatSeconds(currentClip.range, "short-with-ms")}
             </span>
           </p>
           <p>

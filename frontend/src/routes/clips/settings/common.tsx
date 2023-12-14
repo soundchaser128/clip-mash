@@ -3,14 +3,14 @@ import {ClipFormInputs} from "./ClipSettingsForm"
 import React from "react"
 import {formatSeconds} from "@/helpers/time"
 
-export const ClipDurationField: React.FC<{
+export const CompilationDurationField: React.FC<{
   totalClipDuration: number
 }> = ({totalClipDuration}) => {
   const {register, watch} = useFormContext<ClipFormInputs>()
   const currentDuration = watch("maxDuration")
 
   return (
-    <div className="form-field">
+    <div className="form-control">
       <label className="label">
         <span className="label-text">Compilation length</span>
       </label>
@@ -28,6 +28,27 @@ export const ClipDurationField: React.FC<{
         {formatSeconds(currentDuration, "short")} /{" "}
         {formatSeconds(totalClipDuration, "short")}
       </div>
+    </div>
+  )
+}
+
+export const MinClipDurationField = () => {
+  const {register} = useFormContext<ClipFormInputs>()
+  return (
+    <div className="form-control">
+      <label className="label">
+        <span className="label-text">Minimum clip length (seconds)</span>
+      </label>
+      <input
+        type="number"
+        className="input input-bordered w-full"
+        required
+        min="0"
+        step="0.1"
+        {...register("minClipDuration", {
+          valueAsNumber: true,
+        })}
+      />
     </div>
   )
 }
@@ -150,7 +171,9 @@ export const RandomizedLengthFormFields: React.FC<{
         />
       </div>
 
-      <ClipDurationField totalClipDuration={totalClipDuration} />
+      <CompilationDurationField totalClipDuration={totalClipDuration} />
+
+      <MinClipDurationField />
     </>
   )
 }

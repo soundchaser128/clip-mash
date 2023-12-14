@@ -22,6 +22,75 @@ import {produce} from "immer"
 import ClipSettingsForm from "./settings/ClipSettingsForm"
 import {formatSeconds} from "@/helpers/time"
 
+interface IncludedClip {
+  clip: Clip
+  included: boolean
+}
+
+interface ClipInfoProps {
+  currentClipIndex: number
+  clips: IncludedClip[]
+  totalLength: number
+  onNextStage: () => void
+  currentMarker?: {title: string}
+}
+
+const ClipInfo: React.FC<ClipInfoProps> = ({
+  currentClipIndex,
+  clips,
+  totalLength,
+  onNextStage,
+  currentMarker,
+}) => {
+  const currentClip = clips.at(currentClipIndex)?.clip
+
+  return (
+    <div className="mb-4 grid grid-cols-3">
+      <div className="text-sm text-opacity-80">
+        Preview the clips included in the final compilation. You can change the
+        settings for clip generation and apply to see changes instantly. The
+        number and color of the timeline segment identify the video it comes
+        from.
+      </div>
+      <div className="text-center text-sm">
+        <p>
+          Showing clip{" "}
+          <strong>
+            {currentClipIndex + 1} / {clips.length}
+          </strong>
+        </p>
+        {currentClip && (
+          <p>
+            Current clip duration:{" "}
+            <span className="font-semibold">
+              {formatSeconds(currentClip.range, "short-with-ms")}
+            </span>
+          </p>
+        )}
+
+        <p>
+          Total video duration:{" "}
+          <span className="font-semibold">
+            {formatSeconds(totalLength, "short")}
+          </span>
+        </p>
+        <p>
+          Marker title:{" "}
+          <span className="font-semibold">{currentMarker?.title}</span>
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onNextStage}
+        className="btn btn-success place-self-end"
+      >
+        Next
+        <HiChevronRight className="ml-1" />
+      </button>
+    </div>
+  )
+}
+
 const HelpText: React.FC<{onBack: () => void}> = ({onBack}) => {
   return (
     <div className="text-sm">
@@ -109,6 +178,18 @@ const ClipsTimeline: React.FC<ClipsTimelineProps> = ({
   )
 }
 
+function getClipUrl(
+  streams: Record<string, string>,
+  currentClip: Clip | undefined,
+) {
+  if (!currentClip) {
+    return undefined
+  } else {
+    const streamUrl = streams[currentClip.videoId]
+    return `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
+  }
+}
+
 function PreviewClips() {
   const revalidator = useRevalidator()
   const [wasRevalidated, setWasRevalidated] = useState(false)
@@ -130,22 +211,22 @@ function PreviewClips() {
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
   // TODO don't crash when clips are empty
-  const currentClip = clips[currentClipIndex].clip
-  const streamUrl = streams[currentClip.videoId]
-  const clipUrl = `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
+  const currentClip = clips.at(currentClipIndex)?.clip
+
+  const clipUrl = getClipUrl(streams, currentClip)
   const navigate = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
-  const currentMarker = state.data.selectedMarkers?.find(
-    (m) => currentClip.markerId === m.id,
-  )
+  const currentMarker = currentClip
+    ? state.data.selectedMarkers?.find((m) => currentClip.markerId === m.id)
+    : undefined
   const totalLength = clips.reduce(
     (len, {clip}) => len + (clip.range[1] - clip.range[0]),
     0,
   )
   const [withMusic, setWithMusic] = useState(false)
   const [videoMuted, setVideoMuted] = useState(true)
-  const hasAudio = state.data.songs && state.data.songs.length >= 1
+  const hasAudio = state.data.songs && state.data.songs.length > 0
   const [songIndex, setSongIndex] = useState(0)
 
   useEffect(() => {
@@ -172,10 +253,12 @@ function PreviewClips() {
   const onVideoTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (
     event,
   ) => {
-    const endTimestamp = currentClip.range[1]
-    const currentTime = event.currentTarget.currentTime
-    if (Math.abs(endTimestamp - currentTime) <= 0.5 && autoPlay) {
-      setCurrentClipIndex((c) => (c + 1) % clips.length)
+    if (currentClip) {
+      const endTimestamp = currentClip.range[1]
+      const currentTime = event.currentTarget.currentTime
+      if (Math.abs(endTimestamp - currentTime) <= 0.5 && autoPlay) {
+        setCurrentClipIndex((c) => (c + 1) % clips.length)
+      }
     }
   }
 
@@ -227,47 +310,13 @@ function PreviewClips() {
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-3">
-        <div className="text-sm text-opacity-80">
-          Preview the clips included in the final compilation. You can change
-          the settings for clip generation and apply to see changes instantly.
-          The number and color of the timeline segment identify the video it
-          comes from.
-        </div>
-        <div className="text-center text-sm">
-          <p>
-            Showing clip{" "}
-            <strong>
-              {currentClipIndex + 1} / {clips.length}
-            </strong>
-          </p>
-          <p>
-            Current clip duration:{" "}
-            <span className="font-semibold">
-              {formatSeconds(currentClip.range, "short-with-ms")}
-            </span>
-          </p>
-          <p>
-            Total video duration:{" "}
-            <span className="font-semibold">
-              {formatSeconds(totalLength, "short")}
-            </span>
-          </p>
-          <p>
-            Marker title:{" "}
-            <span className="font-semibold">{currentMarker?.title}</span>
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onNextStage}
-          className="btn btn-success place-self-end"
-        >
-          Next
-          <HiChevronRight className="ml-1" />
-        </button>
-      </div>
-
+      <ClipInfo
+        currentClipIndex={currentClipIndex}
+        clips={clips}
+        totalLength={totalLength}
+        onNextStage={onNextStage}
+        currentMarker={currentMarker}
+      />
       {hasAudio && (
         <audio
           ref={audioRef}
@@ -279,14 +328,22 @@ function PreviewClips() {
       )}
 
       <section className="flex">
-        <video
-          className="w-3/4 h-[650px]"
-          src={clipUrl}
-          muted={videoMuted}
-          autoPlay={autoPlay}
-          onTimeUpdate={onVideoTimeUpdate}
-          ref={videoRef}
-        />
+        {clips.length === 0 && (
+          <div className="w-3/4 h-[650px] flex justify-center items-center">
+            No clips were generated. Check the clip duration and minimum clip
+            length settings.
+          </div>
+        )}
+        {clips.length > 0 && (
+          <video
+            className="w-3/4 h-[650px]"
+            src={clipUrl}
+            muted={videoMuted}
+            autoPlay={autoPlay}
+            onTimeUpdate={onVideoTimeUpdate}
+            ref={videoRef}
+          />
+        )}
         <section className="flex flex-col px-4 py-2 w-2/5 bg-base-200 justify-between">
           {helpOpen && <HelpText onBack={() => setHelpOpen(false)} />}
           {!helpOpen && (

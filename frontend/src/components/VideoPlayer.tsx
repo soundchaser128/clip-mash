@@ -38,35 +38,50 @@ const PlayerContext = React.createContext<{
 
 type PlayerAction =
   | {type: "init"; payload: HTMLVideoElement}
-  | {type: "play"}
-  | {type: "pause"}
-  | {type: "mute"}
-  | {type: "unmute"}
+  | {type: "togglePlay"}
+  | {type: "toggleMute"}
   | {type: "setDuration"; payload: number}
   | {type: "setCurrentTime"; payload: number}
-  | {type: "setPosition"; payload: number}
+  | {type: "jump"; payload: number}
   | {type: "setPlaybackRate"; payload: number}
 
 export function PlayerContextProvider({children}: {children: React.ReactNode}) {
   function reducer(state: PlayerState, action: PlayerAction): PlayerState {
     switch (action.type) {
-      case "play":
-        return {...state, isPlaying: true}
-      case "pause":
-        return {...state, isPlaying: false}
-      case "mute":
-        return {...state, isMuted: true}
-      case "unmute":
-        return {...state, isMuted: false}
+      case "togglePlay":
+        if (state.isPlaying) {
+          if (state.videoElement) {
+            state.videoElement.pause()
+          }
+          return {...state, isPlaying: false}
+        } else {
+          if (state.videoElement) {
+            state.videoElement.play()
+          }
+          return {...state, isPlaying: true}
+        }
+      case "toggleMute":
+        if (state.isMuted) {
+          if (state.videoElement) {
+            state.videoElement.muted = false
+          }
+          return {...state, isMuted: false}
+        } else {
+          if (state.videoElement) {
+            state.videoElement.muted = true
+          }
+          return {...state, isMuted: true}
+        }
+
       case "setDuration":
         return {...state, duration: action.payload}
       case "setCurrentTime":
         return {...state, currentTime: action.payload}
-      case "setPosition":
+      case "jump":
         if (state.videoElement) {
-          state.videoElement.currentTime = action.payload
+          state.videoElement.currentTime += action.payload
         }
-        return {...state, currentTime: action.payload}
+        return {...state, currentTime: state.videoElement!.currentTime}
       case "setPlaybackRate":
         state.videoElement!.playbackRate = action.payload
         return {...state, playbackRate: action.payload}
@@ -128,38 +143,17 @@ export function Player({src, className, ...rest}: Props) {
 export function PlayerControls() {
   const {state, dispatch} = usePlayer()
   const {isPlaying, isMuted} = state
-  const videoElement = state.videoElement
 
   const onTogglePlay = () => {
-    if (videoElement) {
-      if (videoElement.paused) {
-        videoElement.play()
-        dispatch({type: "play"})
-      } else {
-        videoElement.pause()
-        dispatch({type: "pause"})
-      }
-    }
+    dispatch({type: "togglePlay"})
   }
 
   const onToggleMuted = () => {
-    if (videoElement) {
-      if (videoElement.muted) {
-        videoElement.muted = false
-        dispatch({type: "unmute"})
-      } else {
-        videoElement.muted = true
-        dispatch({type: "mute"})
-      }
-    }
+    dispatch({type: "toggleMute"})
   }
 
   const onJump = (seconds: number) => {
-    if (videoElement) {
-      const newTime = videoElement.currentTime + seconds
-      videoElement.currentTime = newTime
-      dispatch({type: "setCurrentTime", payload: newTime})
-    }
+    dispatch({type: "jump", payload: seconds})
   }
 
   useHotkeys("space", onTogglePlay)

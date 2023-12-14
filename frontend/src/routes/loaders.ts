@@ -27,13 +27,16 @@ import {
 import {lerpArrays} from "@/helpers/math"
 
 export const DEFAULT_PAGE_LENGTH = 24
-const DEFAULT_SPREAD = 0.5
+export const DEFAULT_CLIP_BASE_DURATION = 10
+const DEFAULT_SPREAD = 0.25
 
 function getDivisors(spread: number): number[] {
   const MIN_DURATIONS = [1, 1, 1, 1]
   const MAX_DURATIONS = [1, 4, 8, 16]
 
-  return lerpArrays(MIN_DURATIONS, MAX_DURATIONS, spread)
+  const result = lerpArrays(MIN_DURATIONS, MAX_DURATIONS, spread)
+  console.log({spread, result})
+  return result
 }
 
 export interface ClipsLoaderData {

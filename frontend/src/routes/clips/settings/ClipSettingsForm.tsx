@@ -20,6 +20,7 @@ import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"
 import {sumDurations} from "@/helpers/time"
+import {DEFAULT_CLIP_BASE_DURATION} from "@/routes/loaders"
 
 const clipGenerationOptions = (useMusic: boolean) => {
   if (useMusic) {
@@ -208,21 +209,27 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
     if (!useMusic) {
       switch (clipStrategy) {
         case "equalLength":
-          setValue("equalLength.clipDuration", 15)
+          setValue("equalLength.clipDuration", DEFAULT_CLIP_BASE_DURATION)
           break
         case "roundRobin":
-          setValue("roundRobin.clipLengths.baseDuration", 15)
+          setValue(
+            "roundRobin.clipLengths.baseDuration",
+            DEFAULT_CLIP_BASE_DURATION,
+          )
           setValue("roundRobin.clipLengths.type", "randomized")
           break
         case "weightedRandom":
-          setValue("weightedRandom.clipLengths.baseDuration", 15)
+          setValue(
+            "weightedRandom.clipLengths.baseDuration",
+            DEFAULT_CLIP_BASE_DURATION,
+          )
           setValue("weightedRandom.clipLengths.type", "randomized")
           break
       }
     } else {
       switch (clipStrategy) {
         case "equalLength":
-          setValue("equalLength.clipDuration", 15)
+          setValue("equalLength.clipDuration", DEFAULT_CLIP_BASE_DURATION)
           break
 
         case "roundRobin":

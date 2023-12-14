@@ -162,8 +162,6 @@ function VideoMarkersPage() {
   })
 
   const {state, dispatch} = usePlayer()
-  // console.log(state)
-
   const startPosition = watch("start")
   const endPosition = watch("end")
 

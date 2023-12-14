@@ -24,10 +24,17 @@ import {
   ClipFormInputs,
   getDefaultOptions,
 } from "./clips/settings/ClipSettingsForm"
+import {lerpArrays} from "@/helpers/math"
 
 export const DEFAULT_PAGE_LENGTH = 24
+const DEFAULT_SPREAD = 0.5
 
-const DEFAULT_DIVISORS = [1.5, 2, 3]
+function getDivisors(spread: number): number[] {
+  const MIN_DURATIONS = [1, 1, 1, 1]
+  const MAX_DURATIONS = [1, 4, 8, 16]
+
+  return lerpArrays(MIN_DURATIONS, MAX_DURATIONS, spread)
+}
 
 export interface ClipsLoaderData {
   clips: Clip[]
@@ -52,12 +59,13 @@ const markerLength = (state: FormState): number => {
 const getClipLengths = (
   options: {clipLengths?: ClipLengthOptions},
   state: FormState,
+  spread: number,
 ): ClipLengthOptions => {
   if (!options.clipLengths || !options.clipLengths.type) {
     return {
       type: "randomized",
       baseDuration: 20,
-      divisors: DEFAULT_DIVISORS,
+      divisors: getDivisors(spread),
     }
   }
 
@@ -76,7 +84,7 @@ const getClipLengths = (
     return {
       type: "randomized",
       baseDuration: options.clipLengths.baseDuration,
-      divisors: DEFAULT_DIVISORS,
+      divisors: getDivisors(spread),
     }
   }
 }
@@ -89,7 +97,7 @@ const getClipPickerOptions = (
     return {
       type: "equalLength",
       clipDuration: 20,
-      divisors: DEFAULT_DIVISORS,
+      divisors: getDivisors(DEFAULT_SPREAD),
       minClipDuration: 1.5,
     }
   }
@@ -102,7 +110,11 @@ const getClipPickerOptions = (
       return {
         type: "roundRobin",
         length,
-        clipLengths: getClipLengths(inputs.roundRobin, state),
+        clipLengths: getClipLengths(
+          inputs.roundRobin,
+          state,
+          inputs.clipDurationSpread,
+        ),
         lenientDuration: !inputs.useMusic,
         minClipDuration: inputs.minClipDuration,
       }
@@ -113,7 +125,11 @@ const getClipPickerOptions = (
         : inputs?.maxDuration || markerLength(state)
       return {
         type: "weightedRandom",
-        clipLengths: getClipLengths(inputs.weightedRandom, state),
+        clipLengths: getClipLengths(
+          inputs.weightedRandom,
+          state,
+          inputs.clipDurationSpread,
+        ),
         length,
         // @ts-expect-error type definitions don't align
         weights: state.clipWeights!,
@@ -127,7 +143,7 @@ const getClipPickerOptions = (
       return {
         type: "equalLength",
         clipDuration: inputs.equalLength.clipDuration,
-        divisors: DEFAULT_DIVISORS,
+        divisors: getDivisors(inputs.clipDurationSpread),
         length,
         minClipDuration: inputs.minClipDuration,
       }
@@ -207,7 +223,7 @@ export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const withMarkers = url.searchParams.get("withMarkers") === "true"
   const videos = await listStashVideos({
     query,
-    page: Number(url.searchParams.get("page")) || 1,
+    page: Number(url.searchParams.get("page")) ?? 1,
     size: DEFAULT_PAGE_LENGTH,
     withMarkers: withMarkers ? true : null,
   })
@@ -234,7 +250,7 @@ export const makeVideoLoader: (
     const query = url.searchParams
     const videos = await listVideos({
       hasMarkers: params.hasMarkers || parseBoolean(query.get("hasMarkers")),
-      page: Number(query.get("page")) || 0,
+      page: Number(query.get("page")) ?? 0,
       size: DEFAULT_PAGE_LENGTH,
       query: query.get("query"),
       sort: query.get("sort"),

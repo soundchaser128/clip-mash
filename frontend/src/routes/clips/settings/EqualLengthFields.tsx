@@ -1,6 +1,10 @@
 import {useFormContext} from "react-hook-form"
 import {ClipFormInputs} from "./ClipSettingsForm"
-import {CompilationDurationField, MinClipDurationField} from "./common"
+import {
+  ClipDurationSpreadField,
+  CompilationDurationField,
+  MinClipDurationField,
+} from "./common"
 
 const EqualLengthFields: React.FC<{totalClipDuration: number}> = ({
   totalClipDuration,
@@ -11,7 +15,7 @@ const EqualLengthFields: React.FC<{totalClipDuration: number}> = ({
     <>
       <div className="form-control">
         <label className="label">
-          <span className="label-text">Clip duration (seconds)</span>
+          <span className="label-text">Base clip duration (seconds)</span>
         </label>
         <input
           type="number"
@@ -22,6 +26,7 @@ const EqualLengthFields: React.FC<{totalClipDuration: number}> = ({
 
       <CompilationDurationField totalClipDuration={totalClipDuration} />
       <MinClipDurationField />
+      <ClipDurationSpreadField />
     </>
   )
 }

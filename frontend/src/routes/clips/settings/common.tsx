@@ -10,7 +10,7 @@ export const CompilationDurationField: React.FC<{
   const currentDuration = watch("maxDuration")
 
   return (
-    <div className="form-control">
+    <div>
       <label className="label">
         <span className="label-text">Compilation length</span>
       </label>
@@ -19,7 +19,6 @@ export const CompilationDurationField: React.FC<{
         className="range range-primary w-full"
         min={0}
         max={totalClipDuration}
-        required
         {...register("maxDuration", {
           valueAsNumber: true,
         })}
@@ -49,6 +48,31 @@ export const MinClipDurationField = () => {
           valueAsNumber: true,
         })}
       />
+    </div>
+  )
+}
+
+export const ClipDurationSpreadField = () => {
+  const {register} = useFormContext<ClipFormInputs>()
+  return (
+    <div>
+      <label className="label">
+        <span className="label-text">Clip duration spread</span>
+      </label>
+      <input
+        type="range"
+        className="range range-primary w-full"
+        min={0}
+        max={1}
+        step={0.05}
+        {...register("clipDurationSpread", {
+          valueAsNumber: true,
+        })}
+      />
+      <div className="text-xs flex justify-between">
+        <span>Clips have same length</span>
+        <span>Clips have random length</span>
+      </div>
     </div>
   )
 }
@@ -172,8 +196,8 @@ export const RandomizedLengthFormFields: React.FC<{
       </div>
 
       <CompilationDurationField totalClipDuration={totalClipDuration} />
-
       <MinClipDurationField />
+      <ClipDurationSpreadField />
     </>
   )
 }

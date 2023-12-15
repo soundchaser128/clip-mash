@@ -32,12 +32,7 @@ import {
 import {useConfig} from "@/hooks/useConfig"
 import Kbd from "@/components/Kbd"
 import useHotkeys from "@/hooks/useHotkeys"
-import {
-  Player,
-  PlayerContextProvider,
-  PlayerControls,
-  usePlayer,
-} from "@/components/VideoPlayer"
+import {Player, PlayerControls, usePlayer} from "@/components/VideoPlayer"
 import {isBetween} from "@/helpers/math"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
@@ -161,7 +156,7 @@ function VideoMarkersPage() {
     resolver: handleValidation,
   })
 
-  const {state, dispatch} = usePlayer()
+  const state = usePlayer()
   const startPosition = watch("start")
   const endPosition = watch("end")
 
@@ -182,14 +177,14 @@ function VideoMarkersPage() {
   const onSetCurrentTime = (field: "start" | "end") => {
     const time = state.currentTime
     if (time) {
-      setValue(field, formatSeconds(time, "short-with-ms"))
+      setValue(field, formatSeconds(time.get(), "short-with-ms"))
     }
   }
 
   const onSetVideoPosition = (time: string) => {
     const parsed = parseTimestamp(time)
     if (parsed) {
-      dispatch({type: "jump", payload: parsed})
+      // dispatch({type: "jump", payload: parsed})
     }
   }
 
@@ -208,7 +203,7 @@ function VideoMarkersPage() {
         ? await createMarker(
             video,
             values,
-            state.duration,
+            state.duration.get(),
             index,
             values.createInStash ?? false,
           )
@@ -239,12 +234,13 @@ function VideoMarkersPage() {
   }
 
   const currentItemIndex = markers.findIndex((m) =>
-    isBetween(state.currentTime, m.start, m.end || state.duration),
+    isBetween(state.currentTime.get(), m.start, m.end || state.duration.get()),
   )
 
   const onAddMark = () => {
+    console.log(state)
     setMarkPoints((draft) => {
-      draft.push(state.currentTime)
+      draft.push(state.currentTime.get())
     })
   }
 
@@ -287,7 +283,10 @@ function VideoMarkersPage() {
   const onShowForm = (mode: FormMode, marker?: MarkerDto) => {
     setFormMode(mode)
     const start = mode === "create" ? state.currentTime : undefined
-    setValue("start", formatSeconds(marker?.start || start, "short-with-ms"))
+    setValue(
+      "start",
+      formatSeconds(marker?.start || start?.get(), "short-with-ms"),
+    )
     setValue("end", formatSeconds(marker?.end || undefined, "short-with-ms"))
     setValue("title", marker?.primaryTag || "")
 
@@ -330,10 +329,12 @@ function VideoMarkersPage() {
   const onSplitMarker = async () => {
     const currentTime = state.currentTime || 0
     const currentMarker = markers.find((m) =>
-      isBetween(currentTime, m.start, m.end),
+      isBetween(currentTime.get(), m.start, m.end),
     )
     if (currentMarker) {
-      const data = await splitMarker(currentMarker.id, {time: currentTime})
+      const data = await splitMarker(currentMarker.id, {
+        time: currentTime.get(),
+      })
       setMarkers(data)
       revalidator.revalidate()
     }
@@ -352,7 +353,7 @@ function VideoMarkersPage() {
 
     for (let i = 0; i < points.length; i++) {
       const current = points[i]
-      const next = points[i + 1] || state.duration!
+      const next = points[i + 1] || state.duration.get()
       const marker = await createMarker(
         video,
         {
@@ -360,7 +361,7 @@ function VideoMarkersPage() {
           end: next,
           title: "Untitled",
         },
-        state.duration,
+        state.duration.get(),
         i,
         false,
       )
@@ -382,11 +383,11 @@ function VideoMarkersPage() {
   const onItemClick = (item: unknown, index: number) => {
     const marker = markers[index]
     onShowForm("edit", marker)
-    dispatch({type: "jump", payload: marker.start})
+    // dispatch({type: "jump", payload: marker.start})
   }
 
   const onTimelineClick = (time: number) => {
-    dispatch({type: "jump", payload: time})
+    // dispatch({type: "jump", payload: time})
   }
 
   const onDeleteAll = async () => {
@@ -675,7 +676,7 @@ function VideoMarkersPage() {
             editedMarker ? markers.indexOf(editedMarker) : currentItemIndex
           }
           fadeInactiveItems
-          time={state.currentTime}
+          time={state.currentTime.get()}
           markPoints={markPoints}
           onMarkerClick={onRemoveMark}
           onTimelineClick={onTimelineClick}
@@ -687,9 +688,5 @@ function VideoMarkersPage() {
 }
 
 export default function WrappedVideoMarkersPage() {
-  return (
-    <PlayerContextProvider>
-      <VideoMarkersPage />
-    </PlayerContextProvider>
-  )
+  return <VideoMarkersPage />
 }

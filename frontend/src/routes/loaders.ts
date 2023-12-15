@@ -34,9 +34,7 @@ function getDivisors(spread: number): number[] {
   const MIN_DURATIONS = [1, 1, 1, 1]
   const MAX_DURATIONS = [1, 4, 8, 16]
 
-  const result = lerpArrays(MIN_DURATIONS, MAX_DURATIONS, spread)
-  console.log({spread, result})
-  return result
+  return lerpArrays(MIN_DURATIONS, MAX_DURATIONS, spread)
 }
 
 export interface ClipsLoaderData {

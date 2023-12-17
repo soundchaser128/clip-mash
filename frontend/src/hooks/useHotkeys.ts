@@ -15,21 +15,22 @@ const useHotkeys = (
   callback: Callback,
   action?: string,
 ) => {
-  const actionRef = useRef<Callback>(callback)
+  // const actionRef = useRef<Callback>(callback)
 
   useEffect(() => {
     mousetrap.bind(
       keys,
       (evt, combo) => {
         console.log(combo)
-        typeof actionRef.current === "function" && actionRef.current(evt, combo)
+        // typeof actionRef.current === "function" && actionRef.current(evt, combo)
+        callback(evt, combo)
       },
       action,
     )
     return () => {
       mousetrap.unbind(keys)
     }
-  }, [keys])
+  }, [keys, action, callback])
 }
 
 export default useHotkeys

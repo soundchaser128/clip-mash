@@ -243,9 +243,7 @@ function VideoMarkersPage() {
   )
 
   const onAddMark = () => {
-    console.log(state)
     setMarkPoints((draft) => {
-      console.log(state)
       draft.push(state.currentTime)
     })
   }

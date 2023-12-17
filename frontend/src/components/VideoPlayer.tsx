@@ -45,53 +45,53 @@ type PlayerAction =
   | {type: "jump"; payload: number}
   | {type: "setPlaybackRate"; payload: number}
 
-export function PlayerContextProvider({children}: {children: React.ReactNode}) {
-  function reducer(state: PlayerState, action: PlayerAction): PlayerState {
-    switch (action.type) {
-      case "togglePlay":
-        if (state.isPlaying) {
-          if (state.videoElement) {
-            state.videoElement.pause()
-          }
-          return {...state, isPlaying: false}
-        } else {
-          if (state.videoElement) {
-            state.videoElement.play()
-          }
-          return {...state, isPlaying: true}
-        }
-      case "toggleMute":
-        if (state.isMuted) {
-          if (state.videoElement) {
-            state.videoElement.muted = false
-          }
-          return {...state, isMuted: false}
-        } else {
-          if (state.videoElement) {
-            state.videoElement.muted = true
-          }
-          return {...state, isMuted: true}
-        }
-
-      case "setDuration":
-        return {...state, duration: action.payload}
-      case "setCurrentTime":
-        return {...state, currentTime: action.payload}
-      case "jump":
+function reducer(state: PlayerState, action: PlayerAction): PlayerState {
+  switch (action.type) {
+    case "togglePlay":
+      if (state.isPlaying) {
         if (state.videoElement) {
-          state.videoElement.currentTime += action.payload
+          state.videoElement.pause()
         }
-        return {...state, currentTime: state.videoElement!.currentTime}
-      case "setPlaybackRate":
-        state.videoElement!.playbackRate = action.payload
-        return {...state, playbackRate: action.payload}
-      case "init":
-        return {...state, videoElement: action.payload}
-      default:
-        return state
-    }
-  }
+        return {...state, isPlaying: false}
+      } else {
+        if (state.videoElement) {
+          state.videoElement.play()
+        }
+        return {...state, isPlaying: true}
+      }
+    case "toggleMute":
+      if (state.isMuted) {
+        if (state.videoElement) {
+          state.videoElement.muted = false
+        }
+        return {...state, isMuted: false}
+      } else {
+        if (state.videoElement) {
+          state.videoElement.muted = true
+        }
+        return {...state, isMuted: true}
+      }
 
+    case "setDuration":
+      return {...state, duration: action.payload}
+    case "setCurrentTime":
+      return {...state, currentTime: action.payload}
+    case "jump":
+      if (state.videoElement) {
+        state.videoElement.currentTime += action.payload
+      }
+      return {...state, currentTime: state.videoElement!.currentTime}
+    case "setPlaybackRate":
+      state.videoElement!.playbackRate = action.payload
+      return {...state, playbackRate: action.payload}
+    case "init":
+      return {...state, videoElement: action.payload}
+    default:
+      return state
+  }
+}
+
+export function PlayerContextProvider({children}: {children: React.ReactNode}) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
   return (

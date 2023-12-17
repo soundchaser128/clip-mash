@@ -162,6 +162,7 @@ function VideoMarkersPage() {
   })
 
   const {state, dispatch} = usePlayer()
+  // console.log("state", state)
   const startPosition = watch("start")
   const endPosition = watch("end")
 
@@ -243,7 +244,9 @@ function VideoMarkersPage() {
   )
 
   const onAddMark = () => {
+    console.log(state)
     setMarkPoints((draft) => {
+      console.log(state)
       draft.push(state.currentTime)
     })
   }

@@ -1,4 +1,4 @@
-import {useEffect, useRef} from "react"
+import {useEffect} from "react"
 import * as mousetrap from "mousetrap"
 
 type MousetrapCallback = (
@@ -15,14 +15,10 @@ const useHotkeys = (
   callback: Callback,
   action?: string,
 ) => {
-  // const actionRef = useRef<Callback>(callback)
-
   useEffect(() => {
     mousetrap.bind(
       keys,
       (evt, combo) => {
-        console.log(combo)
-        // typeof actionRef.current === "function" && actionRef.current(evt, combo)
         callback(evt, combo)
       },
       action,

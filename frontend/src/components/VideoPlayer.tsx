@@ -42,7 +42,8 @@ type PlayerAction =
   | {type: "toggleMute"}
   | {type: "setDuration"; payload: number}
   | {type: "setCurrentTime"; payload: number}
-  | {type: "jump"; payload: number}
+  | {type: "jumpRelative"; payload: number}
+  | {type: "jumpAbsolute"; payload: number}
   | {type: "setPlaybackRate"; payload: number}
 
 function reducer(state: PlayerState, action: PlayerAction): PlayerState {
@@ -76,9 +77,14 @@ function reducer(state: PlayerState, action: PlayerAction): PlayerState {
       return {...state, duration: action.payload}
     case "setCurrentTime":
       return {...state, currentTime: action.payload}
-    case "jump":
+    case "jumpRelative":
       if (state.videoElement) {
         state.videoElement.currentTime += action.payload
+      }
+      return {...state, currentTime: state.videoElement!.currentTime}
+    case "jumpAbsolute":
+      if (state.videoElement) {
+        state.videoElement.currentTime = action.payload
       }
       return {...state, currentTime: state.videoElement!.currentTime}
     case "setPlaybackRate":
@@ -152,16 +158,19 @@ export function PlayerControls() {
     dispatch({type: "toggleMute"})
   }
 
-  const onJump = (seconds: number) => {
-    dispatch({type: "jump", payload: seconds})
+  const onJump = (seconds: number, type: "relative" | "absolute") => {
+    dispatch({
+      type: type === "relative" ? "jumpRelative" : "jumpAbsolute",
+      payload: seconds,
+    })
   }
 
   useHotkeys("space", onTogglePlay)
   useHotkeys("v m", onToggleMuted)
-  useHotkeys("k", () => onJump(-0.5))
-  useHotkeys("l", () => onJump(0.5))
-  useHotkeys("right", () => onJump(5))
-  useHotkeys("left", () => onJump(-5))
+  useHotkeys("k", () => onJump(-0.5, "relative"))
+  useHotkeys("l", () => onJump(0.5, "relative"))
+  useHotkeys("right", () => onJump(5, "relative"))
+  useHotkeys("left", () => onJump(-5, "relative"))
 
   return (
     <>

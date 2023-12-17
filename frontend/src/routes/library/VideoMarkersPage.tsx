@@ -162,7 +162,6 @@ function VideoMarkersPage() {
   })
 
   const {state, dispatch} = usePlayer()
-  // console.log("state", state)
   const startPosition = watch("start")
   const endPosition = watch("end")
 
@@ -190,7 +189,7 @@ function VideoMarkersPage() {
   const onSetVideoPosition = (time: string) => {
     const parsed = parseTimestamp(time)
     if (parsed) {
-      dispatch({type: "jump", payload: parsed})
+      dispatch({type: "jumpAbsolute", payload: parsed})
     }
   }
 
@@ -376,20 +375,20 @@ function VideoMarkersPage() {
     setMarkPoints([])
   }
 
-  useHotkeys("i", onAddMark)
-  useHotkeys("m f", onAddFullVideo)
+  useHotkeys("i", () => onAddMark())
+  useHotkeys("m f", () => onAddFullVideo())
   useHotkeys("m n", () => onShowForm("create", undefined))
-  useHotkeys("m s", onSplitMarker)
-  useHotkeys("m i", onConsumeMarkPoints)
+  useHotkeys("m s", () => onSplitMarker())
+  useHotkeys("m i", () => onConsumeMarkPoints())
 
   const onItemClick = (item: unknown, index: number) => {
     const marker = markers[index]
     onShowForm("edit", marker)
-    dispatch({type: "jump", payload: marker.start})
+    dispatch({type: "jumpAbsolute", payload: marker.start})
   }
 
   const onTimelineClick = (time: number) => {
-    dispatch({type: "jump", payload: time})
+    dispatch({type: "jumpAbsolute", payload: time})
   }
 
   const onDeleteAll = async () => {

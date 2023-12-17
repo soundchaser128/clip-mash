@@ -21,6 +21,7 @@ const useHotkeys = (
     mousetrap.bind(
       keys,
       (evt, combo) => {
+        console.log(combo)
         typeof actionRef.current === "function" && actionRef.current(evt, combo)
       },
       action,

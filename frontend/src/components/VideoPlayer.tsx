@@ -1,10 +1,8 @@
 import useHotkeys from "@/hooks/useHotkeys"
 import clsx from "clsx"
-import {useEffect} from "react"
+import React, {useContext, useEffect, useReducer} from "react"
 import {useRef} from "react"
 import {HiPause, HiPlay, HiSpeakerWave, HiSpeakerXMark} from "react-icons/hi2"
-import {hookstate, useHookstate} from "@hookstate/core"
-import {subscribable} from "@hookstate/subscribable"
 
 interface Props {
   src: string
@@ -19,6 +17,7 @@ interface PlayerState {
   currentTime: number
   duration: number
   playbackRate: number
+  videoElement?: HTMLVideoElement
 }
 
 const initialState: PlayerState = {
@@ -29,49 +28,102 @@ const initialState: PlayerState = {
   playbackRate: 1,
 }
 
-const playerState = hookstate(initialState, subscribable())
+const PlayerContext = React.createContext<{
+  state: PlayerState
+  dispatch: React.Dispatch<PlayerAction>
+}>({
+  state: initialState,
+  dispatch: () => {},
+})
+
+type PlayerAction =
+  | {type: "init"; payload: HTMLVideoElement}
+  | {type: "togglePlay"}
+  | {type: "toggleMute"}
+  | {type: "setDuration"; payload: number}
+  | {type: "setCurrentTime"; payload: number}
+  | {type: "jump"; payload: number}
+  | {type: "setPlaybackRate"; payload: number}
+
+export function PlayerContextProvider({children}: {children: React.ReactNode}) {
+  function reducer(state: PlayerState, action: PlayerAction): PlayerState {
+    switch (action.type) {
+      case "togglePlay":
+        if (state.isPlaying) {
+          if (state.videoElement) {
+            state.videoElement.pause()
+          }
+          return {...state, isPlaying: false}
+        } else {
+          if (state.videoElement) {
+            state.videoElement.play()
+          }
+          return {...state, isPlaying: true}
+        }
+      case "toggleMute":
+        if (state.isMuted) {
+          if (state.videoElement) {
+            state.videoElement.muted = false
+          }
+          return {...state, isMuted: false}
+        } else {
+          if (state.videoElement) {
+            state.videoElement.muted = true
+          }
+          return {...state, isMuted: true}
+        }
+
+      case "setDuration":
+        return {...state, duration: action.payload}
+      case "setCurrentTime":
+        return {...state, currentTime: action.payload}
+      case "jump":
+        if (state.videoElement) {
+          state.videoElement.currentTime += action.payload
+        }
+        return {...state, currentTime: state.videoElement!.currentTime}
+      case "setPlaybackRate":
+        state.videoElement!.playbackRate = action.payload
+        return {...state, playbackRate: action.payload}
+      case "init":
+        return {...state, videoElement: action.payload}
+      default:
+        return state
+    }
+  }
+
+  const [state, dispatch] = useReducer(reducer, initialState)
+
+  return (
+    <PlayerContext.Provider value={{state, dispatch}}>
+      {children}
+    </PlayerContext.Provider>
+  )
+}
 
 export function usePlayer() {
-  return useHookstate(playerState)
+  return useContext(PlayerContext)
 }
 
 export function Player({src, className, ...rest}: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const state = useHookstate(playerState)
+  const {dispatch} = usePlayer()
 
   useEffect(() => {
-    state.isPlaying.subscribe((isPlaying) => {
-      if (videoRef.current) {
-        if (isPlaying) {
-          videoRef.current.play()
-        } else {
-          videoRef.current.pause()
-        }
-      }
-    })
-  }, [])
-
-  useEffect(() => {
-    state.isMuted.subscribe((isMuted) => {
-      if (videoRef.current) {
-        videoRef.current.muted = isMuted
-      }
-    })
-  }, [])
+    if (videoRef.current) {
+      dispatch({type: "init", payload: videoRef.current})
+    }
+  }, [dispatch])
 
   const onLoadedMetadata = () => {
     if (videoRef.current) {
-      state.merge({
-        duration: videoRef.current.duration,
-      })
+      dispatch({type: "setDuration", payload: videoRef.current.duration})
     }
   }
 
   const onTimeUpdate = () => {
     if (videoRef.current) {
-      state.merge({
-        currentTime: videoRef.current.currentTime,
-      })
+      dispatch({type: "setCurrentTime", payload: videoRef.current.currentTime})
     }
   }
 
@@ -89,18 +141,19 @@ export function Player({src, className, ...rest}: Props) {
 }
 
 export function PlayerControls() {
-  const state = useHookstate(playerState)
+  const {state, dispatch} = usePlayer()
+  const {isPlaying, isMuted} = state
 
   const onTogglePlay = () => {
-    state.merge((s) => ({isPlaying: !s.isPlaying}))
+    dispatch({type: "togglePlay"})
   }
 
   const onToggleMuted = () => {
-    state.merge((s) => ({isMuted: !s.isMuted}))
+    dispatch({type: "toggleMute"})
   }
 
   const onJump = (seconds: number) => {
-    state.merge((s) => ({currentTime: s.currentTime + seconds}))
+    dispatch({type: "jump", payload: seconds})
   }
 
   useHotkeys("space", onTogglePlay)
@@ -115,19 +168,19 @@ export function PlayerControls() {
       <button
         onClick={onTogglePlay}
         className={clsx("btn btn-square", {
-          "btn-success": !state.isPlaying,
-          "btn-neutral": state.isPlaying,
+          "btn-success": !isPlaying,
+          "btn-neutral": isPlaying,
         })}
         type="button"
       >
-        {state.isPlaying ? (
+        {isPlaying ? (
           <HiPause className="w-5 h-5" />
         ) : (
           <HiPlay className="w-5 h-5" />
         )}
       </button>
       <button onClick={onToggleMuted} className="btn btn-square" type="button">
-        {state.isMuted ? (
+        {isMuted ? (
           <HiSpeakerWave className="w-5 h-5" />
         ) : (
           <HiSpeakerXMark className="w-5 h-5" />

@@ -20,8 +20,6 @@
   },
   "dependencies": {
     "@badrap/result": "^0.2.13",
-    "@hookstate/core": "^4.0.1",
-    "@hookstate/subscribable": "^4.0.0",
     "@react-hook/resize-observer": "^1.2.6",
     "@react-spring/web": "^9.7.3",
     "@sentry/react": "^7.85.0",

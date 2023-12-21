@@ -20,7 +20,7 @@ import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"
 import {sumDurations} from "@/helpers/time"
-import {DEFAULT_CLIP_BASE_DURATION} from "@/routes/loaders"
+import {DEFAULT_CLIP_BASE_DURATION, DEFAULT_SPREAD} from "@/routes/loaders"
 
 const clipGenerationOptions = (useMusic: boolean) => {
   if (useMusic) {
@@ -62,7 +62,7 @@ export const getDefaultOptions = (state: FormState): ClipFormInputs => {
       },
       clipOrder: {type: "scene"},
       minClipDuration: 1.5,
-      clipDurationSpread: 0.5,
+      clipDurationSpread: DEFAULT_SPREAD,
     }
   } else {
     return {
@@ -74,7 +74,7 @@ export const getDefaultOptions = (state: FormState): ClipFormInputs => {
       clipOrder: {type: "scene"},
       maxDuration: sumDurations(state.selectedMarkers || []),
       minClipDuration: 1.5,
-      clipDurationSpread: 0.5,
+      clipDurationSpread: DEFAULT_SPREAD,
     }
   }
 }

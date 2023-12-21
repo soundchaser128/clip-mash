@@ -28,7 +28,7 @@ import {lerpArrays} from "@/helpers/math"
 
 export const DEFAULT_PAGE_LENGTH = 24
 export const DEFAULT_CLIP_BASE_DURATION = 10
-const DEFAULT_SPREAD = 0.25
+export const DEFAULT_SPREAD = 0.25
 
 function getDivisors(spread: number): number[] {
   const MIN_DURATIONS = [1, 1, 1, 1]

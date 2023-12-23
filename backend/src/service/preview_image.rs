@@ -68,4 +68,20 @@ impl PreviewGenerator {
 
         Ok(preview_image_path)
     }
+
+    pub async fn migrate_preview_images(&self) -> Result<()> {
+        let image_path = self.directories.preview_image_dir();
+        let mut entries = tokio::fs::read_dir(image_path).await?;
+        while let Some(entry) = entries.next_entry().await? {
+            let path = Utf8PathBuf::from_path_buf(entry.path()).expect("must be utf-8 path");
+            if path.is_file() {
+                if path.extension() == Some("png") {
+                    info!("deleting PNG preview image at {}", path);
+                    tokio::fs::remove_file(path).await?;
+                }
+            }
+        }
+
+        Ok(())
+    }
 }

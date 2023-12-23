@@ -19,6 +19,7 @@ pub enum FolderType {
     Music,
     Database,
     Config,
+    PreviewImages,
 }
 
 impl FolderType {
@@ -136,6 +137,7 @@ impl Directories {
             FolderType::Database => self.database_file(),
             FolderType::Config => self.config_dir().to_owned(),
             FolderType::DownloadedVideo => self.downloaded_video_dir(),
+            FolderType::PreviewImages => self.preview_image_dir(),
         }
     }
 
@@ -195,7 +197,13 @@ impl Directories {
         use self::FolderType::*;
 
         let mut map = HashMap::new();
-        let folder_types = [TempVideo, CompilationVideo, DownloadedVideo, Music];
+        let folder_types = [
+            TempVideo,
+            CompilationVideo,
+            DownloadedVideo,
+            Music,
+            PreviewImages,
+        ];
 
         for ty in folder_types {
             let path = self.get(ty);

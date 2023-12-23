@@ -34,6 +34,7 @@ const folderTypeNames: Record<FolderType, string> = {
   [FolderType.database]: "Database files",
   [FolderType.music]: "Music files",
   [FolderType.tempVideo]: "Temporary video files",
+  [FolderType.previewImages]: "Preview images",
 }
 
 const canCleanup: FolderType[] = [

@@ -111,7 +111,7 @@ const VideoCard: React.FC<Props> = ({
   return (
     <article
       className={clsx(
-        "card card-compact bg-base-200 shadow-xl",
+        "card card-compact bg-base-200 shadow-xl animate-in fade-in",
         video.markerCount > 0 && "ring ring-green-500",
         disabled && "opacity-50",
         zoomOnHover &&

@@ -34,12 +34,12 @@ pub type Result<T> = std::result::Result<T, Report>;
 // 100 MB
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
-fn find_addr() -> SocketAddr {
+fn find_unused_port() -> SocketAddr {
     let host = std::env::args()
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1".into());
 
-    // find random unused port
+    // find first unused port
     let port = if cfg!(debug_assertions) {
         5174
     } else {
@@ -198,7 +198,7 @@ async fn run() -> Result<()> {
         .layer(sentry_tower::SentryHttpLayer::with_transaction())
         .with_state(state);
 
-    let addr = find_addr();
+    let addr = find_unused_port();
     info!("listening on {addr}");
 
     let is_debug_build = cfg!(debug_assertions);

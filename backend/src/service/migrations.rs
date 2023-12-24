@@ -1,4 +1,3 @@
-use std::process::id;
 use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};

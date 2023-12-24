@@ -272,7 +272,11 @@ impl MarkersDatabase {
         Ok(markers)
     }
 
-    pub async fn set_marker_preview_image(&self, id: i64, preview_image: &str) -> Result<()> {
+    pub async fn set_marker_preview_image(
+        &self,
+        id: i64,
+        preview_image: Option<&str>,
+    ) -> Result<()> {
         sqlx::query!(
             "UPDATE markers SET marker_preview_image = $1 WHERE rowid = $2",
             preview_image,

@@ -21,6 +21,7 @@ use crate::server::types::{
     UpdateMarker, VideoDetailsDto, VideoDetailsDtoConverter, VideoDto,
 };
 use crate::service::encoding_optimization::EncodingOptimizationService;
+use crate::service::migrations::Migrator;
 use crate::service::preview_image::PreviewGenerator;
 use crate::service::scene_detection;
 use crate::service::video::{AddVideosRequest, VideoService};
@@ -36,9 +37,10 @@ use crate::service::video::{AddVideosRequest, VideoService};
 #[axum::debug_handler]
 pub async fn list_videos(
     Query(page): Query<PageParameters>,
-    Query(query): Query<VideoSearchQuery>,
+    Query(mut query): Query<VideoSearchQuery>,
     state: State<Arc<AppState>>,
 ) -> Result<Json<Page<ListVideoDto>>, AppError> {
+    query.query = query.query.map(|q| format!("\"{}\"", q.trim()));
     info!("handling list_videos request with page {page:?} and query {query:?}");
     let (videos, size) = state.database.videos.list_videos(query, &page).await?;
     Ok(Json(Page::new(videos, size, page)))
@@ -575,7 +577,7 @@ pub async fn split_marker(
             state
                 .database
                 .markers
-                .set_marker_preview_image(marker.rowid.unwrap(), path.as_str())
+                .set_marker_preview_image(marker.rowid.unwrap(), Some(path.as_str()))
                 .await?;
         }
     }
@@ -610,4 +612,24 @@ pub async fn merge_stash_video(
     info!("new video after merging: {new_video:?}");
 
     Ok(Json(new_video))
+}
+
+#[axum::debug_handler]
+#[utoipa::path(
+    post,
+    path = "/api/library/migrate/preview",
+    responses(
+        (status = 200, description = "Successfully migrated preview images to WebP", body = ()),
+    )
+)]
+pub async fn migrate_preview_images(State(state): State<Arc<AppState>>) -> Result<(), AppError> {
+    let migrator = Migrator::new(
+        state.database.clone(),
+        state.directories.clone(),
+        state.ffmpeg_location.clone(),
+    );
+
+    migrator.migrate_preview_images().await?;
+
+    Ok(())
 }

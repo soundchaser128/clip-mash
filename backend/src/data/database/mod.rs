@@ -620,7 +620,7 @@ mod test {
         let preview_image_path = "/some/path/to/image.png";
         database
             .markers
-            .set_marker_preview_image(marker.rowid.unwrap(), preview_image_path)
+            .set_marker_preview_image(marker.rowid.unwrap(), Some(preview_image_path))
             .await
             .unwrap();
         let result = database

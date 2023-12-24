@@ -1,6 +1,7 @@
+use std::process::id;
 use std::time::Instant;
 
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 use tracing::{info, warn};
 
 use super::commands::ffmpeg::FfmpegLocation;
@@ -10,6 +11,16 @@ use crate::data::database::{AllVideosFilter, Database, VideoUpdate};
 use crate::helpers::parallelize;
 use crate::service::commands::ffprobe;
 use crate::Result;
+
+fn video_id_from_path(path: &Utf8Path) -> Option<&str> {
+    let stem = path.file_stem()?;
+    if let Some(idx) = stem.find('_') {
+        let video_id = &stem[..idx];
+        Some(video_id)
+    } else {
+        None
+    }
+}
 
 pub fn run_async(database: Database, directories: Directories, ffmpeg_location: FfmpegLocation) {
     tokio::spawn(async move {
@@ -81,7 +92,7 @@ impl Migrator {
                 Ok(path) => {
                     self.database
                         .videos
-                        .set_video_preview_image(&video.id, path.as_str())
+                        .set_video_preview_image(&video.id, Some(path.as_str()))
                         .await?
                 }
                 Err(err) => warn!(
@@ -112,7 +123,7 @@ impl Migrator {
                     Ok(path) => {
                         self.database
                             .markers
-                            .set_marker_preview_image(marker.rowid.unwrap(), path.as_str())
+                            .set_marker_preview_image(marker.rowid.unwrap(), Some(path.as_str()))
                             .await?;
                     }
                     Err(err) => warn!(
@@ -169,6 +180,42 @@ impl Migrator {
                 self.database.ffprobe.set_info(&video_id, &ffprobe).await?;
             }
         }
+
+        Ok(())
+    }
+
+    pub async fn migrate_preview_images(&self) -> Result<()> {
+        let image_path = self.directories.preview_image_dir();
+        let mut entries = tokio::fs::read_dir(image_path).await?;
+        while let Some(entry) = entries.next_entry().await? {
+            let path = Utf8PathBuf::from_path_buf(entry.path()).expect("must be utf-8 path");
+            if path.is_file() {
+                if path.extension() == Some("png") {
+                    if let Some(video_id) = video_id_from_path(&path) {
+                        info!("deleting PNG preview image at {}", path);
+                        tokio::fs::remove_file(&path).await?;
+                        self.database
+                            .videos
+                            .set_video_preview_image(&video_id, None)
+                            .await?;
+                        let markers = self
+                            .database
+                            .markers
+                            .get_markers_for_video(&video_id)
+                            .await?;
+                        for marker in markers {
+                            self.database
+                                .markers
+                                .set_marker_preview_image(marker.rowid.unwrap(), None)
+                                .await?;
+                        }
+                    }
+                }
+            }
+        }
+
+        self.generate_video_preview_images().await?;
+        self.generate_marker_preview_images().await?;
 
         Ok(())
     }

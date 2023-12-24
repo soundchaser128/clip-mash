@@ -420,7 +420,11 @@ impl VideosDatabase {
         Ok(())
     }
 
-    pub async fn set_video_preview_image(&self, id: &str, preview_image: &str) -> Result<()> {
+    pub async fn set_video_preview_image(
+        &self,
+        id: &str,
+        preview_image: Option<&str>,
+    ) -> Result<()> {
         sqlx::query!(
             "UPDATE videos SET video_preview_image = $1 WHERE id = $2",
             preview_image,

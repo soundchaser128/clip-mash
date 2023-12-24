@@ -104,6 +104,7 @@ impl CompilationGenerator {
 
     fn blurred_padding_filter(
         &self,
+        source_size: (u32, u32),
         target_size: (u32, u32),
         target_aspect: Ratio<u32>,
         fps: f64,
@@ -112,14 +113,13 @@ impl CompilationGenerator {
         let brightness = -0.125;
 
         let (px_w, px_h) = target_size;
-
         let tw = target_aspect.numer();
         let th = target_aspect.denom();
 
         format!("
-            split[original][copy];
-            [copy]scale=ih*{tw}/{th}:-1,crop=h=iw*{th}/{tw},gblur=sigma={sigma},eq=brightness={brightness}
-            [blurred];[blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2,fps={fps},scale={px_w}:{px_h}
+            split [original][copy];
+            [copy] scale={px_w}:-1, crop=ih*{th}/{tw}:ih:iw/2-ow/2:0, gblur=sigma={sigma}, eq=brightness={brightness}[blurred];
+            [blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2, scale={px_w}:{px_h}, fps={fps}
         ")
     }
 
@@ -190,24 +190,33 @@ impl CompilationGenerator {
     }
 
     async fn create_clip(&self, clip: CreateClip<'_>) -> Result<()> {
+        enum FilterType {
+            Simple(String),
+            Complex(String),
+        }
+
         let clip_str = clip.duration.to_string();
         let seconds_str = clip.start.to_string();
 
+        let source_size = (clip.video_width, clip.video_height);
         let video = Ratio::new(clip.video_width, clip.video_height);
         let target = Ratio::new(clip.width, clip.height);
 
         let filter = match (clip.padding, target != video) {
-            (PaddingType::Blur, true) => {
-                self.blurred_padding_filter((clip.width, clip.height), target, clip.fps)
-            }
-            _ => format!(
+            (PaddingType::Blur, true) => FilterType::Complex(self.blurred_padding_filter(
+                source_size,
+                (clip.width, clip.height),
+                target,
+                clip.fps,
+            )),
+            _ => FilterType::Simple(format!(
                 "scale={width}:{height}:force_original_aspect_ratio=decrease,
                 pad={width}:{height}:-1:-1:color=black,
                 fps={fps}",
                 width = clip.width,
                 height = clip.height,
                 fps = clip.fps
-            ),
+            )),
         };
 
         let mut args = vec![
@@ -223,7 +232,12 @@ impl CompilationGenerator {
         ];
         if clip.re_encode || clip.force_re_encode {
             args.extend(self.video_encoding_parameters(clip.codec, clip.quality, clip.effort));
-            args.extend(&["-acodec", "aac", "-vf", &filter, "-ar", "48000"]);
+            let filter_args = match &filter {
+                FilterType::Simple(filter) => vec!["-vf", filter.as_str()],
+                FilterType::Complex(filter) => vec!["-filter_complex", filter.as_str()],
+            };
+            args.extend(filter_args);
+            args.extend(&["-acodec", "aac", "-ar", "48000"]);
         } else {
             args.extend(&["-c:v", "copy", "-c:a", "copy"]);
         }

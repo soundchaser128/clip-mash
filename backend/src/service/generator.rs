@@ -2,6 +2,7 @@ use std::ffi::OsStr;
 use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};
+use color_eyre::Section;
 use fraction::Ratio;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -118,8 +119,8 @@ impl CompilationGenerator {
 
         format!("
             split [original][copy];
-            [copy] scale={px_w}:-1, crop=ih*{th}/{tw}:ih:iw/2-ow/2:0, gblur=sigma={sigma}, eq=brightness={brightness}[blurred];
-            [blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2, scale={px_w}:{px_h}, fps={fps}
+            [copy] scale=ih*{tw}/{th}:-1, crop=h=iw*{th}/{tw}, gblur=sigma={sigma}, eq=brightness={brightness}[blurred];
+            [blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2, fps={fps}, scale={px_w}:{px_h}
         ")
     }
 
@@ -189,6 +190,7 @@ impl CompilationGenerator {
         vec!["-c:v", encoder, "-preset", effort, "-crf", crf]
     }
 
+    // TODO re-try with different padding if it fails
     async fn create_clip(&self, clip: CreateClip<'_>) -> Result<()> {
         enum FilterType {
             Simple(String),
@@ -349,6 +351,9 @@ impl CompilationGenerator {
                     })
                     .await;
                 if let Err(e) = result {
+                    let e = e.with_note(|| {
+                        format!("failed to create clip for video {}", marker.video_id)
+                    });
                     let error = e.to_string();
                     self.database
                         .progress

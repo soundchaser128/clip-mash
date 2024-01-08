@@ -13,7 +13,7 @@ import Layout from "../components/Layout"
 import Steps from "../components/Steps"
 import {FormState, FormStage, SerializedFormState} from "../types/form-state"
 import {saveJsonToDisk} from "@/helpers/json"
-import {AppVersion} from "@/api"
+import {AppVersion, deleteProgress} from "@/api"
 
 const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
   return (
@@ -64,12 +64,14 @@ const AssistantLayout: React.FC = () => {
   const {actions, state} = useStateMachine({resetForm})
   const version = useRouteLoaderData("root") as AppVersion
 
-  const onReset = () => {
+  const onReset = async () => {
     if (
       confirm(
         "Are you sure you want to reset the form and return to the start?",
       )
     ) {
+      const id = state.data.videoId
+      await deleteProgress(id!)
       actions.resetForm()
       navigate("/")
     }

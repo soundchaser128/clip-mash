@@ -62,5 +62,5 @@ pub async fn delete_progress(
     state: State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     state.database.progress.delete_progress(&id).await?;
-    Ok(())
+    Ok(Json("OK"))
 }

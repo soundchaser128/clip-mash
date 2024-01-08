@@ -178,7 +178,9 @@ function VideoOptions() {
                   Select padding
                 </option>
                 <option value="black">Black</option>
-                <option value="blur">Blurred video content</option>
+                <option value="blur">
+                  Blurred video content (experimental)
+                </option>
               </select>
             </div>
           </div>

@@ -233,6 +233,7 @@ impl Migrator {
             self.database.progress.cleanup_progress(),
             self.initialize_video_titles(),
             self.populate_ffprobe_info(),
+            self.database.markers.fix_all_video_indices(),
         )?;
 
         let elapsed = start.elapsed();

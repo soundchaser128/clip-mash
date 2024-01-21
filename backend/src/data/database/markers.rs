@@ -1,4 +1,4 @@
-use sqlx::{FromRow, QueryBuilder, SqliteExecutor, SqlitePool};
+use sqlx::{FromRow, QueryBuilder, SqliteConnection, SqliteExecutor, SqlitePool};
 use tracing::{debug, info};
 
 use super::{DbMarker, DbMarkerWithVideo, MarkerCount};
@@ -49,10 +49,10 @@ impl MarkersDatabase {
         .map_err(From::from)
     }
 
-    async fn create_new_marker_with_executor<'a, E: SqliteExecutor<'a>>(
+    async fn create_new_marker_inner(
         &self,
         marker: CreateMarker,
-        executor: E,
+        connection: &mut SqliteConnection,
     ) -> Result<DbMarker> {
         let created_on = marker.created_on.unwrap_or_else(|| unix_timestamp_now());
         let inserted_value = sqlx::query!(
@@ -70,10 +70,10 @@ impl MarkersDatabase {
                 marker.marker_stash_id,
 
         )
-        .fetch_one(executor)
+        .fetch_one(&mut *connection)
         .await?;
 
-        let marker = DbMarker {
+        let mut marker = DbMarker {
             rowid: Some(inserted_value.rowid),
             start_time: marker.start,
             end_time: marker.end,
@@ -85,14 +85,23 @@ impl MarkersDatabase {
             marker_stash_id: marker.marker_stash_id,
         };
 
+        let new_markers = self
+            .fix_marker_video_indices(&marker.video_id, &mut *connection)
+            .await?;
+        let actual_index = new_markers
+            .iter()
+            .position(|m| m.rowid == marker.rowid)
+            .expect("marker must be in list of new markers");
+        marker.index_within_video = actual_index as i64;
+
         info!("newly updated or inserted marker: {marker:?}");
 
         Ok(marker)
     }
 
     pub async fn create_new_marker(&self, marker: CreateMarker) -> Result<DbMarker> {
-        self.create_new_marker_with_executor(marker, &self.pool)
-            .await
+        let mut connection = self.pool.acquire().await?;
+        self.create_new_marker_inner(marker, &mut connection).await
     }
 
     pub async fn update_marker(&self, id: i64, update: UpdateMarker) -> Result<DbMarker> {
@@ -184,10 +193,8 @@ impl MarkersDatabase {
 
         let mut tx = self.pool.begin().await?;
 
-        self.create_new_marker_with_executor(new_marker_1, &mut *tx)
-            .await?;
-        self.create_new_marker_with_executor(new_marker_2, &mut *tx)
-            .await?;
+        self.create_new_marker_inner(new_marker_1, &mut *tx).await?;
+        self.create_new_marker_inner(new_marker_2, &mut *tx).await?;
         self.delete_marker_with_executor(rowid, &mut *tx).await?;
 
         tx.commit().await?;
@@ -288,6 +295,55 @@ impl MarkersDatabase {
         Ok(())
     }
 
+    pub async fn fix_all_video_indices(&self) -> Result<()> {
+        let mut transaction = self.pool.begin().await?;
+        let all_video_ids = sqlx::query!("SELECT id FROM videos")
+            .fetch_all(&mut *transaction)
+            .await?;
+
+        for video_id in all_video_ids {
+            let video_id = video_id.id;
+            self.fix_marker_video_indices(&video_id, &mut *transaction)
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    async fn fix_marker_video_indices(
+        &self,
+        video_id: &str,
+        connection: &mut SqliteConnection,
+    ) -> Result<Vec<DbMarker>> {
+        use ordered_float::OrderedFloat;
+
+        let mut markers = self.get_markers_for_video(video_id).await?;
+        markers.sort_by_key(|m| OrderedFloat(m.start_time));
+
+        for (index, marker) in markers.iter_mut().enumerate() {
+            let index = index as i64;
+
+            if marker.index_within_video != index {
+                let rowid = marker.rowid.expect("marker must have rowid");
+                sqlx::query!(
+                    "UPDATE markers SET index_within_video = $1 WHERE rowid = $2",
+                    index,
+                    rowid,
+                )
+                .execute(&mut *connection)
+                .await?;
+
+                info!(
+                    "updated marker with id {} to have index {} (was {})",
+                    rowid, index, marker.index_within_video
+                );
+                marker.index_within_video = index;
+            }
+        }
+
+        Ok(markers)
+    }
+
     pub async fn get_markers_for_video(&self, video_id: &str) -> Result<Vec<DbMarker>> {
         let markers = sqlx::query_as!(
             DbMarker,
@@ -322,5 +378,42 @@ impl MarkersDatabase {
         .await?;
 
         Ok(results)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::marker;
+
+    use super::*;
+    use crate::data::database::Database;
+    use crate::service::fixtures::{persist_marker, persist_video};
+
+    #[sqlx::test]
+    async fn test_fix_marker_video_indices(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await?;
+
+        // uses create_new_marker, so the indices should be correct after inserting
+        persist_marker(&database, &video.id, 3, 0.0, 5.0, false).await?;
+        persist_marker(&database, &video.id, 2, 15.0, 25.0, false).await?;
+        persist_marker(&database, &video.id, 1, 50.0, 55.0, false).await?;
+        persist_marker(&database, &video.id, 0, 100.0, 110.0, false).await?;
+
+        let all_markers = database.markers.get_markers_for_video(&video.id).await?;
+
+        assert_eq!(all_markers[0].index_within_video, 0);
+        assert_eq!(all_markers[0].start_time, 0.0);
+
+        assert_eq!(all_markers[1].index_within_video, 1);
+        assert_eq!(all_markers[1].start_time, 15.0);
+
+        assert_eq!(all_markers[2].index_within_video, 2);
+        assert_eq!(all_markers[2].start_time, 50.0);
+
+        assert_eq!(all_markers[3].index_within_video, 3);
+        assert_eq!(all_markers[3].start_time, 100.0);
+
+        Ok(())
     }
 }

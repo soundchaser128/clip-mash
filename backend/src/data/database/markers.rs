@@ -307,6 +307,8 @@ impl MarkersDatabase {
                 .await?;
         }
 
+        transaction.commit().await?;
+
         Ok(())
     }
 
@@ -317,7 +319,9 @@ impl MarkersDatabase {
     ) -> Result<Vec<DbMarker>> {
         use ordered_float::OrderedFloat;
 
-        let mut markers = self.get_markers_for_video(video_id).await?;
+        let mut markers = self
+            .get_markers_for_video_inner(video_id, &mut *connection)
+            .await?;
         markers.sort_by_key(|m| OrderedFloat(m.start_time));
 
         for (index, marker) in markers.iter_mut().enumerate() {
@@ -345,12 +349,22 @@ impl MarkersDatabase {
     }
 
     pub async fn get_markers_for_video(&self, video_id: &str) -> Result<Vec<DbMarker>> {
+        let mut connection = self.pool.acquire().await?;
+        self.get_markers_for_video_inner(video_id, &mut connection)
+            .await
+    }
+
+    async fn get_markers_for_video_inner(
+        &self,
+        video_id: &str,
+        connection: &mut SqliteConnection,
+    ) -> Result<Vec<DbMarker>> {
         let markers = sqlx::query_as!(
             DbMarker,
             "SELECT *, rowid FROM markers WHERE video_id = $1 ORDER BY index_within_video ASC",
             video_id
         )
-        .fetch_all(&self.pool)
+        .fetch_all(connection)
         .await?;
         Ok(markers)
     }

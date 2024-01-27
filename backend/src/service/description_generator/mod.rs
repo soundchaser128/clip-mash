@@ -57,7 +57,7 @@ pub struct ClipInfo {
 pub struct VideoInfo {
     pub source: VideoSource,
     pub title: String,
-    pub interactive: bool,
+    pub interactive: &'static str,
 }
 
 #[derive(Serialize, Debug)]
@@ -114,7 +114,7 @@ impl From<&CompilationOptions> for TemplateContext {
                 .map(|v| VideoInfo {
                     source: v.source.clone(),
                     title: v.video_title.as_ref().unwrap_or(&v.id).to_string(),
-                    interactive: v.interactive,
+                    interactive: if v.interactive { "Yes" } else { "No" },
                 })
                 .collect(),
         }

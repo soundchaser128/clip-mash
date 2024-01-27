@@ -1,8 +1,17 @@
 # Changelog
 
 ## Unreleased
-- feat: added separate settings page
-- feat: allow cleaning up temporary files
+- feat: Add separate settings page
+- feat: Allow cleaning up temporary files
+- feat(experimental): Add an option on the video settings page to control how videos are padded when the aspect ratio doesn't fit (black, or a blurred version of the source video to fill up the empty space)
+- fix: Better error reporting for clip generation
+- feat: Add a slider for the total compilation duration
+- feat: Add a slider to control the spread of the clip lengths
+- feat: Add a field for the minimum clip length
+- feat: Generate preview images for videos and markers as webp, not png, saves a lot of disk space
+- fix: Make the stash API key optional (only required when stash has a username/password set)
+- fix: Start the application on the first unoccupied port that it finds, so that there's no port conflicts on startup
+- feat: Use mimalloc as custom allocator
 
 ## 0.20.0
 - feat: Add Sentry integration to frontend and backend to track errors.

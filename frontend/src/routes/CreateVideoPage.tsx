@@ -106,8 +106,7 @@ function Progress() {
       videoCodec: state.data.videoCodec!,
       videoQuality: state.data.videoQuality!,
       musicVolume: state.data.musicVolume,
-      // todo: add these to the UI
-      padding: "blur",
+      padding: state.data.padding!,
       forceReEncode: false,
     } satisfies CreateVideoBody
 

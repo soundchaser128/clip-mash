@@ -397,8 +397,6 @@ impl MarkersDatabase {
 
 #[cfg(test)]
 mod tests {
-    use std::marker;
-
     use super::*;
     use crate::data::database::Database;
     use crate::service::fixtures::{persist_marker, persist_video};

@@ -45,8 +45,13 @@ fn get_clip_file_name(
     end: f64,
     codec: VideoCodec,
     (x_res, y_res): (u32, u32),
+    padding: PaddingType,
 ) -> String {
-    format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}.mp4")
+    let padding = match padding {
+        PaddingType::Black => "black",
+        PaddingType::Blur => "blur",
+    };
+    format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}-{padding}.mp4")
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
@@ -97,7 +102,7 @@ impl CompilationGenerator {
         Ok(CompilationGenerator {
             directories,
             ffmpeg_path,
-            database: database,
+            database,
             encoding_optimization,
             stream_urls: streams_service,
         })
@@ -105,7 +110,6 @@ impl CompilationGenerator {
 
     fn blurred_padding_filter(
         &self,
-        source_size: (u32, u32),
         target_size: (u32, u32),
         target_aspect: Ratio<u32>,
         fps: f64,
@@ -200,13 +204,11 @@ impl CompilationGenerator {
         let clip_str = clip.duration.to_string();
         let seconds_str = clip.start.to_string();
 
-        let source_size = (clip.video_width, clip.video_height);
         let video = Ratio::new(clip.video_width, clip.video_height);
         let target = Ratio::new(clip.width, clip.height);
 
         let filter = match (clip.padding, target != video) {
             (PaddingType::Blur, true) => FilterType::Complex(self.blurred_padding_filter(
-                source_size,
                 (clip.width, clip.height),
                 target,
                 clip.fps,
@@ -301,6 +303,7 @@ impl CompilationGenerator {
             .encoding_optimization
             .needs_re_encode(&video_ids)
             .await?;
+        info!("Using padding type {:?}", options.padding);
 
         let total = clips.len();
         let mut paths = vec![];
@@ -328,6 +331,7 @@ impl CompilationGenerator {
                 *end,
                 options.video_codec,
                 options.output_resolution,
+                options.padding,
             ));
             if !out_file.is_file() {
                 info!("creating clip {} / {} at {out_file}", index + 1, total);

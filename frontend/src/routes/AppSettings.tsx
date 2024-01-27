@@ -7,9 +7,10 @@ import {
   cleanupFolder,
   getFileStats,
   getHealth,
+  migratePreviewImages,
   setConfig,
 } from "../api"
-import {HiCheckCircle, HiCog, HiTrash} from "react-icons/hi2"
+import {HiCheckCircle, HiCog, HiPhoto, HiTrash} from "react-icons/hi2"
 import {useConfig} from "@/hooks/useConfig"
 import Loader from "@/components/Loader"
 import {formatBytes} from "@/helpers/formatting"
@@ -91,6 +92,7 @@ function AppConfigPage() {
   const settingsPage = `${urlValue}/settings?tab=security`
   const [healthResult, setHealthResult] = useState<HealthResult>()
   const createToast = useCreateToast()
+  const [converting, setConverting] = useState(false)
 
   const onSubmit = async (inputs: Inputs) => {
     const health = await testCredentials(inputs)
@@ -127,6 +129,15 @@ function AppConfigPage() {
         type: "error",
         message: "Error cleaning up: " + (e as Error).message,
       })
+    }
+  }
+
+  const onConvertPreviewImages = async () => {
+    setConverting(true)
+    try {
+      await migratePreviewImages()
+    } finally {
+      setConverting(false)
     }
   }
 
@@ -237,6 +248,21 @@ function AppConfigPage() {
           </div>
         )}
         {loading && <Loader />}
+      </section>
+
+      <section className="mt-4 flex justify-between items-center">
+        <p className="label-text">
+          Convert preview images to the WebP format.
+          <br />
+          Reduces disk usage of the preview image folder.
+        </p>
+        <button
+          disabled={converting}
+          onClick={onConvertPreviewImages}
+          className="btn btn-primary"
+        >
+          <HiPhoto /> Convert
+        </button>
       </section>
     </div>
   )

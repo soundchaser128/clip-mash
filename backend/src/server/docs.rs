@@ -31,6 +31,7 @@ use crate::service::video::AddVideosRequest;
         library::list_stash_videos,
         library::cleanup_videos,
         library::merge_stash_video,
+        library::migrate_preview_images,
         library::videos_need_encoding,
         library::list_marker_titles,
         files::list_file_entries,

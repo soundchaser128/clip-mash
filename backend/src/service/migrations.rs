@@ -6,7 +6,8 @@ use tracing::{info, warn};
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::preview_image::PreviewGenerator;
-use crate::data::database::{AllVideosFilter, Database, VideoUpdate};
+use super::stash_config::StashConfig;
+use crate::data::database::{AllVideosFilter, Database, Settings, VideoUpdate};
 use crate::helpers::parallelize;
 use crate::service::commands::ffprobe;
 use crate::Result;
@@ -183,6 +184,18 @@ impl Migrator {
         Ok(())
     }
 
+    async fn migrate_settings(&self) -> Result<()> {
+        if let Ok(config) = StashConfig::get().await {
+            if self.database.settings.fetch_settings().await?.is_none() {
+                info!("loaded config, migrating it to database");
+                let settings = Settings { stash: config };
+                self.database.settings.set_settings(settings).await?;
+            }
+        }
+
+        Ok(())
+    }
+
     pub async fn migrate_preview_images(&self) -> Result<()> {
         let image_path = self.directories.preview_image_dir();
         let mut entries = tokio::fs::read_dir(image_path).await?;
@@ -234,6 +247,7 @@ impl Migrator {
             self.initialize_video_titles(),
             self.populate_ffprobe_info(),
             self.database.markers.fix_all_video_indices(),
+            self.migrate_settings(),
         )?;
 
         let elapsed = start.elapsed();

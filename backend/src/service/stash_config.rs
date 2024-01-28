@@ -31,6 +31,7 @@ impl StashConfig {
         Ok(config)
     }
 
+    #[deprecated]
     pub async fn get() -> Result<StashConfig> {
         let config = CONFIG.lock().await;
 
@@ -39,6 +40,7 @@ impl StashConfig {
         })
     }
 
+    #[deprecated]
     pub async fn get_or_empty() -> StashConfig {
         let config = CONFIG.lock().await;
         let config = config.as_ref().cloned();
@@ -52,6 +54,7 @@ impl StashConfig {
     }
 }
 
+#[deprecated]
 pub async fn init(directories: &Directories) {
     match StashConfig::load(directories) {
         Ok(config) => {
@@ -64,6 +67,7 @@ pub async fn init(directories: &Directories) {
     }
 }
 
+#[deprecated]
 pub async fn set_config(config: StashConfig, directories: &Directories) -> Result<()> {
     use tokio::fs;
 

@@ -53,9 +53,32 @@ import SentryDebug from "./routes/SentryDebug"
 import AppSettingsPage from "./routes/AppSettings"
 import TroubleshootingInfo from "./components/TroubleshootingInfo"
 
+async function logResponseError(response: Response) {
+  let body
+  if (!response.bodyUsed) {
+    body = await response.text()
+  }
+
+  console.error("ErrorBoundary caught response:", {
+    url: response.url,
+    status: response.status,
+    statusText: response.statusText,
+    body,
+  })
+}
+
 const ErrorBoundary = () => {
   const error = useRouteError()
-  console.error(error)
+
+  useEffect(() => {
+    if (error instanceof Error) {
+      console.error("ErrorBoundary caught error", error)
+    } else if (error instanceof Response) {
+      logResponseError(error)
+    } else {
+      console.error("ErrorBoundary caught some other error", error)
+    }
+  }, [error])
 
   if (isRouteErrorResponse(error)) {
     const is404 = error.status === 404

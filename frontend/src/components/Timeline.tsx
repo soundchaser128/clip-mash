@@ -66,7 +66,11 @@ const TimeAxis = ({length, onClick}: TimeAxisProps) => {
         stroke="currentColor"
       />
       {ticks.map(({value, xOffset}) => (
-        <g key={value} transform={`translate(${xOffset + marginLeft}, 0)`}>
+        <g
+          key={value}
+          className="pointer-events-none"
+          transform={`translate(${xOffset + marginLeft}, 0)`}
+        >
           <line y2="6" stroke="currentColor" />
           <text
             key={value}
@@ -147,11 +151,6 @@ const Timeline: React.FC<Props> = ({
   onTimelineClick,
   className,
 }) => {
-  const playheadPosition =
-    typeof time === "number"
-      ? `calc(${(time / length) * 100}% - (1.25rem / 2))`
-      : undefined
-
   const handleTimelineClick = (e: React.MouseEvent) => {
     if (onTimelineClick) {
       const rect = e.currentTarget.getBoundingClientRect()
@@ -161,11 +160,30 @@ const Timeline: React.FC<Props> = ({
     }
   }
 
+  const playheadPosition =
+    typeof time === "number"
+      ? `calc(${(time / length) * 100}% - (1.25rem / 2))`
+      : undefined
+
+  const [mouseDown, setMouseDown] = React.useState(false)
+
+  const onMouseDown = () => setMouseDown(true)
+  const onMouseUp = () => setMouseDown(false)
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (mouseDown) {
+      handleTimelineClick(e)
+    }
+  }
+
   return (
     <section className={className}>
       <div
         className="flex h-[36px] relative w-full bg-base-200"
         style={{marginLeft}}
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
+        onMouseMove={onMouseMove}
       >
         {typeof time === "number" && (
           <span

@@ -1,3 +1,4 @@
+import {formatSeconds} from "@/helpers/time"
 import useHotkeys from "@/hooks/useHotkeys"
 import clsx from "clsx"
 import React, {useContext, useEffect, useReducer} from "react"
@@ -195,6 +196,11 @@ export function PlayerControls() {
           <HiSpeakerXMark className="w-5 h-5" />
         )}
       </button>
+
+      <span className="text-sm">
+        {formatSeconds(state.currentTime, "short")} /{" "}
+        {formatSeconds(state.duration, "short")}
+      </span>
     </>
   )
 }

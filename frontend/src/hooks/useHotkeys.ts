@@ -1,5 +1,5 @@
 import {useEffect} from "react"
-import * as mousetrap from "mousetrap"
+import mousetrap from "mousetrap"
 
 type MousetrapCallback = (
   e: mousetrap.ExtendedKeyboardEvent,

@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import React, {useMemo, useRef} from "react"
+import React, {useEffect, useMemo, useRef} from "react"
 import * as d3 from "d3"
 import useContainerSize from "@/hooks/useContainerSize"
 import {formatSeconds} from "@/helpers/time"
@@ -152,9 +152,13 @@ const Timeline: React.FC<Props> = ({
   onTimelineClick,
   className,
 }) => {
-  const handleTimelineClick = (e: React.MouseEvent) => {
+  const handleTimelineClick = (e: React.MouseEvent | DragEvent) => {
     if (onTimelineClick) {
-      const rect = e.currentTarget.parentElement?.getBoundingClientRect()
+      const parent = (e.currentTarget as Element)?.parentElement
+      const rect = parent?.getBoundingClientRect()
+      if (!rect) {
+        return
+      }
       const x = e.clientX - rect!.left
       const time = (x / rect!.width) * length
       const clamped = clamp(time, 0, length)
@@ -183,18 +187,27 @@ const Timeline: React.FC<Props> = ({
     handleTimelineClick(e)
   }
 
-  const onDragOver = (e: React.DragEvent) => {
+  const onDragOver = (e: DragEvent) => {
     e.preventDefault()
   }
 
-  const onDrop = (e: React.DragEvent) => {
+  const onDrop = (e: DragEvent) => {
     e.preventDefault()
     setMouseDown(false)
     handleTimelineClick(e)
   }
 
+  useEffect(() => {
+    document.addEventListener("dragover", onDragOver)
+    document.addEventListener("drop", onDrop)
+    return () => {
+      document.removeEventListener("dragover", onDragOver)
+      document.removeEventListener("drop", onDrop)
+    }
+  })
+
   return (
-    <section className={className} onDragOver={onDragOver} onDrop={onDrop}>
+    <section className={className}>
       <div
         className="flex h-[36px] relative w-full bg-base-200"
         style={{marginLeft}}

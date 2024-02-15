@@ -4,6 +4,7 @@ import * as d3 from "d3"
 import useContainerSize from "@/hooks/useContainerSize"
 import {formatSeconds} from "@/helpers/time"
 import {getSegmentColor, getSegmentTextColor} from "@/helpers/style"
+import {clamp} from "@/helpers/math"
 
 interface Item {
   label: string
@@ -21,7 +22,7 @@ interface Props {
   time?: number
   markPoints?: number[]
   onMarkerClick?: (time: number, e: React.MouseEvent) => void
-  onTimelineClick?: (time: number, e: React.MouseEvent) => void
+  onTimelineClick?: (time: number) => void
 }
 
 const marginLeft = 4
@@ -153,10 +154,11 @@ const Timeline: React.FC<Props> = ({
 }) => {
   const handleTimelineClick = (e: React.MouseEvent) => {
     if (onTimelineClick) {
-      const rect = e.currentTarget.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const time = (x / rect.width) * length
-      onTimelineClick(time, e)
+      const rect = e.currentTarget.parentElement?.getBoundingClientRect()
+      const x = e.clientX - rect!.left
+      const time = (x / rect!.width) * length
+      const clamped = clamp(time, 0, length)
+      onTimelineClick(clamped)
     }
   }
 
@@ -167,28 +169,44 @@ const Timeline: React.FC<Props> = ({
 
   const [mouseDown, setMouseDown] = React.useState(false)
 
-  const onMouseDown = () => setMouseDown(true)
-  const onMouseUp = () => setMouseDown(false)
+  const onDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = "move"
+    setMouseDown(true)
+  }
 
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (mouseDown) {
-      handleTimelineClick(e)
-    }
+  const onDragEnd = (e: React.DragEvent) => {
+    setMouseDown(false)
+    handleTimelineClick(e)
+  }
+
+  const onDrag = (e: React.DragEvent) => {
+    handleTimelineClick(e)
+  }
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setMouseDown(false)
+    handleTimelineClick(e)
   }
 
   return (
-    <section className={className}>
+    <section className={className} onDragOver={onDragOver} onDrop={onDrop}>
       <div
         className="flex h-[36px] relative w-full bg-base-200"
         style={{marginLeft}}
-        onMouseDown={onMouseDown}
-        onMouseUp={onMouseUp}
-        onMouseMove={onMouseMove}
       >
         {typeof time === "number" && (
           <span
-            style={{left: playheadPosition}}
+            style={{left: playheadPosition, opacity: mouseDown ? 0.4 : 1}}
             className="absolute bottom-[-10px] bg-gray-700 rounded-full w-5 h-5 z-10 border-2 border-gray-400"
+            draggable
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            onDrag={onDrag}
           />
         )}
         {markPoints?.map((time) => (

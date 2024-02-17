@@ -70,8 +70,12 @@ pub fn debug_output(output: Output) {
         let stdout = std::str::from_utf8(&output.stdout).unwrap();
         let stderr = std::str::from_utf8(&output.stderr).unwrap();
 
-        debug!("stdout = '{}'", stdout);
-        debug!("stderr = '{}'", stderr);
+        if !stdout.is_empty() {
+            debug!("stdout = '{}'", stdout);
+        }
+        if !stderr.is_empty() {
+            debug!("stderr = '{}'", stderr);
+        }
     }
 }
 

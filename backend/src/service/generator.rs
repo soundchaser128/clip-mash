@@ -89,6 +89,22 @@ pub struct CompilationGenerator {
     stream_urls: StreamUrlService,
 }
 
+#[derive(Debug, Copy, Clone)]
+enum Orientation {
+    Landscape,
+    Portrait,
+}
+
+impl Orientation {
+    fn new(width: u32, height: u32) -> Self {
+        if width > height {
+            Orientation::Landscape
+        } else {
+            Orientation::Portrait
+        }
+    }
+}
+
 impl CompilationGenerator {
     pub async fn new(
         directories: Directories,
@@ -106,26 +122,6 @@ impl CompilationGenerator {
             encoding_optimization,
             stream_urls: streams_service,
         })
-    }
-
-    fn blurred_padding_filter(
-        &self,
-        target_size: (u32, u32),
-        target_aspect: Ratio<u32>,
-        fps: f64,
-    ) -> String {
-        let sigma = 120;
-        let brightness = -0.125;
-
-        let (px_w, px_h) = target_size;
-        let tw = target_aspect.numer();
-        let th = target_aspect.denom();
-
-        format!("
-            split [original][copy];
-            [copy] scale=ih*{tw}/{th}:-1, crop=h=iw*{th}/{tw}, gblur=sigma={sigma}, eq=brightness={brightness}[blurred];
-            [blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2, fps={fps}, scale={px_w}:{px_h}
-        ")
     }
 
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {
@@ -194,7 +190,47 @@ impl CompilationGenerator {
         vec!["-c:v", encoder, "-preset", effort, "-crf", crf]
     }
 
-    // TODO re-try with different padding if it fails
+    fn blurred_padding_filter(
+        &self,
+        source_size: (u32, u32),
+        target_size: (u32, u32),
+        fps: f64,
+    ) -> String {
+        info!(
+            "creating blurred padding filter for source {source_size:?} to target {target_size:?}"
+        );
+
+        let sigma = 120;
+        let brightness = -0.125;
+
+        let source_orientation = Orientation::new(source_size.0, source_size.1);
+        let target_orientation = Orientation::new(target_size.0, target_size.1);
+        let (px_w, px_h) = target_size;
+
+        let transform_filters = match (source_orientation, target_orientation) {
+            (Orientation::Landscape, Orientation::Portrait) => {
+                format!("scale={px_w}:-1, crop=w={px_w}")
+            }
+            (Orientation::Portrait, Orientation::Landscape) => {
+                format!("scale=-1:{px_h}, crop=h={px_h}")
+            }
+            (Orientation::Portrait, Orientation::Portrait) => {
+                format!("scale=-1:{px_h}, pad={px_w}:{px_h}:-1:-1:color=black")
+            }
+            (Orientation::Landscape, Orientation::Landscape) => {
+                format!("scale={px_w}:-1, pad={px_w}:{px_h}:-1:-1:color=black")
+            }
+        };
+
+        info!("using transform filters: {transform_filters} for source {source_orientation:?} to target {target_orientation:?}");
+
+        format!("
+            split [original][copy];
+            [copy] {transform_filters}, gblur=sigma={sigma}, eq=brightness={brightness}[blurred];
+            [blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2, fps={fps}, scale={px_w}:{px_h}
+        ")
+    }
+
     async fn create_clip(&self, clip: CreateClip<'_>) -> Result<()> {
         enum FilterType {
             Simple(String),
@@ -209,8 +245,8 @@ impl CompilationGenerator {
 
         let filter = match (clip.padding, target != video) {
             (PaddingType::Blur, true) => FilterType::Complex(self.blurred_padding_filter(
+                (clip.video_width, clip.video_height),
                 (clip.width, clip.height),
-                target,
                 clip.fps,
             )),
             _ => FilterType::Simple(format!(

@@ -184,6 +184,7 @@ impl Migrator {
         Ok(())
     }
 
+    #[allow(unused)]
     async fn migrate_settings(&self) -> Result<()> {
         if let Ok(config) = StashConfig::get().await {
             if self.database.settings.fetch_settings().await?.is_none() {
@@ -247,7 +248,7 @@ impl Migrator {
             self.initialize_video_titles(),
             self.populate_ffprobe_info(),
             self.database.markers.fix_all_video_indices(),
-            self.migrate_settings(),
+            // self.migrate_settings(),
         )?;
 
         let elapsed = start.elapsed();

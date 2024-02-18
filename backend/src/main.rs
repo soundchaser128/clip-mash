@@ -38,14 +38,20 @@ fn find_unused_port() -> SocketAddr {
     let host = std::env::args()
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1".into());
+    let port = std::env::args()
+        .nth(2)
+        .and_then(|port| port.parse::<u16>().ok());
 
     // find first unused port
     let port = if cfg!(debug_assertions) {
         5174
     } else {
-        (1024..65535)
-            .find(|port| std::net::TcpListener::bind(format!("{}:{}", host, port)).is_ok())
-            .expect("failed to find unused port")
+        match port {
+            Some(port) => port,
+            None => (1024..65535)
+                .find(|port| std::net::TcpListener::bind(format!("{}:{}", host, port)).is_ok())
+                .expect("failed to find unused port"),
+        }
     };
     format!("{}:{}", host, port).parse().unwrap()
 }
@@ -206,7 +212,10 @@ async fn run() -> Result<()> {
         tokio::spawn(async move {
             tokio::time::sleep(Duration::from_millis(500)).await;
             if webbrowser::open(&format!("http://{addr}")).is_err() {
-                warn!("failed to open UI in browser, please navigate to http://localhost:5174");
+                warn!(
+                    "failed to open UI in browser, please navigate to http://localhost:{}",
+                    addr.port()
+                );
             }
         });
     }

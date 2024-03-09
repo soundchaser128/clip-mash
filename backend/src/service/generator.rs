@@ -17,6 +17,7 @@ use super::streams::{LocalVideoSource, StreamUrlService};
 use super::Marker;
 use crate::data::database::{Database, DbSong, DbVideo};
 use crate::helpers::estimator::Estimator;
+use crate::helpers::util::StrExt;
 use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
 use crate::Result;
@@ -229,6 +230,7 @@ impl CompilationGenerator {
             [copy] {transform_filters}, gblur=sigma={sigma}, eq=brightness={brightness}[blurred];
             [blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2, fps={fps}, scale={px_w}:{px_h}
         ")
+        .collapse_whitespace()
     }
 
     async fn create_clip(&self, clip: CreateClip<'_>) -> Result<()> {
@@ -249,14 +251,17 @@ impl CompilationGenerator {
                 (clip.width, clip.height),
                 clip.fps,
             )),
-            _ => FilterType::Simple(format!(
-                "scale={width}:{height}:force_original_aspect_ratio=decrease,
+            _ => FilterType::Simple(
+                format!(
+                    "scale={width}:{height}:force_original_aspect_ratio=decrease,
                 pad={width}:{height}:-1:-1:color=black,
                 fps={fps}",
-                width = clip.width,
-                height = clip.height,
-                fps = clip.fps
-            )),
+                    width = clip.width,
+                    height = clip.height,
+                    fps = clip.fps
+                )
+                .collapse_whitespace(),
+            ),
         };
 
         let mut args = vec![
@@ -276,6 +281,7 @@ impl CompilationGenerator {
                 FilterType::Simple(filter) => vec!["-vf", filter.as_str()],
                 FilterType::Complex(filter) => vec!["-filter_complex", filter.as_str()],
             };
+            info!("using filter args: {filter_args:?}");
             args.extend(filter_args);
             args.extend(&["-acodec", "aac", "-ar", "48000"]);
         } else {

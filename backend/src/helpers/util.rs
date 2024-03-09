@@ -110,6 +110,8 @@ pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
 
 pub trait StrExt {
     fn limit_length(&self, max_length: usize) -> String;
+
+    fn collapse_whitespace(&self) -> String;
 }
 
 impl StrExt for str {
@@ -119,6 +121,13 @@ impl StrExt for str {
         } else {
             self.to_string()
         }
+    }
+
+    fn collapse_whitespace(&self) -> String {
+        self.split_whitespace()
+            .map(|s| s.replace("\n", " "))
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 }
 

@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 async-stream = "0.3.5"
 aubio = { version = "0.2.1", features = ["builtin"] }
-axum = { version = "0.6.20", features = ["macros", "multipart"] }
+axum = { version = "0.7.4", features = ["macros", "multipart"] }
 camino = { version = "1.1.6", features = ["serde1"] }
 color-eyre = "0.6.2"
 directories = "5.0.1"
@@ -24,11 +24,11 @@ opener = "0.6.1"
 ordered-float = "4.1.0"
 rand = "0.8.5"
 regex = "1.9.6"
-reqwest = { version = "0.11.22", features = ["json"] }
+reqwest = { version = "0.12.0", features = ["json"] }
 sanitise-file-name = "1.0.0"
 semver = "1.0.20"
-sentry = { version = "0.31.8", features = ["debug-images"] }
-sentry-tower = { version = "0.31.8", features = ["axum-matched-path"] }
+sentry = { version = "0.32.2", features = ["debug-images"] }
+sentry-tower = { version = "0.32.2", features = ["axum-matched-path"] }
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
 serde_yaml = "0.9.27"
@@ -38,13 +38,13 @@ time = { version = "0.3.29", features = ["formatting", "parsing", "macros"] }
 tokio = { version = "1.32.0", features = ["full"] }
 tokio-util = { version = "0.7.9", features = ["io"] }
 tower = "0.4.13"
-tower-http = { version = "0.4.4", features = ["fs", "trace"] }
+tower-http = { version = "0.5.2", features = ["fs", "trace"] }
 tracing = "0.1.37"
 tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 url = { version = "2.4.1", features = ["serde"] }
 utoipa = { version = "4.0.0", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "4.0.0", features = ["axum"] }
+utoipa-swagger-ui = { version = "6.0.0", features = ["axum"] }
 walkdir = "2.4.0"
 webbrowser = "0.8.11"
 youtube_dl = { version = "0.9.0", features = ["tokio", "downloader-native-tls"] }
@@ -64,7 +64,7 @@ fake = "2.8.0"
 tracing-test = "0.2.4"
 mock_instant = "0.3.1"
 graphql-parser = "0.4.0"
-wiremock = "0.5.19"
+wiremock = "0.6.0"
 
 [profile.release]
 debug = true

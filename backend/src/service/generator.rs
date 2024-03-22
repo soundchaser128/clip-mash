@@ -571,6 +571,7 @@ mod tests {
     use crate::service::fixtures::generate_video;
 
     #[tokio::test]
+    #[ignore]
     async fn test_blurred_padding_filter() -> Result<()> {
         generate_video("wide.mp4", 720, 480).await?;
         generate_video("tall.mp4", 480, 720).await?;

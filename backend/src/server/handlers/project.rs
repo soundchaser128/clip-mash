@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use axum::body::StreamBody;
+use axum::body::Body;
 use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
@@ -206,7 +206,7 @@ pub async fn download_video(
         (header::CONTENT_DISPOSITION, content_disposition),
     ]);
 
-    let body = StreamBody::new(stream);
+    let body = Body::from_stream(stream);
     Ok((headers, body))
 }
 

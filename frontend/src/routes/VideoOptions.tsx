@@ -11,6 +11,8 @@ import {
 import {videosNeedEncoding} from "@/api"
 import {getFormState} from "@/helpers/form"
 
+const showPaddingOptions = false
+
 export const videoOptionsLoader: LoaderFunction = async () => {
   const formState = getFormState()!
   const needsEncode = await videosNeedEncoding(formState.videoIds || [])
@@ -164,25 +166,27 @@ function VideoOptions() {
               </select>
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">
-                  Padding for videos with different aspect ratios
-                </span>
-              </label>
-              <select
-                className="select select-bordered"
-                {...register("padding")}
-              >
-                <option disabled value="none">
-                  Select padding
-                </option>
-                <option value="black">Black</option>
-                <option value="blur">
-                  Blurred video content (experimental)
-                </option>
-              </select>
-            </div>
+            {showPaddingOptions && (
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">
+                    Padding for videos with different aspect ratios
+                  </span>
+                </label>
+                <select
+                  className="select select-bordered"
+                  {...register("padding")}
+                >
+                  <option disabled value="none">
+                    Select padding
+                  </option>
+                  <option value="black">Black</option>
+                  <option value="blur">
+                    Blurred video content (experimental)
+                  </option>
+                </select>
+              </div>
+            )}
           </div>
         )}
 

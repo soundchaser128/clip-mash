@@ -31,7 +31,7 @@ const formatEta = (seconds: number): string => {
   }
 }
 
-function Progress() {
+function ProgressPage() {
   const {state} = useStateMachine()
   const [progress, setProgress] = useState<Progress>()
   const fileName = `${state.data.fileName || "Compilation"} [${
@@ -196,4 +196,4 @@ function Progress() {
   )
 }
 
-export default Progress
+export default ProgressPage

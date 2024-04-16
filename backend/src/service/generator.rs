@@ -567,7 +567,6 @@ impl CompilationGenerator {
 mod tests {
     use color_eyre::Result;
 
-    use super::CompilationGenerator;
     use crate::service::fixtures::generate_video;
 
     #[tokio::test]

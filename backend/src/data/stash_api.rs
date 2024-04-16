@@ -207,21 +207,6 @@ impl StashApi {
         StashApi::new(config.stash_url, config.api_key)
     }
 
-    #[deprecated]
-    pub async fn load_config() -> Self {
-        let config = StashConfig::get_or_empty().await;
-        StashApi::new(config.stash_url, config.api_key)
-    }
-
-    #[deprecated]
-    pub async fn load_config_or_fail() -> Result<Self> {
-        if let Ok(config) = StashConfig::get().await {
-            Ok(StashApi::new(config.stash_url, config.api_key))
-        } else {
-            bail!("no stash config found")
-        }
-    }
-
     fn api_key(&self) -> &str {
         self.api_key
             .as_ref()

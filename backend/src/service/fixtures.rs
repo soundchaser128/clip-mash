@@ -14,7 +14,6 @@ use tracing::info;
 use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
-use super::commands::ffmpeg::Ffmpeg;
 use super::Marker;
 use crate::data::database::{
     unix_timestamp_now, CreateVideo, Database, DbMarker, DbVideo, VideoSource,

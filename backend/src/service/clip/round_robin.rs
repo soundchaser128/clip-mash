@@ -1,4 +1,3 @@
-use float_cmp::approx_eq;
 use rand::rngs::StdRng;
 use tracing::info;
 

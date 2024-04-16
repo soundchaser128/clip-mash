@@ -161,10 +161,8 @@ pub struct MarkerDtoConverter {
 }
 
 impl MarkerDtoConverter {
-    pub async fn new() -> Self {
-        Self {
-            stash_api: StashApi::load_config().await,
-        }
+    pub fn new(stash_api: StashApi) -> Self {
+        Self { stash_api }
     }
 
     fn stream_url(&self, source: VideoSource, video_id: &str, stash_id: Option<i64>) -> String {
@@ -500,8 +498,8 @@ pub struct VideoDetailsDtoConverter {
 }
 
 impl VideoDetailsDtoConverter {
-    pub async fn new() -> Self {
-        let marker_converter = MarkerDtoConverter::new().await;
+    pub fn new(stash_api: StashApi) -> Self {
+        let marker_converter = MarkerDtoConverter::new(stash_api);
         Self { marker_converter }
     }
 

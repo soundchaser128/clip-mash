@@ -209,7 +209,8 @@ pub async fn get_video(
 ) -> Result<Json<VideoDetailsDto>, AppError> {
     let video = state.database.videos.get_video_with_markers(&id).await?;
     if let Some(video) = video {
-        let converter = VideoDetailsDtoConverter::new().await;
+        let stash_api = state.stash_api().await?;
+        let converter = VideoDetailsDtoConverter::new(stash_api);
         let dto = converter.from_db(video);
         Ok(Json(dto))
     } else {
@@ -369,7 +370,8 @@ pub async fn list_markers(
         .markers
         .list_markers(video_ids.as_deref(), None)
         .await?;
-    let converter = MarkerDtoConverter::new().await;
+    let stash_api = state.stash_api().await?;
+    let converter = MarkerDtoConverter::new(stash_api);
 
     let markers = markers
         .into_iter()
@@ -455,7 +457,8 @@ pub async fn create_new_marker(
                 .await?;
             marker.preview_image_path = Some(preview_image.to_string());
             let marker = state.database.markers.create_new_marker(marker).await?;
-            let converter = MarkerDtoConverter::new().await;
+            let stash_api = state.stash_api().await?;
+            let converter = MarkerDtoConverter::new(stash_api);
 
             if create_in_stash && video.source == VideoSource::Stash {
                 let scene_id = video.stash_scene_id.unwrap();
@@ -510,7 +513,8 @@ pub async fn update_marker(
         .get_video(&marker.video_id)
         .await?
         .expect("video for marker must exist");
-    let converter = MarkerDtoConverter::new().await;
+    let stash_api = state.stash_api().await?;
+    let converter = MarkerDtoConverter::new(stash_api);
     Ok(Json(converter.from_db(marker, &video)))
 }
 
@@ -584,7 +588,8 @@ pub async fn split_marker(
         }
     }
 
-    let converter = MarkerDtoConverter::new().await;
+    let stash_api = state.stash_api().await?;
+    let converter = MarkerDtoConverter::new(stash_api);
 
     Ok(Json(
         new_markers

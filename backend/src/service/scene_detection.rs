@@ -101,7 +101,8 @@ pub async fn find_and_persist_markers(
 
     let mut created_markers = vec![];
     let preview_generator: PreviewGenerator = state.clone().into();
-    let converter = MarkerDtoConverter::new().await;
+    let stash_api = state.stash_api().await?;
+    let converter = MarkerDtoConverter::new(stash_api);
     for (index, marker) in markers.into_iter().enumerate() {
         let preview_image = preview_generator
             .generate_preview(&video.id, &video.file_path, marker.start)

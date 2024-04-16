@@ -25,6 +25,8 @@ pub struct AppState {
 }
 
 impl AppState {
+    /// Fetch the stash configuration from the database. If the configuration is not set,
+    /// a default (empty) configuration is returned.
     pub async fn stash_config(&self) -> Result<StashConfig> {
         let settings = self.database.settings.fetch().await?;
         Ok(settings.stash)

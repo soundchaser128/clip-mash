@@ -186,8 +186,8 @@ impl Migrator {
 
     #[allow(unused)]
     async fn migrate_settings(&self) -> Result<()> {
-        if let Ok(config) = StashConfig::get().await {
-            if self.database.settings.fetch_optional().await?.is_none() {
+        if self.database.settings.fetch_optional().await?.is_none() {
+            if let Ok(config) = StashConfig::load(&self.directories) {
                 info!("loaded config, migrating it to database");
                 let settings = Settings { stash: config };
                 self.database.settings.set(settings).await?;

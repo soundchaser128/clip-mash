@@ -14,6 +14,8 @@ import {dateTimeFormat, formatSeconds} from "@/helpers/time"
 import React from "react"
 import EditableText from "./EditableText"
 import HoverVideo from "./HoverVideo"
+import {Link, useLocation} from "react-router-dom"
+import {searchLink} from "@/helpers/links"
 
 const OverlayText: React.FC<{
   children: React.ReactNode
@@ -72,6 +74,8 @@ const VideoCard: React.FC<Props> = ({
   zoomOnHover,
   hideDetails,
 }) => {
+  const location = useLocation()
+
   if (hideDetails) {
     return (
       <HoverVideo
@@ -145,9 +149,13 @@ const VideoCard: React.FC<Props> = ({
             {tags.length > 0 && (
               <span className="inline-flex flex-wrap gap-y-1 gap-x-0.5 -ml-2">
                 {tags.map((tag) => (
-                  <span key={tag} className="badge">
+                  <Link
+                    to={searchLink(location, tag)}
+                    key={tag}
+                    className="badge"
+                  >
                     {tag}
-                  </span>
+                  </Link>
                 ))}
               </span>
             )}

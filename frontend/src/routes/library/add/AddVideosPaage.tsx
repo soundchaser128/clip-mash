@@ -12,7 +12,7 @@ const AddVideosPage = () => {
             <li>
               Download from any site <code>yt-dlp</code> supports.
             </li>
-            <li>Scan a local folder for video files</li>
+            <li>Scan a local folder for video files.</li>
             <li>Connect to your Stash instance to add files from there.</li>
           </ul>
         </div>

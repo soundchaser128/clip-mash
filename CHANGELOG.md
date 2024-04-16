@@ -12,6 +12,7 @@
 - fix: Make the stash API key optional (only required when stash has a username/password set)
 - fix: Start the application on the first unoccupied port that it finds, so that there's no port conflicts on startup
 - feat: Use mimalloc as custom allocator
+- feat: migrate JSON configuration file to database
 
 ## 0.20.0
 - feat: Add Sentry integration to frontend and backend to track errors.

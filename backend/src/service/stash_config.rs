@@ -12,7 +12,7 @@ lazy_static! {
     static ref CONFIG: Mutex<Option<StashConfig>> = Default::default();
 }
 
-#[derive(Debug, Serialize, Clone, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Clone, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct StashConfig {
     pub stash_url: String,

@@ -97,6 +97,8 @@ impl FileSystemEntry {
     }
 }
 
+// FIXME
+#[allow(deprecated)]
 fn get_or_home_dir(path: Option<String>) -> Utf8PathBuf {
     path.map(Utf8PathBuf::from)
         .or(std::env::home_dir().and_then(|home| Utf8PathBuf::from_path_buf(home).ok()))

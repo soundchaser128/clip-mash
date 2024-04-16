@@ -65,8 +65,6 @@ async fn run() -> Result<()> {
     let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
     info!("using ffmpeg at {ffmpeg_location:?}");
 
-    service::stash_config::init(&directories).await;
-
     let database_file = directories.database_file();
     let database = Database::new(database_file.as_str()).await?;
     let generator =

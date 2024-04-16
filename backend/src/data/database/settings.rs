@@ -1,10 +1,10 @@
-use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
 use crate::service::stash_config::StashConfig;
+use crate::Result;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct Settings {
     pub stash: StashConfig,
 }
@@ -19,7 +19,7 @@ impl SettingsDatabase {
         Self { pool }
     }
 
-    pub async fn fetch_settings(&self) -> Result<Option<Settings>> {
+    pub async fn fetch_optional(&self) -> Result<Option<Settings>> {
         let settings = sqlx::query!("SELECT * FROM settings WHERE id = 1")
             .fetch_optional(&self.pool)
             .await?
@@ -31,7 +31,13 @@ impl SettingsDatabase {
         Ok(settings)
     }
 
-    pub async fn set_settings(&self, settings: Settings) -> Result<()> {
+    /// Fetches the settings from the database. If no settings are found, the default (empty) settings are returned.
+    pub async fn fetch(&self) -> Result<Settings> {
+        let settings = self.fetch_optional().await?;
+        Ok(settings.unwrap_or_default())
+    }
+
+    pub async fn set(&self, settings: Settings) -> Result<()> {
         let settings_json = serde_json::to_string(&settings)?;
         sqlx::query!(
             "INSERT INTO settings (id, settings_json) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET settings_json = ?",

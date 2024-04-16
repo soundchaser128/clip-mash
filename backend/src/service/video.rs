@@ -24,7 +24,6 @@ use crate::server::types::{CreateMarker, ListVideoDto, UpdateMarker};
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
-use crate::service::stash_config::StashConfig;
 use crate::util::generate_id;
 use crate::Result;
 
@@ -57,13 +56,14 @@ pub struct VideoService {
 
 impl VideoService {
     pub async fn new(state: Arc<AppState>) -> Result<Self> {
+        let stash_api = state.stash_api().await?;
         let preview_generator =
             PreviewGenerator::new(state.directories.clone(), state.ffmpeg_location.clone());
         Ok(VideoService {
             database: state.database.clone(),
             directories: state.directories.clone(),
             ffmpeg_location: state.ffmpeg_location.clone(),
-            stash_api: StashApi::load_config().await,
+            stash_api,
             preview_generator,
         })
     }
@@ -224,7 +224,7 @@ impl VideoService {
     }
 
     async fn persist_stash_video(&self, scene_ids: Vec<i64>) -> Result<Vec<DbVideo>> {
-        let stash_config = StashConfig::get().await?;
+        let stash_config = self.database.settings.fetch().await?.stash;
         info!("adding videos from stash with IDs {scene_ids:?}");
 
         let scenes = self.stash_api.find_scenes_by_ids(scene_ids).await?;
@@ -334,7 +334,7 @@ impl VideoService {
     }
 
     pub async fn merge_stash_scene(&self, video_id: &str) -> Result<ListVideoDto> {
-        let stash_config = StashConfig::get().await?;
+        let stash_config = self.database.settings.fetch().await?.stash;
 
         let mut video = self
             .database

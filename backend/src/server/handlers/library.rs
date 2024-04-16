@@ -71,12 +71,14 @@ pub async fn list_stash_videos(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Page<StashVideoDto>>, AppError> {
     info!("listing stash videos with page {page:?} and query {query:?}");
-    let stash_api = StashApi::load_config_or_fail().await;
-    if stash_api.is_err() {
+    let settings = state.database.settings.fetch_optional().await?;
+
+    if settings.is_none() {
         info!("no stash config found, returning empty page");
         return Ok(Json(Page::empty()));
     }
-    let stash_api = stash_api.unwrap();
+    let stash_api = StashApi::with_config(settings.unwrap().stash);
+
     let (stash_videos, count) = stash_api.find_scenes(&page, query, with_markers).await?;
     info!("found {} stash videos", stash_videos.len());
     let ids: Vec<i64> = stash_videos
@@ -457,7 +459,7 @@ pub async fn create_new_marker(
 
             if create_in_stash && video.source == VideoSource::Stash {
                 let scene_id = video.stash_scene_id.unwrap();
-                let stash_api = StashApi::load_config_or_fail().await?;
+                let stash_api = state.stash_api().await?;
                 let stash_id = stash_api
                     .add_marker(marker.clone(), scene_id.to_string())
                     .await?;

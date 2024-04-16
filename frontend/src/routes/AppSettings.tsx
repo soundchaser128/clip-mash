@@ -101,6 +101,8 @@ function AppConfigPage() {
 
     if (health.success) {
       await setConfig(inputs)
+      // reload the window to re-fetch the config
+      window.location.reload()
     }
   }
 
@@ -167,7 +169,7 @@ function AppConfigPage() {
               <span className="label-text">API key (optional):</span>
             </label>
             <input
-              type="text"
+              type="password"
               placeholder="eyJhbGc..."
               className="input input-bordered"
               {...register("apiKey")}

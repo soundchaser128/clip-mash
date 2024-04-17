@@ -95,6 +95,12 @@ def cmd(command: List[str], skip_dry_run=False, error=None):
                 )
 
 
+def fail_if_tag_exists(tag: str):
+    result = subprocess.run(["git", "show-ref", "--tags", f"refs/tags/{tag}"])
+    if result.returncode == 0:
+        raise Exception(f"Tag {tag} already exists")
+
+
 def update_cargo_toml(type: str):
     with open(cargo_toml_path, "r") as f:
         cargo_toml = f.read()
@@ -122,12 +128,7 @@ def update_cargo_toml(type: str):
 
     print(f"New version: {version}")
     # check if the tag already exists
-    tag = f"v{version}"
-    cmd(
-        ["git", "rev-parse", "--verify", tag],
-        skip_dry_run=True,
-        error=f"Tag {tag} already exists",
-    )
+    fail_if_tag_exists(f"v{version}")
 
     cargo_toml = cargo_toml_version_regex.sub(f'version = "{version}"', cargo_toml)
 

@@ -565,7 +565,7 @@ pub struct CreateVideoBody {
     pub video_codec: VideoCodec,
     pub video_quality: VideoQuality,
     pub encoding_effort: EncodingEffort,
-    pub padding: PaddingType,
+    pub padding: Option<PaddingType>,
     pub force_re_encode: bool,
 }
 

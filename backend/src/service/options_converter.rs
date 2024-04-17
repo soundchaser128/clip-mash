@@ -82,7 +82,7 @@ impl OptionsConverterService {
             encoding_effort: body.encoding_effort,
             video_quality: body.video_quality,
             videos,
-            padding: body.padding,
+            padding: body.padding.unwrap_or_default(),
             force_re_encode: body.force_re_encode,
         })
     }

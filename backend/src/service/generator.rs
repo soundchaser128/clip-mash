@@ -62,6 +62,12 @@ pub enum PaddingType {
     Blur,
 }
 
+impl Default for PaddingType {
+    fn default() -> Self {
+        PaddingType::Black
+    }
+}
+
 #[derive(Debug)]
 struct CreateClip<'a> {
     url: &'a str,

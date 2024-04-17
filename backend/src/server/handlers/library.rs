@@ -453,7 +453,7 @@ pub async fn create_new_marker(
         if let Some(video) = state.database.videos.get_video(&marker.video_id).await? {
             let preview_generator: PreviewGenerator = state.0.clone().into();
             let preview_image = preview_generator
-                .generate_preview(&video.id, &video.file_path, video.duration / 2.0)
+                .generate_preview(&video.id, &video.file_path, marker.start)
                 .await?;
             marker.preview_image_path = Some(preview_image.to_string());
             let marker = state.database.markers.create_new_marker(marker).await?;

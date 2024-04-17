@@ -34,4 +34,4 @@ ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 ENTRYPOINT ["/tini", "--"]
 
-CMD ["/app/clip-mash", "0.0.0.0"]
+CMD ["/app/clip-mash", "0.0.0.0", "5174"]

@@ -24,9 +24,11 @@ pub fn create_seeded_rng(seed: Option<&str>) -> StdRng {
     StdRng::seed_from_u64(seed)
 }
 
-pub fn add_api_key(url: &str, api_key: &str) -> String {
+pub fn add_api_key(url: &str, api_key: Option<&str>) -> String {
     let mut url = Url::parse(url).expect("invalid url");
-    url.query_pairs_mut().append_pair("apikey", api_key);
+    if let Some(api_key) = api_key {
+        url.query_pairs_mut().append_pair("apikey", api_key);
+    }
     url.to_string()
 }
 
@@ -40,15 +42,27 @@ pub fn expect_file_name(path: &str) -> String {
 pub fn commandline_error<T>(command_name: &str, output: Output) -> crate::Result<T> {
     use color_eyre::eyre::eyre;
 
-    let stdout = std::str::from_utf8(&output.stdout).unwrap();
-    let stderr = std::str::from_utf8(&output.stderr).unwrap();
-    Err(eyre!(
-        "command {} failed with exit code {}, stdout:\n'{}'\nstderr:\n'{}'",
+    let mut message = format!(
+        "Command '{}' failed with exit code {}.",
         command_name,
-        output.status.code().unwrap_or(1),
-        stdout,
-        stderr
-    ))
+        output.status.code().unwrap_or(1)
+    );
+
+    if let Some(stdout) = std::str::from_utf8(&output.stdout).ok() {
+        if !stdout.is_empty() {
+            message.push_str("\nProcess standard output:\n");
+            message.push_str(stdout);
+        }
+    }
+
+    if let Some(stderr) = std::str::from_utf8(&output.stderr).ok() {
+        if !stderr.is_empty() {
+            message.push_str("\nProcess error output:\n");
+            message.push_str(stderr);
+        }
+    }
+
+    Err(eyre!(message))
 }
 
 pub fn debug_output(output: Output) {
@@ -56,8 +70,12 @@ pub fn debug_output(output: Output) {
         let stdout = std::str::from_utf8(&output.stdout).unwrap();
         let stderr = std::str::from_utf8(&output.stderr).unwrap();
 
-        debug!("stdout = '{}'", stdout);
-        debug!("stderr = '{}'", stderr);
+        if !stdout.is_empty() {
+            debug!("stdout = '{}'", stdout);
+        }
+        if !stderr.is_empty() {
+            debug!("stderr = '{}'", stderr);
+        }
     }
 }
 
@@ -92,6 +110,8 @@ pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
 
 pub trait StrExt {
     fn limit_length(&self, max_length: usize) -> String;
+
+    fn collapse_whitespace(&self) -> String;
 }
 
 impl StrExt for str {
@@ -101,6 +121,13 @@ impl StrExt for str {
         } else {
             self.to_string()
         }
+    }
+
+    fn collapse_whitespace(&self) -> String {
+        self.split_whitespace()
+            .map(|s| s.replace("\n", " "))
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 }
 
@@ -128,7 +155,7 @@ mod test {
 
     #[test]
     fn test_add_api_key() {
-        let result = add_api_key("http://localhost:3001", "super-secret-123");
+        let result = add_api_key("http://localhost:3001", Some("super-secret-123"));
         assert_eq!(result, "http://localhost:3001/?apikey=super-secret-123");
     }
 

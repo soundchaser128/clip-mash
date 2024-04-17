@@ -39,32 +39,26 @@ impl PreviewGenerator {
         let destination = self
             .directories
             .preview_image_dir()
-            .join(format!("{}_{}.png", video_id, offset_seconds));
-        self.generate_preview_inner(video_path, destination, offset_seconds)
-            .await
-    }
+            .join(format!("{}_{}.webp", video_id, offset_seconds));
 
-    async fn generate_preview_inner(
-        &self,
-        video_path: impl AsRef<Utf8Path>,
-        preview_image_path: Utf8PathBuf,
-        offset_seconds: f64,
-    ) -> Result<Utf8PathBuf> {
-        info!("generating preview image at {preview_image_path}");
+        info!("generating preview image at {destination}");
 
-        if preview_image_path.exists() {
-            info!("preview image already exists at {preview_image_path}");
-            return Ok(preview_image_path);
+        if destination.exists() {
+            info!("preview image already exists at {destination}");
+            return Ok(destination);
         }
 
-        Ffmpeg::new(&self.ffmpeg_location, preview_image_path.to_string())
+        Ffmpeg::new(&self.ffmpeg_location, destination.to_string())
             .input(video_path.as_ref().as_str())
             .extra_arg("-frames:v")
             .extra_arg("1")
             .start(offset_seconds)
+            .video_filter("scale=800:-1")
+            .extra_arg("-quality")
+            .extra_arg("90")
             .run()
             .await?;
 
-        Ok(preview_image_path)
+        Ok(destination)
     }
 }

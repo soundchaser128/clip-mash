@@ -1,5 +1,5 @@
 import {LoaderFunction} from "react-router-dom"
-import {getFormState} from "@/helpers"
+import {getFormState} from "@/helpers/form"
 import {
   Clip,
   ClipPickerOptions,
@@ -24,8 +24,18 @@ import {
   ClipFormInputs,
   getDefaultOptions,
 } from "./clips/settings/ClipSettingsForm"
+import {lerpArrays} from "@/helpers/math"
 
 export const DEFAULT_PAGE_LENGTH = 24
+export const DEFAULT_CLIP_BASE_DURATION = 10
+export const DEFAULT_SPREAD = 0.25
+
+function getDivisors(spread: number): number[] {
+  const MIN_DURATIONS = [1, 1, 1, 1]
+  const MAX_DURATIONS = [1, 4, 8, 16]
+
+  return lerpArrays(MIN_DURATIONS, MAX_DURATIONS, spread)
+}
 
 export interface ClipsLoaderData {
   clips: Clip[]
@@ -50,12 +60,13 @@ const markerLength = (state: FormState): number => {
 const getClipLengths = (
   options: {clipLengths?: ClipLengthOptions},
   state: FormState,
+  spread: number,
 ): ClipLengthOptions => {
   if (!options.clipLengths || !options.clipLengths.type) {
     return {
       type: "randomized",
       baseDuration: 20,
-      divisors: [2, 3, 4],
+      divisors: getDivisors(spread),
     }
   }
 
@@ -74,7 +85,7 @@ const getClipLengths = (
     return {
       type: "randomized",
       baseDuration: options.clipLengths.baseDuration,
-      divisors: [2, 3, 4],
+      divisors: getDivisors(spread),
     }
   }
 }
@@ -87,7 +98,8 @@ const getClipPickerOptions = (
     return {
       type: "equalLength",
       clipDuration: 20,
-      divisors: [2, 3, 4],
+      divisors: getDivisors(DEFAULT_SPREAD),
+      minClipDuration: 1.5,
     }
   }
 
@@ -95,33 +107,46 @@ const getClipPickerOptions = (
     case "roundRobin": {
       const length = state.songs?.length
         ? songsLength(state)
-        : markerLength(state)
+        : inputs?.maxDuration || markerLength(state)
       return {
         type: "roundRobin",
         length,
-        clipLengths: getClipLengths(inputs.roundRobin, state),
+        clipLengths: getClipLengths(
+          inputs.roundRobin,
+          state,
+          inputs.clipDurationSpread,
+        ),
         lenientDuration: !inputs.useMusic,
+        minClipDuration: inputs.minClipDuration,
       }
     }
     case "weightedRandom": {
       const length = state.songs?.length
         ? songsLength(state)
-        : markerLength(state)
+        : inputs?.maxDuration || markerLength(state)
       return {
         type: "weightedRandom",
-        clipLengths: getClipLengths(inputs.weightedRandom, state),
+        clipLengths: getClipLengths(
+          inputs.weightedRandom,
+          state,
+          inputs.clipDurationSpread,
+        ),
         length,
         // @ts-expect-error type definitions don't align
         weights: state.clipWeights!,
+        minClipDuration: inputs.minClipDuration,
       }
     }
     case "equalLength": {
-      const length = state.songs?.length ? songsLength(state) : undefined
+      const length = state.songs?.length
+        ? songsLength(state)
+        : inputs?.maxDuration
       return {
         type: "equalLength",
         clipDuration: inputs.equalLength.clipDuration,
-        divisors: [2, 3, 4],
+        divisors: getDivisors(inputs.clipDurationSpread),
         length,
+        minClipDuration: inputs.minClipDuration,
       }
     }
     case "noSplit": {
@@ -208,7 +233,7 @@ export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const withMarkers = url.searchParams.get("withMarkers") === "true"
   const videos = await listStashVideos({
     query,
-    page: Number(url.searchParams.get("page")) || 1,
+    page: Number(url.searchParams.get("page")) ?? 1,
     size: DEFAULT_PAGE_LENGTH,
     withMarkers: withMarkers ? true : null,
   })
@@ -235,7 +260,7 @@ export const makeVideoLoader: (
     const query = url.searchParams
     const videos = await listVideos({
       hasMarkers: params.hasMarkers || parseBoolean(query.get("hasMarkers")),
-      page: Number(query.get("page")) || 0,
+      page: Number(query.get("page")) ?? 0,
       size: DEFAULT_PAGE_LENGTH,
       query: query.get("query"),
       sort: query.get("sort"),

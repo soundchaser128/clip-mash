@@ -6,7 +6,9 @@ import {useFormContext} from "react-hook-form"
 import {ClipFormInputs} from "./ClipSettingsForm"
 import {MusicFormFields, RandomizedLengthFormFields} from "./common"
 
-const WeightedRandomFields: React.FC = () => {
+const WeightedRandomFields: React.FC<{
+  totalClipDuration: number
+}> = ({totalClipDuration}) => {
   const data = useLoaderData() as ClipsLoaderData
   const {state} = useStateMachine()
   const {watch} = useFormContext<ClipFormInputs>()
@@ -18,7 +20,10 @@ const WeightedRandomFields: React.FC = () => {
       {useMusic && hasSongs ? (
         <MusicFormFields strategy="weightedRandom" />
       ) : (
-        <RandomizedLengthFormFields strategy="weightedRandom" />
+        <RandomizedLengthFormFields
+          strategy="weightedRandom"
+          totalClipDuration={totalClipDuration}
+        />
       )}
 
       <WeightsModal className="mt-4" clips={data.clips} />

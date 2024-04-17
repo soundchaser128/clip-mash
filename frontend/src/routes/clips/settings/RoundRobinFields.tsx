@@ -3,7 +3,9 @@ import {ClipFormInputs} from "./ClipSettingsForm"
 import {useStateMachine} from "little-state-machine"
 import {MusicFormFields, RandomizedLengthFormFields} from "./common"
 
-const RoundRobinClipStrategyForm: React.FC = () => {
+const RoundRobinClipStrategyForm: React.FC<{
+  totalClipDuration: number
+}> = ({totalClipDuration}) => {
   const {state} = useStateMachine()
   const {watch} = useFormContext<ClipFormInputs>()
   const hasSongs = state.data.songs?.length || 0 > 0
@@ -14,7 +16,10 @@ const RoundRobinClipStrategyForm: React.FC = () => {
       {useMusic && hasSongs ? (
         <MusicFormFields strategy="roundRobin" />
       ) : (
-        <RandomizedLengthFormFields strategy="roundRobin" />
+        <RandomizedLengthFormFields
+          strategy="roundRobin"
+          totalClipDuration={totalClipDuration}
+        />
       )}
     </>
   )

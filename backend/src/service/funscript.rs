@@ -275,9 +275,8 @@ pub struct ScriptBuilder {
 }
 
 impl ScriptBuilder {
-    pub async fn new() -> Self {
-        let api = StashApi::load_config().await;
-        Self { api }
+    pub fn new(stash_api: StashApi) -> Self {
+        Self { api: stash_api }
     }
 
     async fn fetch_funscripts(&self, videos: &[&DbVideo]) -> Result<HashMap<String, FunScript>> {

@@ -1,15 +1,17 @@
 import {useStateMachine} from "little-state-machine"
 import {useForm} from "react-hook-form"
 import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, FormState} from "../types/form-state"
+import {FormStage, FormState} from "@/types/form-state"
 import {updateForm} from "./actions"
 import {
   HiArrowsRightLeft,
   HiChevronRight,
   HiInformationCircle,
 } from "react-icons/hi2"
-import {videosNeedEncoding} from "../api"
-import {getFormState} from "../helpers"
+import {videosNeedEncoding} from "@/api"
+import {getFormState} from "@/helpers/form"
+
+const showPaddingOptions = false
 
 export const videoOptionsLoader: LoaderFunction = async () => {
   const formState = getFormState()!
@@ -19,7 +21,7 @@ export const videoOptionsLoader: LoaderFunction = async () => {
 
 type Inputs = Pick<
   FormState,
-  "outputFps" | "videoCodec" | "videoQuality" | "encodingEffort"
+  "outputFps" | "videoCodec" | "videoQuality" | "encodingEffort" | "padding"
 > & {outputWidth: number; outputHeight: number}
 
 const defaultOptions: Inputs = {
@@ -163,6 +165,28 @@ function VideoOptions() {
                 <option value="high">High</option>
               </select>
             </div>
+
+            {showPaddingOptions && (
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">
+                    Padding for videos with different aspect ratios
+                  </span>
+                </label>
+                <select
+                  className="select select-bordered"
+                  {...register("padding")}
+                >
+                  <option disabled value="none">
+                    Select padding
+                  </option>
+                  <option value="black">Black</option>
+                  <option value="blur">
+                    Blurred video content (experimental)
+                  </option>
+                </select>
+              </div>
+            )}
           </div>
         )}
 

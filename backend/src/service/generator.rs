@@ -2,9 +2,13 @@ use std::ffi::OsStr;
 use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};
+use color_eyre::Section;
+use fraction::Ratio;
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use tokio::process::Command;
-use tracing::{debug, enabled, info, Level};
+use tracing::{debug, info, Level};
+use utoipa::ToSchema;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
@@ -13,6 +17,7 @@ use super::streams::{LocalVideoSource, StreamUrlService};
 use super::Marker;
 use crate::data::database::{Database, DbSong, DbVideo};
 use crate::helpers::estimator::Estimator;
+use crate::helpers::util::StrExt;
 use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
 use crate::util::{commandline_error, debug_output, format_duration, generate_id};
 use crate::Result;
@@ -31,6 +36,8 @@ pub struct CompilationOptions {
     pub video_quality: VideoQuality,
     pub encoding_effort: EncodingEffort,
     pub videos: Vec<DbVideo>,
+    pub padding: PaddingType,
+    pub force_re_encode: bool,
 }
 
 fn get_clip_file_name(
@@ -39,8 +46,26 @@ fn get_clip_file_name(
     end: f64,
     codec: VideoCodec,
     (x_res, y_res): (u32, u32),
+    padding: PaddingType,
 ) -> String {
-    format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}.mp4")
+    let padding = match padding {
+        PaddingType::Black => "black",
+        PaddingType::Blur => "blur",
+    };
+    format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}-{padding}.mp4")
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum PaddingType {
+    Black,
+    Blur,
+}
+
+impl Default for PaddingType {
+    fn default() -> Self {
+        PaddingType::Black
+    }
 }
 
 #[derive(Debug)]
@@ -56,6 +81,10 @@ struct CreateClip<'a> {
     quality: VideoQuality,
     effort: EncodingEffort,
     re_encode: bool,
+    video_width: u32,
+    video_height: u32,
+    padding: PaddingType,
+    force_re_encode: bool,
 }
 
 #[derive(Clone)]
@@ -65,6 +94,22 @@ pub struct CompilationGenerator {
     database: Database,
     encoding_optimization: EncodingOptimizationService,
     stream_urls: StreamUrlService,
+}
+
+#[derive(Debug, Copy, Clone)]
+enum Orientation {
+    Landscape,
+    Portrait,
+}
+
+impl Orientation {
+    fn new(width: u32, height: u32) -> Self {
+        if width > height {
+            Orientation::Landscape
+        } else {
+            Orientation::Portrait
+        }
+    }
 }
 
 impl CompilationGenerator {
@@ -80,14 +125,14 @@ impl CompilationGenerator {
         Ok(CompilationGenerator {
             directories,
             ffmpeg_path,
-            database: database,
+            database,
             encoding_optimization,
             stream_urls: streams_service,
         })
     }
 
     async fn ffmpeg(&self, args: Vec<impl AsRef<OsStr>>) -> Result<()> {
-        if enabled!(Level::DEBUG) {
+        if tracing::enabled!(Level::DEBUG) {
             let string = args.iter().map(|s| s.as_ref().to_string_lossy()).join(" ");
             debug!("running command '{} {}'", self.ffmpeg_path, string);
         }
@@ -152,14 +197,78 @@ impl CompilationGenerator {
         vec!["-c:v", encoder, "-preset", effort, "-crf", crf]
     }
 
+    fn blurred_padding_filter(
+        &self,
+        source_size: (u32, u32),
+        target_size: (u32, u32),
+        fps: f64,
+    ) -> String {
+        info!(
+            "creating blurred padding filter for source {source_size:?} to target {target_size:?}"
+        );
+
+        let sigma = 120;
+        let brightness = -0.125;
+
+        let source_orientation = Orientation::new(source_size.0, source_size.1);
+        let target_orientation = Orientation::new(target_size.0, target_size.1);
+        let (px_w, px_h) = target_size;
+
+        let transform_filters = match (source_orientation, target_orientation) {
+            (Orientation::Landscape, Orientation::Portrait) => {
+                format!("scale={px_w}:-1, crop=w={px_w}")
+            }
+            (Orientation::Portrait, Orientation::Landscape) => {
+                format!("scale=-1:{px_h}, crop=h={px_h}")
+            }
+            (Orientation::Portrait, Orientation::Portrait) => {
+                format!("scale=-1:{px_h}, pad={px_w}:{px_h}:-1:-1:color=black")
+            }
+            (Orientation::Landscape, Orientation::Landscape) => {
+                format!("scale={px_w}:-1, pad={px_w}:{px_h}:-1:-1:color=black")
+            }
+        };
+
+        info!("using transform filters: {transform_filters} for source {source_orientation:?} to target {target_orientation:?}");
+
+        format!("
+            split [original][copy];
+            [copy] {transform_filters}, gblur=sigma={sigma}, eq=brightness={brightness}[blurred];
+            [blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2, fps={fps}, scale={px_w}:{px_h}
+        ")
+        .collapse_whitespace()
+    }
+
     async fn create_clip(&self, clip: CreateClip<'_>) -> Result<()> {
+        enum FilterType {
+            Simple(String),
+            Complex(String),
+        }
+
         let clip_str = clip.duration.to_string();
         let seconds_str = clip.start.to_string();
-        let filter = format!("scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:-1:-1:color=black,fps={fps}",
-            width=clip.width,
-            height=clip.height,
-            fps=clip.fps,
-        );
+
+        let video = Ratio::new(clip.video_width, clip.video_height);
+        let target = Ratio::new(clip.width, clip.height);
+
+        let filter = match (clip.padding, target != video) {
+            (PaddingType::Blur, true) => FilterType::Complex(self.blurred_padding_filter(
+                (clip.video_width, clip.video_height),
+                (clip.width, clip.height),
+                clip.fps,
+            )),
+            _ => FilterType::Simple(
+                format!(
+                    "scale={width}:{height}:force_original_aspect_ratio=decrease,
+                pad={width}:{height}:-1:-1:color=black,
+                fps={fps}",
+                    width = clip.width,
+                    height = clip.height,
+                    fps = clip.fps
+                )
+                .collapse_whitespace(),
+            ),
+        };
 
         let mut args = vec![
             "-hide_banner",
@@ -172,9 +281,15 @@ impl CompilationGenerator {
             "-t",
             clip_str.as_str(),
         ];
-        if clip.re_encode {
+        if clip.re_encode || clip.force_re_encode {
             args.extend(self.video_encoding_parameters(clip.codec, clip.quality, clip.effort));
-            args.extend(&["-acodec", "aac", "-vf", &filter, "-ar", "48000"]);
+            let filter_args = match &filter {
+                FilterType::Simple(filter) => vec!["-vf", filter.as_str()],
+                FilterType::Complex(filter) => vec!["-filter_complex", filter.as_str()],
+            };
+            info!("using filter args: {filter_args:?}");
+            args.extend(filter_args);
+            args.extend(&["-acodec", "aac", "-ar", "48000"]);
         } else {
             args.extend(&["-c:v", "copy", "-c:a", "copy"]);
         }
@@ -226,6 +341,7 @@ impl CompilationGenerator {
             .await?;
         let video_dir = self.directories.temp_video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
+        let video_dir = video_dir.canonicalize_utf8()?;
         let video_ids = self.get_video_ids(&options);
         let stream_urls = self
             .stream_urls
@@ -235,6 +351,7 @@ impl CompilationGenerator {
             .encoding_optimization
             .needs_re_encode(&video_ids)
             .await?;
+        info!("Using padding type {:?}", options.padding);
 
         let total = clips.len();
         let mut paths = vec![];
@@ -250,6 +367,10 @@ impl CompilationGenerator {
                 .iter()
                 .find(|m| &m.id == marker_id)
                 .expect(&format!("no marker with ID {marker_id} found"));
+
+            let video_metadata = self.database.ffprobe.get_info(&marker.video_id).await?;
+            let video = video_metadata.video_parameters();
+
             let url = &stream_urls[&marker.video_id];
             let (width, height) = options.output_resolution;
             let out_file = video_dir.join(get_clip_file_name(
@@ -258,23 +379,41 @@ impl CompilationGenerator {
                 *end,
                 options.video_codec,
                 options.output_resolution,
+                options.padding,
             ));
             if !out_file.is_file() {
                 info!("creating clip {} / {} at {out_file}", index + 1, total);
-                self.create_clip(CreateClip {
-                    url,
-                    start: *start,
-                    duration: end - start,
-                    width,
-                    height,
-                    fps: options.output_fps as f64,
-                    out_file: &out_file,
-                    codec: options.video_codec,
-                    quality: options.video_quality,
-                    effort: options.encoding_effort,
-                    re_encode: needs_re_encode,
-                })
-                .await?;
+                let result = self
+                    .create_clip(CreateClip {
+                        url,
+                        start: *start,
+                        duration: end - start,
+                        width,
+                        height,
+                        fps: options.output_fps as f64,
+                        out_file: &out_file,
+                        codec: options.video_codec,
+                        quality: options.video_quality,
+                        effort: options.encoding_effort,
+                        re_encode: needs_re_encode,
+                        video_width: video.width as u32,
+                        video_height: video.height as u32,
+                        padding: options.padding,
+                        force_re_encode: options.force_re_encode,
+                    })
+                    .await;
+                if let Err(e) = result {
+                    let e = e.with_note(|| {
+                        format!("failed to create clip for video {}", marker.video_id)
+                    });
+                    let error = e.to_string();
+                    self.database
+                        .progress
+                        .progress_error(&options.video_id, &error)
+                        .await?;
+
+                    return Err(e);
+                }
             } else {
                 info!("clip {out_file} already exists, skipping");
             }
@@ -427,5 +566,22 @@ impl CompilationGenerator {
             .await?;
         self.finish_progress(&options.video_id).await?;
         Ok(destination)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use color_eyre::Result;
+
+    use crate::service::fixtures::generate_video;
+
+    #[tokio::test]
+    #[ignore]
+    async fn test_blurred_padding_filter() -> Result<()> {
+        generate_video("wide.mp4", 720, 480).await?;
+        generate_video("tall.mp4", 480, 720).await?;
+        generate_video("square.mp4", 480, 480).await?;
+
+        Ok(())
     }
 }

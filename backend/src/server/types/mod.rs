@@ -12,12 +12,13 @@ use crate::data::database::{
 };
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashApi;
+use crate::service::generator::PaddingType;
 use crate::service::video::TAG_SEPARATOR;
 use crate::util::{add_api_key, expect_file_name};
 
 pub struct StashSceneWrapper<'a> {
     pub scene: FindScenesQueryFindScenesScenes,
-    pub api_key: &'a str,
+    pub api_key: Option<&'a str>,
 }
 
 impl<'a> From<StashSceneWrapper<'a>> for StashScene {
@@ -160,10 +161,8 @@ pub struct MarkerDtoConverter {
 }
 
 impl MarkerDtoConverter {
-    pub async fn new() -> Self {
-        Self {
-            stash_api: StashApi::load_config().await,
-        }
+    pub fn new(stash_api: StashApi) -> Self {
+        Self { stash_api }
     }
 
     fn stream_url(&self, source: VideoSource, video_id: &str, stash_id: Option<i64>) -> String {
@@ -499,8 +498,8 @@ pub struct VideoDetailsDtoConverter {
 }
 
 impl VideoDetailsDtoConverter {
-    pub async fn new() -> Self {
-        let marker_converter = MarkerDtoConverter::new().await;
+    pub fn new(stash_api: StashApi) -> Self {
+        let marker_converter = MarkerDtoConverter::new(stash_api);
         Self { marker_converter }
     }
 
@@ -566,6 +565,8 @@ pub struct CreateVideoBody {
     pub video_codec: VideoCodec,
     pub video_quality: VideoQuality,
     pub encoding_effort: EncodingEffort,
+    pub padding: Option<PaddingType>,
+    pub force_re_encode: bool,
 }
 
 #[derive(Serialize, Debug)]

@@ -1,5 +1,5 @@
 import {Result} from "@badrap/result"
-import {parseTimestamp} from "../../helpers"
+import {parseTimestamp} from "../../helpers/time"
 import {JsonError} from "../../types/types"
 import {
   CreateMarker,

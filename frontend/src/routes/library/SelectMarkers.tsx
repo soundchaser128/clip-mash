@@ -15,13 +15,13 @@ import {
 } from "react-icons/hi2"
 import {MarkerDto, SelectedMarker} from "../../api"
 import {updateForm} from "../actions"
-import {dateTimeFormat, formatSeconds, sumDurations} from "../../helpers"
 import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
 import EditableText from "../../components/EditableText"
 import {updateMarker} from "../../api"
 import useFuse from "../../hooks/useFuse"
 import HoverVideo from "@/components/HoverVideo"
+import {dateTimeFormat, formatSeconds, sumDurations} from "@/helpers/time"
 
 const SelectMarkers: React.FC = () => {
   const initialMarkers = useLoaderData() as MarkerDto[]

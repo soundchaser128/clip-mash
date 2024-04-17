@@ -1,8 +1,10 @@
 import clsx from "clsx"
-import {formatSeconds, getSegmentColor, getSegmentTextColor} from "../helpers"
-import React, {useMemo, useRef} from "react"
+import React, {useEffect, useMemo, useRef} from "react"
 import * as d3 from "d3"
 import useContainerSize from "@/hooks/useContainerSize"
+import {formatSeconds} from "@/helpers/time"
+import {getSegmentColor, getSegmentTextColor} from "@/helpers/style"
+import {clamp} from "@/helpers/math"
 
 interface Item {
   label: string
@@ -20,7 +22,7 @@ interface Props {
   time?: number
   markPoints?: number[]
   onMarkerClick?: (time: number, e: React.MouseEvent) => void
-  onTimelineClick?: (time: number, e: React.MouseEvent) => void
+  onTimelineClick?: (time: number) => void
 }
 
 const marginLeft = 4
@@ -65,7 +67,11 @@ const TimeAxis = ({length, onClick}: TimeAxisProps) => {
         stroke="currentColor"
       />
       {ticks.map(({value, xOffset}) => (
-        <g key={value} transform={`translate(${xOffset + marginLeft}, 0)`}>
+        <g
+          key={value}
+          className="pointer-events-none"
+          transform={`translate(${xOffset + marginLeft}, 0)`}
+        >
           <line y2="6" stroke="currentColor" />
           <text
             key={value}
@@ -73,6 +79,7 @@ const TimeAxis = ({length, onClick}: TimeAxisProps) => {
               fontSize: "12px",
               textAnchor: "middle",
               transform: "translateY(20px)",
+              fill: "var(--fallback-bc,oklch(var(--bc)/1))",
             }}
           >
             {value === 0 ? "0" : formatSeconds(value, "short")}
@@ -145,19 +152,59 @@ const Timeline: React.FC<Props> = ({
   onTimelineClick,
   className,
 }) => {
+  const handleTimelineClick = (e: React.MouseEvent | DragEvent) => {
+    if (onTimelineClick) {
+      const parent = (e.currentTarget as Element)?.parentElement
+      const rect = parent?.getBoundingClientRect()
+      if (!rect) {
+        return
+      }
+      const x = e.clientX - rect!.left
+      const time = (x / rect!.width) * length
+      const clamped = clamp(time, 0, length)
+      onTimelineClick(clamped)
+    }
+  }
+
   const playheadPosition =
     typeof time === "number"
       ? `calc(${(time / length) * 100}% - (1.25rem / 2))`
       : undefined
 
-  const handleTimelineClick = (e: React.MouseEvent) => {
-    if (onTimelineClick) {
-      const rect = e.currentTarget.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const time = (x / rect.width) * length
-      onTimelineClick(time, e)
-    }
+  const [mouseDown, setMouseDown] = React.useState(false)
+
+  const onDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = "move"
+    setMouseDown(true)
   }
+
+  const onDragEnd = (e: React.DragEvent) => {
+    setMouseDown(false)
+    handleTimelineClick(e)
+  }
+
+  const onDrag = (e: React.DragEvent) => {
+    handleTimelineClick(e)
+  }
+
+  const onDragOver = (e: DragEvent) => {
+    e.preventDefault()
+  }
+
+  const onDrop = (e: DragEvent) => {
+    e.preventDefault()
+    setMouseDown(false)
+    handleTimelineClick(e)
+  }
+
+  useEffect(() => {
+    document.addEventListener("dragover", onDragOver)
+    document.addEventListener("drop", onDrop)
+    return () => {
+      document.removeEventListener("dragover", onDragOver)
+      document.removeEventListener("drop", onDrop)
+    }
+  })
 
   return (
     <section className={className}>
@@ -167,8 +214,12 @@ const Timeline: React.FC<Props> = ({
       >
         {typeof time === "number" && (
           <span
-            style={{left: playheadPosition}}
+            style={{left: playheadPosition, opacity: mouseDown ? 0.4 : 1}}
             className="absolute bottom-[-10px] bg-gray-700 rounded-full w-5 h-5 z-10 border-2 border-gray-400"
+            draggable
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            onDrag={onDrag}
           />
         )}
         {markPoints?.map((time) => (

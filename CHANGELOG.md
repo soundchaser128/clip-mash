@@ -1,6 +1,18 @@
 # Changelog
 
 ## Unreleased
+- feat: Add separate settings page
+- feat: Allow cleaning up temporary files
+- feat(experimental): Add an option on the video settings page to control how videos are padded when the aspect ratio doesn't fit (black, or a blurred version of the source video to fill up the empty space)
+- fix: Better error reporting for clip generation
+- feat: Add a slider for the total compilation duration
+- feat: Add a slider to control the spread of the clip lengths
+- feat: Add a field for the minimum clip length
+- feat: Generate preview images for videos and markers as webp, not png, saves a lot of disk space
+- fix: Make the stash API key optional (only required when stash has a username/password set)
+- fix: Start the application on the first unoccupied port that it finds, so that there's no port conflicts on startup
+- feat: Use mimalloc as custom allocator
+- feat: migrate JSON configuration file to database
 
 ## 0.20.1
 - fix: improve error handling for update checking (#74)
@@ -133,7 +145,7 @@
 - chore: Rename app to ClipMash
 - chore: Added eslint setup for Typescript code
 
-# 0.5.1
+## 0.5.1
 - docs: Added updated screenshots
 - chore: Fixed clippy warnings
 - fix: crash when reaching the end of the list of clips

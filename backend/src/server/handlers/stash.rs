@@ -7,6 +7,7 @@ use serde::Deserialize;
 use tracing::info;
 use utoipa::IntoParams;
 
+use crate::data::database::Settings;
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -20,10 +21,11 @@ use crate::service::stash_config::StashConfig;
     )
 )]
 #[axum::debug_handler]
-pub async fn get_config() -> impl IntoResponse {
-    match StashConfig::get().await {
-        Ok(config) => Json(Some(config)),
-        Err(_) => Json(None),
+pub async fn get_config(state: State<Arc<AppState>>) -> Result<impl IntoResponse, AppError> {
+    let config = state.stash_config_optional().await?;
+    match config {
+        Some(config) => Ok(Json(Some(config))),
+        None => Ok(Json(None)),
     }
 }
 
@@ -31,7 +33,7 @@ pub async fn get_config() -> impl IntoResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ConfigQuery {
     url: String,
-    api_key: String,
+    api_key: Option<String>,
 }
 
 #[utoipa::path(
@@ -47,7 +49,7 @@ pub struct ConfigQuery {
 pub async fn get_health(
     Query(ConfigQuery { url, api_key }): Query<ConfigQuery>,
 ) -> Result<impl IntoResponse, AppError> {
-    let api = StashApi::new(&url, &api_key);
+    let api = StashApi::new(url, api_key);
     let result = api.health().await?;
     Ok(Json(result))
 }
@@ -65,10 +67,12 @@ pub async fn set_config(
     state: State<Arc<AppState>>,
     Json(config): Json<StashConfig>,
 ) -> Result<Json<&'static str>, AppError> {
-    use crate::service::stash_config;
-
     info!("setting config with URL {}", config.stash_url);
-    stash_config::set_config(config, &state.directories).await?;
+    state
+        .database
+        .settings
+        .set(Settings { stash: config })
+        .await?;
 
     Ok(Json("OK"))
 }

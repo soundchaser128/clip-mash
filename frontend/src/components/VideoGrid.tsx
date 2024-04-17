@@ -47,10 +47,20 @@ const VideoGrid: React.FC<Props> = ({
   const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
     undefined,
   )
-  const [showingDetails, setShowingDetails] = useState(false)
+
+  const {addOrReplaceParams, addOrReplaceParam, setQueryDebounced} =
+    useDebouncedSetQuery()
+  const showingDetails = params.get("details") === "true"
+
+  const setShowingDetails = (show: boolean) => {
+    if (show) {
+      addOrReplaceParam("details", "true")
+    } else {
+      addOrReplaceParam("details", undefined)
+    }
+  }
 
   const config = useConfig()
-  const {addOrReplaceParams, setQueryDebounced} = useDebouncedSetQuery()
   const videos = page.content
   const {register, handleSubmit, watch, reset} = useForm<FilterInputs>({
     mode: "onChange",

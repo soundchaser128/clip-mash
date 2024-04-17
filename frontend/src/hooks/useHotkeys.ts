@@ -1,5 +1,5 @@
-import {useEffect, useRef} from "react"
-import * as mousetrap from "mousetrap"
+import {useEffect} from "react"
+import mousetrap from "mousetrap"
 
 type MousetrapCallback = (
   e: mousetrap.ExtendedKeyboardEvent,
@@ -15,20 +15,18 @@ const useHotkeys = (
   callback: Callback,
   action?: string,
 ) => {
-  const actionRef = useRef<Callback>(callback)
-
   useEffect(() => {
     mousetrap.bind(
       keys,
       (evt, combo) => {
-        typeof actionRef.current === "function" && actionRef.current(evt, combo)
+        callback(evt, combo)
       },
       action,
     )
     return () => {
       mousetrap.unbind(keys)
     }
-  }, [keys])
+  }, [keys, action, callback])
 }
 
 export default useHotkeys

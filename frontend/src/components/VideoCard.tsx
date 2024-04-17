@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import {StashConfig, ListVideoDto, VideoDto} from "../api"
+import {StashConfig, ListVideoDto, VideoDto} from "@/api"
 import {
   HiAdjustmentsVertical,
   HiArrowDownTray,
@@ -10,10 +10,12 @@ import {
   HiTag,
   HiXMark,
 } from "react-icons/hi2"
-import {dateTimeFormat, formatSeconds} from "../helpers"
+import {dateTimeFormat, formatSeconds} from "@/helpers/time"
 import React from "react"
 import EditableText from "./EditableText"
 import HoverVideo from "./HoverVideo"
+import {Link, useLocation} from "react-router-dom"
+import {searchLink} from "@/helpers/links"
 
 const OverlayText: React.FC<{
   children: React.ReactNode
@@ -72,6 +74,8 @@ const VideoCard: React.FC<Props> = ({
   zoomOnHover,
   hideDetails,
 }) => {
+  const location = useLocation()
+
   if (hideDetails) {
     return (
       <HoverVideo
@@ -111,7 +115,7 @@ const VideoCard: React.FC<Props> = ({
   return (
     <article
       className={clsx(
-        "card card-compact bg-base-200 shadow-xl",
+        "card card-compact bg-base-200 shadow-xl animate-in fade-in",
         video.markerCount > 0 && "ring ring-green-500",
         disabled && "opacity-50",
         zoomOnHover &&
@@ -145,9 +149,13 @@ const VideoCard: React.FC<Props> = ({
             {tags.length > 0 && (
               <span className="inline-flex flex-wrap gap-y-1 gap-x-0.5 -ml-2">
                 {tags.map((tag) => (
-                  <span key={tag} className="badge">
+                  <Link
+                    to={searchLink(location, tag)}
+                    key={tag}
+                    className="badge"
+                  >
                     {tag}
-                  </span>
+                  </Link>
                 ))}
               </span>
             )}

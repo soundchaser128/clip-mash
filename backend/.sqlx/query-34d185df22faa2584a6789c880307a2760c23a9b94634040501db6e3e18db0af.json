@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE markers SET index_within_video = $1 WHERE rowid = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "34d185df22faa2584a6789c880307a2760c23a9b94634040501db6e3e18db0af"
+}

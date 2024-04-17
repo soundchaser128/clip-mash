@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use axum::body::StreamBody;
+use axum::body::Body;
 use axum::extract::{Path, Query, State};
 use axum::response::IntoResponse;
 use axum::Json;
@@ -206,7 +206,7 @@ pub async fn download_video(
         (header::CONTENT_DISPOSITION, content_disposition),
     ]);
 
-    let body = StreamBody::new(stream);
+    let body = Body::from_stream(stream);
     Ok((headers, body))
 }
 
@@ -228,7 +228,8 @@ pub async fn get_combined_funscript(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateFunscriptBody>,
 ) -> Result<Json<FunScript>, AppError> {
-    let script_builder = ScriptBuilder::new().await;
+    let stash_api = state.stash_api().await?;
+    let script_builder = ScriptBuilder::new(stash_api);
     let service = OptionsConverterService::new(state.database.clone());
     let clips = service.convert_clips(body.clips).await?;
     let script = script_builder.create_combined_funscript(clips).await?;

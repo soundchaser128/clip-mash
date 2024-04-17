@@ -19,7 +19,8 @@ pub struct StreamUrlService {
 
 impl StreamUrlService {
     pub async fn new(database: Database) -> Self {
-        let stash_api = StashApi::load_config().await;
+        let config = database.settings.fetch().await.unwrap_or_default();
+        let stash_api = StashApi::with_config(config.stash);
         StreamUrlService {
             stash_api,
             database,

@@ -3,7 +3,7 @@ import {useForm} from "react-hook-form"
 import {updateForm} from "../actions"
 import React, {useState} from "react"
 import {Link, useLoaderData, useNavigate} from "react-router-dom"
-import {formatSeconds, sumDurations} from "@/helpers"
+import {formatSeconds, sumDurations} from "@/helpers/time"
 import {
   HiArrowUpTray,
   HiBarsArrowDown,

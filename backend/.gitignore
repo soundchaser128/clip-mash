@@ -14,3 +14,6 @@
 /yt-dlp
 /logs
 /samples
+/app-data
+/testfiles/*.mp4
+

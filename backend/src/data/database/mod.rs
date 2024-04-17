@@ -13,6 +13,8 @@ use self::ffprobe::FfProbeInfoDatabase;
 use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
 use self::progress::ProgressDatabase;
+pub use self::settings::Settings;
+use self::settings::SettingsDatabase;
 use self::videos::VideosDatabase;
 use super::stash_api::MarkerLike;
 use crate::server::types::{Beats, Progress, VideoLike};
@@ -23,6 +25,7 @@ mod ffprobe;
 mod markers;
 mod music;
 mod progress;
+mod settings;
 mod videos;
 
 #[derive(Debug, Clone, Copy, sqlx::Type, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
@@ -212,15 +215,6 @@ pub enum AllVideosFilter {
     NoTitle,
 }
 
-#[derive(Clone)]
-pub struct Database {
-    pub videos: VideosDatabase,
-    pub markers: MarkersDatabase,
-    pub progress: ProgressDatabase,
-    pub music: MusicDatabase,
-    pub ffprobe: FfProbeInfoDatabase,
-}
-
 #[derive(Deserialize, ToSchema, Debug)]
 pub struct VideoUpdate {
     pub title: Option<String>,
@@ -231,6 +225,16 @@ pub struct VideoUpdate {
 pub struct MarkerCount {
     pub title: String,
     pub count: i64,
+}
+
+#[derive(Clone)]
+pub struct Database {
+    pub videos: VideosDatabase,
+    pub markers: MarkersDatabase,
+    pub progress: ProgressDatabase,
+    pub music: MusicDatabase,
+    pub ffprobe: FfProbeInfoDatabase,
+    pub settings: SettingsDatabase,
 }
 
 impl Database {
@@ -248,7 +252,8 @@ impl Database {
             progress: ProgressDatabase::new(pool.clone()),
             music: MusicDatabase::new(pool.clone()),
             ffprobe: FfProbeInfoDatabase::new(pool.clone()),
-            videos: VideosDatabase::new(pool),
+            videos: VideosDatabase::new(pool.clone()),
+            settings: SettingsDatabase::new(pool),
         })
     }
 
@@ -259,7 +264,8 @@ impl Database {
             progress: ProgressDatabase::new(pool.clone()),
             music: MusicDatabase::new(pool.clone()),
             ffprobe: FfProbeInfoDatabase::new(pool.clone()),
-            videos: VideosDatabase::new(pool),
+            videos: VideosDatabase::new(pool.clone()),
+            settings: SettingsDatabase::new(pool),
         }
     }
 }
@@ -620,7 +626,7 @@ mod test {
         let preview_image_path = "/some/path/to/image.png";
         database
             .markers
-            .set_marker_preview_image(marker.rowid.unwrap(), preview_image_path)
+            .set_marker_preview_image(marker.rowid.unwrap(), Some(preview_image_path))
             .await
             .unwrap();
         let result = database

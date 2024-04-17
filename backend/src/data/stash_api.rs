@@ -142,7 +142,7 @@ impl MarkerLike for StashMarker {
 }
 
 impl StashMarker {
-    pub fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: &str) -> Vec<Self> {
+    pub fn from_scene(scene: FindScenesQueryFindScenesScenes, api_key: Option<&str>) -> Vec<Self> {
         let duration = scene
             .files
             .iter()
@@ -190,30 +190,28 @@ impl StashMarker {
 #[derive(Clone)]
 pub struct StashApi {
     api_url: String,
-    api_key: String,
+    api_key: Option<String>,
     client: Client,
 }
 
 impl StashApi {
-    pub fn new(api_url: &str, api_key: &str) -> Self {
+    pub fn new(api_url: String, api_key: Option<String>) -> Self {
         StashApi {
-            api_url: api_url.into(),
-            api_key: api_key.into(),
+            api_url: api_url,
+            api_key: api_key,
             client: Client::new(),
         }
     }
 
-    pub async fn load_config() -> Self {
-        let config = StashConfig::get_or_empty().await;
-        StashApi::new(&config.stash_url, &config.api_key)
+    pub fn with_config(config: StashConfig) -> Self {
+        StashApi::new(config.stash_url, config.api_key)
     }
 
-    pub async fn load_config_or_fail() -> Result<Self> {
-        if let Ok(config) = StashConfig::get().await {
-            Ok(StashApi::new(&config.stash_url, &config.api_key))
-        } else {
-            bail!("no stash config found")
-        }
+    fn api_key(&self) -> &str {
+        self.api_key
+            .as_ref()
+            .map(|s| s.as_str())
+            .unwrap_or_default()
     }
 
     pub async fn health(&self) -> Result<String> {
@@ -224,7 +222,7 @@ impl StashApi {
             .client
             .post(url)
             .json(&request_body)
-            .header("ApiKey", &self.api_key)
+            .header("ApiKey", self.api_key())
             .send()
             .await?
             .error_for_status()?;
@@ -247,7 +245,7 @@ impl StashApi {
             .client
             .post(url)
             .json(&request_body)
-            .header("ApiKey", &self.api_key)
+            .header("ApiKey", self.api_key())
             .send()
             .await?
             .error_for_status()?;
@@ -281,7 +279,7 @@ impl StashApi {
             .client
             .post(url)
             .json(&request_body)
-            .header("ApiKey", &self.api_key)
+            .header("ApiKey", self.api_key())
             .send()
             .await?
             .error_for_status()?;
@@ -312,7 +310,7 @@ impl StashApi {
             .client
             .post(url)
             .json(&request_body)
-            .header("ApiKey", &self.api_key)
+            .header("ApiKey", self.api_key())
             .send()
             .await?
             .error_for_status()?;
@@ -343,7 +341,7 @@ impl StashApi {
             .client
             .post(url)
             .json(&request_body)
-            .header("ApiKey", &self.api_key)
+            .header("ApiKey", self.api_key())
             .send()
             .await?
             .error_for_status()?;
@@ -361,7 +359,7 @@ impl StashApi {
             .client
             .post(url)
             .json(&request_body)
-            .header("ApiKey", &self.api_key)
+            .header("ApiKey", self.api_key())
             .send()
             .await?
             .error_for_status()?;
@@ -398,7 +396,7 @@ impl StashApi {
             .client
             .post(url)
             .json(&request_body)
-            .header("ApiKey", &self.api_key)
+            .header("ApiKey", self.api_key())
             .send()
             .await?
             .error_for_status()?;
@@ -414,7 +412,7 @@ impl StashApi {
         let response = self
             .client
             .get(url)
-            .header("ApiKey", &self.api_key)
+            .header("ApiKey", self.api_key())
             .send()
             .await?
             .error_for_status()?
@@ -426,12 +424,12 @@ impl StashApi {
 
     pub fn get_screenshot_url(&self, id: i64) -> String {
         let url = format!("{}/scene/{}/screenshot", self.api_url, id);
-        add_api_key(&url, &self.api_key)
+        add_api_key(&url, self.api_key.as_deref())
     }
 
     pub fn get_stream_url(&self, id: i64) -> String {
         let url = format!("{}/scene/{}/stream", self.api_url, id);
-        add_api_key(&url, &self.api_key)
+        add_api_key(&url, self.api_key.as_deref())
     }
 }
 

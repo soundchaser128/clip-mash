@@ -1,7 +1,7 @@
 import {HiDocument, HiFolder} from "react-icons/hi2"
 import {FileSystemEntry} from "@/api"
 import clsx from "clsx"
-import {formatBytes} from "@/helpers"
+import {formatBytes} from "@/helpers/formatting"
 import {Control, Controller, FieldValues, Path} from "react-hook-form"
 
 export interface Props<T extends FieldValues> {

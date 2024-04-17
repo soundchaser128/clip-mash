@@ -19,6 +19,8 @@ import {FormState} from "@/types/form-state"
 import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"
+import {sumDurations} from "@/helpers/time"
+import {DEFAULT_CLIP_BASE_DURATION, DEFAULT_SPREAD} from "@/routes/loaders"
 
 const clipGenerationOptions = (useMusic: boolean) => {
   if (useMusic) {
@@ -59,6 +61,8 @@ export const getDefaultOptions = (state: FormState): ClipFormInputs => {
         },
       },
       clipOrder: {type: "scene"},
+      minClipDuration: 1.5,
+      clipDurationSpread: DEFAULT_SPREAD,
     }
   } else {
     return {
@@ -68,6 +72,9 @@ export const getDefaultOptions = (state: FormState): ClipFormInputs => {
         clipDuration: 30,
       },
       clipOrder: {type: "scene"},
+      maxDuration: sumDurations(state.selectedMarkers || []),
+      minClipDuration: 1.5,
+      clipDurationSpread: DEFAULT_SPREAD,
     }
   }
 }
@@ -77,6 +84,9 @@ interface CommonInputs {
   clipOrder: ClipOrder
   seed?: string
   useMusic?: boolean
+  maxDuration?: number
+  minClipDuration?: number
+  clipDurationSpread: number
 }
 
 interface RoundRobinFormInputs {
@@ -151,6 +161,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const clipOrder = watch("clipOrder.type")
   const useMusic = watch("useMusic")
   const hasSongs = state.data.songs?.length || 0 > 0
+  const totalClipDuration = sumDurations(state.data.selectedMarkers || [])
 
   const validate = (values: ClipFormInputs) => {
     let valid = true
@@ -198,21 +209,27 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
     if (!useMusic) {
       switch (clipStrategy) {
         case "equalLength":
-          setValue("equalLength.clipDuration", 15)
+          setValue("equalLength.clipDuration", DEFAULT_CLIP_BASE_DURATION)
           break
         case "roundRobin":
-          setValue("roundRobin.clipLengths.baseDuration", 15)
+          setValue(
+            "roundRobin.clipLengths.baseDuration",
+            DEFAULT_CLIP_BASE_DURATION,
+          )
           setValue("roundRobin.clipLengths.type", "randomized")
           break
         case "weightedRandom":
-          setValue("weightedRandom.clipLengths.baseDuration", 15)
+          setValue(
+            "weightedRandom.clipLengths.baseDuration",
+            DEFAULT_CLIP_BASE_DURATION,
+          )
           setValue("weightedRandom.clipLengths.type", "randomized")
           break
       }
     } else {
       switch (clipStrategy) {
         case "equalLength":
-          setValue("equalLength.clipDuration", 15)
+          setValue("equalLength.clipDuration", DEFAULT_CLIP_BASE_DURATION)
           break
 
         case "roundRobin":
@@ -320,20 +337,23 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
             </div>
           </div>
         </div>
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Clip order</span>
-          </label>
-          <select
-            className="select select-bordered"
-            {...register("clipOrder.type")}
-          >
-            <option value="">Select...</option>
-            <option value="scene">Scene order</option>
-            <option value="random">Random</option>
-            <option value="fixed">Fixed</option>
-          </select>
-        </div>
+
+        {!useMusic && (
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Clip order</span>
+            </label>
+            <select
+              className="select select-bordered"
+              {...register("clipOrder.type")}
+            >
+              <option value="">Select...</option>
+              <option value="scene">Scene order</option>
+              <option value="random">Random</option>
+              <option value="fixed">Fixed</option>
+            </select>
+          </div>
+        )}
 
         {clipOrder === "fixed" && <MarkerOrderModal className="mt-4" />}
 
@@ -367,9 +387,15 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
           </select>
         </div>
 
-        {clipStrategy === "roundRobin" && <RoundRobinFields />}
-        {clipStrategy === "weightedRandom" && <WeightedRandomFields />}
-        {clipStrategy === "equalLength" && <EqualLengthFields />}
+        {clipStrategy === "roundRobin" && (
+          <RoundRobinFields totalClipDuration={totalClipDuration} />
+        )}
+        {clipStrategy === "weightedRandom" && (
+          <WeightedRandomFields totalClipDuration={totalClipDuration} />
+        )}
+        {clipStrategy === "equalLength" && (
+          <EqualLengthFields totalClipDuration={totalClipDuration} />
+        )}
 
         <div className="form-control">
           <label className="label">

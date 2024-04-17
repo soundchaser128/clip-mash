@@ -229,6 +229,7 @@ impl VideosDatabase {
         })
     }
 
+    #[allow(unused_assignments)]
     async fn fetch_count(&self, query: &VideoSearchQuery) -> Result<i64> {
         let mut query_builder = QueryBuilder::new("SELECT COUNT(*) FROM videos v ");
         let mut first = true;
@@ -283,6 +284,7 @@ impl VideosDatabase {
         Ok(count)
     }
 
+    #[allow(unused_assignments)]
     pub async fn list_videos(
         &self,
         query_object: VideoSearchQuery,
@@ -420,7 +422,11 @@ impl VideosDatabase {
         Ok(())
     }
 
-    pub async fn set_video_preview_image(&self, id: &str, preview_image: &str) -> Result<()> {
+    pub async fn set_video_preview_image(
+        &self,
+        id: &str,
+        preview_image: Option<&str>,
+    ) -> Result<()> {
         sqlx::query!(
             "UPDATE videos SET video_preview_image = $1 WHERE id = $2",
             preview_image,

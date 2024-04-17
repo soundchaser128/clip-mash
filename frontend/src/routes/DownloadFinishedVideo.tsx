@@ -8,7 +8,7 @@ import {
 import {Link} from "react-router-dom"
 import ExternalLink from "../components/ExternalLink"
 import {CreateVideoBody, DescriptionType, generateDescription} from "@/api"
-import {saveBlobToDisk} from "@/helpers"
+import {saveBlobToDisk} from "@/helpers/json"
 
 const DownloadVideoPage = () => {
   const {state} = useStateMachine()
@@ -29,6 +29,8 @@ const DownloadVideoPage = () => {
       videoCodec: state.data.videoCodec!,
       videoQuality: state.data.videoQuality!,
       musicVolume: state.data.musicVolume,
+      padding: state.data.padding!,
+      forceReEncode: false,
     } satisfies CreateVideoBody
 
     const response = await generateDescription(format, data)

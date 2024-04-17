@@ -5,7 +5,7 @@ import {useNavigate} from "react-router"
 import useNotification from "../../../hooks/useNotification"
 import Loader from "../../../components/Loader"
 import {useState} from "react"
-import {pluralize} from "../../../helpers"
+import {pluralize} from "@/helpers/formatting"
 import {AddVideosRequest, addNewVideos} from "../../../api"
 
 type Inputs = {urls: string}
@@ -34,7 +34,10 @@ const DownloadVideosPage: React.FC = () => {
   const [videoCount, setVideoCount] = useState<number>()
 
   const onSubmit = async (values: Inputs) => {
-    const urls = values.urls.split(splitRegex).map((res) => res.trim())
+    const urls = values.urls
+      .split(splitRegex)
+      .map((res) => res.trim())
+      .filter((u) => u.length > 0)
     setVideoCount(urls.length)
     const errors = []
     for (const url of urls) {

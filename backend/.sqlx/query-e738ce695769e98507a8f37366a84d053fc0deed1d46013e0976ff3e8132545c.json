@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM progress WHERE video_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "e738ce695769e98507a8f37366a84d053fc0deed1d46013e0976ff3e8132545c"
+}

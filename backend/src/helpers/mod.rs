@@ -9,7 +9,7 @@ pub mod sentry;
 pub mod util;
 
 lazy_static! {
-    static ref PARALELISM: usize = {
+    static ref PARALLELISM: usize = {
         let cpus = num_cpus::get();
         cpus / 2
     };
@@ -23,7 +23,7 @@ where
     use futures::stream;
     use futures::stream::StreamExt;
 
-    let mut stream = stream::iter(futures).buffer_unordered(*PARALELISM);
+    let mut stream = stream::iter(futures).buffer_unordered(*PARALLELISM);
 
     let mut results = vec![];
     while let Some(result) = stream.next().await {
@@ -42,7 +42,7 @@ where
     use futures::stream;
     use futures::stream::StreamExt;
 
-    let mut stream = stream::iter(futures).buffer_unordered(*PARALELISM);
+    let mut stream = stream::iter(futures).buffer_unordered(*PARALLELISM);
 
     let mut results = vec![];
     while let Some(result) = stream.next().await {

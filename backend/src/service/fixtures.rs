@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicI64, Ordering};
 
+use camino::Utf8Path;
 use fake::faker::filesystem::en::FilePath;
 use fake::faker::lorem::en::{Sentence, Word};
 use fake::{Fake, Faker};
@@ -8,6 +9,7 @@ use graphql_parser::query::{Definition, OperationDefinition};
 use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde_json::Value;
+use tokio::process::Command;
 use tracing::info;
 use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
@@ -532,4 +534,24 @@ pub fn songs() -> Vec<Beats> {
             ],
         },
     ]
+}
+
+/// Uses ffmpeg to generate a video in the desired dimensions
+pub async fn generate_video(path: impl AsRef<Utf8Path>, width: u32, height: u32) -> Result<()> {
+    let path = Utf8Path::new("testfiles").join(path);
+    Command::new("ffmpeg")
+        .args(&[
+            "-f",
+            "lavfi",
+            "-i",
+            &format!(
+                "color=size={}x{}:duration=10:rate=30:color=red",
+                width, height
+            ),
+            path.as_str(),
+        ])
+        .output()
+        .await
+        .map(|_| ())
+        .map_err(From::from)
 }

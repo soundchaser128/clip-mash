@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react"
+import React, {useState} from "react"
 import {useForm, FieldErrors} from "react-hook-form"
 import {
   HiClock,
@@ -8,17 +8,13 @@ import {
   HiTag,
   HiCheck,
   HiPencilSquare,
-  HiPlay,
   HiQuestionMarkCircle,
   HiMagnifyingGlass,
   HiChevronLeft,
-  HiPause,
-  HiSpeakerWave,
-  HiSpeakerXMark,
+  HiArrowRight,
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
-import {formatSeconds, isBetween} from "@/helpers"
-import Modal from "@/components/Modal"
+import {formatSeconds, parseTimestamp} from "@/helpers/time"
 import {useLoaderData, useNavigate, useRevalidator} from "react-router-dom"
 import TimestampInput from "@/components/TimestampInput"
 import {createMarker, updateMarker} from "./api"
@@ -36,7 +32,13 @@ import {
 import {useConfig} from "@/hooks/useConfig"
 import Kbd from "@/components/Kbd"
 import useHotkeys from "@/hooks/useHotkeys"
-import clsx from "clsx"
+import {
+  Player,
+  PlayerContextProvider,
+  PlayerControls,
+  usePlayer,
+} from "@/components/VideoPlayer"
+import {isBetween} from "@/helpers/math"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
@@ -52,7 +54,7 @@ interface Inputs {
   id?: number
   title: string
   start: string
-  end?: string
+  end: string
   createInStash?: boolean
 }
 
@@ -107,6 +109,18 @@ function HelpPanel({onBack}: {onBack: () => void}) {
         <li>
           <Kbd keys="V M" separator=" " /> Toggle mute
         </li>
+        <li>
+          <Kbd keys="‹" /> Jump forwards 5 seconds
+        </li>
+        <li>
+          <Kbd keys="›" /> Jump backwards 5 seconds
+        </li>
+        <li>
+          <Kbd keys="L" /> Jump forwards 0.5 seconds
+        </li>
+        <li>
+          <Kbd keys="K" /> Jump backwards 0.5 seconds
+        </li>
       </ul>
     </div>
   )
@@ -134,7 +148,7 @@ const handleValidation = (values: Inputs) => {
   }
 }
 
-export default function MarkerModal() {
+function VideoMarkersPage() {
   const {
     register,
     handleSubmit,
@@ -142,9 +156,14 @@ export default function MarkerModal() {
     formState: {errors},
     setError,
     setValue,
+    watch,
   } = useForm<Inputs>({
     resolver: handleValidation,
   })
+
+  const {state, dispatch} = usePlayer()
+  const startPosition = watch("start")
+  const endPosition = watch("end")
 
   const navigate = useNavigate()
   const {video, markers: videoMarkers} = useLoaderData() as VideoDetailsDto
@@ -152,18 +171,27 @@ export default function MarkerModal() {
   const revalidator = useRevalidator()
 
   const [markers, setMarkers] = useImmer<MarkerDto[]>(videoMarkers)
-  const videoRef = useRef<HTMLVideoElement>(null)
   const [formMode, setFormMode] = useState<FormMode>("hidden")
-  const [videoDuration, setVideoDuration] = useState<number>()
   const [editedMarker, setEditedMarker] = useState<MarkerDto>()
   const [loading, setLoading] = useState(false)
   const threshold = 40
-  const [time, setTime] = useState(0)
   const [markPoints, setMarkPoints] = useImmer<number[]>([])
   const config = useConfig()
   const showingForm = formMode === "create" || formMode === "edit"
-  const isPlaying = videoRef.current?.paused === false
-  const [isMuted, setIsMuted] = useState(videoRef.current?.muted)
+
+  const onSetCurrentTime = (field: "start" | "end") => {
+    const time = state.currentTime
+    if (time) {
+      setValue(field, formatSeconds(time, "short-with-ms"))
+    }
+  }
+
+  const onSetVideoPosition = (time: string) => {
+    const parsed = parseTimestamp(time)
+    if (parsed) {
+      dispatch({type: "jumpAbsolute", payload: parsed})
+    }
+  }
 
   const onSubmit = async (values: Inputs) => {
     const index =
@@ -180,7 +208,7 @@ export default function MarkerModal() {
         ? await createMarker(
             video,
             values,
-            videoDuration!,
+            state.duration,
             index,
             values.createInStash ?? false,
           )
@@ -210,23 +238,13 @@ export default function MarkerModal() {
     }
   }
 
-  const onSetCurrentTime = (field: "start" | "end") => {
-    setValue(
-      field,
-      formatSeconds(videoRef.current?.currentTime || 0, "short-with-ms"),
-    )
-  }
   const currentItemIndex = markers.findIndex((m) =>
-    isBetween(time, m.start, m.end || videoDuration!),
+    isBetween(state.currentTime, m.start, m.end || state.duration),
   )
-
-  const onTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (e) => {
-    setTime(e.currentTarget.currentTime)
-  }
 
   const onAddMark = () => {
     setMarkPoints((draft) => {
-      draft.push(videoRef.current!.currentTime)
+      draft.push(state.currentTime)
     })
   }
 
@@ -268,7 +286,7 @@ export default function MarkerModal() {
 
   const onShowForm = (mode: FormMode, marker?: MarkerDto) => {
     setFormMode(mode)
-    const start = mode === "create" ? videoRef.current?.currentTime : undefined
+    const start = mode === "create" ? state.currentTime : undefined
     setValue("start", formatSeconds(marker?.start || start, "short-with-ms"))
     setValue("end", formatSeconds(marker?.end || undefined, "short-with-ms"))
     setValue("title", marker?.primaryTag || "")
@@ -304,18 +322,13 @@ export default function MarkerModal() {
     onClose()
   }
 
-  const onMetadataLoaded: React.ReactEventHandler<HTMLVideoElement> = (e) => {
-    const duration = e.currentTarget.duration
-    setVideoDuration(duration)
-  }
-
   const onClose = () => {
     revalidator.revalidate()
     navigate(-1)
   }
 
   const onSplitMarker = async () => {
-    const currentTime = videoRef.current?.currentTime || 0
+    const currentTime = state.currentTime || 0
     const currentMarker = markers.find((m) =>
       isBetween(currentTime, m.start, m.end),
     )
@@ -339,7 +352,7 @@ export default function MarkerModal() {
 
     for (let i = 0; i < points.length; i++) {
       const current = points[i]
-      const next = points[i + 1] || videoDuration!
+      const next = points[i + 1] || state.duration!
       const marker = await createMarker(
         video,
         {
@@ -347,7 +360,7 @@ export default function MarkerModal() {
           end: next,
           title: "Untitled",
         },
-        videoDuration!,
+        state.duration,
         i,
         false,
       )
@@ -360,49 +373,20 @@ export default function MarkerModal() {
     setMarkPoints([])
   }
 
-  const onTogglePlay = () => {
-    if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play()
-      } else {
-        videoRef.current.pause()
-      }
-    }
-  }
-
-  const onToggleMuted = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted
-      setIsMuted(videoRef.current.muted)
-    }
-  }
-
-  useHotkeys("i", onAddMark)
-  useHotkeys("m f", onAddFullVideo)
+  useHotkeys("i", () => onAddMark())
+  useHotkeys("m f", () => onAddFullVideo())
   useHotkeys("m n", () => onShowForm("create", undefined))
-  useHotkeys("m s", onSplitMarker)
-  useHotkeys("m i", onConsumeMarkPoints)
-  useHotkeys("space", onTogglePlay)
-  useHotkeys("v m", onToggleMuted)
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.focus()
-    }
-  }, [videoRef])
+  useHotkeys("m s", () => onSplitMarker())
+  useHotkeys("m i", () => onConsumeMarkPoints())
 
   const onItemClick = (item: unknown, index: number) => {
     const marker = markers[index]
     onShowForm("edit", marker)
-    if (videoRef.current) {
-      videoRef.current.currentTime = marker.start
-    }
+    dispatch({type: "jumpAbsolute", payload: marker.start})
   }
 
   const onTimelineClick = (time: number) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = time
-    }
+    dispatch({type: "jumpAbsolute", payload: time})
   }
 
   const onDeleteAll = async () => {
@@ -420,17 +404,13 @@ export default function MarkerModal() {
   }
 
   return (
-    <Modal isOpen onClose={onClose}>
+    <>
       <div className="flex gap-2">
-        <video
+        <Player
           className="w-2/3 max-h-[82vh]"
           src={getVideoUrl(video, config)}
-          ref={videoRef}
-          onLoadedMetadata={onMetadataLoaded}
-          onTimeUpdate={onTimeUpdate}
-          muted
         />
-        <div className="flex flex-col w-1/3 justify-between">
+        <div className="flex flex-col w-1/3 justify-between max-h-[60vh] relative">
           {showingForm && (
             <form
               className="w-full flex flex-col gap-2"
@@ -457,21 +437,30 @@ export default function MarkerModal() {
                 <label className="label">
                   <span className="label-text">Start time</span>
                 </label>
-                <div className="input-group w-full">
+                <div className="flex w-full">
                   <TimestampInput
                     name="start"
                     control={control}
                     error={errors.start}
                   />
 
-                  <button
-                    onClick={() => onSetCurrentTime("start")}
-                    className="btn"
-                    type="button"
-                  >
-                    <HiClock className="mr-2" />
-                    Set current time
-                  </button>
+                  <div className="join">
+                    <button
+                      onClick={() => onSetCurrentTime("start")}
+                      className="btn join-item"
+                      type="button"
+                    >
+                      <HiClock className="mr-2" />
+                      Set current time
+                    </button>
+                    <button
+                      onClick={() => onSetVideoPosition(startPosition)}
+                      className="btn join-item"
+                      type="button"
+                    >
+                      <HiArrowRight /> Go to
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -482,21 +471,31 @@ export default function MarkerModal() {
                     {errors.end?.message}
                   </span>
                 </label>
-                <div className="input-group w-full">
+                <div className="flex w-full">
                   <TimestampInput
                     name="end"
                     control={control}
                     error={errors.end}
                   />
 
-                  <button
-                    onClick={() => onSetCurrentTime("end")}
-                    className="btn"
-                    type="button"
-                  >
-                    <HiClock className="mr-2" />
-                    Set current time
-                  </button>
+                  <div className="join">
+                    <button
+                      onClick={() => onSetCurrentTime("end")}
+                      className="btn"
+                      type="button"
+                    >
+                      <HiClock className="mr-2" />
+                      Set current time
+                    </button>
+
+                    <button
+                      onClick={() => onSetVideoPosition(endPosition)}
+                      className="btn join-item"
+                      type="button"
+                    >
+                      <HiArrowRight /> Go to
+                    </button>
+                  </div>
                 </div>
               </div>
               {video.source === "Stash" && (
@@ -547,107 +546,103 @@ export default function MarkerModal() {
           )}
 
           {!showingForm && (
-            <div>
-              <div className="overflow-x-auto p-2">
-                {formMode === "help" && (
-                  <HelpPanel onBack={() => setFormMode("hidden")} />
-                )}
-                {loading && (
-                  <Loader className="h-full w-full justify-center">
-                    Detecting markers...
-                  </Loader>
-                )}
-                {formMode === "hidden" && !loading && (
-                  <>
-                    <div className="flex w-full justify-between">
-                      <div className="grid grid-cols-2 gap-0.5">
-                        <button
-                          onClick={() => onShowForm("create")}
-                          className="btn btn-sm btn-success"
-                        >
-                          <HiPlus className="w-4 h-4 mr-2" />
-                          Add
-                        </button>
-                        <button
-                          disabled={markers.length === 0}
-                          onClick={onSplitMarker}
-                          className="btn btn-sm btn-primary"
-                        >
-                          <HiTag className="w-4 h-4 mr-2" />
-                          Split
-                        </button>
-                        <button
-                          onClick={onDetectMarkers}
-                          className="btn btn-sm btn-primary"
-                          disabled={markers.length > 0}
-                        >
-                          <HiMagnifyingGlass className="w-4 h-4 mr-2" />
-                          Detect
-                        </button>
-                        <button
-                          onClick={onConsumeMarkPoints}
-                          className="btn btn-sm btn-success"
-                          type="button"
-                          disabled={markPoints.length === 0}
-                        >
-                          <HiPlus /> From points
-                        </button>
-                      </div>
-
+            <div className="overflow-x-auto p-2">
+              {formMode === "help" && (
+                <HelpPanel onBack={() => setFormMode("hidden")} />
+              )}
+              {loading && (
+                <Loader className="h-full w-full justify-center">
+                  Detecting markers...
+                </Loader>
+              )}
+              {formMode === "hidden" && !loading && (
+                <>
+                  <div className="flex w-full justify-between">
+                    <div className="grid grid-cols-2 gap-0.5">
                       <button
-                        onClick={() => setFormMode("help")}
-                        className="btn btn-sm btn-secondary"
+                        onClick={() => onShowForm("create")}
+                        className="btn btn-sm btn-success"
                       >
-                        <HiQuestionMarkCircle className="w-4 h-4 mr-2" />
-                        Help
+                        <HiPlus className="w-4 h-4 mr-2" />
+                        Add
+                      </button>
+                      <button
+                        disabled={markers.length === 0}
+                        onClick={onSplitMarker}
+                        className="btn btn-sm btn-primary"
+                      >
+                        <HiTag className="w-4 h-4 mr-2" />
+                        Split
+                      </button>
+                      <button
+                        onClick={onDetectMarkers}
+                        className="btn btn-sm btn-primary"
+                        disabled={markers.length > 0}
+                      >
+                        <HiMagnifyingGlass className="w-4 h-4 mr-2" />
+                        Detect
+                      </button>
+                      <button
+                        onClick={onConsumeMarkPoints}
+                        className="btn btn-sm btn-success"
+                        type="button"
+                        disabled={markPoints.length === 0}
+                      >
+                        <HiPlus /> From points
                       </button>
                     </div>
-                    <table className="table table-compact w-full">
-                      <thead>
-                        <tr>
-                          <th></th>
-                          <th>Tag</th>
-                          <th>Start</th>
-                          <th>End</th>
-                          <th>Edit</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {markers.length === 0 && (
-                          <tr>
-                            <td colSpan={5} className="text-center">
-                              No markers yet. Click the Help button for
-                              information on how to add markers.
-                            </td>
-                          </tr>
-                        )}
 
-                        {markers.map((marker, idx) => (
-                          <tr key={marker.id}>
-                            <td>{idx + 1}</td>
-                            <td className="font-bold">{marker.primaryTag}</td>
-                            <td>
-                              {formatSeconds(marker.start, "short-with-ms")}
-                            </td>
-                            <td>
-                              {formatSeconds(marker.end, "short-with-ms")}
-                            </td>
-                            <td>
-                              <button
-                                onClick={() => onShowForm("edit", marker)}
-                                type="button"
-                                className="btn btn-sm btn-square btn-primary"
-                              >
-                                <HiPencilSquare className="inline" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
-                )}
-              </div>
+                    <button
+                      onClick={() => setFormMode("help")}
+                      className="btn btn-sm btn-secondary"
+                    >
+                      <HiQuestionMarkCircle className="w-4 h-4 mr-2" />
+                      Help
+                    </button>
+                  </div>
+                  <table className="table table-compact w-full">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Tag</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Edit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {markers.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="text-center">
+                            No markers yet. Click the Help button for
+                            information on how to add markers.
+                          </td>
+                        </tr>
+                      )}
+
+                      {markers.map((marker, idx) => (
+                        <tr key={marker.id}>
+                          <td>{idx + 1}</td>
+                          <td className="font-bold">{marker.primaryTag}</td>
+                          <td>
+                            {formatSeconds(marker.start, "short-with-ms")}
+                          </td>
+                          <td>{formatSeconds(marker.end, "short-with-ms")}</td>
+                          <td>
+                            <button
+                              onClick={() => onShowForm("edit", marker)}
+                              type="button"
+                              className="btn btn-sm btn-square btn-primary"
+                            >
+                              <HiPencilSquare className="inline" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
             </div>
           )}
           <div className="w-full flex justify-between">
@@ -667,31 +662,7 @@ export default function MarkerModal() {
         </div>
       </div>
       <div className="flex gap-2 items-center w-full">
-        <button
-          onClick={onTogglePlay}
-          className={clsx("btn btn-square", {
-            "btn-success": !isPlaying,
-            "btn-neutral": isPlaying,
-          })}
-          type="button"
-        >
-          {isPlaying ? (
-            <HiPause className="w-5 h-5" />
-          ) : (
-            <HiPlay className="w-5 h-5" />
-          )}
-        </button>
-        <button
-          onClick={onToggleMuted}
-          className="btn btn-square"
-          type="button"
-        >
-          {isMuted ? (
-            <HiSpeakerWave className="w-5 h-5" />
-          ) : (
-            <HiSpeakerXMark className="w-5 h-5" />
-          )}
-        </button>
+        <PlayerControls />
         <Timeline
           length={video.duration}
           items={markers.map((marker) => ({
@@ -704,13 +675,21 @@ export default function MarkerModal() {
             editedMarker ? markers.indexOf(editedMarker) : currentItemIndex
           }
           fadeInactiveItems
-          time={time}
+          time={state.currentTime}
           markPoints={markPoints}
           onMarkerClick={onRemoveMark}
           onTimelineClick={onTimelineClick}
           className="py-4 flex-grow"
         />
       </div>
-    </Modal>
+    </>
+  )
+}
+
+export default function WrappedVideoMarkersPage() {
+  return (
+    <PlayerContextProvider>
+      <VideoMarkersPage />
+    </PlayerContextProvider>
   )
 }

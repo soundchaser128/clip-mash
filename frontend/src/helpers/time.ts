@@ -1,61 +1,11 @@
 import {formatDuration} from "date-fns"
-import {SelectedMarker} from "./api"
-import {FormState} from "./types/form-state"
-import {scaleSequential} from "d3-scale"
-import {interpolatePlasma} from "d3-scale-chromatic"
-import React from "react"
-
-export function getFormState(): FormState | null {
-  const json = sessionStorage.getItem("form-state")
-  if (json) {
-    const state: {data: FormState} = JSON.parse(json)
-    return state.data
-  } else {
-    return null
-  }
-}
-
-export function getSegmentColor(index: number, count: number): string {
-  const colorScale = scaleSequential()
-    .domain([0, count - 1])
-    .interpolator(interpolatePlasma)
-
-  return colorScale(index)
-}
-
-export function getSegmentTextColor(color: string): string {
-  const [r, g, b] = color
-    .slice(1)
-    .match(/.{1,2}/g)!
-    .map((x) => parseInt(x, 16))
-
-  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
-
-  if (luma < 140) {
-    return "#ffffff"
-  } else {
-    return "#000000"
-  }
-}
-
-export function getSegmentStyle(
-  index: number,
-  count: number,
-): React.CSSProperties {
-  const color = getSegmentColor(index, count)
-  const textColor = getSegmentTextColor(color)
-
-  return {
-    backgroundColor: color,
-    color: textColor,
-  }
-}
-
-type DurationFormat = "long" | "short" | "short-with-ms"
+import {SelectedMarker} from "../api"
 
 function padNumber(n: number, padding = 2): string {
   return n.toString().padStart(padding, "0")
 }
+
+type DurationFormat = "long" | "short" | "short-with-ms"
 
 export function formatSeconds(
   input: number | [number, number] | number[] | undefined,
@@ -147,53 +97,7 @@ export function sumDurations(markers?: HasDuration[]): number {
   }
 }
 
-export function pluralize(
-  word: string,
-  count: number | undefined | null,
-): string {
-  return count === 1 ? word : `${word}s`
-}
-
-export function isBetween(
-  value: number,
-  lower: number,
-  upper: number,
-): boolean {
-  return value >= lower && value <= upper
-}
-
-export function clamp(value: number, lower: number, upper: number): number {
-  return Math.min(Math.max(value, lower), upper)
-}
-
 export const dateTimeFormat = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeStyle: "short",
 })
-
-// format number of bytes as human readable string
-export function formatBytes(bytes: number): string {
-  const sizes = ["Bytes", "KB", "MB", "GB", "TB"]
-  if (bytes === 0) {
-    return "0 Bytes"
-  }
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`
-}
-
-export function saveJsonToDisk<T>(fileName: string, data: T) {
-  const json = JSON.stringify(data)
-  const blob = new Blob([json], {type: "application/json"})
-  saveBlobToDisk(fileName, blob)
-}
-
-export function saveBlobToDisk(fileName: string, blob: Blob) {
-  const href = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = href
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(href)
-}

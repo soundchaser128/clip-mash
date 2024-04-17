@@ -13,6 +13,7 @@ import {HiCheck, HiChevronLeft, HiPlus} from "react-icons/hi2"
 import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../../api"
 import {useConfig} from "../../../hooks/useConfig"
 import useDebouncedSetQuery from "../../../hooks/useDebouncedQuery"
+import {useCreateToast} from "@/hooks/useToast"
 
 const AddStashVideoPage: React.FC = () => {
   const [search] = useSearchParams()
@@ -23,10 +24,15 @@ const AddStashVideoPage: React.FC = () => {
   const navigate = useNavigate()
   const [addingVideo, setAddingVideo] = useState<string | boolean>()
   const withMarkers = search.get("withMarkers") === "true"
+  const createToast = useCreateToast()
 
   useEffect(() => {
     if (!config) {
-      navigate("/stash/config")
+      navigate("/settings")
+      createToast({
+        message: "Please configure your Stash settings first.",
+        type: "info",
+      })
     }
   }, [config, navigate])
 

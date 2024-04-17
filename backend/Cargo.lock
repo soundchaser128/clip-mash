@@ -485,7 +485,7 @@ dependencies = [
 
 [[package]]
 name = "clip-mash"
-version = "0.21.0-pre.10"
+version = "0.21.0-pre.11"
 dependencies = [
  "async-stream",
  "aubio",

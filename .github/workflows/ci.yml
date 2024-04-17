@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,16 +13,24 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: "18.x"
-    - name: Install ffmpeg 
-      run: sudo apt-get update && sudo apt-get -y --no-install-recommends install ffmpeg
-    - name: Build Node
-      run: cd frontend && npm ci && npm run format-check && npm run lint && npm run build
-    - name: Test Rust
-      env:
-        SQLX_OFFLINE: "true"
-      run: cargo fmt --check && cargo test
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get -y --no-install-recommends install ffmpeg
+      - name: Build Node
+        run: cd frontend && npm ci && npm run format-check && npm run lint && npm run test && npm run build
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "backend -> target"
+      - name: Install cargo-nextest
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-nextest
+          locked: true
+      - name: Test Rust
+        env:
+          SQLX_OFFLINE: "true"
+        run: cd backend && cargo fmt --check --all && cargo nextest run --retries=3

@@ -1,0 +1,50 @@
+query FindScenesQuery($query: String, $page: Int!, $page_size: Int!, $scene_ids: [Int!], $has_markers: String) {
+  findScenes(
+    filter: {per_page: $page_size, page: $page, sort: "created_at", direction: DESC, q: $query},
+    scene_ids: $scene_ids,
+    scene_filter: {has_markers: $has_markers}
+  ) {
+    count
+    scenes {
+      id
+      created_at
+      title
+      rating100
+      interactive
+      files {
+        basename
+        duration
+      }
+      performers {
+        name
+      }
+      sceneStreams {
+        url
+        label
+      }
+      scene_markers {
+        id
+        seconds
+        stream
+        screenshot
+        tags {
+          name
+        }
+        primary_tag {
+          name
+        }
+      }
+      paths {
+        screenshot
+        preview
+        sprite
+      }
+      tags {
+        name
+      }
+      studio {
+        name
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+format:
+    cargo +nightly fmt
+
+check:
+    cargo check
+    cargo sqlx prepare --check
+
+start:
+    cargo run 0.0.0.0
+
+build:
+    cargo build --release
+
+setup:
+    cargo install sqlx-cli
+    sqlx migrate run
+
+fix:
+    cargo fix --allow-staged

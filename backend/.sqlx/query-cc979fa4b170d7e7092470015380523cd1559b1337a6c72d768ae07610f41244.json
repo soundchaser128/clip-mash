@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM videos v WHERE v.file_path = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "file_path",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "interactive",
+        "ordinal": 2,
+        "type_info": "Bool"
+      },
+      {
+        "name": "source",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "duration",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "video_preview_image",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "stash_scene_id",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "video_created_on",
+        "ordinal": 7,
+        "type_info": "Int64"
+      },
+      {
+        "name": "video_title",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_tags",
+        "ordinal": 9,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "cc979fa4b170d7e7092470015380523cd1559b1337a6c72d768ae07610f41244"
+}

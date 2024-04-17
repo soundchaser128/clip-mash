@@ -1,0 +1,128 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT *, m.rowid AS rowid FROM videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.id = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "file_path",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "interactive",
+        "ordinal": 2,
+        "type_info": "Bool"
+      },
+      {
+        "name": "source",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "duration",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "video_preview_image",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "stash_scene_id",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "video_created_on",
+        "ordinal": 7,
+        "type_info": "Int64"
+      },
+      {
+        "name": "video_title",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_tags",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_id",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "start_time",
+        "ordinal": 11,
+        "type_info": "Float"
+      },
+      {
+        "name": "end_time",
+        "ordinal": 12,
+        "type_info": "Float"
+      },
+      {
+        "name": "title",
+        "ordinal": 13,
+        "type_info": "Text"
+      },
+      {
+        "name": "index_within_video",
+        "ordinal": 14,
+        "type_info": "Int64"
+      },
+      {
+        "name": "marker_preview_image",
+        "ordinal": 15,
+        "type_info": "Text"
+      },
+      {
+        "name": "marker_created_on",
+        "ordinal": 16,
+        "type_info": "Int64"
+      },
+      {
+        "name": "marker_stash_id",
+        "ordinal": 17,
+        "type_info": "Int64"
+      },
+      {
+        "name": "rowid",
+        "ordinal": 18,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "347021d4cddbba55d3316a53a1bf77cad782da6cdc50d6a98cc83f40d5ebacc9"
+}

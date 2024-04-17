@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE songs SET beats = $1 WHERE rowid = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "fc93c0cc12fbb00b0092a501328cf09cb4d802da1e36866d2d3b7be0fbd10a26"
+}

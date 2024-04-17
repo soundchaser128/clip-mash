@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT rowid, url, file_path, duration, beats FROM songs WHERE url = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "rowid",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "url",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "file_path",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "duration",
+        "ordinal": 3,
+        "type_info": "Float"
+      },
+      {
+        "name": "beats",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "b9c3097d83470bdb46dc2d4a3058be008a3a58e4f934db7d9d66753e75b0fccd"
+}

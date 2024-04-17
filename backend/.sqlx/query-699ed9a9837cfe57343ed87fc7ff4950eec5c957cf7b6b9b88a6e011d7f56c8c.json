@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video, marker_preview_image, marker_created_on, marker_stash_id)\n                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n                ON CONFLICT DO UPDATE SET start_time = excluded.start_time, end_time = excluded.end_time, title = excluded.title\n                RETURNING rowid, marker_created_on",
+  "describe": {
+    "columns": [
+      {
+        "name": "rowid",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "marker_created_on",
+        "ordinal": 1,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "699ed9a9837cfe57343ed87fc7ff4950eec5c957cf7b6b9b88a6e011d7f56c8c"
+}

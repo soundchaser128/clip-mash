@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE markers SET marker_preview_image = $1 WHERE rowid = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "a8dc1372075dcf56204d842602b018abcc77c2ade981dd4350dd3b259952b9ae"
+}

@@ -1,72 +1,96 @@
 import {createStore, StateMachineProvider} from "little-state-machine"
-import React from "react"
+import React, {useEffect} from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
   isRouteErrorResponse,
-  LoaderFunction,
+  Outlet,
   RouterProvider,
+  ScrollRestoration,
   useRouteError,
 } from "react-router-dom"
+import "inter-ui/inter.css"
 import "./index.css"
-import SelectCriteria from "./routes/stash/filter/root"
-import SelectMarkers, {loader as markerLoader} from "./routes/select-markers"
-import VideoOptions from "./routes/video-options"
-import Progress from "./routes/progress"
-import PreviewClips, {loader as clipLoader} from "./routes/clips"
-import Performers, {
-  loader as performerLoader,
-} from "./routes/stash/filter/performers"
-import Tags, {loader as tagsLoader} from "./routes/stash/filter/tags"
-import Scenes, {loader as scenesLoader} from "./routes/stash/filter/scenes"
-import SelectVideoPath from "./routes/local/path"
-import SelectSource from "./routes"
-import SelectMode from "./routes/select-mode"
-import {nanoid} from "nanoid"
-import ListVideos, {loader as listVideosLoader} from "./routes/local/videos"
-import EditVideoModal from "./routes/local/videos.$id"
-import StashRoot from "./routes/root"
+
+import VideoOptions, {videoOptionsLoader} from "./routes/VideoOptions"
+import Progress from "./routes/CreateVideoPage"
+import PreviewClips from "./routes/clips/ClipPreviewPage"
+import ListVideos from "./routes/library/ListVideos"
+import CreateLayout from "./routes/Layout"
 import Layout from "./components/Layout"
-import Music from "./routes/music"
-import ConfigPage from "./routes/stash/config"
-import {loader as configLoader} from "./routes/loaders"
-import {SongDto} from "./types/types"
+import Music from "./routes/music/MusicPage"
+import {
+  clipsLoader,
+  localMarkerLoader,
+  newIdLoader,
+  musicLoader,
+  versionLoader,
+  stashVideoLoader,
+  makeVideoLoader,
+  videoDetailsLoader,
+} from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
+import MarkersPage from "./routes/library/SelectMarkers"
+import AddVideosPage from "./routes/library/add/AddVideosPaage"
+import useNotification from "./hooks/useNotification"
+import {FormStage} from "./types/form-state"
+import DownloadVideosPage from "./routes/library/add/DownloadVideosPage"
+import SelectVideos from "./routes/library/add/AddLocalVideosPage"
+import AddStashVideoPage from "./routes/library/add/AddStashVideoPage"
+import {ConfigProvider} from "./hooks/useConfig"
+import FunscriptPage from "./routes/FunscriptPage"
+import DownloadVideoPage from "./routes/DownloadFinishedVideo"
+import SelectVideosPage from "./routes/library/SelectVideos"
+import DownloadMusic from "./routes/music/DownloadMusic"
+import UploadMusic from "./routes/music/UploadMusic"
+import ReorderSongs from "./routes/music/ReorderSongs"
+import {ToastProvider} from "./hooks/useToast"
+import HomePage from "./routes/HomePage"
+import VideoMarkersPage from "./routes/library/VideoMarkersPage"
+import Sentry from "./sentry"
+import SentryDebug from "./routes/SentryDebug"
+import AppSettingsPage from "./routes/AppSettings"
+import TroubleshootingInfo from "./components/TroubleshootingInfo"
 
-const TroubleshootingInfo = () => {
-  return (
-    <div className="p-2">
-      <p>Try refreshing the page.</p>
-      <p>
-        If that doesn&apos;t help, please open an issue{" "}
-        <a
-          className="link link-primary"
-          href="https://github.com/soundchaser128/stash-compilation-maker/issues"
-        >
-          here
-        </a>
-        , describing what you did leading up to the error.
-      </p>
-    </div>
-  )
+async function logResponseError(response: Response) {
+  let body
+  if (!response.bodyUsed) {
+    body = await response.text()
+  }
+
+  console.error("ErrorBoundary caught response:", {
+    url: response.url,
+    status: response.status,
+    statusText: response.statusText,
+    body,
+  })
 }
 
 const ErrorBoundary = () => {
   const error = useRouteError()
-  console.error(error)
+
+  useEffect(() => {
+    if (error instanceof Error) {
+      console.error("ErrorBoundary caught error", error)
+    } else if (error instanceof Response) {
+      logResponseError(error)
+    } else {
+      console.error("ErrorBoundary caught some other error", error)
+    }
+  }, [error])
 
   if (isRouteErrorResponse(error)) {
     const is404 = error.status === 404
 
     return (
       <Layout>
-        <div className="mt-8">
+        <div className="mt-8 flex flex-col">
           <h1 className="font-bold text-5xl mb-4 w-fit">
             {is404 ? "404 - Page not found" : "Sorry, something went wrong."}
           </h1>
           {!is404 && (
-            <div className="bg-red-200 p-2 rounded-lg text-black">
+            <div className="bg-error text-error-content p-2 rounded-lg self-start mb-4">
               <p>
                 Status code <strong>{error.status}</strong>
               </p>
@@ -84,118 +108,139 @@ const ErrorBoundary = () => {
     )
   }
 
+  const errorJson = JSON.stringify(error, null, 2)
+  const isUsefulJson = errorJson && errorJson !== "{}"
+  const err = error as Error
   return (
     <Layout>
-      <div className="self-center shrink mt-8">
+      <div className="mt-8 flex flex-col">
         <h1 className="font-bold text-5xl mb-4">
           Sorry, something went wrong.
         </h1>
-        <div>
-          <pre>{JSON.stringify(error, null, 2)}</pre>
+        <div className="bg-error text-error-content p-2 rounded-lg self-start mb-4">
+          <h2 className="font-bold">Error details:</h2>
+          <div>
+            {isUsefulJson && <pre>{errorJson}</pre>}
+            {!isUsefulJson && (
+              <p>
+                <code>
+                  {err.name}: {err.message}
+                </code>
+              </p>
+            )}
+          </div>
         </div>
+        <TroubleshootingInfo />
       </div>
     </Layout>
   )
 }
 
-const musicLoader: LoaderFunction = async () => {
-  const response = await fetch("/api/music")
-  const data = (await response.json()) as SongDto[]
-  return data
+const Init = () => {
+  useNotification()
+
+  return (
+    <>
+      <Outlet />
+      <ScrollRestoration />
+    </>
+  )
 }
 
 const router = createBrowserRouter([
   {
     path: "/",
     errorElement: <ErrorBoundary />,
+    element: <Init />,
+    id: "root",
+    loader: versionLoader,
     children: [
       {
         index: true,
-        element: <SelectSource />,
+        element: <HomePage />,
+        loader: newIdLoader,
       },
       {
-        path: "/stash/config",
-        element: <ConfigPage />,
-      },
-      {
-        path: "local",
-        element: <StashRoot />,
+        element: <CreateLayout />,
         children: [
           {
-            path: "path",
-            element: <SelectVideoPath />,
+            path: "/settings",
+            element: <AppSettingsPage />,
           },
+
           {
-            path: "videos",
+            path: "library",
             element: <ListVideos />,
-            loader: listVideosLoader,
-            id: "video-list",
-            children: [
-              {
-                path: ":id",
-                element: <EditVideoModal />,
-              },
-            ],
+            loader: makeVideoLoader({}),
           },
           {
-            path: "options",
-            element: <VideoOptions />,
-          },
-        ],
-      },
-      {
-        path: "stash",
-        element: <StashRoot />,
-        loader: configLoader,
-        children: [
-          {
-            path: "mode",
-            element: <SelectMode />,
+            path: "library/:id/markers",
+            element: <VideoMarkersPage />,
+            loader: videoDetailsLoader,
           },
           {
-            path: "filter",
-            element: <SelectCriteria />,
-            id: "select-root",
-            children: [
-              {
-                path: "performers",
-                element: <Performers />,
-                loader: performerLoader,
-              },
-              {
-                path: "tags",
-                element: <Tags />,
-                loader: tagsLoader,
-              },
-              {
-                path: "scenes",
-                element: <Scenes />,
-                loader: scenesLoader,
-              },
-            ],
+            path: "library/add",
+            element: <AddVideosPage />,
+          },
+          {path: "library/add/download", element: <DownloadVideosPage />},
+          {path: "library/add/folder", element: <SelectVideos />},
+          {
+            path: "library/add/stash",
+            element: <AddStashVideoPage />,
+            loader: stashVideoLoader,
+          },
+          {
+            path: "/library/select",
+            element: <SelectVideosPage />,
+            loader: makeVideoLoader({hasMarkers: true}),
           },
           {
             path: "markers",
-            element: <SelectMarkers />,
-            loader: markerLoader,
-          },
-          {
-            path: "clips",
-            element: <PreviewClips />,
-            loader: clipLoader,
-          },
-          {
-            path: "video-options",
-            element: <VideoOptions />,
-          },
-          {
-            path: "progress",
-            element: <Progress />,
+            element: <MarkersPage />,
+            loader: localMarkerLoader,
           },
           {
             path: "music",
             element: <Music />,
             loader: musicLoader,
+          },
+          {
+            path: "music/download",
+            element: <DownloadMusic />,
+          },
+          {
+            path: "music/upload",
+            element: <UploadMusic />,
+          },
+          {
+            path: "music/reorder",
+            element: <ReorderSongs />,
+          },
+          {
+            path: "video-options",
+            element: <VideoOptions />,
+            loader: videoOptionsLoader,
+          },
+          {
+            path: "clips",
+            element: <PreviewClips />,
+            loader: clipsLoader,
+          },
+          {
+            path: "generate",
+            element: <Progress />,
+          },
+          {
+            path: ":id/download",
+            element: <DownloadVideoPage />,
+          },
+          {
+            path: ":id/funscript",
+            element: <FunscriptPage />,
+          },
+          {
+            path: "/sentry-debug",
+            element: <SentryDebug />,
           },
         ],
       },
@@ -206,21 +251,26 @@ const router = createBrowserRouter([
 createStore(
   {
     data: {
-      source: undefined,
-      id: nanoid(8),
+      stage: FormStage.Start,
     },
   },
   {
     name: "form-state",
-  }
+  },
 )
+
+Sentry.setup()
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <StateMachineProvider>
       <DndProvider backend={HTML5Backend}>
-        <RouterProvider router={router} />
+        <ConfigProvider>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </ConfigProvider>
       </DndProvider>
     </StateMachineProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 )

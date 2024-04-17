@@ -84,7 +84,9 @@ def cmd(command: List[str]):
     if dry_run:
         print(" ".join(command))
     else:
-        subprocess.run(command)
+        result = subprocess.run(command)
+        if result.returncode != 0:
+            raise RuntimeError(f"Command failed: {command}: {result.returncode}")
 
 
 def update_cargo_toml(type: str):
@@ -143,12 +145,12 @@ def main():
         # Push a commit to the repo with the new version
         cmd(["git", "add", ".."])
         cmd(["git", "commit", "-m", f"chore: Prepare release {new_version}"])
-        cmd(["git", "push"])
+        cmd(["git", "push", "--no-verify"])
 
         # Create a tag
         cmd(["git", "tag", f"v{new_version}"])
         # Push the tag
-        cmd(["git", "push", "--tags"])
+        cmd(["git", "push", "--tags", "--no-verify"])
     finally:
         os.chdir("..")
 

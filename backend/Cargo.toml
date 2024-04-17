@@ -1,11 +1,11 @@
 [package]
 name = "clip-mash"
-version = "0.21.0-pre.10"
+version = "0.21.0-pre.12"
 edition = "2021"
 
 [dependencies]
 async-stream = "0.3.5"
-aubio = { version = "0.2.1", features = ["builtin"] }
+aubio = { version = "0.2.1", features = ["bindgen"] }
 axum = { version = "0.7.4", features = ["macros", "multipart"] }
 camino = { version = "1.1.6", features = ["serde1"] }
 color-eyre = "0.6.2"
@@ -32,7 +32,7 @@ sentry-tower = { version = "0.32.2", features = ["axum-matched-path"] }
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
 serde_yaml = "0.9.27"
-sqlx = { version = "0.7.2", features = ["runtime-tokio",  "sqlite"] }
+sqlx = { version = "0.7.2", features = ["runtime-tokio", "sqlite"] }
 tera = "1.19.1"
 time = { version = "0.3.29", features = ["formatting", "parsing", "macros"] }
 tokio = { version = "1.32.0", features = ["full"] }
@@ -47,7 +47,10 @@ utoipa = { version = "4.0.0", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "6.0.0", features = ["axum"] }
 walkdir = "2.4.0"
 webbrowser = "0.8.11"
-youtube_dl = { version = "0.10.0", features = ["tokio", "downloader-native-tls"] }
+youtube_dl = { version = "0.10.0", features = [
+    "tokio",
+    "downloader-native-tls",
+] }
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.40"

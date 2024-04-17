@@ -1,6 +1,6 @@
 [package]
 name = "clip-mash"
-version = "0.21.0-pre.11"
+version = "0.21.0-pre.10"
 edition = "2021"
 
 [dependencies]

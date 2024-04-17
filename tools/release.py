@@ -80,16 +80,19 @@ class ChangeLog:
         unreleased.entries = []
 
 
-def cmd(command: List[str], skip_dry_run=False):
+def cmd(command: List[str], skip_dry_run=False, error=None):
     if dry_run and not skip_dry_run:
         print(" ".join(command))
     else:
         result = subprocess.run(command)
         if result.returncode != 0:
             command_str = " ".join(command)
-            raise RuntimeError(
-                f"Command '{command_str}' failed with exit code {result.returncode}"
-            )
+            if error is not None:
+                raise RuntimeError(error)
+            else:
+                raise RuntimeError(
+                    f"Command '{command_str}' failed with exit code {result.returncode}"
+                )
 
 
 def update_cargo_toml(type: str):
@@ -118,6 +121,13 @@ def update_cargo_toml(type: str):
         raise Exception(f"Unknown version type: {type}")
 
     print(f"New version: {version}")
+    # check if the tag already exists
+    tag = f"v{version}"
+    cmd(
+        ["git", "rev-parse", "--verify", tag],
+        skip_dry_run=True,
+        error=f"Tag {tag} already exists",
+    )
 
     cargo_toml = cargo_toml_version_regex.sub(f'version = "{version}"', cargo_toml)
 
@@ -136,7 +146,11 @@ def main():
     os.chdir("backend")
     try:
         # make sure there are no uncommitted changes
-        cmd(["git", "diff", "--quiet"], skip_dry_run=True)
+        cmd(
+            ["git", "diff", "--quiet"],
+            skip_dry_run=True,
+            error="You have uncommitted changes.",
+        )
 
         new_version = update_cargo_toml(type)
         if type != "pre":

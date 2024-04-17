@@ -80,13 +80,16 @@ class ChangeLog:
         unreleased.entries = []
 
 
-def cmd(command: List[str]):
-    if dry_run:
+def cmd(command: List[str], skip_dry_run=False):
+    if dry_run and not skip_dry_run:
         print(" ".join(command))
     else:
         result = subprocess.run(command)
         if result.returncode != 0:
-            raise RuntimeError(f"Command failed: {command}: {result.returncode}")
+            command_str = " ".join(command)
+            raise RuntimeError(
+                f"Command '{command_str}' failed with exit code {result.returncode}"
+            )
 
 
 def update_cargo_toml(type: str):
@@ -132,6 +135,9 @@ def main():
     type = args[0]
     os.chdir("backend")
     try:
+        # make sure there are no uncommitted changes
+        cmd(["git", "diff", "--quiet"], skip_dry_run=True)
+
         new_version = update_cargo_toml(type)
         if type != "pre":
             change_log = ChangeLog.parse(Path("../CHANGELOG.md"))

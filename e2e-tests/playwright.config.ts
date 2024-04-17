@@ -70,10 +70,10 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "cargo run",
+    command: "target/release/clip-mash",
     url: "http://127.0.0.1:5174",
     reuseExistingServer: !process.env.CI,
     cwd: "../backend",
-    timeout: 180 * 1000,
+    timeout: 10 * 1000,
   },
 });

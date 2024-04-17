@@ -23,6 +23,8 @@ jobs:
         run: cd e2e-tests && npm ci
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+      - name: Build executable
+        run: cd backend && cargo build --release
       - name: Run Playwright tests
         run: cd e2e-tests && npx playwright test
       - uses: actions/upload-artifact@v3

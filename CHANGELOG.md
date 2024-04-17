@@ -14,6 +14,9 @@
 - feat: Use mimalloc as custom allocator
 - feat: migrate JSON configuration file to database
 
+## 0.20.1
+- fix: improve error handling for update checking (#74)
+
 ## 0.20.0
 - feat: Add Sentry integration to frontend and backend to track errors.
 - feat: Check for updates on startup, show a notification if there's a new version.

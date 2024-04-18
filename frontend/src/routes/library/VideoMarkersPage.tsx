@@ -420,7 +420,7 @@ function VideoMarkersPage() {
                 {formMode === "create" ? "Add new" : "Edit"} marker
               </h2>
               <div className="form-control">
-                <label className="label">
+                <label htmlFor="title" className="label">
                   <span className="label-text">Marker title</span>
                   <span className="label-text-alt text-error">
                     {errors.title?.message}
@@ -434,7 +434,7 @@ function VideoMarkersPage() {
                 />
               </div>
               <div className="form-control">
-                <label className="label">
+                <label htmlFor="start" className="label">
                   <span className="label-text">Start time</span>
                 </label>
                 <div className="flex w-full">
@@ -500,7 +500,10 @@ function VideoMarkersPage() {
               </div>
               {video.source === "Stash" && (
                 <div className="form-control">
-                  <label className="label cursor-pointer">
+                  <label
+                    htmlFor="createInStash"
+                    className="label cursor-pointer"
+                  >
                     <span className="label-text">
                       Create marker in Stash as well?
                     </span>

@@ -151,7 +151,7 @@ function AppConfigPage() {
         <h2 className="text-xl font-bold mb-2">Stash configuration</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="w-full self-center">
           <div className="form-control">
-            <label className="label">
+            <label className="label" htmlFor="stashUrl">
               <span className="label-text">URL of your Stash instance:</span>
             </label>
             <input
@@ -165,7 +165,7 @@ function AppConfigPage() {
           </div>
 
           <div className="form-control">
-            <label className="label">
+            <label className="label" htmlFor="apiKey">
               <span className="label-text">API key (optional):</span>
             </label>
             <input

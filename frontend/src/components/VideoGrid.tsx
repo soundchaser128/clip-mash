@@ -124,7 +124,7 @@ const VideoGrid: React.FC<Props> = ({
 
           <div className="flex gap-1">
             <div className="flex gap-1">
-              <label className="label">
+              <label className="label" htmlFor="source">
                 <span className="label-text">Video source</span>
               </label>
               <select
@@ -142,7 +142,7 @@ const VideoGrid: React.FC<Props> = ({
             </div>
 
             <div className="flex gap-1">
-              <label className="label">
+              <label className="label" htmlFor="sort">
                 <span className="label-text">Sort by</span>
               </label>
               <select
@@ -160,7 +160,7 @@ const VideoGrid: React.FC<Props> = ({
             </div>
             {!hideMarkerCountFilter && (
               <div className="flex gap-1">
-                <label className="label">
+                <label className="label" htmlFor="hasMarkers">
                   <span className="label-text">Has markers</span>
                 </label>
                 <select
@@ -178,7 +178,7 @@ const VideoGrid: React.FC<Props> = ({
             )}
 
             <div className="flex gap-1">
-              <label className="label">
+              <label className="label" htmlFor="isInteractive">
                 <span className="label-text">Interactive</span>
               </label>
               <select
@@ -208,7 +208,7 @@ const VideoGrid: React.FC<Props> = ({
       <div className="w-full flex justify-end">
         <span />
         <div className="flex items-center gap-1">
-          <label className="label">
+          <label className="label" htmlFor="showDetails">
             <span className="label-text">Show details</span>
           </label>
           <input
@@ -216,6 +216,7 @@ const VideoGrid: React.FC<Props> = ({
             className="toggle toggle-secondary"
             checked={showingDetails}
             onChange={(e) => setShowingDetails(e.target.checked)}
+            name="showDetails"
           />
         </div>
       </div>

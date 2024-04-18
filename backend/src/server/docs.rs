@@ -6,7 +6,7 @@ use super::handlers::music::SongUpload;
 use super::handlers::project::{CreateFunscriptBody, DescriptionData, ProjectCreateResponse};
 use super::types::*;
 use crate::data::database::{MarkerCount, VideoSource, VideoUpdate};
-use crate::server::handlers::{files, library, music, progress, project, stash, version};
+use crate::server::handlers::{files, library, music, progress, project, stash, system};
 use crate::service::description_generator::DescriptionType;
 use crate::service::directories::FolderType;
 use crate::service::generator::PaddingType;
@@ -54,7 +54,7 @@ use crate::service::video::AddVideosRequest;
         music::get_beats,
         music::upload_music,
         music::download_music,
-        version::get_version,
+        system::get_version,
     ),
     components(
         schemas(

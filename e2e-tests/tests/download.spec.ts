@@ -1,14 +1,15 @@
 import { test, expect } from "@playwright/test";
+import { restartServer } from "../lib/server";
 
 const videoUrls = [
-  // "https://rule34video.com/video/3073401/wattson-on-a-date-dzooworks-4k/",
-  // "https://rule34video.com/video/3096413/wattson-on-holiday-break-dzooworks/",
   "https://rule34video.com/video/3057656/wattson-yeero/",
   "https://rule34video.com/video/3154125/caustic-fucking-wraith-wattson-dzooworks/",
   "https://rule34video.com/video/3053449/wraith-dzooworks/",
 ];
 
 test("download some videos", async ({ page }) => {
+  await restartServer();
+
   await page.goto("/");
   await expect(page).toHaveTitle(/ClipMash/);
   await page.getByRole("link", { name: "Start" }).click();

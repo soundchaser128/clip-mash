@@ -7,14 +7,13 @@ use crate::service::new_version_checker::NewVersionChecker;
 use crate::service::stash_config::StashConfig;
 use crate::Result;
 
-pub mod debug;
 pub mod files;
 pub mod library;
 pub mod music;
 pub mod progress;
 pub mod project;
 pub mod stash;
-pub mod version;
+pub mod system;
 
 pub struct AppState {
     pub generator: CompilationGenerator,

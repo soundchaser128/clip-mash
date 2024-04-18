@@ -179,11 +179,17 @@ async fn run() -> Result<()> {
         .route("/config", post(handlers::stash::set_config))
         .route("/health", get(handlers::stash::get_health));
 
+    let system_routes = Router::new()
+        .route("/restart", post(handlers::system::restart))
+        .route("/sentry/error", post(handlers::system::sentry_error))
+        .route("/version", get(handlers::system::get_version))
+        .route("/health", get(handlers::system::get_health));
+
     let api_routes = Router::new()
         .nest("/project", project_routes)
         .nest("/library", library_routes)
         .nest("/stash", stash_routes)
-        .route("/version", get(handlers::version::get_version))
+        .nest("/system", system_routes)
         .route(
             "/progress/:id/stream",
             get(handlers::progress::get_progress_stream),
@@ -197,8 +203,7 @@ async fn run() -> Result<()> {
         .route("/song/:id/stream", get(handlers::music::stream_song))
         .route("/song/download", post(handlers::music::download_music))
         .route("/song/upload", post(handlers::music::upload_music))
-        .route("/song/:id/beats", get(handlers::music::get_beats))
-        .route("/debug/sentry-error", post(handlers::debug::sentry_error));
+        .route("/song/:id/beats", get(handlers::music::get_beats));
 
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))

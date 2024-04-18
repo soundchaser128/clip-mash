@@ -26,6 +26,7 @@ import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
 import VideoGrid from "@/components/VideoGrid"
 import PageInfo from "@/components/PageInfo"
+import {useCreateToast} from "@/hooks/useToast"
 
 export default function ListVideos() {
   const {actions} = useStateMachine({updateForm})
@@ -35,6 +36,7 @@ export default function ListVideos() {
   const [syncingVideo, setSyncingVideo] = useState<string>()
   const videos = page.content
   const [query] = useSearchParams()
+  const createToast = useCreateToast()
 
   const onOpenModal = (videoId: string) => {
     const queryString = query.toString()
@@ -70,7 +72,10 @@ export default function ListVideos() {
       )
     ) {
       const {deletedCount} = await cleanupVideos()
-      alert(`${deletedCount} videos deleted.`)
+      createToast({
+        type: "success",
+        message: `${deletedCount} videos deleted.`,
+      })
       revalidator.revalidate()
     }
   }

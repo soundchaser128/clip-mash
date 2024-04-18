@@ -2,10 +2,10 @@ import {ListVideoDto, ListVideoDtoPage, updateVideo} from "@/api"
 import VideoCard from "./VideoCard"
 import {useLoaderData, useNavigation, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
-import {HiFolder, HiXMark} from "react-icons/hi2"
+import {HiFolder, HiMagnifyingGlass, HiXMark} from "react-icons/hi2"
 import Pagination from "./Pagination"
 import useDebouncedSetQuery, {QueryPairs} from "@/hooks/useDebouncedQuery"
-import {useEffect, useState} from "react"
+import {useState} from "react"
 import {useConfig} from "@/hooks/useConfig"
 import AddTagModal from "./AddTagModal"
 import clsx from "clsx"
@@ -79,7 +79,7 @@ const VideoGrid: React.FC<Props> = ({
   const noVideos = videos.length === 0 && formEmpty && !isLoading
   const noVideosForFilter = videos.length === 0 && !formEmpty && !isLoading
 
-  const onSubmit = (values: FilterInputs) => {
+  function onSubmit(values: FilterInputs) {
     const hasQuery = !!values.query?.trim()
     const update: QueryPairs = [
       ["sort", values.sort],
@@ -95,18 +95,13 @@ const VideoGrid: React.FC<Props> = ({
     addOrReplaceParams(update)
   }
 
-  const onEditTitle = async (id: string, title: string) => {
+  async function onEditTitle(id: string, title: string) {
     await updateVideo(id, {title})
   }
 
-  const onShowTagModal = (video: ListVideoDto) => {
+  function onShowTagModal(video: ListVideoDto) {
     setEditingTags(video)
   }
-
-  useEffect(() => {
-    const subscription = watch(() => handleSubmit(onSubmit)())
-    return () => subscription.unsubscribe()
-  }, [handleSubmit, watch])
 
   return (
     <>
@@ -193,6 +188,11 @@ const VideoGrid: React.FC<Props> = ({
                 <option value="false">No</option>
               </select>
             </div>
+
+            <button type="submit" className="btn btn-primary btn-square btn-sm">
+              <HiMagnifyingGlass />
+            </button>
+
             <button
               type="button"
               onClick={() => reset(EMPTY_VALUES)}

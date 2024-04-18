@@ -8,13 +8,19 @@ const videoUrls = [
   "https://rule34video.com/video/3053449/wraith-dzooworks/",
 ];
 
-test("has title", async ({ page }) => {
+test("download some videos", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/ClipMash/);
   await page.getByRole("link", { name: "Start" }).click();
   await page.getByRole("link", { name: "Add videos" }).click();
+  await page.getByRole("link", { name: "Folder" }).click();
   await page.getByRole("link", { name: "Download" }).click();
-  const input = page.getByPlaceholder("Enter URLs separated by line");
-  await input.fill(videoUrls.join("\n"));
+  await page
+    .getByPlaceholder("Enter URLs separated by line")
+    .fill(videoUrls.join("\n"));
   await page.getByRole("button", { name: "Download" }).click();
+  await expect(page.getByText("Downloading 5 videos...")).toBeVisible();
+
+  const images = await page.getByRole("img").all();
+  expect(images).toHaveLength(videoUrls.length);
 });

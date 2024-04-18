@@ -465,7 +465,7 @@ function VideoMarkersPage() {
               </div>
 
               <div className="form-control">
-                <label className="label">
+                <label htmlFor="end" className="label">
                   <span className="label-text">End time</span>
                   <span className="label-text-alt text-error">
                     {errors.end?.message}

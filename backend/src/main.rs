@@ -65,8 +65,15 @@ async fn run() -> Result<()> {
     let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
     info!("using ffmpeg at {ffmpeg_location:?}");
 
-    let database_file = directories.database_file();
-    let database = Database::new(database_file.as_str()).await?;
+    let database_file = if env::var("CLIP_MASH_SQLITE_IN_MEMORY").is_ok() {
+        ":memory:".into()
+    } else {
+        directories.database_file().into_string()
+    };
+
+    info!("using database at {database_file:?}");
+
+    let database = Database::new(&database_file).await?;
     let generator =
         CompilationGenerator::new(directories.clone(), &ffmpeg_location, database.clone()).await?;
     migrations::run_async(

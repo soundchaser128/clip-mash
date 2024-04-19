@@ -7,11 +7,24 @@ async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+interface IsOk {
+  ok: boolean;
+}
+
+async function fetchHealth(): Promise<IsOk> {
+  try {
+    const response = await fetch(`${baseUrl}/api/system/health`);
+    return response;
+  } catch (e) {
+    return { ok: false };
+  }
+}
+
 export async function waitUntilHealthy() {
   let elapsed = 0;
 
   while (elapsed < serverTimeout) {
-    const response = await fetch(`${baseUrl}/api/system/health`);
+    const response = await fetchHealth();
     if (response.ok) {
       return;
     } else {
@@ -22,9 +35,13 @@ export async function waitUntilHealthy() {
 }
 
 export async function restartServer() {
-  await fetch(`${baseUrl}/api/system/restart`, {
-    method: "POST",
-  });
+  try {
+    await fetch(`${baseUrl}/api/system/restart`, {
+      method: "POST",
+    });
+  } catch (e) {
+    // ignored
+  }
 
   await waitUntilHealthy();
 }

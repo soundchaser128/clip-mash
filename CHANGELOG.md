@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.21.0
+
 - feat: Add separate settings page
 - feat: Allow cleaning up temporary files
 - fix: Better error reporting for clip generation

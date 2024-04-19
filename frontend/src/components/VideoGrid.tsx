@@ -47,6 +47,7 @@ const VideoGrid: React.FC<Props> = ({
   const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
     undefined,
   )
+  const [selectMode, setSelectMode] = useState(false)
 
   const {addOrReplaceParams, addOrReplaceParam, setQueryDebounced} =
     useDebouncedSetQuery()
@@ -62,7 +63,7 @@ const VideoGrid: React.FC<Props> = ({
 
   const config = useConfig()
   const videos = page.content
-  const {register, handleSubmit, watch, reset} = useForm<FilterInputs>({
+  const {register, handleSubmit, watch} = useForm<FilterInputs>({
     mode: "onChange",
     defaultValues: Object.fromEntries(params.entries()),
   })
@@ -118,7 +119,7 @@ const VideoGrid: React.FC<Props> = ({
           />
 
           <div className="flex gap-1">
-            <div className="flex gap-1">
+            <div className="flex items-center gap-1">
               <label className="label" htmlFor="source">
                 <span className="label-text">Video source</span>
               </label>
@@ -136,7 +137,7 @@ const VideoGrid: React.FC<Props> = ({
               </select>
             </div>
 
-            <div className="flex gap-1">
+            <div className="flex gap-1 items-center">
               <label className="label" htmlFor="sort">
                 <span className="label-text">Sort by</span>
               </label>
@@ -154,7 +155,7 @@ const VideoGrid: React.FC<Props> = ({
               </select>
             </div>
             {!hideMarkerCountFilter && (
-              <div className="flex gap-1">
+              <div className="flex gap-1 items-center">
                 <label className="label" htmlFor="hasMarkers">
                   <span className="label-text">Has markers</span>
                 </label>
@@ -172,7 +173,7 @@ const VideoGrid: React.FC<Props> = ({
               </div>
             )}
 
-            <div className="flex gap-1">
+            <div className="flex gap-1 items-center">
               <label className="label" htmlFor="isInteractive">
                 <span className="label-text">Interactive</span>
               </label>
@@ -189,16 +190,11 @@ const VideoGrid: React.FC<Props> = ({
               </select>
             </div>
 
-            <button type="submit" className="btn btn-primary btn-square btn-sm">
-              <HiMagnifyingGlass />
+            <button type="submit" className="btn btn-primary">
+              <HiMagnifyingGlass /> Search
             </button>
 
-            <button
-              type="button"
-              onClick={() => reset(EMPTY_VALUES)}
-              className="tooltip flex items-center hover:bg-gray-200 rounded-full p-2"
-              data-tip="Reset values"
-            >
+            <button type="reset" className="btn btn-ghost btn-square">
               <HiXMark />
             </button>
           </div>

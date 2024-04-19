@@ -1,9 +1,9 @@
 # Changelog
 
 ## Unreleased
+
 - feat: Add separate settings page
 - feat: Allow cleaning up temporary files
-- feat(experimental): Add an option on the video settings page to control how videos are padded when the aspect ratio doesn't fit (black, or a blurred version of the source video to fill up the empty space)
 - fix: Better error reporting for clip generation
 - feat: Add a slider for the total compilation duration
 - feat: Add a slider to control the spread of the clip lengths
@@ -15,15 +15,18 @@
 - feat: migrate JSON configuration file to database
 
 ## 0.20.1
+
 - fix: improve error handling for update checking (#74)
 
 ## 0.20.0
+
 - feat: Add Sentry integration to frontend and backend to track errors.
 - feat: Check for updates on startup, show a notification if there's a new version.
 - chore: update to DaisyUI 4.0
 - fix: Combined funscripts ran out of sync with the generated compilation after a while
 
 ## 0.19.0
+
 - feat: Description generator: Generate text descriptions (Markdown, JSON or YAML) for finished compilations
 - feat: Play video when hovering over the preview image (video library, video select page, marker list page)
 - fix: Make sure logs are written to the files, even if the application crashes during startup.
@@ -32,6 +35,7 @@
 - feat: Hide details in the video grid per default and add a toggle to show them
 
 ## 0.18.0
+
 - feat: Allow sorting clips by putting markers into groups.
 - feat: Save and load project data from disk
 - feat: Persist ffprobe JSON info in the database, in a separate table
@@ -43,12 +47,15 @@
 - feat: Allow adding tags to existing videos
 
 ## 0.17.2
+
 - fix: Crash when notifications aren't available
 
 ## 0.17.1
+
 - fix: Funscript generation with Stash videos was using the internal video ID instead of the Stash scene ID.
 
 ## 0.17.0
+
 - feat: Unified video library. You no longer need to choose between whether you want videos from Stash or from your local hard drive.
 - feat: Only re-encode clips when the source videos have different encoding parameters (width, height, FPS, codec). Clips will be
   created losslessly, without re-encoding if the source videos' encoding parameters are the same.
@@ -59,20 +66,24 @@
 - fix: Select all/Deselect all on the marker page now only selects the currently visible markers
 - feat: Add basic sorting options to the video library page
 - feat: Resolution can now be set freely via input fields, allowing more exotic resolutions and vertical videos, for example.
-- feat: Greatly improve OpenAPI docs. 
+- feat: Greatly improve OpenAPI docs.
 - refactor: Use OpenAPI generated client for the frontend
 - feat: Allow filtering videos by source
 
 ## 0.16.1
+
 - fix: add tooltips, don't run onSubmit when shifting clips around
 
 ## 0.16.0
+
 - feat: allow removing and rearranging clips (unless the video has its cuts synced to music)
 
 ## 0.15.1
+
 - fix(docker): ffmpeg wasn't working when the input source was a URL that had to be DNS resolved
 
 ## 0.15.0
+
 - feat: Add beat-based funscript generator
 - feat: Allow splitting markers
 - feat: Add OpenAPI docs (WIP)
@@ -86,15 +97,18 @@
 - feat: Improve ETA calculations
 
 ## 0.14.0
+
 - feat: Auotmated marker creation by detecting scene changes
 - fix: Add encoding parameters (resolution and codec name) to clip filenames
 
 ## 0.13.0
+
 - feat: show version number in footer
 - chore: update frontend and backend dependency versions
 - feat: add (almost) lossless encoding setting
 
 ## 0.12.0
+
 - feat: Allow specifying video encoding parameters (codec, quality and encoding effort)
 - feat: Change video list page to show all videos on a page instead of having to specify a path first
 - feat: Show ETA during clip creation
@@ -103,20 +117,24 @@
 - fix: Funscript file was not available for download when generating from local files
 
 ## 0.11.0
+
 - feat: Added browser notifications when downloads are finished or video generation is done
 - feat: Generate video and marker preview images for local videos and show them in the UI
 - feat: Added filter to local video list page
 
 ## 0.10.0
+
 - feat: Allow specifying weights for markers
 - feat: Added button to quickly add entire video as a marker
 - feat: Use ffprobe to detect the video length for local videos
 
 ## 0.9.1
+
 - fix: Show whether a video was downloaded via the app on the video list page
 - fix: Fixed a few style issues with smaller screens
 
 ## 0.9.0
+
 - feat: Allow downloading videos via `yt-dlp`
 - feat: Allow editing the marker start/end time fields
 - feat: Validate markers before saving them to the database
@@ -124,6 +142,7 @@
 - chore: move backend code into separate folder
 
 ## 0.8.0
+
 - feat: Generate clips based on a song's beats
 - feat: Add dedicated page for selecting markers for local videos
 - feat: Add clip options to clip preview page
@@ -131,31 +150,37 @@
 - refactor: generate typescript definitions based on Rust types
 
 ## 0.7.2
+
 - fix: mismatch between length of generated clips and music
 - feat: add logging to file, not just terminal
 
 ## 0.7.1
+
 - fix: assets folder was not being created
 
 ## 0.7.0
+
 - feat: Support for adding background music (#9)
 
 ## 0.6.0
+
 - feat: Allow using local videos (#8)
 - chore: Rename app to ClipMash
 - chore: Added eslint setup for Typescript code
 
 ## 0.5.1
+
 - docs: Added updated screenshots
 - chore: Fixed clippy warnings
 - fix: crash when reaching the end of the list of clips
 
 ## 0.5.0
+
 - feat: Added a `.funscript` file generator.
 - feat: Show more details about the scenes and performers used for selecting markers.
 - fix: Improved frontend error handling (404s are handled differently from other errors, show more details)
 - feat: Show existing configuration values when navigating to the configuration page
-- feat: Improve clip preview page: Show colored segments signifying the different clips, allow playing through 
+- feat: Improve clip preview page: Show colored segments signifying the different clips, allow playing through
   all the clips in one go.
 - fix: Fixed the "test credentials" button not showing an error when credentials were invalid
 - feat: Added links to the steps in the UI

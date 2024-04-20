@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: failures when fetching video encoding status shouldn't crash the app
+
 ## 0.21.0
 
 - feat: Add separate settings page

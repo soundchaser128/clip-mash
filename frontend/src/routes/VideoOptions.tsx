@@ -14,9 +14,14 @@ import {getFormState} from "@/helpers/form"
 const showPaddingOptions = false
 
 export const videoOptionsLoader: LoaderFunction = async () => {
-  const formState = getFormState()!
-  const needsEncode = await videosNeedEncoding(formState.videoIds || [])
-  return needsEncode
+  try {
+    const formState = getFormState()!
+    const needsEncode = await videosNeedEncoding(formState.videoIds || [])
+    return needsEncode
+  } catch (e) {
+    console.warn("failed to check video encoding status, returning true", e)
+    return true
+  }
 }
 
 type Inputs = Pick<

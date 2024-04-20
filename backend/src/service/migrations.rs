@@ -176,8 +176,16 @@ impl Migrator {
         }))
         .await;
         for (video_id, ffprobe) in ffprobe_infos {
-            if let Ok(ffprobe) = ffprobe {
-                self.database.ffprobe.set_info(&video_id, &ffprobe).await?;
+            match ffprobe {
+                Ok(ffprobe) => {
+                    self.database.ffprobe.set_info(&video_id, &ffprobe).await?;
+                }
+                Err(err) => {
+                    warn!(
+                        "failed to determine ffprobe info for video {}: {:?}",
+                        video_id, err
+                    );
+                }
             }
         }
 

@@ -21,7 +21,7 @@ module.exports = {
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-unused-vars": "warn",
     "no-alert": "warn",
-    // don't allow console.log, but allow console.error
-    "no-console": ["warn", { allow: ["error"] }],
+    // don't allow console.log, but allow error and warn
+    "no-console": ["warn", { allow: ["error", "warn"] }],
   },
 }

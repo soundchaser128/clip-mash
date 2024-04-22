@@ -1,5 +1,5 @@
 import {ListVideoDto, ListVideoDtoPage, updateVideo} from "@/api"
-import VideoCard from "./VideoCard"
+import VideoCard, {AspectRatio} from "./VideoCard"
 import {useLoaderData, useNavigation, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {HiFolder, HiMagnifyingGlass, HiXMark} from "react-icons/hi2"
@@ -29,11 +29,6 @@ interface FilterInputs {
   source?: string
 }
 
-const EMPTY_VALUES: FilterInputs = {
-  query: "",
-  sort: "title",
-}
-
 const VideoGrid: React.FC<Props> = ({
   editableTitles,
   editableTags,
@@ -48,7 +43,7 @@ const VideoGrid: React.FC<Props> = ({
   const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
     undefined,
   )
-  const [selectMode, setSelectMode] = useState(false)
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("wide")
 
   const {addOrReplaceParams, addOrReplaceParam, setQueryDebounced} =
     useDebouncedSetQuery()
@@ -203,7 +198,24 @@ const VideoGrid: React.FC<Props> = ({
       )}
 
       <div className="w-full flex justify-between py-2">
-        <PageSizeSelect />
+        <div className="flex gap-2">
+          <PageSizeSelect />
+          <div className="flex items-center gap-1">
+            <label className="label">
+              <span className="label-text">Preview image aspect ratio</span>
+            </label>
+
+            <select
+              value={aspectRatio}
+              onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
+              className="select select-sm select-bordered"
+            >
+              <option value="wide">Wide</option>
+              <option value="square">Square</option>
+              <option value="tall">Tall</option>
+            </select>
+          </div>
+        </div>
 
         <div className="flex items-center gap-1">
           <label className="label" htmlFor="showDetails">
@@ -253,7 +265,7 @@ const VideoGrid: React.FC<Props> = ({
             key={video.video.id}
             video={video}
             actionChildren={actionChildren && actionChildren(video)}
-            stashConfig={config}
+            stashConfig={config.stash}
             onImageClick={onVideoClick}
             disabled={isVideoDisabled ? isVideoDisabled(video) : false}
             onEditTitle={
@@ -267,6 +279,7 @@ const VideoGrid: React.FC<Props> = ({
                 : undefined
             }
             hideDetails={!showingDetails}
+            aspectRatio={aspectRatio}
           />
         ))}
       </section>

@@ -17,6 +17,8 @@ import HoverVideo from "./HoverVideo"
 import {Link, useLocation} from "react-router-dom"
 import {searchLink} from "@/helpers/links"
 
+export type AspectRatio = "tall" | "square" | "wide"
+
 const OverlayText: React.FC<{
   children: React.ReactNode
   className?: string
@@ -41,6 +43,7 @@ interface Props {
   onAddTag?: (video: ListVideoDto) => void
   zoomOnHover?: boolean
   hideDetails?: boolean
+  aspectRatio: AspectRatio
 }
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
@@ -73,6 +76,7 @@ const VideoCard: React.FC<Props> = ({
   onAddTag,
   zoomOnHover,
   hideDetails,
+  aspectRatio,
 }) => {
   const location = useLocation()
 
@@ -83,6 +87,7 @@ const VideoCard: React.FC<Props> = ({
         imageSource={getPreview(video.video, stashConfig)}
         videoSource={getVideo(video.video, stashConfig)}
         disabled={disabled}
+        aspectRatio={aspectRatio}
         className={clsx(
           "rounded-2xl",
           zoomOnHover &&
@@ -128,6 +133,7 @@ const VideoCard: React.FC<Props> = ({
           imageSource={getPreview(video.video, stashConfig)}
           videoSource={getVideo(video.video, stashConfig)}
           disabled={disabled}
+          aspectRatio={aspectRatio}
         />
       </figure>
       <section className="card-body gap-0">

@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-- fix: failures when fetching video encoding status shouldn't crash the app
+## 0.21.1
+
+- fix: Failures when fetching video encoding status shouldn't crash the app
+- fix: Pagination on Stash video page started at 0, not 1 as it's supposed to
+- feat: Added page size dropdowns to video pages
 
 ## 0.21.0
 

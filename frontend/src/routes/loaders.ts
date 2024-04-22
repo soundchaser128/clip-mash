@@ -233,8 +233,8 @@ export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const withMarkers = url.searchParams.get("withMarkers") === "true"
   const videos = await listStashVideos({
     query,
-    page: Number(url.searchParams.get("page")) ?? 1,
-    size: DEFAULT_PAGE_LENGTH,
+    page: Number(url.searchParams.get("page")) || 1,
+    size: Number(url.searchParams.get("size")) || DEFAULT_PAGE_LENGTH,
     withMarkers: withMarkers ? true : null,
   })
 
@@ -260,8 +260,8 @@ export const makeVideoLoader: (
     const query = url.searchParams
     const videos = await listVideos({
       hasMarkers: params.hasMarkers || parseBoolean(query.get("hasMarkers")),
-      page: Number(query.get("page")) ?? 0,
-      size: DEFAULT_PAGE_LENGTH,
+      page: Number(query.get("page")) || 0,
+      size: Number(query.get("size")) || DEFAULT_PAGE_LENGTH,
       query: query.get("query"),
       sort: query.get("sort"),
       source: query.get("source") as VideoSource | null,

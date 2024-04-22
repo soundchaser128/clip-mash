@@ -340,7 +340,7 @@ pub async fn get_marker_preview(
     }
 }
 
-#[derive(Deserialize, IntoParams)]
+#[derive(Deserialize, IntoParams, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ListMarkersQuery {
     pub video_ids: Option<String>,
@@ -359,10 +359,12 @@ pub async fn list_markers(
     state: State<Arc<AppState>>,
     Query(body): Query<ListMarkersQuery>,
 ) -> Result<Json<Vec<MarkerDto>>, AppError> {
+    info!("listing markers for {body:?}");
     let video_ids: Option<Vec<_>> = body
         .video_ids
         .map(|ids| ids.split(',').map(String::from).collect());
     if video_ids.is_none() || video_ids.as_ref().unwrap().is_empty() {
+        info!("no video IDs provided, returning empty list");
         return Ok(Json(vec![]));
     }
     let markers = state

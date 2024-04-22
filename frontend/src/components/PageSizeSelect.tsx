@@ -32,6 +32,7 @@ const PageSizeSelect: React.FC = () => {
         <option>60</option>
         <option>120</option>
         <option>240</option>
+        <option>480</option>
       </select>
     </div>
   )

@@ -7,7 +7,7 @@ module.exports = {
     "plugin:react/recommended",
   ],
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint", "react-hooks", "react"],
+  plugins: ["@typescript-eslint", "react-hooks", "react", "i18next"],
   root: true,
   env: {
     browser: true,
@@ -22,6 +22,7 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": "warn",
     "no-alert": "warn",
     // don't allow console.log, but allow error and warn
-    "no-console": ["warn", { allow: ["error", "warn"] }],
+    "no-console": ["warn", {allow: ["error", "warn"]}],
+    "i18next/no-literal-string": "warn",
   },
 }

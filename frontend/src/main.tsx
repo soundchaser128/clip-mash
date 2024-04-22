@@ -11,6 +11,7 @@ import {
 } from "react-router-dom"
 import "inter-ui/inter.css"
 import "./index.css"
+import "./i18n"
 
 import VideoOptions, {videoOptionsLoader} from "./routes/VideoOptions"
 import Progress from "./routes/CreateVideoPage"
@@ -52,6 +53,7 @@ import Sentry from "./sentry"
 import SentryDebug from "./routes/SentryDebug"
 import AppSettingsPage from "./routes/AppSettings"
 import TroubleshootingInfo from "./components/TroubleshootingInfo"
+import {useTranslation} from "react-i18next"
 
 async function logResponseError(response: Response) {
   let body
@@ -69,6 +71,7 @@ async function logResponseError(response: Response) {
 
 const ErrorBoundary = () => {
   const error = useRouteError()
+  const {t} = useTranslation()
 
   useEffect(() => {
     if (error instanceof Error) {
@@ -91,14 +94,10 @@ const ErrorBoundary = () => {
           </h1>
           {!is404 && (
             <div className="bg-error text-error-content p-2 rounded-lg self-start mb-4">
-              <p>
-                Status code <strong>{error.status}</strong>
-              </p>
+              <p>{t("error.statusCode", {status: error.status})}</p>
               {error.data.error && <p>{error.data.error}</p>}
               {error.data.request && (
-                <p>
-                  Request to <code>{error.data.request}</code> failed.
-                </p>
+                <p>{t("error.requestFailed", {request: error.data.request})}</p>
               )}
             </div>
           )}

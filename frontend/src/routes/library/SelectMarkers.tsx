@@ -260,6 +260,7 @@ const SelectMarkers: React.FC = () => {
                   imageSource={marker.screenshotUrl}
                   onImageClick={() => onCheckboxToggle(marker.id)}
                   disabled={!selectedMarker.selected}
+                  aspectRatio="wide"
                 />
               </figure>
 

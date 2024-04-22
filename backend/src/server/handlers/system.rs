@@ -8,6 +8,7 @@ use axum::Json;
 use serde_json::json;
 use tracing::{error, info, warn};
 
+use crate::data::database::Settings;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::service::new_version_checker::AppVersion;
@@ -33,6 +34,38 @@ pub async fn get_version(State(state): State<Arc<AppState>>) -> Result<Json<AppV
             }))
         }
     }
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/system/configuration",
+    responses(
+        (status = 200, description = "Returns the application configuration", body = Settings),
+    )
+)]
+#[axum::debug_handler]
+pub async fn get_config(state: State<Arc<AppState>>) -> Result<impl IntoResponse, AppError> {
+    let config = state.database.settings.fetch().await?;
+    Ok(Json(config))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/system/configuration",
+    request_body = Settings,
+    responses(
+        (status = 204, description = "Application configuration successfully set", body = ()),
+    )
+)]
+#[axum::debug_handler]
+pub async fn set_config(
+    state: State<Arc<AppState>>,
+    Json(config): Json<Settings>,
+) -> Result<Json<&'static str>, AppError> {
+    info!("setting config {:?}", config);
+    state.database.settings.set(config).await?;
+
+    Ok(Json("OK"))
 }
 
 #[axum::debug_handler]

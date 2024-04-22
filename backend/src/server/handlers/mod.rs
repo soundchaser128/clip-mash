@@ -31,11 +31,6 @@ impl AppState {
         Ok(settings.stash)
     }
 
-    pub async fn stash_config_optional(&self) -> Result<Option<StashConfig>> {
-        let settings = self.database.settings.fetch_optional().await?;
-        Ok(settings.map(|s| s.stash))
-    }
-
     pub async fn stash_api(&self) -> Result<StashApi> {
         let stash_config = self.stash_config().await?;
         Ok(StashApi::with_config(stash_config))

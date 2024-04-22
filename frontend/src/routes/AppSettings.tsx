@@ -4,6 +4,7 @@ import {useForm} from "react-hook-form"
 import ExternalLink from "../components/ExternalLink"
 import {
   FolderType,
+  Settings,
   cleanupFolder,
   getFileStats,
   getHealth,
@@ -16,10 +17,7 @@ import Loader from "@/components/Loader"
 import {formatBytes} from "@/helpers/formatting"
 import {useCreateToast} from "@/hooks/useToast"
 
-interface Inputs {
-  stashUrl: string
-  apiKey?: string | null
-}
+type Inputs = Settings
 
 interface HealthResult {
   success: boolean
@@ -70,8 +68,8 @@ const useFileStats = () => {
 async function testCredentials(inputs: Inputs): Promise<HealthResult> {
   try {
     const response = await getHealth({
-      apiKey: inputs.apiKey,
-      url: inputs.stashUrl,
+      apiKey: inputs.stash.apiKey,
+      url: inputs.stash.stashUrl,
     })
     return {success: true, message: response}
   } catch (e) {
@@ -87,8 +85,8 @@ function AppConfigPage() {
   const {watch, register, handleSubmit} = useForm<Inputs>({
     defaultValues: config,
   })
-  const urlValue = watch("stashUrl") || "http://localhost:9999"
-  const apiKeyValue = watch("apiKey")
+  const urlValue = watch("stash.stashUrl") || "http://localhost:9999"
+  const apiKeyValue = watch("stash.apiKey")
   const settingsPage = `${urlValue}/settings?tab=security`
   const [healthResult, setHealthResult] = useState<HealthResult>()
   const createToast = useCreateToast()
@@ -96,8 +94,8 @@ function AppConfigPage() {
 
   const onSubmit = async (inputs: Inputs) => {
     const health = await testCredentials(inputs)
-    inputs.apiKey = inputs.apiKey?.trim()
-    inputs.stashUrl = inputs.stashUrl.trim()
+    inputs.stash.apiKey = inputs.stash.apiKey?.trim()
+    inputs.stash.stashUrl = inputs.stash.stashUrl.trim()
 
     if (health.success) {
       await setConfig(inputs)
@@ -108,8 +106,10 @@ function AppConfigPage() {
 
   const onTestCredentials = useCallback(async () => {
     const response = await testCredentials({
-      stashUrl: urlValue,
-      apiKey: apiKeyValue,
+      stash: {
+        stashUrl: urlValue,
+        apiKey: apiKeyValue,
+      },
     })
     setHealthResult(response)
   }, [urlValue, apiKeyValue])
@@ -160,7 +160,7 @@ function AppConfigPage() {
               className="input input-bordered"
               defaultValue="http://localhost:9999"
               required
-              {...register("stashUrl", {required: true})}
+              {...register("stash.stashUrl", {required: true})}
             />
           </div>
 
@@ -172,7 +172,7 @@ function AppConfigPage() {
               type="password"
               placeholder="eyJhbGc..."
               className="input input-bordered"
-              {...register("apiKey")}
+              {...register("stash.apiKey")}
             />
             <label className="label">
               <span className="label-text-alt">

@@ -130,7 +130,8 @@ const AddStashVideoPage: React.FC = () => {
             <VideoCard
               key={video.id}
               video={{video, markerCount: video.markerCount}}
-              stashConfig={config}
+              stashConfig={config.stash}
+              aspectRatio="wide"
               actionChildren={
                 <>
                   <span />

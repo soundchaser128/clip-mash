@@ -1,11 +1,11 @@
 import {createContext, useContext, useState, useEffect} from "react"
-import {StashConfig, getConfig} from "../api"
+import {Settings, getConfig} from "../api"
 
-const ConfigContext = createContext<StashConfig | undefined>(undefined)
+const ConfigContext = createContext<Settings | undefined>(undefined)
 
 export const useConfig = () => {
   const config = useContext(ConfigContext)
-  return config
+  return config!
 }
 
 interface ConfigProviderProps {
@@ -15,7 +15,7 @@ interface ConfigProviderProps {
 export const ConfigProvider: React.FC<{children: React.ReactNode}> = ({
   children,
 }: ConfigProviderProps) => {
-  const [currentConfig, setCurrentConfig] = useState<StashConfig>()
+  const [currentConfig, setCurrentConfig] = useState<Settings>()
 
   useEffect(() => {
     if (!currentConfig) {

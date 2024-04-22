@@ -174,16 +174,15 @@ async fn run() -> Result<()> {
             post(handlers::project::generate_description),
         );
 
-    let stash_routes = Router::new()
-        .route("/config", get(handlers::stash::get_config))
-        .route("/config", post(handlers::stash::set_config))
-        .route("/health", get(handlers::stash::get_health));
+    let stash_routes = Router::new().route("/health", get(handlers::stash::get_health));
 
     let system_routes = Router::new()
         .route("/restart", post(handlers::system::restart))
         .route("/sentry/error", post(handlers::system::sentry_error))
         .route("/version", get(handlers::system::get_version))
-        .route("/health", get(handlers::system::get_health));
+        .route("/health", get(handlers::system::get_health))
+        .route("/configuration", get(handlers::system::get_config))
+        .route("/configuration", post(handlers::system::set_config));
 
     let api_routes = Router::new()
         .nest("/project", project_routes)

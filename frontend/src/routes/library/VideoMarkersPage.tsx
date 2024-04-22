@@ -408,7 +408,7 @@ function VideoMarkersPage() {
       <div className="flex gap-2">
         <Player
           className="w-2/3 max-h-[82vh]"
-          src={getVideoUrl(video, config)}
+          src={getVideoUrl(video, config.stash)}
         />
         <div className="flex flex-col w-1/3 justify-between max-h-[60vh] relative">
           {showingForm && (

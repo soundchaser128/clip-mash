@@ -14,6 +14,7 @@ import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../../api"
 import {useConfig} from "../../../hooks/useConfig"
 import useDebouncedSetQuery from "../../../hooks/useDebouncedQuery"
 import {useCreateToast} from "@/hooks/useToast"
+import PageSizeSelect from "@/components/PageSizeSelect"
 
 const AddStashVideoPage: React.FC = () => {
   const [search] = useSearchParams()
@@ -115,7 +116,11 @@ const AddStashVideoPage: React.FC = () => {
           <HiPlus /> Add entire page
         </button>
       </section>
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full my-4">
+      <section className="py-2">
+        <PageSizeSelect />
+      </section>
+
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full mb-4">
         {data.content.map((video) => {
           const videoBeingAdded =
             addingVideo === video.id || addingVideo === true

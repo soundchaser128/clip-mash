@@ -9,6 +9,7 @@ import {useEffect, useState} from "react"
 import {useConfig} from "@/hooks/useConfig"
 import AddTagModal from "./AddTagModal"
 import clsx from "clsx"
+import PageSizeSelect from "./PageSizeSelect"
 
 interface Props {
   editableTitles?: boolean
@@ -205,8 +206,9 @@ const VideoGrid: React.FC<Props> = ({
         </form>
       )}
 
-      <div className="w-full flex justify-end">
-        <span />
+      <div className="w-full flex justify-between py-2">
+        <PageSizeSelect />
+
         <div className="flex items-center gap-1">
           <label className="label">
             <span className="label-text">Show details</span>
@@ -244,7 +246,7 @@ const VideoGrid: React.FC<Props> = ({
       )}
 
       <section
-        className={clsx("grid grid-cols-1 lg:grid-cols-3 w-full my-4", {
+        className={clsx("grid grid-cols-1 lg:grid-cols-3 w-full mb-4", {
           "gap-3": showingDetails,
           "gap-1": !showingDetails,
         })}

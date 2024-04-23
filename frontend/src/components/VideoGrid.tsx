@@ -10,11 +10,15 @@ import {useConfig} from "@/hooks/useConfig"
 import AddTagModal from "./AddTagModal"
 import clsx from "clsx"
 import PageSizeSelect from "./PageSizeSelect"
+import useLocalStorage from "@/hooks/useLocalStorage"
 
 interface Props {
   editableTitles?: boolean
   editableTags?: boolean
-  actionChildren?: (video: ListVideoDto) => React.ReactNode
+  actionChildren?: (
+    video: ListVideoDto,
+    aspectRation: AspectRatio,
+  ) => React.ReactNode
   onVideoClick: (id: string) => void
   hideMarkerCountFilter?: boolean
   isVideoDisabled?: (video: ListVideoDto) => boolean
@@ -43,7 +47,10 @@ const VideoGrid: React.FC<Props> = ({
   const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
     undefined,
   )
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("wide")
+  const [aspectRatio, setAspectRatio] = useLocalStorage<AspectRatio>(
+    "videoGridAspectRatio",
+    "wide",
+  )
 
   const {addOrReplaceParams, addOrReplaceParam, setQueryDebounced} =
     useDebouncedSetQuery()
@@ -255,16 +262,21 @@ const VideoGrid: React.FC<Props> = ({
       )}
 
       <section
-        className={clsx("grid grid-cols-1 lg:grid-cols-3 w-full mb-4", {
+        className={clsx("grid grid-cols-1 w-full mb-4", {
           "gap-3": showingDetails,
           "gap-1": !showingDetails,
+          "lg:grid-cols-3": aspectRatio === "wide",
+          "lg:grid-cols-4": aspectRatio === "square",
+          "lg:grid-cols-6": aspectRatio === "tall",
         })}
       >
         {videos.map((video) => (
           <VideoCard
             key={video.video.id}
             video={video}
-            actionChildren={actionChildren && actionChildren(video)}
+            actionChildren={
+              actionChildren && actionChildren(video, aspectRatio)
+            }
             stashConfig={config.stash}
             onImageClick={onVideoClick}
             disabled={isVideoDisabled ? isVideoDisabled(video) : false}

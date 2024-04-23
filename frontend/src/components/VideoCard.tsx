@@ -100,7 +100,7 @@ const VideoCard: React.FC<Props> = ({
         disabled={disabled}
         aspectRatio={aspectRatio}
         className={clsx(
-          "rounded-2xl",
+          "rounded-lg",
           zoomOnHover &&
             "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
         )}

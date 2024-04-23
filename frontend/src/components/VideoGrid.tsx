@@ -204,39 +204,34 @@ const VideoGrid: React.FC<Props> = ({
         </form>
       )}
 
-      <div className="w-full flex justify-between py-2">
-        <div className="flex gap-2">
-          <PageSizeSelect />
-          <div className="flex items-center gap-1">
-            <label className="label">
-              <span className="label-text">Preview image aspect ratio</span>
-            </label>
-
-            <select
-              value={aspectRatio}
-              onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
-              className="select select-sm select-bordered"
-            >
-              <option value="wide">Wide</option>
-              <option value="square">Square</option>
-              <option value="tall">Tall</option>
-            </select>
-          </div>
-        </div>
-
+      <section className="w-full flex gap-2 py-4 items-center">
+        <PageSizeSelect />
         <div className="flex items-center gap-1">
-          <label className="label" htmlFor="showDetails">
-            <span className="label-text">Show details</span>
+          <label className="label">
+            <span className="label-text">Preview image aspect ratio</span>
           </label>
-          <input
-            type="checkbox"
-            className="toggle toggle-secondary"
-            checked={showingDetails}
-            onChange={(e) => setShowingDetails(e.target.checked)}
-            name="showDetails"
-          />
+
+          <select
+            value={aspectRatio}
+            onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
+            className="select select-sm select-bordered"
+          >
+            <option value="wide">Wide</option>
+            <option value="square">Square</option>
+            <option value="tall">Tall</option>
+          </select>
         </div>
-      </div>
+        <label className="label" htmlFor="showDetails">
+          <span className="label-text">Show details</span>
+        </label>
+        <input
+          type="checkbox"
+          className="toggle toggle-secondary"
+          checked={showingDetails}
+          onChange={(e) => setShowingDetails(e.target.checked)}
+          name="showDetails"
+        />
+      </section>
 
       <AddTagModal
         video={editingTags}

@@ -166,6 +166,8 @@ impl MarkerDtoConverter {
     }
 
     fn stream_url(&self, source: VideoSource, video_id: &str, stash_id: Option<i64>) -> String {
+        use crate::data::alexandria::CONTENT_URL;
+
         match source {
             VideoSource::Stash => {
                 let stash_id = stash_id.expect("stash video must have scene id");
@@ -173,6 +175,9 @@ impl MarkerDtoConverter {
             }
             VideoSource::Folder | VideoSource::Download => {
                 format!("/api/library/video/{}/file", video_id)
+            }
+            VideoSource::Alexandria => {
+                format!("{CONTENT_URL}/content/{video_id}.mp4")
             }
         }
     }

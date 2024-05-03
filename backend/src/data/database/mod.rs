@@ -71,6 +71,7 @@ impl fmt::Display for VideoSource {
             VideoSource::Folder => write!(f, "folder"),
             VideoSource::Download => write!(f, "download"),
             VideoSource::Stash => write!(f, "stash"),
+            VideoSource::Alexandria => write!(f, "alexandria"),
         }
     }
 }

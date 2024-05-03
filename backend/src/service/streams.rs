@@ -51,6 +51,11 @@ impl StreamUrlService {
                 .find(|v| v.video_id() == video_id)
                 .and_then(|v| v.stash_scene_id())
                 .map(|stash_id| self.stash_api.get_stream_url(stash_id)),
+
+            VideoSource::Alexandria => {
+                use crate::data::alexandria::CONTENT_URL;
+                Some(format!("{CONTENT_URL}/content/{video_id}.mp4"))
+            }
         }
     }
 

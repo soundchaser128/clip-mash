@@ -300,6 +300,10 @@ impl ScriptBuilder {
                     info!("trying to load funscript from {}", path);
                     FunScript::load(path).await
                 }
+                VideoSource::Alexandria => {
+                    warn!("alexandria videos do not have funscripts");
+                    continue;
+                }
             };
 
             match script {

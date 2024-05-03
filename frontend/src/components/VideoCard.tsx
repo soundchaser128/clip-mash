@@ -55,6 +55,8 @@ interface Props {
   zoomOnHover?: boolean
   hideDetails?: boolean
   aspectRatio: AspectRatio
+  getThumbnailUrl?: (video: VideoDto) => string
+  getVideoUrl?: (video: VideoDto) => string
 }
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
@@ -88,15 +90,21 @@ const VideoCard: React.FC<Props> = ({
   zoomOnHover,
   hideDetails,
   aspectRatio,
+  getVideoUrl,
+  getThumbnailUrl,
 }) => {
   const location = useLocation()
+  const videoUrlFn = getVideoUrl ?? getVideo
+  const thumbnailUrlFn = getThumbnailUrl ?? getPreview
+  const videoUrl = videoUrlFn(video.video, stashConfig)
+  const thumbnailUrl = thumbnailUrlFn(video.video, stashConfig)
 
   if (hideDetails) {
     return (
       <HoverVideo
         onImageClick={() => onImageClick && onImageClick(video.video.id)}
-        imageSource={getPreview(video.video, stashConfig)}
-        videoSource={getVideo(video.video, stashConfig)}
+        imageSource={thumbnailUrl}
+        videoSource={videoUrl}
         disabled={disabled}
         aspectRatio={aspectRatio}
         className={clsx(
@@ -148,8 +156,8 @@ const VideoCard: React.FC<Props> = ({
       <figure>
         <HoverVideo
           onImageClick={() => onImageClick && onImageClick(video.video.id)}
-          imageSource={getPreview(video.video, stashConfig)}
-          videoSource={getVideo(video.video, stashConfig)}
+          imageSource={thumbnailUrl}
+          videoSource={videoUrl}
           disabled={disabled}
           aspectRatio={aspectRatio}
         />

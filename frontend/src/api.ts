@@ -116,6 +116,7 @@ export const VideoSource = {
   Folder: "Folder",
   Download: "Download",
   Stash: "Stash",
+  Alexandria: "Alexandria",
 } as const
 
 export type VideoQuality = (typeof VideoQuality)[keyof typeof VideoQuality]

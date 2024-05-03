@@ -6,6 +6,7 @@ use utoipa::ToSchema;
 use crate::Result;
 
 const BASE_URL: &str = "https://alexandria.soundchaser128.xyz";
+pub const CONTENT_URL: &str = "https://content-next.soundchaser128.xyz";
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -45,7 +46,12 @@ impl AlexandriaApi {
         Self { client }
     }
 
-    pub async fn fetch_videos(&self, query: Option<&str>, page: i64, per_page: i64) -> Result<AlexandriaVideoPage> {
+    pub async fn fetch_videos(
+        &self,
+        query: Option<&str>,
+        page: i64,
+        per_page: i64,
+    ) -> Result<AlexandriaVideoPage> {
         let page = page.to_string();
         let size = per_page.to_string();
 

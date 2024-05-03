@@ -18,6 +18,7 @@ import {
   getNewId,
   getVideo,
   listMarkers,
+  listAlexandriaVideos,
 } from "@/api"
 import {FormState} from "@/types/form-state"
 import {
@@ -271,3 +272,16 @@ export const makeVideoLoader: (
 
     return videos
   }
+
+export const alexandriaVideoLoader: LoaderFunction = async ({request}) => {
+  const url = new URL(request.url)
+  const query = url.searchParams
+  const videos = await listAlexandriaVideos({
+    page: Number(query.get("page")) || 0,
+    size: Number(query.get("size")) || DEFAULT_PAGE_LENGTH,
+    query: query.get("query"),
+    sort: query.get("sort"),
+  })
+
+  return {videos}
+}

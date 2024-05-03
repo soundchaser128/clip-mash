@@ -1,4 +1,9 @@
-import {HiArchiveBox, HiArrowDownTray, HiFolder} from "react-icons/hi2"
+import {
+  HiArchiveBox,
+  HiArrowDownTray,
+  HiBookOpen,
+  HiFolder,
+} from "react-icons/hi2"
 import {Link} from "react-router-dom"
 
 const AddVideosPage = () => {
@@ -34,6 +39,14 @@ const AddVideosPage = () => {
         <Link to="/library/add/stash" className="btn btn-primary btn-lg w-48">
           <HiArchiveBox />
           Stash
+        </Link>
+
+        <Link
+          to="/library/add/alexandria"
+          className="btn btn-primary btn-lg w-48"
+        >
+          <HiBookOpen />
+          Alexandria
         </Link>
       </div>
     </>

@@ -44,6 +44,9 @@ pub enum AddVideosRequest {
     Stash {
         scene_ids: Vec<i64>,
     },
+    // Alexandria {
+    //     ids: Vec<String>,
+    // }
 }
 
 pub struct VideoService {
@@ -319,6 +322,7 @@ impl VideoService {
                 futures.await
             }
             AddVideosRequest::Stash { scene_ids } => self.persist_stash_video(scene_ids).await,
+            // AddVideosRequest::Alexandria { ids } => self.persist_alexandria_videos(ids).await,
         }
     }
 

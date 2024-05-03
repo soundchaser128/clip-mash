@@ -12,6 +12,7 @@ use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
+use crate::data::alexandria::AlexandriaApi;
 use crate::data::database::Database;
 use crate::server::docs::ApiDoc;
 use crate::server::handlers::AppState;
@@ -88,6 +89,7 @@ async fn run() -> Result<()> {
         directories,
         ffmpeg_location,
         new_version_checker: NewVersionChecker::new(),
+        alexandria: AlexandriaApi::new(reqwest::Client::new()),
     });
 
     let library_routes = Router::new()
@@ -115,6 +117,8 @@ async fn run() -> Result<()> {
         .route("/video/cleanup", post(handlers::library::cleanup_videos))
         // list videos on stash
         .route("/video/stash", get(handlers::library::list_stash_videos))
+        // list alexandria videos
+        .route("/video/alexandria", get(handlers::library::list_alexandria_videos))
         // get details on a single video
         .route("/video/:id", get(handlers::library::get_video))
         // delete a video

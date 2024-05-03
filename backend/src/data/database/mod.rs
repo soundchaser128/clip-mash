@@ -34,6 +34,7 @@ pub enum VideoSource {
     Folder,
     Download,
     Stash,
+    Alexandria,
 }
 
 impl FromStr for VideoSource {

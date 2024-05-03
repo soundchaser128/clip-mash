@@ -12,6 +12,7 @@ use tower::ServiceExt;
 use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
 
+use crate::data::alexandria::AlexandriaVideoPage;
 use crate::data::database::{MarkerCount, VideoSearchQuery, VideoSource, VideoUpdate};
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
@@ -641,4 +642,33 @@ pub async fn migrate_preview_images(State(state): State<Arc<AppState>>) -> Resul
     migrator.migrate_preview_images().await?;
 
     Ok(())
+}
+
+#[derive(Deserialize, Debug, IntoParams)]
+pub struct AlexandriaVideoQuery {
+    pub query: Option<String>,
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/library/video/alexandria",
+    params(AlexandriaVideoQuery, PageParameters),
+    responses(
+        (status = 200, description = "Lists all videos with given query", body = AlexandriaVideoPage),
+    )
+)]
+#[axum::debug_handler]
+pub async fn list_alexandria_videos(
+    State(state): State<Arc<AppState>>,
+    Query(page): Query<PageParameters>,
+    Query(query): Query<AlexandriaVideoQuery>,
+) -> Result<Json<AlexandriaVideoPage>, AppError> {
+    info!("listing alexandria videos with page {page:?} and query {query:?}");
+
+    let videos = state
+        .alexandria
+        .fetch_videos(query.query.as_deref(), page.page(), page.size())
+        .await?;
+
+    Ok(Json(videos))
 }

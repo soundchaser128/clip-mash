@@ -1,3 +1,4 @@
+use crate::data::alexandria::AlexandriaApi;
 use crate::data::database::Database;
 use crate::data::stash_api::StashApi;
 use crate::service::commands::ffmpeg::FfmpegLocation;
@@ -21,6 +22,7 @@ pub struct AppState {
     pub directories: Directories,
     pub ffmpeg_location: FfmpegLocation,
     pub new_version_checker: NewVersionChecker,
+    pub alexandria: AlexandriaApi,
 }
 
 impl AppState {

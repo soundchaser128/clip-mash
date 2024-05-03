@@ -28,6 +28,7 @@ import {
   stashVideoLoader,
   makeVideoLoader,
   videoDetailsLoader,
+  alexandriaVideoLoader,
 } from "./routes/loaders"
 import {DndProvider} from "react-dnd"
 import {HTML5Backend} from "react-dnd-html5-backend"
@@ -52,6 +53,7 @@ import Sentry from "./sentry"
 import SentryDebug from "./routes/SentryDebug"
 import AppSettingsPage from "./routes/AppSettings"
 import TroubleshootingInfo from "./components/TroubleshootingInfo"
+import AddAlexandriaVideosPage from "./routes/library/add/AddAlexandriaVideosPage"
 
 async function logResponseError(response: Response) {
   let body
@@ -188,6 +190,11 @@ const router = createBrowserRouter([
             path: "library/add/stash",
             element: <AddStashVideoPage />,
             loader: stashVideoLoader,
+          },
+          {
+            path: "library/add/alexandria",
+            element: <AddAlexandriaVideosPage />,
+            loader: alexandriaVideoLoader,
           },
           {
             path: "/library/select",

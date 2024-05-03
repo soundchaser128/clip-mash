@@ -184,25 +184,25 @@ async fn run() -> Result<()> {
         .route("/configuration", get(handlers::system::get_config))
         .route("/configuration", post(handlers::system::set_config));
 
+    let music_routes = Router::new()
+        .route("/", get(handlers::music::list_songs))
+        .route("/:id/stream", get(handlers::music::stream_song))
+        .route("/download", post(handlers::music::download_music))
+        .route("/upload", post(handlers::music::upload_music))
+        .route("/:id/beats", get(handlers::music::get_beats));
+
+    let progress_routes = Router::new()
+        .route("/:id/stream", get(handlers::progress::get_progress_stream))
+        .route("/:id/info", get(handlers::progress::get_progress_info))
+        .route("/:id", delete(handlers::progress::delete_progress));
+
     let api_routes = Router::new()
         .nest("/project", project_routes)
         .nest("/library", library_routes)
         .nest("/stash", stash_routes)
         .nest("/system", system_routes)
-        .route(
-            "/progress/:id/stream",
-            get(handlers::progress::get_progress_stream),
-        )
-        .route(
-            "/progress/:id/info",
-            get(handlers::progress::get_progress_info),
-        )
-        .route("/progress/:id", delete(handlers::progress::delete_progress))
-        .route("/song", get(handlers::music::list_songs))
-        .route("/song/:id/stream", get(handlers::music::stream_song))
-        .route("/song/download", post(handlers::music::download_music))
-        .route("/song/upload", post(handlers::music::upload_music))
-        .route("/song/:id/beats", get(handlers::music::get_beats));
+        .nest("/song", music_routes)
+        .nest("/progress", progress_routes);
 
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))

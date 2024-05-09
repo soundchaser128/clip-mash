@@ -10,7 +10,7 @@ function toVideDto(video: AlexandriaVideo): ListVideoDto {
   return {
     markerCount: 0,
     video: {
-      createdOn: new Date(video.createdOn).getTime(),
+      createdOn: new Date(video.createdOn).getTime() / 1000,
       duration: 0.0,
       fileName: "",
       filePath: null,
@@ -70,7 +70,7 @@ const AddAlexandriaVideosPage = () => {
 
       <Pagination
         totalPages={data.videos.totalPages}
-        currentPage={data.videos.number}
+        currentPage={data.videos.number + 1}
         startIndex={1}
       />
     </>

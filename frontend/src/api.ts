@@ -790,7 +790,7 @@ export interface AppVersion {
 }
 
 export interface AppConfig {
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface AlexandriaVideo {

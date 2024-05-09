@@ -169,7 +169,7 @@ const AddStashVideoPage: React.FC = () => {
       <Pagination
         totalPages={data.totalPages}
         currentPage={data.pageNumber}
-        startIndex={1}
+        startIndex={0}
       />
     </>
   )

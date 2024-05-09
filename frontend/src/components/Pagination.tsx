@@ -39,6 +39,8 @@ const Pagination: React.FC<PaginationProps> = ({
     (currentPage - 1).toString(),
   )
 
+  console.log({currentPage, nextLink, prevLink})
+
   if (totalPages <= 1) {
     return null
   }

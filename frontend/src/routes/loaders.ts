@@ -276,8 +276,9 @@ export const makeVideoLoader: (
 export const alexandriaVideoLoader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
   const query = url.searchParams
+  console.log(query.toString())
   const videos = await listAlexandriaVideos({
-    page: Number(query.get("page")) || 0,
+    page: Number(query.get("page")) || 1,
     size: Number(query.get("size")) || DEFAULT_PAGE_LENGTH,
     query: query.get("query"),
     sort: query.get("sort"),

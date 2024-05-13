@@ -43,9 +43,9 @@ tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 url = { version = "2.4.1", features = ["serde"] }
 utoipa = { version = "4.0.0", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "6.0.0", features = ["axum"] }
+utoipa-swagger-ui = { version = "7.0", features = ["axum"] }
 walkdir = "2.4.0"
-webbrowser = "0.8.11"
+webbrowser = "1.0"
 youtube_dl = { version = "0.10.0", features = [
     "tokio",
     "downloader-native-tls",
@@ -56,7 +56,7 @@ tar = "0.4.40"
 xz2 = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]
-zip = "0.6.6"
+zip = "1.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 aubio = { version = "0.2.1", features = ["bindgen"] }

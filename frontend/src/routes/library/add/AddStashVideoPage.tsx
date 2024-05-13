@@ -28,7 +28,7 @@ const AddStashVideoPage: React.FC = () => {
   const createToast = useCreateToast()
 
   useEffect(() => {
-    if (!config) {
+    if (!config.stash.stashUrl) {
       navigate("/settings")
       createToast({
         message: "Please configure your Stash settings first.",

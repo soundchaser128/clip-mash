@@ -21,6 +21,7 @@ import useUndo from "use-undo"
 import {produce} from "immer"
 import ClipSettingsForm from "./settings/ClipSettingsForm"
 import {formatSeconds} from "@/helpers/time"
+import {getClipUrl} from "@/helpers/clips"
 
 interface IncludedClip {
   clip: Clip
@@ -176,18 +177,6 @@ const ClipsTimeline: React.FC<ClipsTimelineProps> = ({
       })}
     </div>
   )
-}
-
-function getClipUrl(
-  streams: Record<string, string>,
-  currentClip: Clip | undefined,
-) {
-  if (!currentClip) {
-    return undefined
-  } else {
-    const streamUrl = streams[currentClip.videoId]
-    return `${streamUrl}#t=${currentClip.range[0]},${currentClip.range[1]}`
-  }
 }
 
 function PreviewClips() {

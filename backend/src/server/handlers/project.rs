@@ -81,18 +81,53 @@ async fn create_video_inner(
     Ok(())
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/project/clips/interactive",
+    request_body = CreateInteractiveClipsBody,
+    responses(
+        (status = 200, description = "", body = ClipsResponse),
+    )
+)]
 #[axum::debug_handler]
 pub async fn fetch_clips_interactive(
     state: State<Arc<AppState>>,
     body: Json<CreateInteractiveClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
-    let all_markers = state
+    let all_markers: Vec<_> = state
         .database
         .markers
         .list_markers(None, None, Some(&body.query))
-        .await?;
+        .await?
+        .into_iter()
+        .map(|m| SelectedMarker {
+            id: m.rowid.unwrap(),
+            video_id: m.video_id,
+            selected_range: (m.start_time, m.end_time),
+            index_within_video: m.index_within_video as usize,
+            selected: Some(true),
+            title: m.title,
+            loops: 1,
+            source: m.source,
+        })
+        .collect();
 
-    unimplemented!()
+    let options = CreateClipsBody {
+        clip_order: ClipOrder::Scene,
+        markers: all_markers,
+        seed: None,
+        clips: ClipOptions {
+            clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
+                clip_duration: body.clip_duration,
+                divisors: vec![1., 1., 1., 1.],
+                length: None,
+                min_clip_duration: Some(1.0),
+            }),
+            order: ClipOrder::Scene,
+        },
+    };
+
+    fetch_clips(state, Json(options)).await
 }
 
 #[derive(Serialize, ToSchema)]

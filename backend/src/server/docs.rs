@@ -42,6 +42,7 @@ use crate::service::video::AddVideosRequest;
         project::create_video,
         project::download_video,
         project::fetch_clips,
+        project::fetch_clips_interactive,
         project::get_beat_funscript,
         project::get_combined_funscript,
         project::get_new_id,
@@ -116,7 +117,8 @@ use crate::service::video::AddVideosRequest;
             FolderType,
             PaddingType,
             Settings,
-            AppConfig
+            AppConfig,
+            CreateInteractiveClipsBody
         )
     ),
     tags(

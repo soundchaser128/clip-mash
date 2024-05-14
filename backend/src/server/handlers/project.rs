@@ -81,6 +81,20 @@ async fn create_video_inner(
     Ok(())
 }
 
+#[axum::debug_handler]
+pub async fn fetch_clips_interactive(
+    state: State<Arc<AppState>>,
+    body: Json<CreateInteractiveClipsBody>,
+) -> Result<Json<ClipsResponse>, AppError> {
+    let all_markers = state
+        .database
+        .markers
+        .list_markers(None, None, Some(&body.query))
+        .await?;
+
+    unimplemented!()
+}
+
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectCreateResponse {

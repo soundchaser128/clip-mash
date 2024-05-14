@@ -52,6 +52,7 @@ import Sentry from "./sentry"
 import SentryDebug from "./routes/SentryDebug"
 import AppSettingsPage from "./routes/AppSettings"
 import TroubleshootingInfo from "./components/TroubleshootingInfo"
+import ClipMashTv from "./routes/Tv"
 
 async function logResponseError(response: Response) {
   let body
@@ -159,6 +160,10 @@ const router = createBrowserRouter([
         index: true,
         element: <HomePage />,
         loader: newIdLoader,
+      },
+      {
+        path: "/tv",
+        element: <ClipMashTv />,
       },
       {
         element: <CreateLayout />,

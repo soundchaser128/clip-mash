@@ -461,6 +461,12 @@ pub struct CreateClipsBody {
     pub clips: ClipOptions,
 }
 
+#[derive(Deserialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateInteractiveClipsBody {
+    pub query: String,
+}
+
 #[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ClipsResponse {

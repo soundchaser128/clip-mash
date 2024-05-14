@@ -606,12 +606,16 @@ mod test {
         }
         let result = database
             .markers
-            .list_markers(Some(&[video.id]), None)
+            .list_markers(Some(&[video.id]), None, None)
             .await
             .unwrap();
         assert_eq!(5, result.len());
 
-        let result = database.markers.list_markers(None, None).await.unwrap();
+        let result = database
+            .markers
+            .list_markers(None, None, None)
+            .await
+            .unwrap();
         assert_eq!(5, result.len());
     }
 

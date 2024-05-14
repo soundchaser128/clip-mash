@@ -370,7 +370,7 @@ pub async fn list_markers(
     let markers = state
         .database
         .markers
-        .list_markers(video_ids.as_deref(), None)
+        .list_markers(video_ids.as_deref(), None, None)
         .await?;
     let stash_api = state.stash_api().await?;
     let converter = MarkerDtoConverter::new(stash_api);

@@ -157,6 +157,10 @@ async fn run() -> Result<()> {
 
     let project_routes = Router::new()
         .route("/clips", post(handlers::project::fetch_clips))
+        .route(
+            "/clips/interactive",
+            post(handlers::project::fetch_clips_interactive),
+        )
         .route("/id", get(handlers::project::get_new_id))
         .route("/create", post(handlers::project::create_video))
         .route(

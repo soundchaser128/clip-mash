@@ -1,3 +1,4 @@
+use color_eyre::eyre::bail;
 use sqlx::{FromRow, QueryBuilder, SqliteConnection, SqliteExecutor, SqlitePool};
 use tracing::{debug, info};
 
@@ -240,7 +241,13 @@ impl MarkersDatabase {
         &self,
         video_ids: Option<&[String]>,
         sort: Option<&str>,
+        query: Option<&str>,
     ) -> Result<Vec<DbMarkerWithVideo>> {
+        // video_ids and query are mutually exclusive
+        if video_ids.is_some() && query.is_some() {
+            bail!("video_ids and query are mutually exclusive");
+        }
+
         info!("fetching markers with video ids {video_ids:?}");
         let mut query_builder = QueryBuilder::new(
             "SELECT m.video_id, m.rowid, m.start_time, m.end_time, 
@@ -250,6 +257,7 @@ impl MarkersDatabase {
             FROM markers m
             INNER JOIN videos v ON m.video_id = v.id ",
         );
+
         if let Some(video_ids) = video_ids {
             query_builder.push("WHERE video_id IN (");
             let mut list = query_builder.separated(",");
@@ -258,6 +266,12 @@ impl MarkersDatabase {
             }
             list.push_unseparated(") ");
         }
+
+        if let Some(query) = query {
+            query_builder.push("WHERE m.title LIKE ");
+            query_builder.push_bind(format!("%{}%", query));
+        }
+
         query_builder.push("ORDER BY ");
         let order = match sort {
             Some("duration") => "(m.end_time - m.start_time DESC)",

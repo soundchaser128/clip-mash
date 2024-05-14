@@ -9,7 +9,7 @@ import {updateForm} from "./actions"
 import {useEffect, useRef, useState} from "react"
 import {FormStage, SerializedFormState} from "../types/form-state"
 import Layout from "../components/Layout"
-import {HiFolder, HiRocketLaunch} from "react-icons/hi2"
+import {HiFolder, HiPlay, HiRocketLaunch} from "react-icons/hi2"
 import {AppVersion} from "@/api"
 
 const HomePage = () => {
@@ -98,6 +98,12 @@ const HomePage = () => {
               <HiFolder className="mr-2 w-6 h-6" />
               Open project
             </button>
+            <span className="divider">OR</span>
+
+            <Link to="/tv" className="btn btn-lg btn-primary self-center">
+              <HiPlay className="mr-2 w-6 h-6" />
+              TV
+            </Link>
           </div>
         </div>
       </div>

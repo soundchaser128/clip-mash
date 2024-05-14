@@ -1,23 +1,12 @@
 import {ClipsResponse, fetchClipsInteractive} from "@/api"
+import {
+  Player,
+  PlayerContextProvider,
+  PlayerControls,
+} from "@/components/VideoPlayer"
 import {getClipUrl} from "@/helpers/clips"
 import {useEffect, useRef, useState} from "react"
 import {useMatch, useParams} from "react-router-dom"
-
-const suggestions = [
-  "Blowjob",
-  "Doggy Style",
-  "Missionary",
-  "Reverse Cowgirl",
-  "Cowgirl",
-  "Anal",
-  "Titty Fucking",
-  "Masturbation",
-]
-
-function randomSuggestion(): string {
-  const index = Math.floor(Math.random() * suggestions.length)
-  return suggestions[index]
-}
 
 const TvWatchPage: React.FC = () => {
   const {query} = useParams()
@@ -49,23 +38,27 @@ const TvWatchPage: React.FC = () => {
   }
 
   return (
-    <main className="w-full h-screen flex flex-row">
-      <section className="grow">
-        <video
+    <PlayerContextProvider>
+      <main className="w-full h-screen flex flex-row">
+        <section className="grow flex flex-col">
+          {/* <video
           src={clipUrl}
           onTimeUpdate={onVideoTimeUpdate}
           className="w-full h-full"
           ref={videoRef}
           autoPlay
-          controls
           muted
-        />
-      </section>
-      <section className="p-2 bg-base-200">
-        <h1 className="text-4xl font-bold">TV</h1>
-        <p className="text-lg">Query: {query}</p>
-      </section>
-    </main>
+        /> */}
+
+          <Player src={clipUrl!} autoPlay />
+          <PlayerControls />
+        </section>
+        <section className="p-2 bg-base-200">
+          <h1 className="text-4xl font-bold">TV</h1>
+          <p className="text-lg">Query: {query}</p>
+        </section>
+      </main>
+    </PlayerContextProvider>
   )
 }
 

@@ -52,7 +52,8 @@ import Sentry from "./sentry"
 import SentryDebug from "./routes/SentryDebug"
 import AppSettingsPage from "./routes/AppSettings"
 import TroubleshootingInfo from "./components/TroubleshootingInfo"
-import ClipMashTv from "./routes/Tv"
+import TvWatchPage from "./routes/tv/TvWatchPage"
+import TvStartPage from "./routes/tv/TvStartPage"
 
 async function logResponseError(response: Response) {
   let body
@@ -163,7 +164,11 @@ const router = createBrowserRouter([
       },
       {
         path: "/tv",
-        element: <ClipMashTv />,
+        element: <TvStartPage />,
+      },
+      {
+        path: "/tv/watch/:query",
+        element: <TvWatchPage />,
       },
       {
         element: <CreateLayout />,

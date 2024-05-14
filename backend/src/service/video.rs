@@ -223,7 +223,7 @@ impl VideoService {
         Ok(video)
     }
 
-    async fn persist_stash_video(&self, scene_ids: Vec<i64>) -> Result<Vec<DbVideo>> {
+    async fn persist_stash_videos(&self, scene_ids: Vec<i64>) -> Result<Vec<DbVideo>> {
         let stash_config = self.database.settings.fetch().await?.stash;
         info!("adding videos from stash with IDs {scene_ids:?}");
 
@@ -318,7 +318,7 @@ impl VideoService {
 
                 futures.await
             }
-            AddVideosRequest::Stash { scene_ids } => self.persist_stash_video(scene_ids).await,
+            AddVideosRequest::Stash { scene_ids } => self.persist_stash_videos(scene_ids).await,
         }
     }
 

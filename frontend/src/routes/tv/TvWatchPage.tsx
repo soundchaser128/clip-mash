@@ -1,6 +1,7 @@
 import {ClipsResponse, fetchClipsInteractive} from "@/api"
 import {getClipUrl} from "@/helpers/clips"
 import {useEffect, useRef, useState} from "react"
+import {useMatch, useParams} from "react-router-dom"
 
 const suggestions = [
   "Blowjob",
@@ -18,9 +19,9 @@ function randomSuggestion(): string {
   return suggestions[index]
 }
 
-const query = randomSuggestion()
+const TvWatchPage: React.FC = () => {
+  const {query} = useParams()
 
-const ClipMashTv: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [clips, setClips] = useState<ClipsResponse>()
   const [index, setIndex] = useState(0)
@@ -30,7 +31,7 @@ const ClipMashTv: React.FC = () => {
 
   useEffect(() => {
     fetchClipsInteractive({
-      query: query,
+      query: query!,
       clipDuration: 10.0,
     }).then((res) => setClips(res))
   }, [])
@@ -68,4 +69,4 @@ const ClipMashTv: React.FC = () => {
   )
 }
 
-export default ClipMashTv
+export default TvWatchPage

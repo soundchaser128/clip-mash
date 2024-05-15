@@ -2,9 +2,10 @@ import {ClipsResponse, fetchClipsInteractive} from "@/api"
 import {getClipUrl} from "@/helpers/clips"
 import clsx from "clsx"
 import {useRef, useState} from "react"
-import {HiChevronLeft, HiChevronRight} from "react-icons/hi2"
+import {HiChevronLeft, HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import useDebouncedSetQuery from "@/hooks/useDebouncedQuery"
 import {LoaderFunction, useLoaderData} from "react-router-dom"
+import DataList, {Data, Description} from "@/components/DataList"
 
 export const interactiveClipsLoader: LoaderFunction = async (request) => {
   const url = new URL(request.request.url)
@@ -30,6 +31,7 @@ const TvWatchPage: React.FC = () => {
   })
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [isPlaying, setIsPlaying] = useState(true)
   const [index, setIndex] = useState(0)
   const length = clips?.clips?.length || 0
   const currentClip = length > 0 ? clips!.clips[index] : undefined
@@ -53,6 +55,25 @@ const TvWatchPage: React.FC = () => {
   const onClipDurationChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setClipDuration(event.target.valueAsNumber)
     setQuery.setQueryDebounced(event.target.value)
+  }
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause()
+      } else {
+        videoRef.current.play()
+      }
+      setIsPlaying((p) => !p)
+    }
+  }
+
+  const onChangeClip = (direction: "prev" | "next") => {
+    if (direction === "prev") {
+      setIndex((c) => (c - 1 + length) % length)
+    } else {
+      setIndex((c) => (c + 1) % length)
+    }
   }
 
   return (
@@ -101,15 +122,43 @@ const TvWatchPage: React.FC = () => {
                 </span>
               </label>
             </div>
-            <dl className="text-sm">
-              <dt>
-                <strong>Current clip:</strong>
-              </dt>
-              <dd>
+            <DataList>
+              <Description>Current clip:</Description>
+              <Data>
                 {currentVideo?.title} -{" "}
                 <strong>{currentClip?.markerTitle}</strong>
-              </dd>
-            </dl>
+              </Data>
+            </DataList>
+
+            <div className="join self-center">
+              <button
+                onClick={() => onChangeClip("prev")}
+                className="btn btn-square btn-outline join-item"
+              >
+                <HiChevronLeft />
+              </button>
+
+              <button
+                className={clsx("btn btn-square join-item", {
+                  "btn-success": !isPlaying,
+                  "btn-neutral": isPlaying,
+                })}
+                type="button"
+                onClick={togglePlay}
+              >
+                {isPlaying ? (
+                  <HiPause className="w-5 h-5" />
+                ) : (
+                  <HiPlay className="w-5 h-5" />
+                )}
+              </button>
+              <button
+                onClick={() => onChangeClip("next")}
+                className="btn btn-square btn-outline join-item"
+              >
+                <HiChevronRight />
+              </button>
+            </div>
           </>
         )}
       </section>

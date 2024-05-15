@@ -241,10 +241,10 @@ impl MarkersDatabase {
         &self,
         video_ids: Option<&[String]>,
         sort: Option<&str>,
-        query: Option<&str>,
+        marker_titles: Option<&[String]>,
     ) -> Result<Vec<DbMarkerWithVideo>> {
         // video_ids and query are mutually exclusive
-        if video_ids.is_some() && query.is_some() {
+        if video_ids.is_some() && marker_titles.is_some() {
             bail!("video_ids and query are mutually exclusive");
         }
 
@@ -267,9 +267,13 @@ impl MarkersDatabase {
             list.push_unseparated(") ");
         }
 
-        if let Some(query) = query {
-            query_builder.push("WHERE m.title LIKE ");
-            query_builder.push_bind(format!("%{}%", query));
+        if let Some(titles) = marker_titles {
+            query_builder.push("WHERE title IN (");
+            let mut list = query_builder.separated(",");
+            for title in titles {
+                list.push_bind(title);
+            }
+            list.push_unseparated(") ");
         }
 
         query_builder.push("ORDER BY ");

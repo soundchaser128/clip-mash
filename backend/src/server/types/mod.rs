@@ -464,7 +464,7 @@ pub struct CreateClipsBody {
 #[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateInteractiveClipsBody {
-    pub query: String,
+    pub marker_titles: Vec<String>,
     pub clip_duration: f64,
 }
 

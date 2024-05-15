@@ -572,7 +572,7 @@ export interface CreateMarkerRequest {
 
 export interface CreateInteractiveClipsBody {
   clipDuration: number
-  query: string
+  markerTitles: string[]
 }
 
 export interface CreateFunscriptBody {

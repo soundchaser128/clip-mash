@@ -6,22 +6,24 @@ import {
 } from "@/components/VideoPlayer"
 import {getClipUrl} from "@/helpers/clips"
 import {useEffect, useRef, useState} from "react"
-import {useMatch, useParams} from "react-router-dom"
+import {useSearchParams} from "react-router-dom"
 
 const TvWatchPage: React.FC = () => {
-  const {query} = useParams()
+  const [searchParams] = useSearchParams()
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const [clips, setClips] = useState<ClipsResponse>()
   const [index, setIndex] = useState(0)
   const length = clips?.clips?.length || 0
   const currentClip = length > 0 ? clips!.clips[index] : undefined
+  const nextClip = length > 0 ? clips!.clips[(index + 1) % length] : undefined
   const clipUrl = getClipUrl(clips?.streams || {}, currentClip)
+  const nextClipUrl = getClipUrl(clips?.streams || {}, nextClip)
 
   useEffect(() => {
     fetchClipsInteractive({
-      query: query!,
-      clipDuration: 10.0,
+      markerTitles: searchParams.getAll("query"),
+      clipDuration: 5.0,
     }).then((res) => setClips(res))
   }, [])
 
@@ -38,27 +40,24 @@ const TvWatchPage: React.FC = () => {
   }
 
   return (
-    <PlayerContextProvider>
-      <main className="w-full h-screen flex flex-row">
-        <section className="grow flex flex-col">
-          {/* <video
+    <main className="w-full h-screen flex flex-row">
+      <section className="grow flex flex-col">
+        <video
           src={clipUrl}
           onTimeUpdate={onVideoTimeUpdate}
           className="w-full h-full"
           ref={videoRef}
           autoPlay
           muted
-        /> */}
+          preload="auto"
+        />
 
-          <Player src={clipUrl!} autoPlay />
-          <PlayerControls />
-        </section>
-        <section className="p-2 bg-base-200">
-          <h1 className="text-4xl font-bold">TV</h1>
-          <p className="text-lg">Query: {query}</p>
-        </section>
-      </main>
-    </PlayerContextProvider>
+        <video preload="auto" className="hidden" src={nextClipUrl} />
+      </section>
+      <section className="p-2 bg-base-200">
+        <h1 className="text-4xl font-bold">TV</h1>
+      </section>
+    </main>
   )
 }
 

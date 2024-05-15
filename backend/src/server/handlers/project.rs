@@ -97,7 +97,7 @@ pub async fn fetch_clips_interactive(
     let all_markers: Vec<_> = state
         .database
         .markers
-        .list_markers(None, None, Some(&body.query))
+        .list_markers(None, None, Some(&body.marker_titles))
         .await?
         .into_iter()
         .map(|m| SelectedMarker {
@@ -112,10 +112,11 @@ pub async fn fetch_clips_interactive(
         })
         .collect();
 
+    let seed = rand::random::<u64>().to_string();
     let options = CreateClipsBody {
         clip_order: ClipOrder::Scene,
         markers: all_markers,
-        seed: None,
+        seed: Some(seed),
         clips: ClipOptions {
             clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                 clip_duration: body.clip_duration,

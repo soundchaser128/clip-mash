@@ -1,6 +1,6 @@
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
-use tracing::info;
+use tracing::{debug, info};
 
 use super::ClipPicker;
 use crate::server::types::{Clip, EqualLengthClipOptions};
@@ -49,7 +49,7 @@ impl ClipPicker for EqualLengthClipPicker {
                 let end = (offset + duration).min(end);
                 let duration = end - start;
                 if duration > min_duration {
-                    info!(
+                    debug!(
                         "adding clip for video {} with duration {duration} and title {}",
                         marker.video_id, marker.title
                     );

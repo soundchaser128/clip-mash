@@ -7,6 +7,7 @@ import useDebouncedSetQuery from "@/hooks/useDebouncedQuery"
 import {LoaderFunction, useLoaderData} from "react-router-dom"
 import DataList, {Data, Description} from "@/components/DataList"
 import {clamp} from "@/helpers/math"
+import Heading from "@/components/Heading"
 
 export const interactiveClipsLoader: LoaderFunction = async (request) => {
   const url = new URL(request.request.url)
@@ -106,7 +107,7 @@ const TvWatchPage: React.FC = () => {
         </button>
         {!collapsed && (
           <>
-            <h1 className="text-4xl font-bold mb-4 text-center">ClipMash TV</h1>
+            <Heading className="text-center">ClipMash TV</Heading>
             <div className="join self-center mb-4">
               <button
                 onClick={() => onChangeClip("prev")}

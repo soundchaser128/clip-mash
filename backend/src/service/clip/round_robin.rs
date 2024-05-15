@@ -1,5 +1,5 @@
 use rand::rngs::StdRng;
-use tracing::info;
+use tracing::{debug, info};
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
@@ -66,7 +66,7 @@ impl ClipPicker for RoundRobinClipPicker {
                 );
                 let duration = end - start;
                 if (has_music && duration > 0.0) || (!has_music && duration >= min_duration) {
-                    info!(
+                    debug!(
                         "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
                         marker.video_id, marker.title
                     );

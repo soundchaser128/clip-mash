@@ -9,7 +9,7 @@ use camino::Utf8Path;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use tower::ServiceExt;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::data::database::{MarkerCount, VideoSearchQuery, VideoSource, VideoUpdate};
@@ -329,10 +329,10 @@ pub async fn get_marker_preview(
 ) -> Result<impl IntoResponse, AppError> {
     use tower_http::services::ServeFile;
 
-    info!("getting preview image for marker {id}");
+    debug!("getting preview image for marker {id}");
     let marker = state.database.markers.get_marker(id).await?;
     if let Some(preview_image) = marker.marker_preview_image {
-        info!("preview image found at {preview_image}");
+        debug!("preview image found at {preview_image}");
         let result = ServeFile::new(preview_image).oneshot(request).await;
         Ok(result)
     } else {

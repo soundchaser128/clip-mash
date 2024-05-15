@@ -9,7 +9,6 @@ use crate::Result;
 
 mod json;
 mod markdown;
-mod yaml;
 
 pub trait DescriptionGenerator {
     fn generate(&self, options: TemplateContext) -> Result<String>;
@@ -32,7 +31,6 @@ fn format_timestamp(value: f64) -> String {
 pub enum DescriptionType {
     Markdown,
     Json,
-    Yaml,
 }
 
 impl DescriptionType {
@@ -40,7 +38,6 @@ impl DescriptionType {
         match self {
             Self::Markdown => "text/markdown",
             Self::Json => "application/json",
-            Self::Yaml => "application/yaml",
         }
     }
 }
@@ -126,6 +123,5 @@ pub fn render_description(options: &CompilationOptions, ty: DescriptionType) -> 
     match ty {
         DescriptionType::Markdown => markdown::MarkdownDescriptionGenerator.generate(context),
         DescriptionType::Json => json::JsonDescriptionGenerator.generate(context),
-        DescriptionType::Yaml => yaml::YamlDescriptionGenerator.generate(context),
     }
 }

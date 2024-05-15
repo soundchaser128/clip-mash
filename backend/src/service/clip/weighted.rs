@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::rngs::StdRng;
-use tracing::info;
+use tracing::{debug, info};
 
 use super::ClipPicker;
 use crate::server::types::{Clip, WeightedRandomClipOptions};
@@ -77,10 +77,6 @@ impl ClipPicker for WeightedRandomClipPicker {
             }) = marker_state.find_marker_by_title(marker_tag, rng)
             {
                 let duration = end - start;
-                info!(
-                    "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
-                    marker.video_id, marker.title
-                );
                 clips.push(Clip {
                     index_within_marker: index,
                     index_within_video: marker.index_within_video,
@@ -90,8 +86,8 @@ impl ClipPicker for WeightedRandomClipPicker {
                     video_id: marker.video_id.clone(),
                     marker_title: marker.title.clone(),
                 });
-                info!(
-                    "adding clip for video {} with duration {duration} and title {}",
+                debug!(
+                    "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
                     marker.video_id, marker.title
                 );
 

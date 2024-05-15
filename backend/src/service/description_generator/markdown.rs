@@ -1,4 +1,4 @@
-use tera::{Context, Tera};
+use tinytemplate::TinyTemplate;
 use tracing::info;
 
 use super::{DescriptionGenerator, TemplateContext};
@@ -9,14 +9,11 @@ pub struct MarkdownDescriptionGenerator;
 impl DescriptionGenerator for MarkdownDescriptionGenerator {
     fn generate(&self, options: TemplateContext) -> Result<String> {
         info!("Generating Markdown description");
-        let mut context = Context::new();
-        context.insert("video", &options);
-        Tera::one_off(
-            include_str!("../../../data/templates/description.md"),
-            &context,
-            false,
-        )
-        .map_err(From::from)
+        let template = include_str!("../../../data/templates/description.md");
+        let mut tt = TinyTemplate::new();
+        tt.add_template("description", template)?;
+
+        tt.render("description", &options).map_err(From::from)
     }
 }
 

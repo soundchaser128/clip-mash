@@ -19,7 +19,6 @@ itertools = "0.12.0"
 lazy_static = "1.4.0"
 mimalloc = "0.1.30"
 num_cpus = "1.16.0"
-opener = "0.7.0"
 ordered-float = "4.1.0"
 rand = "0.8.5"
 regex = "1.9.6"
@@ -30,9 +29,8 @@ sentry = { version = "0.32.2", features = ["debug-images"] }
 sentry-tower = { version = "0.32.2", features = ["axum-matched-path"] }
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
-serde_yaml = "0.9.27"
 sqlx = { version = "0.7.2", features = ["runtime-tokio", "sqlite"] }
-tera = "1.19.1"
+tinytemplate = "1.2"
 time = { version = "0.3.29", features = ["formatting", "parsing", "macros"] }
 tokio = { version = "1.32.0", features = ["full"] }
 tokio-util = { version = "0.7.9", features = ["io"] }
@@ -73,6 +71,3 @@ tracing-test = "0.2.4"
 mock_instant = "0.4.0"
 graphql-parser = "0.4.0"
 wiremock = "0.6.0"
-
-[profile.release]
-debug = true

@@ -42,8 +42,10 @@ const TvStartPage: React.FC = () => {
 
   return (
     <main className="container pt-2 py-1 ml-auto mr-auto flex flex-col min-h-screen">
-      <h1 className="text-4xl font-bold mb-1">ClipMash TV</h1>
-      <p className="text-lg mb-4">Click on marker titles to select them.</p>
+      <h1 className="text-4xl font-bold mb-1 text-center">ClipMash TV</h1>
+      <p className="text-lg mb-4 text-center">
+        Click on marker titles to select them.
+      </p>
       <div className="flex flex-col justify-center items-center max-w-xl self-center">
         <ul className="flex gap-1 flex-wrap">
           {markers.markers.slice(0, 50).map((marker) => (

@@ -52,7 +52,7 @@ import Sentry from "./sentry"
 import SentryDebug from "./routes/SentryDebug"
 import AppSettingsPage from "./routes/AppSettings"
 import TroubleshootingInfo from "./components/TroubleshootingInfo"
-import TvWatchPage from "./routes/tv/TvWatchPage"
+import TvWatchPage, {interactiveClipsLoader} from "./routes/tv/TvWatchPage"
 import TvStartPage, {markerTitleLoader} from "./routes/tv/TvStartPage"
 
 async function logResponseError(response: Response) {
@@ -170,6 +170,7 @@ const router = createBrowserRouter([
       {
         path: "/tv/watch",
         element: <TvWatchPage />,
+        loader: interactiveClipsLoader,
       },
       {
         element: <CreateLayout />,

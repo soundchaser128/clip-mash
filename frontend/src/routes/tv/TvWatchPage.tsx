@@ -6,6 +6,7 @@ import {HiChevronLeft, HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
 import useDebouncedSetQuery from "@/hooks/useDebouncedQuery"
 import {LoaderFunction, useLoaderData} from "react-router-dom"
 import DataList, {Data, Description} from "@/components/DataList"
+import {clamp} from "@/helpers/math"
 
 export const interactiveClipsLoader: LoaderFunction = async (request) => {
   const url = new URL(request.request.url)
@@ -70,7 +71,7 @@ const TvWatchPage: React.FC = () => {
 
   const onChangeClip = (direction: "prev" | "next") => {
     if (direction === "prev") {
-      setIndex((c) => (c - 1 + length) % length)
+      setIndex((c) => clamp(c - 1, 0, length - 1))
     } else {
       setIndex((c) => (c + 1) % length)
     }
@@ -105,32 +106,8 @@ const TvWatchPage: React.FC = () => {
         </button>
         {!collapsed && (
           <>
-            <h1 className="text-4xl font-bold">TV</h1>
-            <div className="form-control">
-              <input
-                className="range-primary"
-                type="range"
-                min="2"
-                max="30"
-                step="0.5"
-                value={clipDuration}
-                onChange={onClipDurationChange}
-              />
-              <label className="label">
-                <span className="label-text">
-                  Clip duration ({clipDuration}s)
-                </span>
-              </label>
-            </div>
-            <DataList>
-              <Description>Current clip:</Description>
-              <Data>
-                {currentVideo?.title} -{" "}
-                <strong>{currentClip?.markerTitle}</strong>
-              </Data>
-            </DataList>
-
-            <div className="join self-center">
+            <h1 className="text-4xl font-bold mb-4 text-center">ClipMash TV</h1>
+            <div className="join self-center mb-4">
               <button
                 onClick={() => onChangeClip("prev")}
                 className="btn btn-square btn-outline join-item"
@@ -159,6 +136,29 @@ const TvWatchPage: React.FC = () => {
                 <HiChevronRight />
               </button>
             </div>
+            <div className="form-control">
+              <input
+                className="range-primary"
+                type="range"
+                min="2"
+                max="30"
+                step="0.5"
+                value={clipDuration}
+                onChange={onClipDurationChange}
+              />
+              <label className="label">
+                <span className="label-text mb-4">
+                  Clip duration ({clipDuration}s)
+                </span>
+              </label>
+            </div>
+            <DataList>
+              <Description>Current clip:</Description>
+              <Data>
+                {currentVideo?.title} -{" "}
+                <strong>{currentClip?.markerTitle}</strong>
+              </Data>
+            </DataList>
           </>
         )}
       </section>

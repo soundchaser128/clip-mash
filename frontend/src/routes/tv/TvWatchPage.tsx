@@ -26,6 +26,9 @@ export const interactiveClipsLoader: LoaderFunction = async (request) => {
   const response = await fetchClipsInteractive({
     markerTitles: searchParams.getAll("query"),
     clipDuration: parseFloat(searchParams.get("clipDuration") || "5.0"),
+    order: {
+      type: "random",
+    },
   })
 
   return {

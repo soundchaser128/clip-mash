@@ -516,7 +516,6 @@ export type DescriptionType =
 export const DescriptionType = {
   markdown: "markdown",
   json: "json",
-  yaml: "yaml",
 } as const
 
 export interface DescriptionData {
@@ -573,6 +572,7 @@ export interface CreateMarkerRequest {
 export interface CreateInteractiveClipsBody {
   clipDuration: number
   markerTitles: string[]
+  order: ClipOrder
 }
 
 export interface CreateFunscriptBody {
@@ -580,7 +580,6 @@ export interface CreateFunscriptBody {
 }
 
 export interface CreateClipsBody {
-  clipOrder: ClipOrder
   clips: ClipOptions
   markers: SelectedMarker[]
   /** @nullable */

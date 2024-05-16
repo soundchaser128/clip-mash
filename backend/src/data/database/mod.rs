@@ -86,6 +86,7 @@ pub struct DbVideo {
     pub video_created_on: i64,
     pub video_title: Option<String>,
     pub video_tags: Option<String>,
+    // todo add performers
 }
 
 impl DbVideo {

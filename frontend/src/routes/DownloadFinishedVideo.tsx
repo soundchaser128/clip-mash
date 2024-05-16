@@ -105,11 +105,6 @@ const DownloadVideoPage = () => {
                     JSON
                   </button>
                 </li>
-                <li>
-                  <button onClick={() => onGenerateDescription("yaml")}>
-                    YAML
-                  </button>
-                </li>
               </ul>
             </details>
             {interactive && (

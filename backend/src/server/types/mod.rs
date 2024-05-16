@@ -455,7 +455,6 @@ pub struct EqualLengthClipOptions {
 #[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateClipsBody {
-    pub clip_order: ClipOrder,
     pub markers: Vec<SelectedMarker>,
     pub seed: Option<String>,
     pub clips: ClipOptions,
@@ -466,6 +465,7 @@ pub struct CreateClipsBody {
 pub struct CreateInteractiveClipsBody {
     pub marker_titles: Vec<String>,
     pub clip_duration: f64,
+    pub order: ClipOrder,
 }
 
 #[derive(Serialize, Debug, ToSchema)]

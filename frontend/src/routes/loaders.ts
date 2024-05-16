@@ -165,7 +165,6 @@ export const clipsLoader: LoaderFunction = async () => {
   const seed = options.seed?.length === 0 ? undefined : options.seed
 
   const body = {
-    clipOrder,
     markers: state.selectedMarkers!.filter((m) => m.selected),
     seed,
     clips: {

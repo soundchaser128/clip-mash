@@ -92,7 +92,7 @@ async fn create_video_inner(
 #[axum::debug_handler]
 pub async fn fetch_clips_interactive(
     state: State<Arc<AppState>>,
-    body: Json<CreateInteractiveClipsBody>,
+    Json(body): Json<CreateInteractiveClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
     let all_markers: Vec<_> = state
         .database
@@ -114,7 +114,6 @@ pub async fn fetch_clips_interactive(
 
     let seed = rand::random::<u64>().to_string();
     let options = CreateClipsBody {
-        clip_order: ClipOrder::Scene,
         markers: all_markers,
         seed: Some(seed),
         clips: ClipOptions {
@@ -124,7 +123,7 @@ pub async fn fetch_clips_interactive(
                 length: None,
                 min_clip_duration: Some(1.0),
             }),
-            order: ClipOrder::Scene,
+            order: body.order,
         },
     };
 

@@ -1,4 +1,4 @@
-import {ClipsResponse, fetchClipsInteractive} from "@/api"
+import {ClipsResponse, SongDto, fetchClipsInteractive, listSongs} from "@/api"
 import {getClipUrl} from "@/helpers/clips"
 import clsx from "clsx"
 import {useRef, useState} from "react"
@@ -9,9 +9,19 @@ import DataList, {Data, Description} from "@/components/DataList"
 import {clamp} from "@/helpers/math"
 import Heading from "@/components/Heading"
 
+interface LoaderData {
+  clips: ClipsResponse
+  music: SongDto[]
+}
+
 export const interactiveClipsLoader: LoaderFunction = async (request) => {
   const url = new URL(request.request.url)
   const searchParams = url.searchParams
+  let music: SongDto[] = []
+
+  if (searchParams.has("withMusic")) {
+    music = await listSongs()
+  }
 
   const response = await fetchClipsInteractive({
     markerTitles: searchParams.getAll("query"),
@@ -20,11 +30,12 @@ export const interactiveClipsLoader: LoaderFunction = async (request) => {
 
   return {
     clips: response,
-  }
+    music,
+  } satisfies LoaderData
 }
 
 const TvWatchPage: React.FC = () => {
-  const {clips} = useLoaderData() as {clips: ClipsResponse}
+  const {clips, music} = useLoaderData() as LoaderData
   const [collapsed, setCollapsed] = useState(false)
   const [clipDuration, setClipDuration] = useState(5.0)
   const setQuery = useDebouncedSetQuery({
@@ -33,6 +44,9 @@ const TvWatchPage: React.FC = () => {
   })
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [currentSong, setCurrentSong] = useState(0)
+  const audioRef = useRef<HTMLAudioElement>(null)
+
   const [isPlaying, setIsPlaying] = useState(true)
   const [index, setIndex] = useState(0)
   const length = clips?.clips?.length || 0
@@ -48,7 +62,7 @@ const TvWatchPage: React.FC = () => {
     if (currentClip) {
       const endTimestamp = currentClip.range[1]
       const currentTime = event.currentTarget.currentTime
-      if (Math.abs(endTimestamp - currentTime) <= 0.5) {
+      if (Math.abs(endTimestamp - currentTime) <= 0.1) {
         setIndex((c) => (c + 1) % length)
       }
     }
@@ -63,8 +77,14 @@ const TvWatchPage: React.FC = () => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause()
+        if (audioRef.current) {
+          audioRef.current.pause()
+        }
       } else {
         videoRef.current.play()
+        if (audioRef.current) {
+          audioRef.current.play()
+        }
       }
       setIsPlaying((p) => !p)
     }
@@ -92,6 +112,16 @@ const TvWatchPage: React.FC = () => {
         />
 
         <video preload="auto" className="hidden" src={nextClipUrl} />
+
+        {music.length > 0 && (
+          <audio
+            ref={audioRef}
+            src={`/api/song/${music[currentSong]?.songId}/stream`}
+            onEnded={() => setCurrentSong((s) => (s + 1) % music.length)}
+            className="hidden"
+            autoPlay
+          />
+        )}
       </section>
       <section
         className={clsx(

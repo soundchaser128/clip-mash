@@ -55,6 +55,8 @@ use crate::service::video::AddVideosRequest;
         system::get_version,
         system::get_config,
         system::set_config,
+        system::restart,
+        system::get_health,
     ),
     components(
         schemas(

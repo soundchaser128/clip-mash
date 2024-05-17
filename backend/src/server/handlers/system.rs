@@ -73,6 +73,13 @@ pub async fn sentry_error() {
     panic!("Sentry backend error test")
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/system/restart",
+    responses(
+        (status = 204, description = "Restart the server", body = ()),
+    )
+)]
 #[axum::debug_handler]
 pub async fn restart() {
     use std::env;
@@ -90,6 +97,14 @@ pub async fn restart() {
     std::process::exit(0);
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/system/health",
+    responses(
+        (status = 200, description = "The application is healthy", body = ()),
+        (status = 503, description = "The application is not healthy", body = ()),
+    )
+)]
 #[axum::debug_handler]
 pub async fn get_health(state: State<Arc<AppState>>) -> impl IntoResponse {
     if let Err(e) = state.database.settings.fetch_optional().await {

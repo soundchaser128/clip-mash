@@ -106,7 +106,7 @@ pub async fn restart() {
     )
 )]
 #[axum::debug_handler]
-pub async fn get_health(state: State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn get_app_health(state: State<Arc<AppState>>) -> impl IntoResponse {
     if let Err(e) = state.database.settings.fetch_optional().await {
         error!("Failed to fetch settings: {}", e);
         (

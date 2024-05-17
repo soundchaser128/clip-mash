@@ -48,7 +48,7 @@ use crate::service::video::AddVideosRequest;
         project::get_new_id,
         project::list_finished_videos,
         project::generate_description,
-        stash::get_health,
+        stash::get_stash_health,
         music::list_songs,
         music::get_beats,
         music::upload_music,
@@ -57,7 +57,7 @@ use crate::service::video::AddVideosRequest;
         system::get_config,
         system::set_config,
         system::restart,
-        system::get_health,
+        system::get_app_health,
     ),
     components(
         schemas(
@@ -118,7 +118,6 @@ use crate::service::video::AddVideosRequest;
             DescriptionData,
             FolderType,
             PaddingType,
-            Settings
             Settings,
             CreateInteractiveClipsBody
         )

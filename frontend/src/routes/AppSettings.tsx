@@ -7,7 +7,7 @@ import {
   Settings,
   cleanupFolder,
   getFileStats,
-  getHealth,
+  getStashHealth,
   migratePreviewImages,
   setConfig,
 } from "../api"
@@ -69,7 +69,7 @@ const useFileStats = () => {
 
 async function testCredentials(inputs: Inputs): Promise<HealthResult> {
   try {
-    const response = await getHealth({
+    const response = await getStashHealth({
       apiKey: inputs.stash.apiKey,
       url: inputs.stash.stashUrl,
     })

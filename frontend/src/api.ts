@@ -8,9 +8,24 @@ import {customInstance} from "./custom-client"
 /**
  * @nullable
  */
+export type Restart204 = unknown | null
+
+/**
+ * @nullable
+ */
+export type GetAppHealth503 = unknown | null
+
+/**
+ * @nullable
+ */
+export type GetAppHealth200 = unknown | null
+
+/**
+ * @nullable
+ */
 export type SetConfig204 = unknown | null
 
-export type GetHealthParams = {
+export type GetStashHealthParams = {
   url: string
   apiKey?: string | null
 }
@@ -198,8 +213,6 @@ export type StrokeTypeOneOfThree = {
   accelerate: StrokeTypeOneOfThreeAccelerate
 }
 
-export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
-
 /**
  * Creates a stroke every `n` beats
  */
@@ -212,6 +225,8 @@ export type StrokeTypeOneOf = {
   /** Creates a stroke every `n` beats */
   everyNth: StrokeTypeOneOfEveryNth
 }
+
+export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
 
 export interface StashVideoDto {
   createdOn: number
@@ -509,7 +524,6 @@ export type DescriptionType =
 export const DescriptionType = {
   markdown: "markdown",
   json: "json",
-  yaml: "yaml",
 } as const
 
 export interface DescriptionData {
@@ -563,8 +577,21 @@ export interface CreateMarkerRequest {
   marker: CreateMarker
 }
 
+export interface CreateInteractiveClipsBody {
+  clipDuration: number
+  markerTitles: string[]
+  order: ClipOrder
+}
+
 export interface CreateFunscriptBody {
   clips: Clip[]
+}
+
+export interface CreateClipsBody {
+  clips: ClipOptions
+  markers: SelectedMarker[]
+  /** @nullable */
+  seed?: string | null
 }
 
 export interface CreateBeatFunscriptBody {
@@ -703,14 +730,6 @@ export type ClipOrderOneOf = {
 export interface ClipOptions {
   clipPicker: ClipPickerOptions
   order: ClipOrder
-}
-
-export interface CreateClipsBody {
-  clipOrder: ClipOrder
-  clips: ClipOptions
-  markers: SelectedMarker[]
-  /** @nullable */
-  seed?: string | null
 }
 
 export type ClipLengthOptionsOneOfFourAllOfType =
@@ -998,6 +1017,17 @@ export const fetchClips = (createClipsBody: CreateClipsBody) => {
   })
 }
 
+export const fetchClipsInteractive = (
+  createInteractiveClipsBody: CreateInteractiveClipsBody,
+) => {
+  return customInstance<ClipsResponse>({
+    url: `/api/project/clips/interactive`,
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    data: createInteractiveClipsBody,
+  })
+}
+
 export const createVideo = (createVideoBody: CreateVideoBody) => {
   return customInstance<ProjectCreateResponse>({
     url: `/api/project/create`,
@@ -1086,7 +1116,7 @@ export const getBeats = (id: number) => {
   return customInstance<Beats>({url: `/api/song/${id}/beats`, method: "GET"})
 }
 
-export const getHealth = (params: GetHealthParams) => {
+export const getStashHealth = (params: GetStashHealthParams) => {
   return customInstance<string>({
     url: `/api/stash/health`,
     method: "GET",
@@ -1107,6 +1137,20 @@ export const setConfig = (settings: Settings) => {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     data: settings,
+  })
+}
+
+export const getAppHealth = () => {
+  return customInstance<GetAppHealth200>({
+    url: `/api/system/health`,
+    method: "GET",
+  })
+}
+
+export const restart = () => {
+  return customInstance<Restart204>({
+    url: `/api/system/restart`,
+    method: "POST",
   })
 }
 
@@ -1181,6 +1225,9 @@ export type GetProgressInfoResult = NonNullable<
 export type FetchClipsResult = NonNullable<
   Awaited<ReturnType<typeof fetchClips>>
 >
+export type FetchClipsInteractiveResult = NonNullable<
+  Awaited<ReturnType<typeof fetchClipsInteractive>>
+>
 export type CreateVideoResult = NonNullable<
   Awaited<ReturnType<typeof createVideo>>
 >
@@ -1208,9 +1255,15 @@ export type UploadMusicResult = NonNullable<
   Awaited<ReturnType<typeof uploadMusic>>
 >
 export type GetBeatsResult = NonNullable<Awaited<ReturnType<typeof getBeats>>>
-export type GetHealthResult = NonNullable<Awaited<ReturnType<typeof getHealth>>>
+export type GetStashHealthResult = NonNullable<
+  Awaited<ReturnType<typeof getStashHealth>>
+>
 export type GetConfigResult = NonNullable<Awaited<ReturnType<typeof getConfig>>>
 export type SetConfigResult = NonNullable<Awaited<ReturnType<typeof setConfig>>>
+export type GetAppHealthResult = NonNullable<
+  Awaited<ReturnType<typeof getAppHealth>>
+>
+export type RestartResult = NonNullable<Awaited<ReturnType<typeof restart>>>
 export type GetVersionResult = NonNullable<
   Awaited<ReturnType<typeof getVersion>>
 >

@@ -16,6 +16,8 @@ import {useConfig} from "@/hooks/useConfig"
 import Loader from "@/components/Loader"
 import {formatBytes} from "@/helpers/formatting"
 import {useCreateToast} from "@/hooks/useToast"
+import {AspectRatio} from "@/components/VideoCard"
+import useAspectRatioSetting from "@/hooks/useAspectRatioSetting"
 
 type Inputs = Settings
 
@@ -91,6 +93,7 @@ function AppConfigPage() {
   const [healthResult, setHealthResult] = useState<HealthResult>()
   const createToast = useCreateToast()
   const [converting, setConverting] = useState(false)
+  const [aspectRatio, setAspectRatio] = useAspectRatioSetting()
 
   const onSubmit = async (inputs: Inputs) => {
     const health = await testCredentials(inputs)
@@ -146,6 +149,25 @@ function AppConfigPage() {
   return (
     <div className="flex flex-col pt-4 max-w-xl ml-auto mr-auto">
       <h1 className="text-3xl font-bold mb-4 text-center">Settings</h1>
+
+      <section className="flex flex-col mb-4">
+        <h2 className="text-xl font-bold mb-2">Interface</h2>
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Preview image aspect ratio</span>
+          </label>
+
+          <select
+            value={aspectRatio}
+            onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
+            className="select select-sm select-bordered"
+          >
+            <option value="wide">Wide</option>
+            <option value="square">Square</option>
+            <option value="tall">Tall</option>
+          </select>
+        </div>
+      </section>
 
       <section className="flex flex-col mb-4">
         <h2 className="text-xl font-bold mb-2">Stash configuration</h2>

@@ -10,7 +10,7 @@ import {useConfig} from "@/hooks/useConfig"
 import AddTagModal from "./AddTagModal"
 import clsx from "clsx"
 import PageSizeSelect from "./PageSizeSelect"
-import useLocalStorage from "@/hooks/useLocalStorage"
+import useAspectRatioSetting from "@/hooks/useAspectRatioSetting"
 
 interface Props {
   editableTitles?: boolean
@@ -47,10 +47,7 @@ const VideoGrid: React.FC<Props> = ({
   const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
     undefined,
   )
-  const [aspectRatio, setAspectRatio] = useLocalStorage<AspectRatio>(
-    "videoGridAspectRatio",
-    "wide",
-  )
+  const [aspectRatio] = useAspectRatioSetting()
 
   const {addOrReplaceParams, addOrReplaceParam, setQueryDebounced} =
     useDebouncedSetQuery()
@@ -206,21 +203,6 @@ const VideoGrid: React.FC<Props> = ({
 
       <section className="w-full flex gap-2 py-4 items-center">
         <PageSizeSelect />
-        <div className="flex items-center gap-1">
-          <label className="label">
-            <span className="label-text">Preview image aspect ratio</span>
-          </label>
-
-          <select
-            value={aspectRatio}
-            onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
-            className="select select-sm select-bordered"
-          >
-            <option value="wide">Wide</option>
-            <option value="square">Square</option>
-            <option value="tall">Tall</option>
-          </select>
-        </div>
         <label className="label" htmlFor="showDetails">
           <span className="label-text">Show details</span>
         </label>

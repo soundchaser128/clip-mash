@@ -56,7 +56,7 @@ const TvStartPage: React.FC = () => {
         onSubmit={onSubmit}
         className="flex flex-col justify-center items-center max-w-xl self-center"
       >
-        <ul className="flex gap-1 flex-wrap">
+        <ul className="flex gap-1 flex-wrap justify-center">
           {markers.markers.slice(0, 50).map((marker) => (
             <li key={marker.title}>
               <button

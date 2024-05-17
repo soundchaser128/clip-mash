@@ -37,7 +37,7 @@ const OverlayText: React.FC<{
   return (
     <span
       style={{textShadow: "0px 0px 8px black"}}
-      className={clsx("absolute text-white truncate max-w-full", className)}
+      className={clsx("absolute text-white truncate max-w-full text-xs", className)}
     >
       {children}
     </span>
@@ -115,12 +115,12 @@ const VideoCard: React.FC<Props> = ({
                 "bottom-2 left-2": aspectRatio === "tall",
               })}
             >
-              <HiClock className="inline mr-2" />
+              <HiClock className="inline mr-1" />
               {formatSeconds(video.video.duration)}
             </OverlayText>
             {aspectRatio !== "tall" && (
               <OverlayText className="left-2 bottom-2">
-                <HiTag className="inline mr-2" />
+                <HiTag className="inline mr-1" />
                 Markers: <strong>{video.markerCount}</strong>
               </OverlayText>
             )}

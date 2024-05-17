@@ -44,6 +44,10 @@ function gridCols(n: number): string {
       return "grid-cols-5"
     case 6:
       return "grid-cols-6"
+    case 7:
+      return "grid-cols-7"
+    case 8:
+      return "grid-cols-8"
     default:
       return "grid-cols-3"
   }
@@ -234,14 +238,20 @@ const VideoGrid: React.FC<Props> = ({
           />
         </div>
 
-        <input
-          type="range"
-          className="range range-sm range-primary w-64"
-          value={rowCount}
-          onChange={(e) => setRowCount(e.target.valueAsNumber)}
-          min={3}
-          max={6}
-        />
+        <div className="flex flex-col">
+          <input
+            type="range"
+            className="range range-sm range-primary w-64"
+            value={rowCount}
+            onChange={(e) => setRowCount(e.target.valueAsNumber)}
+            min={3}
+            max={8}
+          />
+          <div className="w-full flex justify-between text-xs px-2">
+            <span>3</span>
+            <span>8</span>
+          </div>
+        </div>
       </section>
 
       <AddTagModal
@@ -284,7 +294,7 @@ const VideoGrid: React.FC<Props> = ({
             actionChildren={
               actionChildren && actionChildren(video, aspectRatio)
             }
-            stashConfig={config.stash}
+            stashConfig={config?.stash}
             onImageClick={onVideoClick}
             disabled={isVideoDisabled ? isVideoDisabled(video) : false}
             onEditTitle={

@@ -45,7 +45,7 @@ pub struct CreateClipsOptions {
 impl CreateClipsOptions {
     pub fn normalize_video_indices(&mut self) {
         self.markers.sort_by_key(|m| m.video_id.clone());
-        for (_, group) in &self.markers.iter_mut().group_by(|m| m.video_id.clone()) {
+        for (_, group) in &self.markers.iter_mut().chunk_by(|m| m.video_id.clone()) {
             let mut group = group.collect_vec();
             group.sort_by_key(|m| m.index_within_video);
             for (index, marker) in group.iter_mut().enumerate() {

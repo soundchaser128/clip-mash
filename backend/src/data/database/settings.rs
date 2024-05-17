@@ -6,14 +6,8 @@ use crate::service::stash_config::StashConfig;
 use crate::Result;
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default, ToSchema)]
-pub struct AppConfig {
-    // empty for now
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, Default, ToSchema)]
 pub struct Settings {
     pub stash: StashConfig,
-    pub app: Option<AppConfig>,
 }
 
 #[derive(Clone)]

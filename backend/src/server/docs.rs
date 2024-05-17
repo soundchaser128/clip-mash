@@ -5,7 +5,7 @@ use super::handlers::library::{CreateMarkerRequest, VideoCleanupResponse};
 use super::handlers::music::SongUpload;
 use super::handlers::project::{CreateFunscriptBody, DescriptionData, ProjectCreateResponse};
 use super::types::*;
-use crate::data::database::{AppConfig, MarkerCount, Settings, VideoSource, VideoUpdate};
+use crate::data::database::{MarkerCount, Settings, VideoSource, VideoUpdate};
 use crate::server::handlers::{files, library, music, progress, project, stash, system};
 use crate::service::description_generator::DescriptionType;
 use crate::service::directories::FolderType;
@@ -115,8 +115,7 @@ use crate::service::video::AddVideosRequest;
             DescriptionData,
             FolderType,
             PaddingType,
-            Settings,
-            AppConfig
+            Settings
         )
     ),
     tags(

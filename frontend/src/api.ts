@@ -45,6 +45,26 @@ export type DeleteVideo200 = unknown | null
  */
 export type UpdateVideo200 = unknown | null
 
+export type ListStashVideosParams = {
+  query?: string | null
+  withMarkers?: boolean | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
+export type ListVideosParams = {
+  query?: string | null
+  source?: VideoSource | null
+  hasMarkers?: boolean | null
+  isInteractive?: boolean | null
+  page?: number | null
+  size?: number | null
+  sort?: string | null
+  dir?: SortDirection | null
+}
+
 export type GetFileStats200ItemItem = FolderType & number
 
 /**
@@ -236,26 +256,6 @@ export const SortDirection = {
   desc: "desc",
 } as const
 
-export type ListStashVideosParams = {
-  query?: string | null
-  withMarkers?: boolean | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
-
-export type ListVideosParams = {
-  query?: string | null
-  source?: VideoSource | null
-  hasMarkers?: boolean | null
-  isInteractive?: boolean | null
-  page?: number | null
-  size?: number | null
-  sort?: string | null
-  dir?: SortDirection | null
-}
-
 export interface SongUpload {
   file: Blob
 }
@@ -275,14 +275,7 @@ export interface SongClipOptions {
   songs: Beats[]
 }
 
-/**
- * @nullable
- */
-export type SettingsApp = AppConfig | null
-
 export interface Settings {
-  /** @nullable */
-  app?: SettingsApp
   stash: StashConfig
 }
 
@@ -516,6 +509,7 @@ export type DescriptionType =
 export const DescriptionType = {
   markdown: "markdown",
   json: "json",
+  yaml: "yaml",
 } as const
 
 export interface DescriptionData {
@@ -569,21 +563,8 @@ export interface CreateMarkerRequest {
   marker: CreateMarker
 }
 
-export interface CreateInteractiveClipsBody {
-  clipDuration: number
-  markerTitles: string[]
-  order: ClipOrder
-}
-
 export interface CreateFunscriptBody {
   clips: Clip[]
-}
-
-export interface CreateClipsBody {
-  clips: ClipOptions
-  markers: SelectedMarker[]
-  /** @nullable */
-  seed?: string | null
 }
 
 export interface CreateBeatFunscriptBody {
@@ -643,6 +624,12 @@ export type ClipPickerOptionsOneOfFourAllOf = {
 export type ClipPickerOptionsOneOfFour = WeightedRandomClipOptions &
   ClipPickerOptionsOneOfFourAllOf
 
+export type ClipPickerOptions =
+  | ClipPickerOptionsOneOf
+  | ClipPickerOptionsOneOfFour
+  | ClipPickerOptionsOneOfSeven
+  | ClipPickerOptionsOneOfOnezero
+
 export type ClipPickerOptionsOneOfAllOfType =
   (typeof ClipPickerOptionsOneOfAllOfType)[keyof typeof ClipPickerOptionsOneOfAllOfType]
 
@@ -657,12 +644,6 @@ export type ClipPickerOptionsOneOfAllOf = {
 
 export type ClipPickerOptionsOneOf = RoundRobinClipOptions &
   ClipPickerOptionsOneOfAllOf
-
-export type ClipPickerOptions =
-  | ClipPickerOptionsOneOf
-  | ClipPickerOptionsOneOfFour
-  | ClipPickerOptionsOneOfSeven
-  | ClipPickerOptionsOneOfOnezero
 
 export type ClipOrderOneOfSevenType =
   (typeof ClipOrderOneOfSevenType)[keyof typeof ClipOrderOneOfSevenType]
@@ -701,6 +682,12 @@ export type ClipOrderOneOfThree = {
   type: ClipOrderOneOfThreeType
 }
 
+export type ClipOrder =
+  | ClipOrderOneOf
+  | ClipOrderOneOfThree
+  | ClipOrderOneOfFive
+  | ClipOrderOneOfSeven
+
 export type ClipOrderOneOfType =
   (typeof ClipOrderOneOfType)[keyof typeof ClipOrderOneOfType]
 
@@ -713,15 +700,17 @@ export type ClipOrderOneOf = {
   type: ClipOrderOneOfType
 }
 
-export type ClipOrder =
-  | ClipOrderOneOf
-  | ClipOrderOneOfThree
-  | ClipOrderOneOfFive
-  | ClipOrderOneOfSeven
-
 export interface ClipOptions {
   clipPicker: ClipPickerOptions
   order: ClipOrder
+}
+
+export interface CreateClipsBody {
+  clipOrder: ClipOrder
+  clips: ClipOptions
+  markers: SelectedMarker[]
+  /** @nullable */
+  seed?: string | null
 }
 
 export type ClipLengthOptionsOneOfFourAllOfType =
@@ -782,10 +771,6 @@ export interface AppVersion {
   currentVersion: string
   needsUpdate: boolean
   newestVersion: string
-}
-
-export interface AppConfig {
-  [key: string]: unknown
 }
 
 export type AddVideosRequestOneOfFiveType =
@@ -1013,17 +998,6 @@ export const fetchClips = (createClipsBody: CreateClipsBody) => {
   })
 }
 
-export const fetchClipsInteractive = (
-  createInteractiveClipsBody: CreateInteractiveClipsBody,
-) => {
-  return customInstance<ClipsResponse>({
-    url: `/api/project/clips/interactive`,
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    data: createInteractiveClipsBody,
-  })
-}
-
 export const createVideo = (createVideoBody: CreateVideoBody) => {
   return customInstance<ProjectCreateResponse>({
     url: `/api/project/create`,
@@ -1206,9 +1180,6 @@ export type GetProgressInfoResult = NonNullable<
 >
 export type FetchClipsResult = NonNullable<
   Awaited<ReturnType<typeof fetchClips>>
->
-export type FetchClipsInteractiveResult = NonNullable<
-  Awaited<ReturnType<typeof fetchClipsInteractive>>
 >
 export type CreateVideoResult = NonNullable<
   Awaited<ReturnType<typeof createVideo>>

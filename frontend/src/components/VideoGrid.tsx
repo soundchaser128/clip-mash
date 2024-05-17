@@ -11,6 +11,7 @@ import AddTagModal from "./AddTagModal"
 import clsx from "clsx"
 import PageSizeSelect from "./PageSizeSelect"
 import useAspectRatioSetting from "@/hooks/useAspectRatioSetting"
+import useLocalStorage from "@/hooks/useLocalStorage"
 
 interface Props {
   editableTitles?: boolean
@@ -33,6 +34,21 @@ interface FilterInputs {
   source?: string
 }
 
+function gridCols(n: number): string {
+  switch (n) {
+    case 3:
+      return "grid-cols-3"
+    case 4:
+      return "grid-cols-4"
+    case 5:
+      return "grid-cols-5"
+    case 6:
+      return "grid-cols-6"
+    default:
+      return "grid-cols-3"
+  }
+}
+
 const VideoGrid: React.FC<Props> = ({
   editableTitles,
   editableTags,
@@ -48,6 +64,8 @@ const VideoGrid: React.FC<Props> = ({
     undefined,
   )
   const [aspectRatio] = useAspectRatioSetting()
+  const [rowCount, setRowCount] = useLocalStorage("videoGridRowCount", 3)
+  const gridColCount = gridCols(rowCount)
 
   const {addOrReplaceParams, addOrReplaceParam, setQueryDebounced} =
     useDebouncedSetQuery()
@@ -201,17 +219,28 @@ const VideoGrid: React.FC<Props> = ({
         </form>
       )}
 
-      <section className="w-full flex gap-2 py-4 items-center">
-        <PageSizeSelect />
-        <label className="label" htmlFor="showDetails">
-          <span className="label-text">Show details</span>
-        </label>
+      <section className="w-full flex gap-2 py-4 items-center justify-between">
+        <div className="flex items-center">
+          <PageSizeSelect />
+          <label className="label" htmlFor="showDetails">
+            <span className="label-text">Show details</span>
+          </label>
+          <input
+            type="checkbox"
+            className="toggle toggle-secondary"
+            checked={showingDetails}
+            onChange={(e) => setShowingDetails(e.target.checked)}
+            name="showDetails"
+          />
+        </div>
+
         <input
-          type="checkbox"
-          className="toggle toggle-secondary"
-          checked={showingDetails}
-          onChange={(e) => setShowingDetails(e.target.checked)}
-          name="showDetails"
+          type="range"
+          className="range range-sm range-primary w-64"
+          value={rowCount}
+          onChange={(e) => setRowCount(e.target.valueAsNumber)}
+          min={3}
+          max={6}
         />
       </section>
 
@@ -239,12 +268,13 @@ const VideoGrid: React.FC<Props> = ({
       )}
 
       <section
-        className={clsx("grid grid-cols-1 w-full mb-4", {
+        className={clsx("grid w-full mb-4", gridColCount, {
           "gap-3": showingDetails,
           "gap-1": !showingDetails,
-          "lg:grid-cols-3": aspectRatio === "wide",
-          "lg:grid-cols-4": aspectRatio === "square",
-          "lg:grid-cols-6": aspectRatio === "tall",
+
+          // "lg:grid-cols-3": aspectRatio === "wide",
+          // "lg:grid-cols-4": aspectRatio === "square",
+          // "lg:grid-cols-6": aspectRatio === "tall",
         })}
       >
         {videos.map((video) => (

@@ -1,6 +1,7 @@
 import HoverVideoPlayer from "react-hover-video-player"
 import Loader from "./Loader"
 import clsx from "clsx"
+import {AspectRatio} from "./VideoCard"
 
 interface Props {
   videoSource: string
@@ -9,6 +10,7 @@ interface Props {
   disabled?: boolean
   className?: string
   overlay?: JSX.Element
+  aspectRatio: AspectRatio
 }
 
 export default function HoverVideo({
@@ -18,10 +20,14 @@ export default function HoverVideo({
   disabled,
   className,
   overlay,
+  aspectRatio,
 }: Props) {
-  const classes = clsx(className, "aspect-[16/9] object-cover w-full h-full", {
+  const classes = clsx(className, "object-cover w-full h-full", {
     grayscale: disabled,
     "cursor-pointer": onImageClick,
+    "aspect-[16/9]": aspectRatio === "wide",
+    "aspect-square": aspectRatio === "square",
+    "aspect-[9/16]": aspectRatio === "tall",
   })
 
   return (

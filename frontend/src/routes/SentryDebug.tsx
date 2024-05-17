@@ -6,7 +6,7 @@ export default function SentryDebug() {
   }
 
   const onServerError = async () => {
-    await fetch("/api/debug/sentry-error", {method: "POST"})
+    await fetch("/api/system/sentry/error", {method: "POST"})
   }
 
   return (

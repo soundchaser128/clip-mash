@@ -196,7 +196,10 @@ impl Migrator {
         if self.database.settings.fetch_optional().await?.is_none() {
             if let Ok(config) = StashConfig::load(&self.directories) {
                 info!("loaded config, migrating it to database");
-                let settings = Settings { stash: config };
+                let settings = Settings {
+                    stash: config,
+                    ..Default::default()
+                };
                 self.database.settings.set(settings).await?;
             }
         }

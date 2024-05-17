@@ -408,7 +408,7 @@ function VideoMarkersPage() {
       <div className="flex gap-2">
         <Player
           className="w-2/3 max-h-[82vh]"
-          src={getVideoUrl(video, config)}
+          src={getVideoUrl(video, config.stash)}
         />
         <div className="flex flex-col w-1/3 justify-between max-h-[60vh] relative">
           {showingForm && (
@@ -420,7 +420,7 @@ function VideoMarkersPage() {
                 {formMode === "create" ? "Add new" : "Edit"} marker
               </h2>
               <div className="form-control">
-                <label className="label">
+                <label htmlFor="title" className="label">
                   <span className="label-text">Marker title</span>
                   <span className="label-text-alt text-error">
                     {errors.title?.message}
@@ -434,7 +434,7 @@ function VideoMarkersPage() {
                 />
               </div>
               <div className="form-control">
-                <label className="label">
+                <label htmlFor="start" className="label">
                   <span className="label-text">Start time</span>
                 </label>
                 <div className="flex w-full">
@@ -465,7 +465,7 @@ function VideoMarkersPage() {
               </div>
 
               <div className="form-control">
-                <label className="label">
+                <label htmlFor="end" className="label">
                   <span className="label-text">End time</span>
                   <span className="label-text-alt text-error">
                     {errors.end?.message}
@@ -500,7 +500,10 @@ function VideoMarkersPage() {
               </div>
               {video.source === "Stash" && (
                 <div className="form-control">
-                  <label className="label cursor-pointer">
+                  <label
+                    htmlFor="createInStash"
+                    className="label cursor-pointer"
+                  >
                     <span className="label-text">
                       Create marker in Stash as well?
                     </span>

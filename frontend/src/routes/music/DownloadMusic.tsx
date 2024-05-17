@@ -44,7 +44,7 @@ const DownloadMusic: React.FC = () => {
         You can download songs from YouTube, Vimeo or any other site that yt-dlp
         supports.
       </p>
-      <Field label="Music URL">
+      <Field name="musicUrl" label="Music URL">
         <input
           className="input input-bordered w-full"
           placeholder="Supports YouTube, Vimeo, ..."

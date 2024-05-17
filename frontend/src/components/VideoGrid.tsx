@@ -1,20 +1,24 @@
 import {ListVideoDto, ListVideoDtoPage, updateVideo} from "@/api"
-import VideoCard from "./VideoCard"
+import VideoCard, {AspectRatio} from "./VideoCard"
 import {useLoaderData, useNavigation, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
-import {HiFolder, HiXMark} from "react-icons/hi2"
+import {HiFolder, HiMagnifyingGlass, HiXMark} from "react-icons/hi2"
 import Pagination from "./Pagination"
 import useDebouncedSetQuery, {QueryPairs} from "@/hooks/useDebouncedQuery"
-import {useEffect, useState} from "react"
+import {useState} from "react"
 import {useConfig} from "@/hooks/useConfig"
 import AddTagModal from "./AddTagModal"
 import clsx from "clsx"
 import PageSizeSelect from "./PageSizeSelect"
+import useLocalStorage from "@/hooks/useLocalStorage"
 
 interface Props {
   editableTitles?: boolean
   editableTags?: boolean
-  actionChildren?: (video: ListVideoDto) => React.ReactNode
+  actionChildren?: (
+    video: ListVideoDto,
+    aspectRation: AspectRatio,
+  ) => React.ReactNode
   onVideoClick: (id: string) => void
   hideMarkerCountFilter?: boolean
   isVideoDisabled?: (video: ListVideoDto) => boolean
@@ -27,11 +31,6 @@ interface FilterInputs {
   hasMarkers?: string
   isInteractive?: string
   source?: string
-}
-
-const EMPTY_VALUES: FilterInputs = {
-  query: "",
-  sort: "title",
 }
 
 const VideoGrid: React.FC<Props> = ({
@@ -48,6 +47,10 @@ const VideoGrid: React.FC<Props> = ({
   const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
     undefined,
   )
+  const [aspectRatio, setAspectRatio] = useLocalStorage<AspectRatio>(
+    "videoGridAspectRatio",
+    "wide",
+  )
 
   const {addOrReplaceParams, addOrReplaceParam, setQueryDebounced} =
     useDebouncedSetQuery()
@@ -63,7 +66,7 @@ const VideoGrid: React.FC<Props> = ({
 
   const config = useConfig()
   const videos = page.content
-  const {register, handleSubmit, watch, reset} = useForm<FilterInputs>({
+  const {register, handleSubmit, watch} = useForm<FilterInputs>({
     mode: "onChange",
     defaultValues: Object.fromEntries(params.entries()),
   })
@@ -80,7 +83,7 @@ const VideoGrid: React.FC<Props> = ({
   const noVideos = videos.length === 0 && formEmpty && !isLoading
   const noVideosForFilter = videos.length === 0 && !formEmpty && !isLoading
 
-  const onSubmit = (values: FilterInputs) => {
+  function onSubmit(values: FilterInputs) {
     const hasQuery = !!values.query?.trim()
     const update: QueryPairs = [
       ["sort", values.sort],
@@ -96,18 +99,13 @@ const VideoGrid: React.FC<Props> = ({
     addOrReplaceParams(update)
   }
 
-  const onEditTitle = async (id: string, title: string) => {
+  async function onEditTitle(id: string, title: string) {
     await updateVideo(id, {title})
   }
 
-  const onShowTagModal = (video: ListVideoDto) => {
+  function onShowTagModal(video: ListVideoDto) {
     setEditingTags(video)
   }
-
-  useEffect(() => {
-    const subscription = watch(() => handleSubmit(onSubmit)())
-    return () => subscription.unsubscribe()
-  }, [handleSubmit, watch])
 
   return (
     <>
@@ -124,8 +122,8 @@ const VideoGrid: React.FC<Props> = ({
           />
 
           <div className="flex gap-1">
-            <div className="flex gap-1">
-              <label className="label">
+            <div className="flex items-center gap-1">
+              <label className="label" htmlFor="source">
                 <span className="label-text">Video source</span>
               </label>
               <select
@@ -142,8 +140,8 @@ const VideoGrid: React.FC<Props> = ({
               </select>
             </div>
 
-            <div className="flex gap-1">
-              <label className="label">
+            <div className="flex gap-1 items-center">
+              <label className="label" htmlFor="sort">
                 <span className="label-text">Sort by</span>
               </label>
               <select
@@ -160,8 +158,8 @@ const VideoGrid: React.FC<Props> = ({
               </select>
             </div>
             {!hideMarkerCountFilter && (
-              <div className="flex gap-1">
-                <label className="label">
+              <div className="flex gap-1 items-center">
+                <label className="label" htmlFor="hasMarkers">
                   <span className="label-text">Has markers</span>
                 </label>
                 <select
@@ -178,8 +176,8 @@ const VideoGrid: React.FC<Props> = ({
               </div>
             )}
 
-            <div className="flex gap-1">
-              <label className="label">
+            <div className="flex gap-1 items-center">
+              <label className="label" htmlFor="isInteractive">
                 <span className="label-text">Interactive</span>
               </label>
               <select
@@ -194,33 +192,46 @@ const VideoGrid: React.FC<Props> = ({
                 <option value="false">No</option>
               </select>
             </div>
-            <button
-              type="button"
-              onClick={() => reset(EMPTY_VALUES)}
-              className="tooltip flex items-center hover:bg-gray-200 rounded-full p-2"
-              data-tip="Reset values"
-            >
+
+            <button type="submit" className="btn btn-primary">
+              <HiMagnifyingGlass /> Search
+            </button>
+
+            <button type="reset" className="btn btn-ghost btn-square">
               <HiXMark />
             </button>
           </div>
         </form>
       )}
 
-      <div className="w-full flex justify-between py-2">
+      <section className="w-full flex gap-2 py-4 items-center">
         <PageSizeSelect />
-
         <div className="flex items-center gap-1">
           <label className="label">
-            <span className="label-text">Show details</span>
+            <span className="label-text">Preview image aspect ratio</span>
           </label>
-          <input
-            type="checkbox"
-            className="toggle toggle-secondary"
-            checked={showingDetails}
-            onChange={(e) => setShowingDetails(e.target.checked)}
-          />
+
+          <select
+            value={aspectRatio}
+            onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
+            className="select select-sm select-bordered"
+          >
+            <option value="wide">Wide</option>
+            <option value="square">Square</option>
+            <option value="tall">Tall</option>
+          </select>
         </div>
-      </div>
+        <label className="label" htmlFor="showDetails">
+          <span className="label-text">Show details</span>
+        </label>
+        <input
+          type="checkbox"
+          className="toggle toggle-secondary"
+          checked={showingDetails}
+          onChange={(e) => setShowingDetails(e.target.checked)}
+          name="showDetails"
+        />
+      </section>
 
       <AddTagModal
         video={editingTags}
@@ -246,17 +257,22 @@ const VideoGrid: React.FC<Props> = ({
       )}
 
       <section
-        className={clsx("grid grid-cols-1 lg:grid-cols-3 w-full mb-4", {
+        className={clsx("grid grid-cols-1 w-full mb-4", {
           "gap-3": showingDetails,
           "gap-1": !showingDetails,
+          "lg:grid-cols-3": aspectRatio === "wide",
+          "lg:grid-cols-4": aspectRatio === "square",
+          "lg:grid-cols-6": aspectRatio === "tall",
         })}
       >
         {videos.map((video) => (
           <VideoCard
             key={video.video.id}
             video={video}
-            actionChildren={actionChildren && actionChildren(video)}
-            stashConfig={config}
+            actionChildren={
+              actionChildren && actionChildren(video, aspectRatio)
+            }
+            stashConfig={config.stash}
             onImageClick={onVideoClick}
             disabled={isVideoDisabled ? isVideoDisabled(video) : false}
             onEditTitle={
@@ -270,6 +286,7 @@ const VideoGrid: React.FC<Props> = ({
                 : undefined
             }
             hideDetails={!showingDetails}
+            aspectRatio={aspectRatio}
           />
         ))}
       </section>

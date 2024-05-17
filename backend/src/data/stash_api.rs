@@ -20,6 +20,9 @@ use crate::service::stash_config::StashConfig;
 use crate::util::add_api_key;
 use crate::Result;
 
+// How to generate Stash GraphQL schema JSON:
+// https://github.com/graphql-rust/graphql-client/tree/main/graphql_client_cli
+
 type Time = String;
 
 #[derive(GraphQLQuery)]

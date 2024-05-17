@@ -28,7 +28,7 @@ const AddTagModal: React.FC<Props> = ({video, onClose}) => {
       <h2 className="font-bold text-2xl mb-4">Add tag to video</h2>
       <form onSubmit={onSubmit} className="flex flex-col self-center px-8">
         <div className="form-control">
-          <label className="label">
+          <label htmlFor="newTag" className="label">
             <span className="label-text">Tag</span>
           </label>
           <input
@@ -38,6 +38,7 @@ const AddTagModal: React.FC<Props> = ({video, onClose}) => {
             value={tag}
             onChange={(e) => setTag(e.target.value)}
             autoFocus
+            name="newTag"
           />
         </div>
         <button className="btn btn-success self-end mt-2" type="submit">

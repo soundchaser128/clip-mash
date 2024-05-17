@@ -28,7 +28,7 @@ const AddStashVideoPage: React.FC = () => {
   const createToast = useCreateToast()
 
   useEffect(() => {
-    if (!config) {
+    if (!config.stash.stashUrl) {
       navigate("/settings")
       createToast({
         message: "Please configure your Stash settings first.",
@@ -130,7 +130,8 @@ const AddStashVideoPage: React.FC = () => {
             <VideoCard
               key={video.id}
               video={{video, markerCount: video.markerCount}}
-              stashConfig={config}
+              stashConfig={config.stash}
+              aspectRatio="wide"
               actionChildren={
                 <>
                   <span />

@@ -65,8 +65,15 @@ async fn run() -> Result<()> {
     let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
     info!("using ffmpeg at {ffmpeg_location:?}");
 
-    let database_file = directories.database_file();
-    let database = Database::new(database_file.as_str()).await?;
+    let database_file = if env::var("CLIP_MASH_SQLITE_IN_MEMORY").is_ok() {
+        ":memory:".into()
+    } else {
+        directories.database_file().into_string()
+    };
+
+    info!("using database at {database_file:?}");
+
+    let database = Database::new(&database_file).await?;
     let generator =
         CompilationGenerator::new(directories.clone(), &ffmpeg_location, database.clone()).await?;
     migrations::run_async(
@@ -167,31 +174,35 @@ async fn run() -> Result<()> {
             post(handlers::project::generate_description),
         );
 
-    let stash_routes = Router::new()
-        .route("/config", get(handlers::stash::get_config))
-        .route("/config", post(handlers::stash::set_config))
-        .route("/health", get(handlers::stash::get_health));
+    let stash_routes = Router::new().route("/health", get(handlers::stash::get_health));
+
+    let system_routes = Router::new()
+        .route("/restart", post(handlers::system::restart))
+        .route("/sentry/error", post(handlers::system::sentry_error))
+        .route("/version", get(handlers::system::get_version))
+        .route("/health", get(handlers::system::get_health))
+        .route("/configuration", get(handlers::system::get_config))
+        .route("/configuration", post(handlers::system::set_config));
+
+    let music_routes = Router::new()
+        .route("/", get(handlers::music::list_songs))
+        .route("/:id/stream", get(handlers::music::stream_song))
+        .route("/download", post(handlers::music::download_music))
+        .route("/upload", post(handlers::music::upload_music))
+        .route("/:id/beats", get(handlers::music::get_beats));
+
+    let progress_routes = Router::new()
+        .route("/:id/stream", get(handlers::progress::get_progress_stream))
+        .route("/:id/info", get(handlers::progress::get_progress_info))
+        .route("/:id", delete(handlers::progress::delete_progress));
 
     let api_routes = Router::new()
         .nest("/project", project_routes)
         .nest("/library", library_routes)
         .nest("/stash", stash_routes)
-        .route("/version", get(handlers::version::get_version))
-        .route(
-            "/progress/:id/stream",
-            get(handlers::progress::get_progress_stream),
-        )
-        .route(
-            "/progress/:id/info",
-            get(handlers::progress::get_progress_info),
-        )
-        .route("/progress/:id", delete(handlers::progress::delete_progress))
-        .route("/song", get(handlers::music::list_songs))
-        .route("/song/:id/stream", get(handlers::music::stream_song))
-        .route("/song/download", post(handlers::music::download_music))
-        .route("/song/upload", post(handlers::music::upload_music))
-        .route("/song/:id/beats", get(handlers::music::get_beats))
-        .route("/debug/sentry-error", post(handlers::debug::sentry_error));
+        .nest("/system", system_routes)
+        .nest("/song", music_routes)
+        .nest("/progress", progress_routes);
 
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))

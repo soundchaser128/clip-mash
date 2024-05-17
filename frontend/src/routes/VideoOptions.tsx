@@ -77,7 +77,7 @@ function VideoOptions() {
         {needsEncode && (
           <div className="flex flex-col gap-4 self-center max-w-lg">
             <div className="form-control w-full">
-              <label className="label">
+              <label className="label" htmlFor="outputWidth">
                 <span className="label-text">Output resolution</span>
               </label>
               <div className="flex items-center gap-2">
@@ -103,7 +103,7 @@ function VideoOptions() {
             </div>
 
             <div className="form-control">
-              <label className="label">
+              <label className="label" htmlFor="outputFps">
                 <span className="label-text">Output frames per second</span>
               </label>
               <input
@@ -114,7 +114,7 @@ function VideoOptions() {
               />
             </div>
             <div className="form-control">
-              <label className="label">
+              <label className="label" htmlFor="videoCodec">
                 <span className="label-text">Video codec</span>
               </label>
               <select
@@ -137,7 +137,7 @@ function VideoOptions() {
             </div>
 
             <div className="form-control">
-              <label className="label">
+              <label className="label" htmlFor="videoQuality">
                 <span className="label-text">Video quality</span>
               </label>
               <select
@@ -155,7 +155,7 @@ function VideoOptions() {
             </div>
 
             <div className="form-control">
-              <label className="label">
+              <label className="label" htmlFor="encodingEffort">
                 <span className="label-text">Encoding effort</span>
               </label>
               <select
@@ -173,7 +173,7 @@ function VideoOptions() {
 
             {showPaddingOptions && (
               <div className="form-control">
-                <label className="label">
+                <label className="label" htmlFor="padding">
                   <span className="label-text">
                     Padding for videos with different aspect ratios
                   </span>

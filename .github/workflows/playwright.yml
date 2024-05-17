@@ -1,0 +1,35 @@
+name: Playwright Tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get -y --no-install-recommends install ffmpeg
+      - name: Build Node
+        run: cd frontend && npm ci && npm run format-check && npm run lint && npm run test && npm run build
+      - name: Setup Rust toolchain
+        run: rustup toolchain install stable --profile minimal
+      - name: Install dependencies
+        run: cd e2e-tests && npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Build executable
+        run: cd backend && cargo build
+      - name: Run Playwright tests
+        run: cd e2e-tests && npx playwright test
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: e2e-tests/playwright-report/
+          retention-days: 30

@@ -26,6 +26,8 @@ import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"
 import VideoGrid from "@/components/VideoGrid"
 import PageInfo from "@/components/PageInfo"
+import {useCreateToast} from "@/hooks/useToast"
+import clsx from "clsx"
 
 export default function ListVideos() {
   const {actions} = useStateMachine({updateForm})
@@ -35,6 +37,7 @@ export default function ListVideos() {
   const [syncingVideo, setSyncingVideo] = useState<string>()
   const videos = page.content
   const [query] = useSearchParams()
+  const createToast = useCreateToast()
 
   const onOpenModal = (videoId: string) => {
     const queryString = query.toString()
@@ -70,7 +73,10 @@ export default function ListVideos() {
       )
     ) {
       const {deletedCount} = await cleanupVideos()
-      alert(`${deletedCount} videos deleted.`)
+      createToast({
+        type: "success",
+        message: `${deletedCount} videos deleted.`,
+      })
       revalidator.revalidate()
     }
   }
@@ -118,10 +124,13 @@ export default function ListVideos() {
         editableTitles
         editableTags
         onVideoClick={onOpenModal}
-        actionChildren={(video) => (
+        actionChildren={(video, aspectRatio) => (
           <>
-            <div className="form-control"></div>
-            <div className="flex gap-1">
+            <div
+              className={clsx("flex gap-1", {
+                "flex-col": aspectRatio === "tall",
+              })}
+            >
               {video.video.source === "Stash" && (
                 <button
                   onClick={() => onSyncVideo(video.video.id)}
@@ -134,9 +143,9 @@ export default function ListVideos() {
               )}
               <button
                 onClick={() => onRemoveVideo(video.video.id)}
-                className="btn btn-error btn-sm btn-square"
+                className="btn btn-error btn-sm"
               >
-                <HiTrash />
+                <HiTrash /> Delete
               </button>
               <button
                 onClick={() => onOpenModal(video.video.id)}

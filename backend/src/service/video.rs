@@ -76,6 +76,13 @@ impl VideoService {
                 .filter_map(|e| e.ok())
                 .filter(|e| e.file_type().is_file())
                 .map(|e| Utf8PathBuf::from_path_buf(e.into_path()).expect("not a utf8 path"))
+                .filter(|e| {
+                    if let Some(extension) = e.extension() {
+                        VIDEO_EXTENSIONS.contains(&extension)
+                    } else {
+                        false
+                    }
+                })
                 .collect();
 
             Ok(files)
@@ -139,14 +146,7 @@ impl VideoService {
         let start = Instant::now();
         let entries = self.gather_files(path.as_ref().to_owned(), recurse).await?;
         debug!("found files {entries:?} (recurse = {recurse})");
-        let mut futures = vec![];
-        for path in entries {
-            if let Some(extension) = path.extension() {
-                if VIDEO_EXTENSIONS.contains(&extension) {
-                    futures.push(self.add_local_video(path));
-                }
-            }
-        }
+        let futures = entries.into_iter().map(|path| self.add_local_video(path));
         let videos = parallelize(futures)
             .await
             .into_iter()

@@ -17,6 +17,19 @@ import HoverVideo from "./HoverVideo"
 import {Link, useLocation} from "react-router-dom"
 import {searchLink} from "@/helpers/links"
 
+export type AspectRatio = "tall" | "square" | "wide"
+
+const Label: React.FC<{
+  children: React.ReactNode
+  aspectRatio: AspectRatio
+}> = ({children, aspectRatio}) => {
+  if (aspectRatio === "tall") {
+    return null
+  } else {
+    return <>{children}</>
+  }
+}
+
 const OverlayText: React.FC<{
   children: React.ReactNode
   className?: string
@@ -41,6 +54,7 @@ interface Props {
   onAddTag?: (video: ListVideoDto) => void
   zoomOnHover?: boolean
   hideDetails?: boolean
+  aspectRatio: AspectRatio
 }
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
@@ -73,6 +87,7 @@ const VideoCard: React.FC<Props> = ({
   onAddTag,
   zoomOnHover,
   hideDetails,
+  aspectRatio,
 }) => {
   const location = useLocation()
 
@@ -83,8 +98,9 @@ const VideoCard: React.FC<Props> = ({
         imageSource={getPreview(video.video, stashConfig)}
         videoSource={getVideo(video.video, stashConfig)}
         disabled={disabled}
+        aspectRatio={aspectRatio}
         className={clsx(
-          "rounded-2xl",
+          "rounded-lg",
           zoomOnHover &&
             "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
         )}
@@ -93,14 +109,21 @@ const VideoCard: React.FC<Props> = ({
             <OverlayText className="top-2 left-2">
               {video.video.title}
             </OverlayText>
-            <OverlayText className="bottom-2 right-2">
+            <OverlayText
+              className={clsx({
+                "bottom-2 right-2": aspectRatio !== "tall",
+                "bottom-2 left-2": aspectRatio === "tall",
+              })}
+            >
               <HiClock className="inline mr-2" />
               {formatSeconds(video.video.duration)}
             </OverlayText>
-            <OverlayText className="left-2 bottom-2">
-              <HiTag className="inline mr-2" />
-              Markers: <strong>{video.markerCount}</strong>
-            </OverlayText>
+            {aspectRatio !== "tall" && (
+              <OverlayText className="left-2 bottom-2">
+                <HiTag className="inline mr-2" />
+                Markers: <strong>{video.markerCount}</strong>
+              </OverlayText>
+            )}
           </>
         }
       />
@@ -128,6 +151,7 @@ const VideoCard: React.FC<Props> = ({
           imageSource={getPreview(video.video, stashConfig)}
           videoSource={getVideo(video.video, stashConfig)}
           disabled={disabled}
+          aspectRatio={aspectRatio}
         />
       </figure>
       <section className="card-body gap-0">
@@ -174,7 +198,7 @@ const VideoCard: React.FC<Props> = ({
           </li>
           <li>
             <HiAdjustmentsVertical className="inline mr-2" />
-            Interactive:{" "}
+            <Label aspectRatio={aspectRatio}>Interactive: </Label>
             <strong>
               {video.video.interactive ? (
                 <HiCheck className="text-green-600 inline" />
@@ -185,26 +209,34 @@ const VideoCard: React.FC<Props> = ({
           </li>
           <li>
             <HiTag className="inline mr-2" />
-            Markers: <strong>{video.markerCount}</strong>
+            <Label aspectRatio={aspectRatio}>Markers: </Label>
+            <strong>{video.markerCount}</strong>
           </li>
           <li>
             <HiArrowDownTray className="inline mr-2" />
-            Source: <strong>{video.video.source}</strong>
+            <Label aspectRatio={aspectRatio}>Source: </Label>
+            <strong>{video.video.source}</strong>
           </li>
           <li>
             <HiClock className="inline mr-2" />
-            Duration: <strong>{formatSeconds(video.video.duration)}</strong>
+            <Label aspectRatio={aspectRatio}>Duration: </Label>
+            <strong>{formatSeconds(video.video.duration)}</strong>
           </li>
           <li>
             <HiCalendar className="inline mr-2" />
-            Created:{" "}
+            <Label aspectRatio={aspectRatio}>Created: </Label>
             <strong>
               <time dateTime={isoDate}>{humanDate}</time>
             </strong>
           </li>
         </ul>
 
-        <div className="card-actions justify-between grow items-end">
+        <div
+          className={clsx("card-actions justify-between grow", {
+            "items-end": aspectRatio !== "tall",
+            "items-center": aspectRatio === "tall",
+          })}
+        >
           {actionChildren}
         </div>
       </section>

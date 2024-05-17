@@ -93,7 +93,7 @@ const DownloadVideosPage: React.FC = () => {
           You can download videos from YouTube, Vimeo or any other site that
           yt-dlp supports.
         </p>
-        <Field label="Video URLs">
+        <Field name="urls" label="Video URLs">
           <textarea
             className="textarea textarea-bordered"
             placeholder="Enter URLs separated by line breaks..."

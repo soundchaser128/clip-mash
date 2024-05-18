@@ -2,7 +2,14 @@ import {ClipsResponse, SongDto, fetchClipsInteractive, listSongs} from "@/api"
 import {getClipUrl} from "@/helpers/clips"
 import clsx from "clsx"
 import {useRef, useState} from "react"
-import {HiChevronLeft, HiChevronRight, HiPause, HiPlay} from "react-icons/hi2"
+import {
+  HiChevronLeft,
+  HiChevronRight,
+  HiPause,
+  HiPlay,
+  HiSpeakerWave,
+  HiSpeakerXMark,
+} from "react-icons/hi2"
 import useDebouncedSetQuery from "@/hooks/useDebouncedQuery"
 import {LoaderFunction, useLoaderData} from "react-router-dom"
 import DataList, {Data, Description} from "@/components/DataList"
@@ -51,13 +58,16 @@ const TvWatchPage: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null)
 
   const [isPlaying, setIsPlaying] = useState(true)
+  const [muted, setMuted] = useState(true)
   const [index, setIndex] = useState(0)
   const length = clips?.clips?.length || 0
   const currentClip = length > 0 ? clips!.clips[index] : undefined
   const currentVideo = clips?.videos.find((v) => v.id === currentClip?.videoId)
-  const nextClip = length > 0 ? clips!.clips[(index + 1) % length] : undefined
   const clipUrl = getClipUrl(clips?.streams || {}, currentClip)
-  const nextClipUrl = getClipUrl(clips?.streams || {}, nextClip)
+
+  const onToggleMuted = () => {
+    setMuted((m) => !m)
+  }
 
   const onVideoTimeUpdate: React.ReactEventHandler<HTMLVideoElement> = (
     event,
@@ -76,7 +86,7 @@ const TvWatchPage: React.FC = () => {
     setQuery.setQueryDebounced(event.target.value)
   }
 
-  const togglePlay = () => {
+  const onTogglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause()
@@ -107,14 +117,13 @@ const TvWatchPage: React.FC = () => {
         <video
           src={clipUrl}
           onTimeUpdate={onVideoTimeUpdate}
-          className="w-full h-full"
+          className="w-full h-full cursor-pointer"
           ref={videoRef}
           autoPlay
-          muted
           preload="auto"
+          muted={muted}
+          onClick={onTogglePlay}
         />
-
-        <video preload="auto" className="hidden" src={nextClipUrl} />
 
         {music.length > 0 && (
           <audio
@@ -123,6 +132,7 @@ const TvWatchPage: React.FC = () => {
             onEnded={() => setCurrentSong((s) => (s + 1) % music.length)}
             className="hidden"
             autoPlay
+            muted={muted}
           />
         )}
       </section>
@@ -155,7 +165,7 @@ const TvWatchPage: React.FC = () => {
                   "btn-neutral": isPlaying,
                 })}
                 type="button"
-                onClick={togglePlay}
+                onClick={onTogglePlay}
               >
                 {isPlaying ? (
                   <HiPause className="w-5 h-5" />
@@ -164,12 +174,25 @@ const TvWatchPage: React.FC = () => {
                 )}
               </button>
               <button
+                onClick={onToggleMuted}
+                className="btn btn-outline btn-square join-item"
+                type="button"
+              >
+                {muted ? (
+                  <HiSpeakerWave className="w-5 h-5" />
+                ) : (
+                  <HiSpeakerXMark className="w-5 h-5" />
+                )}
+              </button>
+
+              <button
                 onClick={() => onChangeClip("next")}
                 className="btn btn-square btn-outline join-item"
               >
                 <HiChevronRight />
               </button>
             </div>
+
             <div className="form-control">
               <input
                 className="range-primary"

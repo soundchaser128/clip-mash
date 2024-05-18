@@ -84,6 +84,11 @@ const HomePage = () => {
               </Link>
             </div>
             <span className="divider">OR</span>
+            <Link to="/tv" className="btn btn-lg btn-primary self-center">
+              <HiPlay className="mr-2 w-6 h-6" />
+              TV
+            </Link>
+            <span className="divider">OR</span>
             <input
               accept="application/json"
               type="file"
@@ -98,12 +103,6 @@ const HomePage = () => {
               <HiFolder className="mr-2 w-6 h-6" />
               Open project
             </button>
-            <span className="divider">OR</span>
-
-            <Link to="/tv" className="btn btn-lg btn-primary self-center">
-              <HiPlay className="mr-2 w-6 h-6" />
-              TV
-            </Link>
           </div>
         </div>
       </div>

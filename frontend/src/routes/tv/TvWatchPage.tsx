@@ -125,8 +125,8 @@ const TvWatchPage: React.FC = () => {
   }
 
   return (
-    <main className="w-full h-screen flex flex-row">
-      <section className="grow flex flex-co relative">
+    <main className="w-full flex flex-col lg:flex-row">
+      <section className="grow flex relative h-screen">
         <Link
           to="/tv"
           className="btn btn-primary btn-outline btn-square btn-sm absolute top-4 left-4 z-10"
@@ -158,13 +158,13 @@ const TvWatchPage: React.FC = () => {
       </section>
       <section
         className={clsx(
-          "hidden lg:flex flex-col bg-base-200 p-4 overflow-y-scroll overflow-x-hidden text-lg relative",
-          collapsed ? "w-4" : "w-1/4",
+          "flex flex-col bg-base-200 p-4 overflow-y-scroll overflow-x-hidden text-lg relative",
+          collapsed ? "lg:w-4" : "lg:w-1/4 w-full",
         )}
       >
         <button
           onClick={() => setCollapsed((set) => !set)}
-          className="absolute top-1/2 left-1 btn btn-sm btn-circle btn-outline"
+          className="hidden lg:absolute top-1/2 left-1 btn btn-sm btn-circle btn-outline"
         >
           {collapsed ? <HiChevronLeft /> : <HiChevronRight />}
         </button>

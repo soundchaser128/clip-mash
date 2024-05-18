@@ -128,6 +128,7 @@ impl VideoService {
                 title: Some(path.file_stem().unwrap().to_string()),
                 tags: None,
                 created_on: file_created,
+                performers: None,
             };
             info!("inserting new video {create_video:#?}");
             let video = self.database.videos.persist_video(&create_video).await?;
@@ -215,6 +216,7 @@ impl VideoService {
             title: path.file_stem().map(String::from),
             tags: None,
             created_on: None,
+            performers: None,
         };
         info!("persisting downloaded video {video:#?}");
 
@@ -266,6 +268,9 @@ impl VideoService {
                 let id = generate_id();
                 let ffprobe_info = ffprobe.ok();
 
+                let performers: Vec<_> = scene.performers.iter().map(|p| &p.name).collect();
+                let performers_json =
+                    serde_json::to_string(&performers).expect("must be serializable");
                 let create_video = CreateVideo {
                     id,
                     file_path: self.stash_api.get_stream_url(scene.id.parse().unwrap()),
@@ -277,6 +282,7 @@ impl VideoService {
                     title,
                     tags: Some(tags),
                     created_on,
+                    performers: Some(performers_json),
                 };
 
                 (create_video, ffprobe_info)

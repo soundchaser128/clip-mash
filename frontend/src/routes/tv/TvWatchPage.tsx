@@ -164,7 +164,7 @@ const TvWatchPage: React.FC = () => {
       >
         <button
           onClick={() => setCollapsed((set) => !set)}
-          className="hidden lg:absolute top-1/2 left-1 btn btn-sm btn-circle btn-outline"
+          className="hidden lg:flex absolute top-1/2 left-1 btn btn-sm btn-circle btn-outline"
         >
           {collapsed ? <HiChevronLeft /> : <HiChevronRight />}
         </button>

@@ -2,8 +2,13 @@ import {MarkerCount, listMarkerTitles} from "@/api"
 import Heading from "@/components/Heading"
 import clsx from "clsx"
 import React, {useState} from "react"
-import {HiPlus, HiRocketLaunch} from "react-icons/hi2"
-import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
+import {HiChevronLeft, HiPlus, HiRocketLaunch} from "react-icons/hi2"
+import {
+  Link,
+  LoaderFunction,
+  useLoaderData,
+  useNavigate,
+} from "react-router-dom"
 
 export const markerTitleLoader: LoaderFunction = async () => {
   const markerTitles = await listMarkerTitles({
@@ -51,6 +56,13 @@ const TvStartPage: React.FC = () => {
 
   return (
     <main className="container pt-2 px-1 ml-auto mr-auto flex flex-col min-h-screen">
+      <Link
+        to="/"
+        className="btn btn-primary btn-outline btn-square btn-sm absolute top-4 left-4 z-10"
+      >
+        <HiChevronLeft />
+      </Link>
+
       <Heading className="text-center" spacing="tight">
         ClipMash TV
       </Heading>

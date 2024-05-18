@@ -86,7 +86,7 @@ pub struct DbVideo {
     pub video_created_on: i64,
     pub video_title: Option<String>,
     pub video_tags: Option<String>,
-    // todo add performers
+    pub performers: Option<String>,
 }
 
 impl DbVideo {
@@ -132,6 +132,7 @@ pub struct CreateVideo {
     pub title: Option<String>,
     pub tags: Option<String>,
     pub created_on: Option<i64>,
+    pub performers: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]

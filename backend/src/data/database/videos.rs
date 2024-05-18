@@ -108,6 +108,7 @@ impl VideosDatabase {
                 video_created_on: records[0].video_created_on,
                 video_tags: records[0].video_tags.clone(),
                 video_title: records[0].video_title.clone(),
+                performers: records[0].performers.clone(),
             };
             let markers = records
                 .into_iter()
@@ -198,8 +199,8 @@ impl VideosDatabase {
         let created_on = video.created_on.unwrap_or_else(|| unix_timestamp_now());
         let inserted = sqlx::query!(
             "INSERT INTO videos 
-            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on, performers) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING video_created_on",
             video.id,
             video.file_path,
@@ -211,6 +212,7 @@ impl VideosDatabase {
             video.title,
             video.tags,
             created_on,
+            video.performers,
         )
         .fetch_one(&self.pool)
         .await?;
@@ -226,6 +228,7 @@ impl VideosDatabase {
             video_created_on: inserted.video_created_on,
             video_tags: video.tags.clone(),
             video_title: video.title.clone(),
+            performers: video.performers.clone(),
         })
     }
 
@@ -303,6 +306,7 @@ impl VideosDatabase {
             video_tags: Option<String>,
             video_title: Option<String>,
             marker_count: i64,
+            performers: Option<String>,
         }
 
         let count = self.fetch_count(&query_object).await?;
@@ -323,7 +327,7 @@ impl VideosDatabase {
         };
 
         let mut query_builder = QueryBuilder::new(
-            "SELECT v.id, v.file_path, v.interactive, v.duration, v.video_created_on, v.source, v.video_preview_image, 
+            "SELECT v.id, v.file_path, v.interactive, v.duration, v.video_created_on, v.source, v.video_preview_image, v.performers,
                     v.stash_scene_id, v.video_tags, v.video_title, COUNT(m.video_id) AS marker_count
             FROM videos v
             LEFT JOIN markers m ON v.id = m.video_id ",
@@ -400,6 +404,7 @@ impl VideosDatabase {
                     video_created_on: row.video_created_on,
                     video_tags: row.video_tags,
                     video_title: row.video_title,
+                    performers: row.performers,
                 };
                 videos.push(ListVideoDto {
                     video: video.into(),

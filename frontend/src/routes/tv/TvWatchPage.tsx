@@ -11,7 +11,7 @@ import {
   HiSpeakerXMark,
 } from "react-icons/hi2"
 import useDebouncedSetQuery from "@/hooks/useDebouncedQuery"
-import {LoaderFunction, useLoaderData} from "react-router-dom"
+import {Link, LoaderFunction, useLoaderData} from "react-router-dom"
 import DataList, {Data, Description} from "@/components/DataList"
 import {clamp} from "@/helpers/math"
 import Heading from "@/components/Heading"
@@ -52,6 +52,8 @@ const TvWatchPage: React.FC = () => {
     parameterName: "clipDuration",
     replaceAll: false,
   })
+
+  const [balance, setBalance] = useState(0.5)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentSong, setCurrentSong] = useState(0)
@@ -111,9 +113,27 @@ const TvWatchPage: React.FC = () => {
     }
   }
 
+  const onBalanceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.valueAsNumber
+    setBalance(value)
+    if (audioRef.current) {
+      audioRef.current.volume = 1.0 - value
+    }
+    if (videoRef.current) {
+      videoRef.current.volume = value
+    }
+  }
+
   return (
     <main className="w-full h-screen flex flex-row">
-      <section className="grow flex flex-col">
+      <section className="grow flex flex-co relative">
+        <Link
+          to="/tv"
+          className="btn btn-primary btn-outline btn-square btn-sm absolute top-4 left-4 z-10"
+        >
+          <HiChevronLeft />
+        </Link>
+
         <video
           src={clipUrl}
           onTimeUpdate={onVideoTimeUpdate}
@@ -154,7 +174,7 @@ const TvWatchPage: React.FC = () => {
             <div className="join self-center mb-4">
               <button
                 onClick={() => onChangeClip("prev")}
-                className="btn btn-square btn-outline join-item"
+                className="btn btn-square join-item"
               >
                 <HiChevronLeft />
               </button>
@@ -162,7 +182,7 @@ const TvWatchPage: React.FC = () => {
               <button
                 className={clsx("btn btn-square join-item", {
                   "btn-success": !isPlaying,
-                  "btn-neutral": isPlaying,
+                  "btn-warning": isPlaying,
                 })}
                 type="button"
                 onClick={onTogglePlay}
@@ -175,7 +195,7 @@ const TvWatchPage: React.FC = () => {
               </button>
               <button
                 onClick={onToggleMuted}
-                className="btn btn-outline btn-square join-item"
+                className="btn btn-square join-item"
                 type="button"
               >
                 {muted ? (
@@ -187,7 +207,7 @@ const TvWatchPage: React.FC = () => {
 
               <button
                 onClick={() => onChangeClip("next")}
-                className="btn btn-square btn-outline join-item"
+                className="btn btn-square join-item"
               >
                 <HiChevronRight />
               </button>
@@ -195,7 +215,7 @@ const TvWatchPage: React.FC = () => {
 
             <div className="form-control">
               <input
-                className="range-primary"
+                className="range range-primary"
                 type="range"
                 min="2"
                 max="30"
@@ -209,6 +229,21 @@ const TvWatchPage: React.FC = () => {
                 </span>
               </label>
             </div>
+            <div className="form-control">
+              <input
+                className="range range-primary"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={balance}
+                onChange={onBalanceChange}
+              />
+              <label className="label">
+                <span className="label-text mb-4">Audio balance</span>
+              </label>
+            </div>
+
             <DataList>
               <Description>Current clip:</Description>
               <Data>

@@ -114,18 +114,27 @@ pub async fn upload_music(
     Err(eyre!("missing form field `file`").into())
 }
 
+#[derive(Deserialize, IntoParams)]
+pub struct ListSongsQuery {
+    shuffle: Option<bool>,
+}
+
 #[axum::debug_handler]
 #[utoipa::path(
     get,
     path = "/api/song",
+    params(ListSongsQuery),
     responses(
         (status = 200, description = "Lists all songs", body = Vec<SongDto>),
     )
 )]
 pub async fn list_songs(
+    Query(ListSongsQuery { shuffle }): Query<ListSongsQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<SongDto>>, AppError> {
-    let songs = state
+    use rand::seq::SliceRandom;
+
+    let mut songs: Vec<SongDto> = state
         .database
         .music
         .list_songs()
@@ -133,6 +142,10 @@ pub async fn list_songs(
         .into_iter()
         .map(From::from)
         .collect();
+
+    if let Some(true) = shuffle {
+        songs.shuffle(&mut rand::thread_rng());
+    }
 
     Ok(Json(songs))
 }

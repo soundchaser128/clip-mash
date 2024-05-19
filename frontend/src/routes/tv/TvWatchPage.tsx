@@ -27,7 +27,7 @@ export const interactiveClipsLoader: LoaderFunction = async (request) => {
   let music: SongDto[] = []
 
   if (searchParams.has("withMusic")) {
-    music = await listSongs()
+    music = await listSongs({shuffle: true})
   }
 
   const response = await fetchClipsInteractive({
@@ -60,7 +60,7 @@ const TvWatchPage: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null)
 
   const [isPlaying, setIsPlaying] = useState(true)
-  const [muted, setMuted] = useState(true)
+  const [muted, setMuted] = useState(music.length === 0)
   const [index, setIndex] = useState(0)
   const length = clips?.clips?.length || 0
   const currentClip = length > 0 ? clips!.clips[index] : undefined
@@ -229,20 +229,22 @@ const TvWatchPage: React.FC = () => {
                 </span>
               </label>
             </div>
-            <div className="form-control">
-              <input
-                className="range range-primary"
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={balance}
-                onChange={onBalanceChange}
-              />
-              <label className="label">
-                <span className="label-text mb-4">Audio balance</span>
-              </label>
-            </div>
+            {music.length > 0 && (
+              <div className="form-control">
+                <input
+                  className="range range-primary"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={balance}
+                  onChange={onBalanceChange}
+                />
+                <label className="label">
+                  <span className="label-text mb-4">Audio balance</span>
+                </label>
+              </div>
+            )}
 
             <DataList>
               <Description>Current clip:</Description>

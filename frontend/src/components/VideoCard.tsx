@@ -8,6 +8,7 @@ import {
   HiClock,
   HiPlus,
   HiTag,
+  HiUsers,
   HiXMark,
 } from "react-icons/hi2"
 import {dateTimeFormat, formatSeconds} from "@/helpers/time"
@@ -16,6 +17,7 @@ import EditableText from "./EditableText"
 import HoverVideo from "./HoverVideo"
 import {Link, useLocation} from "react-router-dom"
 import {searchLink} from "@/helpers/links"
+import {pluralize} from "@/helpers/formatting"
 
 export type AspectRatio = "tall" | "square" | "wide"
 
@@ -232,6 +234,15 @@ const VideoCard: React.FC<Props> = ({
               <time dateTime={isoDate}>{humanDate}</time>
             </strong>
           </li>
+          {video.video.performers.length > 0 && (
+            <li>
+              <HiUsers className="inline mr-2" />
+              <Label aspectRatio={aspectRatio}>
+                {pluralize("Performer", video.video.performers.length)}:{" "}
+              </Label>
+              <strong>{video.video.performers.join(", ")}</strong>
+            </li>
+          )}
         </ul>
 
         <div

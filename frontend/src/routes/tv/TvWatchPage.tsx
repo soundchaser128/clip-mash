@@ -53,7 +53,8 @@ const TvWatchPage: React.FC = () => {
     replaceAll: false,
   })
 
-  const [balance, setBalance] = useState(0.5)
+  const [musicAudioBalance, setMusicAudioBalance] = useState(0.5)
+  const [volume, setVolume] = useState(1.0)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentSong, setCurrentSong] = useState(0)
@@ -115,12 +116,27 @@ const TvWatchPage: React.FC = () => {
 
   const onBalanceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.valueAsNumber
-    setBalance(value)
+    setMusicAudioBalance(value)
+    const musicVolume = volume * value
+    const videoVolume = volume * (1 - value)
     if (audioRef.current) {
-      audioRef.current.volume = 1.0 - value
+      audioRef.current.volume = musicVolume
     }
     if (videoRef.current) {
-      videoRef.current.volume = value
+      videoRef.current.volume = videoVolume
+    }
+  }
+
+  const onVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.valueAsNumber
+    setVolume(value)
+    const musicVolume = value * musicAudioBalance
+    const videoVolume = value * (1 - musicAudioBalance)
+    if (audioRef.current) {
+      audioRef.current.volume = musicVolume
+    }
+    if (videoRef.current) {
+      videoRef.current.volume = videoVolume
     }
   }
 
@@ -229,6 +245,20 @@ const TvWatchPage: React.FC = () => {
                 </span>
               </label>
             </div>
+            <div className="form-control">
+              <input
+                className="range range-primary"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={volume}
+                onChange={onVolumeChange}
+              />
+              <label className="label">
+                <span className="label-text mb-4">Volume</span>
+              </label>
+            </div>
             {music.length > 0 && (
               <div className="form-control">
                 <input
@@ -237,7 +267,7 @@ const TvWatchPage: React.FC = () => {
                   min="0"
                   max="1"
                   step="0.05"
-                  value={balance}
+                  value={musicAudioBalance}
                   onChange={onBalanceChange}
                 />
                 <label className="label">

@@ -173,8 +173,28 @@ impl VideosDatabase {
                     .fetch_all(&self.pool)
                     .await
             }
+            AllVideosFilter::NoPerformers => {
+                sqlx::query_as!(
+                    DbVideo,
+                    "SELECT * FROM videos WHERE performers IS NULL AND stash_scene_id IS NOT NULL"
+                )
+                .fetch_all(&self.pool)
+                .await
+            }
         };
         query.map_err(From::from)
+    }
+
+    pub async fn set_video_performers(&self, id: &str, performers: &str) -> Result<()> {
+        sqlx::query!(
+            "UPDATE videos SET performers = $1 WHERE id = $2",
+            performers,
+            id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
     }
 
     pub async fn cleanup_videos(&self) -> Result<u32> {

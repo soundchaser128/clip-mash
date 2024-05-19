@@ -215,6 +215,7 @@ pub enum AllVideosFilter {
     NoVideoDuration,
     NoPreviewImage,
     NoTitle,
+    NoPerformers,
 }
 
 #[derive(Deserialize, ToSchema, Debug)]

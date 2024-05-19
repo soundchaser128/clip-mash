@@ -296,7 +296,10 @@ impl From<DbVideo> for VideoDto {
             id: value.id,
             stash_scene_id: value.stash_scene_id,
             title,
-            performers: vec![],
+            performers: value
+                .performers
+                .and_then(|s| serde_json::from_str(&s).ok())
+                .unwrap_or_default(),
             interactive: value.interactive,
             file_name: expect_file_name(&value.file_path),
             source: value.source,

@@ -29,4 +29,8 @@ impl StashConfig {
         let config = serde_json::from_str(&text)?;
         Ok(config)
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.stash_url.is_empty()
+    }
 }

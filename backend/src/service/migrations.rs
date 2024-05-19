@@ -8,6 +8,7 @@ use super::directories::Directories;
 use super::preview_image::PreviewGenerator;
 use super::stash_config::StashConfig;
 use crate::data::database::{AllVideosFilter, Database, Settings, VideoUpdate};
+use crate::data::stash_api::StashApi;
 use crate::helpers::parallelize;
 use crate::service::commands::ffprobe;
 use crate::Result;
@@ -69,6 +70,44 @@ impl Migrator {
                     .await?;
             } else {
                 warn!("failed to determine duration for video {}", video.file_path);
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn set_performers_from_stash(&self) -> Result<()> {
+        info!("setting performers from stash if necessary");
+        let settings = self.database.settings.fetch().await;
+        match settings {
+            Ok(settings) if !settings.stash.is_empty() => {
+                let videos = self
+                    .database
+                    .videos
+                    .get_videos(AllVideosFilter::NoPerformers)
+                    .await?;
+
+                let stash_api = StashApi::with_config(settings.stash);
+                for video in videos {
+                    let scene = stash_api
+                        .find_scene(video.stash_scene_id.expect("must be set because of query"))
+                        .await?;
+                    let performers: Vec<&str> = scene
+                        .performers
+                        .iter()
+                        .map(|performer| performer.name.as_str())
+                        .collect();
+                    info!("found performers for video {}: {:?}", video.id, performers);
+
+                    let performers = serde_json::to_string(&performers)?;
+                    self.database
+                        .videos
+                        .set_video_performers(&video.id, &performers)
+                        .await?;
+                }
+            }
+            _ => {
+                info!("no stash settings found, not setting performers")
             }
         }
 
@@ -259,6 +298,7 @@ impl Migrator {
             self.populate_ffprobe_info(),
             self.database.markers.fix_all_video_indices(),
             self.migrate_settings(),
+            self.set_performers_from_stash(),
         )?;
 
         let elapsed = start.elapsed();

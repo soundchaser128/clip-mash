@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT title, count(*) AS count\n            FROM markers\n            WHERE title != 'Untitled' AND title LIKE $1\n            GROUP BY title\n            ORDER BY count DESC\n            LIMIT $2",
+  "query": "SELECT title, count(*) AS count\n            FROM markers\n            WHERE title LIKE $1\n            GROUP BY title\n            ORDER BY count DESC\n            LIMIT $2",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "0efe20e157e3aa8b2ebc988350db83c4e05eb04f55ea7026694221ed1c73d6b8"
+  "hash": "d1e0d41932aec57def7764f87b5312a63bbe0d9b83323c64d83c400be13ea466"
 }

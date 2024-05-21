@@ -54,6 +54,9 @@ tar = "0.4.40"
 xz2 = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]
+# used for listing drives on windows
+sysinfo = "0.30.12"
+# used for unzipping the downloaded ffmpeg archive
 zip = "1.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]

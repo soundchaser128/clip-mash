@@ -281,10 +281,6 @@ const VideoGrid: React.FC<Props> = ({
         className={clsx("grid w-full mb-4", gridColCount, {
           "gap-3": showingDetails,
           "gap-1": !showingDetails,
-
-          // "lg:grid-cols-3": aspectRatio === "wide",
-          // "lg:grid-cols-4": aspectRatio === "square",
-          // "lg:grid-cols-6": aspectRatio === "tall",
         })}
       >
         {videos.map((video) => (

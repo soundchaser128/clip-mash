@@ -454,6 +454,7 @@ export interface ListVideoDtoPage {
 
 export interface ListFileEntriesResponse {
   directory: string
+  drives: string[]
   entries: FileSystemEntry[]
 }
 

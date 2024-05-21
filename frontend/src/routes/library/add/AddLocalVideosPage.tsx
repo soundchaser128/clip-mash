@@ -76,6 +76,7 @@ export default function SelectVideos() {
           <>
             <FileBrowser
               name="path"
+              drives={files?.drives || []}
               files={files?.entries || []}
               onSelectItem={(e) => onSelectEntry(e.fullPath)}
               control={control}

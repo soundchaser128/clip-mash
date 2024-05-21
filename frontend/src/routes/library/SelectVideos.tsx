@@ -100,7 +100,7 @@ export default function ListVideos() {
         onVideoClick={onToggleCheckbox}
         isVideoDisabled={isVideoDisabled}
         noVideosFoundMessage="No videos with markers found. Try going back to the library and adding some markers."
-        actionChildren={(video, aspectRatio) => (
+        actionChildren={(video) => (
           <>
             <div className="form-control">
               <label className="label cursor-pointer">

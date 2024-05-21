@@ -25,8 +25,9 @@ import {
   getDefaultOptions,
 } from "./clips/settings/ClipSettingsForm"
 import {lerpArrays} from "@/helpers/math"
+import {getPageSize} from "@/components/PageSizeSelect"
 
-export const DEFAULT_PAGE_LENGTH = 24
+// export const DEFAULT_PAGE_LENGTH = 30
 export const DEFAULT_CLIP_BASE_DURATION = 10
 export const DEFAULT_SPREAD = 0.25
 
@@ -233,7 +234,7 @@ export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const videos = await listStashVideos({
     query,
     page: Number(url.searchParams.get("page")) || 1,
-    size: Number(url.searchParams.get("size")) || DEFAULT_PAGE_LENGTH,
+    size: getPageSize(url.searchParams),
     withMarkers: withMarkers ? true : null,
   })
 
@@ -260,7 +261,7 @@ export const makeVideoLoader: (
     const videos = await listVideos({
       hasMarkers: params.hasMarkers || parseBoolean(query.get("hasMarkers")),
       page: Number(query.get("page")) || 0,
-      size: Number(query.get("size")) || DEFAULT_PAGE_LENGTH,
+      size: getPageSize(url.searchParams),
       query: query.get("query"),
       sort: query.get("sort"),
       source: query.get("source") as VideoSource | null,

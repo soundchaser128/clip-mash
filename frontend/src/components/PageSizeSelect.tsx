@@ -3,6 +3,19 @@ import useLocalStorage from "@/hooks/useLocalStorage"
 
 const DEFAULT_ITEMS_PER_PAGE = 30
 
+export function getPageSize(queryParams: URLSearchParams): number {
+  const localStorage = window.localStorage.getItem("pageSize")
+  const queryValue = queryParams.get("size")
+
+  if (queryValue) {
+    return Number(queryValue)
+  } else if (localStorage) {
+    return Number(localStorage)
+  } else {
+    return DEFAULT_ITEMS_PER_PAGE
+  }
+}
+
 const PageSizeSelect: React.FC = () => {
   const {addOrReplaceParams} = useDebouncedSetQuery()
   const [perPage, setPerPage] = useLocalStorage(

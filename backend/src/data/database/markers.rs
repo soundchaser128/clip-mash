@@ -399,7 +399,7 @@ impl MarkersDatabase {
             MarkerCount,
             "SELECT title, count(*) AS count
             FROM markers
-            WHERE title != 'Untitled' AND title LIKE $1
+            WHERE title LIKE $1
             GROUP BY title
             ORDER BY count DESC
             LIMIT $2",

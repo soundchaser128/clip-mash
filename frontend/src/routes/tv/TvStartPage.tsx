@@ -10,6 +10,8 @@ import {
   useNavigate,
 } from "react-router-dom"
 
+const INITIAL_COUNT = 25
+
 export const markerTitleLoader: LoaderFunction = async () => {
   const markerTitles = await listMarkerTitles({
     count: 1000,
@@ -27,7 +29,7 @@ const TvStartPage: React.FC = () => {
   const [withMusic, setWithMusic] = useState<boolean>(false)
   const [showAll, setShowAll] = useState<boolean>(false)
 
-  const markers = showAll ? data.markers : data.markers.slice(0, 25)
+  const markers = showAll ? data.markers : data.markers.slice(0, INITIAL_COUNT)
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -89,14 +91,16 @@ const TvStartPage: React.FC = () => {
           ))}
         </ul>
 
-        <button
-          className="btn btn-outline btn-primary mt-2 btn-sm"
-          onClick={() => setShowAll(!showAll)}
-          type="button"
-        >
-          <HiPlus />
-          {showAll ? "Show less" : "Show all"}
-        </button>
+        {markers.length > INITIAL_COUNT && (
+          <button
+            className="btn btn-outline btn-primary mt-2 btn-sm"
+            onClick={() => setShowAll(!showAll)}
+            type="button"
+          >
+            <HiPlus />
+            {showAll ? "Show less" : "Show all"}
+          </button>
+        )}
 
         <div className="form-control mt-4">
           <label className="label">

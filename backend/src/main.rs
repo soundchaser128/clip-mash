@@ -34,25 +34,35 @@ pub type Result<T> = std::result::Result<T, Report>;
 // 100 MB
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
-fn find_unused_port() -> SocketAddr {
-    let host = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "127.0.0.1".into());
+fn get_port() -> u16 {
+    use rand::Rng;
+
     let port = std::env::args()
         .nth(2)
         .and_then(|port| port.parse::<u16>().ok());
-
-    // find first unused port
-    let port = if cfg!(debug_assertions) {
-        5174
-    } else {
-        match port {
-            Some(port) => port,
-            None => (1024..65535)
-                .find(|port| std::net::TcpListener::bind(format!("{}:{}", host, port)).is_ok())
-                .expect("failed to find unused port"),
+    match port {
+        Some(port) => port,
+        None => {
+            if cfg!(debug_assertions) {
+                5174
+            } else {
+                let random_port = rand::thread_rng().gen_range(1024..65535);
+                info!("using random port {random_port}");
+                random_port
+            }
         }
-    };
+    }
+}
+
+fn get_host() -> String {
+    std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "127.0.0.1".into())
+}
+
+fn get_address() -> SocketAddr {
+    let host = get_host();
+    let port = get_port();
     format!("{}:{}", host, port).parse().unwrap()
 }
 
@@ -217,7 +227,7 @@ async fn run() -> Result<()> {
         .layer(sentry_tower::SentryHttpLayer::with_transaction())
         .with_state(state);
 
-    let addr = find_unused_port();
+    let addr = get_address();
     info!("listening on {addr}");
 
     let is_debug_build = cfg!(debug_assertions);

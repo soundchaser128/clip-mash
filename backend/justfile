@@ -1,3 +1,5 @@
+set shell := ["nu", "-c"]
+
 format:
     cargo +nightly fmt
 
@@ -17,3 +19,8 @@ setup:
 
 fix:
     cargo fix --allow-staged
+
+generate-openapi-spec:
+    cargo build
+    cargo run --bin generate-openapi-spec ../api-docs.json
+    

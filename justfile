@@ -1,12 +1,17 @@
+set shell := ["nu", "-c"]
+
 project := justfile_directory()
 frontend := project + "/frontend"
 backend := project + "/backend"
 
+default:
+  @just --list
+
 @backend *cmd:
-    cd {{backend}} && just {{cmd}}
+    cd {{backend}}; just {{cmd}}
 
 @frontend *cmd:
-    cd {{frontend}} && just {{cmd}}
+    cd {{frontend}}; just {{cmd}}
 
 format:
     just backend format
@@ -27,3 +32,8 @@ setup:
 fix:
     just backend fix
     just frontend fix
+
+generate-code:
+    just backend generate-openapi-spec
+    just frontend generate-client
+    rm api-docs.json

@@ -2,6 +2,7 @@
 name = "clip-mash"
 version = "0.22.0-pre.1"
 edition = "2021"
+default-run = "clip-mash"
 
 [dependencies]
 async-stream = "0.3.5"

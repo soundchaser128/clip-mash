@@ -1,5 +1,8 @@
 set shell := ["nu", "-c"]
 
+default:
+  @just --list
+
 check:
     npm run type-check
     npm run format-check

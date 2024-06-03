@@ -1,0 +1,17 @@
+set shell := ["nu", "-c"]
+
+default:
+  @just --list
+
+format:
+    cargo +nightly fmt
+
+check:
+    cargo check
+
+build:
+    cargo build --release
+
+fix:
+    cargo fix --allow-staged
+

@@ -4,6 +4,7 @@ project := justfile_directory()
 frontend := project + "/frontend"
 backend := project + "/backend"
 e2e := project + "/e2e-tests"
+client := project + "/rust-client"
 
 default:
   @just --list
@@ -17,17 +18,23 @@ default:
 @e2e *cmd:
     cd {{e2e}}; just {{cmd}}
 
+@client *cmd:
+    cd {{client}}; just {{cmd}}
+
 format:
     just backend format
     just frontend format
+    just client format
 
 check:
     just backend check
     just frontend check
+    just client check
 
 build:
     just frontend build
     just backend build
+    just client build
 
 setup:
     just frontend setup
@@ -36,6 +43,7 @@ setup:
 fix:
     just backend fix
     just frontend fix
+    just client fix
 
 generate-code:
     just backend generate-openapi-spec

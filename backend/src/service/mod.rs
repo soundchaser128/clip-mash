@@ -5,6 +5,7 @@ pub mod directories;
 pub mod encoding_optimization;
 pub mod funscript;
 pub mod generator;
+pub mod handy;
 pub mod migrations;
 pub mod music;
 pub mod new_version_checker;

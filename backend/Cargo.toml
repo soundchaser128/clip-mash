@@ -49,6 +49,7 @@ youtube_dl = { version = "0.10.0", features = [
     "tokio",
     "downloader-native-tls",
 ] }
+handy-api = { git = "https://github.com/soundchaser128/handy-sdk-rs", version = "0.1.0-2.0.0-beta-3" }
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.40"
@@ -58,7 +59,7 @@ xz2 = "0.1.7"
 # used for listing drives on windows
 sysinfo = "0.30.12"
 # used for unzipping the downloaded ffmpeg archive
-zip = "1.2"
+zip = "2.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 aubio = { version = "0.2.1", features = ["bindgen"] }

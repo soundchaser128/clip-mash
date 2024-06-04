@@ -1,23 +1,35 @@
+use std::process::Stdio;
 use std::time::Duration;
 
+use color_eyre::eyre::bail;
 use color_eyre::Result;
 use rand::Rng;
 use tokio::process::Command;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let timeout = Duration::from_secs(60);
+    let interval_duration = Duration::from_millis(100);
+
     let port: u32 = rand::thread_rng().gen_range(1024..65535);
     eprintln!("Starting server on port {}", port);
-    // killall clip-mash
 
     let mut process = Command::new("cargo")
         .arg("run")
         .arg("--")
         .arg("0.0.0.0")
         .arg(port.to_string())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true)
         .spawn()?;
 
+    let mut elapsed = Duration::from_secs(0);
     loop {
+        if elapsed >= timeout {
+            bail!("Server did not start in {} seconds", timeout.as_secs());
+        }
+
         let response = reqwest::get(&format!("http://localhost:{}/api/system/health", port)).await;
         if let Ok(response) = response {
             if response.status().is_success() {
@@ -25,7 +37,8 @@ async fn main() -> Result<()> {
             }
         }
 
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        tokio::time::sleep(interval_duration).await;
+        elapsed += interval_duration;
     }
 
     let response =

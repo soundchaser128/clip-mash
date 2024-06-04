@@ -1,3 +1,18 @@
+use clap::{Parser, Subcommand};
+
+#[derive(Debug, Subcommand)]
+enum TopLevelCommand {
+    Video,
+    Marker,
+}
+
+#[derive(Parser, Debug)]
+struct Args {
+    #[clap(subcommand)]
+    command: TopLevelCommand,
+}
+
 fn main() {
-    println!("Hello, world!");
+    let args = Args::parse();
+    println!("{:?}", args);
 }

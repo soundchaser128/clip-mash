@@ -1,9 +1,4 @@
-import {
-  ListPerformerResponse,
-  MarkerCount,
-  listMarkerTitles,
-  listPerformers,
-} from "@/api"
+import {listMarkerTitles, listPerformers} from "@/api"
 import Heading from "@/components/Heading"
 import clsx from "clsx"
 import React, {useState} from "react"

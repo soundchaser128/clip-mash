@@ -30,8 +30,15 @@ export const interactiveClipsLoader: LoaderFunction = async (request) => {
     music = await listSongs({shuffle: true})
   }
 
+  const queryType = (searchParams.get("queryType") || "markerTitles") as
+    | "markerTitles"
+    | "performers"
+
   const response = await fetchClipsInteractive({
-    markerTitles: searchParams.getAll("query"),
+    query: {
+      type: queryType,
+      data: searchParams.getAll("query"),
+    },
     clipDuration: parseFloat(searchParams.get("clipDuration") || "5.0"),
     order: {
       type: "random",

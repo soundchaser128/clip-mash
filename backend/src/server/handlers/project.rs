@@ -96,10 +96,8 @@ pub async fn fetch_clips_interactive(
     Json(body): Json<CreateInteractiveClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
     let filter = match body.query {
-        InteractiveClipsQuery::MarkerTitles(titles) => ListMarkersFilter::MarkerTitles(titles),
-        InteractiveClipsQuery::Performers(performers) => {
-            ListMarkersFilter::VideoPerformers(performers)
-        }
+        InteractiveClipsQuery::MarkerTitles { data } => ListMarkersFilter::MarkerTitles(data),
+        InteractiveClipsQuery::Performers { data } => ListMarkersFilter::VideoPerformers(data),
     };
 
     let all_markers: Vec<_> = state

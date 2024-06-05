@@ -126,6 +126,34 @@ pub async fn add_new_videos(
     Ok(Json(new_videos))
 }
 
+#[derive(Serialize, ToSchema)]
+pub struct ListPerformerResponse {
+    pub performer: String,
+    pub video_count: usize,
+}
+
+#[axum::debug_handler]
+#[utoipa::path(
+    get,
+    path = "/api/library/video/performers",
+    responses(
+        (status = 200, description = "List all performers", body = Vec<ListPerformerResponse>),
+    )
+)]
+pub async fn list_performers(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let performers = state.database.videos.get_all_performers().await?;
+    let performers: Vec<_> = performers
+        .into_iter()
+        .map(|(performer, video_count)| ListPerformerResponse {
+            performer,
+            video_count,
+        })
+        .collect();
+    Ok(Json(performers))
+}
+
 #[axum::debug_handler]
 #[utoipa::path(
     post,

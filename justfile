@@ -48,5 +48,4 @@ fix:
 generate-code:
     just backend generate-openapi-spec
     just frontend generate-client
-    just backend generate-rust-client
     rm api-docs.json

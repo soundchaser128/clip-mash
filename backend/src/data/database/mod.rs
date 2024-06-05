@@ -10,18 +10,17 @@ use tracing::{info, warn};
 use utoipa::{IntoParams, ToSchema};
 
 use self::ffprobe::FfProbeInfoDatabase;
+pub use self::markers::ListMarkersFilter;
 use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
 use self::progress::ProgressDatabase;
+pub use self::settings::Settings;
 use self::settings::SettingsDatabase;
 use self::videos::VideosDatabase;
 use super::stash_api::MarkerLike;
 use crate::server::types::{Beats, Progress, VideoLike};
 use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
-
-pub use self::markers::ListMarkersFilter;
-pub use self::settings::Settings;
 
 mod ffprobe;
 mod markers;
@@ -291,7 +290,7 @@ mod test {
         Database, ListMarkersFilter, VideoSearchQuery, VideoSource, VideoUpdate,
     };
     use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
-    use crate::service::fixtures::{persist_marker, persist_video, persist_video_fn};
+    use crate::service::fixtures::{persist_marker, persist_video, persist_video_with};
     use crate::util::generate_id;
     use crate::Result;
 
@@ -427,14 +426,14 @@ mod test {
     async fn test_list_videos_with_source(pool: SqlitePool) -> Result<()> {
         let database = Database::with_pool(pool);
         for _ in 0..5 {
-            persist_video_fn(&database, |v| {
+            persist_video_with(&database, |v| {
                 v.source = VideoSource::Stash;
             })
             .await?;
         }
 
         for _ in 0..5 {
-            persist_video_fn(&database, |v| {
+            persist_video_with(&database, |v| {
                 v.source = VideoSource::Folder;
             })
             .await?;
@@ -482,7 +481,7 @@ mod test {
             persist_video(&database).await.unwrap();
         }
         for i in 0..10 {
-            persist_video_fn(&database, |v| {
+            persist_video_with(&database, |v| {
                 v.title = Some("sexy".into());
                 v.file_path = format!("/path/{i}/sexy.mp4");
             })
@@ -491,7 +490,7 @@ mod test {
         }
 
         for i in 0..5 {
-            persist_video_fn(&database, |v| {
+            persist_video_with(&database, |v| {
                 v.title = Some("cool".into());
                 v.file_path = format!("/path/{i}/cool.mp4");
             })
@@ -715,7 +714,7 @@ mod test {
     fn test_has_stash_scene_ids(pool: SqlitePool) {
         let database = Database::with_pool(pool);
         for idx in 0..20 {
-            persist_video_fn(&database, |v| {
+            persist_video_with(&database, |v| {
                 if idx < 5 {
                     v.stash_scene_id = Some(idx);
                 }
@@ -834,5 +833,32 @@ mod test {
         assert!(ids.contains(&video1.id.as_str()));
         assert!(ids.contains(&video2.id.as_str()));
         assert!(!ids.contains(&video3.id.as_str()));
+    }
+
+    fn json_array(items: &[&str]) -> String {
+        serde_json::to_string(items).unwrap()
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn test_get_all_performers(pool: SqlitePool) -> Result<()> {
+        let db = Database::with_pool(pool);
+
+        persist_video_with(&db, |v| {
+            v.performers = Some(json_array(&["performer1", "performer2"]));
+        })
+        .await?;
+
+        persist_video_with(&db, |v| {
+            v.performers = Some(json_array(&["performer1", "performer3"]));
+        })
+        .await?;
+
+        let performers = db.videos.get_all_performers().await?;
+        assert_eq!(performers.len(), 3);
+
+        assert_eq!(performers[0], ("performer1".into(), 2));
+
+        Ok(())
     }
 }

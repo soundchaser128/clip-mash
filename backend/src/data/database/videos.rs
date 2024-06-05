@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use camino::Utf8Path;
 use futures::TryStreamExt;
@@ -445,6 +445,41 @@ impl VideosDatabase {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn get_all_performers(&self) -> Result<Vec<(String, usize)>> {
+        // meh, seens like json_each is not supported in sqlx's sqlite version?
+        // let rows = sqlx::query!(
+        //     "
+        //     SELECT value, count(*)
+        //     FROM videos v, json_each(v.performers)
+        //     GROUP BY value
+        //     ORDER BY count(*) DESC"
+        // )
+        // .fetch_all(&self.pool)
+        // .await?;
+
+        let decode_performers =
+            |p: Option<String>| p.and_then(|p| serde_json::from_str::<Vec<String>>(&p).ok());
+
+        let all_video_performers = sqlx::query!("SELECT performers FROM videos")
+            .fetch_all(&self.pool)
+            .await?;
+
+        let mut performer_counts = HashMap::new();
+        for record in all_video_performers {
+            if let Some(performers) = decode_performers(record.performers) {
+                for performer in performers {
+                    let count = performer_counts.entry(performer).or_insert(0);
+                    *count += 1;
+                }
+            }
+        }
+
+        let mut performers: Vec<_> = performer_counts.into_iter().collect();
+        performers.sort_by_key(|(_, count)| std::cmp::Reverse(*count));
+
+        Ok(performers)
     }
 
     pub async fn set_video_preview_image(

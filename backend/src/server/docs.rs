@@ -6,6 +6,7 @@ use super::handlers::music::SongUpload;
 use super::handlers::project::{CreateFunscriptBody, DescriptionData, ProjectCreateResponse};
 use super::types::*;
 use crate::data::database::{MarkerCount, Settings, VideoSource, VideoUpdate};
+use crate::server::handlers::library::ListPerformerResponse;
 use crate::server::handlers::{files, library, music, progress, project, stash, system};
 use crate::service::description_generator::DescriptionType;
 use crate::service::directories::FolderType;
@@ -34,6 +35,7 @@ use crate::service::video::AddVideosRequest;
         library::migrate_preview_images,
         library::videos_need_encoding,
         library::list_marker_titles,
+        library::list_performers,
         files::list_file_entries,
         files::get_file_stats,
         files::cleanup_folder,
@@ -120,7 +122,8 @@ use crate::service::video::AddVideosRequest;
             PaddingType,
             Settings,
             CreateInteractiveClipsBody,
-            InteractiveClipsQuery
+            InteractiveClipsQuery,
+            ListPerformerResponse
         )
     ),
     tags(

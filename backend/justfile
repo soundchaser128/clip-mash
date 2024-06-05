@@ -1,7 +1,7 @@
 set shell := ["nu", "-c"]
 
 default:
-  @just --list
+    @just --list
 
 format:
     cargo +nightly fmt
@@ -9,6 +9,7 @@ format:
 check:
     cargo check
     cargo sqlx prepare --check
+    cargo nextest run
 
 start:
     cargo run 0.0.0.0

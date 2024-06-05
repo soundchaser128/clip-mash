@@ -105,6 +105,8 @@ async fn run() -> Result<()> {
         .route("/video", get(handlers::library::list_videos))
         // add new videos either via stash, local or url
         .route("/video", post(handlers::library::add_new_videos))
+        // list all performers from videos
+        .route("/video/performers", get(handlers::library::list_performers))
         // returns whether a set of videos need to be re-encoded or not
         .route(
             "/video/need-encoding",

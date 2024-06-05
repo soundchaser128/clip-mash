@@ -217,6 +217,8 @@ export type StrokeTypeOneOfThree = {
   accelerate: StrokeTypeOneOfThreeAccelerate
 }
 
+export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
+
 /**
  * Creates a stroke every `n` beats
  */
@@ -229,8 +231,6 @@ export type StrokeTypeOneOf = {
   /** Creates a stroke every `n` beats */
   everyNth: StrokeTypeOneOfEveryNth
 }
-
-export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
 
 export interface StashVideoDto {
   createdOn: number
@@ -452,11 +452,47 @@ export interface ListVideoDtoPage {
   totalPages: number
 }
 
+export interface ListPerformerResponse {
+  performer: string
+  /** @minimum 0 */
+  video_count: number
+}
+
 export interface ListFileEntriesResponse {
   directory: string
   drives: string[]
   entries: FileSystemEntry[]
 }
+
+export type InteractiveClipsQueryOneOfThreeType =
+  (typeof InteractiveClipsQueryOneOfThreeType)[keyof typeof InteractiveClipsQueryOneOfThreeType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const InteractiveClipsQueryOneOfThreeType = {
+  performers: "performers",
+} as const
+
+export type InteractiveClipsQueryOneOfThree = {
+  data: string[]
+  type: InteractiveClipsQueryOneOfThreeType
+}
+
+export type InteractiveClipsQueryOneOfType =
+  (typeof InteractiveClipsQueryOneOfType)[keyof typeof InteractiveClipsQueryOneOfType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const InteractiveClipsQueryOneOfType = {
+  markerTitles: "markerTitles",
+} as const
+
+export type InteractiveClipsQueryOneOf = {
+  data: string[]
+  type: InteractiveClipsQueryOneOfType
+}
+
+export type InteractiveClipsQuery =
+  | InteractiveClipsQueryOneOf
+  | InteractiveClipsQueryOneOfThree
 
 export type FolderType = (typeof FolderType)[keyof typeof FolderType]
 
@@ -584,8 +620,8 @@ export interface CreateMarkerRequest {
 
 export interface CreateInteractiveClipsBody {
   clipDuration: number
-  markerTitles: string[]
   order: ClipOrder
+  query: InteractiveClipsQuery
 }
 
 export interface CreateFunscriptBody {
@@ -626,6 +662,12 @@ export type ClipPickerOptionsOneOfOnezero = {
   type: ClipPickerOptionsOneOfOnezeroType
 }
 
+export type ClipPickerOptions =
+  | ClipPickerOptionsOneOf
+  | ClipPickerOptionsOneOfFour
+  | ClipPickerOptionsOneOfSeven
+  | ClipPickerOptionsOneOfOnezero
+
 export type ClipPickerOptionsOneOfSevenAllOfType =
   (typeof ClipPickerOptionsOneOfSevenAllOfType)[keyof typeof ClipPickerOptionsOneOfSevenAllOfType]
 
@@ -655,12 +697,6 @@ export type ClipPickerOptionsOneOfFourAllOf = {
 
 export type ClipPickerOptionsOneOfFour = WeightedRandomClipOptions &
   ClipPickerOptionsOneOfFourAllOf
-
-export type ClipPickerOptions =
-  | ClipPickerOptionsOneOf
-  | ClipPickerOptionsOneOfFour
-  | ClipPickerOptionsOneOfSeven
-  | ClipPickerOptionsOneOfOnezero
 
 export type ClipPickerOptionsOneOfAllOfType =
   (typeof ClipPickerOptionsOneOfAllOfType)[keyof typeof ClipPickerOptionsOneOfAllOfType]
@@ -953,6 +989,13 @@ export const videosNeedEncoding = (videosNeedEncodingBody: string[]) => {
   })
 }
 
+export const listPerformers = () => {
+  return customInstance<ListPerformerResponse[]>({
+    url: `/api/library/video/performers`,
+    method: "GET",
+  })
+}
+
 export const listStashVideos = (params?: ListStashVideosParams) => {
   return customInstance<StashVideoDtoPage>({
     url: `/api/library/video/stash`,
@@ -1204,6 +1247,9 @@ export type CleanupVideosResult = NonNullable<
 >
 export type VideosNeedEncodingResult = NonNullable<
   Awaited<ReturnType<typeof videosNeedEncoding>>
+>
+export type ListPerformersResult = NonNullable<
+  Awaited<ReturnType<typeof listPerformers>>
 >
 export type ListStashVideosResult = NonNullable<
   Awaited<ReturnType<typeof listStashVideos>>

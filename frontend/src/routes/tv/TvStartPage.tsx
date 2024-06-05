@@ -1,4 +1,9 @@
-import {MarkerCount, listMarkerTitles} from "@/api"
+import {
+  ListPerformerResponse,
+  MarkerCount,
+  listMarkerTitles,
+  listPerformers,
+} from "@/api"
 import Heading from "@/components/Heading"
 import clsx from "clsx"
 import React, {useState} from "react"
@@ -12,24 +17,41 @@ import {
 
 const INITIAL_COUNT = 25
 
+type Item = {
+  title: string
+  count: number
+}
+
+type LoaderData = {
+  markers: Item[]
+  performers: Item[]
+}
+
 export const markerTitleLoader: LoaderFunction = async () => {
-  const markerTitles = await listMarkerTitles({
-    count: 1000,
-  })
+  const [markerTitles, performers] = await Promise.all([
+    listMarkerTitles({count: 1000}),
+    listPerformers(),
+  ])
 
   return {
     markers: markerTitles,
-  }
+    performers: performers.map((p) => ({
+      title: p.performer,
+      count: p.video_count,
+    })),
+  } satisfies LoaderData
 }
 
 const TvStartPage: React.FC = () => {
   const navigate = useNavigate()
-  const data = useLoaderData() as {markers: MarkerCount[]}
+  const data = useLoaderData() as LoaderData
   const [selection, setSelection] = useState<string[]>([])
   const [withMusic, setWithMusic] = useState<boolean>(false)
   const [showAll, setShowAll] = useState<boolean>(false)
+  const [usePerformers, setUsePerformers] = useState<boolean>(false)
+  const allItems = usePerformers ? data.performers : data.markers
 
-  const markers = showAll ? data.markers : data.markers.slice(0, INITIAL_COUNT)
+  const items = showAll ? allItems : allItems.slice(0, INITIAL_COUNT)
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -37,6 +59,7 @@ const TvStartPage: React.FC = () => {
     for (const title of selection) {
       query.append("query", title)
     }
+    query.append("queryType", usePerformers ? "performers" : "markerTitles")
 
     if (withMusic) {
       query.append("withMusic", "true")
@@ -65,33 +88,44 @@ const TvStartPage: React.FC = () => {
         <HiChevronLeft />
       </Link>
 
-      <Heading className="text-center" spacing="tight">
+      <Heading className="text-center" spacing="loose">
         ClipMash TV
       </Heading>
-      <p className="text-lg mb-4 text-center">
-        Click on marker titles to select them.
-      </p>
+
+      <div className="self-center mb-8 form-control">
+        <label className="cursor-pointer label flex gap-4">
+          <span className="label-text">Marker titles</span>
+          <input
+            type="checkbox"
+            className="toggle toggle-primary"
+            checked={usePerformers}
+            onChange={(e) => setUsePerformers(e.target.checked)}
+          />
+          <span className="label-text">Performers</span>
+        </label>
+      </div>
+
       <form
         onSubmit={onSubmit}
         className="flex flex-col justify-center items-center max-w-xl self-center"
       >
         <ul className="flex gap-1 flex-wrap justify-center">
-          {markers.map((marker) => (
-            <li key={marker.title}>
+          {items.map((item) => (
+            <li key={item.title}>
               <button
                 type="button"
                 className={clsx("btn btn-neutral btn-sm", {
-                  "btn-outline": !selection.includes(marker.title),
+                  "btn-outline": !selection.includes(item.title),
                 })}
-                onClick={() => toggleSelected(marker)}
+                onClick={() => toggleSelected(item)}
               >
-                {marker.title} ({marker.count})
+                {item.title} ({item.count})
               </button>
             </li>
           ))}
         </ul>
 
-        {markers.length > INITIAL_COUNT && (
+        {items.length > INITIAL_COUNT && (
           <button
             className="btn btn-outline btn-primary mt-2 btn-sm"
             onClick={() => setShowAll(!showAll)}

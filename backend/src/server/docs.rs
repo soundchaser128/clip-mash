@@ -119,7 +119,8 @@ use crate::service::video::AddVideosRequest;
             FolderType,
             PaddingType,
             Settings,
-            CreateInteractiveClipsBody
+            CreateInteractiveClipsBody,
+            InteractiveClipsQuery
         )
     ),
     tags(

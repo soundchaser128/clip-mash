@@ -12,7 +12,9 @@ use tower::ServiceExt;
 use tracing::{debug, info, warn};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::{MarkerCount, VideoSearchQuery, VideoSource, VideoUpdate};
+use crate::data::database::{
+    ListMarkersFilter, MarkerCount, VideoSearchQuery, VideoSource, VideoUpdate,
+};
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -370,7 +372,7 @@ pub async fn list_markers(
     let markers = state
         .database
         .markers
-        .list_markers(video_ids.as_deref(), None, None)
+        .list_markers(Some(ListMarkersFilter::VideoIds(video_ids.unwrap())), None)
         .await?;
     let stash_api = state.stash_api().await?;
     let converter = MarkerDtoConverter::new(stash_api);

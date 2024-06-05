@@ -1,4 +1,3 @@
-use color_eyre::eyre::bail;
 use sqlx::{FromRow, QueryBuilder, SqliteConnection, SqliteExecutor, SqlitePool};
 use tracing::{debug, info};
 
@@ -239,16 +238,10 @@ impl MarkersDatabase {
 
     pub async fn list_markers(
         &self,
-        video_ids: Option<&[String]>,
+        filter: Option<ListMarkersFilter>,
         sort: Option<&str>,
-        marker_titles: Option<&[String]>,
     ) -> Result<Vec<DbMarkerWithVideo>> {
-        // video_ids and query are mutually exclusive
-        if video_ids.is_some() && marker_titles.is_some() {
-            bail!("video_ids and query are mutually exclusive");
-        }
-
-        info!("fetching markers with video ids {video_ids:?}");
+        info!("fetching markers with filter {filter:?}");
         let mut query_builder = QueryBuilder::new(
             "SELECT m.video_id, m.rowid, m.start_time, m.end_time, 
                     m.title, v.file_path, m.index_within_video, m.marker_preview_image, 
@@ -257,23 +250,35 @@ impl MarkersDatabase {
             FROM markers m
             INNER JOIN videos v ON m.video_id = v.id ",
         );
-
-        if let Some(video_ids) = video_ids {
-            query_builder.push("WHERE video_id IN (");
-            let mut list = query_builder.separated(",");
-            for video_id in video_ids {
-                list.push_bind(video_id);
+        if let Some(filter) = filter {
+            match filter {
+                ListMarkersFilter::VideoIds(video_ids) => {
+                    query_builder.push("WHERE video_id IN (");
+                    let mut list = query_builder.separated(",");
+                    for video_id in video_ids {
+                        list.push_bind(video_id);
+                    }
+                    list.push_unseparated(") ");
+                }
+                ListMarkersFilter::MarkerTitles(marker_titles) => {
+                    query_builder.push("WHERE title IN (");
+                    let mut list = query_builder.separated(",");
+                    for title in marker_titles {
+                        list.push_bind(title);
+                    }
+                    list.push_unseparated(") ");
+                }
+                ListMarkersFilter::VideoPerformers(performers) => {
+                    query_builder.push(
+                        "WHERE EXISTS (SELECT 1 from json_each(v.performers) WHERE value IN (",
+                    );
+                    let mut list = query_builder.separated(",");
+                    for performer in performers {
+                        list.push_bind(performer);
+                    }
+                    list.push_unseparated(")) ");
+                }
             }
-            list.push_unseparated(") ");
-        }
-
-        if let Some(titles) = marker_titles {
-            query_builder.push("WHERE title IN (");
-            let mut list = query_builder.separated(",");
-            for title in titles {
-                list.push_bind(title);
-            }
-            list.push_unseparated(") ");
         }
 
         query_builder.push("ORDER BY ");
@@ -411,6 +416,13 @@ impl MarkersDatabase {
 
         Ok(results)
     }
+}
+
+#[derive(Debug)]
+pub enum ListMarkersFilter {
+    VideoIds(Vec<String>),
+    MarkerTitles(Vec<String>),
+    VideoPerformers(Vec<String>),
 }
 
 #[cfg(test)]

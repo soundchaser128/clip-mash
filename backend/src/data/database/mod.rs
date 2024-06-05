@@ -13,13 +13,15 @@ use self::ffprobe::FfProbeInfoDatabase;
 use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
 use self::progress::ProgressDatabase;
-pub use self::settings::Settings;
 use self::settings::SettingsDatabase;
 use self::videos::VideosDatabase;
 use super::stash_api::MarkerLike;
 use crate::server::types::{Beats, Progress, VideoLike};
 use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
+
+pub use self::markers::ListMarkersFilter;
+pub use self::settings::Settings;
 
 mod ffprobe;
 mod markers;
@@ -285,7 +287,9 @@ mod test {
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
-    use crate::data::database::{Database, VideoSearchQuery, VideoSource, VideoUpdate};
+    use crate::data::database::{
+        Database, ListMarkersFilter, VideoSearchQuery, VideoSource, VideoUpdate,
+    };
     use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_fn};
     use crate::util::generate_id;
@@ -609,16 +613,12 @@ mod test {
         }
         let result = database
             .markers
-            .list_markers(Some(&[video.id]), None, None)
+            .list_markers(Some(ListMarkersFilter::VideoIds(vec![video.id])), None)
             .await
             .unwrap();
         assert_eq!(5, result.len());
 
-        let result = database
-            .markers
-            .list_markers(None, None, None)
-            .await
-            .unwrap();
+        let result = database.markers.list_markers(None, None).await.unwrap();
         assert_eq!(5, result.len());
     }
 

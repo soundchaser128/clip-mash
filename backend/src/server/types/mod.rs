@@ -464,9 +464,16 @@ pub struct CreateClipsBody {
 }
 
 #[derive(Deserialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase", tag = "type")]
+pub enum InteractiveClipsQuery {
+    MarkerTitles(Vec<String>),
+    Performers(Vec<String>),
+}
+
+#[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateInteractiveClipsBody {
-    pub marker_titles: Vec<String>,
+    pub query: InteractiveClipsQuery,
     pub clip_duration: f64,
     pub order: ClipOrder,
 }

@@ -12,6 +12,7 @@ use tracing::{debug, error, info};
 use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
+use crate::data::database::ListMarkersFilter;
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
@@ -94,10 +95,17 @@ pub async fn fetch_clips_interactive(
     state: State<Arc<AppState>>,
     Json(body): Json<CreateInteractiveClipsBody>,
 ) -> Result<Json<ClipsResponse>, AppError> {
+    let filter = match body.query {
+        InteractiveClipsQuery::MarkerTitles(titles) => ListMarkersFilter::MarkerTitles(titles),
+        InteractiveClipsQuery::Performers(performers) => {
+            ListMarkersFilter::VideoPerformers(performers)
+        }
+    };
+
     let all_markers: Vec<_> = state
         .database
         .markers
-        .list_markers(None, None, Some(&body.marker_titles))
+        .list_markers(Some(filter), None)
         .await?
         .into_iter()
         .map(|m| SelectedMarker {

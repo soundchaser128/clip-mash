@@ -285,10 +285,18 @@ const TvWatchPage: React.FC = () => {
 
             <DataList>
               <Description>Current clip:</Description>
-              <Data>
+              <Data className="truncate">
                 {currentVideo?.title} -{" "}
                 <strong>{currentClip?.markerTitle}</strong>
               </Data>
+              {music.length > 0 && (
+                <>
+                  <Description>Current Song</Description>
+                  <Data className="truncate">
+                    {music[currentSong].fileName}
+                  </Data>
+                </>
+              )}
             </DataList>
           </>
         )}

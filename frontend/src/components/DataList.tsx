@@ -1,15 +1,22 @@
-const DataList: React.FC<{children: React.ReactNode}> = ({children}) => {
-  return <dl className="flex flex-col text-sm">{children}</dl>
+import clsx from "clsx"
+
+interface Props {
+  children?: React.ReactNode
+  className?: string
 }
 
-export const Description: React.FC<{children: React.ReactNode}> = ({
-  children,
-}) => {
-  return <dt className="font-semibold">{children}</dt>
+const DataList: React.FC<Props> = ({children, className}) => {
+  return (
+    <dl className={clsx("flex flex-col text-sm", className)}>{children}</dl>
+  )
 }
 
-export const Data: React.FC<{children: React.ReactNode}> = ({children}) => {
-  return <dd className="mb-2">{children}</dd>
+export const Description: React.FC<Props> = ({children, className}) => {
+  return <dt className={clsx("font-semibold", className)}>{children}</dt>
+}
+
+export const Data: React.FC<Props> = ({children, className}) => {
+  return <dd className={clsx("mb-2", className)}>{children}</dd>
 }
 
 export default DataList

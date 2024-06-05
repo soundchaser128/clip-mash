@@ -88,11 +88,16 @@ const TvStartPage: React.FC = () => {
         <HiChevronLeft />
       </Link>
 
-      <Heading className="text-center" spacing="loose">
+      <Heading className="text-center" spacing="tight">
         ClipMash TV
       </Heading>
 
-      <div className="self-center mb-8 form-control">
+      <p className="self-center mb-2">
+        Select markers or performers and click on 🚀 Start to watch a
+        compilation generated for you in the browser!
+      </p>
+
+      <div className="self-center form-control">
         <label className="cursor-pointer label flex gap-4">
           <span className="label-text">Marker titles</span>
           <input

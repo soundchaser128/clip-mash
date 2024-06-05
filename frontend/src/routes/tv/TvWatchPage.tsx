@@ -16,6 +16,11 @@ import DataList, {Data, Description} from "@/components/DataList"
 import {clamp} from "@/helpers/math"
 import Heading from "@/components/Heading"
 
+function removeExtension(fileName: string) {
+  const index = fileName.indexOf(".")
+  return index === -1 ? fileName : fileName.substring(0, index)
+}
+
 interface LoaderData {
   clips: ClipsResponse
   music: SongDto[]
@@ -293,7 +298,7 @@ const TvWatchPage: React.FC = () => {
                 <>
                   <Description>Current Song</Description>
                   <Data className="truncate">
-                    {music[currentSong].fileName}
+                    {removeExtension(music[currentSong].fileName)}
                   </Data>
                 </>
               )}

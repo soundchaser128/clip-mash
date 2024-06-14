@@ -50,6 +50,7 @@ use crate::service::video::AddVideosRequest;
         project::get_new_id,
         project::list_finished_videos,
         project::generate_description,
+        project::generate_random_seed,
         stash::get_stash_health,
         music::list_songs,
         music::get_beats,

@@ -1,8 +1,13 @@
-import {listMarkerTitles, listPerformers} from "@/api"
+import {generateRandomSeed, listMarkerTitles, listPerformers} from "@/api"
 import Heading from "@/components/Heading"
 import clsx from "clsx"
 import React from "react"
-import {HiChevronLeft, HiPlus, HiRocketLaunch} from "react-icons/hi2"
+import {
+  HiArrowPath,
+  HiChevronLeft,
+  HiPlus,
+  HiRocketLaunch,
+} from "react-icons/hi2"
 import {
   Link,
   LoaderFunction,
@@ -42,6 +47,7 @@ interface FilterState {
   queryType: TvQueryType
   withMusic: boolean
   showAll: boolean
+  seed: string
 }
 
 function queryToSelection(query: URLSearchParams): FilterState {
@@ -49,12 +55,14 @@ function queryToSelection(query: URLSearchParams): FilterState {
   const withMusic = query.has("withMusic")
   const queryValues = query.getAll("query")
   const showAll = query.has("showAll")
+  const seed = query.get("seed") ?? ""
 
   return {
     query: queryValues,
     queryType: queryType ?? "markerTitles",
     withMusic,
     showAll,
+    seed,
   }
 }
 
@@ -72,6 +80,8 @@ function selectionToQuery(state: FilterState): URLSearchParams {
   if (state.showAll) {
     query.append("showAll", "true")
   }
+
+  query.append("seed", state.seed)
 
   return query
 }
@@ -128,6 +138,11 @@ const TvStartPage: React.FC = () => {
       pathname: "/tv/watch",
       search: query.toString(),
     })
+  }
+
+  const onGenerateSeed = async () => {
+    const seed = await generateRandomSeed()
+    onChange({seed})
   }
 
   return (
@@ -232,6 +247,28 @@ const TvStartPage: React.FC = () => {
               checked={state.withMusic}
               onChange={(e) => onChange({withMusic: e.target.checked})}
             />
+          </label>
+        </div>
+
+        <div className="form-control self-stretch mt-2">
+          <label className="label">
+            <span className="label-text mr-2">Seed</span>
+            <div className="join">
+              <input
+                type="text"
+                value={state.seed}
+                onChange={(e) => onChange({seed: e.target.value})}
+                className="input input-bordered join-item"
+              />
+              <button
+                type="button"
+                className="btn join-item"
+                onClick={onGenerateSeed}
+              >
+                <HiArrowPath />
+                Generate
+              </button>
+            </div>
           </label>
         </div>
 

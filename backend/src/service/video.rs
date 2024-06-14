@@ -19,12 +19,12 @@ use super::directories::Directories;
 use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource, VideoUpdate};
 use crate::data::stash_api::{MarkerLike, StashApi, StashMarker};
 use crate::helpers::parallelize;
+use crate::helpers::random::generate_id;
 use crate::server::handlers::AppState;
 use crate::server::types::{CreateMarker, ListVideoDto, UpdateMarker};
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
-use crate::util::generate_id;
 use crate::Result;
 
 pub const TAG_SEPARATOR: &str = ";";

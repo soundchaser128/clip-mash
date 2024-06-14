@@ -194,10 +194,10 @@ mod test {
     use ordered_float::OrderedFloat;
     use tracing_test::traced_test;
 
+    use crate::helpers::random::create_seeded_rng;
     use crate::server::types::{Beats, MeasureCount};
     use crate::service::clip::length_picker::{RandomizedClipLengthPicker, SongClipLengthPicker};
     use crate::service::fixtures;
-    use crate::util::create_seeded_rng;
 
     #[traced_test]
     #[test]

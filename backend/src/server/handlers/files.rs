@@ -223,6 +223,7 @@ pub async fn get_file_stats(
         (status = 200, description = "Cleanup the given folder", body = ()),
     )
 )]
+/// Deletes all generated files in the specified folder.
 pub async fn cleanup_folder(
     Path(folder_type): Path<FolderType>,
     State(state): State<Arc<AppState>>,

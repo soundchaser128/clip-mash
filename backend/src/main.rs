@@ -103,20 +103,14 @@ async fn run() -> Result<()> {
     });
 
     let library_routes = Router::new()
-        // list all videos (paginated, with search)
         .route("/video", get(handlers::library::list_videos))
-        // add new videos either via stash, local or url
         .route("/video", post(handlers::library::add_new_videos))
-        // list all performers from videos
         .route("/video/performers", get(handlers::library::list_performers))
-        // returns whether a set of videos need to be re-encoded or not
         .route(
             "/video/need-encoding",
             post(handlers::library::videos_need_encoding),
         )
-        // update video metadata
         .route("/video/:id", put(handlers::library::update_video))
-        // sync a single video with stash
         .route(
             "/video/:id/stash/merge",
             post(handlers::library::merge_stash_video),
@@ -125,42 +119,28 @@ async fn run() -> Result<()> {
             "/cleanup/:folder_type",
             post(handlers::files::cleanup_folder),
         )
-        // remove videos that don't exist on disk
         .route("/video/cleanup", post(handlers::library::cleanup_videos))
-        // list videos on stash
         .route("/video/stash", get(handlers::library::list_stash_videos))
-        // get details on a single video
         .route("/video/:id", get(handlers::library::get_video))
-        // delete a video
         .route("/video/:id", delete(handlers::library::delete_video))
-        // detect markers in a video
         .route(
             "/video/:id/detect-markers",
             post(handlers::library::detect_markers),
         )
-        // stream the video file
         .route("/video/:id/file", get(handlers::library::get_video_file))
-        // get the generated preview image
         .route(
             "/video/:id/preview",
             get(handlers::library::get_video_preview),
         )
-        // list all markers by video ID
         .route("/marker", get(handlers::library::list_markers))
-        // list marker titles and counts, for autocompletion
         .route("/marker/title", get(handlers::library::list_marker_titles))
-        // create new marker for video
         .route("/marker", post(handlers::library::create_new_marker))
-        // update local marker
         .route("/marker/:id", put(handlers::library::update_marker))
-        // delete local marker
         .route("/marker/:id", delete(handlers::library::delete_marker))
-        // get the generated preview image for a marker
         .route(
             "/marker/:id/preview",
             get(handlers::library::get_marker_preview),
         )
-        // split local marker
         .route("/marker/:id/split", post(handlers::library::split_marker))
         .route("/directory", get(handlers::files::list_file_entries))
         .route("/stats", get(handlers::files::get_file_stats))
@@ -190,7 +170,8 @@ async fn run() -> Result<()> {
         .route(
             "/description/:type",
             post(handlers::project::generate_description),
-        );
+        )
+        .route("/random-seed", get(handlers::project::generate_random_seed));
 
     let stash_routes = Router::new().route("/health", get(handlers::stash::get_stash_health));
 

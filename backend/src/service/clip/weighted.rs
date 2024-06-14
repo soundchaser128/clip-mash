@@ -111,6 +111,7 @@ mod tests {
     use tracing_test::traced_test;
 
     use super::validate_options;
+    use crate::helpers::random::create_seeded_rng;
     use crate::server::types::{
         ClipLengthOptions, RandomizedClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
     };
@@ -118,7 +119,6 @@ mod tests {
     use crate::service::clip::weighted::WeightedRandomClipPicker;
     use crate::service::clip::ClipPicker;
     use crate::service::fixtures;
-    use crate::util::create_seeded_rng;
 
     #[traced_test]
     #[test]

@@ -622,6 +622,8 @@ export interface CreateInteractiveClipsBody {
   clipDuration: number
   order: ClipOrder
   query: InteractiveClipsQuery
+  /** @nullable */
+  seed?: string | null
 }
 
 export interface CreateFunscriptBody {
@@ -878,6 +880,9 @@ export type AddVideosRequest =
   | AddVideosRequestOneOfThree
   | AddVideosRequestOneOfFive
 
+/**
+ * @summary Deletes all generated files in the specified folder.
+ */
 export const cleanupFolder = (folderType: FolderType) => {
   return customInstance<CleanupFolder200>({
     url: `/api/library/cleanup/${folderType}`,
@@ -893,6 +898,9 @@ export const listFileEntries = (params?: ListFileEntriesParams) => {
   })
 }
 
+/**
+ * @summary Lists all markers for a set of video IDs.
+ */
 export const listMarkers = (params?: ListMarkersParams) => {
   return customInstance<MarkerDto[]>({
     url: `/api/library/marker`,
@@ -901,6 +909,9 @@ export const listMarkers = (params?: ListMarkersParams) => {
   })
 }
 
+/**
+ * @summary Creates a new marker for a video.
+ */
 export const createNewMarker = (createMarkerRequest: CreateMarkerRequest) => {
   return customInstance<MarkerDto>({
     url: `/api/library/marker`,
@@ -910,6 +921,9 @@ export const createNewMarker = (createMarkerRequest: CreateMarkerRequest) => {
   })
 }
 
+/**
+ * @summary Lists marker titles and nunber of occurrences
+ */
 export const listMarkerTitles = (params?: ListMarkerTitlesParams) => {
   return customInstance<MarkerCount[]>({
     url: `/api/library/marker/title`,
@@ -918,6 +932,9 @@ export const listMarkerTitles = (params?: ListMarkerTitlesParams) => {
   })
 }
 
+/**
+ * @summary Update a marker, additionally updates the marker in Stash if applicable and desired.
+ */
 export const updateMarker = (id: number, updateMarker: UpdateMarker) => {
   return customInstance<MarkerDto>({
     url: `/api/library/marker/${id}`,
@@ -927,6 +944,9 @@ export const updateMarker = (id: number, updateMarker: UpdateMarker) => {
   })
 }
 
+/**
+ * @summary Deletes a marker.
+ */
 export const deleteMarker = (id: number) => {
   return customInstance<DeleteMarker200>({
     url: `/api/library/marker/${id}`,
@@ -934,6 +954,9 @@ export const deleteMarker = (id: number) => {
   })
 }
 
+/**
+ * @summary Splits a marker into two at the specified time.
+ */
 export const splitMarker = (id: number, params: SplitMarkerParams) => {
   return customInstance<MarkerDto[]>({
     url: `/api/library/marker/${id}/split`,
@@ -956,6 +979,9 @@ export const getFileStats = () => {
   })
 }
 
+/**
+ * @summary Lists videos (paginated, with search)
+ */
 export const listVideos = (params?: ListVideosParams) => {
   return customInstance<ListVideoDtoPage>({
     url: `/api/library/video`,
@@ -964,6 +990,9 @@ export const listVideos = (params?: ListVideosParams) => {
   })
 }
 
+/**
+ * @summary Adds new videos either via stash, local files or URL (to download)
+ */
 export const addNewVideos = (addVideosRequest: AddVideosRequest) => {
   return customInstance<VideoDto[]>({
     url: `/api/library/video`,
@@ -973,6 +1002,9 @@ export const addNewVideos = (addVideosRequest: AddVideosRequest) => {
   })
 }
 
+/**
+ * @summary Removes videos that don't exist on disk
+ */
 export const cleanupVideos = () => {
   return customInstance<VideoCleanupResponse>({
     url: `/api/library/video/cleanup`,
@@ -980,6 +1012,9 @@ export const cleanupVideos = () => {
   })
 }
 
+/**
+ * @summary Returns whether a set of videos need to be re-encoded or not
+ */
 export const videosNeedEncoding = (videosNeedEncodingBody: string[]) => {
   return customInstance<boolean>({
     url: `/api/library/video/need-encoding`,
@@ -989,6 +1024,9 @@ export const videosNeedEncoding = (videosNeedEncodingBody: string[]) => {
   })
 }
 
+/**
+ * @summary Lists all performers from videos and their number of markers
+ */
 export const listPerformers = () => {
   return customInstance<ListPerformerResponse[]>({
     url: `/api/library/video/performers`,
@@ -996,6 +1034,9 @@ export const listPerformers = () => {
   })
 }
 
+/**
+ * @summary Lists videos on the configured Stash instance
+ */
 export const listStashVideos = (params?: ListStashVideosParams) => {
   return customInstance<StashVideoDtoPage>({
     url: `/api/library/video/stash`,
@@ -1004,6 +1045,9 @@ export const listStashVideos = (params?: ListStashVideosParams) => {
   })
 }
 
+/**
+ * @summary Gets details on a single video
+ */
 export const getVideo = (id: string) => {
   return customInstance<VideoDetailsDto>({
     url: `/api/library/video/${id}`,
@@ -1011,6 +1055,9 @@ export const getVideo = (id: string) => {
   })
 }
 
+/**
+ * @summary Updates video metadata
+ */
 export const updateVideo = (id: string, videoUpdate: VideoUpdate) => {
   return customInstance<UpdateVideo200>({
     url: `/api/library/video/${id}`,
@@ -1020,6 +1067,9 @@ export const updateVideo = (id: string, videoUpdate: VideoUpdate) => {
   })
 }
 
+/**
+ * @summary Deletes a video
+ */
 export const deleteVideo = (id: string) => {
   return customInstance<DeleteVideo200>({
     url: `/api/library/video/${id}`,
@@ -1027,6 +1077,9 @@ export const deleteVideo = (id: string) => {
   })
 }
 
+/**
+ * @summary Tries to detect markers in a video by detecting scene changes.
+ */
 export const detectMarkers = (id: string, params?: DetectMarkersParams) => {
   return customInstance<MarkerDto[]>({
     url: `/api/library/video/${id}/detect-markers`,
@@ -1035,6 +1088,9 @@ export const detectMarkers = (id: string, params?: DetectMarkersParams) => {
   })
 }
 
+/**
+ * @summary Synchronizes a single video with stash
+ */
 export const mergeStashVideo = (id: string) => {
   return customInstance<ListVideoDto>({
     url: `/api/library/video/${id}/stash/merge`,
@@ -1136,6 +1192,19 @@ export const getNewId = () => {
   return customInstance<NewId>({url: `/api/project/id`, method: "GET"})
 }
 
+/**
+ * @summary Generate a possible random seed (a random word)
+ */
+export const generateRandomSeed = () => {
+  return customInstance<string>({
+    url: `/api/project/random-seed`,
+    method: "GET",
+  })
+}
+
+/**
+ * @summary List all songs
+ */
 export const listSongs = (params?: ListSongsParams) => {
   return customInstance<SongDto[]>({url: `/api/song`, method: "GET", params})
 }
@@ -1148,6 +1217,9 @@ export const downloadMusic = (params: DownloadMusicParams) => {
   })
 }
 
+/**
+ * @summary Upload a song file
+ */
 export const uploadMusic = (songUpload: SongUpload) => {
   const formData = new FormData()
   formData.append("file", songUpload.file)
@@ -1160,6 +1232,9 @@ export const uploadMusic = (songUpload: SongUpload) => {
   })
 }
 
+/**
+ * @summary Get beats for a song, or detect them if they are not yet available.
+ */
 export const getBeats = (id: number) => {
   return customInstance<Beats>({url: `/api/song/${id}/beats`, method: "GET"})
 }
@@ -1298,6 +1373,9 @@ export type GetCombinedFunscriptResult = NonNullable<
   Awaited<ReturnType<typeof getCombinedFunscript>>
 >
 export type GetNewIdResult = NonNullable<Awaited<ReturnType<typeof getNewId>>>
+export type GenerateRandomSeedResult = NonNullable<
+  Awaited<ReturnType<typeof generateRandomSeed>>
+>
 export type ListSongsResult = NonNullable<Awaited<ReturnType<typeof listSongs>>>
 export type DownloadMusicResult = NonNullable<
   Awaited<ReturnType<typeof downloadMusic>>

@@ -476,6 +476,7 @@ pub struct CreateInteractiveClipsBody {
     pub query: InteractiveClipsQuery,
     pub clip_duration: f64,
     pub order: ClipOrder,
+    pub seed: Option<String>,
 }
 
 #[derive(Serialize, Debug, ToSchema)]

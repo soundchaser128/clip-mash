@@ -5,6 +5,7 @@ use crate::Result;
 
 pub mod estimator;
 pub mod log;
+pub mod random;
 pub mod sentry;
 pub mod util;
 

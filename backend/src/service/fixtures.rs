@@ -18,8 +18,8 @@ use super::Marker;
 use crate::data::database::{
     unix_timestamp_now, CreateVideo, Database, DbMarker, DbVideo, VideoSource,
 };
+use crate::helpers::random::generate_id;
 use crate::server::types::{Beats, CreateMarker};
-use crate::util::generate_id;
 use crate::Result;
 
 #[derive(Debug, Deserialize)]

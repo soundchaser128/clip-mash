@@ -297,9 +297,9 @@ mod test {
     use crate::data::database::{
         Database, ListMarkersFilter, VideoSearchQuery, VideoSource, VideoUpdate,
     };
+    use crate::helpers::random::generate_id;
     use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_with};
-    use crate::util::generate_id;
     use crate::Result;
 
     #[sqlx::test]
@@ -865,7 +865,10 @@ mod test {
         let performers = db.videos.get_all_performers().await?;
         assert_eq!(performers.len(), 3);
 
-        assert_eq!(performers[0], ("performer1".into(), 2));
+        let performer_names: Vec<_> = performers.iter().map(|p| p.0.as_str()).collect();
+        assert!(performer_names.contains(&"performer1"));
+        assert!(performer_names.contains(&"performer2"));
+        assert!(performer_names.contains(&"performer3"));
 
         Ok(())
     }

@@ -98,6 +98,7 @@ pub struct SongUpload {
         (status = 200, description = "Uploads a song", body = SongDto),
     )
 )]
+/// Upload a song file
 pub async fn upload_music(
     State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
@@ -128,6 +129,7 @@ pub struct ListSongsQuery {
         (status = 200, description = "Lists all songs", body = Vec<SongDto>),
     )
 )]
+/// List all songs
 pub async fn list_songs(
     Query(ListSongsQuery { shuffle }): Query<ListSongsQuery>,
     State(state): State<Arc<AppState>>,
@@ -161,6 +163,7 @@ pub async fn list_songs(
         (status = 200, description = "Get beats for a song", body = Beats),
     )
 )]
+/// Get beats for a song, or detect them if they are not yet available.
 pub async fn get_beats(
     Path(song_id): Path<i64>,
     state: State<Arc<AppState>>,

@@ -17,9 +17,11 @@ use super::streams::{LocalVideoSource, StreamUrlService};
 use super::Marker;
 use crate::data::database::{Database, DbSong, DbVideo};
 use crate::helpers::estimator::Estimator;
+use crate::helpers::random::generate_id;
 use crate::helpers::util::StrExt;
 use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
-use crate::util::{commandline_error, debug_output, format_duration, generate_id};
+use crate::util::{commandline_error, debug_output, format_duration};
+
 use crate::Result;
 
 #[derive(Debug)]

@@ -13,6 +13,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
 use crate::data::database::ListMarkersFilter;
+use crate::helpers::random::generate_id;
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
@@ -20,7 +21,6 @@ use crate::service::description_generator::DescriptionType;
 use crate::service::funscript::{self, FunScript, ScriptBuilder};
 use crate::service::options_converter::OptionsConverterService;
 use crate::service::streams::{LocalVideoSource, StreamUrlService};
-use crate::util::generate_id;
 
 #[utoipa::path(
     post,
@@ -118,10 +118,9 @@ pub async fn fetch_clips_interactive(
         })
         .collect();
 
-    let seed = rand::random::<u64>().to_string();
     let options = CreateClipsBody {
         markers: all_markers,
-        seed: Some(seed),
+        seed: body.seed,
         clips: ClipOptions {
             clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                 clip_duration: body.clip_duration,
@@ -349,4 +348,19 @@ pub async fn generate_description(
         body: description,
         content_type: description_type.content_type().to_string(),
     }))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/project/random-seed",
+    responses(
+        (status = 200, description = "Generate a random seed", body = String),
+    )
+)]
+#[axum::debug_handler]
+/// Generate a possible random seed (a random word)
+pub async fn generate_random_seed() -> Json<String> {
+    use crate::helpers::random;
+
+    Json(random::get_random_word())
 }

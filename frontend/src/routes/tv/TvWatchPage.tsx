@@ -39,6 +39,8 @@ export const interactiveClipsLoader: LoaderFunction = async (request) => {
     | "markerTitles"
     | "performers"
 
+  const seed = searchParams.get("seed")
+
   const response = await fetchClipsInteractive({
     query: {
       type: queryType,
@@ -48,6 +50,7 @@ export const interactiveClipsLoader: LoaderFunction = async (request) => {
     order: {
       type: "random",
     },
+    seed,
   })
 
   return {

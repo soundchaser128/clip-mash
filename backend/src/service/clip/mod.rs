@@ -8,12 +8,12 @@ use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use super::Marker;
+use crate::helpers::random::create_seeded_rng;
 use crate::server::types::{Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use crate::service::clip::equal_len::EqualLengthClipPicker;
 use crate::service::clip::round_robin::RoundRobinClipPicker;
 use crate::service::clip::sort::{ClipSorter, RandomClipSorter, SceneOrderClipSorter};
 use crate::service::clip::weighted::WeightedRandomClipPicker;
-use crate::util::create_seeded_rng;
 
 mod equal_len;
 mod length_picker;
@@ -214,6 +214,7 @@ mod tests {
 
     use super::{ClipOrder, CreateClipsOptions};
     use crate::data::database::VideoSource;
+    use crate::helpers::random::create_seeded_rng;
     use crate::server::types::{
         Clip, ClipLengthOptions, ClipOptions, ClipPickerOptions, EqualLengthClipOptions,
         RandomizedClipOptions, RoundRobinClipOptions,
@@ -221,7 +222,6 @@ mod tests {
     use crate::service::clip::sort::ClipSorter;
     use crate::service::clip::{ClipService, ClipsResult, SceneOrderClipSorter};
     use crate::service::fixtures::{create_marker_video_id, create_marker_with_loops};
-    use crate::util::create_seeded_rng;
 
     #[traced_test]
     #[test]

@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use tokio::sync::Mutex;
 use tracing::info;
 use utoipa::ToSchema;
 

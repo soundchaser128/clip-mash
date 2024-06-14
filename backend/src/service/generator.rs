@@ -21,7 +21,6 @@ use crate::helpers::random::generate_id;
 use crate::helpers::util::StrExt;
 use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
 use crate::util::{commandline_error, debug_output, format_duration};
-
 use crate::Result;
 
 #[derive(Debug)]

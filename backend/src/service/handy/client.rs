@@ -71,4 +71,8 @@ impl HandyClient {
             GetMode200Response::ErrorResponse(e) => Err(ErrorResponse(e.error).into()),
         }
     }
+
+    pub async fn set_stroke_range(&self, min: u32, max: u32) -> Result<()> {
+        todo!()
+    }
 }

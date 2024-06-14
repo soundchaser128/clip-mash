@@ -1,8 +1,9 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use lazy_static::lazy_static;
+use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
-use rand::{rngs::StdRng, thread_rng, SeedableRng};
+use rand::{thread_rng, SeedableRng};
 
 const ADJECTIVES: &str = include_str!("../../data/words/adjectives.txt");
 const ANIMALS: &str = include_str!("../../data/words/animals.txt");

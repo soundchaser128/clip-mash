@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use tracing::info;
@@ -6,10 +5,6 @@ use utoipa::ToSchema;
 
 use super::directories::Directories;
 use crate::Result;
-
-lazy_static! {
-    static ref CONFIG: Mutex<Option<StashConfig>> = Default::default();
-}
 
 #[derive(Debug, Serialize, Clone, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]

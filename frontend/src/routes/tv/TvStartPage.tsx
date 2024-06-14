@@ -42,7 +42,7 @@ export const markerTitleLoader: LoaderFunction = async () => {
 
 export type TvQueryType = "markerTitles" | "performers" | "videoTags"
 
-interface FilterState {
+export interface TvSettings {
   query: string[]
   queryType: TvQueryType
   withMusic: boolean
@@ -50,7 +50,7 @@ interface FilterState {
   seed: string
 }
 
-function queryToSelection(query: URLSearchParams): FilterState {
+function queryToSelection(query: URLSearchParams): TvSettings {
   const queryType = query.get("queryType") as TvQueryType | null
   const withMusic = query.has("withMusic")
   const queryValues = query.getAll("query")
@@ -66,7 +66,7 @@ function queryToSelection(query: URLSearchParams): FilterState {
   }
 }
 
-function selectionToQuery(state: FilterState): URLSearchParams {
+function selectionToQuery(state: TvSettings): URLSearchParams {
   const query = new URLSearchParams()
   for (const title of state.query) {
     query.append("query", title)
@@ -107,7 +107,7 @@ const TvStartPage: React.FC = () => {
   }
   const items = state.showAll ? allItems : allItems.slice(0, INITIAL_COUNT)
 
-  const onChange = (update: Partial<FilterState>) => {
+  const onChange = (update: Partial<TvSettings>) => {
     const query = selectionToQuery({
       ...state,
       ...update,
@@ -258,11 +258,11 @@ const TvStartPage: React.FC = () => {
                 type="text"
                 value={state.seed}
                 onChange={(e) => onChange({seed: e.target.value})}
-                className="input input-bordered join-item"
+                className="input input-sm input-bordered join-item"
               />
               <button
                 type="button"
-                className="btn join-item"
+                className="btn btn-sm join-item"
                 onClick={onGenerateSeed}
               >
                 <HiArrowPath />

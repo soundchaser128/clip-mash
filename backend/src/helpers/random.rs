@@ -14,8 +14,8 @@ lazy_static! {
     static ref ANIMALS_LIST: Vec<&'static str> = ANIMALS.split('\n').map(|n| n.trim()).collect();
     static ref ALL_WORDS: Vec<&'static str> = {
         let mut words = vec![];
-        words.extend(ADJECTIVE_LIST.iter().copied());
-        words.extend(ANIMALS_LIST.iter().copied());
+        words.extend(ADJECTIVE_LIST.iter());
+        words.extend(ANIMALS_LIST.iter());
         words
     };
 }

@@ -84,6 +84,8 @@ async fn run() -> Result<()> {
     info!("using database at {database_file:?}");
 
     let database = Database::new(&database_file).await?;
+    let version = database.sqlite_version().await?;
+    info!("using sqlite version {version}");
     let generator =
         CompilationGenerator::new(directories.clone(), &ffmpeg_location, database.clone()).await?;
     migrations::run_async(

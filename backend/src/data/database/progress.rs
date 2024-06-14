@@ -6,7 +6,7 @@ use crate::Result;
 
 #[derive(Debug, Clone)]
 pub struct ProgressDatabase {
-    pool: SqlitePool,
+    pub(super) pool: SqlitePool,
 }
 
 impl ProgressDatabase {

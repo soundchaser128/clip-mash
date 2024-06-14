@@ -463,16 +463,19 @@ impl VideosDatabase {
         let decode_performers =
             |p: Option<String>| p.and_then(|p| serde_json::from_str::<Vec<String>>(&p).ok());
 
-        let all_video_performers = sqlx::query!("SELECT performers FROM videos")
-            .fetch_all(&self.pool)
-            .await?;
+        let all_video_performers = sqlx::query!(
+            r#"SELECT performers, (SELECT count(*) FROM markers m WHERE m.video_id = videos.id) AS "marker_count: i32"
+             FROM videos"#
+        )
+        .fetch_all(&self.pool)
+        .await?;
 
         let mut performer_counts = HashMap::new();
         for record in all_video_performers {
             if let Some(performers) = decode_performers(record.performers) {
                 for performer in performers {
                     let count = performer_counts.entry(performer).or_insert(0);
-                    *count += 1;
+                    *count += record.marker_count.unwrap_or(1) as usize;
                 }
             }
         }

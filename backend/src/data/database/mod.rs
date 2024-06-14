@@ -2,7 +2,7 @@ use std::fmt;
 use std::str::FromStr;
 use std::time::SystemTime;
 
-use color_eyre::eyre::bail;
+use color_eyre::eyre::{bail, OptionExt};
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::{FromRow, SqlitePool};
@@ -259,6 +259,14 @@ impl Database {
             videos: VideosDatabase::new(pool.clone()),
             settings: SettingsDatabase::new(pool),
         })
+    }
+
+    pub async fn sqlite_version(&self) -> Result<String> {
+        let version = sqlx::query_scalar!("select sqlite_version()")
+            .fetch_one(&self.progress.pool)
+            .await?;
+
+        version.ok_or_eyre("no version found")
     }
 
     #[cfg(test)]

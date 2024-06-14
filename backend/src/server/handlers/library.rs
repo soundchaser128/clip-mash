@@ -128,8 +128,8 @@ pub async fn add_new_videos(
 
 #[derive(Serialize, ToSchema)]
 pub struct ListPerformerResponse {
-    pub performer: String,
-    pub video_count: usize,
+    pub title: String,
+    pub count: usize,
 }
 
 #[axum::debug_handler]
@@ -147,8 +147,8 @@ pub async fn list_performers(
     let performers: Vec<_> = performers
         .into_iter()
         .map(|(performer, video_count)| ListPerformerResponse {
-            performer,
-            video_count,
+            title: performer,
+            count: video_count,
         })
         .collect();
     Ok(Json(performers))

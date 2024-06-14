@@ -31,25 +31,21 @@ export const markerTitleLoader: LoaderFunction = async () => {
 
   return {
     markers: markerTitles,
-    performers: performers.map((p) => ({
-      title: p.performer,
-      count: p.video_count,
-    })),
+    performers: performers,
   } satisfies LoaderData
 }
 
+export type TvQueryType = "markerTitles" | "performers" | "videoTags"
+
 interface FilterState {
   query: string[]
-  queryType: "markerTitles" | "performers"
+  queryType: TvQueryType
   withMusic: boolean
   showAll: boolean
 }
 
 function queryToSelection(query: URLSearchParams): FilterState {
-  const queryType = query.get("queryType") as
-    | "markerTitles"
-    | "performers"
-    | null
+  const queryType = query.get("queryType") as TvQueryType | null
   const withMusic = query.has("withMusic")
   const queryValues = query.getAll("query")
   const showAll = query.has("showAll")
@@ -143,21 +139,49 @@ const TvStartPage: React.FC = () => {
           compilation generated for you in the browser!
         </p>
 
-        <div className="form-control self-center">
-          <label className="cursor-pointer label flex gap-4">
-            <span className="label-text">Marker titles</span>
-            <input
-              type="checkbox"
-              className="toggle toggle-primary"
-              checked={state.queryType === "performers"}
-              onChange={(e) =>
-                onChange({
-                  queryType: e.target.checked ? "performers" : "markerTitles",
-                })
-              }
-            />
-            <span className="label-text">Performers</span>
-          </label>
+        <div role="tablist" className="tabs tabs-bordered mb-4">
+          <Link
+            to={{
+              search: selectionToQuery({
+                ...state,
+                queryType: "markerTitles",
+              }).toString(),
+            }}
+            role="tab"
+            className={clsx("tab", {
+              "tab-active": state.queryType === "markerTitles",
+            })}
+          >
+            Marker titles
+          </Link>
+          <Link
+            to={{
+              search: selectionToQuery({
+                ...state,
+                queryType: "performers",
+              }).toString(),
+            }}
+            role="tab"
+            className={clsx("tab", {
+              "tab-active": state.queryType === "performers",
+            })}
+          >
+            Performers
+          </Link>
+          <Link
+            to={{
+              search: selectionToQuery({
+                ...state,
+                queryType: "videoTags",
+              }).toString(),
+            }}
+            role="tab"
+            className={clsx("tab", {
+              "tab-active": state.queryType === "videoTags",
+            })}
+          >
+            Video tags
+          </Link>
         </div>
 
         <ul className="flex gap-1 flex-wrap">

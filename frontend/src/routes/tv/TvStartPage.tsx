@@ -76,15 +76,25 @@ function selectionToQuery(state: FilterState): URLSearchParams {
   return query
 }
 
-// TODO store the state in the URL
 const TvStartPage: React.FC = () => {
   const navigate = useNavigate()
   const data = useLoaderData() as LoaderData
   const [queryParms] = useSearchParams()
   const state = queryToSelection(queryParms)
 
-  const allItems =
-    state.queryType === "performers" ? data.performers : data.markers
+  let allItems: Item[] = []
+  switch (state.queryType) {
+    case "performers":
+      allItems = data.performers
+      break
+    case "videoTags":
+      // allItems = []
+      // TODO
+      break
+    case "markerTitles":
+      allItems = data.markers
+      break
+  }
   const items = state.showAll ? allItems : allItems.slice(0, INITIAL_COUNT)
 
   const onChange = (update: Partial<FilterState>) => {

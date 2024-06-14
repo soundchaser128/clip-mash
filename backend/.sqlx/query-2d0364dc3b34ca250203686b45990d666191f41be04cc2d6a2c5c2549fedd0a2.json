@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT performers, (SELECT count(*) FROM markers m WHERE m.video_id = videos.id) AS \"marker_count: i32\"\n             FROM videos",
+  "describe": {
+    "columns": [
+      {
+        "name": "performers",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "marker_count: i32",
+        "ordinal": 1,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      null
+    ]
+  },
+  "hash": "2d0364dc3b34ca250203686b45990d666191f41be04cc2d6a2c5c2549fedd0a2"
+}

@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT performers FROM videos",
+  "query": "select sqlite_version()",
   "describe": {
     "columns": [
       {
-        "name": "performers",
+        "name": "sqlite_version()",
         "ordinal": 0,
         "type_info": "Text"
       }
@@ -13,8 +13,8 @@
       "Right": 0
     },
     "nullable": [
-      true
+      null
     ]
   },
-  "hash": "ff2bd64465ba4ac746155fec071cd5c647270966455363a2fb352ff3e34c4d4f"
+  "hash": "ed59f6fe6478c07989fc8888bfe9c80b7963d88c470b936cb956e0dd14cd282d"
 }

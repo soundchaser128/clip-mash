@@ -1,3 +1,4 @@
+use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
 
 use camino::Utf8Path;
@@ -448,7 +449,7 @@ impl VideosDatabase {
     }
 
     pub async fn get_all_performers(&self) -> Result<Vec<(String, usize)>> {
-        // meh, seens like json_each is not supported in sqlx's sqlite version?
+        // TODO seems like json_each is not supported in sqlx's sqlite version?
         // let rows = sqlx::query!(
         //     "
         //     SELECT value, count(*)
@@ -477,7 +478,7 @@ impl VideosDatabase {
         }
 
         let mut performers: Vec<_> = performer_counts.into_iter().collect();
-        performers.sort_by_key(|(_, count)| std::cmp::Reverse(*count));
+        performers.sort_by_key(|(name, count)| (Reverse(*count), name.clone()));
 
         Ok(performers)
     }

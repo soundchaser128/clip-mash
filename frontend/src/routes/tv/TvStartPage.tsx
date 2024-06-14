@@ -8,6 +8,7 @@ import {
   LoaderFunction,
   useLoaderData,
   useNavigate,
+  useSearchParams,
 } from "react-router-dom"
 
 const INITIAL_COUNT = 25
@@ -37,46 +38,90 @@ export const markerTitleLoader: LoaderFunction = async () => {
   } satisfies LoaderData
 }
 
+interface FilterState {
+  query: string[]
+  queryType: "markerTitles" | "performers"
+  withMusic: boolean
+  showAll: boolean
+}
+
+function queryToSelection(query: URLSearchParams): FilterState {
+  const queryType = query.get("queryType") as
+    | "markerTitles"
+    | "performers"
+    | null
+  const withMusic = query.has("withMusic")
+  const queryValues = query.getAll("query")
+  const showAll = query.has("showAll")
+
+  return {
+    query: queryValues,
+    queryType: queryType ?? "markerTitles",
+    withMusic,
+    showAll,
+  }
+}
+
+function selectionToQuery(state: FilterState): URLSearchParams {
+  const query = new URLSearchParams()
+  for (const title of state.query) {
+    query.append("query", title)
+  }
+  query.append("queryType", state.queryType)
+
+  if (state.withMusic) {
+    query.append("withMusic", "true")
+  }
+
+  if (state.showAll) {
+    query.append("showAll", "true")
+  }
+
+  return query
+}
+
+// TODO store the state in the URL
 const TvStartPage: React.FC = () => {
   const navigate = useNavigate()
   const data = useLoaderData() as LoaderData
-  const [selection, setSelection] = useState<string[]>([])
-  const [withMusic, setWithMusic] = useState<boolean>(false)
-  const [showAll, setShowAll] = useState<boolean>(false)
-  const [usePerformers, setUsePerformers] = useState<boolean>(false)
-  const allItems = usePerformers ? data.performers : data.markers
+  const [queryParms] = useSearchParams()
+  const state = queryToSelection(queryParms)
 
-  const items = showAll ? allItems : allItems.slice(0, INITIAL_COUNT)
+  const allItems =
+    state.queryType === "performers" ? data.performers : data.markers
+  const items = state.showAll ? allItems : allItems.slice(0, INITIAL_COUNT)
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const query = new URLSearchParams()
-    for (const title of selection) {
-      query.append("query", title)
-    }
-    query.append("queryType", usePerformers ? "performers" : "markerTitles")
-
-    if (withMusic) {
-      query.append("withMusic", "true")
-    }
-
+  const onChange = (update: Partial<FilterState>) => {
+    const query = selectionToQuery({
+      ...state,
+      ...update,
+    })
     navigate({
-      pathname: "/tv/watch",
       search: query.toString(),
     })
   }
 
   const toggleSelected = (item: Item) => {
-    if (selection.includes(item.title)) {
-      setSelection(selection.filter((s) => s !== item.title))
+    if (state.query.includes(item.title)) {
+      onChange({
+        query: state.query.filter((title) => title !== item.title),
+      })
     } else {
-      setSelection([...selection, item.title])
+      onChange({
+        query: [...state.query, item.title],
+      })
     }
   }
 
-  const toggleSelectionType = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsePerformers(e.target.checked)
-    setSelection([])
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    const query = selectionToQuery(state)
+
+    navigate({
+      pathname: "/tv/watch",
+      search: query.toString(),
+    })
   }
 
   return (
@@ -104,8 +149,12 @@ const TvStartPage: React.FC = () => {
             <input
               type="checkbox"
               className="toggle toggle-primary"
-              checked={usePerformers}
-              onChange={toggleSelectionType}
+              checked={state.queryType === "performers"}
+              onChange={(e) =>
+                onChange({
+                  queryType: e.target.checked ? "performers" : "markerTitles",
+                })
+              }
             />
             <span className="label-text">Performers</span>
           </label>
@@ -117,7 +166,7 @@ const TvStartPage: React.FC = () => {
               <button
                 type="button"
                 className={clsx("btn btn-neutral btn-sm", {
-                  "btn-outline": !selection.includes(item.title),
+                  "btn-outline": !state.query.includes(item.title),
                 })}
                 onClick={() => toggleSelected(item)}
               >
@@ -130,11 +179,11 @@ const TvStartPage: React.FC = () => {
         {items.length > INITIAL_COUNT && (
           <button
             className="btn btn-outline btn-primary mt-2 btn-sm"
-            onClick={() => setShowAll(!showAll)}
+            onClick={() => onChange({showAll: !state.showAll})}
             type="button"
           >
             <HiPlus />
-            {showAll ? "Show less" : "Show all"}
+            {state.showAll ? "Show less" : "Show all"}
           </button>
         )}
 
@@ -146,14 +195,14 @@ const TvStartPage: React.FC = () => {
               type="checkbox"
               id="withMusic"
               className="toggle toggle-primary"
-              checked={withMusic}
-              onChange={(e) => setWithMusic(e.target.checked)}
+              checked={state.withMusic}
+              onChange={(e) => onChange({withMusic: e.target.checked})}
             />
           </label>
         </div>
 
         <button
-          disabled={!selection.length}
+          disabled={!state.query.length}
           type="submit"
           className="btn btn-success self-center mt-2 btn-lg text-xl w-64"
         >

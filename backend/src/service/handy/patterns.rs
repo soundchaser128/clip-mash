@@ -274,10 +274,9 @@ mod math {
 }
 
 mod global {
+    use super::{CycleIncrementStatus, Message};
     use lazy_static::lazy_static;
     use tokio::sync::{mpsc, Mutex};
-
-    use super::{CycleIncrementStatus, Message};
 
     lazy_static! {
         static ref SENDER: Mutex<Option<mpsc::Sender<Message>>> = Mutex::new(None);

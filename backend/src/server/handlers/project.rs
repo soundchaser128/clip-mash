@@ -111,7 +111,6 @@ pub async fn fetch_clips_interactive(
             video_id: m.video_id,
             selected_range: (m.start_time, m.end_time),
             index_within_video: m.index_within_video as usize,
-            selected: Some(true),
             title: m.title,
             loops: 1,
             source: m.source,
@@ -124,7 +123,7 @@ pub async fn fetch_clips_interactive(
         clips: ClipOptions {
             clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                 clip_duration: body.clip_duration,
-                divisors: vec![1., 1., 1., 1.],
+                spread: 0.0,
                 length: None,
                 min_clip_duration: Some(1.0),
             }),

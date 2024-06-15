@@ -134,7 +134,7 @@ mod tests {
         let options = WeightedRandomClipOptions {
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: target_duration,
             weights: weights.clone(),
@@ -167,7 +167,7 @@ mod tests {
             length: video_duration,
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             lenient_duration: false,
             min_clip_duration: None,
@@ -187,7 +187,7 @@ mod tests {
         let options = WeightedRandomClipOptions {
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             weights,
             length: video_duration,
@@ -216,7 +216,7 @@ mod tests {
             length: 956.839832,
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             min_clip_duration: None,
         };
@@ -252,7 +252,7 @@ mod tests {
             length: 956.839832,
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
         };
         let markers = fixtures::other_markers();
@@ -279,7 +279,7 @@ mod tests {
             ],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: 30.0,
         };
@@ -297,7 +297,7 @@ mod tests {
             weights: vec![("A".to_string(), 0.0)],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: 30.0,
         };
@@ -315,7 +315,7 @@ mod tests {
             weights: vec![("B".to_string(), 1.0)],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: 30.0,
         };
@@ -333,7 +333,7 @@ mod tests {
             weights: vec![],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: 30.0,
         };
@@ -364,7 +364,7 @@ mod tests {
             weights: vec![("Cowgirl".to_string(), 1.0), ("Blowjob".to_string(), 1.0)],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: 10.0 * 1000.0,
         };

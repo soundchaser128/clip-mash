@@ -5,12 +5,13 @@ use rand::seq::IteratorRandom;
 use rand::Rng;
 use tracing::{debug, info};
 
+use super::get_divisors;
 use crate::server::types::{Beats, ClipLengthOptions, MeasureCount};
 
 #[derive(Debug)]
 pub struct RandomizedClipLengthPicker<'a> {
     rng: &'a mut StdRng,
-    divisors: Vec<f64>,
+    spread: f64,
     base_duration: f64,
 
     total_duration: f64,
@@ -21,16 +22,14 @@ pub struct RandomizedClipLengthPicker<'a> {
 impl<'a> RandomizedClipLengthPicker<'a> {
     pub fn new(
         rng: &'a mut StdRng,
-        divisors: Vec<f64>,
+        spread: f64,
         base_duration: f64,
         total_duration: f64,
         min_clip_duration: f64,
     ) -> Self {
-        assert!(!divisors.is_empty(), "divisors must not be empty");
-
         Self {
             rng,
-            divisors,
+            spread,
             base_duration,
             total_duration,
             current_duration: 0.0,
@@ -45,8 +44,8 @@ impl<'a> Iterator for RandomizedClipLengthPicker<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         let remaining_duration = self.total_duration - self.current_duration;
         if remaining_duration > 0.0 {
-            let time = self
-                .divisors
+            let divisors = get_divisors(self.spread);
+            let time = divisors
                 .iter()
                 .map(|d| (self.base_duration / d).max(self.min_clip_duration))
                 .choose(self.rng)
@@ -162,7 +161,7 @@ impl<'a> ClipLengthPicker<'a> {
             ClipLengthOptions::Randomized(options) => {
                 ClipLengthPicker::Randomized(RandomizedClipLengthPicker::new(
                     rng,
-                    options.divisors,
+                    options.spread,
                     options.base_duration,
                     total_duration,
                     min_clip_duration,
@@ -265,8 +264,7 @@ mod test {
     #[test]
     fn randomized_clip_lengths() {
         let mut rng = create_seeded_rng(None);
-        let picker =
-            RandomizedClipLengthPicker::new(&mut rng, vec![2.0, 3.0, 4.0], 30.0, 600.0, 1.5);
+        let picker = RandomizedClipLengthPicker::new(&mut rng, 0.5, 30.0, 600.0, 1.5);
         let durations: Vec<_> = picker.collect();
         let total = durations.iter().sum::<f64>();
         assert!(
@@ -277,6 +275,6 @@ mod test {
 
         let distinct_values: HashSet<_> =
             durations.iter().map(|n| OrderedFloat::from(*n)).collect();
-        assert_eq!(3, distinct_values.len());
+        assert_eq!(4, distinct_values.len());
     }
 }

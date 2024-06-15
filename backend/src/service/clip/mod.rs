@@ -22,8 +22,6 @@ mod sort;
 mod state;
 mod weighted;
 
-// const MIN_DURATION: f64 = 1.5;
-
 pub trait ClipPicker {
     type Options;
 
@@ -207,6 +205,25 @@ fn trim_clips(clips: &mut Vec<Clip>, max_len: f64) {
     }
 }
 
+fn lerp(a: f64, b: f64, t: f64) -> f64 {
+    a + (b - a) * t
+}
+
+fn lerp_arrays<const N: usize>(a: [f64; N], b: [f64; N], spread: f64) -> [f64; N] {
+    let mut result = [0.0; N];
+    for i in 0..N {
+        result[i] = lerp(a[i], b[i], spread)
+    }
+    result
+}
+
+pub fn get_divisors(spread: f64) -> [f64; 4] {
+    let min_durations = [1.0, 1.0, 1.0, 1.0];
+    let max_durations = [1.0, 4.0, 8.0, 16.0];
+
+    return lerp_arrays(min_durations, max_durations, spread);
+}
+
 #[cfg(test)]
 mod tests {
     use float_cmp::assert_approx_eq;
@@ -228,14 +245,14 @@ mod tests {
     fn test_arrange_clips_basic() {
         let options = CreateClipsOptions {
             markers: vec![
-                create_marker_video_id(1, 1.0, 15.0, 0, "v2"),
-                create_marker_video_id(2, 1.0, 17.0, 0, "v1"),
+                create_marker_video_id(1, 0.0, 15.0, 0, "v2"),
+                create_marker_video_id(2, 0.0, 17.0, 0, "v1"),
             ],
             seed: None,
             clip_options: ClipOptions {
                 clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
-                    clip_duration: 30.0,
-                    divisors: vec![2.0, 3.0, 4.0],
+                    clip_duration: 15.0,
+                    spread: 0.0,
                     length: None,
                     min_clip_duration: None,
                 }),
@@ -244,10 +261,11 @@ mod tests {
         };
         let service = ClipService::new();
         let ClipsResult { clips: results, .. } = service.arrange_clips(options);
+        tracing::info!("{:?}", results);
         assert_eq!(3, results.len());
-        assert_eq!((1.0, 11.0), results[0].range);
-        assert_eq!((1.0, 16.0), results[1].range);
-        assert_eq!((11.0, 15.0), results[2].range);
+        assert_eq!((0.0, 15.0), results[0].range);
+        assert_eq!((0.0, 15.0), results[1].range);
+        assert_eq!((15.0, 17.0), results[2].range);
     }
 
     #[traced_test]
@@ -286,7 +304,7 @@ mod tests {
             clip_options: ClipOptions {
                 clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                     clip_duration: 30.0,
-                    divisors: vec![2.0, 3.0, 4.0],
+                    spread: 0.5,
                     length: None,
                     min_clip_duration: None,
                 }),
@@ -356,7 +374,7 @@ mod tests {
                 clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
                     clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                         base_duration: 10.0,
-                        divisors: vec![2.0, 3.0, 4.0],
+                        spread: 0.5,
                     }),
                     length: 30.0,
                     lenient_duration: false,
@@ -384,7 +402,7 @@ mod tests {
                 clip_picker: ClipPickerOptions::RoundRobin(RoundRobinClipOptions {
                     clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                         base_duration: 10.0,
-                        divisors: vec![2.0, 3.0, 4.0],
+                        spread: 0.5,
                     }),
                     length: 30.0,
                     lenient_duration: false,

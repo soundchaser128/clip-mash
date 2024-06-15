@@ -354,7 +354,6 @@ pub struct SelectedMarker {
     pub video_id: String,
     pub selected_range: (f64, f64),
     pub index_within_video: usize,
-    pub selected: Option<bool>,
     pub title: String,
     pub loops: usize,
     pub source: VideoSource,
@@ -364,7 +363,7 @@ pub struct SelectedMarker {
 #[serde(rename_all = "camelCase")]
 pub struct RandomizedClipOptions {
     pub base_duration: f64,
-    pub divisors: Vec<f64>,
+    pub spread: f64,
 }
 
 #[derive(Deserialize, Debug, Clone, Copy, Serialize, ToSchema)]
@@ -450,7 +449,7 @@ pub struct WeightedRandomClipOptions {
 #[serde(rename_all = "camelCase")]
 pub struct EqualLengthClipOptions {
     pub clip_duration: f64,
-    pub divisors: Vec<f64>,
+    pub spread: f64,
     pub length: Option<f64>,
     pub min_clip_duration: Option<f64>,
 }

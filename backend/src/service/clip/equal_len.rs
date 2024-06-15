@@ -4,7 +4,7 @@ use tracing::{debug, info};
 
 use super::ClipPicker;
 use crate::server::types::{Clip, EqualLengthClipOptions};
-use crate::service::clip::trim_clips;
+use crate::service::clip::{get_divisors, trim_clips};
 use crate::service::Marker;
 
 pub struct EqualLengthClipPicker;
@@ -18,13 +18,12 @@ impl ClipPicker for EqualLengthClipPicker {
         options: Self::Options,
         rng: &mut StdRng,
     ) -> Vec<Clip> {
-        assert!(options.divisors.len() > 0, "divisors must not be empty");
         info!("using EqualLengthClipPicker to make clips: {options:?}");
         let min_duration = options.min_clip_duration.unwrap_or(1.5);
 
         let duration = options.clip_duration;
-        let clip_lengths: Vec<f64> = options
-            .divisors
+        let divisors = get_divisors(options.spread);
+        let clip_lengths: Vec<f64> = divisors
             .into_iter()
             .map(|d| (duration / d).max(min_duration))
             .collect();

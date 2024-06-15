@@ -24,19 +24,10 @@ import {
   ClipFormInputs,
   getDefaultOptions,
 } from "./clips/settings/ClipSettingsForm"
-import {lerpArrays} from "@/helpers/math"
 import {getPageSize} from "@/components/PageSizeSelect"
 
-// export const DEFAULT_PAGE_LENGTH = 30
 export const DEFAULT_CLIP_BASE_DURATION = 10
 export const DEFAULT_SPREAD = 0.25
-
-function getDivisors(spread: number): number[] {
-  const MIN_DURATIONS = [1, 1, 1, 1]
-  const MAX_DURATIONS = [1, 4, 8, 16]
-
-  return lerpArrays(MIN_DURATIONS, MAX_DURATIONS, spread)
-}
 
 export interface ClipsLoaderData {
   clips: Clip[]
@@ -67,7 +58,7 @@ const getClipLengths = (
     return {
       type: "randomized",
       baseDuration: 20,
-      divisors: getDivisors(spread),
+      spread,
     }
   }
 
@@ -86,7 +77,7 @@ const getClipLengths = (
     return {
       type: "randomized",
       baseDuration: options.clipLengths.baseDuration,
-      divisors: getDivisors(spread),
+      spread,
     }
   }
 }
@@ -99,7 +90,7 @@ const getClipPickerOptions = (
     return {
       type: "equalLength",
       clipDuration: 20,
-      divisors: getDivisors(DEFAULT_SPREAD),
+      spread: DEFAULT_SPREAD,
       minClipDuration: 1.5,
     }
   }
@@ -145,7 +136,7 @@ const getClipPickerOptions = (
       return {
         type: "equalLength",
         clipDuration: inputs.equalLength.clipDuration,
-        divisors: getDivisors(inputs.clipDurationSpread),
+        spread: inputs.clipDurationSpread,
         length,
         minClipDuration: inputs.minClipDuration,
       }

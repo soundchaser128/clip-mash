@@ -1,37 +1,51 @@
 use std::time::Duration;
 
-use serde::Serialize;
+use color_eyre::eyre::bail;
+use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, DurationSeconds, DurationSecondsWithFrac};
 use tokio::sync::mpsc;
 use tracing::{debug, error, info};
 
 use super::client::{HandyClient, IHandyClient, Mode};
 use crate::Result;
 
+// TODO use messages to change parameters on the fly
 #[derive(Debug)]
 pub enum Message {
     TogglePause,
     Stop,
 }
 
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Range {
     pub min: f64,
     pub max: f64,
 }
 
-#[derive(Debug)]
+#[serde_as]
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CycleIncrementParameters {
     pub start_range: Range,
     pub end_range: Range,
-    pub stroke_range: Range,
+    pub slide_range: Range,
+
+    #[serde_as(as = "DurationSecondsWithFrac<f64>")]
     pub update_interval: Duration,
+
+    #[serde_as(as = "DurationSeconds<u64>")]
     pub session_duration: Duration,
+
+    #[serde_as(as = "DurationSeconds<u64>")]
     pub cycle_duration: Duration,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type", rename_all = "kebab-case")]
 pub enum HandyPattern {
-    CycleIncrement(CycleIncrementParameters),
+    CycleIncrement {
+        parameters: CycleIncrementParameters,
+    },
     // Cycle(CycleParameters),
     // Random(RandomParameters),
     // Accellerate(AccellerateParameters),
@@ -43,17 +57,22 @@ pub struct HandyController {
 
 impl HandyController {
     pub fn new(key: String) -> Self {
-        let client = HandyClient::mock(key);
+        let client = HandyClient::new(key);
 
         Self { client }
     }
 
-    pub async fn start(self, pattern: HandyPattern) -> mpsc::Sender<Message> {
+    pub async fn start(self, pattern: HandyPattern) -> Result<()> {
+        let is_connected = self.client.is_connected().await?;
+        if !is_connected {
+            bail!("Handy is not connected");
+        }
+
         let (sender, receiver) = mpsc::channel(1);
-        global::store(sender.clone()).await;
+        global::store(sender).await;
 
         match pattern {
-            HandyPattern::CycleIncrement(parameters) => {
+            HandyPattern::CycleIncrement { parameters } => {
                 let mut controller =
                     CycleIncrementController::new(self.client, receiver, parameters);
 
@@ -65,7 +84,7 @@ impl HandyController {
             }
         }
 
-        sender
+        Ok(())
     }
 }
 
@@ -137,14 +156,14 @@ impl CycleIncrementController {
 
     async fn tick(&mut self) -> Result<bool> {
         let cycle_value = self.get_cycle_position();
-        debug!("cycle_value: {}", cycle_value);
+        debug!("current cycle value: {}", cycle_value);
 
         let speed_bounds = self.get_speed_bounds();
-        info!("speed_bounds: {:?}", speed_bounds);
+        debug!("current speed bounds: {:?}", speed_bounds);
 
         let new_speed = math::lerp(speed_bounds.min, speed_bounds.max, cycle_value).round() as u32;
         if new_speed != self.current_velocity {
-            info!("Setting new speed: {}", new_speed);
+            info!("Setting new speed: {new_speed}, current bounds: {speed_bounds:?}",);
             self.client.set_velocity(new_speed as f64).await?;
             self.current_velocity = new_speed;
         }
@@ -184,9 +203,9 @@ impl CycleIncrementController {
         );
 
         self.client
-            .set_stroke_range(
-                self.parameters.stroke_range.min as u32,
-                self.parameters.stroke_range.max as u32,
+            .set_slide_range(
+                self.parameters.slide_range.min as u32,
+                self.parameters.slide_range.max as u32,
             )
             .await?;
         self.client.set_mode(Mode::HAMP).await?;
@@ -218,12 +237,12 @@ impl CycleIncrementController {
                     break Ok(());
                 }
             } else {
-                info!("Paused, skipping tick");
+                debug!("Paused, skipping tick");
             }
 
             global::set_status(self.status()).await;
 
-            info!("sleeping for {:?}", self.parameters.update_interval);
+            debug!("sleeping for {:?}", self.parameters.update_interval);
             tokio::time::sleep(self.parameters.update_interval).await;
             self.current_time += self.parameters.update_interval.as_millis() as u64;
         }
@@ -274,9 +293,10 @@ mod math {
 }
 
 mod global {
-    use super::{CycleIncrementStatus, Message};
     use lazy_static::lazy_static;
     use tokio::sync::{mpsc, Mutex};
+
+    use super::{CycleIncrementStatus, Message};
 
     lazy_static! {
         static ref SENDER: Mutex<Option<mpsc::Sender<Message>>> = Mutex::new(None);

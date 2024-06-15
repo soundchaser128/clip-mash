@@ -66,12 +66,22 @@ pub struct HampVelocityPercent {
 }
 
 pub trait IHandyClient {
+    /// Check if the handy is connected
     async fn is_connected(&self) -> Result<bool>;
+
+    /// Set the current mode
     async fn set_mode(&self, mode: Mode) -> Result<()>;
-    async fn get_mode(&self) -> Result<Mode>;
+
+    /// Start the handy in HAMP mode with the given velocity.
     async fn start(&self, velocity: f64) -> Result<()>;
+
+    /// Stop the handy (HAMP mode)
     async fn stop(&self) -> Result<()>;
-    async fn set_stroke_range(&self, min: u32, max: u32) -> Result<()>;
+
+    /// Set the slide range
+    async fn set_slide_range(&self, min: u32, max: u32) -> Result<()>;
+
+    /// Set the current velocity (HAMP mode)
     async fn set_velocity(&self, velocity: f64) -> Result<()>;
 }
 
@@ -106,6 +116,7 @@ impl IHandyClient for HandyClient {
         let response: ConnectedResponse = self
             .client
             .get(&url)
+            .header(KEY_HEADER, &self.key)
             .send()
             .await?
             .error_for_status()?
@@ -117,7 +128,6 @@ impl IHandyClient for HandyClient {
 
     async fn set_mode(&self, mode: Mode) -> Result<()> {
         let update = ModeUpdate { mode: mode as u8 };
-        info!("json body: {}", serde_json::to_string(&update)?);
         let url = format!("{}/mode", self.base_url);
         let response = self
             .client
@@ -133,21 +143,6 @@ impl IHandyClient for HandyClient {
             let body = response.text().await?;
             Err(eyre!("Failed to set mode: '{}'", body))
         }
-    }
-
-    async fn get_mode(&self) -> Result<Mode> {
-        let url = format!("{}/mode", self.base_url);
-        let response: GetModeResponse = self
-            .client
-            .get(&url)
-            .header(KEY_HEADER, &self.key)
-            .send()
-            .await?
-            .error_for_status()?
-            .json()
-            .await?;
-
-        response.mode.try_into()
     }
 
     async fn start(&self, velocity: f64) -> Result<()> {
@@ -184,7 +179,7 @@ impl IHandyClient for HandyClient {
         Ok(())
     }
 
-    async fn set_stroke_range(&self, min: u32, max: u32) -> Result<()> {
+    async fn set_slide_range(&self, min: u32, max: u32) -> Result<()> {
         let settings = SlideSettings {
             min,
             max,

@@ -1,11 +1,12 @@
 use std::time::Duration;
 
 use handy_api::models::Mode;
+use serde::Serialize;
 use tokio::sync::{mpsc, Mutex};
 use tracing::{debug, error, info};
 use utoipa::openapi::info;
 
-use super::client::HandyClient;
+use super::client::{HandyClient, IHandyClient};
 use crate::Result;
 
 #[derive(Debug)]
@@ -14,7 +15,7 @@ pub enum Message {
     Stop,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize)]
 pub struct Range {
     pub min: f64,
     pub max: f64,
@@ -79,6 +80,14 @@ impl HandyController {
 
         Ok(sender)
     }
+}
+
+#[derive(Debug, Serialize)]
+pub struct CycleIncrementStatus {
+    pub current_time: u64,
+    pub current_velocity: u32,
+    pub paused: bool,
+    pub current_speed_bounds: Range,
 }
 
 struct CycleIncrementController {
@@ -166,6 +175,15 @@ impl CycleIncrementController {
         self.client.stop().await?;
 
         Ok(())
+    }
+
+    pub async fn status(&self) -> CycleIncrementStatus {
+        CycleIncrementStatus {
+            current_time: self.current_time,
+            current_velocity: self.current_velocity,
+            paused: self.paused,
+            current_speed_bounds: self.get_speed_bounds(),
+        }
     }
 
     pub async fn run(&mut self) -> Result<()> {

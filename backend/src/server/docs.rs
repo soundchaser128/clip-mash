@@ -6,8 +6,9 @@ use super::handlers::music::SongUpload;
 use super::handlers::project::{CreateFunscriptBody, DescriptionData, ProjectCreateResponse};
 use super::types::*;
 use crate::data::database::{MarkerCount, Settings, VideoSource, VideoUpdate};
+use crate::server::handlers::handy::StartHandyParameters;
 use crate::server::handlers::library::ListPerformerResponse;
-use crate::server::handlers::{files, library, music, progress, project, stash, system};
+use crate::server::handlers::{files, handy, library, music, progress, project, stash, system};
 use crate::service::description_generator::DescriptionType;
 use crate::service::directories::FolderType;
 use crate::service::generator::PaddingType;
@@ -61,6 +62,7 @@ use crate::service::video::AddVideosRequest;
         system::set_config,
         system::restart,
         system::get_app_health,
+        handy::start,
     ),
     components(
         schemas(
@@ -124,7 +126,8 @@ use crate::service::video::AddVideosRequest;
             Settings,
             CreateInteractiveClipsBody,
             InteractiveClipsQuery,
-            ListPerformerResponse
+            ListPerformerResponse,
+            StartHandyParameters
         )
     ),
     tags(

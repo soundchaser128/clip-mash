@@ -195,13 +195,19 @@ async fn run() -> Result<()> {
         .route("/:id/info", get(handlers::progress::get_progress_info))
         .route("/:id", delete(handlers::progress::delete_progress));
 
+    let handy_routes = Router::new()
+        .route("/start", post(handlers::handy::start))
+        .route("/stop", post(handlers::handy::stop))
+        .route("/", get(handlers::handy::status));
+
     let api_routes = Router::new()
         .nest("/project", project_routes)
         .nest("/library", library_routes)
         .nest("/stash", stash_routes)
         .nest("/system", system_routes)
         .nest("/song", music_routes)
-        .nest("/progress", progress_routes);
+        .nest("/progress", progress_routes)
+        .nest("/handy", handy_routes);
 
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))

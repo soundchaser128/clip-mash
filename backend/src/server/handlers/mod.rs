@@ -8,6 +8,7 @@ use crate::service::stash_config::StashConfig;
 use crate::Result;
 
 pub mod files;
+pub mod handy;
 pub mod library;
 pub mod music;
 pub mod progress;

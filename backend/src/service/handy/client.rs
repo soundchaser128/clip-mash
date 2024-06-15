@@ -38,6 +38,16 @@ impl std::error::Error for ErrorResponse {
     }
 }
 
+pub trait IHandyClient {
+    async fn is_connected(&self) -> Result<bool>;
+    async fn set_mode(&self, mode: Mode) -> Result<()>;
+    async fn get_mode(&self) -> Result<Mode>;
+    async fn start(&self, velocity: f64) -> Result<()>;
+    async fn stop(&self) -> Result<()>;
+    async fn set_stroke_range(&self, min: f64, max: f64) -> Result<()>;
+    async fn set_velocity(&self, velocity: f64) -> Result<()>;
+}
+
 pub struct HandyClient {
     config: Configuration,
     key: String,
@@ -50,22 +60,24 @@ impl HandyClient {
             key,
         }
     }
+}
 
-    pub async fn is_connected(&self) -> Result<bool> {
+impl IHandyClient for HandyClient {
+    async fn is_connected(&self) -> Result<bool> {
         use handy_api::apis::base_api::is_connected;
 
         let result = is_connected(&self.config, &self.key).await?;
         Ok(result.connected)
     }
 
-    pub async fn set_mode(&self, mode: Mode) -> Result<()> {
+    async fn set_mode(&self, mode: Mode) -> Result<()> {
         use handy_api::apis::base_api::set_mode;
 
         set_mode(&self.config, &self.key, ModeUpdate { mode }).await?;
         Ok(())
     }
 
-    pub async fn get_mode(&self) -> Result<Mode> {
+    async fn get_mode(&self) -> Result<Mode> {
         use handy_api::apis::base_api::get_mode;
 
         let result = get_mode(&self.config, &self.key).await?;
@@ -75,7 +87,7 @@ impl HandyClient {
         }
     }
 
-    pub async fn start(&self, velocity: f64) -> Result<()> {
+    async fn start(&self, velocity: f64) -> Result<()> {
         use handy_api::apis::hamp_api::start;
 
         let response = start(&self.config, &self.key).await?;
@@ -90,7 +102,7 @@ impl HandyClient {
         Ok(())
     }
 
-    pub async fn stop(&self) -> Result<()> {
+    async fn stop(&self) -> Result<()> {
         use handy_api::apis::hamp_api::hamp_stop;
         let response = hamp_stop(&self.config, &self.key).await?;
         match response {
@@ -101,7 +113,7 @@ impl HandyClient {
         }
     }
 
-    pub async fn set_stroke_range(&self, min: f64, max: f64) -> Result<()> {
+    async fn set_stroke_range(&self, min: f64, max: f64) -> Result<()> {
         use handy_api::apis::slide_api::set_slide;
 
         let body = SlideSettings {
@@ -116,7 +128,7 @@ impl HandyClient {
         }
     }
 
-    pub async fn set_velocity(&self, velocity: f64) -> Result<()> {
+    async fn set_velocity(&self, velocity: f64) -> Result<()> {
         use handy_api::apis::hamp_api::set_hamp_velocity_percent;
 
         let body = HampVelocityPercent { velocity };

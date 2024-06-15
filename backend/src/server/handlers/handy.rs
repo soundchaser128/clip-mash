@@ -8,7 +8,7 @@ use utoipa::ToSchema;
 
 use crate::server::error::AppError;
 use crate::service::handy::patterns::{
-    CycleIncrementParameters, HandyController, HandyPattern, Range,
+    self, CycleIncrementParameters, HandyController, HandyPattern, Range,
 };
 
 #[derive(Deserialize, ToSchema)]
@@ -56,11 +56,41 @@ pub async fn start(
     Ok(())
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/handy/stop",
+    responses(
+        (status = 200, description = "Stopped motion successfully", body = ()),
+    )
+)]
 #[axum::debug_handler]
 pub async fn stop() -> Result<(), AppError> {
-    todo!()
+    patterns::stop().await;
+
+    Ok(())
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/handy/pause",
+    responses(
+        (status = 200, description = "Paused motion successfully", body = ()),
+    )
+)]
+#[axum::debug_handler]
+pub async fn pause() -> Result<(), AppError> {
+    patterns::pause().await;
+
+    Ok(())
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/handy",
+    responses(
+        (status = 200, description = "Get the current status of the handy", body = ()),
+    )
+)]
 #[axum::debug_handler]
 pub async fn status() -> Result<impl IntoResponse, AppError> {
     Ok(Json("nothing yet"))

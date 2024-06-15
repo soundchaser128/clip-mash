@@ -1,12 +1,11 @@
 use std::time::Duration;
 
-use super::client::Mode;
 use serde::Serialize;
 use tokio::sync::{mpsc, Mutex};
 use tracing::{debug, error, info};
 use utoipa::openapi::info;
 
-use super::client::{HandyClient, IHandyClient};
+use super::client::{HandyClient, IHandyClient, Mode};
 use crate::Result;
 
 #[derive(Debug)]
@@ -138,6 +137,7 @@ impl CycleIncrementController {
         let end = self.parameters.end_range;
         let total_position =
             self.current_time as f64 / self.parameters.session_duration.as_secs_f64();
+        debug!("total_position: {}", total_position);
         let min = math::lerp(start.min, end.min, total_position);
         let max = math::lerp(start.max, end.max, total_position);
 
@@ -146,7 +146,7 @@ impl CycleIncrementController {
 
     async fn tick(&mut self) -> Result<bool> {
         let cycle_value = self.get_cycle_position();
-        info!("cycle_value: {}", cycle_value);
+        debug!("cycle_value: {}", cycle_value);
 
         let speed_bounds = self.get_speed_bounds();
         info!("speed_bounds: {:?}", speed_bounds);
@@ -227,6 +227,22 @@ impl CycleIncrementController {
             tokio::time::sleep(self.parameters.update_interval).await;
             self.current_time += self.parameters.update_interval.as_millis() as u64;
         }
+    }
+}
+
+pub async fn stop() {
+    if let Some(sender) = global::get().await {
+        let _ = sender.send(Message::Stop).await;
+    } else {
+        info!("No controller to stop");
+    }
+}
+
+pub async fn pause() {
+    if let Some(sender) = global::get().await {
+        let _ = sender.send(Message::TogglePause).await;
+    } else {
+        info!("No controller to pause");
     }
 }
 

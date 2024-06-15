@@ -198,6 +198,7 @@ async fn run() -> Result<()> {
     let handy_routes = Router::new()
         .route("/start", post(handlers::handy::start))
         .route("/stop", post(handlers::handy::stop))
+        .route("/pause", post(handlers::handy::pause))
         .route("/", get(handlers::handy::status));
 
     let api_routes = Router::new()

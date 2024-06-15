@@ -1,31 +1,68 @@
 use std::fmt;
 
-use crate::Result;
-use color_eyre::eyre::Context;
+use color_eyre::eyre::{eyre, Context};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-const API_URL: &str = "https://www.handyfeeling.com/api/handy/v2";
+use crate::Result;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+const DEFAULT_API_URL: &str = "https://www.handyfeeling.com/api/handy/v2";
+const KEY_HEADER: &str = "X-Connection-Key";
+
+#[derive(Clone, Copy, Debug)]
 pub enum Mode {
-    #[serde(rename = "0")]
-    HAMP,
-    #[serde(rename = "1")]
-    HSSP,
-    #[serde(rename = "2")]
-    HDSP,
-    #[serde(rename = "3")]
-    MAINTENANCE,
-    #[serde(rename = "4")]
-    HBSP,
+    HAMP = 0,
+    HSSP = 1,
+    HDSP = 2,
+    MAINTENANCE = 3,
+    HBSP = 4,
 }
 
-#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
+impl TryFrom<u8> for Mode {
+    type Error = color_eyre::Report;
+
+    fn try_from(value: u8) -> std::result::Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Mode::HAMP),
+            1 => Ok(Mode::HSSP),
+            2 => Ok(Mode::HDSP),
+            3 => Ok(Mode::MAINTENANCE),
+            4 => Ok(Mode::HBSP),
+            _ => Err(eyre!("Invalid mode value: {}", value)),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
 pub struct ConnectedResponse {
     /// Machine connected status
     pub connected: bool,
+}
+
+/// ModeUpdate : Mode update payload
+#[derive(Debug, Serialize)]
+pub struct ModeUpdate {
+    pub mode: u8,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GetModeResponse {
+    pub mode: u8,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SlideSettings {
+    pub min: u32,
+    pub max: u32,
+    /// Flag to indicate if the slide operation is fixed. A fixed operation moves the active slider area (min-max) offset to the new min or max value.
+    #[serde(rename = "fixed", skip_serializing_if = "Option::is_none")]
+    pub fixed: Option<bool>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct HampVelocityPercent {
+    pub velocity: f64,
 }
 
 pub trait IHandyClient {
@@ -41,6 +78,7 @@ pub trait IHandyClient {
 pub struct HandyClient {
     key: String,
     client: Client,
+    base_url: String,
 }
 
 impl HandyClient {
@@ -48,14 +86,22 @@ impl HandyClient {
         Self {
             key,
             client: Client::new(),
+            base_url: DEFAULT_API_URL.to_string(),
+        }
+    }
+
+    pub fn with_endpoint(key: String, endpoint: String) -> Self {
+        Self {
+            key,
+            client: Client::new(),
+            base_url: endpoint,
         }
     }
 }
 
 impl IHandyClient for HandyClient {
     async fn is_connected(&self) -> Result<bool> {
-        // let result = is_connected(&self.config, &self.key).await?;
-        let url = format!("{API_URL}/connected");
+        let url = format!("{}/connected", self.base_url);
         let response: ConnectedResponse = self
             .client
             .get(&url)
@@ -69,81 +115,109 @@ impl IHandyClient for HandyClient {
     }
 
     async fn set_mode(&self, mode: Mode) -> Result<()> {
-        use handy_api::apis::base_api::set_mode;
-
-        info!("setting mode to {mode:?}");
-        let result = set_mode(&self.config, &self.key, ModeUpdate { mode }).await?;
-        match result {
-            handy_api::models::SetMode200Response::ModeUpdateResponse(_) => Ok(()),
-            handy_api::models::SetMode200Response::ErrorResponse(e) => {
-                Err(ErrorResponse(e.error).into())
-            }
+        let update = ModeUpdate { mode: mode as u8 };
+        info!("json body: {}", serde_json::to_string(&update)?);
+        let url = format!("{}/mode", self.base_url);
+        let response = self
+            .client
+            .put(&url)
+            .header(KEY_HEADER, &self.key)
+            .json(&update)
+            .send()
+            .await?;
+        if response.status().is_success() {
+            info!("set_mode response: {:?}", response);
+            Ok(())
+        } else {
+            let body = response.text().await?;
+            Err(eyre!("Failed to set mode: '{}'", body))
         }
     }
 
     async fn get_mode(&self) -> Result<Mode> {
-        use handy_api::apis::base_api::get_mode;
+        let url = format!("{}/mode", self.base_url);
+        let response: GetModeResponse = self
+            .client
+            .get(&url)
+            .header(KEY_HEADER, &self.key)
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
 
-        let result = get_mode(&self.config, &self.key).await?;
-        match result {
-            GetMode200Response::GetMode200ResponseOneOf(r) => Ok(r.mode),
-            GetMode200Response::ErrorResponse(e) => Err(ErrorResponse(e.error).into()),
-        }
+        response.mode.try_into()
     }
 
     async fn start(&self, velocity: f64) -> Result<()> {
-        use handy_api::apis::hamp_api::start;
+        let url = format!("{}/hamp/start", self.base_url);
+        let response = self
+            .client
+            .put(url)
+            .header(KEY_HEADER, &self.key)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<serde_json::Value>()
+            .await?;
+        info!("start response: {:?}", response);
 
-        let response = start(&self.config, &self.key).await?;
-        match response {
-            handy_api::models::Start200Response::ErrorResponse(e) => {
-                return Err(ErrorResponse(e.error).into())
-            }
-            _ => {}
-        }
         self.set_velocity(velocity).await?;
 
         Ok(())
     }
 
     async fn stop(&self) -> Result<()> {
-        use handy_api::apis::hamp_api::hamp_stop;
-        let response = hamp_stop(&self.config, &self.key).await?;
-        match response {
-            handy_api::models::HampStop200Response::ErrorResponse(e) => {
-                Err(ErrorResponse(e.error).into())
-            }
-            handy_api::models::HampStop200Response::HampStopResponse(_) => Ok(()),
-        }
+        let url = format!("{}/hamp/stop", self.base_url);
+        let response = self
+            .client
+            .put(url)
+            .header(KEY_HEADER, &self.key)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<serde_json::Value>()
+            .await?;
+        info!("stop response: {:?}", response);
+
+        Ok(())
     }
 
     async fn set_stroke_range(&self, min: u32, max: u32) -> Result<()> {
-        use handy_api::apis::slide_api::set_slide;
-
-        let body = SlideSettings {
+        let settings = SlideSettings {
             min,
             max,
             fixed: Some(true),
         };
-        let result = set_slide(&self.config, &self.key, body)
-            .await
-            .wrap_err("setting slide settings")?;
-        match result {
-            SetSlide200Response::ErrorResponse(e) => Err(ErrorResponse(e.error).into()),
-            SetSlide200Response::SlideUpdateResponse(_) => Ok(()),
-        }
+        let url = format!("{}/slide", self.base_url);
+        let response = self
+            .client
+            .put(url)
+            .header(KEY_HEADER, &self.key)
+            .json(&settings)
+            .send()
+            .await?
+            .json::<serde_json::Value>()
+            .await?;
+        info!("set_stroke_range response: {:?}", response);
+
+        Ok(())
     }
 
     async fn set_velocity(&self, velocity: f64) -> Result<()> {
-        use handy_api::apis::hamp_api::set_hamp_velocity_percent;
-
         let body = HampVelocityPercent { velocity };
-        let result = set_hamp_velocity_percent(&self.config, &self.key, body).await?;
-        match result {
-            SetHampVelocityPercent200Response::RpcResult(_) => Ok(()),
-            SetHampVelocityPercent200Response::ErrorResponse(e) => {
-                Err(ErrorResponse(e.error).into())
-            }
-        }
+        let url = format!("{}/hamp/velocity", self.base_url);
+        let response = self
+            .client
+            .put(url)
+            .header(KEY_HEADER, &self.key)
+            .json(&body)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<serde_json::Value>()
+            .await?;
+        info!("set_velocity response: {:?}", response);
+        Ok(())
     }
 }

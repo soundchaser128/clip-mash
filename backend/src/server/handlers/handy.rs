@@ -3,6 +3,7 @@ use std::time::Duration;
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::Deserialize;
+use tracing::info;
 use utoipa::ToSchema;
 
 use crate::server::error::AppError;
@@ -28,6 +29,8 @@ pub struct StartHandyParameters {
 pub async fn start(
     Json(StartHandyParameters { key }): Json<StartHandyParameters>,
 ) -> Result<(), AppError> {
+    info!("starting handy motion");
+
     let parameters = CycleIncrementParameters {
         cycle_duration: Duration::from_secs(60),
         session_duration: Duration::from_secs(60 * 15),

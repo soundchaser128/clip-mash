@@ -49,7 +49,6 @@ youtube_dl = { version = "0.10.0", features = [
     "tokio",
     "downloader-native-tls",
 ] }
-handy-api = { git = "https://github.com/soundchaser128/handy-sdk-rs", version = "0.1.0-2.0.0-beta-3" }
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.40"

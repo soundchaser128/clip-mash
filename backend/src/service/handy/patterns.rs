@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use handy_api::models::Mode;
+use super::client::Mode;
 use serde::Serialize;
 use tokio::sync::{mpsc, Mutex};
 use tracing::{debug, error, info};
@@ -59,9 +59,8 @@ impl HandyController {
         Self { client }
     }
 
-    pub async fn start(self, pattern: HandyPattern) -> Result<mpsc::Sender<Message>> {
+    pub fn start(self, pattern: HandyPattern) -> mpsc::Sender<Message> {
         let (sender, receiver) = mpsc::channel(1);
-
         global::store(sender.clone());
 
         match pattern {
@@ -71,14 +70,14 @@ impl HandyController {
 
                 tokio::spawn(async move {
                     if let Err(e) = controller.run().await {
-                        error!("Failed to run cycle increment controller: {}", e)
+                        error!("Failed to run cycle increment controller: {e:?}")
                     }
                 });
             }
             _ => unimplemented!(),
         }
 
-        Ok(sender)
+        sender
     }
 }
 
@@ -194,8 +193,8 @@ impl CycleIncrementController {
 
         self.client
             .set_stroke_range(
-                self.parameters.stroke_range.min,
-                self.parameters.stroke_range.max,
+                self.parameters.stroke_range.min as u32,
+                self.parameters.stroke_range.max as u32,
             )
             .await?;
         self.client.set_mode(Mode::HAMP).await?;

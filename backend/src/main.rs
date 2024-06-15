@@ -196,10 +196,10 @@ async fn run() -> Result<()> {
         .route("/:id", delete(handlers::progress::delete_progress));
 
     let handy_routes = Router::new()
-        .route("/start", post(handlers::handy::start))
-        .route("/stop", post(handlers::handy::stop))
-        .route("/pause", post(handlers::handy::pause))
-        .route("/", get(handlers::handy::status));
+        .route("/start", post(handlers::handy::start_handy))
+        .route("/stop", post(handlers::handy::stop_handy))
+        .route("/pause", post(handlers::handy::pause_handy))
+        .route("/", get(handlers::handy::handy_status));
 
     let api_routes = Router::new()
         .nest("/project", project_routes)

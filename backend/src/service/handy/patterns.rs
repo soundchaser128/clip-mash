@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DurationSeconds, DurationSecondsWithFrac};
 use tokio::sync::mpsc;
 use tracing::{debug, error, info};
+use utoipa::ToSchema;
 
 use super::client::{HandyClient, IHandyClient, Mode};
 use crate::Result;
@@ -16,14 +17,14 @@ pub enum Message {
     Stop,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, ToSchema)]
 pub struct Range {
     pub min: f64,
     pub max: f64,
 }
 
 #[serde_as]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CycleIncrementParameters {
     pub start_range: Range,
@@ -40,7 +41,7 @@ pub struct CycleIncrementParameters {
     pub cycle_duration: Duration,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 pub enum HandyPattern {
     CycleIncrement {
@@ -91,7 +92,7 @@ impl HandyController {
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CycleIncrementStatus {
-    pub current_time: u64,
+    pub elapsed: Duration,
     pub current_velocity: u32,
     pub paused: bool,
     pub current_speed_bounds: Range,
@@ -102,8 +103,7 @@ struct CycleIncrementController {
     receiver: mpsc::Receiver<Message>,
     parameters: CycleIncrementParameters,
 
-    // current time in milliseconds
-    current_time: u64,
+    elapsed: Duration,
     current_velocity: u32,
     paused: bool,
 }
@@ -115,7 +115,7 @@ impl CycleIncrementController {
         parameters: CycleIncrementParameters,
     ) -> Self {
         Self {
-            current_time: 0,
+            elapsed: Duration::ZERO,
             current_velocity: parameters.start_range.min.round() as u32,
 
             client,
@@ -126,9 +126,9 @@ impl CycleIncrementController {
     }
 
     fn get_cycle_position(&self) -> f64 {
-        let cycle_x = (self.current_time % self.parameters.cycle_duration.as_millis() as u64)
-            as f64
-            / self.parameters.cycle_duration.as_millis() as f64;
+        let duration = self.parameters.cycle_duration.as_millis();
+        let elapsed = self.elapsed.as_millis();
+        let cycle_x = (elapsed % duration) as f64 / duration as f64;
         debug!("cycle_x: {}", cycle_x);
         let threshold = 0.5f64;
         let in_mul = threshold.powf(-1.0);
@@ -144,7 +144,7 @@ impl CycleIncrementController {
     fn get_speed_bounds(&self) -> Range {
         let start = self.parameters.start_range;
         let end = self.parameters.end_range;
-        let t = self.current_time as f64 / 1000.0;
+        let t = self.elapsed.as_secs_f64();
         let duration = self.parameters.session_duration.as_secs_f64();
         let total_position = t / duration;
         debug!("total_position: {}", total_position);
@@ -168,8 +168,7 @@ impl CycleIncrementController {
             self.current_velocity = new_speed;
         }
 
-        let session_duration = self.parameters.session_duration.as_millis() as u64;
-        if self.current_time >= session_duration {
+        if self.elapsed >= self.parameters.session_duration {
             info!("Session duration reached, stopping");
             self.stop().await?;
             Ok(false)
@@ -189,7 +188,7 @@ impl CycleIncrementController {
 
     pub fn status(&self) -> CycleIncrementStatus {
         CycleIncrementStatus {
-            current_time: self.current_time,
+            elapsed: self.elapsed,
             current_velocity: self.current_velocity,
             paused: self.paused,
             current_speed_bounds: self.get_speed_bounds(),
@@ -244,7 +243,7 @@ impl CycleIncrementController {
 
             debug!("sleeping for {:?}", self.parameters.update_interval);
             tokio::time::sleep(self.parameters.update_interval).await;
-            self.current_time += self.parameters.update_interval.as_millis() as u64;
+            self.elapsed += self.parameters.update_interval;
         }
     }
 }

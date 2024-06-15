@@ -93,7 +93,7 @@ const TvWatchPage: React.FC = () => {
     if (currentClip) {
       const endTimestamp = currentClip.range[1]
       const currentTime = event.currentTarget.currentTime
-      if (Math.abs(endTimestamp - currentTime) <= 0.1) {
+      if (Math.abs(endTimestamp - currentTime) <= 0.5) {
         setIndex((c) => (c + 1) % length)
       }
     }

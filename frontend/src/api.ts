@@ -122,6 +122,26 @@ export type ListFileEntriesParams = {
  */
 export type CleanupFolder200 = unknown | null
 
+/**
+ * @nullable
+ */
+export type StopHandy200 = unknown | null
+
+/**
+ * @nullable
+ */
+export type StartHandy200 = unknown | null
+
+/**
+ * @nullable
+ */
+export type PauseHandy200 = unknown | null
+
+/**
+ * @nullable
+ */
+export type HandyStatus200 = unknown | null
+
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
 
 export interface WeightedRandomClipOptions {
@@ -267,6 +287,11 @@ export interface StashConfig {
   stashUrl: string
 }
 
+export interface StartHandyParameters {
+  key: string
+  pattern: HandyPattern
+}
+
 export type SortDirection = (typeof SortDirection)[keyof typeof SortDirection]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
@@ -294,7 +319,14 @@ export interface SongClipOptions {
   songs: Beats[]
 }
 
+/**
+ * @nullable
+ */
+export type SettingsHandy = HandyConfig | null
+
 export interface Settings {
+  /** @nullable */
+  handy?: SettingsHandy
   stash: StashConfig
 }
 
@@ -320,6 +352,11 @@ export interface RoundRobinClipOptions {
   lenientDuration: boolean
   /** @nullable */
   minClipDuration?: number | null
+}
+
+export interface Range {
+  max: number
+  min: number
 }
 
 export interface RandomizedClipOptions {
@@ -477,6 +514,10 @@ export type InteractiveClipsQueryOneOfThree = {
   type: InteractiveClipsQueryOneOfThreeType
 }
 
+export type InteractiveClipsQuery =
+  | InteractiveClipsQueryOneOf
+  | InteractiveClipsQueryOneOfThree
+
 export type InteractiveClipsQueryOneOfType =
   (typeof InteractiveClipsQueryOneOfType)[keyof typeof InteractiveClipsQueryOneOfType]
 
@@ -490,9 +531,25 @@ export type InteractiveClipsQueryOneOf = {
   type: InteractiveClipsQueryOneOfType
 }
 
-export type InteractiveClipsQuery =
-  | InteractiveClipsQueryOneOf
-  | InteractiveClipsQueryOneOfThree
+export type HandyPatternOneOfType =
+  (typeof HandyPatternOneOfType)[keyof typeof HandyPatternOneOfType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const HandyPatternOneOfType = {
+  "cycle-increment": "cycle-increment",
+} as const
+
+export type HandyPatternOneOf = {
+  parameters: CycleIncrementParameters
+  type: HandyPatternOneOfType
+}
+
+export type HandyPattern = HandyPatternOneOf
+
+export interface HandyConfig {
+  enabled: boolean
+  key: string
+}
 
 export type FolderType = (typeof FolderType)[keyof typeof FolderType]
 
@@ -523,6 +580,8 @@ export type FileSystemEntryOneOfThree = {
   type: FileSystemEntryOneOfThreeType
 }
 
+export type FileSystemEntry = FileSystemEntryOneOf | FileSystemEntryOneOfThree
+
 export type FileSystemEntryOneOfType =
   (typeof FileSystemEntryOneOfType)[keyof typeof FileSystemEntryOneOfType]
 
@@ -536,8 +595,6 @@ export type FileSystemEntryOneOf = {
   fullPath: string
   type: FileSystemEntryOneOfType
 }
-
-export type FileSystemEntry = FileSystemEntryOneOf | FileSystemEntryOneOfThree
 
 export interface EqualLengthClipOptions {
   clipDuration: number
@@ -570,6 +627,17 @@ export const DescriptionType = {
 export interface DescriptionData {
   body: string
   contentType: string
+}
+
+type Duration = number
+
+export interface CycleIncrementParameters {
+  cycleDuration: Duration
+  endRange: Range
+  sessionDuration: Duration
+  slideRange: Range
+  startRange: Range
+  updateInterval: Duration
 }
 
 /**
@@ -879,6 +947,42 @@ export type AddVideosRequest =
   | AddVideosRequestOneOf
   | AddVideosRequestOneOfThree
   | AddVideosRequestOneOfFive
+
+/**
+ * @summary Get the current status of the handy
+ */
+export const handyStatus = () => {
+  return customInstance<HandyStatus200>({url: `/api/handy`, method: "GET"})
+}
+
+/**
+ * @summary Pause the handy's movement
+ */
+export const pauseHandy = () => {
+  return customInstance<PauseHandy200>({
+    url: `/api/handy/pause`,
+    method: "POST",
+  })
+}
+
+/**
+ * @summary Start the handy with the given pattern and key.
+ */
+export const startHandy = (startHandyParameters: StartHandyParameters) => {
+  return customInstance<StartHandy200>({
+    url: `/api/handy/start`,
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    data: startHandyParameters,
+  })
+}
+
+/**
+ * @summary Stop the handy's movement
+ */
+export const stopHandy = () => {
+  return customInstance<StopHandy200>({url: `/api/handy/stop`, method: "POST"})
+}
 
 /**
  * @summary Deletes all generated files in the specified folder.
@@ -1281,6 +1385,16 @@ export const getVersion = () => {
   return customInstance<AppVersion>({url: `/api/system/version`, method: "GET"})
 }
 
+export type HandyStatusResult = NonNullable<
+  Awaited<ReturnType<typeof handyStatus>>
+>
+export type PauseHandyResult = NonNullable<
+  Awaited<ReturnType<typeof pauseHandy>>
+>
+export type StartHandyResult = NonNullable<
+  Awaited<ReturnType<typeof startHandy>>
+>
+export type StopHandyResult = NonNullable<Awaited<ReturnType<typeof stopHandy>>>
 export type CleanupFolderResult = NonNullable<
   Awaited<ReturnType<typeof cleanupFolder>>
 >

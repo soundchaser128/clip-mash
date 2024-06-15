@@ -22,8 +22,8 @@ pub struct StartHandyParameters {
     )
 )]
 #[axum::debug_handler]
-/// Start the handy
-pub async fn start(
+/// Start the handy with the given pattern and key.
+pub async fn start_handy(
     Json(StartHandyParameters { key, pattern }): Json<StartHandyParameters>,
 ) -> Result<(), AppError> {
     info!("starting handy motion with pattern {pattern:?}");
@@ -41,7 +41,8 @@ pub async fn start(
     )
 )]
 #[axum::debug_handler]
-pub async fn stop() -> Result<(), AppError> {
+/// Stop the handy's movement
+pub async fn stop_handy() -> Result<(), AppError> {
     patterns::stop().await;
 
     Ok(())
@@ -55,7 +56,8 @@ pub async fn stop() -> Result<(), AppError> {
     )
 )]
 #[axum::debug_handler]
-pub async fn pause() -> Result<(), AppError> {
+/// Pause the handy's movement
+pub async fn pause_handy() -> Result<(), AppError> {
     patterns::pause().await;
 
     Ok(())
@@ -69,7 +71,8 @@ pub async fn pause() -> Result<(), AppError> {
     )
 )]
 #[axum::debug_handler]
-pub async fn status() -> Result<impl IntoResponse, AppError> {
+/// Get the current status of the handy
+pub async fn handy_status() -> Result<impl IntoResponse, AppError> {
     let status = patterns::status().await;
     Ok(Json(status))
 }

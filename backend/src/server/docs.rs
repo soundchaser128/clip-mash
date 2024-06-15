@@ -5,13 +5,14 @@ use super::handlers::library::{CreateMarkerRequest, VideoCleanupResponse};
 use super::handlers::music::SongUpload;
 use super::handlers::project::{CreateFunscriptBody, DescriptionData, ProjectCreateResponse};
 use super::types::*;
-use crate::data::database::{MarkerCount, Settings, VideoSource, VideoUpdate};
+use crate::data::database::{HandyConfig, MarkerCount, Settings, VideoSource, VideoUpdate};
 use crate::server::handlers::handy::StartHandyParameters;
 use crate::server::handlers::library::ListPerformerResponse;
 use crate::server::handlers::{files, handy, library, music, progress, project, stash, system};
 use crate::service::description_generator::DescriptionType;
 use crate::service::directories::FolderType;
 use crate::service::generator::PaddingType;
+use crate::service::handy::patterns::{CycleIncrementParameters, HandyPattern, Range};
 use crate::service::new_version_checker::AppVersion;
 use crate::service::stash_config::StashConfig;
 use crate::service::video::AddVideosRequest;
@@ -62,7 +63,10 @@ use crate::service::video::AddVideosRequest;
         system::set_config,
         system::restart,
         system::get_app_health,
-        handy::start,
+        handy::start_handy,
+        handy::stop_handy,
+        handy::pause_handy,
+        handy::handy_status,
     ),
     components(
         schemas(
@@ -127,7 +131,11 @@ use crate::service::video::AddVideosRequest;
             CreateInteractiveClipsBody,
             InteractiveClipsQuery,
             ListPerformerResponse,
-            StartHandyParameters
+            StartHandyParameters,
+            HandyConfig,
+            HandyPattern,
+            CycleIncrementParameters,
+            Range,
         )
     ),
     tags(

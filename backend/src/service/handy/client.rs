@@ -1,6 +1,4 @@
-use std::fmt;
-
-use color_eyre::eyre::{eyre, Context};
+use color_eyre::eyre::eyre;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::info;
@@ -8,6 +6,8 @@ use tracing::info;
 use crate::Result;
 
 const DEFAULT_API_URL: &str = "https://www.handyfeeling.com/api/handy/v2";
+
+const MOCK_API_URL: &str = "http://localhost:8080/api/handy/v2";
 const KEY_HEADER: &str = "X-Connection-Key";
 
 #[derive(Clone, Copy, Debug)]
@@ -90,11 +90,12 @@ impl HandyClient {
         }
     }
 
-    pub fn with_endpoint(key: String, endpoint: String) -> Self {
+    #[allow(unused)]
+    pub fn mock(key: String) -> Self {
         Self {
             key,
             client: Client::new(),
-            base_url: endpoint,
+            base_url: MOCK_API_URL.to_string(),
         }
     }
 }

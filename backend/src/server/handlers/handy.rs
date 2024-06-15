@@ -51,7 +51,7 @@ pub async fn start(
 
     let pattern = HandyPattern::CycleIncrement(parameters);
     let controller = HandyController::new(key);
-    controller.start(pattern);
+    controller.start(pattern).await;
 
     Ok(())
 }

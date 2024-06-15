@@ -1,9 +1,8 @@
 use std::time::Duration;
 
 use serde::Serialize;
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::mpsc;
 use tracing::{debug, error, info};
-use utoipa::openapi::info;
 
 use super::client::{HandyClient, IHandyClient, Mode};
 use crate::Result;
@@ -21,9 +20,6 @@ pub struct Range {
 }
 
 #[derive(Debug)]
-pub struct CycleParameters {}
-
-#[derive(Debug)]
 pub struct CycleIncrementParameters {
     pub start_range: Range,
     pub end_range: Range,
@@ -34,17 +30,11 @@ pub struct CycleIncrementParameters {
 }
 
 #[derive(Debug)]
-pub struct RandomParameters {}
-
-#[derive(Debug)]
-pub struct AccellerateParameters {}
-
-#[derive(Debug)]
 pub enum HandyPattern {
-    Cycle(CycleParameters),
     CycleIncrement(CycleIncrementParameters),
-    Random(RandomParameters),
-    Accellerate(AccellerateParameters),
+    // Cycle(CycleParameters),
+    // Random(RandomParameters),
+    // Accellerate(AccellerateParameters),
 }
 
 pub struct HandyController {
@@ -53,14 +43,14 @@ pub struct HandyController {
 
 impl HandyController {
     pub fn new(key: String) -> Self {
-        let client = HandyClient::new(key);
+        let client = HandyClient::mock(key);
 
         Self { client }
     }
 
-    pub fn start(self, pattern: HandyPattern) -> mpsc::Sender<Message> {
+    pub async fn start(self, pattern: HandyPattern) -> mpsc::Sender<Message> {
         let (sender, receiver) = mpsc::channel(1);
-        global::store(sender.clone());
+        global::store(sender.clone()).await;
 
         match pattern {
             HandyPattern::CycleIncrement(parameters) => {
@@ -73,7 +63,6 @@ impl HandyController {
                     }
                 });
             }
-            _ => unimplemented!(),
         }
 
         sender
@@ -135,8 +124,9 @@ impl CycleIncrementController {
     fn get_speed_bounds(&self) -> Range {
         let start = self.parameters.start_range;
         let end = self.parameters.end_range;
-        let total_position =
-            self.current_time as f64 / self.parameters.session_duration.as_secs_f64();
+        let t = self.current_time as f64 / 1000.0;
+        let duration = self.parameters.session_duration.as_secs_f64();
+        let total_position = t / duration;
         debug!("total_position: {}", total_position);
         let min = math::lerp(start.min, end.min, total_position);
         let max = math::lerp(start.max, end.max, total_position);
@@ -154,7 +144,7 @@ impl CycleIncrementController {
         let new_speed = math::lerp(speed_bounds.min, speed_bounds.max, cycle_value).round() as u32;
         if new_speed != self.current_velocity {
             info!("Setting new speed: {}", new_speed);
-            self.client.set_velocity(new_speed as f64);
+            self.client.set_velocity(new_speed as f64).await?;
             self.current_velocity = new_speed;
         }
 
@@ -286,7 +276,7 @@ mod global {
     }
 
     pub async fn get() -> Option<mpsc::Sender<Message>> {
-        let mut global = SENDER.lock().await;
+        let global = SENDER.lock().await;
         global.clone()
     }
 }

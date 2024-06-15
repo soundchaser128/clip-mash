@@ -69,7 +69,8 @@ impl HandyController {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct CycleIncrementStatus {
     pub current_time: u64,
     pub current_velocity: u32,
@@ -161,12 +162,13 @@ impl CycleIncrementController {
     async fn stop(&mut self) -> Result<()> {
         info!("stopping motion");
         global::clear().await;
+        global::clear_status().await;
         self.client.stop().await?;
 
         Ok(())
     }
 
-    pub async fn status(&self) -> CycleIncrementStatus {
+    pub fn status(&self) -> CycleIncrementStatus {
         CycleIncrementStatus {
             current_time: self.current_time,
             current_velocity: self.current_velocity,
@@ -197,6 +199,12 @@ impl CycleIncrementController {
                 match message {
                     Message::TogglePause => {
                         self.paused = !self.paused;
+
+                        if self.paused {
+                            self.client.stop().await?;
+                        } else {
+                            self.client.start(self.current_velocity as f64).await?;
+                        }
                     }
                     Message::Stop => {
                         self.stop().await?;
@@ -213,6 +221,8 @@ impl CycleIncrementController {
                 info!("Paused, skipping tick");
             }
 
+            global::set_status(self.status()).await;
+
             info!("sleeping for {:?}", self.parameters.update_interval);
             tokio::time::sleep(self.parameters.update_interval).await;
             self.current_time += self.parameters.update_interval.as_millis() as u64;
@@ -222,7 +232,9 @@ impl CycleIncrementController {
 
 pub async fn stop() {
     if let Some(sender) = global::get().await {
-        let _ = sender.send(Message::Stop).await;
+        if let Err(e) = sender.send(Message::Stop).await {
+            error!("Failed to send stop message: {:?}", e);
+        }
     } else {
         info!("No controller to stop");
     }
@@ -230,10 +242,16 @@ pub async fn stop() {
 
 pub async fn pause() {
     if let Some(sender) = global::get().await {
-        let _ = sender.send(Message::TogglePause).await;
+        if let Err(e) = sender.send(Message::TogglePause).await {
+            error!("Failed to send pause message: {:?}", e);
+        }
     } else {
         info!("No controller to pause");
     }
+}
+
+pub async fn status() -> Option<CycleIncrementStatus> {
+    global::get_status().await
 }
 
 mod math {
@@ -259,10 +277,11 @@ mod global {
     use lazy_static::lazy_static;
     use tokio::sync::{mpsc, Mutex};
 
-    use super::Message;
+    use super::{CycleIncrementStatus, Message};
 
     lazy_static! {
         static ref SENDER: Mutex<Option<mpsc::Sender<Message>>> = Mutex::new(None);
+        static ref STATUS: Mutex<Option<CycleIncrementStatus>> = Mutex::new(None);
     }
 
     pub async fn store(sender: mpsc::Sender<Message>) {
@@ -278,5 +297,20 @@ mod global {
     pub async fn get() -> Option<mpsc::Sender<Message>> {
         let global = SENDER.lock().await;
         global.clone()
+    }
+
+    pub async fn set_status(status: CycleIncrementStatus) {
+        let mut global = STATUS.lock().await;
+        global.replace(status);
+    }
+
+    pub async fn get_status() -> Option<CycleIncrementStatus> {
+        let global = STATUS.lock().await;
+        global.clone()
+    }
+
+    pub async fn clear_status() {
+        let mut global = STATUS.lock().await;
+        global.take();
     }
 }

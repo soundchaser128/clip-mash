@@ -93,5 +93,6 @@ pub async fn pause() -> Result<(), AppError> {
 )]
 #[axum::debug_handler]
 pub async fn status() -> Result<impl IntoResponse, AppError> {
-    Ok(Json("nothing yet"))
+    let status = patterns::status().await;
+    Ok(Json(status))
 }

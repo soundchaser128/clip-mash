@@ -89,6 +89,10 @@ impl HandyController {
     }
 }
 
+trait SpeedController {
+    fn next_speed(&mut self) -> f64;
+}
+
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CycleIncrementStatus {
@@ -106,6 +110,18 @@ struct CycleIncrementController {
     elapsed: Duration,
     current_velocity: u32,
     paused: bool,
+}
+
+impl SpeedController for CycleIncrementController {
+    fn next_speed(&mut self) -> f64 {
+        let cycle_value = self.get_cycle_position();
+        debug!("current cycle value: {}", cycle_value);
+
+        let speed_bounds = self.get_speed_bounds();
+        debug!("current speed bounds: {:?}", speed_bounds);
+
+        math::lerp(speed_bounds.min, speed_bounds.max, cycle_value)
+    }
 }
 
 impl CycleIncrementController {

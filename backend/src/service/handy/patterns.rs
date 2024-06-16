@@ -1,8 +1,9 @@
-use std::time::Duration;
-
 use color_eyre::eyre::bail;
+use noise::{Fbm, NoiseFn, Perlin};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, DurationSeconds, DurationSecondsWithFrac};
+use serde_with::{serde_as, DurationSeconds};
+use std::time::Duration;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info};
 use utoipa::ToSchema;
@@ -31,14 +32,18 @@ pub struct CycleIncrementParameters {
     pub end_range: Range,
     pub slide_range: Range,
 
-    #[serde_as(as = "DurationSecondsWithFrac<f64>")]
-    pub update_interval: Duration,
-
     #[serde_as(as = "DurationSeconds<u64>")]
     pub session_duration: Duration,
 
     #[serde_as(as = "DurationSeconds<u64>")]
     pub cycle_duration: Duration,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RandomParameters {
+    pub speed_range: Range,
+    pub slide_range: Range,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -48,22 +53,117 @@ pub enum HandyPattern {
         parameters: CycleIncrementParameters,
     },
     // Cycle(CycleParameters),
-    // Random(RandomParameters),
+    Random {
+        parameters: RandomParameters,
+    },
     // Accellerate(AccellerateParameters),
 }
 
 pub struct HandyController {
     client: HandyClient,
+    paused: bool,
+    update_interval: Duration,
 }
 
 impl HandyController {
     pub fn new(key: String) -> Self {
         let client = HandyClient::new(key);
 
-        Self { client }
+        Self {
+            client,
+            paused: false,
+            update_interval: Duration::from_millis(500),
+        }
     }
 
-    pub async fn start(self, pattern: HandyPattern) -> Result<()> {
+    async fn stop(&mut self) -> Result<()> {
+        info!("stopping motion");
+        global::clear().await;
+        global::clear_status().await;
+        self.client.stop().await?;
+
+        Ok(())
+    }
+
+    async fn tick(
+        &mut self,
+        controller: &mut impl SpeedController,
+        current_velocity: f64,
+        elapsed: Duration,
+    ) -> Result<f64> {
+        let next_speed = controller.next_speed(elapsed).round();
+        if next_speed as u32 != current_velocity as u32 {
+            info!("Setting new speed: {next_speed}");
+            self.client.set_velocity(next_speed).await?;
+            Ok(next_speed)
+        } else {
+            Ok(current_velocity)
+        }
+    }
+
+    async fn run_loop(
+        &mut self,
+        mut controller: impl SpeedController,
+        mut receiver: mpsc::Receiver<Message>,
+    ) -> Result<()> {
+        let slide_range = controller.slide_range();
+        self.client
+            .set_slide_range(slide_range.min as u32, slide_range.max as u32)
+            .await?;
+        self.client.set_mode(Mode::HAMP).await?;
+        self.client.start(controller.initial_speed()).await?;
+
+        let mut current_velocity = controller.initial_speed();
+        let mut elapsed = Duration::ZERO;
+
+        loop {
+            let message = receiver.try_recv();
+            if let Ok(message) = message {
+                info!("Received message: {:?}", message);
+                match message {
+                    Message::TogglePause => {
+                        self.paused = !self.paused;
+
+                        if self.paused {
+                            self.client.stop().await?;
+                        } else {
+                            self.client.start(current_velocity).await?;
+                        }
+                    }
+                    Message::Stop => {
+                        self.stop().await?;
+                        break Ok(());
+                    }
+                }
+            }
+            if !self.paused {
+                let should_continue = controller.should_continue(elapsed);
+                if !should_continue {
+                    break Ok(());
+                }
+
+                let next_speed = self
+                    .tick(&mut controller, current_velocity, elapsed)
+                    .await?;
+                current_velocity = next_speed;
+            } else {
+                debug!("Paused, skipping tick");
+            }
+
+            global::set_status(ControllerStatus {
+                elapsed,
+                current_velocity: current_velocity as u32,
+                paused: self.paused,
+                // current_speed_bounds: controller.slide_range(),
+            })
+            .await;
+            debug!("sleeping for {:?}", self.update_interval);
+            tokio::time::sleep(self.update_interval).await;
+            elapsed += self.update_interval;
+        }
+    }
+
+    pub async fn start(mut self, pattern: HandyPattern) -> Result<()> {
         let is_connected = self.client.is_connected().await?;
         if !is_connected {
             bail!("Handy is not connected");
@@ -72,78 +172,100 @@ impl HandyController {
         let (sender, receiver) = mpsc::channel(1);
         global::store(sender).await;
 
-        match pattern {
+        let controller: Box<dyn SpeedController> = match pattern {
             HandyPattern::CycleIncrement { parameters } => {
-                let mut controller =
-                    CycleIncrementController::new(self.client, receiver, parameters);
-
-                tokio::spawn(async move {
-                    if let Err(e) = controller.run().await {
-                        error!("Failed to run cycle increment controller: {e:?}")
-                    }
-                });
+                Box::new(CycleIncrementController::new(parameters))
             }
-        }
+            HandyPattern::Random { parameters } => Box::new(RandomController::new(parameters)),
+        };
+
+        tokio::spawn(async move {
+            if let Err(e) = self.run_loop(controller, receiver).await {
+                error!("Failed to run controller: {e:?}");
+            }
+        });
 
         Ok(())
     }
 }
 
-trait SpeedController {
-    fn next_speed(&mut self) -> f64;
+trait SpeedController: Send {
+    /// Returns the next speed to set. The speed should be rounded to the nearest integer.
+    fn next_speed(&mut self, elapsed: Duration) -> f64;
+
+    /// Returns the slide range to set.
+    fn slide_range(&self) -> Range;
+
+    /// Returns the initial speed to set.
+    fn initial_speed(&self) -> f64;
+
+    /// Returns true if the controller should continue running.
+    fn should_continue(&self, elapsed: Duration) -> bool;
+}
+
+impl SpeedController for Box<dyn SpeedController> {
+    fn next_speed(&mut self, elapsed: Duration) -> f64 {
+        self.as_mut().next_speed(elapsed)
+    }
+
+    fn slide_range(&self) -> Range {
+        self.as_ref().slide_range()
+    }
+
+    fn initial_speed(&self) -> f64 {
+        self.as_ref().initial_speed()
+    }
+
+    fn should_continue(&self, elapsed: Duration) -> bool {
+        self.as_ref().should_continue(elapsed)
+    }
 }
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct CycleIncrementStatus {
+pub struct ControllerStatus {
     pub elapsed: Duration,
     pub current_velocity: u32,
     pub paused: bool,
-    pub current_speed_bounds: Range,
+    // pub current_speed_bounds: Range,
 }
 
 struct CycleIncrementController {
-    client: HandyClient,
-    receiver: mpsc::Receiver<Message>,
     parameters: CycleIncrementParameters,
-
-    elapsed: Duration,
-    current_velocity: u32,
-    paused: bool,
 }
 
 impl SpeedController for CycleIncrementController {
-    fn next_speed(&mut self) -> f64 {
-        let cycle_value = self.get_cycle_position();
+    fn next_speed(&mut self, elapsed: Duration) -> f64 {
+        let cycle_value = self.get_cycle_position(elapsed);
         debug!("current cycle value: {}", cycle_value);
 
-        let speed_bounds = self.get_speed_bounds();
+        let speed_bounds = self.get_speed_bounds(elapsed);
         debug!("current speed bounds: {:?}", speed_bounds);
 
         math::lerp(speed_bounds.min, speed_bounds.max, cycle_value)
     }
+
+    fn slide_range(&self) -> Range {
+        self.parameters.slide_range
+    }
+
+    fn initial_speed(&self) -> f64 {
+        self.parameters.start_range.min
+    }
+
+    fn should_continue(&self, elapsed: Duration) -> bool {
+        elapsed <= self.parameters.session_duration
+    }
 }
 
 impl CycleIncrementController {
-    fn new(
-        client: HandyClient,
-        receiver: mpsc::Receiver<Message>,
-        parameters: CycleIncrementParameters,
-    ) -> Self {
-        Self {
-            elapsed: Duration::ZERO,
-            current_velocity: parameters.start_range.min.round() as u32,
-
-            client,
-            receiver,
-            parameters,
-            paused: false,
-        }
+    fn new(parameters: CycleIncrementParameters) -> Self {
+        Self { parameters }
     }
 
-    fn get_cycle_position(&self) -> f64 {
+    fn get_cycle_position(&self, elapsed: Duration) -> f64 {
         let duration = self.parameters.cycle_duration.as_millis();
-        let elapsed = self.elapsed.as_millis();
+        let elapsed = elapsed.as_millis();
         let cycle_x = (elapsed % duration) as f64 / duration as f64;
         debug!("cycle_x: {}", cycle_x);
         let threshold = 0.5f64;
@@ -157,10 +279,10 @@ impl CycleIncrementController {
         }
     }
 
-    fn get_speed_bounds(&self) -> Range {
+    fn get_speed_bounds(&self, elapsed: Duration) -> Range {
         let start = self.parameters.start_range;
         let end = self.parameters.end_range;
-        let t = self.elapsed.as_secs_f64();
+        let t = elapsed.as_secs_f64();
         let duration = self.parameters.session_duration.as_secs_f64();
         let total_position = t / duration;
         debug!("total_position: {}", total_position);
@@ -169,98 +291,52 @@ impl CycleIncrementController {
 
         Range { min, max }
     }
+}
 
-    async fn tick(&mut self) -> Result<bool> {
-        let cycle_value = self.get_cycle_position();
-        debug!("current cycle value: {}", cycle_value);
+struct RandomController {
+    parameters: RandomParameters,
+    noise: Fbm<Perlin>,
+}
 
-        let speed_bounds = self.get_speed_bounds();
-        debug!("current speed bounds: {:?}", speed_bounds);
+impl RandomController {
+    fn new(parameters: RandomParameters) -> Self {
+        // let seed = rand::thread_rng().gen();
+        let mut noise = Fbm::<Perlin>::new(0);
+        noise.frequency = 0.5;
+        noise.octaves = 2;
+        noise.persistence = 2.0;
+        Self { parameters, noise }
+    }
+}
 
-        let new_speed = math::lerp(speed_bounds.min, speed_bounds.max, cycle_value).round() as u32;
-        if new_speed != self.current_velocity {
-            info!("Setting new speed: {new_speed}, current bounds: {speed_bounds:?}",);
-            self.client.set_velocity(new_speed as f64).await?;
-            self.current_velocity = new_speed;
-        }
+fn remap(n: f64, source_start: f64, source_end: f64, dest_start: f64, dest_end: f64) -> f64 {
+    let source_range = source_end - source_start;
+    let dest_range = dest_end - dest_start;
+    let value = (n - source_start) / source_range;
+    dest_start + value * dest_range
+}
 
-        if self.elapsed >= self.parameters.session_duration {
-            info!("Session duration reached, stopping");
-            self.stop().await?;
-            Ok(false)
-        } else {
-            Ok(true)
-        }
+impl SpeedController for RandomController {
+    fn next_speed(&mut self, elapsed: Duration) -> f64 {
+        let n = self.noise.get([elapsed.as_secs_f64(), 1.0]);
+
+        math::lerp(
+            self.parameters.speed_range.min,
+            self.parameters.speed_range.max,
+            n,
+        )
     }
 
-    async fn stop(&mut self) -> Result<()> {
-        info!("stopping motion");
-        global::clear().await;
-        global::clear_status().await;
-        self.client.stop().await?;
-
-        Ok(())
+    fn slide_range(&self) -> Range {
+        self.parameters.slide_range
     }
 
-    pub fn status(&self) -> CycleIncrementStatus {
-        CycleIncrementStatus {
-            elapsed: self.elapsed,
-            current_velocity: self.current_velocity,
-            paused: self.paused,
-            current_speed_bounds: self.get_speed_bounds(),
-        }
+    fn initial_speed(&self) -> f64 {
+        self.parameters.speed_range.min
     }
 
-    pub async fn run(&mut self) -> Result<()> {
-        info!(
-            "Starting cycle increment controller with parameters: {:?}",
-            self.parameters
-        );
-
-        self.client
-            .set_slide_range(
-                self.parameters.slide_range.min as u32,
-                self.parameters.slide_range.max as u32,
-            )
-            .await?;
-        self.client.set_mode(Mode::HAMP).await?;
-        self.client.start(self.current_velocity as f64).await?;
-
-        loop {
-            let message = self.receiver.try_recv();
-            if let Ok(message) = message {
-                info!("Received message: {:?}", message);
-                match message {
-                    Message::TogglePause => {
-                        self.paused = !self.paused;
-
-                        if self.paused {
-                            self.client.stop().await?;
-                        } else {
-                            self.client.start(self.current_velocity as f64).await?;
-                        }
-                    }
-                    Message::Stop => {
-                        self.stop().await?;
-                        break Ok(());
-                    }
-                }
-            }
-            if !self.paused {
-                let should_continue = self.tick().await?;
-                if !should_continue {
-                    break Ok(());
-                }
-            } else {
-                debug!("Paused, skipping tick");
-            }
-
-            global::set_status(self.status()).await;
-
-            debug!("sleeping for {:?}", self.parameters.update_interval);
-            tokio::time::sleep(self.parameters.update_interval).await;
-            self.elapsed += self.parameters.update_interval;
-        }
+    fn should_continue(&self, _elapsed: Duration) -> bool {
+        true
     }
 }
 
@@ -284,7 +360,7 @@ pub async fn pause() {
     }
 }
 
-pub async fn status() -> Option<CycleIncrementStatus> {
+pub async fn status() -> Option<ControllerStatus> {
     global::get_status().await
 }
 
@@ -311,11 +387,11 @@ mod global {
     use lazy_static::lazy_static;
     use tokio::sync::{mpsc, Mutex};
 
-    use super::{CycleIncrementStatus, Message};
+    use super::{ControllerStatus, Message};
 
     lazy_static! {
         static ref SENDER: Mutex<Option<mpsc::Sender<Message>>> = Mutex::new(None);
-        static ref STATUS: Mutex<Option<CycleIncrementStatus>> = Mutex::new(None);
+        static ref STATUS: Mutex<Option<ControllerStatus>> = Mutex::new(None);
     }
 
     pub async fn store(sender: mpsc::Sender<Message>) {
@@ -333,12 +409,12 @@ mod global {
         global.clone()
     }
 
-    pub async fn set_status(status: CycleIncrementStatus) {
+    pub async fn set_status(status: ControllerStatus) {
         let mut global = STATUS.lock().await;
         global.replace(status);
     }
 
-    pub async fn get_status() -> Option<CycleIncrementStatus> {
+    pub async fn get_status() -> Option<ControllerStatus> {
         let global = STATUS.lock().await;
         global.clone()
     }
@@ -346,5 +422,51 @@ mod global {
     pub async fn clear_status() {
         let mut global = STATUS.lock().await;
         global.take();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use tracing::info;
+    use tracing_test::traced_test;
+
+    #[test]
+    #[traced_test]
+    fn test_random_controller() {
+        use super::{RandomController, SpeedController};
+        use std::time::Duration;
+
+        let parameters = super::RandomParameters {
+            speed_range: super::Range {
+                min: 30.0,
+                max: 79.0,
+            },
+            slide_range: super::Range {
+                min: 0.0,
+                max: 80.0,
+            },
+        };
+
+        let mut controller = RandomController::new(parameters);
+
+        let mut samples = vec![];
+        for i in 0..10 {
+            let speed = controller.next_speed(Duration::from_secs(i));
+            samples.push(speed);
+        }
+
+        info!("samples: {:?}", samples);
+
+        let min = samples
+            .iter()
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+        let max = samples
+            .iter()
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+
+        assert!(*min >= 30.0);
+        assert!(*max <= 79.0);
     }
 }

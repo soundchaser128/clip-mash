@@ -50,6 +50,7 @@ youtube_dl = { version = "0.10.0", features = [
     "downloader-native-tls",
 ] }
 serde_with = "3.8.1"
+noise = "0.9.0"
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.40"

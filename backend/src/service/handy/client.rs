@@ -46,11 +46,6 @@ pub struct ModeUpdate {
     pub mode: u8,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct GetModeResponse {
-    pub mode: u8,
-}
-
 #[derive(Debug, Serialize)]
 pub struct SlideSettings {
     pub min: u32,

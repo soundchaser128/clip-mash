@@ -12,9 +12,9 @@ use crate::server::handlers::{files, handy, library, music, progress, project, s
 use crate::service::description_generator::DescriptionType;
 use crate::service::directories::FolderType;
 use crate::service::generator::PaddingType;
-use crate::service::handy::patterns::{
-    CycleIncrementParameters, HandyPattern, RandomParameters, Range,
-};
+use crate::service::handy::patterns::cycle_increment::CycleIncrementParameters;
+use crate::service::handy::patterns::random::RandomParameters;
+use crate::service::handy::patterns::{HandyPattern, Range};
 use crate::service::new_version_checker::AppVersion;
 use crate::service::stash_config::StashConfig;
 use crate::service::video::AddVideosRequest;

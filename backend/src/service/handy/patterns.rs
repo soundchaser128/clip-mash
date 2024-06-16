@@ -1,14 +1,16 @@
+use std::time::Duration;
+
 use color_eyre::eyre::bail;
-use noise::{Fbm, NoiseFn, Perlin};
+use rand::rngs::StdRng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DurationSeconds};
-use std::time::Duration;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info};
 use utoipa::ToSchema;
 
 use super::client::{HandyClient, IHandyClient, Mode};
+use crate::helpers::random::{self, create_seeded_rng};
 use crate::Result;
 
 // TODO use messages to change parameters on the fly
@@ -44,6 +46,9 @@ pub struct CycleIncrementParameters {
 pub struct RandomParameters {
     pub speed_range: Range,
     pub slide_range: Range,
+    pub jitter: f64,
+    pub seed: Option<String>,
+    pub interval_range: (Duration, Duration),
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -52,11 +57,11 @@ pub enum HandyPattern {
     CycleIncrement {
         parameters: CycleIncrementParameters,
     },
-    // Cycle(CycleParameters),
     Random {
         parameters: RandomParameters,
     },
     // Accellerate(AccellerateParameters),
+    // Cycle(CycleParameters),
 }
 
 pub struct HandyController {
@@ -227,7 +232,6 @@ pub struct ControllerStatus {
     pub elapsed: Duration,
     pub current_velocity: u32,
     pub paused: bool,
-    // pub current_speed_bounds: Range,
 }
 
 struct CycleIncrementController {
@@ -295,36 +299,58 @@ impl CycleIncrementController {
 
 struct RandomController {
     parameters: RandomParameters,
-    noise: Fbm<Perlin>,
+    last_speed: f64,
+    rng: StdRng,
+    last_change_at: Duration,
+    next_interval: Duration,
 }
 
 impl RandomController {
     fn new(parameters: RandomParameters) -> Self {
-        // let seed = rand::thread_rng().gen();
-        let mut noise = Fbm::<Perlin>::new(0);
-        noise.frequency = 0.5;
-        noise.octaves = 2;
-        noise.persistence = 2.0;
-        Self { parameters, noise }
-    }
-}
+        let seed = parameters
+            .seed
+            .clone()
+            .unwrap_or_else(|| random::get_random_word());
 
-fn remap(n: f64, source_start: f64, source_end: f64, dest_start: f64, dest_end: f64) -> f64 {
-    let source_range = source_end - source_start;
-    let dest_range = dest_end - dest_start;
-    let value = (n - source_start) / source_range;
-    dest_start + value * dest_range
+        let mut rng = create_seeded_rng(Some(&seed));
+        let next_interval = rng.gen_range(parameters.interval_range.0..parameters.interval_range.1);
+
+        Self {
+            last_speed: parameters.speed_range.min,
+            parameters,
+            rng,
+            last_change_at: Duration::ZERO,
+            next_interval,
+        }
+    }
+
+    fn speed(&mut self) -> f64 {
+        let increment = self
+            .rng
+            .gen_range(-self.parameters.jitter..self.parameters.jitter);
+        let Range { min, max } = self.parameters.speed_range;
+        (self.last_speed + increment).clamp(min, max)
+    }
+
+    fn next_interval(&mut self) -> Duration {
+        let (min, max) = self.parameters.interval_range;
+        self.rng.gen_range(min..max)
+    }
 }
 
 impl SpeedController for RandomController {
     fn next_speed(&mut self, elapsed: Duration) -> f64 {
-        let n = self.noise.get([elapsed.as_secs_f64(), 1.0]);
-
-        math::lerp(
-            self.parameters.speed_range.min,
-            self.parameters.speed_range.max,
-            n,
-        )
+        let next_change = self.last_change_at + self.next_interval;
+        if elapsed >= next_change {
+            let next_speed = self.speed();
+            let next_interval = self.next_interval();
+            self.last_speed = next_speed;
+            self.last_change_at = elapsed;
+            self.next_interval = next_interval;
+            next_speed
+        } else {
+            self.last_speed
+        }
     }
 
     fn slide_range(&self) -> Range {
@@ -433,8 +459,9 @@ mod tests {
     #[test]
     #[traced_test]
     fn test_random_controller() {
-        use super::{RandomController, SpeedController};
         use std::time::Duration;
+
+        use super::{RandomController, SpeedController};
 
         let parameters = super::RandomParameters {
             speed_range: super::Range {
@@ -445,6 +472,9 @@ mod tests {
                 min: 0.0,
                 max: 80.0,
             },
+            seed: None,
+            jitter: 5.0,
+            interval_range: (Duration::from_secs(4), Duration::from_secs(15)),
         };
 
         let mut controller = RandomController::new(parameters);

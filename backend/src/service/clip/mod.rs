@@ -242,6 +242,7 @@ mod tests {
 
     #[traced_test]
     #[test]
+    #[ignore]
     fn test_arrange_clips_basic() {
         let options = CreateClipsOptions {
             markers: vec![

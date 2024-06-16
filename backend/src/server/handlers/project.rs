@@ -111,6 +111,7 @@ pub async fn fetch_clips_interactive(
             video_id: m.video_id,
             selected_range: (m.start_time, m.end_time),
             index_within_video: m.index_within_video as usize,
+            selected: Some(true),
             title: m.title,
             loops: 1,
             source: m.source,

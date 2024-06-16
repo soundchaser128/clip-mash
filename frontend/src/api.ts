@@ -5,6 +5,9 @@
  * OpenAPI spec version: 0.22.0-pre.2
  */
 import {customInstance} from "./custom-client"
+
+type Duration = number
+
 /**
  * @nullable
  */
@@ -361,7 +364,18 @@ export interface Range {
 
 export interface RandomizedClipOptions {
   baseDuration: number
-  divisors: number[]
+  spread: number
+}
+
+export type RandomParametersIntervalRangeItem = Duration & Duration
+
+export interface RandomParameters {
+  intervalRange: RandomParametersIntervalRangeItem[]
+  jitter: number
+  /** @nullable */
+  seed?: string | null
+  slideRange: Range
+  speedRange: Range
 }
 
 export interface ProjectCreateResponse {
@@ -531,6 +545,19 @@ export type InteractiveClipsQueryOneOf = {
   type: InteractiveClipsQueryOneOfType
 }
 
+export type HandyPatternOneOfThreeType =
+  (typeof HandyPatternOneOfThreeType)[keyof typeof HandyPatternOneOfThreeType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const HandyPatternOneOfThreeType = {
+  random: "random",
+} as const
+
+export type HandyPatternOneOfThree = {
+  parameters: RandomParameters
+  type: HandyPatternOneOfThreeType
+}
+
 export type HandyPatternOneOfType =
   (typeof HandyPatternOneOfType)[keyof typeof HandyPatternOneOfType]
 
@@ -544,7 +571,7 @@ export type HandyPatternOneOf = {
   type: HandyPatternOneOfType
 }
 
-export type HandyPattern = HandyPatternOneOf
+export type HandyPattern = HandyPatternOneOf | HandyPatternOneOfThree
 
 export interface HandyConfig {
   enabled: boolean
@@ -598,11 +625,11 @@ export type FileSystemEntryOneOf = {
 
 export interface EqualLengthClipOptions {
   clipDuration: number
-  divisors: number[]
   /** @nullable */
   length?: number | null
   /** @nullable */
   minClipDuration?: number | null
+  spread: number
 }
 
 export type EncodingEffort =
@@ -629,15 +656,12 @@ export interface DescriptionData {
   contentType: string
 }
 
-type Duration = number
-
 export interface CycleIncrementParameters {
   cycleDuration: Duration
   endRange: Range
   sessionDuration: Duration
   slideRange: Range
   startRange: Range
-  updateInterval: Duration
 }
 
 /**
@@ -720,14 +744,6 @@ export interface ClipsResponse {
   videos: VideoDto[]
 }
 
-export type ClipPickerOptionsOneOfOnezeroType =
-  (typeof ClipPickerOptionsOneOfOnezeroType)[keyof typeof ClipPickerOptionsOneOfOnezeroType]
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ClipPickerOptionsOneOfOnezeroType = {
-  noSplit: "noSplit",
-} as const
-
 export type ClipPickerOptionsOneOfOnezero = {
   type: ClipPickerOptionsOneOfOnezeroType
 }
@@ -737,6 +753,14 @@ export type ClipPickerOptions =
   | ClipPickerOptionsOneOfFour
   | ClipPickerOptionsOneOfSeven
   | ClipPickerOptionsOneOfOnezero
+
+export type ClipPickerOptionsOneOfOnezeroType =
+  (typeof ClipPickerOptionsOneOfOnezeroType)[keyof typeof ClipPickerOptionsOneOfOnezeroType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ClipPickerOptionsOneOfOnezeroType = {
+  noSplit: "noSplit",
+} as const
 
 export type ClipPickerOptionsOneOfSevenAllOfType =
   (typeof ClipPickerOptionsOneOfSevenAllOfType)[keyof typeof ClipPickerOptionsOneOfSevenAllOfType]

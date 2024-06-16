@@ -354,6 +354,7 @@ pub struct SelectedMarker {
     pub video_id: String,
     pub selected_range: (f64, f64),
     pub index_within_video: usize,
+    pub selected: Option<bool>,
     pub title: String,
     pub loops: usize,
     pub source: VideoSource,

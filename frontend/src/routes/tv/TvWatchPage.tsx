@@ -3,8 +3,10 @@ import {getClipUrl} from "@/helpers/clips"
 import clsx from "clsx"
 import {useRef, useState} from "react"
 import {
+  HiBackward,
   HiChevronLeft,
   HiChevronRight,
+  HiForward,
   HiPause,
   HiPlay,
   HiSpeakerWave,
@@ -80,6 +82,8 @@ const TvWatchPage: React.FC = () => {
   const [index, setIndex] = useState(0)
   const length = clips?.clips?.length || 0
   const currentClip = length > 0 ? clips!.clips[index] : undefined
+  const nextClip = length > 0 ? clips!.clips[(index + 1) % length] : undefined
+  const nextClipUrl = getClipUrl(clips?.streams || {}, nextClip)
   const currentVideo = clips?.videos.find((v) => v.id === currentClip?.videoId)
   const clipUrl = getClipUrl(clips?.streams || {}, currentClip)
 
@@ -176,6 +180,8 @@ const TvWatchPage: React.FC = () => {
           onClick={onTogglePlay}
         />
 
+        <video preload="auto" className="hidden" src={nextClipUrl} />
+
         {music.length > 0 && (
           <audio
             ref={audioRef}
@@ -207,7 +213,7 @@ const TvWatchPage: React.FC = () => {
                 onClick={() => onChangeClip("prev")}
                 className="btn btn-square join-item"
               >
-                <HiChevronLeft />
+                <HiBackward className="w-5 h-5" />
               </button>
 
               <button
@@ -240,7 +246,7 @@ const TvWatchPage: React.FC = () => {
                 onClick={() => onChangeClip("next")}
                 className="btn btn-square join-item"
               >
-                <HiChevronRight />
+                <HiForward className="w-5 h-5" />
               </button>
             </div>
 

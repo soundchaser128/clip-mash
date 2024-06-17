@@ -1,13 +1,8 @@
 import {generateRandomSeed, listMarkerTitles, listPerformers} from "@/api"
 import Heading from "@/components/Heading"
-import clsx from "clsx"
-import React from "react"
-import {
-  HiArrowPath,
-  HiChevronLeft,
-  HiPlus,
-  HiRocketLaunch,
-} from "react-icons/hi2"
+import React, {useEffect} from "react"
+import {useForm} from "react-hook-form"
+import {HiArrowPath, HiChevronLeft, HiRocketLaunch} from "react-icons/hi2"
 import {
   Link,
   LoaderFunction,
@@ -15,8 +10,6 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom"
-
-const INITIAL_COUNT = 25
 
 type Item = {
   title: string
@@ -36,7 +29,7 @@ export const markerTitleLoader: LoaderFunction = async () => {
 
   return {
     markers: markerTitles,
-    performers: performers,
+    performers: performers.filter((p) => p.count > 0),
   } satisfies LoaderData
 }
 
@@ -46,7 +39,6 @@ export interface TvSettings {
   query: string[]
   queryType: TvQueryType
   withMusic: boolean
-  showAll: boolean
   seed: string
 }
 
@@ -54,14 +46,12 @@ function queryToSelection(query: URLSearchParams): TvSettings {
   const queryType = query.get("queryType") as TvQueryType | null
   const withMusic = query.has("withMusic")
   const queryValues = query.getAll("query")
-  const showAll = query.has("showAll")
   const seed = query.get("seed") ?? ""
 
   return {
     query: queryValues,
     queryType: queryType ?? "markerTitles",
     withMusic,
-    showAll,
     seed,
   }
 }
@@ -77,9 +67,6 @@ function selectionToQuery(state: TvSettings): URLSearchParams {
     query.append("withMusic", "true")
   }
 
-  if (state.showAll) {
-    query.append("showAll", "true")
-  }
   if (state.seed?.trim().length > 0) {
     query.append("seed", state.seed)
   }
@@ -87,7 +74,6 @@ function selectionToQuery(state: TvSettings): URLSearchParams {
 }
 
 // TODO
-//  * use react-hook-form (list of items as a checkbox group)
 //  * make the list of items searchable?
 //  * add a button to clear the form
 //  * add a button to select all items
@@ -96,49 +82,27 @@ const TvStartPage: React.FC = () => {
   const navigate = useNavigate()
   const data = useLoaderData() as LoaderData
   const [queryParms] = useSearchParams()
-  const state = queryToSelection(queryParms)
+  const {register, watch, handleSubmit, setValue} = useForm<TvSettings>({
+    defaultValues: queryToSelection(queryParms),
+  })
+  const state = watch()
 
-  let allItems: Item[] = []
+  let items: Item[] = []
   switch (state.queryType) {
     case "performers":
-      allItems = data.performers
+      items = data.performers
       break
     case "videoTags":
-      // allItems = []
+      // items = []
       // TODO
       break
     case "markerTitles":
-      allItems = data.markers
+      items = data.markers
       break
   }
-  const items = state.showAll ? allItems : allItems.slice(0, INITIAL_COUNT)
 
-  const onChange = (update: Partial<TvSettings>) => {
-    const query = selectionToQuery({
-      ...state,
-      ...update,
-    })
-    navigate({
-      search: query.toString(),
-    })
-  }
-
-  const toggleSelected = (item: Item) => {
-    if (state.query.includes(item.title)) {
-      onChange({
-        query: state.query.filter((title) => title !== item.title),
-      })
-    } else {
-      onChange({
-        query: [...state.query, item.title],
-      })
-    }
-  }
-
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-
-    const query = selectionToQuery(state)
+  const onSubmit = (values: TvSettings) => {
+    const query = selectionToQuery(values)
 
     navigate({
       pathname: "/tv/watch",
@@ -148,8 +112,12 @@ const TvStartPage: React.FC = () => {
 
   const onGenerateSeed = async () => {
     const seed = await generateRandomSeed()
-    onChange({seed})
+    setValue("seed", seed)
   }
+
+  useEffect(() => {
+    navigate({search: selectionToQuery(state).toString()})
+  }, [JSON.stringify(state)])
 
   return (
     <main className="container pt-2 px-1 ml-auto mr-auto flex flex-col min-h-screen">
@@ -164,55 +132,41 @@ const TvStartPage: React.FC = () => {
         ClipMash TV
       </Heading>
 
-      <form onSubmit={onSubmit} className="flex flex-col max-w-xl self-center">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col max-w-xl self-center"
+      >
         <p className="mb-2">
           Select markers or performers and click on 🚀 Start to watch a
           compilation generated for you in the browser!
         </p>
 
         <div role="tablist" className="tabs tabs-bordered mb-4">
-          <Link
-            to={{
-              search: selectionToQuery({
-                ...state,
-                queryType: "markerTitles",
-              }).toString(),
-            }}
+          <input
+            type="radio"
             role="tab"
-            className={clsx("tab", {
-              "tab-active": state.queryType === "markerTitles",
-            })}
-          >
-            Marker titles
-          </Link>
-          <Link
-            to={{
-              search: selectionToQuery({
-                ...state,
-                queryType: "performers",
-              }).toString(),
-            }}
+            className="tab"
+            aria-label="Marker titles"
+            value="markerTitles"
+            {...register("queryType")}
+          />
+          <input
+            type="radio"
             role="tab"
-            className={clsx("tab", {
-              "tab-active": state.queryType === "performers",
-            })}
-          >
-            Performers
-          </Link>
-          <Link
-            to={{
-              search: selectionToQuery({
-                ...state,
-                queryType: "videoTags",
-              }).toString(),
-            }}
+            className="tab"
+            aria-label="Performers"
+            value="performers"
+            {...register("queryType")}
+          />
+
+          <input
+            type="radio"
             role="tab"
-            className={clsx("tab", {
-              "tab-active": state.queryType === "videoTags",
-            })}
-          >
-            Video tags
-          </Link>
+            className="tab"
+            aria-label="Video tags"
+            value="videoTags"
+            {...register("queryType")}
+          />
         </div>
 
         <ul className="flex gap-1 flex-wrap">
@@ -222,29 +176,16 @@ const TvStartPage: React.FC = () => {
 
           {items.map((item) => (
             <li key={item.title}>
-              <button
-                type="button"
-                className={clsx("btn btn-neutral btn-sm", {
-                  "btn-outline": !state.query.includes(item.title),
-                })}
-                onClick={() => toggleSelected(item)}
-              >
-                {item.title} ({item.count})
-              </button>
+              <input
+                type="checkbox"
+                className="btn btn-neutral btn-outline btn-sm"
+                aria-label={`${item.title} (${item.count})`}
+                value={item.title}
+                {...register("query")}
+              />
             </li>
           ))}
         </ul>
-
-        {items.length > INITIAL_COUNT && (
-          <button
-            className="btn btn-outline btn-primary mt-2 btn-sm"
-            onClick={() => onChange({showAll: !state.showAll})}
-            type="button"
-          >
-            <HiPlus />
-            {state.showAll ? "Show less" : "Show all"}
-          </button>
-        )}
 
         <div className="form-control self-stretch mt-2">
           <label className="label">
@@ -253,9 +194,8 @@ const TvStartPage: React.FC = () => {
             <input
               type="checkbox"
               id="withMusic"
-              className="toggle toggle-primary"
-              checked={state.withMusic}
-              onChange={(e) => onChange({withMusic: e.target.checked})}
+              className="checkbox checkbox-primary"
+              {...register("withMusic")}
             />
           </label>
         </div>
@@ -266,17 +206,15 @@ const TvStartPage: React.FC = () => {
             <div className="join">
               <input
                 type="text"
-                value={state.seed}
-                onChange={(e) => onChange({seed: e.target.value})}
                 className="input input-sm input-bordered join-item"
+                {...register("seed")}
               />
               <button
                 type="button"
-                className="btn btn-sm join-item"
+                className="btn btn-sm btn-square join-item"
                 onClick={onGenerateSeed}
               >
                 <HiArrowPath />
-                Generate
               </button>
             </div>
           </label>
@@ -285,7 +223,7 @@ const TvStartPage: React.FC = () => {
         <button
           disabled={!state.query.length}
           type="submit"
-          className="btn btn-success self-center mt-2 btn-lg text-xl w-64"
+          className="btn btn-success self-center mt-2 btn-lg text-xl w-64 mb-4"
         >
           <HiRocketLaunch className="mr-1" />
           Start

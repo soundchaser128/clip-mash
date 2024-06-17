@@ -229,7 +229,6 @@ impl MarkerDtoConverter {
 pub struct VideoDto {
     pub id: String,
     pub title: String,
-    pub performers: Vec<String>,
     pub file_name: String,
     pub file_path: Option<String>,
     pub interactive: bool,
@@ -268,7 +267,6 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
                 .title
                 .or(value.files.get(0).map(|m| m.basename.clone()))
                 .unwrap_or_default(),
-            performers: value.performers.into_iter().map(|p| p.name).collect(),
             file_name: file.basename.clone(),
             interactive: value.interactive,
             source: VideoSource::Stash,
@@ -296,10 +294,6 @@ impl From<DbVideo> for VideoDto {
             id: value.id,
             stash_scene_id: value.stash_scene_id,
             title,
-            performers: value
-                .performers
-                .and_then(|s| serde_json::from_str(&s).ok())
-                .unwrap_or_default(),
             interactive: value.interactive,
             file_name: expect_file_name(&value.file_path),
             source: value.source,
@@ -333,7 +327,8 @@ impl StashVideoDto {
         Self {
             id: dto.id,
             title: dto.title,
-            performers: dto.performers,
+            // TODO
+            performers: vec![],
             file_name: dto.file_name,
             interactive: dto.interactive,
             source: dto.source,

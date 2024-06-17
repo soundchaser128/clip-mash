@@ -99,11 +99,12 @@ impl Migrator {
                         .collect();
                     info!("found performers for video {}: {:?}", video.id, performers);
 
-                    let performers = serde_json::to_string(&performers)?;
-                    self.database
-                        .videos
-                        .set_video_performers(&video.id, &performers)
-                        .await?;
+                    // TODO
+                    // let performers = serde_json::to_string(&performers)?;
+                    // self.database
+                    //     .videos
+                    //     .set_video_performers(&video.id, &performers)
+                    //     .await?;
                 }
             }
             _ => {

@@ -269,9 +269,7 @@ impl MarkersDatabase {
                     list.push_unseparated(") ");
                 }
                 ListMarkersFilter::VideoPerformers(performers) => {
-                    query_builder.push(
-                        "WHERE EXISTS (SELECT 1 from json_each(v.performers) WHERE value IN (",
-                    );
+                    query_builder.push("WHERE EXISTS (SELECT 1 from performers WHERE name IN (");
                     let mut list = query_builder.separated(",");
                     for performer in performers {
                         list.push_bind(performer);

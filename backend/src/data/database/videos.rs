@@ -1,5 +1,4 @@
-use std::cmp::Reverse;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use camino::Utf8Path;
 use futures::TryStreamExt;
@@ -109,7 +108,6 @@ impl VideosDatabase {
                 video_created_on: records[0].video_created_on,
                 video_tags: records[0].video_tags.clone(),
                 video_title: records[0].video_title.clone(),
-                performers: records[0].performers.clone(),
             };
             let markers = records
                 .into_iter()
@@ -175,27 +173,10 @@ impl VideosDatabase {
                     .await
             }
             AllVideosFilter::NoPerformers => {
-                sqlx::query_as!(
-                    DbVideo,
-                    "SELECT * FROM videos WHERE performers IS NULL AND stash_scene_id IS NOT NULL"
-                )
-                .fetch_all(&self.pool)
-                .await
+                todo!()
             }
         };
         query.map_err(From::from)
-    }
-
-    pub async fn set_video_performers(&self, id: &str, performers: &str) -> Result<()> {
-        sqlx::query!(
-            "UPDATE videos SET performers = $1 WHERE id = $2",
-            performers,
-            id
-        )
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
     }
 
     pub async fn cleanup_videos(&self) -> Result<u32> {
@@ -220,8 +201,8 @@ impl VideosDatabase {
         let created_on = video.created_on.unwrap_or_else(|| unix_timestamp_now());
         let inserted = sqlx::query!(
             "INSERT INTO videos 
-            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on, performers) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING video_created_on",
             video.id,
             video.file_path,
@@ -233,7 +214,6 @@ impl VideosDatabase {
             video.title,
             video.tags,
             created_on,
-            video.performers,
         )
         .fetch_one(&self.pool)
         .await?;
@@ -249,7 +229,6 @@ impl VideosDatabase {
             video_created_on: inserted.video_created_on,
             video_tags: video.tags.clone(),
             video_title: video.title.clone(),
-            performers: video.performers.clone(),
         })
     }
 
@@ -327,7 +306,6 @@ impl VideosDatabase {
             video_tags: Option<String>,
             video_title: Option<String>,
             marker_count: i64,
-            performers: Option<String>,
         }
 
         let count = self.fetch_count(&query_object).await?;
@@ -348,7 +326,7 @@ impl VideosDatabase {
         };
 
         let mut query_builder = QueryBuilder::new(
-            "SELECT v.id, v.file_path, v.interactive, v.duration, v.video_created_on, v.source, v.video_preview_image, v.performers,
+            "SELECT v.id, v.file_path, v.interactive, v.duration, v.video_created_on, v.source, v.video_preview_image,
                     v.stash_scene_id, v.video_tags, v.video_title, COUNT(m.video_id) AS marker_count
             FROM videos v
             LEFT JOIN markers m ON v.id = m.video_id ",
@@ -425,7 +403,6 @@ impl VideosDatabase {
                     video_created_on: row.video_created_on,
                     video_tags: row.video_tags,
                     video_title: row.video_title,
-                    performers: row.performers,
                 };
                 videos.push(ListVideoDto {
                     video: video.into(),
@@ -446,44 +423,6 @@ impl VideosDatabase {
         .await?;
 
         Ok(())
-    }
-
-    pub async fn get_all_performers(&self) -> Result<Vec<(String, usize)>> {
-        // TODO seems like json_each is not supported in sqlx's sqlite version?
-        // let rows = sqlx::query!(
-        //     "
-        //     SELECT value, count(*)
-        //     FROM videos v, json_each(v.performers)
-        //     GROUP BY value
-        //     ORDER BY count(*) DESC"
-        // )
-        // .fetch_all(&self.pool)
-        // .await?;
-
-        let decode_performers =
-            |p: Option<String>| p.and_then(|p| serde_json::from_str::<Vec<String>>(&p).ok());
-
-        let all_video_performers = sqlx::query!(
-            r#"SELECT performers, (SELECT count(*) FROM markers m WHERE m.video_id = videos.id) AS "marker_count: i32"
-             FROM videos"#
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        let mut performer_counts = HashMap::new();
-        for record in all_video_performers {
-            if let Some(performers) = decode_performers(record.performers) {
-                for performer in performers {
-                    let count = performer_counts.entry(performer).or_insert(0);
-                    *count += record.marker_count.unwrap_or(1) as usize;
-                }
-            }
-        }
-
-        let mut performers: Vec<_> = performer_counts.into_iter().collect();
-        performers.sort_by_key(|(name, count)| (Reverse(*count), name.clone()));
-
-        Ok(performers)
     }
 
     pub async fn set_video_preview_image(

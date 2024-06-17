@@ -12,6 +12,8 @@ use super::client::{HandyClient, IHandyClient, Mode};
 use crate::Result;
 
 pub mod cycle_increment;
+mod global;
+mod math;
 pub mod random;
 
 // TODO use messages to change parameters on the fly
@@ -232,65 +234,4 @@ pub async fn pause() {
 
 pub async fn status() -> Option<ControllerStatus> {
     global::get_status().await
-}
-
-mod math {
-    pub fn clamp01(value: f64) -> f64 {
-        return 0.0f64.max(1.0f64.min(value));
-    }
-
-    pub fn lerp(from: f64, to: f64, t: f64) -> f64 {
-        return from + (to - from) * clamp01(t);
-    }
-
-    pub fn ease_in(t: f64) -> f64 {
-        return t.powf(2.5);
-    }
-
-    pub fn ease_out(t: f64) -> f64 {
-        let t = 1.0 - t;
-        return t.powf(2.5);
-    }
-}
-
-mod global {
-    use lazy_static::lazy_static;
-    use tokio::sync::{mpsc, Mutex};
-
-    use super::{ControllerStatus, Message};
-
-    lazy_static! {
-        static ref SENDER: Mutex<Option<mpsc::Sender<Message>>> = Mutex::new(None);
-        static ref STATUS: Mutex<Option<ControllerStatus>> = Mutex::new(None);
-    }
-
-    pub async fn store(sender: mpsc::Sender<Message>) {
-        let mut global = SENDER.lock().await;
-        global.replace(sender);
-    }
-
-    pub async fn clear() {
-        let mut global = SENDER.lock().await;
-        global.take();
-    }
-
-    pub async fn get() -> Option<mpsc::Sender<Message>> {
-        let global = SENDER.lock().await;
-        global.clone()
-    }
-
-    pub async fn set_status(status: ControllerStatus) {
-        let mut global = STATUS.lock().await;
-        global.replace(status);
-    }
-
-    pub async fn get_status() -> Option<ControllerStatus> {
-        let global = STATUS.lock().await;
-        global.clone()
-    }
-
-    pub async fn clear_status() {
-        let mut global = STATUS.lock().await;
-        global.take();
-    }
 }

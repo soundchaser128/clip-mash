@@ -80,9 +80,9 @@ function selectionToQuery(state: TvSettings): URLSearchParams {
   if (state.showAll) {
     query.append("showAll", "true")
   }
-
-  query.append("seed", state.seed)
-
+  if (state.seed?.trim().length > 0) {
+    query.append("seed", state.seed)
+  }
   return query
 }
 
@@ -210,6 +210,10 @@ const TvStartPage: React.FC = () => {
         </div>
 
         <ul className="flex gap-1 flex-wrap">
+          {state.queryType === "videoTags" && (
+            <p className="my-4 text-center w-full">Not implemented yet.</p>
+          )}
+
           {items.map((item) => (
             <li key={item.title}>
               <button

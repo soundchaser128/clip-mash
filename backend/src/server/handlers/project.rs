@@ -13,7 +13,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
 use crate::data::database::ListMarkersFilter;
-use crate::helpers::random::generate_id;
+use crate::helpers::random::{generate_id, get_random_word};
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
@@ -120,7 +120,7 @@ pub async fn fetch_clips_interactive(
 
     let options = CreateClipsBody {
         markers: all_markers,
-        seed: body.seed,
+        seed: Some(body.seed.unwrap_or_else(|| get_random_word())),
         clips: ClipOptions {
             clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                 clip_duration: body.clip_duration,

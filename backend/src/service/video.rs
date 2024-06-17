@@ -130,7 +130,6 @@ impl VideoService {
                 title: Some(path.file_stem().unwrap().to_string()),
                 tags: None,
                 created_on: file_created,
-                performers: vec![],
             };
             info!("inserting new video {create_video:#?}");
             let video = self.database.videos.persist_video(&create_video).await?;
@@ -218,7 +217,6 @@ impl VideoService {
             title: path.file_stem().map(String::from),
             tags: None,
             created_on: None,
-            performers: vec![],
         };
         info!("persisting downloaded video {video:#?}");
 
@@ -270,10 +268,6 @@ impl VideoService {
                 let id = generate_id();
                 let ffprobe_info = ffprobe.ok();
 
-                // TODO
-                // let performers: Vec<_> = scene.performers.iter().map(|p| &p.name).collect();
-                // let performers_json =
-                //     serde_json::to_string(&performers).expect("must be serializable");
                 let create_video = CreateVideo {
                     id,
                     file_path: self.stash_api.get_stream_url(scene.id.parse().unwrap()),
@@ -285,29 +279,35 @@ impl VideoService {
                     title,
                     tags: Some(tags),
                     created_on,
-                    performers: scene
-                        .performers
-                        .into_iter()
-                        .map(|p| CreatePerformer {
-                            name: p.name,
-                            image_url: p.image_path,
-                            stash_id: Some(p.id),
-                            gender: p.gender.map(From::from),
-                        })
-                        .collect(),
                 };
 
-                (create_video, ffprobe_info)
+                let performers: Vec<_> = scene
+                    .performers
+                    .into_iter()
+                    .map(|p| CreatePerformer {
+                        name: p.name,
+                        image_url: p.image_path,
+                        stash_id: Some(p.id),
+                        gender: p.gender.map(From::from),
+                    })
+                    .collect();
+
+                (create_video, ffprobe_info, performers)
             })
             .collect();
 
         let mut videos = vec![];
-        for (create_video, ffprobe) in &create_videos {
+        for (create_video, ffprobe, performers) in &create_videos {
             let id = create_video.id.clone();
             let result = self.database.videos.persist_video(create_video).await?;
             if let Some(ffprobe) = ffprobe {
                 self.database.ffprobe.set_info(&id, &ffprobe).await?;
             }
+            self.database
+                .performers
+                .insert_for_video(performers, &id)
+                .await?;
+
             videos.push(result);
         }
 

@@ -45,7 +45,7 @@ impl PerformersDatabase {
     }
 
     pub async fn find_all(&self) -> Result<Vec<DbPerformer>> {
-        sqlx::query_as!(DbPerformer, r#"SELECT rowid AS id, name, created_on, image_url, stash_id, gender AS "gender: Gender" FROM performers"#)
+        sqlx::query_as!(DbPerformer, r#"SELECT id, name, created_on, image_url, stash_id, gender AS "gender: Gender" FROM performers"#)
             .fetch_all(&self.pool)
             .await
             .map_err(From::from)
@@ -76,7 +76,7 @@ impl PerformersDatabase {
     pub async fn insert_for_video(
         &self,
         performers: &[CreatePerformer],
-        video_id: i64,
+        video_id: &str,
     ) -> Result<()> {
         for performer in performers {
             let performer_id = self.insert(performer.clone()).await?;

@@ -147,16 +147,16 @@ pub struct ListPerformerResponse {
 pub async fn list_performers(
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    Ok(Json(vec![12, 34]))
-    // let performers = state.database.videos.get_all_performers().await?;
-    // let performers: Vec<_> = performers
-    //     .into_iter()
-    //     .map(|(performer, video_count)| ListPerformerResponse {
-    //         title: performer,
-    //         count: video_count,
-    //     })
-    //     .collect();
-    // Ok(Json(performers))
+    let performers = state.database.performers.find_all().await?;
+    let performers: Vec<_> = performers
+        .into_iter()
+        .map(|p| ListPerformerResponse {
+            title: p.name,
+            // FIXME
+            count: 0,
+        })
+        .collect();
+    Ok(Json(performers))
 }
 
 #[axum::debug_handler]

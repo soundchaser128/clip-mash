@@ -135,7 +135,6 @@ pub struct CreateVideo {
     pub title: Option<String>,
     pub tags: Option<String>,
     pub created_on: Option<i64>,
-    pub performers: Vec<CreatePerformer>,
 }
 
 #[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]

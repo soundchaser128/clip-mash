@@ -636,6 +636,7 @@ pub struct PageParameters {
     pub page: Option<usize>,
     pub size: Option<usize>,
     pub sort: Option<String>,
+    #[allow(unused)]
     pub dir: Option<SortDirection>,
 }
 
@@ -693,6 +694,7 @@ pub struct CreateMarker {
     pub title: String,
     pub index_within_video: i64,
     pub preview_image_path: Option<String>,
+    #[allow(unused)]
     pub video_interactive: bool,
     pub created_on: Option<i64>,
     pub marker_stash_id: Option<i64>,

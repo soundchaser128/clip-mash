@@ -86,6 +86,12 @@ function selectionToQuery(state: TvSettings): URLSearchParams {
   return query
 }
 
+// TODO
+//  * use react-hook-form (list of items as a checkbox group)
+//  * make the list of items searchable?
+//  * add a button to clear the form
+//  * add a button to select all items
+//  * add a button to select random items
 const TvStartPage: React.FC = () => {
   const navigate = useNavigate()
   const data = useLoaderData() as LoaderData

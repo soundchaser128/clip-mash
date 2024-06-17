@@ -106,7 +106,6 @@ fn get_or_home_dir(path: Option<String>) -> Utf8PathBuf {
         .unwrap_or_default()
 }
 
-// TODO for window as well
 #[cfg(not(target_os = "windows"))]
 fn is_hidden(file: &std::path::Path) -> bool {
     file.file_name()

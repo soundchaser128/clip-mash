@@ -51,19 +51,43 @@ impl PerformersDatabase {
             .map_err(From::from)
     }
 
-    pub async fn insert(&self, performer: CreatePerformer) -> Result<()> {
+    pub async fn insert(&self, performer: CreatePerformer) -> Result<i64> {
         info!("Inserting performer: {:?}", performer);
         sqlx::query!(
             "INSERT INTO performers (name, image_url, stash_id, gender, created_on) 
-             VALUES ($1, $2, $3, $4, strftime('%s', 'now'))",
+            VALUES ($1, $2, $3, $4, strftime('%s', 'now'))
+            ON CONFLICT DO NOTHING",
             performer.name,
             performer.image_url,
             performer.stash_id,
             performer.gender,
         )
-        .execute(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
+        let row_id =
+            sqlx::query_scalar!("SELECT rowid FROM performers ORDER BY rowid DESC LIMIT 1")
+                .fetch_one(&self.pool)
+                .await?;
+        info!("Inserted performer with id: {:?}", row_id);
 
+        Ok(row_id)
+    }
+
+    pub async fn insert_for_video(
+        &self,
+        performers: &[CreatePerformer],
+        video_id: i64,
+    ) -> Result<()> {
+        for performer in performers {
+            let performer_id = self.insert(performer.clone()).await?;
+            sqlx::query!(
+                "INSERT INTO video_performers (video_id, performer_id) VALUES ($1, $2)",
+                video_id,
+                performer_id,
+            )
+            .execute(&self.pool)
+            .await?;
+        }
         Ok(())
     }
 }

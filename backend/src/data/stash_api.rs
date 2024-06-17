@@ -5,15 +5,15 @@ use graphql_client::{GraphQLQuery, Response};
 use ordered_float::OrderedFloat;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tracing::{debug, warn};
 
 use self::create_marker::SceneMarkerCreateInput;
 use self::create_tag::TagCreateInput;
 use self::find_scenes_query::{
     FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
-    FindScenesQueryFindScenesScenesSceneStreams,
+    FindScenesQueryFindScenesScenesSceneStreams, GenderEnum,
 };
-use super::database::{unix_timestamp_now, DbMarker};
+use super::database::{unix_timestamp_now, DbMarker, Gender};
 use crate::server::types::PageParameters;
 use crate::service::funscript::FunScript;
 use crate::service::stash_config::StashConfig;
@@ -107,6 +107,23 @@ where
         .find(|m| m.start() > start)
         .map(|m| m.start())
         .unwrap_or(duration)
+}
+
+impl From<GenderEnum> for Gender {
+    fn from(value: GenderEnum) -> Self {
+        match value {
+            GenderEnum::MALE => Gender::Male,
+            GenderEnum::FEMALE => Gender::Female,
+            GenderEnum::TRANSGENDER_MALE => Gender::TransgenderMale,
+            GenderEnum::TRANSGENDER_FEMALE => Gender::TransgenderFemale,
+            GenderEnum::INTERSEX => Gender::Intersex,
+            GenderEnum::NON_BINARY => Gender::NonBinary,
+            v => {
+                warn!("unrecognized enum variant {v:?}, defaulting to female");
+                Gender::Female
+            }
+        }
+    }
 }
 
 pub trait MarkerLike {

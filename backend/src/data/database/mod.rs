@@ -14,6 +14,7 @@ use self::ffprobe::FfProbeInfoDatabase;
 pub use self::markers::ListMarkersFilter;
 use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
+pub use self::performers::{CreatePerformer, Gender};
 use self::progress::ProgressDatabase;
 use self::settings::SettingsDatabase;
 pub use self::settings::{HandyConfig, Settings};
@@ -134,8 +135,7 @@ pub struct CreateVideo {
     pub title: Option<String>,
     pub tags: Option<String>,
     pub created_on: Option<i64>,
-    // TODO replace with performer structs
-    // pub performers: Option<String>,
+    pub performers: Vec<CreatePerformer>,
 }
 
 #[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]

@@ -353,6 +353,7 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
         title: Some(Word().fake::<String>()),
         tags: Some(Word().fake::<String>()),
         created_on: None,
+        performers: vec![],
     };
 
     db.videos.persist_video(&video).await
@@ -377,6 +378,7 @@ pub async fn persist_video_with<F: FnOnce(&mut CreateVideo)>(
         title: Some(Word().fake::<String>()),
         tags: Some(Word().fake::<String>()),
         created_on: Some(unix_timestamp_now()),
+        performers: vec![],
     };
     before_insert(&mut video);
     info!("inserting video {:#?}", video);

@@ -1,5 +1,5 @@
 CREATE TABLE performers (
-    "name" VARCHAR NOT NULL UNIQUE,
+    "name" VARCHAR NOT NULL,
     created_on INTEGER NOT NULL,
     image_url VARCHAR,
     stash_id VARCHAR,
@@ -9,5 +9,5 @@ CREATE TABLE performers (
 CREATE TABLE video_performers (
     performer_id INTEGER NOT NULL REFERENCES performers(rowid),
     video_id INTEGER NOT NULL REFERENCES videos(id),
-    created_on INTEGER NOT NULL
+    PRIMARY KEY(performer_id, video_id)
 );

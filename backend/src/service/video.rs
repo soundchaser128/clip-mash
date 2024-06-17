@@ -16,7 +16,9 @@ use walkdir::WalkDir;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
-use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource, VideoUpdate};
+use crate::data::database::{
+    CreatePerformer, CreateVideo, Database, DbMarker, DbVideo, VideoSource, VideoUpdate,
+};
 use crate::data::stash_api::{MarkerLike, StashApi, StashMarker};
 use crate::helpers::parallelize;
 use crate::helpers::random::generate_id;
@@ -128,6 +130,7 @@ impl VideoService {
                 title: Some(path.file_stem().unwrap().to_string()),
                 tags: None,
                 created_on: file_created,
+                performers: vec![],
             };
             info!("inserting new video {create_video:#?}");
             let video = self.database.videos.persist_video(&create_video).await?;
@@ -215,6 +218,7 @@ impl VideoService {
             title: path.file_stem().map(String::from),
             tags: None,
             created_on: None,
+            performers: vec![],
         };
         info!("persisting downloaded video {video:#?}");
 
@@ -281,6 +285,16 @@ impl VideoService {
                     title,
                     tags: Some(tags),
                     created_on,
+                    performers: scene
+                        .performers
+                        .into_iter()
+                        .map(|p| CreatePerformer {
+                            name: p.name,
+                            image_url: p.image_path,
+                            stash_id: Some(p.id),
+                            gender: p.gender.map(From::from),
+                        })
+                        .collect(),
                 };
 
                 (create_video, ffprobe_info)

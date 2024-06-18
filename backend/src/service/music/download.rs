@@ -7,7 +7,8 @@ use tokio::io::AsyncWriteExt;
 use tracing::info;
 use url::Url;
 
-use crate::data::database::{CreateSong, Database, DbSong};
+use crate::data::database::music::{CreateSong, DbSong};
+use crate::data::database::Database;
 use crate::helpers::random::generate_id;
 use crate::server::handlers::AppState;
 use crate::service::commands::ffmpeg::FfmpegLocation;

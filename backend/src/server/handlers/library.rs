@@ -12,9 +12,8 @@ use tower::ServiceExt;
 use tracing::{debug, info, warn};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::{
-    ListMarkersFilter, MarkerCount, VideoSearchQuery, VideoSource, VideoUpdate,
-};
+use crate::data::database::markers::{ListMarkersFilter, MarkerCount};
+use crate::data::database::videos::{VideoSearchQuery, VideoSource, VideoUpdate};
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;

@@ -16,9 +16,10 @@ use walkdir::WalkDir;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
-use crate::data::database::{
-    CreatePerformer, CreateVideo, Database, DbMarker, DbVideo, VideoSource, VideoUpdate,
-};
+use crate::data::database::markers::DbMarker;
+use crate::data::database::performers::CreatePerformer;
+use crate::data::database::videos::{CreateVideo, DbVideo, VideoSource, VideoUpdate};
+use crate::data::database::Database;
 use crate::data::stash_api::{MarkerLike, StashApi, StashMarker};
 use crate::helpers::parallelize;
 use crate::helpers::random::generate_id;

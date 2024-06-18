@@ -12,7 +12,7 @@ use url::Url;
 use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
-use crate::data::database::DbSong;
+use crate::data::database::music::DbSong;
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::music::{self, MusicDownloadService};

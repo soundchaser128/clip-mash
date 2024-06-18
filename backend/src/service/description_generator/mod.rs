@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::generator::CompilationOptions;
-use crate::data::database::VideoSource;
+use crate::data::database::videos::VideoSource;
 use crate::server::types::VideoCodec;
 use crate::util::StrExt;
 use crate::Result;

@@ -12,7 +12,7 @@ use tracing::{debug, error, info};
 use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
-use crate::data::database::ListMarkersFilter;
+use crate::data::database::markers::ListMarkersFilter;
 use crate::helpers::random::{generate_id, get_random_word};
 use crate::server::error::AppError;
 use crate::server::types::*;

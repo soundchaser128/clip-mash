@@ -13,7 +13,9 @@ use self::find_scenes_query::{
     FindScenesQueryFindScenesScenes, FindScenesQueryFindScenesScenesSceneMarkers,
     FindScenesQueryFindScenesScenesSceneStreams, GenderEnum,
 };
-use super::database::{unix_timestamp_now, DbMarker, Gender};
+use super::database::markers::DbMarker;
+use super::database::performers::Gender;
+use super::database::unix_timestamp_now;
 use crate::server::types::PageParameters;
 use crate::service::funscript::FunScript;
 use crate::service::stash_config::StashConfig;

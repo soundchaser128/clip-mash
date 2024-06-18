@@ -1,6 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::data::database::{Database, DbSong, DbVideo};
+use crate::data::database::music::DbSong;
+use crate::data::database::videos::DbVideo;
+use crate::data::database::Database;
 use crate::server::types::{Clip, CreateClipsBody, CreateVideoBody, SelectedMarker};
 use crate::service::clip::CreateClipsOptions;
 use crate::service::generator::CompilationOptions;

@@ -16,7 +16,8 @@ use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;
 use crate::data::database::{
-    unix_timestamp_now, CreateVideo, Database, DbMarker, DbVideo, VideoSource,
+    markers::DbMarker, unix_timestamp_now, videos::CreateVideo, videos::DbVideo,
+    videos::VideoSource, Database,
 };
 use crate::helpers::random::generate_id;
 use crate::server::types::{Beats, CreateMarker};

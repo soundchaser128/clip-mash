@@ -7,9 +7,9 @@ use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::{
-    unix_timestamp_now, DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers, VideoSource,
-};
+use crate::data::database::markers::{DbMarker, DbMarkerWithVideo, VideoWithMarkers};
+use crate::data::database::unix_timestamp_now;
+use crate::data::database::videos::{DbVideo, VideoSource};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashApi;
 use crate::service::generator::PaddingType;
@@ -491,8 +491,8 @@ pub struct ListVideoDto {
     pub marker_count: usize,
 }
 
-impl From<LocalVideoWithMarkers> for ListVideoDto {
-    fn from(value: LocalVideoWithMarkers) -> Self {
+impl From<VideoWithMarkers> for ListVideoDto {
+    fn from(value: VideoWithMarkers) -> Self {
         ListVideoDto {
             video: value.video.into(),
             marker_count: value.markers.len(),
@@ -517,7 +517,7 @@ impl VideoDetailsDtoConverter {
         Self { marker_converter }
     }
 
-    pub fn from_db(&self, value: LocalVideoWithMarkers) -> VideoDetailsDto {
+    pub fn from_db(&self, value: VideoWithMarkers) -> VideoDetailsDto {
         let db_video = value.video.clone();
         VideoDetailsDto {
             video: value.video.into(),

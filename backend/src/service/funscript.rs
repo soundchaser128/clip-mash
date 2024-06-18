@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{debug, info, warn};
 
-use crate::data::database::{DbVideo, VideoSource};
+use crate::data::database::videos::{DbVideo, VideoSource};
 use crate::data::stash_api::StashApi;
 use crate::server::types::{Beats, Clip, StrokeType};
 use crate::util::lerp;

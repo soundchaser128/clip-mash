@@ -21,7 +21,7 @@ pub mod fixtures;
 
 use serde::{Deserialize, Serialize};
 
-use crate::data::database::VideoSource;
+use crate::data::database::videos::VideoSource;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Marker {

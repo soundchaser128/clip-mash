@@ -1,10 +1,77 @@
+use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, QueryBuilder, SqliteConnection, SqliteExecutor, SqlitePool};
 use tracing::{debug, info};
+use utoipa::ToSchema;
 
-use super::{DbMarker, DbMarkerWithVideo, MarkerCount};
+use super::videos::{DbVideo, VideoSource};
 use crate::data::database::unix_timestamp_now;
+use crate::data::stash_api::MarkerLike;
 use crate::server::types::{CreateMarker, UpdateMarker};
+use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
+
+#[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
+pub struct DbMarker {
+    pub rowid: Option<i64>,
+    pub video_id: String,
+    pub start_time: f64,
+    pub end_time: f64,
+    pub title: String,
+    pub index_within_video: i64,
+    pub marker_preview_image: Option<String>,
+    pub marker_created_on: i64,
+    pub marker_stash_id: Option<i64>,
+}
+
+impl MarkerLike for DbMarker {
+    fn start(&self) -> f64 {
+        self.start_time
+    }
+
+    fn end(&self) -> f64 {
+        self.end_time
+    }
+}
+
+// TODO better name
+#[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
+pub struct DbMarkerWithVideo {
+    pub rowid: Option<i64>,
+    pub video_id: String,
+    pub start_time: f64,
+    pub end_time: f64,
+    pub title: String,
+    pub file_path: String,
+    pub index_within_video: i64,
+    pub marker_preview_image: Option<String>,
+    pub interactive: bool,
+    pub marker_created_on: i64,
+    pub video_title: Option<String>,
+    pub video_tags: Option<String>,
+    pub source: VideoSource,
+    pub stash_scene_id: Option<i64>,
+}
+
+impl DbMarkerWithVideo {
+    pub fn tags(&self) -> Vec<String> {
+        self.video_tags
+            .clone()
+            .map(|s| s.split(TAG_SEPARATOR).map(|s| s.to_string()).collect())
+            .unwrap_or_default()
+    }
+}
+
+#[derive(Debug)]
+pub struct VideoWithMarkers {
+    pub video: DbVideo,
+    pub markers: Vec<DbMarker>,
+}
+
+#[derive(Serialize, ToSchema, Debug)]
+pub struct MarkerCount {
+    pub title: String,
+    pub count: i64,
+}
 
 #[derive(Debug, Clone)]
 pub struct MarkersDatabase {
@@ -22,7 +89,7 @@ impl MarkersDatabase {
             "SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, 
                 m.end_time, m.index_within_video, m.marker_preview_image, 
-                v.interactive, m.marker_created_on, v.video_title, v.source,
+                v.interactive, m.marker_created_on, v.video_title, v.source AS \"source: VideoSource\",
                 v.video_tags, v.stash_scene_id
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.rowid = $1",
@@ -39,7 +106,7 @@ impl MarkersDatabase {
             "SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, 
                 m.index_within_video, m.marker_preview_image, v.interactive, 
-                m.marker_created_on, v.video_title, v.source, v.video_tags,
+                m.marker_created_on, v.video_title, v.source AS \"source: VideoSource\", v.video_tags,
                 v.stash_scene_id
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.marker_preview_image IS NULL"
@@ -226,7 +293,7 @@ impl MarkersDatabase {
             SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, 
                 m.index_within_video, m.marker_preview_image, v.interactive, 
-                m.marker_created_on, v.video_title, v.source, v.video_tags,
+                m.marker_created_on, v.video_title, v.source AS \"source: VideoSource\", v.video_tags,
                 v.stash_scene_id
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             ORDER BY v.file_path ASC"

@@ -230,7 +230,7 @@ mod tests {
     use tracing_test::traced_test;
 
     use super::{ClipOrder, CreateClipsOptions};
-    use crate::data::database::VideoSource;
+    use crate::data::database::videos::VideoSource;
     use crate::helpers::random::create_seeded_rng;
     use crate::server::types::{
         Clip, ClipLengthOptions, ClipOptions, ClipPickerOptions, EqualLengthClipOptions,

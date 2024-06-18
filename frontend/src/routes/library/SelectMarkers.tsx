@@ -218,14 +218,14 @@ const SelectMarkers: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex gap-2 justify-center">
-          <button onClick={onDeselectAll} className="btn btn-error">
-            <HiXMark className="mr-1" />
-            Deselect all
-          </button>
-          <button onClick={onSelectAll} className="btn btn-secondary">
+        <div className="join">
+          <button onClick={onSelectAll} className="btn btn-secondary join-item">
             <HiCheck className="mr-1" />
             Select all
+          </button>
+          <button onClick={onDeselectAll} className="btn btn-error join-item">
+            <HiXMark className="mr-1" />
+            Deselect all
           </button>
         </div>
       </div>

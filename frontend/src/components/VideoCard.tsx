@@ -82,59 +82,64 @@ function getVideo(video: VideoDto, config?: StashConfig): string {
   }
 }
 
-const VideoCard: React.FC<Props> = ({
+const VideoCardPreview: React.FC<Props> = ({
+  onImageClick,
   video,
   stashConfig,
-  actionChildren,
-  onEditTitle,
-  onImageClick,
   disabled,
-  onAddTag,
-  zoomOnHover,
-  hideDetails,
   aspectRatio,
+  zoomOnHover,
+}) => {
+  return (
+    <HoverVideo
+      onImageClick={() => onImageClick && onImageClick(video.video.id)}
+      imageSource={getPreview(video.video, stashConfig)}
+      videoSource={getVideo(video.video, stashConfig)}
+      disabled={disabled}
+      aspectRatio={aspectRatio}
+      className={clsx(
+        "rounded-lg",
+        zoomOnHover &&
+          "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
+      )}
+      overlay={
+        <>
+          <OverlayText className="top-2 left-2">
+            {video.video.title}
+          </OverlayText>
+          <OverlayText
+            className={clsx({
+              "bottom-2 right-2": aspectRatio !== "tall",
+              "bottom-2 left-2": aspectRatio === "tall",
+            })}
+          >
+            <HiClock className="inline mr-1" />
+            {formatSeconds(video.video.duration)}
+          </OverlayText>
+          {aspectRatio !== "tall" && (
+            <OverlayText className="left-2 bottom-2">
+              <HiTag className="inline mr-1" />
+              Markers: <strong>{video.markerCount}</strong>
+            </OverlayText>
+          )}
+        </>
+      }
+    />
+  )
+}
+
+const VideoCardWithDetails: React.FC<Props> = ({
+  video,
+  disabled,
+  zoomOnHover,
+  onAddTag,
+  onImageClick,
+  onEditTitle,
+  stashConfig,
+  aspectRatio,
+  actionChildren,
 }) => {
   const location = useLocation()
-
-  if (hideDetails) {
-    return (
-      <HoverVideo
-        onImageClick={() => onImageClick && onImageClick(video.video.id)}
-        imageSource={getPreview(video.video, stashConfig)}
-        videoSource={getVideo(video.video, stashConfig)}
-        disabled={disabled}
-        aspectRatio={aspectRatio}
-        className={clsx(
-          "rounded-lg",
-          zoomOnHover &&
-            "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
-        )}
-        overlay={
-          <>
-            <OverlayText className="top-2 left-2">
-              {video.video.title}
-            </OverlayText>
-            <OverlayText
-              className={clsx({
-                "bottom-2 right-2": aspectRatio !== "tall",
-                "bottom-2 left-2": aspectRatio === "tall",
-              })}
-            >
-              <HiClock className="inline mr-1" />
-              {formatSeconds(video.video.duration)}
-            </OverlayText>
-            {aspectRatio !== "tall" && (
-              <OverlayText className="left-2 bottom-2">
-                <HiTag className="inline mr-1" />
-                Markers: <strong>{video.markerCount}</strong>
-              </OverlayText>
-            )}
-          </>
-        }
-      />
-    )
-  }
-
   const tags = video.video.tags?.filter(Boolean) ?? []
   const date = new Date(video.video.createdOn * 1000)
   const isoDate = date.toISOString()
@@ -247,6 +252,14 @@ const VideoCard: React.FC<Props> = ({
       </section>
     </article>
   )
+}
+
+const VideoCard: React.FC<Props> = (props) => {
+  if (props.hideDetails) {
+    return <VideoCardPreview {...props} />
+  } else {
+    return <VideoCardWithDetails {...props} />
+  }
 }
 
 export default VideoCard

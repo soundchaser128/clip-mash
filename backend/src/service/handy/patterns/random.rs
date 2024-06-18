@@ -3,11 +3,14 @@ use std::time::Duration;
 use rand::rngs::StdRng;
 use rand::Rng;
 use serde::Deserialize;
+use serde_with::{serde_as, DurationSeconds};
+use tracing::info;
 use utoipa::ToSchema;
 
 use super::{Range, SpeedController};
 use crate::helpers::random::{create_seeded_rng, get_random_word};
 
+#[serde_as]
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RandomParameters {
@@ -15,6 +18,7 @@ pub struct RandomParameters {
     pub slide_range: Range,
     pub jitter: f64,
     pub seed: Option<String>,
+    #[serde_as(as = "(DurationSeconds<u64>, DurationSeconds<u64>)")]
     pub interval_range: (Duration, Duration),
 }
 
@@ -26,12 +30,19 @@ pub struct RandomController {
     next_interval: Duration,
 }
 
+fn pick_duration((min, max): (Duration, Duration), rng: &mut impl Rng) -> Duration {
+    let min_secs = min.as_secs_f64();
+    let max_secs = max.as_secs_f64();
+    let secs = rng.gen_range(min_secs..max_secs).round();
+    Duration::from_secs_f64(secs)
+}
+
 impl RandomController {
     pub fn new(parameters: RandomParameters) -> Self {
         let seed = parameters.seed.clone().unwrap_or_else(|| get_random_word());
 
         let mut rng = create_seeded_rng(Some(&seed));
-        let next_interval = rng.gen_range(parameters.interval_range.0..parameters.interval_range.1);
+        let next_interval = pick_duration(parameters.interval_range, &mut rng);
 
         Self {
             last_speed: parameters.speed_range.min,
@@ -51,17 +62,21 @@ impl RandomController {
     }
 
     fn next_interval(&mut self) -> Duration {
-        let (min, max) = self.parameters.interval_range;
-        self.rng.gen_range(min..max)
+        pick_duration(self.parameters.interval_range, &mut self.rng)
     }
 }
 
 impl SpeedController for RandomController {
     fn next_speed(&mut self, elapsed: Duration) -> f64 {
         let next_change = self.last_change_at + self.next_interval;
+        info!("elapsed: {:?}, next_change: {:?}", elapsed, next_change);
         if elapsed >= next_change {
             let next_speed = self.speed();
             let next_interval = self.next_interval();
+            info!(
+                "changing speed from {} to {} at {:?}, next change in {:?}",
+                self.last_speed, next_speed, elapsed, next_interval
+            );
             self.last_speed = next_speed;
             self.last_change_at = elapsed;
             self.next_interval = next_interval;

@@ -2,7 +2,7 @@ import {ListVideoDto, ListVideoDtoPage, updateVideo} from "@/api"
 import VideoCard, {AspectRatio} from "./VideoCard"
 import {useLoaderData, useNavigation, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
-import {HiFolder, HiMagnifyingGlass, HiXMark} from "react-icons/hi2"
+import {HiCheck, HiFolder, HiMagnifyingGlass, HiXMark} from "react-icons/hi2"
 import Pagination from "./Pagination"
 import useDebouncedSetQuery, {QueryPairs} from "@/hooks/useDebouncedQuery"
 import {useState} from "react"
@@ -24,6 +24,11 @@ interface Props {
   hideMarkerCountFilter?: boolean
   isVideoDisabled?: (video: ListVideoDto) => boolean
   noVideosFoundMessage?: string
+  batchSelectToggle?: boolean
+  batchSelect?: boolean
+  onBatchSelect?: (selected: boolean) => void
+  onSelectAll?: () => void
+  onDeselectAll?: () => void
 }
 
 interface FilterInputs {
@@ -61,6 +66,11 @@ const VideoGrid: React.FC<Props> = ({
   hideMarkerCountFilter,
   isVideoDisabled,
   noVideosFoundMessage,
+  batchSelectToggle,
+  batchSelect,
+  onBatchSelect,
+  onSelectAll,
+  onDeselectAll,
 }) => {
   const page = useLoaderData() as ListVideoDtoPage
   const [params] = useSearchParams()
@@ -223,19 +233,53 @@ const VideoGrid: React.FC<Props> = ({
         </form>
       )}
 
-      <section className="w-full flex gap-2 py-4 items-center justify-between">
-        <div className="flex items-center">
+      <section className="w-full flex py-4 items-center justify-between">
+        <div className="flex items-center gap-2">
           <PageSizeSelect />
           <label className="label" htmlFor="showDetails">
-            <span className="label-text">Show details</span>
+            <span className="label-text mr-1">Show details</span>
+            <input
+              type="checkbox"
+              className="checkbox checkbox-secondary"
+              checked={showingDetails}
+              onChange={(e) => setShowingDetails(e.target.checked)}
+              name="showDetails"
+            />
           </label>
-          <input
-            type="checkbox"
-            className="toggle toggle-secondary"
-            checked={showingDetails}
-            onChange={(e) => setShowingDetails(e.target.checked)}
-            name="showDetails"
-          />
+
+          {batchSelectToggle && (
+            <>
+              <label className="label" htmlFor="batchSelect">
+                <span className="label-text mr-1">Batch select</span>
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-secondary"
+                  name="batchSelect"
+                  checked={batchSelect}
+                  onChange={(e) => onBatchSelect?.(e.target.checked)}
+                />
+              </label>
+
+              {batchSelect && (
+                <div className="join">
+                  <button
+                    onClick={onSelectAll}
+                    className="btn btn-sm btn-secondary join-item"
+                  >
+                    <HiCheck className="mr-1" />
+                    Select all
+                  </button>
+                  <button
+                    onClick={onDeselectAll}
+                    className="btn btn-sm btn-error join-item"
+                  >
+                    <HiXMark className="mr-1" />
+                    Deselect all
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <div className="flex flex-col">

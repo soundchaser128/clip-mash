@@ -1,7 +1,9 @@
+/// Clamp a value between 0 and 1
 pub fn clamp01(value: f64) -> f64 {
     return 0.0f64.max(1.0f64.min(value));
 }
 
+/// Linear interpolation between two values
 pub fn lerp(from: f64, to: f64, t: f64) -> f64 {
     return from + (to - from) * clamp01(t);
 }

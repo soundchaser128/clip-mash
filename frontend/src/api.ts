@@ -417,8 +417,6 @@ export type MeasureCountOneOfThree = {
   type: MeasureCountOneOfThreeType
 }
 
-export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
-
 export type MeasureCountOneOfType =
   (typeof MeasureCountOneOfType)[keyof typeof MeasureCountOneOfType]
 
@@ -432,6 +430,8 @@ export type MeasureCountOneOf = {
   count: number
   type: MeasureCountOneOfType
 }
+
+export type MeasureCount = MeasureCountOneOf | MeasureCountOneOfThree
 
 export interface MarkerTitle {
   /** @minimum 0 */
@@ -541,6 +541,21 @@ export type InteractiveClipsQueryOneOf = {
   type: InteractiveClipsQueryOneOfType
 }
 
+export type HandyPatternOneOfFiveAllOfType =
+  (typeof HandyPatternOneOfFiveAllOfType)[keyof typeof HandyPatternOneOfFiveAllOfType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const HandyPatternOneOfFiveAllOfType = {
+  accellerate: "accellerate",
+} as const
+
+export type HandyPatternOneOfFiveAllOf = {
+  type: HandyPatternOneOfFiveAllOfType
+}
+
+export type HandyPatternOneOfFive = AccellerateParameters &
+  HandyPatternOneOfFiveAllOf
+
 export type HandyPatternOneOfThreeType =
   (typeof HandyPatternOneOfThreeType)[keyof typeof HandyPatternOneOfThreeType]
 
@@ -559,15 +574,18 @@ export type HandyPatternOneOfType =
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const HandyPatternOneOfType = {
-  "cycle-increment": "cycle-increment",
+  "cycle-accellerate": "cycle-accellerate",
 } as const
 
 export type HandyPatternOneOf = {
-  parameters: CycleIncrementParameters
+  parameters: CycleAccellerateParameters
   type: HandyPatternOneOfType
 }
 
-export type HandyPattern = HandyPatternOneOf | HandyPatternOneOfThree
+export type HandyPattern =
+  | HandyPatternOneOf
+  | HandyPatternOneOfThree
+  | HandyPatternOneOfFive
 
 export interface HandyConfig {
   enabled: boolean
@@ -654,7 +672,7 @@ export interface DescriptionData {
 
 type Duration = number
 
-export interface CycleIncrementParameters {
+export interface CycleAccellerateParameters {
   cycleDuration: Duration
   endRange: Range
   sessionDuration: Duration
@@ -842,12 +860,6 @@ export type ClipOrderOneOfThree = {
   type: ClipOrderOneOfThreeType
 }
 
-export type ClipOrder =
-  | ClipOrderOneOf
-  | ClipOrderOneOfThree
-  | ClipOrderOneOfFive
-  | ClipOrderOneOfSeven
-
 export type ClipOrderOneOfType =
   (typeof ClipOrderOneOfType)[keyof typeof ClipOrderOneOfType]
 
@@ -859,6 +871,12 @@ export const ClipOrderOneOfType = {
 export type ClipOrderOneOf = {
   type: ClipOrderOneOfType
 }
+
+export type ClipOrder =
+  | ClipOrderOneOf
+  | ClipOrderOneOfThree
+  | ClipOrderOneOfFive
+  | ClipOrderOneOfSeven
 
 export interface ClipOptions {
   clipPicker: ClipPickerOptions
@@ -969,6 +987,13 @@ export type AddVideosRequest =
   | AddVideosRequestOneOf
   | AddVideosRequestOneOfThree
   | AddVideosRequestOneOfFive
+
+export interface AccellerateParameters {
+  endSpeed: number
+  sessionDuration: Duration
+  slideRange: Range
+  startSpeed: number
+}
 
 /**
  * @summary Get the current status of the handy

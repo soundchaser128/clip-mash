@@ -10,7 +10,7 @@ use super::{math, Range, SpeedController};
 #[serde_as]
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct CycleIncrementParameters {
+pub struct CycleAccellerateParameters {
     pub start_range: Range,
     pub end_range: Range,
     pub slide_range: Range,
@@ -22,11 +22,11 @@ pub struct CycleIncrementParameters {
     pub cycle_duration: Duration,
 }
 
-pub struct CycleIncrementController {
-    parameters: CycleIncrementParameters,
+pub struct CycleAccellerateController {
+    parameters: CycleAccellerateParameters,
 }
 
-impl SpeedController for CycleIncrementController {
+impl SpeedController for CycleAccellerateController {
     fn next_speed(&mut self, elapsed: Duration) -> f64 {
         let cycle_value = self.get_cycle_position(elapsed);
         debug!("current cycle value: {}", cycle_value);
@@ -50,8 +50,8 @@ impl SpeedController for CycleIncrementController {
     }
 }
 
-impl CycleIncrementController {
-    pub fn new(parameters: CycleIncrementParameters) -> Self {
+impl CycleAccellerateController {
+    pub fn new(parameters: CycleAccellerateParameters) -> Self {
         Self { parameters }
     }
 

@@ -1,7 +1,8 @@
 use std::time::Duration;
 
+use accellerate::{AccellerateController, AccellerateParameters};
 use color_eyre::eyre::bail;
-use cycle_increment::{CycleIncrementController, CycleIncrementParameters};
+use cycle_accellerate::{CycleAccellerateController, CycleAccellerateParameters};
 use random::{RandomController, RandomParameters};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
@@ -11,7 +12,8 @@ use utoipa::ToSchema;
 use super::client::{HandyClient, IHandyClient, Mode};
 use crate::Result;
 
-pub mod cycle_increment;
+pub mod accellerate;
+pub mod cycle_accellerate;
 mod global;
 mod math;
 pub mod random;
@@ -32,13 +34,13 @@ pub struct Range {
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 pub enum HandyPattern {
-    CycleIncrement {
-        parameters: CycleIncrementParameters,
+    CycleAccellerate {
+        parameters: CycleAccellerateParameters,
     },
     Random {
         parameters: RandomParameters,
     },
-    // Accellerate(AccellerateParameters),
+    Accellerate(AccellerateParameters),
     // Cycle(CycleParameters),
 }
 
@@ -137,7 +139,6 @@ impl HandyController {
                 elapsed,
                 current_velocity: current_velocity as u32,
                 paused: self.paused,
-                // current_speed_bounds: controller.slide_range(),
             })
             .await;
             debug!("sleeping for {:?}", self.update_interval);
@@ -156,10 +157,13 @@ impl HandyController {
         global::store(sender).await;
 
         let controller: Box<dyn SpeedController> = match pattern {
-            HandyPattern::CycleIncrement { parameters } => {
-                Box::new(CycleIncrementController::new(parameters))
+            HandyPattern::CycleAccellerate { parameters } => {
+                Box::new(CycleAccellerateController::new(parameters))
             }
             HandyPattern::Random { parameters } => Box::new(RandomController::new(parameters)),
+            HandyPattern::Accellerate(parameters) => {
+                Box::new(AccellerateController::new(parameters))
+            }
         };
 
         tokio::spawn(async move {

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO performers (name, image_url, stash_id, gender, created_on) \n            VALUES ($1, $2, $3, $4, strftime('%s', 'now'))\n            ON CONFLICT DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "9460d02415f3a729d64d02fd34935efcc5dc7d8b0659d7fe45d47222ce2de75f"
+}

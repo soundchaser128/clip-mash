@@ -651,7 +651,11 @@ function VideoMarkersPage() {
           <div className="w-full flex justify-between">
             {formMode === "hidden" && (
               <>
-                <button onClick={onDeleteAll} className="btn btn-error">
+                <button
+                  disabled={markers.length === 0}
+                  onClick={onDeleteAll}
+                  className="btn btn-error"
+                >
                   <HiTrash className="mr-2" />
                   Delete all
                 </button>

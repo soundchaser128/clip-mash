@@ -5,9 +5,6 @@
  * OpenAPI spec version: 0.22.0-pre.2
  */
 import {customInstance} from "./custom-client"
-
-type Duration = number
-
 /**
  * @nullable
  */
@@ -189,7 +186,6 @@ export interface VideoDto {
   filePath?: string | null
   id: string
   interactive: boolean
-  performers: string[]
   source: VideoSource
   /** @nullable */
   stashSceneId?: number | null
@@ -655,6 +651,8 @@ export interface DescriptionData {
   body: string
   contentType: string
 }
+
+type Duration = number
 
 export interface CycleIncrementParameters {
   cycleDuration: Duration

@@ -52,11 +52,6 @@
         "name": "video_tags",
         "ordinal": 9,
         "type_info": "Text"
-      },
-      {
-        "name": "performers",
-        "ordinal": 10,
-        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -71,7 +66,6 @@
       true,
       true,
       false,
-      true,
       true,
       true
     ]

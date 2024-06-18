@@ -234,15 +234,6 @@ const VideoCard: React.FC<Props> = ({
               <time dateTime={isoDate}>{humanDate}</time>
             </strong>
           </li>
-          {video.video.performers.length > 0 && (
-            <li>
-              <HiUsers className="inline mr-2" />
-              <Label aspectRatio={aspectRatio}>
-                {pluralize("Performer", video.video.performers.length)}:{" "}
-              </Label>
-              <strong>{video.video.performers.join(", ")}</strong>
-            </li>
-          )}
         </ul>
 
         <div

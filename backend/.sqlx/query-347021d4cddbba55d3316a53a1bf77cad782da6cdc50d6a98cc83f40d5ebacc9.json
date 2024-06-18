@@ -54,53 +54,48 @@
         "type_info": "Text"
       },
       {
-        "name": "performers",
+        "name": "video_id",
         "ordinal": 10,
         "type_info": "Text"
       },
       {
-        "name": "video_id",
-        "ordinal": 11,
-        "type_info": "Text"
-      },
-      {
         "name": "start_time",
-        "ordinal": 12,
+        "ordinal": 11,
         "type_info": "Float"
       },
       {
         "name": "end_time",
-        "ordinal": 13,
+        "ordinal": 12,
         "type_info": "Float"
       },
       {
         "name": "title",
-        "ordinal": 14,
+        "ordinal": 13,
         "type_info": "Text"
       },
       {
         "name": "index_within_video",
-        "ordinal": 15,
+        "ordinal": 14,
         "type_info": "Int64"
       },
       {
         "name": "marker_preview_image",
-        "ordinal": 16,
+        "ordinal": 15,
         "type_info": "Text"
       },
       {
         "name": "marker_created_on",
-        "ordinal": 17,
+        "ordinal": 16,
         "type_info": "Int64"
       },
       {
         "name": "marker_stash_id",
-        "ordinal": 18,
+        "ordinal": 17,
         "type_info": "Int64"
       },
       {
         "name": "rowid",
-        "ordinal": 19,
+        "ordinal": 18,
         "type_info": "Int64"
       }
     ],
@@ -116,7 +111,6 @@
       true,
       true,
       false,
-      true,
       true,
       true,
       true,

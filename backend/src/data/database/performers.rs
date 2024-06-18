@@ -53,10 +53,11 @@ impl PerformersDatabase {
 
     pub async fn insert(&self, performer: CreatePerformer) -> Result<i64> {
         info!("Inserting performer: {:?}", performer);
-        sqlx::query!(
+        let result = sqlx::query!(
             "INSERT INTO performers (name, image_url, stash_id, gender, created_on) 
             VALUES ($1, $2, $3, $4, strftime('%s', 'now'))
-            ON CONFLICT DO NOTHING",
+            ON CONFLICT DO UPDATE SET name = name
+            RETURNING id",
             performer.name,
             performer.image_url,
             performer.stash_id,
@@ -64,13 +65,10 @@ impl PerformersDatabase {
         )
         .fetch_one(&self.pool)
         .await?;
-        let row_id =
-            sqlx::query_scalar!("SELECT rowid FROM performers ORDER BY rowid DESC LIMIT 1")
-                .fetch_one(&self.pool)
-                .await?;
-        info!("Inserted performer with id: {:?}", row_id);
 
-        Ok(row_id)
+        info!("Inserted performer with id: {:?}", result.id);
+
+        Ok(result.id)
     }
 
     pub async fn insert_for_video(
@@ -109,9 +107,8 @@ mod tests {
         };
         db.insert(performer.clone()).await?;
 
-        // should not be able to insert the same performer twice
-        let result = db.insert(performer).await;
-        assert!(result.is_err());
+        // should be able to insert the same performer twice, just ignore the second insert
+        let result = db.insert(performer).await?;
 
         Ok(())
     }

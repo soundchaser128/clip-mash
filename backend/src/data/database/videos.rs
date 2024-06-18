@@ -268,28 +268,48 @@ impl VideosDatabase {
     pub async fn get_videos(&self, filter: AllVideosFilter) -> Result<Vec<DbVideo>> {
         let query = match filter {
             AllVideosFilter::NoVideoDuration => {
-                sqlx::query_as!(DbVideo, "SELECT id, file_path, interactive, source AS \"source: VideoSource\", 
-                    duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on FROM videos WHERE duration = -1.0")
+                sqlx::query_as!(
+                    DbVideo,
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", duration, video_preview_image, 
+                                stash_scene_id, video_title, video_tags, video_created_on 
+                    FROM videos 
+                    WHERE duration = -1.0")
                     .fetch_all(&self.pool)
                     .await
             }
             AllVideosFilter::NoPreviewImage => {
                 sqlx::query_as!(
                     DbVideo,
-                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", 
-                    duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on FROM videos WHERE video_preview_image IS NULL"
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", duration, video_preview_image, 
+                            stash_scene_id, video_title, video_tags, video_created_on
+                    FROM videos
+                    WHERE video_preview_image IS NULL"
                 )
                 .fetch_all(&self.pool)
                 .await
             }
             AllVideosFilter::NoTitle => {
-                sqlx::query_as!(DbVideo, "SELECT id, file_path, interactive, source AS \"source: VideoSource\", 
-                    duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on FROM videos WHERE video_title IS NULL")
+                sqlx::query_as!(
+                    DbVideo,
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", 
+                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on 
+                    FROM videos 
+                    WHERE video_title IS NULL")
                     .fetch_all(&self.pool)
                     .await
             }
             AllVideosFilter::NoPerformers => {
-                todo!()
+                sqlx::query_as!(
+                    DbVideo,
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", 
+                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on 
+                    FROM videos v
+                    WHERE (SELECT count(*) FROM video_performers vp WHERE vp.video_id = v.id) = 0 AND
+                          v.stash_scene_id IS NOT NULL
+                    "
+                )
+                .fetch_all(&self.pool)
+                .await
             }
         };
         query.map_err(From::from)

@@ -92,7 +92,8 @@ mod test {
     use tracing_test::traced_test;
 
     use super::videos::{VideoSearchQuery, VideoSource, VideoUpdate};
-    use crate::data::database::{markers::ListMarkersFilter, Database};
+    use crate::data::database::markers::ListMarkersFilter;
+    use crate::data::database::Database;
     use crate::helpers::random::generate_id;
     use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_with};

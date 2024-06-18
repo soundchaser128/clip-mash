@@ -7,6 +7,7 @@ use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::preview_image::PreviewGenerator;
 use super::stash_config::StashConfig;
+use crate::data::database::performers::CreatePerformer;
 use crate::data::database::videos::{AllVideosFilter, VideoUpdate};
 use crate::data::database::{Database, Settings};
 use crate::data::stash_api::StashApi;
@@ -87,25 +88,34 @@ impl Migrator {
                     .videos
                     .get_videos(AllVideosFilter::NoPerformers)
                     .await?;
+                info!("found {} stash videos without performers", videos.len());
 
                 let stash_api = StashApi::with_config(settings.stash);
                 for video in videos {
                     let scene = stash_api
                         .find_scene(video.stash_scene_id.expect("must be set because of query"))
                         .await?;
-                    let performers: Vec<&str> = scene
+                    let performers: Vec<_> = scene
                         .performers
-                        .iter()
-                        .map(|performer| performer.name.as_str())
+                        .into_iter()
+                        .map(|p| CreatePerformer {
+                            name: p.name,
+                            image_url: p.image_path,
+                            stash_id: Some(p.id),
+                            gender: p.gender.map(From::from),
+                        })
                         .collect();
-                    info!("found performers for video {}: {:?}", video.id, performers);
-
-                    // TODO
-                    // let performers = serde_json::to_string(&performers)?;
-                    // self.database
-                    //     .videos
-                    //     .set_video_performers(&video.id, &performers)
-                    //     .await?;
+                    info!(
+                        "found {} performers for video {}",
+                        performers.len(),
+                        video.id
+                    );
+                    if performers.len() > 0 {
+                        self.database
+                            .performers
+                            .insert_for_video(&performers, &video.id)
+                            .await?;
+                    }
                 }
             }
             _ => {

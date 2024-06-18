@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, file_path, interactive, source AS \"source: VideoSource\", \n                    duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on FROM videos WHERE duration = -1.0",
+  "query": "SELECT id, file_path, interactive, source AS \"source: VideoSource\", duration, video_preview_image, \n                                stash_scene_id, video_title, video_tags, video_created_on \n                    FROM videos \n                    WHERE duration = -1.0",
   "describe": {
     "columns": [
       {
@@ -70,5 +70,5 @@
       false
     ]
   },
-  "hash": "297a835b567d473bc62bf9ca09dc2d857ff9db75bab39b75757bb3387ec96d44"
+  "hash": "2db4958fcf872d0cb88214d7cf7c93bc3027bade4f9ec529e00b2b3bb123e48f"
 }

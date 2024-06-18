@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, file_path, interactive, source AS \"source: VideoSource\", \n                    duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on FROM videos WHERE video_title IS NULL",
+  "query": "SELECT id, file_path, interactive, source AS \"source: VideoSource\", \n                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on \n                    FROM videos v\n                    WHERE (SELECT count(*) FROM video_performers vp WHERE vp.video_id = v.id) = 0 AND\n                          v.stash_scene_id IS NOT NULL\n                    ",
   "describe": {
     "columns": [
       {
@@ -70,5 +70,5 @@
       false
     ]
   },
-  "hash": "396c11b1f562cb0f63f24ffe70adeb2788de0bbf1765c553719b336f397689f4"
+  "hash": "87816019d18de140a53f2074e8f25d6c94857c2e34b9523c1cdcc0ed2256a653"
 }

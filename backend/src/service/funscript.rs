@@ -8,8 +8,8 @@ use tracing::{debug, info, warn};
 
 use crate::data::database::videos::{DbVideo, VideoSource};
 use crate::data::stash_api::StashApi;
+use crate::helpers::math;
 use crate::server::types::{Beats, Clip, StrokeType};
-use crate::util::lerp;
 use crate::Result;
 
 // Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
@@ -166,7 +166,7 @@ impl BeatState {
                 let position = self.offset + song.offsets.last().unwrap();
                 let percentage = position / self.total_duration;
                 let strokes_per_beat =
-                    lerp(start_strokes_per_beat, end_strokes_per_beat, percentage);
+                    math::lerp(start_strokes_per_beat, end_strokes_per_beat, percentage);
                 debug!(
                     "at {}% of the song, strokes per beat: {}",
                     percentage * 100.0,
@@ -191,7 +191,7 @@ impl BeatState {
                     let beats = (0..num_beats)
                         .map(|i| {
                             let percentage = i as f32 / num_beats as f32;
-                            lerp(beat, beat_after, percentage) + self.offset
+                            math::lerp(beat, beat_after, percentage) + self.offset
                         })
                         .collect();
                     debug!("beats: {:?}", beats);

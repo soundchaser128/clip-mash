@@ -4,7 +4,8 @@ use serde::Deserialize;
 use tracing::debug;
 use utoipa::ToSchema;
 
-use super::{math, Range, SpeedController};
+use super::{Range, SpeedController};
+use crate::helpers::math;
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]

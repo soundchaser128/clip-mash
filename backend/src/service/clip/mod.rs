@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use super::Marker;
+use crate::helpers::math;
 use crate::helpers::random::create_seeded_rng;
 use crate::server::types::{Beats, Clip, ClipOptions, ClipOrder, ClipPickerOptions};
 use crate::service::clip::equal_len::EqualLengthClipPicker;
@@ -205,23 +206,11 @@ fn trim_clips(clips: &mut Vec<Clip>, max_len: f64) {
     }
 }
 
-fn lerp(a: f64, b: f64, t: f64) -> f64 {
-    a + (b - a) * t
-}
-
-fn lerp_arrays<const N: usize>(a: [f64; N], b: [f64; N], spread: f64) -> [f64; N] {
-    let mut result = [0.0; N];
-    for i in 0..N {
-        result[i] = lerp(a[i], b[i], spread)
-    }
-    result
-}
-
 pub fn get_divisors(spread: f64) -> [f64; 4] {
     let min_durations = [1.0, 1.0, 1.0, 1.0];
     let max_durations = [1.0, 4.0, 8.0, 16.0];
 
-    return lerp_arrays(min_durations, max_durations, spread);
+    return math::lerp_arrays(min_durations, max_durations, spread);
 }
 
 #[cfg(test)]

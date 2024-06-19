@@ -470,6 +470,7 @@ dependencies = [
  "lazy_static",
  "mimalloc",
  "mock_instant",
+ "num-traits",
  "num_cpus",
  "ordered-float",
  "rand",

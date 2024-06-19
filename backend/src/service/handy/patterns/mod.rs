@@ -15,7 +15,6 @@ use crate::Result;
 pub mod accellerate;
 pub mod cycle_accellerate;
 mod global;
-mod math;
 pub mod random;
 
 // TODO use messages to change parameters on the fly

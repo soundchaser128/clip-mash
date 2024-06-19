@@ -334,8 +334,6 @@ impl VideosDatabase {
     }
 
     pub async fn persist_video(&self, video: &CreateVideo) -> Result<DbVideo> {
-        // TODO insert performers
-
         let created_on = video.created_on.unwrap_or_else(|| unix_timestamp_now());
         let inserted = sqlx::query!(
             "INSERT INTO videos 
@@ -355,8 +353,6 @@ impl VideosDatabase {
         )
         .fetch_one(&self.pool)
         .await?;
-
-        // TODO insert into video_performers
 
         Ok(DbVideo {
             id: video.id.clone(),

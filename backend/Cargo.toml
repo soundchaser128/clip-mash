@@ -49,6 +49,7 @@ youtube_dl = { version = "0.10.0", features = [
     "tokio",
     "downloader-native-tls",
 ] }
+num-traits = "0.2.19"
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.40"

@@ -66,10 +66,6 @@ pub fn format_duration(seconds: f64) -> String {
     format!("{:02}:{:02}", minutes, seconds)
 }
 
-pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
-    a + (b - a) * t
-}
-
 pub trait StrExt {
     fn limit_length(&self, max_length: usize) -> String;
 

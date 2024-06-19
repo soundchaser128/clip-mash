@@ -38,8 +38,6 @@ export default function ListVideos() {
   const videos = page.content
   const [query] = useSearchParams()
   const createToast = useCreateToast()
-  const [batchSelect, setBatchSelect] = useState(false)
-  const [batchSelection, setBatchSelection] = useState<string[]>([])
 
   const onOpenModal = (videoId: string) => {
     const queryString = query.toString()
@@ -90,22 +88,6 @@ export default function ListVideos() {
     setSyncingVideo(undefined)
   }
 
-  const onSelectVideo = (id: string) => {
-    const newSelection = batchSelection.includes(id)
-      ? batchSelection.filter((v) => v !== id)
-      : [...batchSelection, id]
-
-    setBatchSelection(newSelection)
-  }
-
-  const onSelectAll = () => {
-    setBatchSelection(videos.map((v) => v.video.id))
-  }
-
-  const onDeselectAll = () => {
-    setBatchSelection([])
-  }
-
   return (
     <>
       <JumpToTop />
@@ -139,59 +121,39 @@ export default function ListVideos() {
       </div>
 
       <VideoGrid
-        batchSelectToggle
-        batchSelect={batchSelect}
-        onBatchSelect={setBatchSelect}
-        onSelectAll={onSelectAll}
-        onDeselectAll={onDeselectAll}
         editableTitles
         editableTags
         onVideoClick={onOpenModal}
         actionChildren={(video, aspectRatio) => (
           <>
             <div
-              className={clsx(
-                "flex gap-1 items-center justify-between w-full",
-                {
-                  "flex-col": aspectRatio === "tall",
-                },
-              )}
+              className={clsx("flex gap-1 items-center", {
+                "flex-col": aspectRatio === "tall",
+              })}
             >
-              <div>
-                {video.video.source === "Stash" && (
-                  <button
-                    onClick={() => onSyncVideo(video.video.id)}
-                    className="btn btn-sm btn-secondary"
-                    disabled={syncingVideo === video.video.id}
-                  >
-                    <HiOutlineArrowPath />
-                    Sync
-                  </button>
-                )}
+              {video.video.source === "Stash" && (
                 <button
-                  onClick={() => onRemoveVideo(video.video.id)}
-                  className="btn btn-error btn-sm"
+                  onClick={() => onSyncVideo(video.video.id)}
+                  className="btn btn-sm btn-secondary"
+                  disabled={syncingVideo === video.video.id}
                 >
-                  <HiTrash /> Delete
+                  <HiOutlineArrowPath />
+                  Sync
                 </button>
-                <button
-                  onClick={() => onOpenModal(video.video.id)}
-                  className="btn btn-sm btn-primary"
-                >
-                  <HiTag className="w-4 h-4 mr-2" />
-                  Markers
-                </button>
-              </div>
-              {batchSelect ? (
-                <input
-                  type="checkbox"
-                  className="checkbox checkbox-primary"
-                  checked={batchSelection.includes(video.video.id)}
-                  onChange={() => onSelectVideo(video.video.id)}
-                />
-              ) : (
-                <span />
               )}
+              <button
+                onClick={() => onRemoveVideo(video.video.id)}
+                className="btn btn-error btn-sm"
+              >
+                <HiTrash /> Delete
+              </button>
+              <button
+                onClick={() => onOpenModal(video.video.id)}
+                className="btn btn-sm btn-primary"
+              >
+                <HiTag className="w-4 h-4 mr-2" />
+                Markers
+              </button>
             </div>
           </>
         )}

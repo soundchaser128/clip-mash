@@ -639,30 +639,4 @@ mod test {
         assert!(ids.contains(&video2.id.as_str()));
         assert!(!ids.contains(&video3.id.as_str()));
     }
-
-    #[sqlx::test]
-    #[traced_test]
-    async fn test_get_all_performers(pool: SqlitePool) -> Result<()> {
-        let db = Database::with_pool(pool);
-
-        // persist_video_with(&db, |v| {
-        //     v.performers = Some(json_array(&["performer1", "performer2"]));
-        // })
-        // .await?;
-
-        // persist_video_with(&db, |v| {
-        //     v.performers = Some(json_array(&["performer1", "performer3"]));
-        // })
-        // .await?;
-
-        // let performers = db.videos.get_all_performers().await?;
-        // assert_eq!(performers.len(), 3);
-
-        // let performer_names: Vec<_> = performers.iter().map(|p| p.0.as_str()).collect();
-        // assert!(performer_names.contains(&"performer1"));
-        // assert!(performer_names.contains(&"performer2"));
-        // assert!(performer_names.contains(&"performer3"));
-
-        Ok(())
-    }
 }

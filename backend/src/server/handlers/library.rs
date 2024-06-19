@@ -151,8 +151,7 @@ pub async fn list_performers(
         .into_iter()
         .map(|p| ListPerformerResponse {
             title: p.name,
-            // FIXME
-            count: 0,
+            count: p.marker_count as usize,
         })
         .collect();
     Ok(Json(performers))

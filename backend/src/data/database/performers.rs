@@ -24,6 +24,8 @@ pub struct DbPerformer {
     pub image_url: Option<String>,
     pub stash_id: Option<String>,
     pub gender: Option<Gender>,
+    pub marker_count: i64,
+    pub video_count: i64,
 }
 
 #[derive(Clone, Debug)]
@@ -45,10 +47,20 @@ impl PerformersDatabase {
     }
 
     pub async fn find_all(&self) -> Result<Vec<DbPerformer>> {
-        sqlx::query_as!(DbPerformer, r#"SELECT id, name, created_on, image_url, stash_id, gender AS "gender: Gender" FROM performers"#)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(From::from)
+        sqlx::query_as!(
+            DbPerformer,
+            r#"SELECT p.id AS "id!", p.name, p.created_on, p.image_url, p.stash_id, 
+                      p.gender AS "gender: Gender", count(DISTINCT vp.video_id) AS "video_count!",
+                      count(DISTINCT m.rowid) AS "marker_count!"
+               FROM performers p
+               LEFT JOIN video_performers vp ON p.id = vp.performer_id
+               LEFT JOIN markers m ON m.video_id = vp.video_id
+               GROUP BY p.name
+               ORDER BY count(DISTINCT m.rowid) DESC"#
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(From::from)
     }
 
     pub async fn insert(&self, performer: CreatePerformer) -> Result<i64> {
@@ -108,7 +120,7 @@ mod tests {
         db.insert(performer.clone()).await?;
 
         // should be able to insert the same performer twice, just ignore the second insert
-        let result = db.insert(performer).await?;
+        db.insert(performer).await?;
 
         Ok(())
     }

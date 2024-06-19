@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT p.id AS \"id!\", p.name, p.created_on, p.image_url, p.stash_id, \n                      p.gender AS \"gender: Gender\", count(DISTINCT vp.video_id) AS \"video_count!\",\n                      count(DISTINCT m.rowid) AS \"marker_count!\"\n               FROM performers p\n               LEFT JOIN video_performers vp ON p.id = vp.performer_id\n               LEFT JOIN markers m ON m.video_id = vp.video_id\n               GROUP BY p.name\n               ORDER BY count(DISTINCT m.rowid) DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_on",
+        "ordinal": 2,
+        "type_info": "Int64"
+      },
+      {
+        "name": "image_url",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "stash_id",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "gender: Gender",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_count!",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "marker_count!",
+        "ordinal": 7,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "b254c4dcb9a16b353973438931ce2c9ac28f2f29a13e4617984940861c699851"
+}

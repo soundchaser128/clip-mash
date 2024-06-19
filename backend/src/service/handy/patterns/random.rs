@@ -3,14 +3,12 @@ use std::time::Duration;
 use rand::rngs::StdRng;
 use rand::Rng;
 use serde::Deserialize;
-use serde_with::{serde_as, DurationSeconds};
 use tracing::info;
 use utoipa::ToSchema;
 
 use super::{Range, SpeedController};
 use crate::helpers::random::{create_seeded_rng, get_random_word};
 
-#[serde_as]
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RandomParameters {
@@ -18,8 +16,7 @@ pub struct RandomParameters {
     pub slide_range: Range,
     pub jitter: f64,
     pub seed: Option<String>,
-    #[serde_as(as = "(DurationSeconds<u64>, DurationSeconds<u64>)")]
-    pub interval_range: (Duration, Duration),
+    pub interval_range: Range,
 }
 
 pub struct RandomController {
@@ -30,10 +27,8 @@ pub struct RandomController {
     next_interval: Duration,
 }
 
-fn pick_duration((min, max): (Duration, Duration), rng: &mut impl Rng) -> Duration {
-    let min_secs = min.as_secs_f64();
-    let max_secs = max.as_secs_f64();
-    let secs = rng.gen_range(min_secs..max_secs).round();
+fn pick_duration(Range { min, max }: Range, rng: &mut impl Rng) -> Duration {
+    let secs = rng.gen_range(min..max).round();
     Duration::from_secs_f64(secs)
 }
 
@@ -104,6 +99,9 @@ mod tests {
     use tracing::info;
     use tracing_test::traced_test;
 
+    use super::RandomParameters;
+    use crate::service::handy::patterns::Range;
+
     #[test]
     #[traced_test]
     fn test_random_controller() {
@@ -111,18 +109,21 @@ mod tests {
 
         use super::{RandomController, SpeedController};
 
-        let parameters = super::RandomParameters {
-            speed_range: super::Range {
+        let parameters = RandomParameters {
+            speed_range: Range {
                 min: 30.0,
                 max: 79.0,
             },
-            slide_range: super::Range {
+            slide_range: Range {
                 min: 0.0,
                 max: 80.0,
             },
             seed: None,
             jitter: 5.0,
-            interval_range: (Duration::from_secs(4), Duration::from_secs(15)),
+            interval_range: Range {
+                min: 4.0,
+                max: 15.0,
+            },
         };
 
         let mut controller = RandomController::new(parameters);

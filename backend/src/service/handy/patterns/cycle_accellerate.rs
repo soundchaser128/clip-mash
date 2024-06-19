@@ -1,13 +1,11 @@
 use std::time::Duration;
 
 use serde::Deserialize;
-use serde_with::{serde_as, DurationSeconds};
 use tracing::debug;
 use utoipa::ToSchema;
 
 use super::{math, Range, SpeedController};
 
-#[serde_as]
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CycleAccellerateParameters {
@@ -15,11 +13,18 @@ pub struct CycleAccellerateParameters {
     pub end_range: Range,
     pub slide_range: Range,
 
-    #[serde_as(as = "DurationSeconds<u64>")]
-    pub session_duration: Duration,
+    pub session_duration: f64,
+    pub cycle_duration: f64,
+}
 
-    #[serde_as(as = "DurationSeconds<u64>")]
-    pub cycle_duration: Duration,
+impl CycleAccellerateParameters {
+    pub fn session_duration(&self) -> Duration {
+        Duration::from_secs_f64(self.session_duration)
+    }
+
+    pub fn cycle_duration(&self) -> Duration {
+        Duration::from_secs_f64(self.cycle_duration)
+    }
 }
 
 pub struct CycleAccellerateController {
@@ -46,7 +51,7 @@ impl SpeedController for CycleAccellerateController {
     }
 
     fn should_continue(&self, elapsed: Duration) -> bool {
-        elapsed <= self.parameters.session_duration
+        elapsed <= self.parameters.session_duration()
     }
 }
 
@@ -56,7 +61,7 @@ impl CycleAccellerateController {
     }
 
     fn get_cycle_position(&self, elapsed: Duration) -> f64 {
-        let duration = self.parameters.cycle_duration.as_millis();
+        let duration = self.parameters.cycle_duration().as_millis();
         let elapsed = elapsed.as_millis();
         let cycle_x = (elapsed % duration) as f64 / duration as f64;
         debug!("cycle_x: {}", cycle_x);
@@ -75,7 +80,7 @@ impl CycleAccellerateController {
         let start = self.parameters.start_range;
         let end = self.parameters.end_range;
         let t = elapsed.as_secs_f64();
-        let duration = self.parameters.session_duration.as_secs_f64();
+        let duration = self.parameters.session_duration().as_secs_f64();
         let total_position = t / duration;
         debug!("total_position: {}", total_position);
         let min = math::lerp(start.min, end.min, total_position);

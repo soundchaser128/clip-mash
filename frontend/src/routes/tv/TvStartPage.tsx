@@ -1,6 +1,14 @@
-import {generateRandomSeed, listMarkerTitles, listPerformers} from "@/api"
+import {
+  HandyPattern,
+  generateRandomSeed,
+  listMarkerTitles,
+  listPerformers,
+  startHandy,
+} from "@/api"
 import Heading from "@/components/Heading"
-import React, {useEffect} from "react"
+import Modal from "@/components/Modal"
+import {useConfig} from "@/hooks/useConfig"
+import React, {useEffect, useState} from "react"
 import {useForm} from "react-hook-form"
 import {HiArrowPath, HiChevronLeft, HiRocketLaunch} from "react-icons/hi2"
 import {
@@ -10,6 +18,7 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom"
+import HandySettings from "./handy/HandySettings"
 
 type Item = {
   title: string
@@ -81,10 +90,13 @@ function selectionToQuery(state: TvSettings): URLSearchParams {
 const TvStartPage: React.FC = () => {
   const navigate = useNavigate()
   const data = useLoaderData() as LoaderData
+  const config = useConfig()
   const [queryParms] = useSearchParams()
   const {register, watch, handleSubmit, setValue} = useForm<TvSettings>({
     defaultValues: queryToSelection(queryParms),
   })
+  const [handySettingsOpen, setHandySettingsOpen] = useState(false)
+  const [handySettings, setHandySettings] = useState<HandyPattern | null>(null)
   const state = watch()
 
   let items: Item[] = []
@@ -101,8 +113,15 @@ const TvStartPage: React.FC = () => {
       break
   }
 
-  const onSubmit = (values: TvSettings) => {
+  const onSubmit = async (values: TvSettings) => {
     const query = selectionToQuery(values)
+
+    if (handySettings && config?.handy?.key && config.handy.enabled) {
+      await startHandy({
+        pattern: handySettings,
+        key: config.handy.key,
+      })
+    }
 
     navigate({
       pathname: "/tv/watch",
@@ -219,6 +238,20 @@ const TvStartPage: React.FC = () => {
             </div>
           </label>
         </div>
+        {config?.handy?.enabled && (
+          <>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setHandySettingsOpen((open) => !open)}
+            >
+              Set up Handy
+            </button>
+            <Modal isOpen={handySettingsOpen}>
+              <HandySettings onSubmit={setHandySettings} />
+            </Modal>
+          </>
+        )}
 
         <button
           disabled={!state.query.length}

@@ -40,7 +40,9 @@ pub enum HandyPattern {
     Random {
         parameters: RandomParameters,
     },
-    Accellerate(AccellerateParameters),
+    Accellerate {
+        parameters: AccellerateParameters,
+    },
     // Cycle(CycleParameters),
 }
 
@@ -161,7 +163,7 @@ impl HandyController {
                 Box::new(CycleAccellerateController::new(parameters))
             }
             HandyPattern::Random { parameters } => Box::new(RandomController::new(parameters)),
-            HandyPattern::Accellerate(parameters) => {
+            HandyPattern::Accellerate { parameters } => {
                 Box::new(AccellerateController::new(parameters))
             }
         };

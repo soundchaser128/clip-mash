@@ -236,8 +236,6 @@ export type StrokeTypeOneOfThree = {
   accelerate: StrokeTypeOneOfThreeAccelerate
 }
 
-export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
-
 /**
  * Creates a stroke every `n` beats
  */
@@ -250,6 +248,8 @@ export type StrokeTypeOneOf = {
   /** Creates a stroke every `n` beats */
   everyNth: StrokeTypeOneOfEveryNth
 }
+
+export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
 
 export interface StashVideoDto {
   createdOn: number
@@ -363,10 +363,8 @@ export interface RandomizedClipOptions {
   spread: number
 }
 
-export type RandomParametersIntervalRangeItem = Duration & Duration
-
 export interface RandomParameters {
-  intervalRange: RandomParametersIntervalRangeItem[]
+  intervalRange: Range
   jitter: number
   /** @nullable */
   seed?: string | null
@@ -541,20 +539,23 @@ export type InteractiveClipsQueryOneOf = {
   type: InteractiveClipsQueryOneOfType
 }
 
-export type HandyPatternOneOfFiveAllOfType =
-  (typeof HandyPatternOneOfFiveAllOfType)[keyof typeof HandyPatternOneOfFiveAllOfType]
+export type HandyPatternOneOfFiveType =
+  (typeof HandyPatternOneOfFiveType)[keyof typeof HandyPatternOneOfFiveType]
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const HandyPatternOneOfFiveAllOfType = {
+export const HandyPatternOneOfFiveType = {
   accellerate: "accellerate",
 } as const
 
-export type HandyPatternOneOfFiveAllOf = {
-  type: HandyPatternOneOfFiveAllOfType
+export type HandyPatternOneOfFive = {
+  parameters: AccellerateParameters
+  type: HandyPatternOneOfFiveType
 }
 
-export type HandyPatternOneOfFive = AccellerateParameters &
-  HandyPatternOneOfFiveAllOf
+export type HandyPattern =
+  | HandyPatternOneOf
+  | HandyPatternOneOfThree
+  | HandyPatternOneOfFive
 
 export type HandyPatternOneOfThreeType =
   (typeof HandyPatternOneOfThreeType)[keyof typeof HandyPatternOneOfThreeType]
@@ -581,11 +582,6 @@ export type HandyPatternOneOf = {
   parameters: CycleAccellerateParameters
   type: HandyPatternOneOfType
 }
-
-export type HandyPattern =
-  | HandyPatternOneOf
-  | HandyPatternOneOfThree
-  | HandyPatternOneOfFive
 
 export interface HandyConfig {
   enabled: boolean
@@ -670,12 +666,10 @@ export interface DescriptionData {
   contentType: string
 }
 
-type Duration = number
-
 export interface CycleAccellerateParameters {
-  cycleDuration: Duration
+  cycleDuration: number
   endRange: Range
-  sessionDuration: Duration
+  sessionDuration: number
   slideRange: Range
   startRange: Range
 }
@@ -760,6 +754,14 @@ export interface ClipsResponse {
   videos: VideoDto[]
 }
 
+export type ClipPickerOptionsOneOfOnezeroType =
+  (typeof ClipPickerOptionsOneOfOnezeroType)[keyof typeof ClipPickerOptionsOneOfOnezeroType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ClipPickerOptionsOneOfOnezeroType = {
+  noSplit: "noSplit",
+} as const
+
 export type ClipPickerOptionsOneOfOnezero = {
   type: ClipPickerOptionsOneOfOnezeroType
 }
@@ -769,14 +771,6 @@ export type ClipPickerOptions =
   | ClipPickerOptionsOneOfFour
   | ClipPickerOptionsOneOfSeven
   | ClipPickerOptionsOneOfOnezero
-
-export type ClipPickerOptionsOneOfOnezeroType =
-  (typeof ClipPickerOptionsOneOfOnezeroType)[keyof typeof ClipPickerOptionsOneOfOnezeroType]
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ClipPickerOptionsOneOfOnezeroType = {
-  noSplit: "noSplit",
-} as const
 
 export type ClipPickerOptionsOneOfSevenAllOfType =
   (typeof ClipPickerOptionsOneOfSevenAllOfType)[keyof typeof ClipPickerOptionsOneOfSevenAllOfType]
@@ -990,7 +984,7 @@ export type AddVideosRequest =
 
 export interface AccellerateParameters {
   endSpeed: number
-  sessionDuration: Duration
+  sessionDuration: number
   slideRange: Range
   startSpeed: number
 }

@@ -2,10 +2,54 @@ import {HandyPattern} from "@/api"
 import Heading from "@/components/Heading"
 import {DeepPartial} from "@/types/types"
 import {produce} from "immer"
-import {useForm} from "react-hook-form"
+import {UseFormRegister, useForm} from "react-hook-form"
 
 interface Props {
   onSubmit: (pattern: HandyPattern) => void
+}
+
+interface RangeInputProps {
+  label: string
+  name: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  register: UseFormRegister<any>
+}
+
+const RangeInput: React.FC<RangeInputProps> = ({label, name, register}) => {
+  return (
+    <>
+      <div className="w-full gap-2">
+        <label className="label">
+          <span className="label-text">{label}</span>
+        </label>
+        <div className="flex gap-2 items-center">
+          <input
+            className="input input-bordered"
+            required
+            type="number"
+            min={0}
+            max={100}
+            {...register(`${name}.min`, {
+              valueAsNumber: true,
+              required: true,
+            })}
+          />
+          -
+          <input
+            className="input input-bordered"
+            required
+            type="number"
+            min={0}
+            max={100}
+            {...register(`${name}.max`, {
+              valueAsNumber: true,
+              required: true,
+            })}
+          />
+        </div>
+      </div>
+    </>
+  )
 }
 
 export function prepareSettings(settings: HandyPattern): HandyPattern {
@@ -23,9 +67,28 @@ const defaultValues: DeepPartial<HandyPattern> = {
       min: 0,
       max: 100,
     },
+    // @ts-expect-error intentionally provide all values
+    speedRange: {
+      min: 10,
+      max: 50,
+    },
+    intervalRange: {
+      min: 5,
+      max: 15,
+    },
+    jitter: 10,
     sessionDuration: 10,
+    cycleDuration: 1,
     startSpeed: 5,
     endSpeed: 80,
+    startRange: {
+      min: 5,
+      max: 15,
+    },
+    endRange: {
+      min: 40,
+      max: 70,
+    },
   },
 }
 
@@ -54,36 +117,11 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
           <option value="cycle-accellerate">Accellerating cycle</option>
         </select>
 
-        <div className="w-full gap-2">
-          <label className="label">
-            <span className="label-text">Slide range</span>
-          </label>
-          <div className="flex gap-2 items-center">
-            <input
-              className="input input-bordered"
-              required
-              type="number"
-              min={0}
-              max={100}
-              {...register("parameters.slideRange.min", {
-                valueAsNumber: true,
-                required: true,
-              })}
-            />
-            -
-            <input
-              className="input input-bordered"
-              required
-              type="number"
-              min={0}
-              max={100}
-              {...register("parameters.slideRange.max", {
-                valueAsNumber: true,
-                required: true,
-              })}
-            />
-          </div>
-        </div>
+        <RangeInput
+          label="Slide range"
+          name="parameters.slideRange"
+          register={register}
+        />
 
         {type === "accellerate" && (
           <>
@@ -142,35 +180,68 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
 
         {type === "random" && (
           <>
-            <div className="w-full gap-2">
+            <RangeInput
+              label="Speed range"
+              name="parameters.speedRange"
+              register={register}
+            />
+
+            <div className="form-control">
               <label className="label">
-                <span className="label-text">Speed range</span>
+                <span className="label-text">Randomness</span>
               </label>
-              <div className="flex gap-2 items-center">
-                <input
-                  className="input input-bordered"
-                  required
-                  type="number"
-                  min={0}
-                  max={100}
-                  {...register("parameters.speedRange.min", {
-                    valueAsNumber: true,
-                    required: true,
-                  })}
-                />
-                -
-                <input
-                  className="input input-bordered"
-                  required
-                  type="number"
-                  min={0}
-                  max={100}
-                  {...register("parameters.speedRange.max", {
-                    valueAsNumber: true,
-                    required: true,
-                  })}
-                />
-              </div>
+
+              <input
+                className="input input-bordered"
+                required
+                type="number"
+                min={1}
+                {...register("parameters.jitter", {
+                  valueAsNumber: true,
+                  required: true,
+                })}
+              />
+            </div>
+
+            <RangeInput
+              label="Time between speed changes"
+              name="parameters.intervalRange"
+              register={register}
+            />
+          </>
+        )}
+
+        {type === "cycle-accellerate" && (
+          <>
+            <RangeInput
+              label="Start speed range"
+              name="parameters.startRange"
+              register={register}
+            />
+
+            <RangeInput
+              label="End speed range"
+              name="parameters.endRange"
+              register={register}
+            />
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">
+                  Session duration (in minutes)
+                </span>
+              </label>
+
+              <input
+                className="input input-bordered"
+                required
+                type="number"
+                min={1}
+                {...register("parameters.sessionDuration", {
+                  valueAsNumber: true,
+                  required: true,
+                })}
+              />
             </div>
           </>
         )}

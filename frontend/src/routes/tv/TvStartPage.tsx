@@ -247,7 +247,7 @@ const TvStartPage: React.FC = () => {
             >
               Set up Handy
             </button>
-            <Modal isOpen={handySettingsOpen}>
+            <Modal isOpen={handySettingsOpen} size="fluid">
               <HandySettings onSubmit={setHandySettings} />
             </Modal>
           </>

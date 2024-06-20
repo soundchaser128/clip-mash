@@ -19,6 +19,7 @@ import {
   useSearchParams,
 } from "react-router-dom"
 import HandySettings, {prepareSettings} from "./handy/HandySettings"
+import {useCreateToast} from "@/hooks/useToast"
 
 type Item = {
   title: string
@@ -98,6 +99,7 @@ const TvStartPage: React.FC = () => {
   const [handySettingsOpen, setHandySettingsOpen] = useState(false)
   const [handySettings, setHandySettings] = useState<HandyPattern | null>(null)
   const state = watch()
+  const toast = useCreateToast()
 
   let items: Item[] = []
   switch (state.queryType) {
@@ -117,16 +119,28 @@ const TvStartPage: React.FC = () => {
     const query = selectionToQuery(values)
 
     if (handySettings && config?.handy?.key && config.handy.enabled) {
-      await startHandy({
-        pattern: prepareSettings(handySettings),
-        key: config.handy.key,
-      })
+      try {
+        await startHandy({
+          pattern: prepareSettings(handySettings),
+          key: config.handy.key,
+        })
+      } catch (e) {
+        toast({
+          message: "Failed to start Handy",
+          type: "error",
+        })
+      }
     }
 
     navigate({
       pathname: "/tv/watch",
       search: query.toString(),
     })
+  }
+
+  const onHandySubmit = (values: HandyPattern) => {
+    setHandySettings(values)
+    setHandySettingsOpen(false)
   }
 
   const onGenerateSeed = async () => {
@@ -239,18 +253,13 @@ const TvStartPage: React.FC = () => {
           </label>
         </div>
         {config?.handy?.enabled && (
-          <>
-            <button
-              type="button"
-              className="btn self-end"
-              onClick={() => setHandySettingsOpen((open) => !open)}
-            >
-              Set up Handy
-            </button>
-            <Modal isOpen={handySettingsOpen} size="fluid">
-              <HandySettings onSubmit={setHandySettings} />
-            </Modal>
-          </>
+          <button
+            type="button"
+            className="btn self-end"
+            onClick={() => setHandySettingsOpen((open) => !open)}
+          >
+            Set up Handy
+          </button>
         )}
 
         <button
@@ -262,6 +271,10 @@ const TvStartPage: React.FC = () => {
           Start
         </button>
       </form>
+
+      <Modal isOpen={handySettingsOpen} size="fluid">
+        <HandySettings onSubmit={onHandySubmit} />
+      </Modal>
     </main>
   )
 }

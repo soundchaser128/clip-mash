@@ -57,6 +57,10 @@ export function prepareSettings(settings: HandyPattern): HandyPattern {
     if ("sessionDuration" in draft.parameters) {
       draft.parameters.sessionDuration = draft.parameters.sessionDuration * 60
     }
+
+    if ("cycleDuration" in draft.parameters) {
+      draft.parameters.cycleDuration = draft.parameters.cycleDuration * 60
+    }
   })
 }
 
@@ -238,6 +242,23 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
                 type="number"
                 min={1}
                 {...register("parameters.sessionDuration", {
+                  valueAsNumber: true,
+                  required: true,
+                })}
+              />
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Cycle duration in minutes</span>
+              </label>
+
+              <input
+                className="input input-bordered"
+                required
+                type="number"
+                min={1}
+                {...register("parameters.cycleDuration", {
                   valueAsNumber: true,
                   required: true,
                 })}

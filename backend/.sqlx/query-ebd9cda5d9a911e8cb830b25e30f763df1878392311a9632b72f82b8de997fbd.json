@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT p.id AS \"id!\", p.name, p.created_on, p.image_url, p.stash_id, \n                      p.gender AS \"gender: Gender\", count(DISTINCT vp.video_id) AS \"video_count!\",\n                      count(DISTINCT m.rowid) AS \"marker_count!\"\n               FROM performers p\n               LEFT JOIN video_performers vp ON p.id = vp.performer_id\n               LEFT JOIN markers m ON m.video_id = vp.video_id\n               GROUP BY p.name\n               ORDER BY count(DISTINCT m.rowid) DESC",
+  "query": "SELECT p.id AS \"id!\", p.name, p.created_on, p.image_url, p.stash_id, \n                      p.gender AS \"gender: Gender\", count(DISTINCT vp.video_id) AS \"video_count!\",\n                      count(DISTINCT m.rowid) AS \"marker_count!\"\n               FROM performers p\n               LEFT JOIN video_performers vp ON p.id = vp.performer_id\n               LEFT JOIN markers m ON m.video_id = vp.video_id\n               WHERE p.name LIKE $1\n               GROUP BY p.name\n               ORDER BY count(DISTINCT m.rowid) DESC",
   "describe": {
     "columns": [
       {
@@ -45,7 +45,7 @@
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       true,
@@ -58,5 +58,5 @@
       false
     ]
   },
-  "hash": "b254c4dcb9a16b353973438931ce2c9ac28f2f29a13e4617984940861c699851"
+  "hash": "ebd9cda5d9a911e8cb830b25e30f763df1878392311a9632b72f82b8de997fbd"
 }

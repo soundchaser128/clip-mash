@@ -18,7 +18,7 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom"
-import HandySettings from "./handy/HandySettings"
+import HandySettings, {prepareSettings} from "./handy/HandySettings"
 
 type Item = {
   title: string
@@ -118,7 +118,7 @@ const TvStartPage: React.FC = () => {
 
     if (handySettings && config?.handy?.key && config.handy.enabled) {
       await startHandy({
-        pattern: handySettings,
+        pattern: prepareSettings(handySettings),
         key: config.handy.key,
       })
     }

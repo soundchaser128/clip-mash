@@ -113,7 +113,9 @@ impl PerformersDatabase {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{data::database::Database, service::fixtures, Result};
+    use crate::data::database::Database;
+    use crate::service::fixtures;
+    use crate::Result;
 
     #[sqlx::test]
     async fn insert_performers(pool: SqlitePool) -> Result<()> {

@@ -86,6 +86,10 @@ export type ListVideosParams = {
 
 export type GetFileStats200ItemItem = FolderType & number
 
+export type ListPerformersParams = {
+  prefix?: string | null
+}
+
 /**
  * @nullable
  */
@@ -223,6 +227,8 @@ export interface UpdateMarker {
   title?: string | null
 }
 
+export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
+
 /**
  * Steadily accelerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat`
  */
@@ -248,8 +254,6 @@ export type StrokeTypeOneOf = {
   /** Creates a stroke every `n` beats */
   everyNth: StrokeTypeOneOfEveryNth
 }
-
-export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
 
 export interface StashVideoDto {
   createdOn: number
@@ -1117,6 +1121,17 @@ export const migratePreviewImages = () => {
   })
 }
 
+/**
+ * @summary Lists all performers from videos and their number of markers
+ */
+export const listPerformers = (params?: ListPerformersParams) => {
+  return customInstance<ListPerformerResponse[]>({
+    url: `/api/library/performers`,
+    method: "GET",
+    params,
+  })
+}
+
 export const getFileStats = () => {
   return customInstance<GetFileStats200ItemItem[][]>({
     url: `/api/library/stats`,
@@ -1166,16 +1181,6 @@ export const videosNeedEncoding = (videosNeedEncodingBody: string[]) => {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     data: videosNeedEncodingBody,
-  })
-}
-
-/**
- * @summary Lists all performers from videos and their number of markers
- */
-export const listPerformers = () => {
-  return customInstance<ListPerformerResponse[]>({
-    url: `/api/library/video/performers`,
-    method: "GET",
   })
 }
 
@@ -1463,6 +1468,9 @@ export type SplitMarkerResult = NonNullable<
 export type MigratePreviewImagesResult = NonNullable<
   Awaited<ReturnType<typeof migratePreviewImages>>
 >
+export type ListPerformersResult = NonNullable<
+  Awaited<ReturnType<typeof listPerformers>>
+>
 export type GetFileStatsResult = NonNullable<
   Awaited<ReturnType<typeof getFileStats>>
 >
@@ -1477,9 +1485,6 @@ export type CleanupVideosResult = NonNullable<
 >
 export type VideosNeedEncodingResult = NonNullable<
   Awaited<ReturnType<typeof videosNeedEncoding>>
->
-export type ListPerformersResult = NonNullable<
-  Awaited<ReturnType<typeof listPerformers>>
 >
 export type ListStashVideosResult = NonNullable<
   Awaited<ReturnType<typeof listStashVideos>>

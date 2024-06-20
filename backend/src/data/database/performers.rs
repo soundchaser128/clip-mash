@@ -16,6 +16,7 @@ pub enum Gender {
     NonBinary,
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct DbPerformer {
     pub id: i64,
@@ -47,6 +48,11 @@ impl PerformersDatabase {
     }
 
     pub async fn find_all(&self) -> Result<Vec<DbPerformer>> {
+        self.find_by_prefix("").await
+    }
+
+    pub async fn find_by_prefix(&self, prefix: &str) -> Result<Vec<DbPerformer>> {
+        let prefix = format!("{}%", prefix);
         sqlx::query_as!(
             DbPerformer,
             r#"SELECT p.id AS "id!", p.name, p.created_on, p.image_url, p.stash_id, 
@@ -55,15 +61,17 @@ impl PerformersDatabase {
                FROM performers p
                LEFT JOIN video_performers vp ON p.id = vp.performer_id
                LEFT JOIN markers m ON m.video_id = vp.video_id
+               WHERE p.name LIKE $1
                GROUP BY p.name
-               ORDER BY count(DISTINCT m.rowid) DESC"#
+               ORDER BY count(DISTINCT m.rowid) DESC"#,
+            prefix,
         )
         .fetch_all(&self.pool)
         .await
         .map_err(From::from)
     }
 
-    pub async fn insert(&self, performer: CreatePerformer) -> Result<i64> {
+    pub async fn insert(&self, performer: &CreatePerformer) -> Result<i64> {
         info!("Inserting performer: {:?}", performer);
         let result = sqlx::query!(
             "INSERT INTO performers (name, image_url, stash_id, gender, created_on) 
@@ -89,7 +97,7 @@ impl PerformersDatabase {
         video_id: &str,
     ) -> Result<()> {
         for performer in performers {
-            let performer_id = self.insert(performer.clone()).await?;
+            let performer_id = self.insert(performer).await?;
             sqlx::query!(
                 "INSERT INTO video_performers (video_id, performer_id) VALUES ($1, $2)",
                 video_id,
@@ -105,7 +113,7 @@ impl PerformersDatabase {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Result;
+    use crate::{data::database::Database, service::fixtures, Result};
 
     #[sqlx::test]
     async fn insert_performers(pool: SqlitePool) -> Result<()> {
@@ -117,19 +125,19 @@ mod tests {
             stash_id: Some("stash_id".to_string()),
             gender: Some(Gender::Female),
         };
-        db.insert(performer.clone()).await?;
+        db.insert(&performer).await?;
 
         // should be able to insert the same performer twice, just ignore the second insert
-        db.insert(performer).await?;
+        db.insert(&performer).await?;
 
         Ok(())
     }
 
     #[sqlx::test]
     async fn find_all_performers(pool: SqlitePool) -> Result<()> {
-        let db = PerformersDatabase::new(pool);
+        let db = Database::with_pool(pool);
 
-        let performers = db.find_all().await?;
+        let performers = db.performers.find_all().await?;
         assert_eq!(performers.len(), 0);
 
         for i in 0..10 {
@@ -139,11 +147,33 @@ mod tests {
                 stash_id: Some("stash_id".to_string()),
                 gender: None,
             };
-            db.insert(performer).await?;
+            db.performers.insert(&performer).await?;
         }
 
-        let performers = db.find_all().await?;
+        let performers = db.performers.find_all().await?;
         assert_eq!(performers.len(), 10);
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn find_all_performers_with_videos_and_markers(pool: SqlitePool) -> Result<()> {
+        let db = Database::with_pool(pool);
+
+        let performers = db.performers.find_all().await?;
+        assert_eq!(performers.len(), 0);
+
+        let video = fixtures::persist_video(&db).await?;
+
+        let performer = CreatePerformer {
+            name: "Performer".to_string(),
+            image_url: Some("image_url".to_string()),
+            stash_id: Some("stash_id".to_string()),
+            gender: None,
+        };
+        db.performers
+            .insert_for_video(&[performer], &video.id)
+            .await?;
 
         Ok(())
     }

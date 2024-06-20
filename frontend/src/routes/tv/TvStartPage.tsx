@@ -242,7 +242,7 @@ const TvStartPage: React.FC = () => {
           <>
             <button
               type="button"
-              className="btn"
+              className="btn self-end"
               onClick={() => setHandySettingsOpen((open) => !open)}
             >
               Set up Handy

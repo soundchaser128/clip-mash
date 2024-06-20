@@ -134,10 +134,16 @@ pub struct ListPerformerResponse {
     pub count: usize,
 }
 
+#[derive(Deserialize, IntoParams)]
+pub struct ListPerformersQuery {
+    pub prefix: Option<String>,
+}
+
 #[axum::debug_handler]
 #[utoipa::path(
     get,
-    path = "/api/library/video/performers",
+    path = "/api/library/performers",
+    params(ListPerformersQuery),
     responses(
         (status = 200, description = "List all performers", body = Vec<ListPerformerResponse>),
     )
@@ -145,8 +151,13 @@ pub struct ListPerformerResponse {
 /// Lists all performers from videos and their number of markers
 pub async fn list_performers(
     State(state): State<Arc<AppState>>,
+    Query(ListPerformersQuery { prefix }): Query<ListPerformersQuery>,
 ) -> Result<impl IntoResponse, AppError> {
-    let performers = state.database.performers.find_all().await?;
+    let performers = state
+        .database
+        .performers
+        .find_by_prefix(prefix.as_deref().unwrap_or(""))
+        .await?;
     let performers: Vec<_> = performers
         .into_iter()
         .map(|p| ListPerformerResponse {

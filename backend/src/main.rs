@@ -105,7 +105,6 @@ async fn run() -> Result<()> {
     let library_routes = Router::new()
         .route("/video", get(handlers::library::list_videos))
         .route("/video", post(handlers::library::add_new_videos))
-        .route("/video/performers", get(handlers::library::list_performers))
         .route(
             "/video/need-encoding",
             post(handlers::library::videos_need_encoding),
@@ -142,6 +141,7 @@ async fn run() -> Result<()> {
             get(handlers::library::get_marker_preview),
         )
         .route("/marker/:id/split", post(handlers::library::split_marker))
+        .route("/performers", get(handlers::library::list_performers))
         .route("/directory", get(handlers::files::list_file_entries))
         .route("/stats", get(handlers::files::get_file_stats))
         .route(

@@ -3,6 +3,7 @@ import {
   generateRandomSeed,
   listMarkerTitles,
   listPerformers,
+  listVideoTags,
   startHandy,
 } from "@/api"
 import Heading from "@/components/Heading"
@@ -29,17 +30,20 @@ type Item = {
 type LoaderData = {
   markers: Item[]
   performers: Item[]
+  tags: Item[]
 }
 
 export const markerTitleLoader: LoaderFunction = async () => {
-  const [markerTitles, performers] = await Promise.all([
+  const [markerTitles, performers, tags] = await Promise.all([
     listMarkerTitles({count: 1000}),
     listPerformers(),
+    listVideoTags(),
   ])
 
   return {
     markers: markerTitles,
     performers: performers.filter((p) => p.count > 0),
+    tags: tags.map((t) => ({title: t.tag, count: t.count})),
   } satisfies LoaderData
 }
 
@@ -115,8 +119,7 @@ const TvStartPage: React.FC = () => {
       items = data.performers
       break
     case "videoTags":
-      // items = []
-      // TODO
+      items = data.tags
       break
     case "markerTitles":
       items = data.markers
@@ -218,10 +221,6 @@ const TvStartPage: React.FC = () => {
         </div>
 
         <ul className="flex gap-1 flex-wrap">
-          {state.queryType === "videoTags" && (
-            <p className="my-4 text-center w-full">Not implemented yet.</p>
-          )}
-
           {items.map((item) => (
             <li key={item.title}>
               <input

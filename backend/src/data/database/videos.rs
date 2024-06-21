@@ -48,6 +48,12 @@ impl FromStr for VideoSource {
     }
 }
 
+#[derive(Debug, Serialize, ToSchema)]
+pub struct TagCount {
+    pub tag: String,
+    pub count: i64,
+}
+
 #[derive(Debug, Clone, FromRow)]
 pub struct DbVideo {
     pub id: String,
@@ -389,6 +395,28 @@ impl VideosDatabase {
             video_tags: video.tags.clone(),
             video_title: video.title.clone(),
         })
+    }
+
+    pub async fn list_tags(&self, count: i64) -> Result<Vec<TagCount>> {
+        // query! doesn't like the json_each function, so we have to use sqlx::query
+        let results = sqlx::query(
+            "SELECT json_each.value AS tag, COUNT(*) AS occurrences
+            FROM videos, json_each(videos.video_tags)
+            GROUP BY json_each.value
+            ORDER BY occurrences DESC
+            LIMIT $1",
+        )
+        .bind(count)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|row| TagCount {
+            tag: row.get("tag"),
+            count: row.get("occurrences"),
+        })
+        .collect();
+
+        Ok(results)
     }
 
     #[allow(unused_assignments)]

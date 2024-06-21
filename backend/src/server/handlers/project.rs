@@ -98,6 +98,7 @@ pub async fn fetch_clips_interactive(
     let filter = match body.query {
         InteractiveClipsQuery::MarkerTitles { data } => ListMarkersFilter::MarkerTitles(data),
         InteractiveClipsQuery::Performers { data } => ListMarkersFilter::VideoPerformers(data),
+        InteractiveClipsQuery::VideoTags { data } => ListMarkersFilter::VideoTags(data),
     };
 
     let all_markers: Vec<_> = state

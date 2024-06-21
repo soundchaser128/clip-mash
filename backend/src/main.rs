@@ -55,9 +55,18 @@ fn get_port() -> u16 {
 }
 
 fn get_host() -> String {
-    std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "127.0.0.1".into())
+    let is_mac = cfg!(target_os = "macos");
+    if cfg!(debug_assertions) {
+        if is_mac {
+            "[::1]".into()
+        } else {
+            "127.0.0.1".into()
+        }
+    } else {
+        std::env::args()
+            .nth(1)
+            .unwrap_or_else(|| "127.0.0.1".into())
+    }
 }
 
 fn get_address() -> SocketAddr {
@@ -120,6 +129,7 @@ async fn run() -> Result<()> {
         )
         .route("/video/cleanup", post(handlers::library::cleanup_videos))
         .route("/video/stash", get(handlers::library::list_stash_videos))
+        .route("/video/tags", get(handlers::library::list_video_tags))
         .route("/video/:id", get(handlers::library::get_video))
         .route("/video/:id", delete(handlers::library::delete_video))
         .route(

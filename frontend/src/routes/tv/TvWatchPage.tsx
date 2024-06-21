@@ -28,6 +28,8 @@ import {
 import DataList, {Data, Description} from "@/components/DataList"
 import {clamp} from "@/helpers/math"
 import Heading from "@/components/Heading"
+import {formatSeconds} from "@/helpers/time"
+import {TvQueryType} from "./TvStartPage"
 
 function removeExtension(fileName: string) {
   const index = fileName.indexOf(".")
@@ -48,9 +50,7 @@ export const interactiveClipsLoader: LoaderFunction = async (request) => {
     music = await listSongs({shuffle: true})
   }
 
-  const queryType = (searchParams.get("queryType") || "markerTitles") as
-    | "markerTitles"
-    | "performers"
+  const queryType = searchParams.get("queryType") as TvQueryType
 
   const seed = searchParams.get("seed")
 
@@ -89,6 +89,11 @@ const TvWatchPage: React.FC = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentSong, setCurrentSong] = useState(0)
+  const [timePlayed, setTimePlayed] = useState(0)
+  const totalDuration = clips?.clips.reduce(
+    (acc, clip) => acc + clip.range[1] - clip.range[0],
+    0,
+  )
   const audioRef = useRef<HTMLAudioElement>(null)
 
   const [isPlaying, setIsPlaying] = useState(true)
@@ -112,6 +117,8 @@ const TvWatchPage: React.FC = () => {
       const endTimestamp = currentClip.range[1]
       const currentTime = event.currentTarget.currentTime
       if (Math.abs(endTimestamp - currentTime) <= 0.5) {
+        const clipLength = endTimestamp - currentClip.range[0]
+        setTimePlayed((t) => t + clipLength)
         setIndex((c) => (c + 1) % length)
       }
     }
@@ -135,16 +142,28 @@ const TvWatchPage: React.FC = () => {
           audioRef.current.play()
         }
       }
+
       // toggles paused state
-      await pauseHandy()
+      if (handyEnabled) {
+        await pauseHandy()
+      }
+
       setIsPlaying((p) => !p)
     }
   }
 
   const onChangeClip = (direction: "prev" | "next") => {
+    if (!currentClip) {
+      console.warn("No current clip found")
+      return
+    }
+    const clipDuration = currentClip.range[1] - currentClip.range[0]
+
     if (direction === "prev") {
+      setTimePlayed((t) => t - clipDuration)
       setIndex((c) => clamp(c - 1, 0, length - 1))
     } else {
+      setTimePlayed((t) => t + clipDuration)
       setIndex((c) => (c + 1) % length)
     }
   }
@@ -327,6 +346,10 @@ const TvWatchPage: React.FC = () => {
                   </Data>
                 </>
               )}
+              <Description>Time played / Total duration:</Description>
+              <Data>
+                {formatSeconds(timePlayed)} / {formatSeconds(totalDuration)}
+              </Data>
             </DataList>
           </>
         )}

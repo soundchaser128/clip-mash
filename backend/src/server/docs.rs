@@ -6,7 +6,7 @@ use super::handlers::music::SongUpload;
 use super::handlers::project::{CreateFunscriptBody, DescriptionData, ProjectCreateResponse};
 use super::types::*;
 use crate::data::database::markers::MarkerCount;
-use crate::data::database::videos::{VideoSource, VideoUpdate};
+use crate::data::database::videos::{TagCount, VideoSource, VideoUpdate};
 use crate::data::database::{HandyConfig, Settings};
 use crate::server::handlers::handy::StartHandyParameters;
 use crate::server::handlers::library::ListPerformerResponse;
@@ -43,6 +43,7 @@ use crate::service::video::AddVideosRequest;
         library::videos_need_encoding,
         library::list_marker_titles,
         library::list_performers,
+        library::list_video_tags,
         files::list_file_entries,
         files::get_file_stats,
         files::cleanup_folder,
@@ -143,6 +144,7 @@ use crate::service::video::AddVideosRequest;
             RandomParameters,
             AccellerateParameters,
             Range,
+            TagCount,
         )
     ),
     tags(

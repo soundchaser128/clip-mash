@@ -639,4 +639,25 @@ mod test {
         assert!(ids.contains(&video2.id.as_str()));
         assert!(!ids.contains(&video3.id.as_str()));
     }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn list_video_tags(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+        persist_video_with(&database, |v| {
+            v.tags = Some(serde_json::to_string(&["tag1", "tag2"]).unwrap());
+        })
+        .await?;
+        persist_video_with(&database, |v| {
+            v.tags = Some(serde_json::to_string(&["tag1", "tag3"]).unwrap())
+        })
+        .await?;
+
+        let tags = database.videos.list_tags(100).await?;
+        assert_eq!(3, tags.len());
+        assert_eq!("tag1", tags[0].tag);
+        assert_eq!(2, tags[0].count);
+
+        Ok(())
+    }
 }

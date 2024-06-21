@@ -339,6 +339,15 @@ impl MarkersDatabase {
                     }
                     list.push_unseparated(")) ");
                 }
+                ListMarkersFilter::VideoTags(tags) => {
+                    query_builder.push("JOIN json_each(v.video_tags) AS tag WHERE tag.value IN (");
+                    let mut list = query_builder.separated(",");
+
+                    for tag in tags {
+                        list.push_bind(tag);
+                    }
+                    list.push_unseparated(") ");
+                }
             }
         }
 
@@ -484,6 +493,7 @@ pub enum ListMarkersFilter {
     VideoIds(Vec<String>),
     MarkerTitles(Vec<String>),
     VideoPerformers(Vec<String>),
+    VideoTags(Vec<String>),
 }
 
 #[cfg(test)]

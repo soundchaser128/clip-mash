@@ -13,7 +13,7 @@ use tracing::{debug, info, warn};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::data::database::markers::{ListMarkersFilter, MarkerCount};
-use crate::data::database::videos::{VideoSearchQuery, VideoSource, VideoUpdate};
+use crate::data::database::videos::{TagCount, VideoSearchQuery, VideoSource, VideoUpdate};
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -701,4 +701,19 @@ pub async fn migrate_preview_images(State(state): State<Arc<AppState>>) -> Resul
     migrator.migrate_preview_images().await?;
 
     Ok(())
+}
+
+#[axum::debug_handler]
+#[utoipa::path(
+    get,
+    path = "/api/library/video/tags",
+    responses(
+        (status = 200, description = "List tags for videos", body = Vec<TagCount>),
+    )
+)]
+pub async fn list_video_tags(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<TagCount>>, AppError> {
+    let tags = state.database.videos.list_tags(100).await?;
+    Ok(Json(tags))
 }

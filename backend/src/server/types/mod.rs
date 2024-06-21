@@ -460,6 +460,7 @@ pub struct CreateClipsBody {
 pub enum InteractiveClipsQuery {
     MarkerTitles { data: Vec<String> },
     Performers { data: Vec<String> },
+    VideoTags { data: Vec<String> },
 }
 
 #[derive(Deserialize, Debug, ToSchema)]

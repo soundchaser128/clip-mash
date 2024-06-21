@@ -227,7 +227,10 @@ export interface UpdateMarker {
   title?: string | null
 }
 
-export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
+export interface TagCount {
+  count: number
+  tag: string
+}
 
 /**
  * Steadily accelerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat`
@@ -241,6 +244,8 @@ export type StrokeTypeOneOfThree = {
   /** Steadily accelerates the strokes from `start_strokes_per_beat` to `end_strokes_per_beat` */
   accelerate: StrokeTypeOneOfThreeAccelerate
 }
+
+export type StrokeType = StrokeTypeOneOf | StrokeTypeOneOfThree
 
 /**
  * Creates a stroke every `n` beats
@@ -513,6 +518,24 @@ export interface ListFileEntriesResponse {
   entries: FileSystemEntry[]
 }
 
+export type InteractiveClipsQueryOneOfFiveType =
+  (typeof InteractiveClipsQueryOneOfFiveType)[keyof typeof InteractiveClipsQueryOneOfFiveType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const InteractiveClipsQueryOneOfFiveType = {
+  videoTags: "videoTags",
+} as const
+
+export type InteractiveClipsQueryOneOfFive = {
+  data: string[]
+  type: InteractiveClipsQueryOneOfFiveType
+}
+
+export type InteractiveClipsQuery =
+  | InteractiveClipsQueryOneOf
+  | InteractiveClipsQueryOneOfThree
+  | InteractiveClipsQueryOneOfFive
+
 export type InteractiveClipsQueryOneOfThreeType =
   (typeof InteractiveClipsQueryOneOfThreeType)[keyof typeof InteractiveClipsQueryOneOfThreeType]
 
@@ -525,10 +548,6 @@ export type InteractiveClipsQueryOneOfThree = {
   data: string[]
   type: InteractiveClipsQueryOneOfThreeType
 }
-
-export type InteractiveClipsQuery =
-  | InteractiveClipsQueryOneOf
-  | InteractiveClipsQueryOneOfThree
 
 export type InteractiveClipsQueryOneOfType =
   (typeof InteractiveClipsQueryOneOfType)[keyof typeof InteractiveClipsQueryOneOfType]
@@ -556,11 +575,6 @@ export type HandyPatternOneOfFive = {
   type: HandyPatternOneOfFiveType
 }
 
-export type HandyPattern =
-  | HandyPatternOneOf
-  | HandyPatternOneOfThree
-  | HandyPatternOneOfFive
-
 export type HandyPatternOneOfThreeType =
   (typeof HandyPatternOneOfThreeType)[keyof typeof HandyPatternOneOfThreeType]
 
@@ -586,6 +600,11 @@ export type HandyPatternOneOf = {
   parameters: CycleAccellerateParameters
   type: HandyPatternOneOfType
 }
+
+export type HandyPattern =
+  | HandyPatternOneOf
+  | HandyPatternOneOfThree
+  | HandyPatternOneOfFive
 
 export interface HandyConfig {
   enabled: boolean
@@ -758,14 +777,6 @@ export interface ClipsResponse {
   videos: VideoDto[]
 }
 
-export type ClipPickerOptionsOneOfOnezeroType =
-  (typeof ClipPickerOptionsOneOfOnezeroType)[keyof typeof ClipPickerOptionsOneOfOnezeroType]
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ClipPickerOptionsOneOfOnezeroType = {
-  noSplit: "noSplit",
-} as const
-
 export type ClipPickerOptionsOneOfOnezero = {
   type: ClipPickerOptionsOneOfOnezeroType
 }
@@ -775,6 +786,14 @@ export type ClipPickerOptions =
   | ClipPickerOptionsOneOfFour
   | ClipPickerOptionsOneOfSeven
   | ClipPickerOptionsOneOfOnezero
+
+export type ClipPickerOptionsOneOfOnezeroType =
+  (typeof ClipPickerOptionsOneOfOnezeroType)[keyof typeof ClipPickerOptionsOneOfOnezeroType]
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ClipPickerOptionsOneOfOnezeroType = {
+  noSplit: "noSplit",
+} as const
 
 export type ClipPickerOptionsOneOfSevenAllOfType =
   (typeof ClipPickerOptionsOneOfSevenAllOfType)[keyof typeof ClipPickerOptionsOneOfSevenAllOfType]
@@ -1195,6 +1214,13 @@ export const listStashVideos = (params?: ListStashVideosParams) => {
   })
 }
 
+export const listVideoTags = () => {
+  return customInstance<TagCount[]>({
+    url: `/api/library/video/tags`,
+    method: "GET",
+  })
+}
+
 /**
  * @summary Gets details on a single video
  */
@@ -1488,6 +1514,9 @@ export type VideosNeedEncodingResult = NonNullable<
 >
 export type ListStashVideosResult = NonNullable<
   Awaited<ReturnType<typeof listStashVideos>>
+>
+export type ListVideoTagsResult = NonNullable<
+  Awaited<ReturnType<typeof listVideoTags>>
 >
 export type GetVideoResult = NonNullable<Awaited<ReturnType<typeof getVideo>>>
 export type UpdateVideoResult = NonNullable<

@@ -30,7 +30,6 @@ use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
 use crate::Result;
 
-pub const TAG_SEPARATOR: &str = ";";
 const VIDEO_EXTENSIONS: &[&str] = &["mp4", "m4v", "webm"];
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -265,7 +264,7 @@ impl VideoService {
                 if let Some(studio) = &scene.studio {
                     tags.push(studio.name.as_str());
                 }
-                let tags = tags.join(TAG_SEPARATOR);
+                let tags = serde_json::to_string(&tags).expect("tags must be serializable");
                 let id = generate_id();
                 let ffprobe_info = ffprobe.ok();
 
@@ -376,7 +375,8 @@ impl VideoService {
             new_tags.extend(scene.performers.iter().map(|p| p.name.clone()));
             let new_tags = Some(new_tags).filter(|t| !t.is_empty());
 
-            video.video_tags = new_tags.clone().map(|t| t.join(TAG_SEPARATOR));
+            video.video_tags =
+                Some(serde_json::to_string(&new_tags).expect("tags must be serializable"));
             video.video_title = new_title.clone();
 
             self.database

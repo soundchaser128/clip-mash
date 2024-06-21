@@ -66,7 +66,10 @@ function queryToSelection(query: URLSearchParams): TvSettings {
   }
 }
 
-function selectionToQuery(state: TvSettings): URLSearchParams {
+function selectionToQuery(
+  state: TvSettings,
+  withHandy: boolean,
+): URLSearchParams {
   const query = new URLSearchParams()
   for (const title of state.query) {
     query.append("query", title)
@@ -80,6 +83,11 @@ function selectionToQuery(state: TvSettings): URLSearchParams {
   if (state.seed?.trim().length > 0) {
     query.append("seed", state.seed)
   }
+
+  if (withHandy) {
+    query.append("handyEnabled", "true")
+  }
+
   return query
 }
 
@@ -116,8 +124,12 @@ const TvStartPage: React.FC = () => {
   }
 
   const onSubmit = async (values: TvSettings) => {
-    const query = selectionToQuery(values)
+    const withHandy = Boolean(
+      handySettings && config?.handy?.key && config.handy.enabled,
+    )
+    const query = selectionToQuery(values, withHandy)
 
+    // meh
     if (handySettings && config?.handy?.key && config.handy.enabled) {
       try {
         await startHandy({
@@ -149,7 +161,10 @@ const TvStartPage: React.FC = () => {
   }
 
   useEffect(() => {
-    navigate({search: selectionToQuery(state).toString()})
+    const withHandy = Boolean(
+      handySettings && config?.handy?.key && config.handy.enabled,
+    )
+    navigate({search: selectionToQuery(state, withHandy).toString()})
   }, [JSON.stringify(state)])
 
   return (

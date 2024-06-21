@@ -595,7 +595,7 @@ mod test {
             .unwrap();
         let video = database.videos.get_video(&video.id).await.unwrap().unwrap();
         assert_eq!(video.video_title, Some("Some title".into()));
-        assert_eq!(video.tags(), Some(vec!["tag1".into(), "tag2".into()]));
+        assert_eq!(video.tags(), vec!["tag1", "tag2"]);
     }
 
     #[sqlx::test]

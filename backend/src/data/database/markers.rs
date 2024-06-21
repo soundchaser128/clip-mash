@@ -3,11 +3,10 @@ use sqlx::{FromRow, QueryBuilder, SqliteConnection, SqliteExecutor, SqlitePool};
 use tracing::{debug, info};
 use utoipa::ToSchema;
 
-use super::videos::{DbVideo, VideoSource};
+use super::videos::{tags_from_string, DbVideo, VideoSource};
 use crate::data::database::unix_timestamp_now;
 use crate::data::stash_api::MarkerLike;
 use crate::server::types::{CreateMarker, UpdateMarker};
-use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
 
 #[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
@@ -54,10 +53,7 @@ pub struct DbMarkerWithVideo {
 
 impl DbMarkerWithVideo {
     pub fn tags(&self) -> Vec<String> {
-        self.video_tags
-            .clone()
-            .map(|s| s.split(TAG_SEPARATOR).map(|s| s.to_string()).collect())
-            .unwrap_or_default()
+        tags_from_string(self.video_tags.as_deref())
     }
 }
 

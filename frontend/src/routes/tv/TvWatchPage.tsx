@@ -1,4 +1,10 @@
-import {ClipsResponse, SongDto, fetchClipsInteractive, listSongs} from "@/api"
+import {
+  ClipsResponse,
+  SongDto,
+  fetchClipsInteractive,
+  listSongs,
+  pauseHandy,
+} from "@/api"
 import {getClipUrl} from "@/helpers/clips"
 import clsx from "clsx"
 import {useRef, useState} from "react"
@@ -13,7 +19,12 @@ import {
   HiSpeakerXMark,
 } from "react-icons/hi2"
 import useDebouncedSetQuery from "@/hooks/useDebouncedQuery"
-import {Link, LoaderFunction, useLoaderData} from "react-router-dom"
+import {
+  Link,
+  LoaderFunction,
+  useLoaderData,
+  useSearchParams,
+} from "react-router-dom"
 import DataList, {Data, Description} from "@/components/DataList"
 import {clamp} from "@/helpers/math"
 import Heading from "@/components/Heading"
@@ -65,6 +76,9 @@ const TvWatchPage: React.FC = () => {
   const {clips, music} = useLoaderData() as LoaderData
   const [collapsed, setCollapsed] = useState(false)
   const [clipDuration, setClipDuration] = useState(5.0)
+  const [params] = useSearchParams()
+  const handyEnabled = params.has("handyEnabled")
+
   const setQuery = useDebouncedSetQuery({
     parameterName: "clipDuration",
     replaceAll: false,
@@ -108,7 +122,7 @@ const TvWatchPage: React.FC = () => {
     setQuery.setQueryDebounced(event.target.value)
   }
 
-  const onTogglePlay = () => {
+  const onTogglePlay = async () => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause()
@@ -121,6 +135,8 @@ const TvWatchPage: React.FC = () => {
           audioRef.current.play()
         }
       }
+      // toggles paused state
+      await pauseHandy()
       setIsPlaying((p) => !p)
     }
   }

@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, file_path, interactive, source AS \"source: VideoSource\", \n                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on \n                    FROM videos\n                    WHERE video_tags NOT LIKE '[%'",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "file_path",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "interactive",
+        "ordinal": 2,
+        "type_info": "Bool"
+      },
+      {
+        "name": "source: VideoSource",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "duration",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "video_preview_image",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "stash_scene_id",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "video_title",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_tags",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "video_created_on",
+        "ordinal": 9,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "0409148f3235fa0f6b08aeaaeecee19e21abec1b867835e37fc42b17fb41e005"
+}

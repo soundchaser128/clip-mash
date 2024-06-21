@@ -13,7 +13,6 @@ use crate::data::database::videos::{DbVideo, VideoSource};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashApi;
 use crate::service::generator::PaddingType;
-use crate::service::video::TAG_SEPARATOR;
 use crate::util::{add_api_key, expect_file_name};
 
 pub struct StashSceneWrapper<'a> {
@@ -192,7 +191,7 @@ impl MarkerDtoConverter {
             scene_title: video.video_title.clone(),
             file_name: Some(expect_file_name(&video.file_path)),
             scene_interactive: video.interactive,
-            tags: video.tags().unwrap_or_default(),
+            tags: video.tags(),
             screenshot_url: self.screenshot_url(marker.rowid.unwrap()),
             index_within_video: marker.index_within_video as usize,
             source: video.source,
@@ -279,16 +278,13 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
 
 impl From<DbVideo> for VideoDto {
     fn from(value: DbVideo) -> Self {
+        let tags = value.tags();
         let title = value.video_title.unwrap_or_else(|| {
             Utf8Path::new(&value.file_path)
                 .file_name()
                 .map(From::from)
                 .unwrap_or_default()
         });
-        let tags = value
-            .video_tags
-            .map(|s| s.split(TAG_SEPARATOR).map(From::from).collect())
-            .unwrap_or_default();
 
         VideoDto {
             id: value.id,

@@ -294,6 +294,28 @@ impl Migrator {
         Ok(())
     }
 
+    async fn migrate_video_tags_to_json(&self) -> Result<()> {
+        let videos = self
+            .database
+            .videos
+            .get_videos(AllVideosFilter::NonJsonTags)
+            .await?;
+        for video in videos {
+            self.database
+                .videos
+                .update_video(
+                    &video.id,
+                    VideoUpdate {
+                        tags: Some(video.tags()),
+                        title: None,
+                    },
+                )
+                .await?;
+        }
+
+        Ok(())
+    }
+
     pub async fn run(&self) -> Result<()> {
         info!("running migrations");
         let start = Instant::now();
@@ -311,6 +333,7 @@ impl Migrator {
             self.database.markers.fix_all_video_indices(),
             self.migrate_settings(),
             self.set_performers_from_stash(),
+            self.migrate_video_tags_to_json(),
         )?;
 
         let elapsed = start.elapsed();

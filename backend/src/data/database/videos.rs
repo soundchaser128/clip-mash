@@ -13,8 +13,9 @@ use utoipa::{IntoParams, ToSchema};
 use super::markers::{DbMarker, VideoWithMarkers};
 use crate::data::database::unix_timestamp_now;
 use crate::server::types::{ListVideoDto, PageParameters, VideoLike};
-use crate::service::video::TAG_SEPARATOR;
 use crate::Result;
+
+const LEGACY_TAG_SEPARATOR: &str = ";";
 
 #[derive(Debug, Clone, Copy, sqlx::Type, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
 #[sqlx(rename_all = "lowercase")]
@@ -61,11 +62,20 @@ pub struct DbVideo {
     pub video_tags: Option<String>,
 }
 
+pub fn tags_from_string(tags: Option<&str>) -> Vec<String> {
+    let tags = tags.unwrap_or("");
+    if tags.starts_with("[") {
+        serde_json::from_str(tags).unwrap_or_default()
+    } else {
+        tags.split(LEGACY_TAG_SEPARATOR)
+            .map(|s| s.to_string())
+            .collect()
+    }
+}
+
 impl DbVideo {
-    pub fn tags(&self) -> Option<Vec<String>> {
-        self.video_tags
-            .clone()
-            .map(|s| s.split(TAG_SEPARATOR).map(|s| s.to_string()).collect())
+    pub fn tags(&self) -> Vec<String> {
+        tags_from_string(self.video_tags.as_deref())
     }
 }
 
@@ -113,6 +123,7 @@ pub enum AllVideosFilter {
     NoPreviewImage,
     NoTitle,
     NoPerformers,
+    NonJsonTags,
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -172,7 +183,8 @@ impl VideosDatabase {
                 query_builder.push(", ");
             }
             query_builder.push("video_tags = ");
-            query_builder.push_bind(tags.join(TAG_SEPARATOR));
+            let tags = serde_json::to_string(&tags)?;
+            query_builder.push_bind(tags);
         }
 
         query_builder.push(" WHERE id = ");
@@ -307,6 +319,17 @@ impl VideosDatabase {
                     WHERE (SELECT count(*) FROM video_performers vp WHERE vp.video_id = v.id) = 0 AND
                           v.stash_scene_id IS NOT NULL
                     "
+                )
+                .fetch_all(&self.pool)
+                .await
+            }
+            AllVideosFilter::NonJsonTags => {
+                sqlx::query_as!(
+                    DbVideo,
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", 
+                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on 
+                    FROM videos
+                    WHERE video_tags NOT LIKE '[%'"
                 )
                 .fetch_all(&self.pool)
                 .await

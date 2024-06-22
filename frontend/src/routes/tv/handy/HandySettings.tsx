@@ -3,6 +3,7 @@ import Heading from "@/components/Heading"
 import {DeepPartial} from "@/types/types"
 import {produce} from "immer"
 import {UseFormRegister, useForm} from "react-hook-form"
+import {HiCheck} from "react-icons/hi2"
 
 interface Props {
   onSubmit: (pattern: HandyPattern) => void
@@ -104,9 +105,12 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="max-w-xl self-center w-full"
+      className="max-w-xl self-center w-full flex flex-col"
     >
       <Heading level={2}>Handy settings</Heading>
+      <p className="text-sm mb-2">
+        Set up the pattern for the Handy to follow.
+      </p>
       <div className="form-control">
         <label className="label">
           <span className="label-text">Pattern type</span>
@@ -120,157 +124,164 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
           <option value="accellerate">Accelerate</option>
           <option value="cycle-accellerate">Accellerating cycle</option>
         </select>
-
-        <RangeInput
-          label="Slide range"
-          name="parameters.slideRange"
-          register={register}
-        />
-
-        {type === "accellerate" && (
-          <>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Session duration in minutes</span>
-              </label>
-
-              <input
-                className="input input-bordered"
-                required
-                type="number"
-                min={1}
-                {...register("parameters.sessionDuration", {
-                  valueAsNumber: true,
-                  required: true,
-                })}
-              />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Start speed</span>
-              </label>
-
-              <input
-                className="input input-bordered"
-                required
-                type="number"
-                min={1}
-                {...register("parameters.startSpeed", {
-                  valueAsNumber: true,
-                  required: true,
-                })}
-              />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">End speed</span>
-              </label>
-
-              <input
-                className="input input-bordered"
-                required
-                type="number"
-                min={1}
-                {...register("parameters.endSpeed", {
-                  valueAsNumber: true,
-                  required: true,
-                })}
-              />
-            </div>
-          </>
-        )}
-
-        {type === "random" && (
-          <>
-            <RangeInput
-              label="Speed range"
-              name="parameters.speedRange"
-              register={register}
-            />
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Randomness</span>
-              </label>
-
-              <input
-                className="input input-bordered"
-                required
-                type="number"
-                min={1}
-                {...register("parameters.jitter", {
-                  valueAsNumber: true,
-                  required: true,
-                })}
-              />
-            </div>
-
-            <RangeInput
-              label="Time between speed changes"
-              name="parameters.intervalRange"
-              register={register}
-            />
-          </>
-        )}
-
-        {type === "cycle-accellerate" && (
-          <>
-            <RangeInput
-              label="Start speed range"
-              name="parameters.startRange"
-              register={register}
-            />
-
-            <RangeInput
-              label="End speed range"
-              name="parameters.endRange"
-              register={register}
-            />
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">
-                  Session duration (in minutes)
-                </span>
-              </label>
-
-              <input
-                className="input input-bordered"
-                required
-                type="number"
-                min={1}
-                {...register("parameters.sessionDuration", {
-                  valueAsNumber: true,
-                  required: true,
-                })}
-              />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Cycle duration in minutes</span>
-              </label>
-
-              <input
-                className="input input-bordered"
-                required
-                type="number"
-                min={1}
-                {...register("parameters.cycleDuration", {
-                  valueAsNumber: true,
-                  required: true,
-                })}
-              />
-            </div>
-          </>
-        )}
-
-        <button type="submit" className="btn btn-success mt-4 self-end">
-          Submit
-        </button>
       </div>
+      <p className="mt-1 mb-2 text-sm">
+        {type === "accellerate" &&
+          "The speed will increase over the selected duration from the start speed to the end speed."}
+        {type === "random" &&
+          "The speed will change randomly between the two selected values. The amount of randomness adjusts how large each change can be."}
+        {type === "cycle-accellerate" &&
+          "The speed starts out cycling between the two selected start range values and will gradually increase over the selected session duration until it reaches the end range."}
+      </p>
+
+      <RangeInput
+        label="Slide range"
+        name="parameters.slideRange"
+        register={register}
+      />
+
+      {type === "accellerate" && (
+        <>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Session duration in minutes</span>
+            </label>
+
+            <input
+              className="input input-bordered"
+              required
+              type="number"
+              min={1}
+              {...register("parameters.sessionDuration", {
+                valueAsNumber: true,
+                required: true,
+              })}
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Start speed</span>
+            </label>
+
+            <input
+              className="input input-bordered"
+              required
+              type="number"
+              min={1}
+              {...register("parameters.startSpeed", {
+                valueAsNumber: true,
+                required: true,
+              })}
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">End speed</span>
+            </label>
+
+            <input
+              className="input input-bordered"
+              required
+              type="number"
+              min={1}
+              {...register("parameters.endSpeed", {
+                valueAsNumber: true,
+                required: true,
+              })}
+            />
+          </div>
+        </>
+      )}
+
+      {type === "random" && (
+        <>
+          <RangeInput
+            label="Speed range"
+            name="parameters.speedRange"
+            register={register}
+          />
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Randomness</span>
+            </label>
+
+            <input
+              className="input input-bordered"
+              required
+              type="number"
+              min={1}
+              {...register("parameters.jitter", {
+                valueAsNumber: true,
+                required: true,
+              })}
+            />
+          </div>
+
+          <RangeInput
+            label="Time between speed changes (in seconds)"
+            name="parameters.intervalRange"
+            register={register}
+          />
+        </>
+      )}
+
+      {type === "cycle-accellerate" && (
+        <>
+          <RangeInput
+            label="Start speed range"
+            name="parameters.startRange"
+            register={register}
+          />
+
+          <RangeInput
+            label="End speed range"
+            name="parameters.endRange"
+            register={register}
+          />
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Session duration (in minutes)</span>
+            </label>
+
+            <input
+              className="input input-bordered"
+              required
+              type="number"
+              min={1}
+              {...register("parameters.sessionDuration", {
+                valueAsNumber: true,
+                required: true,
+              })}
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Cycle duration (in minutes)</span>
+            </label>
+
+            <input
+              className="input input-bordered"
+              required
+              type="number"
+              min={1}
+              {...register("parameters.cycleDuration", {
+                valueAsNumber: true,
+                required: true,
+              })}
+            />
+          </div>
+        </>
+      )}
+
+      <button type="submit" className="btn btn-success mt-4 self-end">
+        <HiCheck />
+        Submit
+      </button>
     </form>
   )
 }

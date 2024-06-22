@@ -11,7 +11,12 @@ import Modal from "@/components/Modal"
 import {useConfig} from "@/hooks/useConfig"
 import React, {useEffect, useState} from "react"
 import {useForm} from "react-hook-form"
-import {HiArrowPath, HiChevronLeft, HiRocketLaunch} from "react-icons/hi2"
+import {
+  HiAdjustmentsHorizontal,
+  HiArrowPath,
+  HiChevronLeft,
+  HiRocketLaunch,
+} from "react-icons/hi2"
 import {
   Link,
   LoaderFunction,
@@ -188,8 +193,8 @@ const TvStartPage: React.FC = () => {
         className="flex flex-col max-w-xl self-center"
       >
         <p className="mb-2">
-          Select markers or performers and click on 🚀 Start to watch a
-          compilation generated for you in the browser!
+          Select markers, performers or video tags and click on 🚀 Start to
+          watch a compilation generated for you in the browser!
         </p>
 
         <div role="tablist" className="tabs tabs-bordered mb-4">
@@ -269,9 +274,10 @@ const TvStartPage: React.FC = () => {
         {config?.handy?.enabled && (
           <button
             type="button"
-            className="btn self-end"
+            className="btn self-end btn-outline"
             onClick={() => setHandySettingsOpen((open) => !open)}
           >
+            <HiAdjustmentsHorizontal />
             Set up Handy
           </button>
         )}

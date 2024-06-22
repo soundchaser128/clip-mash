@@ -226,16 +226,19 @@ const VideoGrid: React.FC<Props> = ({
       <section className="w-full flex py-4 items-center justify-between">
         <div className="flex items-center gap-2">
           <PageSizeSelect />
-          <label className="label" htmlFor="showDetails">
-            <span className="label-text mr-1">Show details</span>
-            <input
-              type="checkbox"
-              className="checkbox checkbox-secondary"
-              checked={showingDetails}
-              onChange={(e) => setShowingDetails(e.target.checked)}
-              name="showDetails"
-            />
-          </label>
+
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text mr-1">Show details</span>
+              <input
+                type="checkbox"
+                className="checkbox checkbox-secondary"
+                checked={showingDetails}
+                onChange={(e) => setShowingDetails(e.target.checked)}
+                name="showDetails"
+              />
+            </label>
+          </div>
         </div>
 
         <div className="flex flex-col">

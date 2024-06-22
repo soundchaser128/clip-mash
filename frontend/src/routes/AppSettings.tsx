@@ -171,6 +171,12 @@ function AppConfigPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="w-full">
         <section className="flex flex-col mb-4">
           <h2 className="text-xl font-bold mb-2">Stash configuration</h2>
+          <p className="text-sm mb-2">
+            <ExternalLink href="https://stashapp.cc/">Stash</ExternalLink> is an
+            organizer for your porn. If you have a Stash instance running, you
+            can connect it to ClipMash to import the scenes and markers in your
+            library.
+          </p>
           <div className="form-control">
             <label className="label" htmlFor="stashUrl">
               <span className="label-text">URL of your Stash instance:</span>
@@ -234,10 +240,17 @@ function AppConfigPage() {
 
         <section className="flex flex-col mb-4">
           <h2 className="text-xl font-bold mb-2">Handy settings</h2>
+          <p className="text-sm mb-2">
+            ClipMash can send commands to your{" "}
+            <ExternalLink href="https://www.handyfeeling.com/">
+              Handy
+            </ExternalLink>{" "}
+            device for use with the ClipMash TV feature. To enable this feature,
+            you need to enter your Handy connection key.
+          </p>
           <div className="form-control">
-            <label className="label">
+            <label className="label cursor-pointer">
               <span className="label-text">Enable Handy integration</span>
-
               <input
                 type="checkbox"
                 className="checkbox checkbox-primary"

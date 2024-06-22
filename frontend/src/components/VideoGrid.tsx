@@ -1,6 +1,11 @@
 import {ListVideoDto, ListVideoDtoPage, updateVideo} from "@/api"
 import VideoCard, {AspectRatio} from "./VideoCard"
-import {useLoaderData, useNavigation, useSearchParams} from "react-router-dom"
+import {
+  useLoaderData,
+  useNavigation,
+  useRevalidator,
+  useSearchParams,
+} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {HiFolder, HiMagnifyingGlass, HiXMark} from "react-icons/hi2"
 import Pagination from "./Pagination"
@@ -84,6 +89,7 @@ const VideoGrid: React.FC<Props> = ({
   }
 
   const config = useConfig()
+  const revalidator = useRevalidator()
   const videos = page.content
   const {register, handleSubmit, watch} = useForm<FilterInputs>({
     mode: "onChange",
@@ -124,6 +130,12 @@ const VideoGrid: React.FC<Props> = ({
 
   function onShowTagModal(video: ListVideoDto) {
     setEditingTags(video)
+  }
+
+  async function onAddTag(video: ListVideoDto, tag: string) {
+    await updateVideo(video.video.id, {tags: [...video.video.tags, tag]})
+    revalidator.revalidate()
+    setEditingTags(undefined)
   }
 
   return (
@@ -258,8 +270,9 @@ const VideoGrid: React.FC<Props> = ({
       </section>
 
       <AddTagModal
-        video={editingTags}
+        isOpen={!!editingTags}
         onClose={() => setEditingTags(undefined)}
+        onSubmit={(tag) => onAddTag(editingTags!, tag)}
       />
 
       {noVideos && (

@@ -34,6 +34,16 @@ pub type Result<T> = std::result::Result<T, Report>;
 // 100 MB
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
+fn get_debug_hostname() -> &'static str {
+    use std::env::consts::OS;
+
+    match OS {
+        "windows" => "0.0.0.0",
+        "macos" => "[::1]",
+        _ => "localhost",
+    }
+}
+
 fn get_port() -> u16 {
     use rand::Rng;
 
@@ -55,13 +65,8 @@ fn get_port() -> u16 {
 }
 
 fn get_host() -> String {
-    let is_mac = cfg!(target_os = "macos");
     if cfg!(debug_assertions) {
-        if is_mac {
-            "[::1]".into()
-        } else {
-            "127.0.0.1".into()
-        }
+        get_debug_hostname().into()
     } else {
         std::env::args()
             .nth(1)

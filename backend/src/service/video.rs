@@ -38,16 +38,19 @@ pub enum AddVideosRequest {
     Local {
         path: String,
         recurse: bool,
+        tags: Option<Vec<String>>,
     },
     Download {
         urls: Vec<String>,
+        tags: Option<Vec<String>>,
     },
     #[serde(rename_all = "camelCase")]
-    Stash {
-        scene_ids: Vec<i64>,
-    },
+    Stash { scene_ids: Vec<i64> },
 }
 
+fn tags_to_string(tags: &[String]) -> String {
+    serde_json::to_string(tags).expect("tags must be serializable")
+}
 pub struct VideoService {
     database: Database,
     directories: Directories,
@@ -92,7 +95,7 @@ impl VideoService {
         .await?
     }
 
-    async fn add_local_video(&self, path: Utf8PathBuf) -> Result<Option<DbVideo>> {
+    async fn add_local_video(&self, path: Utf8PathBuf, tags: &[String]) -> Result<Option<DbVideo>> {
         let video_exists = self
             .database
             .videos
@@ -128,7 +131,7 @@ impl VideoService {
                 video_preview_image: Some(image_path.to_string()),
                 stash_scene_id: None,
                 title: Some(path.file_stem().unwrap().to_string()),
-                tags: None,
+                tags: Some(tags_to_string(tags)),
                 created_on: file_created,
             };
             info!("inserting new video {create_video:#?}");
@@ -144,11 +147,14 @@ impl VideoService {
         &self,
         path: impl AsRef<Utf8Path>,
         recurse: bool,
+        tags: Vec<String>,
     ) -> Result<Vec<DbVideo>> {
         let start = Instant::now();
         let entries = self.gather_files(path.as_ref().to_owned(), recurse).await?;
         debug!("found files {entries:?} (recurse = {recurse})");
-        let futures = entries.into_iter().map(|path| self.add_local_video(path));
+        let futures = entries
+            .into_iter()
+            .map(|path| self.add_local_video(path, &tags));
         let videos = parallelize(futures)
             .await
             .into_iter()
@@ -198,7 +204,12 @@ impl VideoService {
         self.database.markers.create_new_marker(create_marker).await
     }
 
-    async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
+    async fn persist_downloaded_video(
+        &self,
+        id: String,
+        path: Utf8PathBuf,
+        tags: Vec<String>,
+    ) -> Result<DbVideo> {
         let ffprobe = ffprobe(path.as_str(), &self.ffmpeg_location).await?;
         let duration = ffprobe.duration();
         let image_path = self
@@ -215,7 +226,7 @@ impl VideoService {
             video_preview_image: Some(image_path.to_string()),
             stash_scene_id: None,
             title: path.file_stem().map(String::from),
-            tags: None,
+            tags: Some(tags_to_string(&tags)),
             created_on: None,
         };
         info!("persisting downloaded video {video:#?}");
@@ -325,13 +336,21 @@ impl VideoService {
 
     pub async fn add_videos(&self, request: AddVideosRequest) -> Result<Vec<DbVideo>> {
         match request {
-            AddVideosRequest::Local { path, recurse } => {
-                self.add_new_local_videos(path, recurse).await
+            AddVideosRequest::Local {
+                path,
+                recurse,
+                tags,
+            } => {
+                self.add_new_local_videos(path, recurse, tags.unwrap_or_default())
+                    .await
             }
-            AddVideosRequest::Download { urls } => {
-                let futures = future::try_join_all(urls.into_iter().map(|url| async move {
-                    let (id, path) = self.download_video(url.parse()?).await?;
-                    self.persist_downloaded_video(id, path).await
+            AddVideosRequest::Download { urls, tags } => {
+                let futures = future::try_join_all(urls.into_iter().map(|url| {
+                    let tags = tags.clone().unwrap_or_default();
+                    async move {
+                        let (id, path) = self.download_video(url.parse()?).await?;
+                        self.persist_downloaded_video(id, path, tags).await
+                    }
                 }));
 
                 futures.await

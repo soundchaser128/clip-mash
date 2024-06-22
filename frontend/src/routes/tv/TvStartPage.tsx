@@ -117,6 +117,9 @@ const TvStartPage: React.FC = () => {
   const [handySettings, setHandySettings] = useState<HandyPattern | null>(null)
   const state = watch()
   const toast = useCreateToast()
+  const withHandy = Boolean(
+    handySettings && config?.handy?.key && config.handy.enabled,
+  )
 
   let items: Item[] = []
   switch (state.queryType) {
@@ -169,11 +172,9 @@ const TvStartPage: React.FC = () => {
   }
 
   useEffect(() => {
-    const withHandy = Boolean(
-      handySettings && config?.handy?.key && config.handy.enabled,
-    )
     navigate({search: selectionToQuery(state, withHandy).toString()})
-  }, [JSON.stringify(state)])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(state), withHandy])
 
   return (
     <main className="container pt-2 px-1 ml-auto mr-auto flex flex-col min-h-screen">

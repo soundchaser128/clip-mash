@@ -982,6 +982,8 @@ export const AddVideosRequestOneOfThreeType = {
 } as const
 
 export type AddVideosRequestOneOfThree = {
+  /** @nullable */
+  tags?: string[] | null
   type: AddVideosRequestOneOfThreeType
   urls: string[]
 }
@@ -997,6 +999,8 @@ export const AddVideosRequestOneOfType = {
 export type AddVideosRequestOneOf = {
   path: string
   recurse: boolean
+  /** @nullable */
+  tags?: string[] | null
   type: AddVideosRequestOneOfType
 }
 

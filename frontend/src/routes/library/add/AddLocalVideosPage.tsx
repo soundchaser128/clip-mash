@@ -1,4 +1,4 @@
-import {HiCheck} from "react-icons/hi2"
+import {HiCheck, HiPlus} from "react-icons/hi2"
 import {useNavigate, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {useEffect, useState} from "react"
@@ -6,6 +6,7 @@ import Loader from "@/components/Loader"
 import {addNewVideos, listFileEntries, ListFileEntriesResponse} from "@/api"
 import FileBrowser from "@/components/FileBrowser"
 import {useCreateToast} from "@/hooks/useToast"
+import AddTagModal from "@/components/AddTagModal"
 
 interface Inputs {
   path: string
@@ -15,6 +16,8 @@ interface Inputs {
 export default function SelectVideos() {
   const navigate = useNavigate()
   const [files, setFiles] = useState<ListFileEntriesResponse>()
+  const [tags, setTags] = useState<string[]>([])
+  const [editingTags, setEditingTags] = useState(false)
   const [query, setQuery] = useSearchParams()
   const path = query.get("path")
   const [submitting, setSubmitting] = useState(false)
@@ -32,6 +35,7 @@ export default function SelectVideos() {
       type: "local",
       path: values.path,
       recurse: values.recurse,
+      tags,
     })
     navigate("/library")
   }
@@ -66,6 +70,15 @@ export default function SelectVideos() {
     setQuery({path})
   }
 
+  const onShowModal = () => {
+    setEditingTags(true)
+  }
+
+  const onAddTag = (tag: string) => {
+    setTags((prev) => [...prev, tag])
+    setEditingTags(false)
+  }
+
   return (
     <>
       <form
@@ -81,6 +94,23 @@ export default function SelectVideos() {
               onSelectItem={(e) => onSelectEntry(e.fullPath)}
               control={control}
             />
+            <div className="flex justify-between mt-2 w-full items-center">
+              <ul className="inline-flex flex-wrap gap-y-1 gap-x-0.5 -ml-2">
+                {tags.map((tag) => (
+                  <li key={tag} className="badge">
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={onShowModal}
+                type="button"
+                className="btn btn-sm self-end"
+              >
+                <HiPlus /> Add tag(s) to all videos
+              </button>
+            </div>
+
             <div className="form-control justify-between w-full">
               <label className="label cursor-pointer">
                 <span className="label-text">
@@ -108,6 +138,12 @@ export default function SelectVideos() {
           </Loader>
         )}
       </form>
+
+      <AddTagModal
+        isOpen={editingTags}
+        onSubmit={onAddTag}
+        onClose={() => setEditingTags(false)}
+      />
     </>
   )
 }

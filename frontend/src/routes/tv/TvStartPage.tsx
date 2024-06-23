@@ -232,6 +232,11 @@ const TvStartPage: React.FC = () => {
         </div>
 
         <ul className="flex gap-1 flex-wrap">
+          {items.length === 0 && (
+            <li className="my-4 text-center font-bold w-full">
+              No items available
+            </li>
+          )}
           {items.map((item) => (
             <li key={item.title}>
               <input

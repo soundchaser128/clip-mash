@@ -16,7 +16,9 @@ import {
   HiArrowPath,
   HiChevronLeft,
   HiRocketLaunch,
+  HiXMark,
 } from "react-icons/hi2"
+import {FaDice} from "react-icons/fa6"
 import {
   Link,
   LoaderFunction,
@@ -102,15 +104,13 @@ function selectionToQuery(
 
 // TODO
 //  * make the list of items searchable?
-//  * add a button to clear the form
-//  * add a button to select all items
-//  * add a button to select random items
+//  * add a forth tab for search query
 const TvStartPage: React.FC = () => {
   const navigate = useNavigate()
   const data = useLoaderData() as LoaderData
   const config = useConfig()
   const [queryParms] = useSearchParams()
-  const {register, watch, handleSubmit, setValue} = useForm<TvSettings>({
+  const {register, watch, handleSubmit, setValue, reset} = useForm<TvSettings>({
     defaultValues: queryToSelection(queryParms),
   })
   const [handySettingsOpen, setHandySettingsOpen] = useState(false)
@@ -135,9 +135,6 @@ const TvStartPage: React.FC = () => {
   }
 
   const onSubmit = async (values: TvSettings) => {
-    const withHandy = Boolean(
-      handySettings && config?.handy?.key && config.handy.enabled,
-    )
     const query = selectionToQuery(values, withHandy)
 
     // meh
@@ -169,6 +166,14 @@ const TvStartPage: React.FC = () => {
   const onGenerateSeed = async () => {
     const seed = await generateRandomSeed()
     setValue("seed", seed)
+  }
+
+  const onSelectRandom = () => {
+    const randomItems = items
+      .map((item) => item.title)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 5)
+    setValue("query", randomItems)
   }
 
   useEffect(() => {
@@ -283,14 +288,34 @@ const TvStartPage: React.FC = () => {
           </button>
         )}
 
-        <button
-          disabled={!state.query.length}
-          type="submit"
-          className="btn btn-success self-center mt-2 btn-lg text-xl w-64 mb-4"
-        >
-          <HiRocketLaunch className="mr-1" />
-          Start
-        </button>
+        <div className="w-full grid grid-cols-3 gap-2 mb-4 mt-2">
+          <button
+            type="button"
+            className="btn btn-outline btn-error self-center"
+            onClick={() => reset()}
+          >
+            <HiXMark />
+            Reset
+          </button>
+
+          <button
+            disabled={!state.query.length}
+            type="submit"
+            className="btn btn-success btn-lg text-xl"
+          >
+            <HiRocketLaunch className="mr-1" />
+            Start
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-outline self-center"
+            onClick={onSelectRandom}
+          >
+            <FaDice />
+            I&apos;m feeling lucky
+          </button>
+        </div>
       </form>
 
       <Modal isOpen={handySettingsOpen} size="fluid">

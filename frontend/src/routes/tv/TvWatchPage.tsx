@@ -348,7 +348,8 @@ const TvWatchPage: React.FC = () => {
               )}
               <Description>Time played / Total duration:</Description>
               <Data>
-                {formatSeconds(timePlayed)} / {formatSeconds(totalDuration)}
+                {formatSeconds(timePlayed, "short")} /{" "}
+                {formatSeconds(totalDuration, "short")}
               </Data>
             </DataList>
           </>

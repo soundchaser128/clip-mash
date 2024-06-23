@@ -67,14 +67,14 @@ export default function ListVideos() {
     <>
       <JumpToTop />
       <div className="grid grid-cols-3 w-full my-4 items-center">
-        <div className="flex gap-2 justify-start">
-          <button onClick={onDeselectAll} className="btn btn-error">
-            <HiXMark className="mr-1" />
-            Deselect all
-          </button>
-          <button onClick={onSelectAll} className="btn btn-secondary">
+        <div className="join">
+          <button onClick={onSelectAll} className="btn btn-secondary join-item">
             <HiCheck className="mr-1" />
             Select all
+          </button>
+          <button onClick={onDeselectAll} className="btn btn-error join-item">
+            <HiXMark className="mr-1" />
+            Deselect all
           </button>
         </div>
         <div className="place-self-center text-center mb-4">
@@ -100,7 +100,7 @@ export default function ListVideos() {
         onVideoClick={onToggleCheckbox}
         isVideoDisabled={isVideoDisabled}
         noVideosFoundMessage="No videos with markers found. Try going back to the library and adding some markers."
-        actionChildren={(video, aspectRatio) => (
+        actionChildren={(video) => (
           <>
             <div className="form-control">
               <label className="label cursor-pointer">

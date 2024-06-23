@@ -7,13 +7,12 @@ use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::{
-    unix_timestamp_now, DbMarker, DbMarkerWithVideo, DbVideo, LocalVideoWithMarkers, VideoSource,
-};
+use crate::data::database::markers::{DbMarker, DbMarkerWithVideo, VideoWithMarkers};
+use crate::data::database::unix_timestamp_now;
+use crate::data::database::videos::{DbVideo, VideoSource};
 use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
 use crate::data::stash_api::StashApi;
 use crate::service::generator::PaddingType;
-use crate::service::video::TAG_SEPARATOR;
 use crate::util::{add_api_key, expect_file_name};
 
 pub struct StashSceneWrapper<'a> {
@@ -192,7 +191,7 @@ impl MarkerDtoConverter {
             scene_title: video.video_title.clone(),
             file_name: Some(expect_file_name(&video.file_path)),
             scene_interactive: video.interactive,
-            tags: video.tags().unwrap_or_default(),
+            tags: video.tags(),
             screenshot_url: self.screenshot_url(marker.rowid.unwrap()),
             index_within_video: marker.index_within_video as usize,
             source: video.source,
@@ -229,7 +228,6 @@ impl MarkerDtoConverter {
 pub struct VideoDto {
     pub id: String,
     pub title: String,
-    pub performers: Vec<String>,
     pub file_name: String,
     pub file_path: Option<String>,
     pub interactive: bool,
@@ -268,7 +266,6 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
                 .title
                 .or(value.files.get(0).map(|m| m.basename.clone()))
                 .unwrap_or_default(),
-            performers: value.performers.into_iter().map(|p| p.name).collect(),
             file_name: file.basename.clone(),
             interactive: value.interactive,
             source: VideoSource::Stash,
@@ -281,22 +278,18 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
 
 impl From<DbVideo> for VideoDto {
     fn from(value: DbVideo) -> Self {
+        let tags = value.tags();
         let title = value.video_title.unwrap_or_else(|| {
             Utf8Path::new(&value.file_path)
                 .file_name()
                 .map(From::from)
                 .unwrap_or_default()
         });
-        let tags = value
-            .video_tags
-            .map(|s| s.split(TAG_SEPARATOR).map(From::from).collect())
-            .unwrap_or_default();
 
         VideoDto {
             id: value.id,
             stash_scene_id: value.stash_scene_id,
             title,
-            performers: vec![],
             interactive: value.interactive,
             file_name: expect_file_name(&value.file_path),
             source: value.source,
@@ -330,7 +323,8 @@ impl StashVideoDto {
         Self {
             id: dto.id,
             title: dto.title,
-            performers: dto.performers,
+            // TODO
+            performers: vec![],
             file_name: dto.file_name,
             interactive: dto.interactive,
             source: dto.source,
@@ -351,6 +345,7 @@ pub struct SelectedMarker {
     pub video_id: String,
     pub selected_range: (f64, f64),
     pub index_within_video: usize,
+    #[allow(unused)]
     pub selected: Option<bool>,
     pub title: String,
     pub loops: usize,
@@ -361,7 +356,7 @@ pub struct SelectedMarker {
 #[serde(rename_all = "camelCase")]
 pub struct RandomizedClipOptions {
     pub base_duration: f64,
-    pub divisors: Vec<f64>,
+    pub spread: f64,
 }
 
 #[derive(Deserialize, Debug, Clone, Copy, Serialize, ToSchema)]
@@ -447,7 +442,7 @@ pub struct WeightedRandomClipOptions {
 #[serde(rename_all = "camelCase")]
 pub struct EqualLengthClipOptions {
     pub clip_duration: f64,
-    pub divisors: Vec<f64>,
+    pub spread: f64,
     pub length: Option<f64>,
     pub min_clip_duration: Option<f64>,
 }
@@ -455,10 +450,26 @@ pub struct EqualLengthClipOptions {
 #[derive(Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateClipsBody {
-    pub clip_order: ClipOrder,
     pub markers: Vec<SelectedMarker>,
     pub seed: Option<String>,
     pub clips: ClipOptions,
+}
+
+#[derive(Deserialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase", tag = "type")]
+pub enum InteractiveClipsQuery {
+    MarkerTitles { data: Vec<String> },
+    Performers { data: Vec<String> },
+    VideoTags { data: Vec<String> },
+}
+
+#[derive(Deserialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateInteractiveClipsBody {
+    pub query: InteractiveClipsQuery,
+    pub clip_duration: f64,
+    pub order: ClipOrder,
+    pub seed: Option<String>,
 }
 
 #[derive(Serialize, Debug, ToSchema)]
@@ -477,8 +488,8 @@ pub struct ListVideoDto {
     pub marker_count: usize,
 }
 
-impl From<LocalVideoWithMarkers> for ListVideoDto {
-    fn from(value: LocalVideoWithMarkers) -> Self {
+impl From<VideoWithMarkers> for ListVideoDto {
+    fn from(value: VideoWithMarkers) -> Self {
         ListVideoDto {
             video: value.video.into(),
             marker_count: value.markers.len(),
@@ -503,7 +514,7 @@ impl VideoDetailsDtoConverter {
         Self { marker_converter }
     }
 
-    pub fn from_db(&self, value: LocalVideoWithMarkers) -> VideoDetailsDto {
+    pub fn from_db(&self, value: VideoWithMarkers) -> VideoDetailsDto {
         let db_video = value.video.clone();
         VideoDetailsDto {
             video: value.video.into(),
@@ -617,6 +628,7 @@ pub struct PageParameters {
     pub page: Option<usize>,
     pub size: Option<usize>,
     pub sort: Option<String>,
+    #[allow(unused)]
     pub dir: Option<SortDirection>,
 }
 
@@ -674,6 +686,7 @@ pub struct CreateMarker {
     pub title: String,
     pub index_within_video: i64,
     pub preview_image_path: Option<String>,
+    #[allow(unused)]
     pub video_interactive: bool,
     pub created_on: Option<i64>,
     pub marker_stash_id: Option<i64>,

@@ -8,6 +8,13 @@ use crate::Result;
 #[derive(Debug, Clone, Deserialize, Serialize, Default, ToSchema)]
 pub struct Settings {
     pub stash: StashConfig,
+    pub handy: Option<HandyConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, Default, ToSchema)]
+pub struct HandyConfig {
+    pub key: String,
+    pub enabled: bool,
 }
 
 #[derive(Clone)]

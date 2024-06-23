@@ -1,21 +1,27 @@
-# Compilation '{{ video.title }}'
+# Compilation '{ title }'
+
 Created with [ClipMash](https://github.com/soundchaser128/clip-mash).
 
 ## Video information
-- Resolution: **{{ video.width }} x {{ video.height }}**
-- Frames per second: **{{ video.fps }}**
-- Video codec: **{{ video.codec }}**
+
+- Resolution: **{ width } x { height }**
+- Frames per second: **{ fps }**
+- Video codec: **{ codec }**
 
 ## Clips
+
 | Video | Description | Start | End |
 | ----- | ----------- | ----- | --- |
-{% for clip in video.clips -%}
-| {{ clip.video_title }} | {{clip.marker_title}} | {{ clip.start }} | {{ clip.end }} |
-{% endfor -%}
+
+{{ for value in clips }}
+| { clip.video_title } | {clip.marker_title} | { clip.start } | { clip.end } |
+{{ endfor }}
 
 ## Videos
+
 | Source | Title | Interactive |
 | ------ | ----- | ----------- |
-{% for video in video.videos -%}
-| {{ video.source }} | {{ video.title }} | {{ video.interactive }}
-{% endfor -%}
+
+{{ for v in videos }}
+| { v.source } | { v.title } | { v.interactive }
+{{ endfor }}

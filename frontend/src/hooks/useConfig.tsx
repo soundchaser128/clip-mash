@@ -5,7 +5,7 @@ const ConfigContext = createContext<Settings | undefined>(undefined)
 
 export const useConfig = () => {
   const config = useContext(ConfigContext)
-  return config!
+  return config
 }
 
 interface ConfigProviderProps {

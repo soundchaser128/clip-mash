@@ -127,7 +127,7 @@ export default function ListVideos() {
         actionChildren={(video, aspectRatio) => (
           <>
             <div
-              className={clsx("flex gap-1", {
+              className={clsx("flex gap-1 items-center", {
                 "flex-col": aspectRatio === "tall",
               })}
             >

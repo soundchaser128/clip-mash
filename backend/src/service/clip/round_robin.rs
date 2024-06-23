@@ -1,5 +1,5 @@
 use rand::rngs::StdRng;
-use tracing::info;
+use tracing::{debug, info};
 
 use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
@@ -66,7 +66,7 @@ impl ClipPicker for RoundRobinClipPicker {
                 );
                 let duration = end - start;
                 if (has_music && duration > 0.0) || (!has_music && duration >= min_duration) {
-                    info!(
+                    debug!(
                         "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
                         marker.video_id, marker.title
                     );
@@ -110,13 +110,13 @@ mod test {
     use float_cmp::assert_approx_eq;
     use tracing_test::traced_test;
 
+    use crate::helpers::random::create_seeded_rng;
     use crate::server::types::{
         Beats, ClipLengthOptions, MeasureCount, RoundRobinClipOptions, SongClipOptions,
     };
     use crate::service::clip::round_robin::RoundRobinClipPicker;
     use crate::service::clip::ClipPicker;
     use crate::service::fixtures;
-    use crate::util::create_seeded_rng;
 
     #[traced_test]
     #[test]

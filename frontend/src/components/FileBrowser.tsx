@@ -9,6 +9,7 @@ export interface Props<T extends FieldValues> {
   name: Path<T>
   onSelectItem: (entry: FileSystemEntry) => void
   control: Control<T>
+  drives: string[]
 }
 
 function FileBrowser<T extends FieldValues>({
@@ -16,6 +17,7 @@ function FileBrowser<T extends FieldValues>({
   onSelectItem,
   name,
   control,
+  drives,
 }: Props<T>) {
   const handleSelectItem = (entry: FileSystemEntry) => {
     onSelectItem(entry)
@@ -40,6 +42,27 @@ function FileBrowser<T extends FieldValues>({
           )}
         />
       </div>
+
+      {drives.length > 0 && (
+        <ul className="menu bg-base-200 rounded-box w-full flex-nowrap mb-4">
+          {drives.map((drive) => (
+            <li key={drive}>
+              <button
+                onClick={() =>
+                  onSelectItem({
+                    fileName: drive,
+                    fullPath: drive,
+                    type: "directory",
+                  })
+                }
+                type="button"
+              >
+                {drive}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <ul className="menu bg-base-200 rounded-box w-full overflow-y-scroll flex-nowrap">
         {files.map((file) => (

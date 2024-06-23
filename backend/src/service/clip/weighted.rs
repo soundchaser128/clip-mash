@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::rngs::StdRng;
-use tracing::info;
+use tracing::{debug, info};
 
 use super::ClipPicker;
 use crate::server::types::{Clip, WeightedRandomClipOptions};
@@ -77,10 +77,6 @@ impl ClipPicker for WeightedRandomClipPicker {
             }) = marker_state.find_marker_by_title(marker_tag, rng)
             {
                 let duration = end - start;
-                info!(
-                    "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
-                    marker.video_id, marker.title
-                );
                 clips.push(Clip {
                     index_within_marker: index,
                     index_within_video: marker.index_within_video,
@@ -90,8 +86,8 @@ impl ClipPicker for WeightedRandomClipPicker {
                     video_id: marker.video_id.clone(),
                     marker_title: marker.title.clone(),
                 });
-                info!(
-                    "adding clip for video {} with duration {duration} and title {}",
+                debug!(
+                    "adding clip for video {} with duration {duration} (skipped {skipped_duration}) and title {}",
                     marker.video_id, marker.title
                 );
 
@@ -115,6 +111,7 @@ mod tests {
     use tracing_test::traced_test;
 
     use super::validate_options;
+    use crate::helpers::random::create_seeded_rng;
     use crate::server::types::{
         ClipLengthOptions, RandomizedClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
     };
@@ -122,7 +119,6 @@ mod tests {
     use crate::service::clip::weighted::WeightedRandomClipPicker;
     use crate::service::clip::ClipPicker;
     use crate::service::fixtures;
-    use crate::util::create_seeded_rng;
 
     #[traced_test]
     #[test]
@@ -138,7 +134,7 @@ mod tests {
         let options = WeightedRandomClipOptions {
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: target_duration,
             weights: weights.clone(),
@@ -171,7 +167,7 @@ mod tests {
             length: video_duration,
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             lenient_duration: false,
             min_clip_duration: None,
@@ -191,7 +187,7 @@ mod tests {
         let options = WeightedRandomClipOptions {
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             weights,
             length: video_duration,
@@ -220,7 +216,7 @@ mod tests {
             length: 956.839832,
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             min_clip_duration: None,
         };
@@ -256,7 +252,7 @@ mod tests {
             length: 956.839832,
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
         };
         let markers = fixtures::other_markers();
@@ -283,7 +279,7 @@ mod tests {
             ],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: 30.0,
         };
@@ -301,7 +297,7 @@ mod tests {
             weights: vec![("A".to_string(), 0.0)],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: 30.0,
         };
@@ -319,7 +315,7 @@ mod tests {
             weights: vec![("B".to_string(), 1.0)],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: 30.0,
         };
@@ -337,7 +333,7 @@ mod tests {
             weights: vec![],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: 30.0,
         };
@@ -368,7 +364,7 @@ mod tests {
             weights: vec![("Cowgirl".to_string(), 1.0), ("Blowjob".to_string(), 1.0)],
             clip_lengths: ClipLengthOptions::Randomized(RandomizedClipOptions {
                 base_duration: 30.0,
-                divisors: vec![2.0, 3.0, 4.0],
+                spread: 0.5,
             }),
             length: 10.0 * 1000.0,
         };

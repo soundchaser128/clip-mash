@@ -34,25 +34,49 @@ pub type Result<T> = std::result::Result<T, Report>;
 // 100 MB
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
 
-fn find_unused_port() -> SocketAddr {
-    let host = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "127.0.0.1".into());
+fn get_debug_hostname() -> &'static str {
+    use std::env::consts::OS;
+
+    match OS {
+        "windows" => "0.0.0.0",
+        "macos" => "[::1]",
+        _ => "localhost",
+    }
+}
+
+fn get_port() -> u16 {
+    use rand::Rng;
+
     let port = std::env::args()
         .nth(2)
         .and_then(|port| port.parse::<u16>().ok());
-
-    // find first unused port
-    let port = if cfg!(debug_assertions) {
-        5174
-    } else {
-        match port {
-            Some(port) => port,
-            None => (1024..65535)
-                .find(|port| std::net::TcpListener::bind(format!("{}:{}", host, port)).is_ok())
-                .expect("failed to find unused port"),
+    match port {
+        Some(port) => port,
+        None => {
+            if cfg!(debug_assertions) {
+                5174
+            } else {
+                let random_port = rand::thread_rng().gen_range(1024..65535);
+                info!("using random port {random_port}");
+                random_port
+            }
         }
-    };
+    }
+}
+
+fn get_host() -> String {
+    if cfg!(debug_assertions) {
+        get_debug_hostname().into()
+    } else {
+        std::env::args()
+            .nth(1)
+            .unwrap_or_else(|| "127.0.0.1".into())
+    }
+}
+
+fn get_address() -> SocketAddr {
+    let host = get_host();
+    let port = get_port();
     format!("{}:{}", host, port).parse().unwrap()
 }
 
@@ -74,6 +98,8 @@ async fn run() -> Result<()> {
     info!("using database at {database_file:?}");
 
     let database = Database::new(&database_file).await?;
+    let version = database.sqlite_version().await?;
+    info!("using sqlite version {version}");
     let generator =
         CompilationGenerator::new(directories.clone(), &ffmpeg_location, database.clone()).await?;
     migrations::run_async(
@@ -91,18 +117,13 @@ async fn run() -> Result<()> {
     });
 
     let library_routes = Router::new()
-        // list all videos (paginated, with search)
         .route("/video", get(handlers::library::list_videos))
-        // add new videos either via stash, local or url
         .route("/video", post(handlers::library::add_new_videos))
-        // returns whether a set of videos need to be re-encoded or not
         .route(
             "/video/need-encoding",
             post(handlers::library::videos_need_encoding),
         )
-        // update video metadata
         .route("/video/:id", put(handlers::library::update_video))
-        // sync a single video with stash
         .route(
             "/video/:id/stash/merge",
             post(handlers::library::merge_stash_video),
@@ -111,43 +132,31 @@ async fn run() -> Result<()> {
             "/cleanup/:folder_type",
             post(handlers::files::cleanup_folder),
         )
-        // remove videos that don't exist on disk
         .route("/video/cleanup", post(handlers::library::cleanup_videos))
-        // list videos on stash
         .route("/video/stash", get(handlers::library::list_stash_videos))
-        // get details on a single video
+        .route("/video/tags", get(handlers::library::list_video_tags))
         .route("/video/:id", get(handlers::library::get_video))
-        // delete a video
         .route("/video/:id", delete(handlers::library::delete_video))
-        // detect markers in a video
         .route(
             "/video/:id/detect-markers",
             post(handlers::library::detect_markers),
         )
-        // stream the video file
         .route("/video/:id/file", get(handlers::library::get_video_file))
-        // get the generated preview image
         .route(
             "/video/:id/preview",
             get(handlers::library::get_video_preview),
         )
-        // list all markers by video ID
         .route("/marker", get(handlers::library::list_markers))
-        // list marker titles and counts, for autocompletion
         .route("/marker/title", get(handlers::library::list_marker_titles))
-        // create new marker for video
         .route("/marker", post(handlers::library::create_new_marker))
-        // update local marker
         .route("/marker/:id", put(handlers::library::update_marker))
-        // delete local marker
         .route("/marker/:id", delete(handlers::library::delete_marker))
-        // get the generated preview image for a marker
         .route(
             "/marker/:id/preview",
             get(handlers::library::get_marker_preview),
         )
-        // split local marker
         .route("/marker/:id/split", post(handlers::library::split_marker))
+        .route("/performers", get(handlers::library::list_performers))
         .route("/directory", get(handlers::files::list_file_entries))
         .route("/stats", get(handlers::files::get_file_stats))
         .route(
@@ -157,6 +166,10 @@ async fn run() -> Result<()> {
 
     let project_routes = Router::new()
         .route("/clips", post(handlers::project::fetch_clips))
+        .route(
+            "/clips/interactive",
+            post(handlers::project::fetch_clips_interactive),
+        )
         .route("/id", get(handlers::project::get_new_id))
         .route("/create", post(handlers::project::create_video))
         .route(
@@ -172,15 +185,16 @@ async fn run() -> Result<()> {
         .route(
             "/description/:type",
             post(handlers::project::generate_description),
-        );
+        )
+        .route("/random-seed", get(handlers::project::generate_random_seed));
 
-    let stash_routes = Router::new().route("/health", get(handlers::stash::get_health));
+    let stash_routes = Router::new().route("/health", get(handlers::stash::get_stash_health));
 
     let system_routes = Router::new()
         .route("/restart", post(handlers::system::restart))
         .route("/sentry/error", post(handlers::system::sentry_error))
         .route("/version", get(handlers::system::get_version))
-        .route("/health", get(handlers::system::get_health))
+        .route("/health", get(handlers::system::get_app_health))
         .route("/configuration", get(handlers::system::get_config))
         .route("/configuration", post(handlers::system::set_config));
 
@@ -196,13 +210,20 @@ async fn run() -> Result<()> {
         .route("/:id/info", get(handlers::progress::get_progress_info))
         .route("/:id", delete(handlers::progress::delete_progress));
 
+    let handy_routes = Router::new()
+        .route("/start", post(handlers::handy::start_handy))
+        .route("/stop", post(handlers::handy::stop_handy))
+        .route("/pause", post(handlers::handy::pause_handy))
+        .route("/", get(handlers::handy::handy_status));
+
     let api_routes = Router::new()
         .nest("/project", project_routes)
         .nest("/library", library_routes)
         .nest("/stash", stash_routes)
         .nest("/system", system_routes)
         .nest("/song", music_routes)
-        .nest("/progress", progress_routes);
+        .nest("/progress", progress_routes)
+        .nest("/handy", handy_routes);
 
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
@@ -213,7 +234,7 @@ async fn run() -> Result<()> {
         .layer(sentry_tower::SentryHttpLayer::with_transaction())
         .with_state(state);
 
-    let addr = find_unused_port();
+    let addr = get_address();
     info!("listening on {addr}");
 
     let is_debug_build = cfg!(debug_assertions);

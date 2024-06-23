@@ -408,7 +408,7 @@ function VideoMarkersPage() {
       <div className="flex gap-2">
         <Player
           className="w-2/3 max-h-[82vh]"
-          src={getVideoUrl(video, config.stash)}
+          src={getVideoUrl(video, config?.stash)}
         />
         <div className="flex flex-col w-1/3 justify-between max-h-[60vh] relative">
           {showingForm && (
@@ -651,7 +651,11 @@ function VideoMarkersPage() {
           <div className="w-full flex justify-between">
             {formMode === "hidden" && (
               <>
-                <button onClick={onDeleteAll} className="btn btn-error">
+                <button
+                  disabled={markers.length === 0}
+                  onClick={onDeleteAll}
+                  className="btn btn-error"
+                >
                   <HiTrash className="mr-2" />
                   Delete all
                 </button>

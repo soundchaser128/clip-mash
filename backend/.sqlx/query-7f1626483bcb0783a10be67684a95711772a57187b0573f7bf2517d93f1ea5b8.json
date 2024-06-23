@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO performers (name, image_url, stash_id, gender, created_on) \n            VALUES ($1, $2, $3, $4, strftime('%s', 'now'))\n            ON CONFLICT DO UPDATE SET name = name\n            RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "7f1626483bcb0783a10be67684a95711772a57187b0573f7bf2517d93f1ea5b8"
+}

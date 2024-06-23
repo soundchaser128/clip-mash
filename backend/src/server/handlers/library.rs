@@ -9,10 +9,11 @@ use camino::Utf8Path;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use tower::ServiceExt;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::{MarkerCount, VideoSearchQuery, VideoSource, VideoUpdate};
+use crate::data::database::markers::{ListMarkersFilter, MarkerCount};
+use crate::data::database::videos::{TagCount, VideoSearchQuery, VideoSource, VideoUpdate};
 use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
@@ -35,6 +36,7 @@ use crate::service::video::{AddVideosRequest, VideoService};
     )
 )]
 #[axum::debug_handler]
+/// Lists videos (paginated, with search)
 pub async fn list_videos(
     Query(page): Query<PageParameters>,
     Query(mut query): Query<VideoSearchQuery>,
@@ -62,6 +64,7 @@ pub struct StashVideoQuery {
     )
 )]
 #[axum::debug_handler]
+/// Lists videos on the configured Stash instance
 pub async fn list_stash_videos(
     Query(page): Query<PageParameters>,
     Query(StashVideoQuery {
@@ -109,6 +112,7 @@ pub async fn list_stash_videos(
     )
 )]
 #[axum::debug_handler]
+/// Adds new videos either via stash, local files or URL (to download)
 pub async fn add_new_videos(
     State(state): State<Arc<AppState>>,
     Json(request): Json<AddVideosRequest>,
@@ -124,6 +128,46 @@ pub async fn add_new_videos(
     Ok(Json(new_videos))
 }
 
+#[derive(Serialize, ToSchema)]
+pub struct ListPerformerResponse {
+    pub title: String,
+    pub count: usize,
+}
+
+#[derive(Deserialize, IntoParams)]
+pub struct ListPerformersQuery {
+    pub prefix: Option<String>,
+}
+
+#[axum::debug_handler]
+#[utoipa::path(
+    get,
+    path = "/api/library/performers",
+    params(ListPerformersQuery),
+    responses(
+        (status = 200, description = "List all performers", body = Vec<ListPerformerResponse>),
+    )
+)]
+/// Lists all performers from videos and their number of markers
+pub async fn list_performers(
+    State(state): State<Arc<AppState>>,
+    Query(ListPerformersQuery { prefix }): Query<ListPerformersQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    let performers = state
+        .database
+        .performers
+        .find_by_prefix(prefix.as_deref().unwrap_or(""))
+        .await?;
+    let performers: Vec<_> = performers
+        .into_iter()
+        .map(|p| ListPerformerResponse {
+            title: p.name,
+            count: p.marker_count as usize,
+        })
+        .collect();
+    Ok(Json(performers))
+}
+
 #[axum::debug_handler]
 #[utoipa::path(
     post,
@@ -133,6 +177,7 @@ pub async fn add_new_videos(
         (status = 200, description = "Check if the videos can be combined without encoding", body = bool),
     )
 )]
+/// Returns whether a set of videos need to be re-encoded or not
 pub async fn videos_need_encoding(
     State(state): State<Arc<AppState>>,
     Json(mut video_ids): Json<Vec<String>>,
@@ -160,6 +205,7 @@ pub async fn videos_need_encoding(
         (status = 200, description = "Update video metadata", body = ()),
     )
 )]
+/// Updates video metadata
 pub async fn update_video(
     Path(id): Path<String>,
     State(state): State<Arc<AppState>>,
@@ -184,6 +230,7 @@ pub struct VideoCleanupResponse {
         (status = 200, description = "Delete unused videos", body = VideoCleanupResponse),
     )
 )]
+/// Removes videos that don't exist on disk
 pub async fn cleanup_videos(
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -203,6 +250,7 @@ pub async fn cleanup_videos(
     )
 )]
 #[axum::debug_handler]
+/// Gets details on a single video
 pub async fn get_video(
     Path(id): Path<String>,
     state: State<Arc<AppState>>,
@@ -229,6 +277,7 @@ pub async fn get_video(
     )
 )]
 #[axum::debug_handler]
+/// Deletes a video
 pub async fn delete_video(
     Path(id): Path<String>,
     state: State<Arc<AppState>>,
@@ -268,6 +317,7 @@ pub struct DetectMarkersQuery {
     )
 )]
 #[axum::debug_handler]
+/// Tries to detect markers in a video by detecting scene changes.
 pub async fn detect_markers(
     Path(id): Path<String>,
     Query(DetectMarkersQuery { threshold }): Query<DetectMarkersQuery>,
@@ -280,6 +330,7 @@ pub async fn detect_markers(
 }
 
 #[axum::debug_handler]
+/// Serves the video file for a given video ID
 pub async fn get_video_file(
     Path(id): Path<String>,
     state: State<Arc<AppState>>,
@@ -297,6 +348,7 @@ pub async fn get_video_file(
 }
 
 #[axum::debug_handler]
+/// Serves the preview image for a given video ID
 pub async fn get_video_preview(
     Path(id): Path<String>,
     state: State<Arc<AppState>>,
@@ -322,6 +374,7 @@ pub async fn get_video_preview(
 }
 
 #[axum::debug_handler]
+/// Gets the generated preview image for a marker
 pub async fn get_marker_preview(
     Path(id): Path<i64>,
     state: State<Arc<AppState>>,
@@ -329,10 +382,10 @@ pub async fn get_marker_preview(
 ) -> Result<impl IntoResponse, AppError> {
     use tower_http::services::ServeFile;
 
-    info!("getting preview image for marker {id}");
+    debug!("getting preview image for marker {id}");
     let marker = state.database.markers.get_marker(id).await?;
     if let Some(preview_image) = marker.marker_preview_image {
-        info!("preview image found at {preview_image}");
+        debug!("preview image found at {preview_image}");
         let result = ServeFile::new(preview_image).oneshot(request).await;
         Ok(result)
     } else {
@@ -355,6 +408,7 @@ pub struct ListMarkersQuery {
     )
 )]
 #[axum::debug_handler]
+/// Lists all markers for a set of video IDs.
 pub async fn list_markers(
     state: State<Arc<AppState>>,
     Query(body): Query<ListMarkersQuery>,
@@ -370,7 +424,7 @@ pub async fn list_markers(
     let markers = state
         .database
         .markers
-        .list_markers(video_ids.as_deref(), None)
+        .list_markers(Some(ListMarkersFilter::VideoIds(video_ids.unwrap())), None)
         .await?;
     let stash_api = state.stash_api().await?;
     let converter = MarkerDtoConverter::new(stash_api);
@@ -397,6 +451,7 @@ pub struct ListMarkerTitlesQuery {
     )
 )]
 #[axum::debug_handler]
+/// Lists marker titles and nunber of occurrences
 pub async fn list_marker_titles(
     Query(ListMarkerTitlesQuery { count, prefix }): Query<ListMarkerTitlesQuery>,
     State(state): State<Arc<AppState>>,
@@ -437,6 +492,7 @@ pub struct CreateMarkerRequest {
     )
 )]
 #[axum::debug_handler]
+/// Creates a new marker for a video.
 pub async fn create_new_marker(
     state: State<Arc<AppState>>,
     Json(body): Json<CreateMarkerRequest>,
@@ -501,6 +557,7 @@ pub async fn create_new_marker(
     )
 )]
 #[axum::debug_handler]
+/// Update a marker, additionally updates the marker in Stash if applicable and desired.
 pub async fn update_marker(
     state: State<Arc<AppState>>,
     Path(id): Path<i64>,
@@ -531,6 +588,7 @@ pub async fn update_marker(
     )
 )]
 #[axum::debug_handler]
+/// Deletes a marker.
 pub async fn delete_marker(
     Path(id): Path<i64>,
     state: State<Arc<AppState>>,
@@ -559,6 +617,7 @@ pub struct SplitMarkerQuery {
     )
 )]
 #[axum::debug_handler]
+/// Splits a marker into two at the specified time.
 pub async fn split_marker(
     Path(id): Path<i64>,
     Query(SplitMarkerQuery { time }): Query<SplitMarkerQuery>,
@@ -612,6 +671,7 @@ pub async fn split_marker(
         (status = 200, description = "Merge the video data from stash into the local video", body = ListVideoDto),
     )
 )]
+/// Synchronizes a single video with stash
 pub async fn merge_stash_video(
     Path(id): Path<String>,
     State(state): State<Arc<AppState>>,
@@ -641,4 +701,19 @@ pub async fn migrate_preview_images(State(state): State<Arc<AppState>>) -> Resul
     migrator.migrate_preview_images().await?;
 
     Ok(())
+}
+
+#[axum::debug_handler]
+#[utoipa::path(
+    get,
+    path = "/api/library/video/tags",
+    responses(
+        (status = 200, description = "List tags for videos", body = Vec<TagCount>),
+    )
+)]
+pub async fn list_video_tags(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<TagCount>>, AppError> {
+    let tags = state.database.videos.list_tags(100).await?;
+    Ok(Json(tags))
 }

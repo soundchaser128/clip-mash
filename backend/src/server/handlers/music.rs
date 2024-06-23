@@ -12,7 +12,7 @@ use url::Url;
 use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
-use crate::data::database::DbSong;
+use crate::data::database::music::DbSong;
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::music::{self, MusicDownloadService};
@@ -98,6 +98,7 @@ pub struct SongUpload {
         (status = 200, description = "Uploads a song", body = SongDto),
     )
 )]
+/// Upload a song file
 pub async fn upload_music(
     State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
@@ -114,18 +115,28 @@ pub async fn upload_music(
     Err(eyre!("missing form field `file`").into())
 }
 
+#[derive(Deserialize, IntoParams)]
+pub struct ListSongsQuery {
+    shuffle: Option<bool>,
+}
+
 #[axum::debug_handler]
 #[utoipa::path(
     get,
     path = "/api/song",
+    params(ListSongsQuery),
     responses(
         (status = 200, description = "Lists all songs", body = Vec<SongDto>),
     )
 )]
+/// List all songs
 pub async fn list_songs(
+    Query(ListSongsQuery { shuffle }): Query<ListSongsQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<SongDto>>, AppError> {
-    let songs = state
+    use rand::seq::SliceRandom;
+
+    let mut songs: Vec<SongDto> = state
         .database
         .music
         .list_songs()
@@ -133,6 +144,10 @@ pub async fn list_songs(
         .into_iter()
         .map(From::from)
         .collect();
+
+    if let Some(true) = shuffle {
+        songs.shuffle(&mut rand::thread_rng());
+    }
 
     Ok(Json(songs))
 }
@@ -148,6 +163,7 @@ pub async fn list_songs(
         (status = 200, description = "Get beats for a song", body = Beats),
     )
 )]
+/// Get beats for a song, or detect them if they are not yet available.
 pub async fn get_beats(
     Path(song_id): Path<i64>,
     state: State<Arc<AppState>>,

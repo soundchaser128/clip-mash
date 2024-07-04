@@ -8,7 +8,6 @@ import {
   HiClock,
   HiPlus,
   HiTag,
-  HiUsers,
   HiXMark,
 } from "react-icons/hi2"
 import {dateTimeFormat, formatSeconds} from "@/helpers/time"
@@ -17,7 +16,6 @@ import EditableText from "./EditableText"
 import HoverVideo from "./HoverVideo"
 import {Link, useLocation} from "react-router-dom"
 import {searchLink} from "@/helpers/links"
-import {pluralize} from "@/helpers/formatting"
 
 export type AspectRatio = "tall" | "square" | "wide"
 
@@ -97,11 +95,11 @@ const VideoCardPreview: React.FC<Props> = ({
       videoSource={getVideo(video.video, stashConfig)}
       disabled={disabled}
       aspectRatio={aspectRatio}
-      className={clsx(
-        "rounded-lg",
-        zoomOnHover &&
-          "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
-      )}
+      className={clsx("rounded-lg", {
+        "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl":
+          zoomOnHover,
+        "border border-green-500": video.markerCount > 0,
+      })}
       overlay={
         <>
           <OverlayText className="top-2 left-2">
@@ -149,10 +147,12 @@ const VideoCardWithDetails: React.FC<Props> = ({
     <article
       className={clsx(
         "card card-compact bg-base-200 shadow-xl animate-in fade-in",
-        video.markerCount > 0 && "ring ring-green-500",
-        disabled && "opacity-50",
-        zoomOnHover &&
-          "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl",
+        {
+          "ring ring-green-500": video.markerCount > 0,
+          "opacity-50": disabled,
+          "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl":
+            zoomOnHover,
+        },
       )}
     >
       <figure>

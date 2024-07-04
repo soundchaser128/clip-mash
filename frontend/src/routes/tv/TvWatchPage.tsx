@@ -28,7 +28,6 @@ import {
 import DataList, {Data, Description} from "@/components/DataList"
 import {clamp} from "@/helpers/math"
 import Heading from "@/components/Heading"
-import {formatSeconds} from "@/helpers/time"
 import {TvQueryType} from "./TvStartPage"
 
 function removeExtension(fileName: string) {
@@ -61,7 +60,7 @@ export const interactiveClipsLoader: LoaderFunction = async (request) => {
     },
     clipDuration: parseFloat(searchParams.get("clipDuration") || "5.0"),
     order: {
-      type: "random",
+      type: "scene",
     },
     seed,
   })
@@ -196,7 +195,7 @@ const TvWatchPage: React.FC = () => {
 
   return (
     <main className="w-full flex flex-col lg:flex-row">
-      <section className="grow flex relative h-screen">
+      <section className="grow flex flex-col relative h-screen">
         <Link
           to="/tv"
           className="btn btn-primary btn-outline btn-square btn-sm absolute top-4 left-4 z-10"
@@ -207,12 +206,18 @@ const TvWatchPage: React.FC = () => {
         <video
           src={clipUrl}
           onTimeUpdate={onVideoTimeUpdate}
-          className="w-full h-full cursor-pointer"
+          className="w-full cursor-pointer"
+          style={{height: "calc(100vh - 1rem)"}}
           ref={videoRef}
           autoPlay
           preload="auto"
           muted={muted}
           onClick={onTogglePlay}
+        />
+        <progress
+          value={timePlayed}
+          max={totalDuration}
+          className="w-full progress progress-primary h-4"
         />
 
         <video preload="auto" className="hidden" src={nextClipUrl} />
@@ -346,11 +351,6 @@ const TvWatchPage: React.FC = () => {
                   </Data>
                 </>
               )}
-              <Description>Time played / Total duration:</Description>
-              <Data>
-                {formatSeconds(timePlayed, "short")} /{" "}
-                {formatSeconds(totalDuration, "short")}
-              </Data>
             </DataList>
           </>
         )}

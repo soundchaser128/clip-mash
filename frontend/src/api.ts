@@ -144,7 +144,7 @@ export type PauseHandy200 = unknown | null
 /**
  * @nullable
  */
-export type HandyStatus200 = unknown | null
+export type HandyStatus200 = ControllerStatus | null
 
 export type WeightedRandomClipOptionsWeightsItemItem = string & number
 
@@ -575,6 +575,11 @@ export type HandyPatternOneOfFive = {
   type: HandyPatternOneOfFiveType
 }
 
+export type HandyPattern =
+  | HandyPatternOneOf
+  | HandyPatternOneOfThree
+  | HandyPatternOneOfFive
+
 export type HandyPatternOneOfThreeType =
   (typeof HandyPatternOneOfThreeType)[keyof typeof HandyPatternOneOfThreeType]
 
@@ -596,15 +601,9 @@ export const HandyPatternOneOfType = {
   "cycle-accellerate": "cycle-accellerate",
 } as const
 
-export type HandyPatternOneOf = {
-  parameters: CycleAccellerateParameters
-  type: HandyPatternOneOfType
+export interface HandyConnectedResponse {
+  connected: boolean
 }
-
-export type HandyPattern =
-  | HandyPatternOneOf
-  | HandyPatternOneOfThree
-  | HandyPatternOneOfFive
 
 export interface HandyConfig {
   enabled: boolean
@@ -697,6 +696,11 @@ export interface CycleAccellerateParameters {
   startRange: Range
 }
 
+export type HandyPatternOneOf = {
+  parameters: CycleAccellerateParameters
+  type: HandyPatternOneOfType
+}
+
 /**
  * @nullable
  */
@@ -767,6 +771,13 @@ export interface CreateBeatFunscriptBody {
   strokeType: StrokeType
 }
 
+export interface ControllerStatus {
+  /** @minimum 0 */
+  currentVelocity: number
+  elapsed: number
+  paused: boolean
+}
+
 export type ClipsResponseStreams = {[key: string]: string}
 
 export interface ClipsResponse {
@@ -775,10 +786,6 @@ export interface ClipsResponse {
   clips: Clip[]
   streams: ClipsResponseStreams
   videos: VideoDto[]
-}
-
-export type ClipPickerOptionsOneOfOnezero = {
-  type: ClipPickerOptionsOneOfOnezeroType
 }
 
 export type ClipPickerOptions =
@@ -794,6 +801,10 @@ export type ClipPickerOptionsOneOfOnezeroType =
 export const ClipPickerOptionsOneOfOnezeroType = {
   noSplit: "noSplit",
 } as const
+
+export type ClipPickerOptionsOneOfOnezero = {
+  type: ClipPickerOptionsOneOfOnezeroType
+}
 
 export type ClipPickerOptionsOneOfSevenAllOfType =
   (typeof ClipPickerOptionsOneOfSevenAllOfType)[keyof typeof ClipPickerOptionsOneOfSevenAllOfType]
@@ -1021,6 +1032,16 @@ export interface AccellerateParameters {
  */
 export const handyStatus = () => {
   return customInstance<HandyStatus200>({url: `/api/handy`, method: "GET"})
+}
+
+/**
+ * @summary Get the connection status of the handy
+ */
+export const handyConnected = () => {
+  return customInstance<HandyConnectedResponse>({
+    url: `/api/handy/connected`,
+    method: "GET",
+  })
 }
 
 /**
@@ -1463,6 +1484,9 @@ export const getVersion = () => {
 
 export type HandyStatusResult = NonNullable<
   Awaited<ReturnType<typeof handyStatus>>
+>
+export type HandyConnectedResult = NonNullable<
+  Awaited<ReturnType<typeof handyConnected>>
 >
 export type PauseHandyResult = NonNullable<
   Awaited<ReturnType<typeof pauseHandy>>

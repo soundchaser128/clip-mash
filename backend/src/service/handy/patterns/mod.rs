@@ -209,7 +209,7 @@ impl SpeedController for Box<dyn SpeedController> {
     }
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ControllerStatus {
     pub elapsed: Duration,

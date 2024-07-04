@@ -8,7 +8,7 @@ use super::types::*;
 use crate::data::database::markers::MarkerCount;
 use crate::data::database::videos::{TagCount, VideoSource, VideoUpdate};
 use crate::data::database::{HandyConfig, Settings};
-use crate::server::handlers::handy::StartHandyParameters;
+use crate::server::handlers::handy::{HandyConnectedResponse, StartHandyParameters};
 use crate::server::handlers::library::ListPerformerResponse;
 use crate::server::handlers::{files, handy, library, music, progress, project, stash, system};
 use crate::service::description_generator::DescriptionType;
@@ -17,7 +17,7 @@ use crate::service::generator::PaddingType;
 use crate::service::handy::patterns::accellerate::AccellerateParameters;
 use crate::service::handy::patterns::cycle_accellerate::CycleAccellerateParameters;
 use crate::service::handy::patterns::random::RandomParameters;
-use crate::service::handy::patterns::{HandyPattern, Range};
+use crate::service::handy::patterns::{ControllerStatus, HandyPattern, Range};
 use crate::service::new_version_checker::AppVersion;
 use crate::service::stash_config::StashConfig;
 use crate::service::video::AddVideosRequest;
@@ -73,6 +73,7 @@ use crate::service::video::AddVideosRequest;
         handy::stop_handy,
         handy::pause_handy,
         handy::handy_status,
+        handy::handy_connected,
     ),
     components(
         schemas(
@@ -145,6 +146,8 @@ use crate::service::video::AddVideosRequest;
             AccellerateParameters,
             Range,
             TagCount,
+            ControllerStatus,
+            HandyConnectedResponse,
         )
     ),
     tags(

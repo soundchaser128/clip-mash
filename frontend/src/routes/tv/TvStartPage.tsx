@@ -1,6 +1,8 @@
 import {
+  HandyConnectedResponse,
   HandyPattern,
   generateRandomSeed,
+  handyConnected,
   listMarkerTitles,
   listPerformers,
   listVideoTags,
@@ -14,6 +16,7 @@ import {useForm} from "react-hook-form"
 import {
   HiAdjustmentsHorizontal,
   HiArrowPath,
+  HiCheck,
   HiChevronLeft,
   HiRocketLaunch,
   HiXMark,
@@ -38,19 +41,22 @@ type LoaderData = {
   markers: Item[]
   performers: Item[]
   tags: Item[]
+  handyStatus: HandyConnectedResponse
 }
 
 export const markerTitleLoader: LoaderFunction = async () => {
-  const [markerTitles, performers, tags] = await Promise.all([
+  const [markerTitles, performers, tags, handy] = await Promise.all([
     listMarkerTitles({count: 1000}),
     listPerformers(),
     listVideoTags(),
+    handyConnected(),
   ])
 
   return {
     markers: markerTitles,
     performers: performers.filter((p) => p.count > 0),
     tags: tags.map((t) => ({title: t.tag, count: t.count})),
+    handyStatus: handy,
   } satisfies LoaderData
 }
 
@@ -283,14 +289,27 @@ const TvStartPage: React.FC = () => {
           </label>
         </div>
         {config?.handy?.enabled && (
-          <button
-            type="button"
-            className="btn self-end btn-outline"
-            onClick={() => setHandySettingsOpen((open) => !open)}
-          >
-            <HiAdjustmentsHorizontal />
-            Set up Handy
-          </button>
+          <div className="flex w-full justify-between items-center">
+            {data.handyStatus.connected ? (
+              <p className="text-success text-sm">
+                <HiCheck className="inline-block" /> Handy connected.
+              </p>
+            ) : (
+              <p className="text-error text-sm">
+                <HiXMark className="inline-block" /> Handy not connected.
+              </p>
+            )}
+
+            <button
+              type="button"
+              className="btn self-end btn-outline"
+              onClick={() => setHandySettingsOpen((open) => !open)}
+              disabled={!data.handyStatus.connected}
+            >
+              <HiAdjustmentsHorizontal />
+              Set up Handy
+            </button>
+          </div>
         )}
 
         <div className="w-full grid grid-cols-3 gap-2 mb-4 mt-2">

@@ -1,10 +1,16 @@
+use std::sync::Arc;
+
+use axum::extract::State;
 use axum::response::IntoResponse;
 use axum::Json;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use tracing::info;
 use utoipa::ToSchema;
 
 use crate::server::error::AppError;
+use crate::server::handlers::AppState;
+use crate::service::handy::client::{HandyClient, IHandyClient};
 use crate::service::handy::patterns::{self, HandyController, HandyPattern};
 
 #[derive(Deserialize, ToSchema)]
@@ -67,7 +73,7 @@ pub async fn pause_handy() -> Result<(), AppError> {
     get,
     path = "/api/handy",
     responses(
-        (status = 200, description = "Get the current status of the handy", body = ()),
+        (status = 200, description = "Get the current status of the handy", body = Option<ControllerStatus>),
     )
 )]
 #[axum::debug_handler]
@@ -75,4 +81,34 @@ pub async fn pause_handy() -> Result<(), AppError> {
 pub async fn handy_status() -> Result<impl IntoResponse, AppError> {
     let status = patterns::status().await;
     Ok(Json(status))
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct HandyConnectedResponse {
+    pub connected: bool,
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/handy/connected",
+    responses(
+        (status = 200, description = "Get the connection status of the handy", body = HandyConnectedResponse),
+    )
+)]
+#[axum::debug_handler]
+/// Get the connection status of the handy
+pub async fn handy_connected(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let settings = state.database.settings.fetch().await?;
+    if let Some(handy) = settings.handy {
+        let client = HandyClient::new(handy.key);
+        let is_connected = client.is_connected().await?;
+        info!("handy connected: {is_connected}");
+        Ok(Json(HandyConnectedResponse {
+            connected: is_connected,
+        }))
+    } else {
+        Ok(Json(HandyConnectedResponse { connected: false }))
+    }
 }

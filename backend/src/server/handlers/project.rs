@@ -125,7 +125,7 @@ pub async fn fetch_clips_interactive(
         clips: ClipOptions {
             clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                 clip_duration: body.clip_duration,
-                spread: 0.0,
+                spread: 0.05,
                 length: None,
                 min_clip_duration: Some(1.0),
             }),

@@ -29,6 +29,7 @@ import DataList, {Data, Description} from "@/components/DataList"
 import {clamp} from "@/helpers/math"
 import Heading from "@/components/Heading"
 import {TvQueryType} from "./TvStartPage"
+import {formatSeconds} from "@/helpers/time"
 
 function removeExtension(fileName: string) {
   const index = fileName.indexOf(".")
@@ -207,18 +208,30 @@ const TvWatchPage: React.FC = () => {
           src={clipUrl}
           onTimeUpdate={onVideoTimeUpdate}
           className="w-full cursor-pointer"
-          style={{height: "calc(100vh - 1rem)"}}
+          style={{height: "calc(100vh - 4rem)"}}
           ref={videoRef}
           autoPlay
           preload="auto"
           muted={muted}
           onClick={onTogglePlay}
         />
-        <progress
-          value={timePlayed}
-          max={totalDuration}
-          className="w-full progress progress-primary h-4"
-        />
+        <div className="w-full px-2">
+          <progress
+            value={timePlayed}
+            max={totalDuration}
+            className="w-full progress progress-primary h-4"
+          />
+          <div className="text-center text-sm pb-2">
+            <p>
+              {formatSeconds(timePlayed, "short")} /{" "}
+              {formatSeconds(totalDuration, "short")}
+            </p>
+            <p>
+              {currentVideo?.title} -{" "}
+              <strong>{currentClip?.markerTitle}</strong>
+            </p>
+          </div>
+        </div>
 
         <video preload="auto" className="hidden" src={nextClipUrl} />
 
@@ -338,11 +351,6 @@ const TvWatchPage: React.FC = () => {
             )}
 
             <DataList>
-              <Description>Current clip:</Description>
-              <Data className="truncate">
-                {currentVideo?.title} -{" "}
-                <strong>{currentClip?.markerTitle}</strong>
-              </Data>
               {music.length > 0 && (
                 <>
                   <Description>Current Song</Description>

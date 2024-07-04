@@ -4,7 +4,6 @@ use axum::extract::State;
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use tracing::info;
 use utoipa::ToSchema;
 

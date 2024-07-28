@@ -177,7 +177,7 @@ impl HandyController {
     }
 }
 
-pub trait SpeedController: Send {
+pub trait SpeedController: Send + Sync {
     /// Returns the next speed to set. The speed should be rounded to the nearest integer.
     fn next_speed(&mut self, elapsed: Duration) -> f64;
 

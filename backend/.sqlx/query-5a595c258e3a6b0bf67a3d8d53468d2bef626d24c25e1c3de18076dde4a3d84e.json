@@ -6,7 +6,7 @@
       {
         "name": "rowid",
         "ordinal": 0,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "title",
@@ -36,7 +36,7 @@
       {
         "name": "index_within_video",
         "ordinal": 6,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "marker_preview_image",
@@ -51,7 +51,7 @@
       {
         "name": "marker_created_on",
         "ordinal": 9,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "video_title",
@@ -71,7 +71,7 @@
       {
         "name": "stash_scene_id",
         "ordinal": 13,
-        "type_info": "Int64"
+        "type_info": "Integer"
       }
     ],
     "parameters": {

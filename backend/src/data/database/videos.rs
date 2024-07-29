@@ -151,10 +151,10 @@ impl VideosDatabase {
     pub async fn get_video(&self, id: &str) -> Result<Option<DbVideo>> {
         let video = sqlx::query_as!(
             DbVideo,
-            "SELECT id, file_path, interactive, source AS \"source: VideoSource\", 
+            "SELECT id, file_path, interactive, source AS \"source: VideoSource\",
                     duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on
-             FROM videos 
-             WHERE id = $1", 
+             FROM videos
+             WHERE id = $1",
             id)
             .fetch_optional(&self.pool)
             .await?;
@@ -242,41 +242,16 @@ impl VideosDatabase {
             };
             let markers = records
                 .into_iter()
-                .filter_map(|r| {
-                    match (
-                        r.video_id,
-                        r.start_time,
-                        r.end_time,
-                        r.title,
-                        r.rowid,
-                        r.index_within_video,
-                        r.marker_preview_image,
-                        r.marker_created_on,
-                        r.marker_stash_id,
-                    ) {
-                        (
-                            Some(video_id),
-                            Some(start_time),
-                            Some(end_time),
-                            Some(title),
-                            rowid,
-                            Some(index),
-                            marker_preview_image,
-                            Some(marker_created_on),
-                            marker_stash_id,
-                        ) => Some(DbMarker {
-                            rowid,
-                            title,
-                            video_id,
-                            start_time,
-                            end_time,
-                            index_within_video: index,
-                            marker_preview_image,
-                            marker_created_on,
-                            marker_stash_id,
-                        }),
-                        _ => None,
-                    }
+                .map(|r| DbMarker {
+                    rowid: r.rowid,
+                    title: r.title,
+                    video_id: r.video_id,
+                    start_time: r.start_time,
+                    end_time: r.end_time,
+                    index_within_video: r.index_within_video,
+                    marker_preview_image: r.marker_preview_image,
+                    marker_created_on: r.marker_created_on,
+                    marker_stash_id: r.marker_stash_id,
                 })
                 .collect();
             Ok(Some(VideoWithMarkers { video, markers }))
@@ -288,9 +263,9 @@ impl VideosDatabase {
             AllVideosFilter::NoVideoDuration => {
                 sqlx::query_as!(
                     DbVideo,
-                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", duration, video_preview_image, 
-                                stash_scene_id, video_title, video_tags, video_created_on 
-                    FROM videos 
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", duration, video_preview_image,
+                                stash_scene_id, video_title, video_tags, video_created_on
+                    FROM videos
                     WHERE duration = -1.0")
                     .fetch_all(&self.pool)
                     .await
@@ -298,7 +273,7 @@ impl VideosDatabase {
             AllVideosFilter::NoPreviewImage => {
                 sqlx::query_as!(
                     DbVideo,
-                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", duration, video_preview_image, 
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", duration, video_preview_image,
                             stash_scene_id, video_title, video_tags, video_created_on
                     FROM videos
                     WHERE video_preview_image IS NULL"
@@ -309,9 +284,9 @@ impl VideosDatabase {
             AllVideosFilter::NoTitle => {
                 sqlx::query_as!(
                     DbVideo,
-                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", 
-                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on 
-                    FROM videos 
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\",
+                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on
+                    FROM videos
                     WHERE video_title IS NULL")
                     .fetch_all(&self.pool)
                     .await
@@ -319,8 +294,8 @@ impl VideosDatabase {
             AllVideosFilter::NoPerformers => {
                 sqlx::query_as!(
                     DbVideo,
-                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", 
-                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on 
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\",
+                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on
                     FROM videos v
                     WHERE (SELECT count(*) FROM video_performers vp WHERE vp.video_id = v.id) = 0 AND
                           v.stash_scene_id IS NOT NULL
@@ -332,8 +307,8 @@ impl VideosDatabase {
             AllVideosFilter::NonJsonTags => {
                 sqlx::query_as!(
                     DbVideo,
-                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", 
-                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on 
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\",
+                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on
                     FROM videos
                     WHERE video_tags NOT LIKE '[%'"
                 )
@@ -365,8 +340,8 @@ impl VideosDatabase {
     pub async fn persist_video(&self, video: &CreateVideo) -> Result<DbVideo> {
         let created_on = video.created_on.unwrap_or_else(|| unix_timestamp_now());
         let inserted = sqlx::query!(
-            "INSERT INTO videos 
-            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on) 
+            "INSERT INTO videos
+            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING video_created_on",
             video.id,

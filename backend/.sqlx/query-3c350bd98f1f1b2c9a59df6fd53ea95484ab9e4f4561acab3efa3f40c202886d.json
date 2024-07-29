@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, file_path, interactive, source AS \"source: VideoSource\", \n                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on \n                    FROM videos \n                    WHERE video_title IS NULL",
+  "query": "SELECT id, file_path, interactive, source AS \"source: VideoSource\", duration, video_preview_image,\n                                stash_scene_id, video_title, video_tags, video_created_on\n                    FROM videos\n                    WHERE duration = -1.0",
   "describe": {
     "columns": [
       {
@@ -36,7 +36,7 @@
       {
         "name": "stash_scene_id",
         "ordinal": 6,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "video_title",
@@ -51,7 +51,7 @@
       {
         "name": "video_created_on",
         "ordinal": 9,
-        "type_info": "Int64"
+        "type_info": "Integer"
       }
     ],
     "parameters": {
@@ -70,5 +70,5 @@
       false
     ]
   },
-  "hash": "7016713d4b02d88e50f10619280de2ec8531a271a5f554fe89c532ebf577d8d1"
+  "hash": "3c350bd98f1f1b2c9a59df6fd53ea95484ab9e4f4561acab3efa3f40c202886d"
 }

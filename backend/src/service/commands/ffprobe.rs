@@ -50,23 +50,10 @@ impl FfProbe {
 pub struct Stream {
     pub index: i64,
     pub codec_name: Option<String>,
-    pub sample_aspect_ratio: Option<String>,
-    pub display_aspect_ratio: Option<String>,
-    pub color_range: Option<String>,
-    pub color_space: Option<String>,
-    pub bits_per_raw_sample: Option<String>,
-    pub channel_layout: Option<String>,
-    pub max_bit_rate: Option<String>,
-    pub nb_frames: Option<String>,
-    /// Number of frames seen by the decoder.
-    /// Requires full decoding and is only available if the 'count_frames'
-    /// setting was enabled.
-    pub nb_read_frames: Option<String>,
     pub codec_long_name: Option<String>,
     pub codec_type: Option<String>,
     pub codec_time_base: Option<String>,
-    pub codec_tag_string: String,
-    pub codec_tag: String,
+
     pub sample_fmt: Option<String>,
     pub sample_rate: Option<String>,
     pub channels: Option<i64>,
@@ -79,55 +66,9 @@ pub struct Stream {
     pub duration_ts: Option<i64>,
     pub duration: Option<String>,
     pub bit_rate: Option<String>,
-    pub disposition: Disposition,
-    pub tags: Option<StreamTags>,
-    pub profile: Option<String>,
     pub width: Option<i64>,
     pub height: Option<i64>,
-    pub coded_width: Option<i64>,
-    pub coded_height: Option<i64>,
-    pub closed_captions: Option<i64>,
-    pub has_b_frames: Option<i64>,
-    pub pix_fmt: Option<String>,
-    pub level: Option<i64>,
-    pub chroma_location: Option<String>,
-    pub refs: Option<i64>,
-    pub is_avc: Option<String>,
-    pub nal_length: Option<String>,
-    pub nal_length_size: Option<String>,
-    pub field_order: Option<String>,
     pub id: Option<String>,
-    #[serde(default)]
-    pub side_data_list: Vec<SideData>,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct SideData {
-    pub side_data_type: String,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct Disposition {
-    pub default: i64,
-    pub dub: i64,
-    pub original: i64,
-    pub comment: i64,
-    pub lyrics: i64,
-    pub karaoke: i64,
-    pub forced: i64,
-    pub hearing_impaired: i64,
-    pub visual_impaired: i64,
-    pub clean_effects: i64,
-    pub attached_pic: i64,
-    pub timed_thumbnails: i64,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct StreamTags {
-    pub language: Option<String>,
-    pub creation_time: Option<String>,
-    pub handler_name: Option<String>,
-    pub encoder: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]

@@ -77,7 +77,10 @@ fn get_host() -> String {
 fn get_address() -> SocketAddr {
     let host = get_host();
     let port = get_port();
-    format!("{}:{}", host, port).parse().unwrap()
+    let addr = format!("{}:{}", host, port);
+    info!("listening on {addr}");
+
+    addr.parse().expect("unable to parse address")
 }
 
 async fn run() -> Result<()> {
@@ -236,7 +239,6 @@ async fn run() -> Result<()> {
         .with_state(state);
 
     let addr = get_address();
-    info!("listening on {addr}");
 
     let is_debug_build = cfg!(debug_assertions);
     if !is_debug_build {

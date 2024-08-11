@@ -80,7 +80,8 @@ fn get_address() -> SocketAddr {
     let addr = format!("{}:{}", host, port);
     info!("listening on {addr}");
 
-    addr.parse().expect("unable to parse address")
+    addr.parse()
+        .expect(&format!("Unable to parse address '{addr}'"))
 }
 
 async fn run() -> Result<()> {

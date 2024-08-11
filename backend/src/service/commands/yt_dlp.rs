@@ -99,7 +99,7 @@ impl YtDlp {
                 generated_id: id,
             })
         } else {
-            bail!("could not find downloaded music file")
+            bail!("could not find downloaded file")
         }
     }
 }

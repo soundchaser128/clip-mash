@@ -51,6 +51,7 @@ pub enum AddVideosRequest {
 fn tags_to_string(tags: &[String]) -> String {
     serde_json::to_string(tags).expect("tags must be serializable")
 }
+
 pub struct VideoService {
     database: Database,
     directories: Directories,

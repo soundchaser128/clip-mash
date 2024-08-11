@@ -40,7 +40,7 @@ fn get_debug_hostname() -> &'static str {
     match OS {
         "windows" => "0.0.0.0",
         "macos" => "[::1]",
-        _ => "localhost",
+        _ => "127.0.0.1",
     }
 }
 

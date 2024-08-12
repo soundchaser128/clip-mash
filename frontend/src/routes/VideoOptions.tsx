@@ -26,7 +26,12 @@ export const videoOptionsLoader: LoaderFunction = async () => {
 
 type Inputs = Pick<
   FormState,
-  "outputFps" | "videoCodec" | "videoQuality" | "encodingEffort" | "padding"
+  | "outputFps"
+  | "videoCodec"
+  | "videoQuality"
+  | "encodingEffort"
+  | "padding"
+  | "includeOriginalFileName"
 > & {outputWidth: number; outputHeight: number}
 
 const defaultOptions: Inputs = {
@@ -169,6 +174,19 @@ function VideoOptions() {
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
+            </div>
+
+            <div className="form-control">
+              <label className="label" htmlFor="includeOriginalFileName">
+                <span className="label-text">
+                  Include original file name in clip filename?
+                </span>
+                <input
+                  type="checkbox"
+                  className="checkbox"
+                  {...register("includeOriginalFileName")}
+                />
+              </label>
             </div>
 
             {showPaddingOptions && (

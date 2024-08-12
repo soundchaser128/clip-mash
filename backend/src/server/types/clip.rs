@@ -101,6 +101,7 @@ pub struct CreateVideoBody {
     pub encoding_effort: EncodingEffort,
     pub padding: Option<PaddingType>,
     pub force_re_encode: bool,
+    pub include_original_file_name: bool,
 }
 
 #[derive(Deserialize, Debug, Serialize, ToSchema)]

@@ -86,6 +86,7 @@ impl OptionsConverterService {
             videos,
             padding: body.padding.unwrap_or_default(),
             force_re_encode: body.force_re_encode,
+            include_original_file_name: body.include_original_file_name,
         })
     }
 

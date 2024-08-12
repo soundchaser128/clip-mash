@@ -31,6 +31,7 @@ const DownloadVideoPage = () => {
       musicVolume: state.data.musicVolume,
       padding: state.data.padding!,
       forceReEncode: false,
+      includeOriginalFileName: state.data.includeOriginalFileName ?? false,
     } satisfies CreateVideoBody
 
     const response = await generateDescription(format, data)

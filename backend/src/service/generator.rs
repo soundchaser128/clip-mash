@@ -41,6 +41,7 @@ pub struct CompilationOptions {
     pub videos: Vec<DbVideo>,
     pub padding: PaddingType,
     pub force_re_encode: bool,
+    pub include_original_file_name: bool,
 }
 
 fn get_clip_file_name(
@@ -50,12 +51,24 @@ fn get_clip_file_name(
     codec: VideoCodec,
     (x_res, y_res): (u32, u32),
     padding: PaddingType,
+    file_path: Option<&str>,
 ) -> String {
     let padding = match padding {
         PaddingType::Black => "black",
         PaddingType::Blur => "blur",
     };
-    format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}-{padding}.mp4")
+    let file_name = file_path
+        .and_then(|p| Utf8Path::new(p).file_stem())
+        .unwrap_or_default();
+
+    let stem = format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}-{padding}");
+    let stem = if file_name.is_empty() {
+        stem
+    } else {
+        format!("{stem}_{file_name}")
+    };
+
+    format!("{stem}.mp4")
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
@@ -355,6 +368,7 @@ impl CompilationGenerator {
             .needs_re_encode(&video_ids)
             .await?;
         info!("Using padding type {:?}", options.padding);
+        let db_videos = self.database.videos.get_videos_by_ids(&video_ids).await?;
 
         let total = clips.len();
         let mut paths = vec![];
@@ -372,7 +386,11 @@ impl CompilationGenerator {
                 .expect(&format!("no marker with ID {marker_id} found"));
 
             let video_metadata = self.database.ffprobe.get_info(&marker.video_id).await?;
-            let video = video_metadata.video_parameters();
+            let video_parameters = video_metadata.video_parameters();
+            let db_video = db_videos
+                .iter()
+                .find(|v| v.id == marker.video_id)
+                .expect("no video found");
 
             let url = &stream_urls[&marker.video_id];
             let (width, height) = options.output_resolution;
@@ -383,6 +401,11 @@ impl CompilationGenerator {
                 options.video_codec,
                 options.output_resolution,
                 options.padding,
+                if options.include_original_file_name {
+                    Some(&db_video.file_path)
+                } else {
+                    None
+                },
             ));
             if !out_file.is_file() {
                 info!("creating clip {} / {} at {out_file}", index + 1, total);
@@ -399,8 +422,8 @@ impl CompilationGenerator {
                         quality: options.video_quality,
                         effort: options.encoding_effort,
                         re_encode: needs_re_encode,
-                        video_width: video.width as u32,
-                        video_height: video.height as u32,
+                        video_width: video_parameters.width as u32,
+                        video_height: video_parameters.height as u32,
                         padding: options.padding,
                         force_re_encode: options.force_re_encode,
                     })

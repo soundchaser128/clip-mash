@@ -660,4 +660,19 @@ mod test {
 
         Ok(())
     }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn get_video_with_markers_bug(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await?;
+        let data = database
+            .videos
+            .get_video_with_markers(&video.id)
+            .await?
+            .unwrap();
+        assert_eq!(data.markers.len(), 0);
+        assert_eq!(data.video.id, video.id);
+        Ok(())
+    }
 }

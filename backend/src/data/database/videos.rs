@@ -242,6 +242,7 @@ impl VideosDatabase {
             };
             let markers = records
                 .into_iter()
+                .filter(|r| r.rowid.is_some())
                 .map(|r| DbMarker {
                     rowid: r.rowid,
                     title: r.title,

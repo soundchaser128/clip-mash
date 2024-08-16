@@ -8,6 +8,7 @@ use axum::routing::{delete, get, post, put};
 use axum::Router;
 use color_eyre::Report;
 use mimalloc::MiMalloc;
+use service::commands::ffprobe;
 use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -91,7 +92,8 @@ async fn run() -> Result<()> {
 
     let directories = Directories::new()?;
     let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
-    info!("using ffmpeg at {ffmpeg_location:?}");
+    let version = ffprobe::get_version(&ffmpeg_location).await?;
+    info!("using ffmpeg at location '{ffmpeg_location:?}' with version '{version}'");
 
     let database_file = if env::var("CLIP_MASH_SQLITE_IN_MEMORY").is_ok() {
         ":memory:".into()

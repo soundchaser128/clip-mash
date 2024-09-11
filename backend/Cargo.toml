@@ -35,7 +35,7 @@ tinytemplate = "1.2"
 time = { version = "0.3.29", features = ["formatting", "parsing", "macros"] }
 tokio = { version = "1.32.0", features = ["full"] }
 tokio-util = { version = "0.7.9", features = ["io"] }
-tower = "0.4.13"
+tower = { version = "0.5.1", features = ["util"] }
 tower-http = { version = "0.5.2", features = ["fs", "trace"] }
 tracing = "0.1.37"
 tracing-appender = "0.2.2"
@@ -57,7 +57,7 @@ xz2 = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]
 # used for listing drives on windows
-sysinfo = "0.30.12"
+sysinfo = "0.31.4"
 # used for unzipping the downloaded ffmpeg archive
 zip = "2.0"
 

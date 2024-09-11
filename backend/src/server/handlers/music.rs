@@ -74,7 +74,7 @@ pub async fn stream_song(
     State(state): State<Arc<AppState>>,
     request: axum::http::Request<Body>,
 ) -> Result<impl IntoResponse, AppError> {
-    use tower::ServiceExt;
+    use tower::util::ServiceExt;
     use tower_http::services::ServeFile;
 
     let song = state.database.music.get_song(song_id).await?;

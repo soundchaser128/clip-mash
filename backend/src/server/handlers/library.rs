@@ -8,7 +8,6 @@ use axum::Json;
 use camino::Utf8Path;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use tower::ServiceExt;
 use tracing::{debug, info, warn};
 use utoipa::{IntoParams, ToSchema};
 
@@ -336,6 +335,7 @@ pub async fn get_video_file(
     state: State<Arc<AppState>>,
     request: axum::http::Request<Body>,
 ) -> Result<impl IntoResponse, AppError> {
+    use tower::util::ServiceExt;
     use tower_http::services::ServeFile;
 
     let video = state.database.videos.get_video(&id).await?;
@@ -354,6 +354,7 @@ pub async fn get_video_preview(
     state: State<Arc<AppState>>,
     request: axum::http::Request<Body>,
 ) -> Result<impl IntoResponse, AppError> {
+    use tower::util::ServiceExt;
     use tower_http::services::ServeFile;
 
     let video = state.database.videos.get_video(&id).await?;
@@ -380,6 +381,7 @@ pub async fn get_marker_preview(
     state: State<Arc<AppState>>,
     request: axum::http::Request<Body>,
 ) -> Result<impl IntoResponse, AppError> {
+    use tower::util::ServiceExt;
     use tower_http::services::ServeFile;
 
     debug!("getting preview image for marker {id}");

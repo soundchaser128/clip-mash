@@ -45,9 +45,18 @@ fn get_debug_hostname() -> &'static str {
     }
 }
 
-fn get_port() -> u16 {
-    use rand::Rng;
+fn find_open_port(host: &str, start: u16) -> u16 {
+    let mut port = start;
+    loop {
+        if let Ok(listener) = std::net::TcpListener::bind((host, port)) {
+            drop(listener);
+            return port;
+        }
+        port += 1;
+    }
+}
 
+fn get_port(host: &str) -> u16 {
     let port = std::env::args()
         .nth(2)
         .and_then(|port| port.parse::<u16>().ok());
@@ -57,9 +66,7 @@ fn get_port() -> u16 {
             if cfg!(debug_assertions) {
                 5174
             } else {
-                let random_port = rand::thread_rng().gen_range(1024..65535);
-                info!("using random port {random_port}");
-                random_port
+                find_open_port(host, 5174)
             }
         }
     }
@@ -77,7 +84,7 @@ fn get_host() -> String {
 
 fn get_address() -> SocketAddr {
     let host = get_host();
-    let port = get_port();
+    let port = get_port(&host);
     let addr = format!("{}:{}", host, port);
     info!("listening on {addr}");
 

@@ -137,7 +137,7 @@ impl HandyController {
             }
 
             global::set_status(ControllerStatus {
-                elapsed,
+                elapsed: elapsed.as_secs_f64(),
                 current_velocity: current_velocity as u32,
                 paused: self.paused,
             })
@@ -212,7 +212,7 @@ impl SpeedController for Box<dyn SpeedController> {
 #[derive(Debug, Serialize, Clone, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ControllerStatus {
-    pub elapsed: Duration,
+    pub elapsed: f64,
     pub current_velocity: u32,
     pub paused: bool,
 }

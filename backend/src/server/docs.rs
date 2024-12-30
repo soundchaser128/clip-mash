@@ -77,9 +77,9 @@ use crate::service::video::AddVideosRequest;
     ),
     components(
         schemas(
-            ListVideoDtoPage,
-            StashVideoDtoPage,
-            MarkerDtoPage,
+            // ListVideoDtoPage,
+            // StashVideoDtoPage,
+            // MarkerDtoPage,
             ListVideoDto,
             MarkerDto,
             VideoDto,

@@ -1,4 +1,4 @@
-import {ListVideoDto, ListVideoDtoPage, updateVideo} from "@/api"
+import {ListVideoDto, PageListVideoDto, updateVideo} from "@/api"
 import VideoCard, {AspectRatio} from "./VideoCard"
 import {
   useLoaderData,
@@ -67,7 +67,7 @@ const VideoGrid: React.FC<Props> = ({
   isVideoDisabled,
   noVideosFoundMessage,
 }) => {
-  const page = useLoaderData() as ListVideoDtoPage
+  const page = useLoaderData() as PageListVideoDto
   const [params] = useSearchParams()
   const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
     undefined,

@@ -2,7 +2,7 @@ import {useStateMachine} from "little-state-machine"
 import {HiCheck, HiChevronRight, HiXMark} from "react-icons/hi2"
 import {updateForm} from "../actions"
 import {useLoaderData, useNavigate} from "react-router-dom"
-import {ListVideoDto, ListVideoDtoPage} from "@/api"
+import {ListVideoDto, PageListVideoDto} from "@/api"
 import {FormStage} from "@/types/form-state"
 import JumpToTop from "@/components/JumpToTop"
 import {pluralize} from "@/helpers/formatting"
@@ -11,7 +11,7 @@ import PageInfo from "@/components/PageInfo"
 
 export default function ListVideos() {
   const {state, actions} = useStateMachine({updateForm})
-  const page = useLoaderData() as ListVideoDtoPage
+  const page = useLoaderData() as PageListVideoDto
   const videos = page.content
   const navigate = useNavigate()
   const count = state.data.videoIds?.length ?? 0

@@ -31,7 +31,7 @@ use crate::service::video::{AddVideosRequest, VideoService};
     path = "/api/library/video",
     params(VideoSearchQuery, PageParameters),
     responses(
-        (status = 200, description = "Lists all videos with given query", body = ListVideoDtoPage),
+        (status = 200, description = "Lists all videos with given query", body = Page<ListVideoDto>),
     )
 )]
 #[axum::debug_handler]
@@ -59,7 +59,7 @@ pub struct StashVideoQuery {
     path = "/api/library/video/stash",
     params(StashVideoQuery, PageParameters),
     responses(
-        (status = 200, description = "Lists all videos in Stash with given query", body = StashVideoDtoPage),
+        (status = 200, description = "Lists all videos in Stash with given query", body = Page<StashVideoDto>),
     )
 )]
 #[axum::debug_handler]
@@ -551,7 +551,7 @@ pub async fn create_new_marker(
     put,
     path = "/api/library/marker/{id}",
     params(
-        ("id" = String, Path, description = "The ID of the marker to update")
+        ("id" = i64, Path, description = "The ID of the marker to update")
     ),
     request_body = UpdateMarker,
     responses(
@@ -667,7 +667,7 @@ pub async fn split_marker(
     post,
     path = "/api/library/video/{id}/stash/merge",
     params(
-        ("id" = i64, Path, description = "The ID of video to merge"),
+        ("id" = String, Path, description = "The ID of video to merge"),
     ),
     responses(
         (status = 200, description = "Merge the video data from stash into the local video", body = ListVideoDto),

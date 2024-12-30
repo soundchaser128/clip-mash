@@ -23,7 +23,7 @@ pub struct DownloadMusicQuery {
     pub url: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SongDto {
     pub song_id: i64,
@@ -157,7 +157,7 @@ pub async fn list_songs(
     get,
     path = "/api/song/{id}/beats",
     params(
-        ("id" = String, Path, description = "The ID of the song to get beats for")
+        ("id" = i64, Path, description = "The ID of the song to get beats for")
     ),
     responses(
         (status = 200, description = "Get beats for a song", body = Beats),

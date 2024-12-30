@@ -10,7 +10,7 @@ use utoipa::ToSchema;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::service::handy::client::{HandyClient, IHandyClient};
-use crate::service::handy::patterns::{self, HandyController, HandyPattern};
+use crate::service::handy::patterns::{self, ControllerStatus, HandyController, HandyPattern};
 
 #[derive(Deserialize, ToSchema)]
 pub struct StartHandyParameters {

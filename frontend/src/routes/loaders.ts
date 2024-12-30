@@ -7,7 +7,7 @@ import {
   CreateClipsBody,
   ListVideosParams,
   ClipLengthOptions,
-  StashVideoDtoPage,
+  PageStashVideoDto,
   VideoDto,
   VideoSource,
   fetchClips,
@@ -124,7 +124,6 @@ const getClipPickerOptions = (
           inputs.clipDurationSpread,
         ),
         length,
-        // @ts-expect-error type definitions don't align
         weights: state.clipWeights!,
         minClipDuration: inputs.minClipDuration,
       }
@@ -216,7 +215,7 @@ export const versionLoader: LoaderFunction = async () => {
   }
 }
 
-export type StashLoaderData = StashVideoDtoPage
+export type StashLoaderData = PageStashVideoDto
 
 export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)

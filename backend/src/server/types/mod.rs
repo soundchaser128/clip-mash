@@ -10,11 +10,11 @@ mod video;
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
 #[serde(rename_all = "camelCase")]
-#[aliases(
-    ListVideoDtoPage = Page<ListVideoDto>,
-    StashVideoDtoPage = Page<StashVideoDto>,
-    MarkerDtoPage = Page<MarkerDto>,
-)]
+// #[aliases(
+//     ListVideoDtoPage = Page<ListVideoDto>,
+//     StashVideoDtoPage = Page<StashVideoDto>,
+//     MarkerDtoPage = Page<MarkerDto>,
+// )]
 pub struct Page<T> {
     pub content: Vec<T>,
     pub total_items: usize,
@@ -35,7 +35,7 @@ impl<T> Page<T> {
     }
 }
 
-impl<T: Serialize + ToSchema<'static>> Page<T> {
+impl<T: Serialize + ToSchema> Page<T> {
     pub fn new(content: Vec<T>, size: usize, page: PageParameters) -> Self {
         let page_number = page.page.unwrap_or(PageParameters::DEFAULT_PAGE as usize);
         let page_size = page.size.unwrap_or(PageParameters::DEFAULT_SIZE as usize);

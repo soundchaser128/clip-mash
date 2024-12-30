@@ -16,7 +16,8 @@
     "lint:fix": "eslint --fix .",
     "test": "vitest",
     "test:once": "vitest run",
-    "generate": "orval --config ./orval.config.ts"
+    "generate": "orval --config ./orval.config.ts",
+    "orval": "orval"
   },
   "dependencies": {
     "@badrap/result": "^0.2.13",
@@ -65,7 +66,7 @@
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^4.6.2",
     "jsdom": "^24.1.1",
-    "orval": "^6.30.2",
+    "orval": "^7.2.0",
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
     "tailwindcss": "^3.4.14",

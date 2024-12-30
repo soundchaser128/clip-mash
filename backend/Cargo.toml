@@ -6,45 +6,45 @@ default-run = "clip-mash"
 license = "GPL-3.0"
 
 [dependencies]
-async-stream = "0.3.5"
-axum = { version = "0.7.4", features = ["macros", "multipart"] }
-camino = { version = "1.1.6", features = ["serde1"] }
-color-eyre = "0.6.2"
+async-stream = "0.3.6"
+axum = { version = "0.7.9", features = ["macros", "multipart"] }
+camino = { version = "1.1.9", features = ["serde1"] }
+color-eyre = "0.6.3"
 directories = "5.0.1"
 float-cmp = "0.10.0"
-fraction = "0.15.0"
-futures = "0.3.28"
+fraction = "0.15.3"
+futures = "0.3.31"
 graphql_client = "0.14.0"
 hound = "3.5.1"
-include_dir = "0.7.3"
+include_dir = "0.7.4"
 itertools = "0.13.0"
-lazy_static = "1.4.0"
-mimalloc = "0.1.30"
+lazy_static = "1.5.0"
+mimalloc = "0.1.43"
 num_cpus = "1.16.0"
-ordered-float = "4.1.0"
+ordered-float = "4.6.0"
 rand = "0.8.5"
-regex = "1.9.6"
-reqwest = { version = "0.12.0", default-features = false, features = ["json"] }
+regex = "1.11.1"
+reqwest = { version = "0.12.11", default-features = false, features = ["json"] }
 sanitise-file-name = "1.0.0"
-semver = "1.0.20"
+semver = "1.0.24"
 sentry = { version = "0.34", features = ["debug-images"] }
 sentry-tower = { version = "0.34", features = ["axum-matched-path"] }
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.107"
-sqlx = { version = "0.8.0", features = ["runtime-tokio", "sqlite"] }
+serde = { version = "1.0.217", features = ["derive"] }
+serde_json = "1.0.134"
+sqlx = { version = "0.8.2", features = ["runtime-tokio", "sqlite"] }
 tinytemplate = "1.2"
-time = { version = "0.3.29", features = ["formatting", "parsing", "macros"] }
-tokio = { version = "1.32.0", features = ["full"] }
-tokio-util = { version = "0.7.9", features = ["io"] }
-tower = { version = "0.5.1", features = ["util"] }
+time = { version = "0.3.37", features = ["formatting", "parsing", "macros"] }
+tokio = { version = "1.42.0", features = ["full"] }
+tokio-util = { version = "0.7.13", features = ["io"] }
+tower = { version = "0.5.2", features = ["util"] }
 tower-http = { version = "0.6", features = ["fs", "trace"] }
-tracing = "0.1.37"
-tracing-appender = "0.2.2"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
-url = { version = "2.4.1", features = ["serde"] }
-utoipa = { version = "5.1.3", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "8.0", features = ["axum"] }
-walkdir = "2.4.0"
+tracing = "0.1.41"
+tracing-appender = "0.2.3"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+url = { version = "2.5.4", features = ["serde"] }
+utoipa = { version = "5.3.0", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "8.1", features = ["axum"] }
+walkdir = "2.5.0"
 webbrowser = "1.0"
 youtube_dl = { version = "0.10.0", features = [
     "tokio",
@@ -53,14 +53,14 @@ youtube_dl = { version = "0.10.0", features = [
 num-traits = "0.2.19"
 
 [target.'cfg(unix)'.dependencies]
-tar = "0.4.40"
+tar = "0.4.43"
 xz2 = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]
 # used for listing drives on windows
 sysinfo = "0.32"
 # used for unzipping the downloaded ffmpeg archive
-zip = "2.0"
+zip = "2.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 aubio = { version = "0.2.1", features = ["bindgen"] }
@@ -72,8 +72,8 @@ aubio = { version = "0.2.1", features = ["builtin"] }
 opt-level = 3
 
 [dev-dependencies]
-fake = "2.8.0"
-tracing-test = "0.2.4"
+fake = "2.10.0"
+tracing-test = "0.2.5"
 mock_instant = "0.5"
-graphql-parser = "0.4.0"
-wiremock = "0.6.0"
+graphql-parser = "0.4.1"
+wiremock = "0.6.2"

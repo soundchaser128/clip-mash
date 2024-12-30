@@ -45,31 +45,11 @@ fn get_debug_hostname() -> &'static str {
     }
 }
 
-fn find_open_port(host: &str, start: u16) -> u16 {
-    let mut port = start;
-    loop {
-        if let Ok(listener) = std::net::TcpListener::bind((host, port)) {
-            drop(listener);
-            return port;
-        }
-        port += 1;
-    }
-}
-
-fn get_port(host: &str) -> u16 {
-    let port = std::env::args()
+fn get_port() -> u16 {
+    std::env::args()
         .nth(2)
-        .and_then(|port| port.parse::<u16>().ok());
-    match port {
-        Some(port) => port,
-        None => {
-            if cfg!(debug_assertions) {
-                5174
-            } else {
-                find_open_port(host, 5174)
-            }
-        }
-    }
+        .and_then(|port| port.parse::<u16>().ok())
+        .unwrap_or(5174)
 }
 
 fn get_host() -> String {
@@ -84,7 +64,7 @@ fn get_host() -> String {
 
 fn get_address() -> SocketAddr {
     let host = get_host();
-    let port = get_port(&host);
+    let port = get_port();
     let addr = format!("{}:{}", host, port);
     info!("listening on {addr}");
 

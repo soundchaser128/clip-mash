@@ -73,7 +73,7 @@ fn get_address() -> SocketAddr {
 }
 
 async fn run() -> Result<()> {
-    use server::{handlers, static_files};
+    use server::handlers;
     use service::commands::ffmpeg;
     use service::migrations;
 
@@ -222,7 +222,6 @@ async fn run() -> Result<()> {
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .nest("/api", api_routes)
-        .fallback_service(static_files::service())
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
         .layer(sentry_tower::NewSentryLayer::new_from_top())
         .layer(sentry_tower::SentryHttpLayer::with_transaction())

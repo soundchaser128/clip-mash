@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: cd e2e-tests && npm ci
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: cd e2e-tests && npx playwright install --with-deps
       - name: Build executable
         run: cd backend && cargo build
       - name: Run Playwright tests

@@ -68,9 +68,6 @@ aubio = { version = "0.2.1", features = ["bindgen"] }
 [target.'cfg(not(target_os = "macos"))'.dependencies]
 aubio = { version = "0.2.1", features = ["builtin"] }
 
-[profile.dev.package.sqlx-macros]
-opt-level = 3
-
 [dev-dependencies]
 fake = "2.8.0"
 tracing-test = "0.2.4"

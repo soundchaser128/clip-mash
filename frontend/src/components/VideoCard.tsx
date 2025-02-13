@@ -62,9 +62,12 @@ interface Props {
 
 function getPreview(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
-    return `${config.stashUrl}/scene/${video.stashSceneId!}/screenshot?apikey=${
-      config.apiKey
-    }`
+    const url = `${config.stashUrl}/scene/${video.stashSceneId!}/screenshot`
+    if (config.apiKey) {
+      return `${url}?apikey=${config.apiKey}`
+    } else {
+      return url
+    }
   } else {
     return `/api/library/video/${video.id}/preview`
   }
@@ -72,9 +75,12 @@ function getPreview(video: VideoDto, config?: StashConfig): string {
 
 function getVideo(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
-    return `${config.stashUrl}/scene/${video.stashSceneId!}/stream?apikey=${
-      config.apiKey
-    }`
+    const url = `${config.stashUrl}/scene/${video.stashSceneId!}/stream`
+    if (config.apiKey) {
+      return `${url}?apikey=${config.apiKey}`
+    } else {
+      return url
+    }
   } else {
     return `/api/library/video/${video.id}/file`
   }

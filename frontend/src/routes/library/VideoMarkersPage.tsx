@@ -42,9 +42,12 @@ import {isBetween} from "@/helpers/math"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
-    return `${config.stashUrl}/scene/${video.stashSceneId!}/stream?apikey=${
-      config.apiKey
-    }`
+    const url = `${config.stashUrl}/scene/${video.stashSceneId!}/stream`
+    if (config.apiKey) {
+      return `${url}?apikey=${config.apiKey}`
+    } else {
+      return url
+    }
   } else {
     return `/api/library/video/${video.id}/file`
   }

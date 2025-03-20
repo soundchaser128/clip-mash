@@ -25,6 +25,7 @@ query FindScenesQuery($query: String, $page: Int!, $page_size: Int!, $scene_ids:
       scene_markers {
         id
         seconds
+        end_seconds
         stream
         screenshot
         tags {

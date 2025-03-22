@@ -395,6 +395,27 @@ impl VideoService {
                         .unwrap()
                         .rowid
                         .unwrap();
+
+                    // Format times as MM:SS for easier reading and logging for updating markers
+                     /**let format_time = |seconds: f64| {
+                        let total_seconds = seconds.round() as i64;
+                        let minutes = total_seconds / 60;
+                        let seconds = total_seconds % 60;
+                        format!("{:02}:{:02}", minutes, seconds)
+                    };
+
+                    info!(
+                        "Marker #{}: Updating from {}→{} ({} to {}) to {}→{} ({} to {})",
+                        db_id,
+                        db_markers.iter().find(|m| m.marker_stash_id == Some(stash_id)).unwrap().start_time,
+                        db_markers.iter().find(|m| m.marker_stash_id == Some(stash_id)).unwrap().end_time,
+                        format_time(db_markers.iter().find(|m| m.marker_stash_id == Some(stash_id)).unwrap().start_time),
+                        format_time(db_markers.iter().find(|m| m.marker_stash_id == Some(stash_id)).unwrap().end_time),
+                        marker.start,
+                        marker.end,
+                        format_time(marker.start),
+                        format_time(marker.end)
+                    );**/
                     self.database
                         .markers
                         .update_marker(

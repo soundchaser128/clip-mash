@@ -6,31 +6,22 @@ use std::time::Duration;
 use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
-use color_eyre::Report;
+use clip_mash::service::commands::ffprobe;
 use mimalloc::MiMalloc;
-use service::commands::ffprobe;
 use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::data::database::Database;
-use crate::server::docs::ApiDoc;
-use crate::server::handlers::AppState;
-use crate::service::directories::Directories;
-use crate::service::generator::CompilationGenerator;
-use crate::service::new_version_checker::NewVersionChecker;
+use clip_mash::data::database::Database;
+use clip_mash::server::docs::ApiDoc;
+use clip_mash::server::handlers::AppState;
+use clip_mash::service::directories::Directories;
+use clip_mash::service::generator::CompilationGenerator;
+use clip_mash::service::new_version_checker::NewVersionChecker;
+use clip_mash::Result;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
-
-mod data;
-mod helpers;
-mod server;
-mod service;
-
-pub use helpers::util;
-
-pub type Result<T> = std::result::Result<T, Report>;
 
 // 100 MB
 const CONTENT_LENGTH_LIMIT: usize = 100 * 1000 * 1000;
@@ -73,9 +64,9 @@ fn get_address() -> SocketAddr {
 }
 
 async fn run() -> Result<()> {
-    use server::{handlers, static_files};
-    use service::commands::ffmpeg;
-    use service::migrations;
+    use clip_mash::server::{handlers, static_files};
+    use clip_mash::service::commands::ffmpeg;
+    use clip_mash::service::migrations;
 
     let directories = Directories::new()?;
     let ffmpeg_location = ffmpeg::download_ffmpeg(&directories).await?;
@@ -250,7 +241,7 @@ async fn run() -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    use crate::helpers::{log, sentry};
+    use clip_mash::helpers::{log, sentry};
 
     color_eyre::install()?;
     let _log_guard = log::setup_logger();

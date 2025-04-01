@@ -454,9 +454,19 @@ impl StashApi {
     }
 
     pub fn get_stream_url(&self, id: i64) -> String {
+        assert!(
+            is_valid_url(&self.api_url),
+            "Invalid API URL: '{}'",
+            self.api_url
+        );
+
         let url = format!("{}/scene/{}/stream", self.api_url, id);
         add_api_key(&url, self.api_key.as_deref())
     }
+}
+
+fn is_valid_url(url: &str) -> bool {
+    url::Url::parse(url).is_ok()
 }
 
 #[cfg(test)]

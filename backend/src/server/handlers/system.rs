@@ -62,7 +62,7 @@ pub async fn set_config(
     state: State<Arc<AppState>>,
     Json(config): Json<Settings>,
 ) -> Result<Json<&'static str>, AppError> {
-    info!("setting config {:?}", config);
+    info!("setting config {:#?}", config);
     state.database.settings.set(config).await?;
 
     Ok(Json("OK"))

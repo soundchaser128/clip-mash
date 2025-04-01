@@ -173,7 +173,9 @@ impl StashMarker {
                     .collect(),
                 file_name: scene.files.get(0).map(|f| f.basename.clone()),
                 start: m.seconds,
-                end: m.end_seconds.unwrap_or_else(|| compute_end(m.seconds, &markers, duration)),
+                end: m
+                    .end_seconds
+                    .unwrap_or_else(|| compute_end(m.seconds, &markers, duration)),
                 streams: scene
                     .scene_streams
                     .clone()

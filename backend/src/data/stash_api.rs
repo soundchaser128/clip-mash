@@ -97,7 +97,6 @@ impl HasStart for &FindScenesQueryFindScenesScenesSceneMarkers {
         self.seconds
     }
 }
-
 fn compute_end<M>(start: f64, markers: impl IntoIterator<Item = M>, duration: f64) -> f64
 where
     M: HasStart,
@@ -174,7 +173,9 @@ impl StashMarker {
                     .collect(),
                 file_name: scene.files.get(0).map(|f| f.basename.clone()),
                 start: m.seconds,
-                end: compute_end(m.seconds, &markers, duration),
+                end: m
+                    .end_seconds
+                    .unwrap_or_else(|| compute_end(m.seconds, &markers, duration)),
                 streams: scene
                     .scene_streams
                     .clone()
@@ -335,6 +336,8 @@ impl StashApi {
                 ignore_auto_tag: None,
                 image: None,
                 parent_ids: None,
+                sort_name: None,
+                favorite: None,
             },
         };
 
@@ -389,6 +392,7 @@ impl StashApi {
                 primary_tag_id: tag_id,
                 title: marker.title,
                 seconds: marker.start_time,
+                end_seconds: Some(marker.end_time),
                 tag_ids: None,
             },
         };

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat: Support for the new `end_time` field on markers in Stash (@WorksDontBreak)
+
 ## 0.21.1
 
 - fix: Failures when fetching video encoding status shouldn't crash the app

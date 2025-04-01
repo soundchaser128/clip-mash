@@ -1,5 +1,7 @@
 mutation CreateMarker($marker: SceneMarkerCreateInput!) {
   sceneMarkerCreate(input: $marker) {
     id
+    seconds
+    end_seconds
   }
 }

@@ -6,19 +6,17 @@ use std::time::Duration;
 use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
 use axum::Router;
+use clip_mash::data::database::Database;
+use clip_mash::server::docs::ApiDoc;
+use clip_mash::server::handlers::AppState;
 use clip_mash::service::commands::ffprobe;
+use clip_mash::service::directories::Directories;
+use clip_mash::service::new_version_checker::NewVersionChecker;
+use clip_mash::Result;
 use mimalloc::MiMalloc;
 use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-
-use clip_mash::data::database::Database;
-use clip_mash::server::docs::ApiDoc;
-use clip_mash::server::handlers::AppState;
-use clip_mash::service::directories::Directories;
-use clip_mash::service::generator::CompilationGenerator;
-use clip_mash::service::new_version_checker::NewVersionChecker;
-use clip_mash::Result;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -84,8 +82,6 @@ async fn run() -> Result<()> {
     let database = Database::new(&database_file).await?;
     let version = database.sqlite_version().await?;
     info!("using sqlite version {version}");
-    let generator =
-        CompilationGenerator::new(directories.clone(), &ffmpeg_location, database.clone()).await?;
     migrations::run_async(
         database.clone(),
         directories.clone(),
@@ -93,7 +89,6 @@ async fn run() -> Result<()> {
     );
 
     let state = Arc::new(AppState {
-        generator,
         database,
         directories,
         ffmpeg_location,

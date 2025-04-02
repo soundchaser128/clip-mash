@@ -19,6 +19,7 @@ use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::description_generator::DescriptionType;
 use crate::service::funscript::{self, FunScript, ScriptBuilder};
+use crate::service::generator::CompilationGenerator;
 use crate::service::options_converter::OptionsConverterService;
 use crate::service::streams::{LocalVideoSource, StreamUrlService};
 
@@ -76,9 +77,15 @@ async fn create_video_inner(
 ) -> Result<(), AppError> {
     let service = OptionsConverterService::new(state.database.clone());
     let options = service.convert_compilation_options(body).await?;
+    let generator = CompilationGenerator::new(
+        state.directories.clone(),
+        &state.ffmpeg_location,
+        state.database.clone(),
+    )
+    .await?;
 
-    let clips = state.generator.gather_clips(&options).await?;
-    state.generator.compile_clips(&options, clips).await?;
+    let clips = generator.gather_clips(&options).await?;
+    generator.compile_clips(&options, clips).await?;
     Ok(())
 }
 

@@ -60,6 +60,7 @@ pub struct HampVelocityPercent {
     pub velocity: f64,
 }
 
+#[allow(async_fn_in_trait)]
 pub trait IHandyClient {
     /// Check if the handy is connected
     async fn is_connected(&self) -> Result<bool>;

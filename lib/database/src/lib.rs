@@ -14,8 +14,6 @@ use self::progress::ProgressDatabase;
 use self::settings::SettingsDatabase;
 pub use self::settings::{HandyConfig, Settings};
 use self::videos::VideosDatabase;
-use crate::server::types::Progress;
-use crate::Result;
 
 pub mod ffprobe;
 pub mod markers;
@@ -24,6 +22,11 @@ pub mod performers;
 pub mod progress;
 pub mod settings;
 pub mod videos;
+
+#[cfg(test)]
+mod fixtures;
+
+pub type Result<T> = color_eyre::Result<T>;
 
 #[derive(Clone)]
 pub struct Database {
@@ -92,11 +95,10 @@ mod test {
     use tracing_test::traced_test;
 
     use super::videos::{VideoSearchQuery, VideoSource, VideoUpdate};
-    use crate::data::database::markers::ListMarkersFilter;
-    use crate::data::database::Database;
+    use crate::fixtures::{persist_marker, persist_video, persist_video_with};
     use crate::helpers::random::generate_id;
-    use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
-    use crate::service::fixtures::{persist_marker, persist_video, persist_video_with};
+    use crate::markers::ListMarkersFilter;
+    use crate::Database;
     use crate::Result;
 
     #[sqlx::test]

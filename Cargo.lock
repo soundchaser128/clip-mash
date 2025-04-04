@@ -651,7 +651,7 @@ dependencies = [
  "mock_instant",
  "num-traits",
  "num_cpus",
- "ordered-float",
+ "ordered-float 4.6.0",
  "rand 0.8.5",
  "regex",
  "reqwest",
@@ -1012,12 +1012,15 @@ dependencies = [
 name = "database"
 version = "0.1.0"
 dependencies = [
+ "camino",
  "color-eyre",
  "futures",
+ "ordered-float 5.0.0",
  "serde",
  "serde_json",
  "sqlx",
  "tracing",
+ "tracing-test",
 ]
 
 [[package]]
@@ -3475,6 +3478,15 @@ name = "ordered-float"
 version = "4.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bb71e1b3fa6ca1c61f383464aaf2bb0e2f8e772a1f01d486832464de363b951"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "ordered-float"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2c1f9f56e534ac6a9b8a4600bdf0f530fb393b5f393e7b4d03489c3cf0c3f01"
 dependencies = [
  "num-traits",
 ]

@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "select sqlite_version()",
+  "describe": {
+    "columns": [
+      {
+        "name": "sqlite_version()",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "ed59f6fe6478c07989fc8888bfe9c80b7963d88c470b936cb956e0dd14cd282d"
+}

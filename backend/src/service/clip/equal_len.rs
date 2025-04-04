@@ -1,5 +1,5 @@
 use rand::rngs::StdRng;
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 use tracing::{debug, info};
 
 use super::ClipPicker;

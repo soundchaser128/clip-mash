@@ -2,8 +2,8 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use lazy_static::lazy_static;
 use rand::rngs::StdRng;
-use rand::seq::SliceRandom;
-use rand::{thread_rng, SeedableRng};
+use rand::seq::IndexedRandom;
+use rand::{rng, SeedableRng};
 
 const ADJECTIVES: &str = include_str!("../../data/words/adjectives.txt");
 const ANIMALS: &str = include_str!("../../data/words/animals.txt");
@@ -22,7 +22,7 @@ lazy_static! {
 }
 
 pub fn generate_id() -> String {
-    let mut rng = thread_rng();
+    let mut rng = rng();
     let adjective1 = ADJECTIVE_LIST.choose(&mut rng).unwrap();
     let adjective2 = ADJECTIVE_LIST.choose(&mut rng).unwrap();
     let animal = ANIMALS_LIST.choose(&mut rng).unwrap();
@@ -31,7 +31,7 @@ pub fn generate_id() -> String {
 }
 
 pub fn get_random_word() -> String {
-    let mut rng = thread_rng();
+    let mut rng = rng();
     ALL_WORDS.choose(&mut rng).unwrap().to_string()
 }
 

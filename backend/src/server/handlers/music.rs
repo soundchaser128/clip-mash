@@ -146,7 +146,7 @@ pub async fn list_songs(
         .collect();
 
     if let Some(true) = shuffle {
-        songs.shuffle(&mut rand::thread_rng());
+        songs.shuffle(&mut rand::rng());
     }
 
     Ok(Json(songs))

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use rand::distributions::WeightedIndex;
+use rand::distr::weighted::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::rngs::StdRng;
 use tracing::{debug, info};

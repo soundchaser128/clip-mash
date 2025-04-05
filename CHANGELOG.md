@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- feat: ClipMash TV: Allows watching a compilation live in your browser (including Handy support)
+- feat: Add performers database table
+- chore: Upgrade dependency versions
+
 ## 0.22.0
 
 - feat: Support for the new `end_time` field on markers in Stash (@WorksDontBreak)

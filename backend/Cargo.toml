@@ -10,18 +10,18 @@ async-stream = "0.3.6"
 axum = { version = "0.8", features = ["macros", "multipart"] }
 camino = { version = "1.1.9", features = ["serde1"] }
 color-eyre = "0.6.3"
-directories = "5.0.1"
+directories = "6.0.0"
 float-cmp = "0.10.0"
 fraction = "0.15.3"
 futures = "0.3.31"
 graphql_client = "0.14.0"
 hound = "3.5.1"
 include_dir = "0.7.4"
-itertools = "0.13.0"
+itertools = "0.14.0"
 lazy_static = "1.5.0"
 mimalloc = "0.1.43"
 num_cpus = "1.16.0"
-ordered-float = "4.6.0"
+ordered-float = "5.0"
 rand = "0.9.0"
 regex = "1.11.1"
 reqwest = { version = "0.12.11", default-features = false, features = ["json"] }
@@ -58,7 +58,7 @@ xz2 = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]
 # used for listing drives on windows
-sysinfo = "0.32"
+sysinfo = "0.34"
 # used for unzipping the downloaded ffmpeg archive
 zip = "=2.3"
 
@@ -72,7 +72,7 @@ aubio = { version = "0.2.1", features = ["builtin"] }
 opt-level = 3
 
 [dev-dependencies]
-fake = "2.10.0"
+fake = "4"
 tracing-test = "0.2.5"
 mock_instant = "0.5"
 graphql-parser = "0.4.1"

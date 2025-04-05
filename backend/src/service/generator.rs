@@ -112,22 +112,6 @@ pub struct CompilationGenerator {
     stream_urls: StreamUrlService,
 }
 
-#[derive(Debug, Copy, Clone)]
-enum Orientation {
-    Landscape,
-    Portrait,
-}
-
-impl Orientation {
-    fn new(width: u32, height: u32) -> Self {
-        if width > height {
-            Orientation::Landscape
-        } else {
-            Orientation::Portrait
-        }
-    }
-}
-
 impl CompilationGenerator {
     pub async fn new(
         directories: Directories,

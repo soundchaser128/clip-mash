@@ -3,7 +3,6 @@ use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::Section;
-use fraction::Ratio;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
@@ -238,17 +237,13 @@ impl CompilationGenerator {
 
         let clip_str = clip.duration.to_string();
         let seconds_str = clip.start.to_string();
-
-        let video = Ratio::new(clip.video_width, clip.video_height);
-        let target = Ratio::new(clip.width, clip.height);
-
-        let filter = match (clip.padding, target != video) {
-            (PaddingType::Blur, true) => FilterType::Complex(self.blurred_padding_filter(
+        let filter = match clip.padding {
+            PaddingType::Blur => FilterType::Complex(self.blurred_padding_filter(
                 (clip.video_width, clip.video_height),
                 (clip.width, clip.height),
                 clip.fps,
             )),
-            _ => FilterType::Simple(
+            PaddingType::Black => FilterType::Simple(
                 format!(
                     "scale={width}:{height}:force_original_aspect_ratio=decrease,
                 pad={width}:{height}:-1:-1:color=black,

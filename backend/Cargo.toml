@@ -12,7 +12,6 @@ camino = { version = "1.1.9", features = ["serde1"] }
 color-eyre = "0.6.3"
 directories = "6.0.0"
 float-cmp = "0.10.0"
-fraction = "0.15.3"
 futures = "0.3.31"
 graphql_client = "0.14.0"
 hound = "3.5.1"

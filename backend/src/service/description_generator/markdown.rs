@@ -1,32 +1,52 @@
-use minijinja::{context, Environment};
 use tracing::info;
 
 use super::{DescriptionGenerator, TemplateContext};
-use crate::Result;
+use crate::{data::database::videos::VideoSource, Result};
 
-pub struct MarkdownDescriptionGenerator {
-    environment: Environment<'static>,
-}
-
-impl MarkdownDescriptionGenerator {
-    pub fn new() -> Result<Self> {
-        let mut environment = Environment::new();
-        let template = include_str!("../../../data/templates/description.md");
-        environment.add_template("description", template)?;
-        environment.set_trim_blocks(true);
-        environment.set_lstrip_blocks(true);
-
-        Ok(MarkdownDescriptionGenerator { environment })
-    }
-}
+pub struct MarkdownDescriptionGenerator;
 
 impl DescriptionGenerator for MarkdownDescriptionGenerator {
-    fn generate(&self, options: TemplateContext) -> Result<String> {
+    fn generate(&self, ctx: TemplateContext) -> Result<String> {
         info!("Generating Markdown description");
-        self.environment
-            .get_template("description")?
-            .render(context! {ctx => options})
-            .map_err(From::from)
+        let mut string = format!(
+            "# Compilation '{}'
+Created with [ClipMash](https://github.com/soundchaser128/clip-mash).
+
+## Video information
+
+- Resolution: **{} x {}**
+- Frames per second: **{}**
+- Video codec: **{}**\n\n",
+            ctx.title, ctx.width, ctx.height, ctx.fps, ctx.codec
+        );
+
+        string.push_str("## Clips\n\n");
+        string.push_str(
+            "| Video | Description | Start | End |\n| ----- | ----------- | ----- | --- |\n",
+        );
+        for clip in ctx.clips {
+            string.push_str(&format!(
+                "| {} | {} | {} | {} |\n",
+                clip.video_title, clip.marker_title, clip.start, clip.end
+            ));
+        }
+
+        string.push_str("\n## Videos\n\n");
+        string.push_str("| Video | Title | Interactive |\n| ----- | ----- | ----------- |\n");
+        for video in ctx.videos {
+            string.push_str(&format!(
+                "| {} | {} | {} |\n",
+                match video.source {
+                    VideoSource::Folder => "Local folder",
+                    VideoSource::Download => "Downloaded",
+                    VideoSource::Stash => "Stash",
+                },
+                video.title,
+                video.interactive
+            ));
+        }
+
+        Ok(string)
     }
 }
 
@@ -52,7 +72,7 @@ mod tests {
             videos: vec![],
         };
 
-        let generator = MarkdownDescriptionGenerator::new().expect("failed to create generator");
+        let generator = MarkdownDescriptionGenerator;
         let description = generator.generate(options).expect("failed to generate");
     }
 }

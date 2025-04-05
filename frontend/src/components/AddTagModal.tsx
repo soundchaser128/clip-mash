@@ -1,32 +1,25 @@
-import {ListVideoDto, updateVideo} from "@/api"
 import Modal from "./Modal"
 import {useState} from "react"
 import {HiPlus} from "react-icons/hi2"
-import {useRevalidator} from "react-router-dom"
 
 interface Props {
-  video?: ListVideoDto
+  isOpen: boolean
+  onSubmit: (tag: string) => void
   onClose: () => void
 }
 
-const AddTagModal: React.FC<Props> = ({video, onClose}) => {
+const AddTagModal: React.FC<Props> = ({onSubmit, onClose, isOpen}) => {
   const [tag, setTag] = useState("")
-  const revalidator = useRevalidator()
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (video) {
-      await updateVideo(video.video.id, {tags: [...video.video.tags, tag]})
-      onClose()
-      revalidator.revalidate()
-      setTag("")
-    }
+    onSubmit(tag)
   }
 
   return (
-    <Modal size="fluid" onClose={onClose} isOpen={!!video}>
+    <Modal size="fluid" onClose={onClose} isOpen={isOpen}>
       <h2 className="font-bold text-2xl mb-4">Add tag to video</h2>
-      <form onSubmit={onSubmit} className="flex flex-col self-center px-8">
+      <form onSubmit={handleSubmit} className="flex flex-col self-center px-8">
         <div className="form-control">
           <label htmlFor="newTag" className="label">
             <span className="label-text">Tag</span>

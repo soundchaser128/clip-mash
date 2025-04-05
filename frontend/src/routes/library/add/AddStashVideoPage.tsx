@@ -15,6 +15,7 @@ import {useConfig} from "../../../hooks/useConfig"
 import useDebouncedSetQuery from "../../../hooks/useDebouncedQuery"
 import {useCreateToast} from "@/hooks/useToast"
 import PageSizeSelect from "@/components/PageSizeSelect"
+import PageInfo from "@/components/PageInfo"
 
 const AddStashVideoPage: React.FC = () => {
   const [search] = useSearchParams()
@@ -28,7 +29,7 @@ const AddStashVideoPage: React.FC = () => {
   const createToast = useCreateToast()
 
   useEffect(() => {
-    if (!config.stash.stashUrl) {
+    if (!config?.stash.stashUrl) {
       navigate("/settings")
       createToast({
         message: "Please configure your Stash settings first.",
@@ -116,8 +117,10 @@ const AddStashVideoPage: React.FC = () => {
           <HiPlus /> Add entire page
         </button>
       </section>
-      <section className="py-2">
+      <section className="py-2 grid grid-cols-3">
         <PageSizeSelect />
+        <PageInfo page={data} className="text-center" startIndex={1} />
+        <span />
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full mb-4">
@@ -130,7 +133,7 @@ const AddStashVideoPage: React.FC = () => {
             <VideoCard
               key={video.id}
               video={{video, markerCount: video.markerCount}}
-              stashConfig={config.stash}
+              stashConfig={config?.stash}
               aspectRatio="wide"
               actionChildren={
                 <>

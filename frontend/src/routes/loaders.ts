@@ -7,7 +7,7 @@ import {
   CreateClipsBody,
   ListVideosParams,
   ClipLengthOptions,
-  StashVideoDtoPage,
+  PageStashVideoDto,
   VideoDto,
   VideoSource,
   fetchClips,
@@ -24,18 +24,10 @@ import {
   ClipFormInputs,
   getDefaultOptions,
 } from "./clips/settings/ClipSettingsForm"
-import {lerpArrays} from "@/helpers/math"
+import {getPageSize} from "@/components/PageSizeSelect"
 
-export const DEFAULT_PAGE_LENGTH = 24
 export const DEFAULT_CLIP_BASE_DURATION = 10
 export const DEFAULT_SPREAD = 0.25
-
-function getDivisors(spread: number): number[] {
-  const MIN_DURATIONS = [1, 1, 1, 1]
-  const MAX_DURATIONS = [1, 4, 8, 16]
-
-  return lerpArrays(MIN_DURATIONS, MAX_DURATIONS, spread)
-}
 
 export interface ClipsLoaderData {
   clips: Clip[]
@@ -66,7 +58,7 @@ const getClipLengths = (
     return {
       type: "randomized",
       baseDuration: 20,
-      divisors: getDivisors(spread),
+      spread,
     }
   }
 
@@ -85,7 +77,7 @@ const getClipLengths = (
     return {
       type: "randomized",
       baseDuration: options.clipLengths.baseDuration,
-      divisors: getDivisors(spread),
+      spread,
     }
   }
 }
@@ -98,7 +90,7 @@ const getClipPickerOptions = (
     return {
       type: "equalLength",
       clipDuration: 20,
-      divisors: getDivisors(DEFAULT_SPREAD),
+      spread: DEFAULT_SPREAD,
       minClipDuration: 1.5,
     }
   }
@@ -132,7 +124,6 @@ const getClipPickerOptions = (
           inputs.clipDurationSpread,
         ),
         length,
-        // @ts-expect-error type definitions don't align
         weights: state.clipWeights!,
         minClipDuration: inputs.minClipDuration,
       }
@@ -144,7 +135,7 @@ const getClipPickerOptions = (
       return {
         type: "equalLength",
         clipDuration: inputs.equalLength.clipDuration,
-        divisors: getDivisors(inputs.clipDurationSpread),
+        spread: inputs.clipDurationSpread,
         length,
         minClipDuration: inputs.minClipDuration,
       }
@@ -165,7 +156,6 @@ export const clipsLoader: LoaderFunction = async () => {
   const seed = options.seed?.length === 0 ? undefined : options.seed
 
   const body = {
-    clipOrder,
     markers: state.selectedMarkers!.filter((m) => m.selected),
     seed,
     clips: {
@@ -225,7 +215,7 @@ export const versionLoader: LoaderFunction = async () => {
   }
 }
 
-export type StashLoaderData = StashVideoDtoPage
+export type StashLoaderData = PageStashVideoDto
 
 export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const url = new URL(request.url)
@@ -234,7 +224,7 @@ export const stashVideoLoader: LoaderFunction = async ({request}) => {
   const videos = await listStashVideos({
     query,
     page: Number(url.searchParams.get("page")) || 1,
-    size: Number(url.searchParams.get("size")) || DEFAULT_PAGE_LENGTH,
+    size: getPageSize(url.searchParams),
     withMarkers: withMarkers ? true : null,
   })
 
@@ -261,7 +251,7 @@ export const makeVideoLoader: (
     const videos = await listVideos({
       hasMarkers: params.hasMarkers || parseBoolean(query.get("hasMarkers")),
       page: Number(query.get("page")) || 0,
-      size: Number(query.get("size")) || DEFAULT_PAGE_LENGTH,
+      size: getPageSize(url.searchParams),
       query: query.get("query"),
       sort: query.get("sort"),
       source: query.get("source") as VideoSource | null,

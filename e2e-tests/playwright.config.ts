@@ -59,6 +59,7 @@ export default defineConfig({
     env: {
       DISABLE_SENTRY: "true",
       CLIP_MASH_SQLITE_IN_MEMORY: "true",
+      RUST_BACKTRACE: "1",
     },
   },
 });

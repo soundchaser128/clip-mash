@@ -1,0 +1,11 @@
+set shell := ["nu", "-c"]
+
+default:
+  @just --list
+
+setup:
+    npm install
+    npx playwright install
+
+test:
+    npx playwright test

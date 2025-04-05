@@ -15,11 +15,11 @@ use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;
-use crate::data::database::{
-    unix_timestamp_now, CreateVideo, Database, DbMarker, DbVideo, VideoSource,
-};
+use crate::data::database::markers::DbMarker;
+use crate::data::database::videos::{CreateVideo, DbVideo, VideoSource};
+use crate::data::database::{unix_timestamp_now, Database};
+use crate::helpers::random::generate_id;
 use crate::server::types::{Beats, CreateMarker};
-use crate::util::generate_id;
 use crate::Result;
 
 #[derive(Debug, Deserialize)]
@@ -358,7 +358,7 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
     db.videos.persist_video(&video).await
 }
 
-pub async fn persist_video_fn<F: FnOnce(&mut CreateVideo)>(
+pub async fn persist_video_with<F: FnOnce(&mut CreateVideo)>(
     db: &Database,
     before_insert: F,
 ) -> Result<DbVideo> {

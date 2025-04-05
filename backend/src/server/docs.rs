@@ -5,11 +5,19 @@ use super::handlers::library::{CreateMarkerRequest, VideoCleanupResponse};
 use super::handlers::music::SongUpload;
 use super::handlers::project::{CreateFunscriptBody, DescriptionData, ProjectCreateResponse};
 use super::types::*;
-use crate::data::database::{MarkerCount, Settings, VideoSource, VideoUpdate};
-use crate::server::handlers::{files, library, music, progress, project, stash, system};
+use crate::data::database::markers::MarkerCount;
+use crate::data::database::videos::{TagCount, VideoSource, VideoUpdate};
+use crate::data::database::{HandyConfig, Settings};
+use crate::server::handlers::handy::{HandyConnectedResponse, StartHandyParameters};
+use crate::server::handlers::library::ListPerformerResponse;
+use crate::server::handlers::{files, handy, library, music, progress, project, stash, system};
 use crate::service::description_generator::DescriptionType;
 use crate::service::directories::FolderType;
 use crate::service::generator::PaddingType;
+use crate::service::handy::patterns::accellerate::AccellerateParameters;
+use crate::service::handy::patterns::cycle_accellerate::CycleAccellerateParameters;
+use crate::service::handy::patterns::random::RandomParameters;
+use crate::service::handy::patterns::{ControllerStatus, HandyPattern, Range};
 use crate::service::new_version_checker::AppVersion;
 use crate::service::stash_config::StashConfig;
 use crate::service::video::AddVideosRequest;
@@ -34,6 +42,8 @@ use crate::service::video::AddVideosRequest;
         library::migrate_preview_images,
         library::videos_need_encoding,
         library::list_marker_titles,
+        library::list_performers,
+        library::list_video_tags,
         files::list_file_entries,
         files::get_file_stats,
         files::cleanup_folder,
@@ -42,12 +52,14 @@ use crate::service::video::AddVideosRequest;
         project::create_video,
         project::download_video,
         project::fetch_clips,
+        project::fetch_clips_interactive,
         project::get_beat_funscript,
         project::get_combined_funscript,
         project::get_new_id,
         project::list_finished_videos,
         project::generate_description,
-        stash::get_health,
+        project::generate_random_seed,
+        stash::get_stash_health,
         music::list_songs,
         music::get_beats,
         music::upload_music,
@@ -56,13 +68,15 @@ use crate::service::video::AddVideosRequest;
         system::get_config,
         system::set_config,
         system::restart,
-        system::get_health,
+        system::get_app_health,
+        handy::start_handy,
+        handy::stop_handy,
+        handy::pause_handy,
+        handy::handy_status,
+        handy::handy_connected,
     ),
     components(
         schemas(
-            ListVideoDtoPage,
-            StashVideoDtoPage,
-            MarkerDtoPage,
             ListVideoDto,
             MarkerDto,
             VideoDto,
@@ -117,7 +131,20 @@ use crate::service::video::AddVideosRequest;
             DescriptionData,
             FolderType,
             PaddingType,
-            Settings
+            Settings,
+            CreateInteractiveClipsBody,
+            InteractiveClipsQuery,
+            ListPerformerResponse,
+            StartHandyParameters,
+            HandyConfig,
+            HandyPattern,
+            CycleAccellerateParameters,
+            RandomParameters,
+            AccellerateParameters,
+            Range,
+            TagCount,
+            ControllerStatus,
+            HandyConnectedResponse,
         )
     ),
     tags(

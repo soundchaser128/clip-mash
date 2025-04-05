@@ -1,12 +1,12 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT \n                m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, \n                m.index_within_video, m.marker_preview_image, v.interactive, \n                m.marker_created_on, v.video_title, v.source, v.video_tags,\n                v.stash_scene_id\n            FROM markers m INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.marker_preview_image IS NULL",
+  "query": "\n            SELECT \n                m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, \n                m.index_within_video, m.marker_preview_image, v.interactive, \n                m.marker_created_on, v.video_title, v.source AS \"source: VideoSource\", v.video_tags,\n                v.stash_scene_id\n            FROM markers m INNER JOIN videos v ON m.video_id = v.id\n            ORDER BY v.file_path ASC",
   "describe": {
     "columns": [
       {
         "name": "rowid",
         "ordinal": 0,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "title",
@@ -36,7 +36,7 @@
       {
         "name": "index_within_video",
         "ordinal": 6,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "marker_preview_image",
@@ -51,7 +51,7 @@
       {
         "name": "marker_created_on",
         "ordinal": 9,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "video_title",
@@ -59,7 +59,7 @@
         "type_info": "Text"
       },
       {
-        "name": "source",
+        "name": "source: VideoSource",
         "ordinal": 11,
         "type_info": "Text"
       },
@@ -71,14 +71,14 @@
       {
         "name": "stash_scene_id",
         "ordinal": 13,
-        "type_info": "Int64"
+        "type_info": "Integer"
       }
     ],
     "parameters": {
       "Right": 0
     },
     "nullable": [
-      false,
+      true,
       false,
       false,
       false,
@@ -94,5 +94,5 @@
       true
     ]
   },
-  "hash": "4c49bde4ad5b70e82b34f5c7aebc5bac148b64a919f20cbdf92821cf2dde172e"
+  "hash": "8711dfa4ca8b24106a92654cdfb9492534cea7ab1c4ef45e0a5793446d7cc6ab"
 }

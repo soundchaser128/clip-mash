@@ -44,6 +44,7 @@ export interface FormState {
   clipWeights?: [string, number][]
   clipOptions?: ClipFormInputs
   padding?: PaddingType
+  includeOriginalFileName?: boolean
 }
 
 export interface SerializedFormState extends FormState {

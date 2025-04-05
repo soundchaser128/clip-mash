@@ -62,7 +62,7 @@ pub async fn set_config(
     state: State<Arc<AppState>>,
     Json(config): Json<Settings>,
 ) -> Result<Json<&'static str>, AppError> {
-    info!("setting config {:?}", config);
+    info!("setting config {:#?}", config);
     state.database.settings.set(config).await?;
 
     Ok(Json("OK"))
@@ -106,7 +106,7 @@ pub async fn restart() {
     )
 )]
 #[axum::debug_handler]
-pub async fn get_health(state: State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn get_app_health(state: State<Arc<AppState>>) -> impl IntoResponse {
     if let Err(e) = state.database.settings.fetch_optional().await {
         error!("Failed to fetch settings: {}", e);
         (

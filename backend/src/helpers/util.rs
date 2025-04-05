@@ -1,28 +1,8 @@
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 use std::process::Output;
 
 use camino::Utf8Path;
-use lazy_static::lazy_static;
-use rand::rngs::StdRng;
-use rand::seq::SliceRandom;
-use rand::{thread_rng, SeedableRng};
-use reqwest::Url;
 use tracing::{debug, Level};
-
-const DEFAULT_SEED: u64 = 123456789;
-
-pub fn create_seeded_rng(seed: Option<&str>) -> StdRng {
-    let seed = match seed {
-        Some(string) => {
-            let mut hasher = DefaultHasher::new();
-            string.hash(&mut hasher);
-            hasher.finish()
-        }
-        None => DEFAULT_SEED,
-    };
-    StdRng::seed_from_u64(seed)
-}
+use url::Url;
 
 pub fn add_api_key(url: &str, api_key: Option<&str>) -> String {
     let mut url = Url::parse(url).expect("invalid url");
@@ -79,33 +59,11 @@ pub fn debug_output(output: Output) {
     }
 }
 
-pub fn generate_id() -> String {
-    const ADJECTIVES: &str = include_str!("../../data/words/adjectives.txt");
-    const ANIMALS: &str = include_str!("../../data/words/animals.txt");
-
-    lazy_static! {
-        static ref ADJECTIVE_LIST: Vec<&'static str> =
-            ADJECTIVES.split('\n').map(|n| n.trim()).collect();
-        static ref ANIMALS_LIST: Vec<&'static str> =
-            ANIMALS.split('\n').map(|n| n.trim()).collect();
-    }
-    let mut rng = thread_rng();
-    let adjective1 = ADJECTIVE_LIST.choose(&mut rng).unwrap();
-    let adjective2 = ADJECTIVE_LIST.choose(&mut rng).unwrap();
-    let animal = ANIMALS_LIST.choose(&mut rng).unwrap();
-
-    format!("{adjective1}-{adjective2}-{animal}")
-}
-
 /// Formats a number of seconds as a mm:ss string
 pub fn format_duration(seconds: f64) -> String {
     let minutes = (seconds / 60.0).floor();
     let seconds = (seconds % 60.0).floor();
     format!("{:02}:{:02}", minutes, seconds)
-}
-
-pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
-    a + (b - a) * t
 }
 
 pub trait StrExt {
@@ -135,7 +93,8 @@ impl StrExt for str {
 mod test {
     use regex::Regex;
 
-    use super::{add_api_key, expect_file_name, format_duration, generate_id};
+    use super::{add_api_key, expect_file_name, format_duration};
+    use crate::helpers::random::generate_id;
 
     #[test]
     #[cfg(not(windows))]

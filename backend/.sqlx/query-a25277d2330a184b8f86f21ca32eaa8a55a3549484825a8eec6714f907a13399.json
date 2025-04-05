@@ -26,7 +26,7 @@
       {
         "name": "index_within_video",
         "ordinal": 4,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "marker_preview_image",
@@ -36,17 +36,17 @@
       {
         "name": "marker_created_on",
         "ordinal": 6,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "marker_stash_id",
         "ordinal": 7,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "rowid",
         "ordinal": 8,
-        "type_info": "Int64"
+        "type_info": "Integer"
       }
     ],
     "parameters": {

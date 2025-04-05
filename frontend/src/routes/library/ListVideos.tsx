@@ -16,7 +16,7 @@ import {
   useSearchParams,
 } from "react-router-dom"
 import {
-  ListVideoDtoPage,
+  PageListVideoDto,
   cleanupVideos,
   deleteVideo,
   mergeStashVideo,
@@ -32,7 +32,7 @@ import clsx from "clsx"
 export default function ListVideos() {
   const {actions} = useStateMachine({updateForm})
   const navigate = useNavigate()
-  const page = useLoaderData() as ListVideoDtoPage
+  const page = useLoaderData() as PageListVideoDto
   const revalidator = useRevalidator()
   const [syncingVideo, setSyncingVideo] = useState<string>()
   const videos = page.content
@@ -127,7 +127,7 @@ export default function ListVideos() {
         actionChildren={(video, aspectRatio) => (
           <>
             <div
-              className={clsx("flex gap-1", {
+              className={clsx("flex gap-1 items-center", {
                 "flex-col": aspectRatio === "tall",
               })}
             >

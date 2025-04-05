@@ -9,6 +9,7 @@ use futures::stream::Stream;
 
 use super::AppState;
 use crate::server::error::AppError;
+use crate::server::types::Progress;
 
 #[axum::debug_handler]
 pub async fn get_progress_stream(

@@ -3,11 +3,27 @@ use sqlx::SqlitePool;
 use tokio::task::spawn_blocking;
 use tracing::info;
 
-use super::{CreateSong, DbSong};
 use crate::server::types::Beats;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::music;
 use crate::Result;
+
+#[derive(Debug)]
+pub struct DbSong {
+    pub rowid: Option<i64>,
+    pub url: String,
+    pub file_path: String,
+    pub duration: f64,
+    pub beats: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct CreateSong {
+    pub url: String,
+    pub file_path: String,
+    pub duration: f64,
+    pub beats: Option<Beats>,
+}
 
 #[derive(Debug, Clone)]
 pub struct MusicDatabase {

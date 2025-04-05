@@ -5,6 +5,7 @@ pub mod directories;
 pub mod encoding_optimization;
 pub mod funscript;
 pub mod generator;
+pub mod handy;
 pub mod migrations;
 pub mod music;
 pub mod new_version_checker;
@@ -20,7 +21,7 @@ pub mod fixtures;
 
 use serde::{Deserialize, Serialize};
 
-use crate::data::database::VideoSource;
+use crate::data::database::videos::VideoSource;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Marker {

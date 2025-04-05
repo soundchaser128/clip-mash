@@ -1,231 +1,29 @@
-use std::fmt;
 use std::str::FromStr;
 use std::time::SystemTime;
 
-use color_eyre::eyre::bail;
-use serde::{Deserialize, Serialize};
+use color_eyre::eyre::OptionExt;
+use performers::PerformersDatabase;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
-use sqlx::{FromRow, SqlitePool};
-use tracing::{info, warn};
-use utoipa::{IntoParams, ToSchema};
+use sqlx::SqlitePool;
+use tracing::info;
 
 use self::ffprobe::FfProbeInfoDatabase;
 use self::markers::MarkersDatabase;
 use self::music::MusicDatabase;
 use self::progress::ProgressDatabase;
-pub use self::settings::Settings;
 use self::settings::SettingsDatabase;
+pub use self::settings::{HandyConfig, Settings};
 use self::videos::VideosDatabase;
-use super::stash_api::MarkerLike;
-use crate::server::types::{Beats, Progress, VideoLike};
-use crate::service::video::TAG_SEPARATOR;
+use crate::server::types::Progress;
 use crate::Result;
 
-mod ffprobe;
-mod markers;
-mod music;
-mod progress;
-mod settings;
-mod videos;
-
-#[derive(Debug, Clone, Copy, sqlx::Type, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
-#[sqlx(rename_all = "lowercase")]
-pub enum VideoSource {
-    Folder,
-    Download,
-    Stash,
-}
-
-impl FromStr for VideoSource {
-    type Err = color_eyre::Report;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        match s {
-            "folder" => Ok(Self::Folder),
-            "download" => Ok(Self::Download),
-            "stash" => Ok(Self::Stash),
-            other => bail!("unknown enum constant {other} for VideoSource"),
-        }
-    }
-}
-
-// needed for sqlx, I guess?
-impl From<String> for VideoSource {
-    fn from(value: String) -> Self {
-        match value.as_str() {
-            "folder" => Self::Folder,
-            "download" => Self::Download,
-            "stash" => Self::Stash,
-            other => {
-                warn!("unknown enum constant {other}, falling back to VideoSource::Folder");
-                VideoSource::Folder
-            }
-        }
-    }
-}
-
-impl fmt::Display for VideoSource {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            VideoSource::Folder => write!(f, "folder"),
-            VideoSource::Download => write!(f, "download"),
-            VideoSource::Stash => write!(f, "stash"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, FromRow)]
-pub struct DbVideo {
-    pub id: String,
-    pub file_path: String,
-    pub interactive: bool,
-    pub source: VideoSource,
-    pub duration: f64,
-    pub video_preview_image: Option<String>,
-    pub stash_scene_id: Option<i64>,
-    pub video_created_on: i64,
-    pub video_title: Option<String>,
-    pub video_tags: Option<String>,
-}
-
-impl DbVideo {
-    pub fn tags(&self) -> Option<Vec<String>> {
-        self.video_tags
-            .clone()
-            .map(|s| s.split(TAG_SEPARATOR).map(|s| s.to_string()).collect())
-    }
-}
-
-impl VideoLike for DbVideo {
-    fn video_id(&self) -> &str {
-        &self.id
-    }
-
-    fn stash_scene_id(&self) -> Option<i64> {
-        self.stash_scene_id
-    }
-
-    fn file_path(&self) -> Option<&str> {
-        Some(self.file_path.as_str())
-    }
-}
-
-#[derive(Deserialize, IntoParams, Debug, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct VideoSearchQuery {
-    pub query: Option<String>,
-    pub source: Option<VideoSource>,
-    pub has_markers: Option<bool>,
-    pub is_interactive: Option<bool>,
-}
-
-#[derive(Debug, Clone)]
-pub struct CreateVideo {
-    pub id: String,
-    pub file_path: String,
-    pub interactive: bool,
-    pub source: VideoSource,
-    pub duration: f64,
-    pub video_preview_image: Option<String>,
-    pub stash_scene_id: Option<i64>,
-    pub title: Option<String>,
-    pub tags: Option<String>,
-    pub created_on: Option<i64>,
-}
-
-#[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
-pub struct DbMarker {
-    pub rowid: Option<i64>,
-    pub video_id: String,
-    pub start_time: f64,
-    pub end_time: f64,
-    pub title: String,
-    pub index_within_video: i64,
-    pub marker_preview_image: Option<String>,
-    pub marker_created_on: i64,
-    pub marker_stash_id: Option<i64>,
-}
-
-impl MarkerLike for DbMarker {
-    fn start(&self) -> f64 {
-        self.start_time
-    }
-
-    fn end(&self) -> f64 {
-        self.end_time
-    }
-}
-
-// TODO better name
-#[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
-pub struct DbMarkerWithVideo {
-    pub rowid: Option<i64>,
-    pub video_id: String,
-    pub start_time: f64,
-    pub end_time: f64,
-    pub title: String,
-    pub file_path: String,
-    pub index_within_video: i64,
-    pub marker_preview_image: Option<String>,
-    pub interactive: bool,
-    pub marker_created_on: i64,
-    pub video_title: Option<String>,
-    pub video_tags: Option<String>,
-    pub source: VideoSource,
-    pub stash_scene_id: Option<i64>,
-}
-
-impl DbMarkerWithVideo {
-    pub fn tags(&self) -> Vec<String> {
-        self.video_tags
-            .clone()
-            .map(|s| s.split(TAG_SEPARATOR).map(|s| s.to_string()).collect())
-            .unwrap_or_default()
-    }
-}
-
-#[derive(Debug)]
-pub struct LocalVideoWithMarkers {
-    pub video: DbVideo,
-    pub markers: Vec<DbMarker>,
-}
-
-#[derive(Debug)]
-pub struct DbSong {
-    pub rowid: Option<i64>,
-    pub url: String,
-    pub file_path: String,
-    pub duration: f64,
-    pub beats: Option<String>,
-}
-
-#[derive(Debug)]
-pub struct CreateSong {
-    pub url: String,
-    pub file_path: String,
-    pub duration: f64,
-    pub beats: Option<Beats>,
-}
-
-#[allow(clippy::enum_variant_names)]
-#[derive(Debug, Clone, Copy)]
-pub enum AllVideosFilter {
-    NoVideoDuration,
-    NoPreviewImage,
-    NoTitle,
-}
-
-#[derive(Deserialize, ToSchema, Debug)]
-pub struct VideoUpdate {
-    pub title: Option<String>,
-    pub tags: Option<Vec<String>>,
-}
-
-#[derive(Serialize, ToSchema, Debug)]
-pub struct MarkerCount {
-    pub title: String,
-    pub count: i64,
-}
+pub mod ffprobe;
+pub mod markers;
+pub mod music;
+pub mod performers;
+pub mod progress;
+pub mod settings;
+pub mod videos;
 
 #[derive(Clone)]
 pub struct Database {
@@ -235,6 +33,7 @@ pub struct Database {
     pub music: MusicDatabase,
     pub ffprobe: FfProbeInfoDatabase,
     pub settings: SettingsDatabase,
+    pub performers: PerformersDatabase,
 }
 
 impl Database {
@@ -253,8 +52,17 @@ impl Database {
             music: MusicDatabase::new(pool.clone()),
             ffprobe: FfProbeInfoDatabase::new(pool.clone()),
             videos: VideosDatabase::new(pool.clone()),
-            settings: SettingsDatabase::new(pool),
+            settings: SettingsDatabase::new(pool.clone()),
+            performers: PerformersDatabase::new(pool.clone()),
         })
+    }
+
+    pub async fn sqlite_version(&self) -> Result<String> {
+        let version = sqlx::query_scalar!("select sqlite_version()")
+            .fetch_one(&self.progress.pool)
+            .await?;
+
+        version.ok_or_eyre("no version found")
     }
 
     #[cfg(test)]
@@ -265,7 +73,8 @@ impl Database {
             music: MusicDatabase::new(pool.clone()),
             ffprobe: FfProbeInfoDatabase::new(pool.clone()),
             videos: VideosDatabase::new(pool.clone()),
-            settings: SettingsDatabase::new(pool),
+            settings: SettingsDatabase::new(pool.clone()),
+            performers: PerformersDatabase::new(pool.clone()),
         }
     }
 }
@@ -282,10 +91,12 @@ mod test {
     use sqlx::SqlitePool;
     use tracing_test::traced_test;
 
-    use crate::data::database::{Database, VideoSearchQuery, VideoSource, VideoUpdate};
+    use super::videos::{VideoSearchQuery, VideoSource, VideoUpdate};
+    use crate::data::database::markers::ListMarkersFilter;
+    use crate::data::database::Database;
+    use crate::helpers::random::generate_id;
     use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
-    use crate::service::fixtures::{persist_marker, persist_video, persist_video_fn};
-    use crate::util::generate_id;
+    use crate::service::fixtures::{persist_marker, persist_video, persist_video_with};
     use crate::Result;
 
     #[sqlx::test]
@@ -420,14 +231,14 @@ mod test {
     async fn test_list_videos_with_source(pool: SqlitePool) -> Result<()> {
         let database = Database::with_pool(pool);
         for _ in 0..5 {
-            persist_video_fn(&database, |v| {
+            persist_video_with(&database, |v| {
                 v.source = VideoSource::Stash;
             })
             .await?;
         }
 
         for _ in 0..5 {
-            persist_video_fn(&database, |v| {
+            persist_video_with(&database, |v| {
                 v.source = VideoSource::Folder;
             })
             .await?;
@@ -475,7 +286,7 @@ mod test {
             persist_video(&database).await.unwrap();
         }
         for i in 0..10 {
-            persist_video_fn(&database, |v| {
+            persist_video_with(&database, |v| {
                 v.title = Some("sexy".into());
                 v.file_path = format!("/path/{i}/sexy.mp4");
             })
@@ -484,7 +295,7 @@ mod test {
         }
 
         for i in 0..5 {
-            persist_video_fn(&database, |v| {
+            persist_video_with(&database, |v| {
                 v.title = Some("cool".into());
                 v.file_path = format!("/path/{i}/cool.mp4");
             })
@@ -606,7 +417,7 @@ mod test {
         }
         let result = database
             .markers
-            .list_markers(Some(&[video.id]), None)
+            .list_markers(Some(ListMarkersFilter::VideoIds(vec![video.id])), None)
             .await
             .unwrap();
         assert_eq!(5, result.len());
@@ -708,7 +519,7 @@ mod test {
     fn test_has_stash_scene_ids(pool: SqlitePool) {
         let database = Database::with_pool(pool);
         for idx in 0..20 {
-            persist_video_fn(&database, |v| {
+            persist_video_with(&database, |v| {
                 if idx < 5 {
                     v.stash_scene_id = Some(idx);
                 }
@@ -784,7 +595,7 @@ mod test {
             .unwrap();
         let video = database.videos.get_video(&video.id).await.unwrap().unwrap();
         assert_eq!(video.video_title, Some("Some title".into()));
-        assert_eq!(video.tags(), Some(vec!["tag1".into(), "tag2".into()]));
+        assert_eq!(video.tags(), vec!["tag1", "tag2"]);
     }
 
     #[sqlx::test]
@@ -827,5 +638,41 @@ mod test {
         assert!(ids.contains(&video1.id.as_str()));
         assert!(ids.contains(&video2.id.as_str()));
         assert!(!ids.contains(&video3.id.as_str()));
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn list_video_tags(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+        persist_video_with(&database, |v| {
+            v.tags = Some(serde_json::to_string(&["tag1", "tag2"]).unwrap());
+        })
+        .await?;
+        persist_video_with(&database, |v| {
+            v.tags = Some(serde_json::to_string(&["tag1", "tag3"]).unwrap())
+        })
+        .await?;
+
+        let tags = database.videos.list_tags(100).await?;
+        assert_eq!(3, tags.len());
+        assert_eq!("tag1", tags[0].tag);
+        assert_eq!(2, tags[0].count);
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn get_video_with_markers_bug(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await?;
+        let data = database
+            .videos
+            .get_video_with_markers(&video.id)
+            .await?
+            .unwrap();
+        assert_eq!(data.markers.len(), 0);
+        assert_eq!(data.video.id, video.id);
+        Ok(())
     }
 }

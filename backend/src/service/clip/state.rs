@@ -45,7 +45,7 @@ impl MarkerState {
         marker_data.sort_by_key(|m| m.id);
         let marker_map: HashMap<i64, Vec<MarkerStart>> = marker_data
             .into_iter()
-            .group_by(|m| m.id)
+            .chunk_by(|m| m.id)
             .into_iter()
             .map(|(id, group)| {
                 (

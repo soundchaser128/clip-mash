@@ -1,6 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::data::database::{Database, DbSong, DbVideo};
+use crate::data::database::music::DbSong;
+use crate::data::database::videos::DbVideo;
+use crate::data::database::Database;
 use crate::server::types::{Clip, CreateClipsBody, CreateVideoBody, SelectedMarker};
 use crate::service::clip::CreateClipsOptions;
 use crate::service::generator::CompilationOptions;
@@ -84,6 +86,7 @@ impl OptionsConverterService {
             videos,
             padding: body.padding.unwrap_or_default(),
             force_re_encode: body.force_re_encode,
+            include_original_file_name: body.include_original_file_name,
         })
     }
 

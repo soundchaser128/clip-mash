@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feat: ClipMash TV: Allows watching a compilation live in your browser (including Handy support)
+- feat: Implement blurry background padding for videos that don't fit the target aspect ratio of the compilation.
 - feat: Add performers database table
 - chore: Upgrade dependency versions
 

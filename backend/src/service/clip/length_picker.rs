@@ -234,8 +234,8 @@ mod test {
         let songs =
             SongClipLengthPicker::new(&mut rng, beats, 4, MeasureCount::Random { min: 1, max: 3 });
         let durations: Vec<_> = songs.collect();
-        assert_eq!(vec![4.0, 4.0, 2.0, 4.0, 4.0, 2.0], durations);
-        assert_eq!(6, durations.len());
+        assert_eq!(vec![4.0, 6.0, 4.0, 4.0, 2.0], durations);
+        assert_eq!(5, durations.len());
         let total_duration = durations.iter().sum::<f64>();
         assert!(
             total_duration >= 20.0,

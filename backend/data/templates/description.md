@@ -4,24 +4,26 @@ Created with [ClipMash](https://github.com/soundchaser128/clip-mash).
 
 ## Video information
 
-- Resolution: **{ width } x { height }**
-- Frames per second: **{ fps }**
-- Video codec: **{ codec }**
+- Resolution: **{{ ctx.width }} x {{ ctx.height }}**
+- Frames per second: **{{ ctx.fps }}**
+- Video codec: **{{ ctx.codec }}**
 
 ## Clips
 
 | Video | Description | Start | End |
 | ----- | ----------- | ----- | --- |
-
-{{ for value in clips }}
-| { clip.video_title } | {clip.marker_title} | { clip.start } | { clip.end } |
-{{ endfor }}
+{% for c in ctx.clips %}
+| {{ c.video_title }} | {{ c.marker_title }} | {{ c.start }} | {{ c.end }} |
+{% endfor %}
 
 ## Videos
 
-| Source | Title | Interactive |
+<!-- | Source | Title | Interactive |
 | ------ | ----- | ----------- |
+{% for v in ctx.videos %}
+| {{ v.source }} | {{ v.title }} | {{ v.interactive }}
+{% endfor %} -->
 
-{{ for v in videos }}
-| { v.source } | { v.title } | { v.interactive }
-{{ endfor }}
+<table>
+
+</table>

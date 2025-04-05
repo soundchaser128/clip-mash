@@ -1,3 +1,6 @@
+use std::sync::OnceLock;
+
+use markdown::MarkdownDescriptionGenerator;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -119,9 +122,13 @@ impl From<&CompilationOptions> for TemplateContext {
 }
 
 pub fn render_description(options: &CompilationOptions, ty: DescriptionType) -> Result<String> {
+    static MARKDOWN_GENERATOR: OnceLock<MarkdownDescriptionGenerator> = OnceLock::new();
+
     let context = TemplateContext::from(options);
     match ty {
-        DescriptionType::Markdown => markdown::MarkdownDescriptionGenerator.generate(context),
+        DescriptionType::Markdown => MARKDOWN_GENERATOR
+            .get_or_init(|| MarkdownDescriptionGenerator::new().unwrap())
+            .generate(context),
         DescriptionType::Json => json::JsonDescriptionGenerator.generate(context),
     }
 }

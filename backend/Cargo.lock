@@ -436,6 +436,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "mimalloc",
+ "minijinja",
  "mock_instant",
  "num-traits",
  "num_cpus",
@@ -453,7 +454,6 @@ dependencies = [
  "sysinfo",
  "tar",
  "time",
- "tinytemplate",
  "tokio",
  "tokio-util",
  "tower",
@@ -1791,6 +1791,15 @@ checksum = "f7c44f8e672c00fe5308fa235f821cb4198414e1c77935c1ab6948d3fd78550e"
 dependencies = [
  "mime",
  "unicase",
+]
+
+[[package]]
+name = "minijinja"
+version = "2.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "98642a6dfca91122779a307b77cd07a4aa951fbe32232aaf5bad9febc66be754"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -3276,16 +3285,6 @@ checksum = "9117f5d4db391c1cf6927e7bea3db74b9a1c1add8f7eda9ffd5364f40f57b82f"
 dependencies = [
  "displaydoc",
  "zerovec",
-]
-
-[[package]]
-name = "tinytemplate"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc"
-dependencies = [
- "serde",
- "serde_json",
 ]
 
 [[package]]

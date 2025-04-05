@@ -1,26 +1,39 @@
-use tinytemplate::TinyTemplate;
+use minijinja::{context, Environment};
 use tracing::info;
 
 use super::{DescriptionGenerator, TemplateContext};
 use crate::Result;
 
-pub struct MarkdownDescriptionGenerator;
+pub struct MarkdownDescriptionGenerator {
+    environment: Environment<'static>,
+}
+
+impl MarkdownDescriptionGenerator {
+    pub fn new() -> Result<Self> {
+        let mut environment = Environment::new();
+        let template = include_str!("../../../data/templates/description.md");
+        environment.add_template("description", template)?;
+        environment.set_trim_blocks(true);
+        environment.set_lstrip_blocks(true);
+
+        Ok(MarkdownDescriptionGenerator { environment })
+    }
+}
 
 impl DescriptionGenerator for MarkdownDescriptionGenerator {
     fn generate(&self, options: TemplateContext) -> Result<String> {
         info!("Generating Markdown description");
-        let template = include_str!("../../../data/templates/description.md");
-        let mut tt = TinyTemplate::new();
-        tt.add_template("description", template)?;
-
-        tt.render("description", &options).map_err(From::from)
+        self.environment
+            .get_template("description")?
+            .render(context! {ctx => options})
+            .map_err(From::from)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{DescriptionGenerator, MarkdownDescriptionGenerator, TemplateContext};
-    use crate::server::types::VideoCodec;
+    use crate::{server::types::VideoCodec, service::description_generator::ClipInfo};
 
     #[test]
     fn test_markdown_description() {
@@ -29,14 +42,17 @@ mod tests {
             width: 1920,
             height: 1080,
             fps: 30,
-            clips: vec![],
+            clips: vec![ClipInfo {
+                start: "00:00:00".to_string(),
+                end: "00:00:10".to_string(),
+                marker_title: "test_marker".to_string(),
+                video_title: "test_video".to_string(),
+            }],
             codec: VideoCodec::H264,
             videos: vec![],
         };
 
-        let description = MarkdownDescriptionGenerator
-            .generate(options)
-            .expect("failed to generate");
-        println!("description: {}", description);
+        let generator = MarkdownDescriptionGenerator::new().expect("failed to create generator");
+        let description = generator.generate(options).expect("failed to generate");
     }
 }

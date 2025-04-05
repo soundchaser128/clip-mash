@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
     let timeout = Duration::from_secs(60);
     let interval_duration = Duration::from_millis(100);
 
-    let port: u32 = rand::thread_rng().gen_range(1024..65535);
+    let port: u32 = rand::rng().random_range(1024..65535);
     eprintln!("Starting server on port {}", port);
 
     let mut process = Command::new("cargo")

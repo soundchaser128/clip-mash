@@ -102,39 +102,39 @@ async fn run() -> Result<()> {
             "/video/need-encoding",
             post(handlers::library::videos_need_encoding),
         )
-        .route("/video/:id", put(handlers::library::update_video))
+        .route("/video/{id}", put(handlers::library::update_video))
         .route(
-            "/video/:id/stash/merge",
+            "/video/{id}/stash/merge",
             post(handlers::library::merge_stash_video),
         )
         .route(
-            "/cleanup/:folder_type",
+            "/cleanup/{folder_type}",
             post(handlers::files::cleanup_folder),
         )
         .route("/video/cleanup", post(handlers::library::cleanup_videos))
         .route("/video/stash", get(handlers::library::list_stash_videos))
         .route("/video/tags", get(handlers::library::list_video_tags))
-        .route("/video/:id", get(handlers::library::get_video))
-        .route("/video/:id", delete(handlers::library::delete_video))
+        .route("/video/{id}", get(handlers::library::get_video))
+        .route("/video/{id}", delete(handlers::library::delete_video))
         .route(
-            "/video/:id/detect-markers",
+            "/video/{id}/detect-markers",
             post(handlers::library::detect_markers),
         )
-        .route("/video/:id/file", get(handlers::library::get_video_file))
+        .route("/video/{id}/file", get(handlers::library::get_video_file))
         .route(
-            "/video/:id/preview",
+            "/video/{id}/preview",
             get(handlers::library::get_video_preview),
         )
         .route("/marker", get(handlers::library::list_markers))
         .route("/marker/title", get(handlers::library::list_marker_titles))
         .route("/marker", post(handlers::library::create_new_marker))
-        .route("/marker/:id", put(handlers::library::update_marker))
-        .route("/marker/:id", delete(handlers::library::delete_marker))
+        .route("/marker/{id}", put(handlers::library::update_marker))
+        .route("/marker/{id}", delete(handlers::library::delete_marker))
         .route(
-            "/marker/:id/preview",
+            "/marker/{id}/preview",
             get(handlers::library::get_marker_preview),
         )
-        .route("/marker/:id/split", post(handlers::library::split_marker))
+        .route("/marker/{id}/split", post(handlers::library::split_marker))
         .route("/performers", get(handlers::library::list_performers))
         .route("/directory", get(handlers::files::list_file_entries))
         .route("/stats", get(handlers::files::get_file_stats))
@@ -162,7 +162,7 @@ async fn run() -> Result<()> {
         .route("/finished", get(handlers::project::list_finished_videos))
         .route("/download", get(handlers::project::download_video))
         .route(
-            "/description/:type",
+            "/description/{type}",
             post(handlers::project::generate_description),
         )
         .route("/random-seed", get(handlers::project::generate_random_seed));
@@ -179,15 +179,15 @@ async fn run() -> Result<()> {
 
     let music_routes = Router::new()
         .route("/", get(handlers::music::list_songs))
-        .route("/:id/stream", get(handlers::music::stream_song))
+        .route("/{id}/stream", get(handlers::music::stream_song))
         .route("/download", post(handlers::music::download_music))
         .route("/upload", post(handlers::music::upload_music))
-        .route("/:id/beats", get(handlers::music::get_beats));
+        .route("/{id}/beats", get(handlers::music::get_beats));
 
     let progress_routes = Router::new()
-        .route("/:id/stream", get(handlers::progress::get_progress_stream))
-        .route("/:id/info", get(handlers::progress::get_progress_info))
-        .route("/:id", delete(handlers::progress::delete_progress));
+        .route("/{id}/stream", get(handlers::progress::get_progress_stream))
+        .route("/{id}/info", get(handlers::progress::get_progress_info))
+        .route("/{id}", delete(handlers::progress::delete_progress));
 
     let handy_routes = Router::new()
         .route("/start", post(handlers::handy::start_handy))

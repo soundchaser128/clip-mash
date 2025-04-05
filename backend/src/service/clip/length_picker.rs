@@ -119,7 +119,7 @@ impl<'a> Iterator for SongClipLengthPicker<'a> {
         let beats = &self.songs[self.song_index].offsets;
         let num_measures = match self.cut_after_measure_count {
             MeasureCount::Fixed { count } => count,
-            MeasureCount::Random { min, max } => self.rng.gen_range(min..max),
+            MeasureCount::Random { min, max } => self.rng.random_range(min..max),
         };
         let num_beats_to_advance = self.beats_per_measure * num_measures;
         let next_beat_index = (self.beat_index + num_beats_to_advance).min(beats.len() - 1);

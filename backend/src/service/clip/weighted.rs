@@ -347,16 +347,16 @@ mod tests {
         let mut rng = create_seeded_rng(None);
         let mut markers = vec![];
         for _ in 0..95 {
-            let start = rng.gen_range(0..5) as f64;
-            let end = rng.gen_range(60..90) as f64;
-            let index = rng.gen_range(0..6);
+            let start = rng.random_range(0..5) as f64;
+            let end = rng.random_range(60..90) as f64;
+            let index = rng.random_range(0..6);
             markers.push(fixtures::create_marker("Blowjob", start, end, index))
         }
 
         for _ in 0..5 {
-            let start = rng.gen_range(50..90) as f64;
-            let end = rng.gen_range(100..140) as f64;
-            let index = rng.gen_range(6..15);
+            let start = rng.random_range(50..90) as f64;
+            let end = rng.random_range(100..140) as f64;
+            let index = rng.random_range(6..15);
             markers.push(fixtures::create_marker("Cowgirl", start, end, index))
         }
         let options = WeightedRandomClipOptions {

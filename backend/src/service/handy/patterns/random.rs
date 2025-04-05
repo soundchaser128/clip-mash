@@ -28,7 +28,7 @@ pub struct RandomController {
 }
 
 fn pick_duration(Range { min, max }: Range, rng: &mut impl Rng) -> Duration {
-    let secs = rng.gen_range(min..max).round();
+    let secs = rng.random_range(min..max).round();
     Duration::from_secs_f64(secs)
 }
 
@@ -51,7 +51,7 @@ impl RandomController {
     fn speed(&mut self) -> f64 {
         let increment = self
             .rng
-            .gen_range(-self.parameters.jitter..self.parameters.jitter);
+            .random_range(-self.parameters.jitter..self.parameters.jitter);
         let Range { min, max } = self.parameters.speed_range;
         (self.last_speed + increment).clamp(min, max)
     }

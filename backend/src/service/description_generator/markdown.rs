@@ -1,7 +1,8 @@
 use tracing::info;
 
 use super::{DescriptionGenerator, TemplateContext};
-use crate::{data::database::videos::VideoSource, Result};
+use crate::data::database::videos::VideoSource;
+use crate::Result;
 
 pub struct MarkdownDescriptionGenerator;
 
@@ -53,7 +54,8 @@ Created with [ClipMash](https://github.com/soundchaser128/clip-mash).
 #[cfg(test)]
 mod tests {
     use super::{DescriptionGenerator, MarkdownDescriptionGenerator, TemplateContext};
-    use crate::{server::types::VideoCodec, service::description_generator::ClipInfo};
+    use crate::server::types::VideoCodec;
+    use crate::service::description_generator::ClipInfo;
 
     #[test]
     fn test_markdown_description() {
@@ -74,5 +76,6 @@ mod tests {
 
         let generator = MarkdownDescriptionGenerator;
         let description = generator.generate(options).expect("failed to generate");
+        assert!(description.contains("# Compilation 'test'"));
     }
 }

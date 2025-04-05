@@ -16,6 +16,7 @@ use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;
 use crate::data::database::markers::DbMarker;
+use crate::data::database::performers::{CreatePerformer, DbPerformer, Gender};
 use crate::data::database::videos::{CreateVideo, DbVideo, VideoSource};
 use crate::data::database::{unix_timestamp_now, Database};
 use crate::helpers::random::generate_id;
@@ -403,6 +404,35 @@ pub async fn persist_marker(
         marker_stash_id: None,
     };
     db.markers.create_new_marker(marker).await
+}
+
+pub async fn persist_performer(
+    db: &Database,
+    name: &str,
+    gender: Option<Gender>,
+    image_url: Option<&str>,
+    stash_id: Option<&str>,
+) -> Result<DbPerformer> {
+    let id = db
+        .performers
+        .insert(&CreatePerformer {
+            name: name.into(),
+            gender,
+            image_url: image_url.map(From::from),
+            stash_id: stash_id.map(From::from),
+        })
+        .await?;
+
+    Ok(DbPerformer {
+        id,
+        name: name.into(),
+        created_on: unix_timestamp_now(),
+        image_url: image_url.map(From::from),
+        stash_id: stash_id.map(From::from),
+        gender,
+        marker_count: 0,
+        video_count: 0,
+    })
 }
 
 pub fn songs() -> Vec<Beats> {

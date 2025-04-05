@@ -39,8 +39,8 @@ const defaultOptions: Inputs = {
   videoCodec: "h264",
   videoQuality: "medium",
   encodingEffort: "medium",
-  outputWidth: 1280,
-  outputHeight: 720,
+  outputWidth: 1920,
+  outputHeight: 1080,
 }
 
 function VideoOptions() {

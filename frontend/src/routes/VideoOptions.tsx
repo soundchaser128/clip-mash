@@ -11,7 +11,7 @@ import {
 import {videosNeedEncoding} from "@/api"
 import {getFormState} from "@/helpers/form"
 
-const showPaddingOptions = false
+const showPaddingOptions = true
 
 export const videoOptionsLoader: LoaderFunction = async () => {
   try {

@@ -225,32 +225,19 @@ impl CompilationGenerator {
 
         let sigma = 120;
         let brightness = -0.125;
-
-        let source_orientation = Orientation::new(source_size.0, source_size.1);
-        let target_orientation = Orientation::new(target_size.0, target_size.1);
         let (px_w, px_h) = target_size;
 
-        let transform_filters = match (source_orientation, target_orientation) {
-            (Orientation::Landscape, Orientation::Portrait) => {
-                format!("scale={px_w}:-1, crop=w={px_w}")
-            }
-            (Orientation::Portrait, Orientation::Landscape) => {
-                format!("scale=-1:{px_h}, crop=h={px_h}")
-            }
-            (Orientation::Portrait, Orientation::Portrait) => {
-                format!("scale=-1:{px_h}, pad={px_w}:{px_h}:-1:-1:color=black")
-            }
-            (Orientation::Landscape, Orientation::Landscape) => {
-                format!("scale={px_w}:-1, pad={px_w}:{px_h}:-1:-1:color=black")
-            }
-        };
+        // Use force_original_aspect_ratio=decrease to ensure proper scaling
+        let scale_filter = format!("scale={px_w}:{px_h}:force_original_aspect_ratio=decrease");
 
-        info!("using transform filters: {transform_filters} for source {source_orientation:?} to target {target_orientation:?}");
+        info!("using scale filter: {scale_filter}");
 
         format!("
             split [original][copy];
-            [copy] {transform_filters}, gblur=sigma={sigma}, eq=brightness={brightness}[blurred];
-            [blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2, fps={fps}, scale={px_w}:{px_h}
+            [copy] {scale_filter}, gblur=sigma={sigma}, eq=brightness={brightness}, scale={px_w}:{px_h} [blurred];
+            [original] {scale_filter} [scaled];
+            [blurred][scaled] overlay=(W-w)/2:(H-h)/2 [padded];
+            [padded] fps={fps}
         ")
         .collapse_whitespace()
     }

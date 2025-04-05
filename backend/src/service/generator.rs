@@ -211,18 +211,22 @@ impl CompilationGenerator {
         let brightness = -0.125;
         let (px_w, px_h) = target_size;
 
-        // Use force_original_aspect_ratio=decrease to ensure proper scaling
+        // Scale for the main video - preserve aspect ratio and fit within target dimensions
         let scale_filter = format!("scale={px_w}:{px_h}:force_original_aspect_ratio=decrease");
+
+        // Scale for the background - will fill target dimensions but maintain aspect ratio
+        // Use "crop" to ensure it fills the entire frame by cropping excess if needed
+        let bg_scale_filter = format!("scale={px_w}:{px_h}:force_original_aspect_ratio=increase:force_divisible_by=2,crop={px_w}:{px_h}");
 
         info!("using scale filter: {scale_filter}");
 
-        format!("
-            split [original][copy];
-            [copy] {scale_filter}, gblur=sigma={sigma}, eq=brightness={brightness}, scale={px_w}:{px_h} [blurred];
+        format!(
+            "split [original][copy];
+            [copy] {bg_scale_filter}, gblur=sigma={sigma}, eq=brightness={brightness} [blurred];
             [original] {scale_filter} [scaled];
             [blurred][scaled] overlay=(W-w)/2:(H-h)/2 [padded];
-            [padded] fps={fps}
-        ")
+            [padded] fps={fps}"
+        )
         .collapse_whitespace()
     }
 

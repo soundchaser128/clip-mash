@@ -332,12 +332,15 @@ impl MarkersDatabase {
                     list.push_unseparated(") ");
                 }
                 ListMarkersFilter::VideoPerformers(performers) => {
-                    query_builder.push("WHERE EXISTS (SELECT 1 from performers WHERE name IN (");
+                    query_builder.push(
+                        "INNER JOIN video_performers pv ON v.id = pv.video_id INNER JOIN performers p ON pv.performer_id = p.id WHERE p.name IN (",
+                    );
+
                     let mut list = query_builder.separated(",");
                     for performer in performers {
                         list.push_bind(performer);
                     }
-                    list.push_unseparated(")) ");
+                    list.push_unseparated(") ");
                 }
                 ListMarkersFilter::VideoTags(tags) => {
                     query_builder.push("JOIN json_each(v.video_tags) AS tag WHERE tag.value IN (");
@@ -498,6 +501,8 @@ pub enum ListMarkersFilter {
 
 #[cfg(test)]
 mod tests {
+    use tracing_test::traced_test;
+
     use super::*;
     use crate::data::database::performers::{CreatePerformer, Gender};
     use crate::data::database::Database;
@@ -728,6 +733,7 @@ mod tests {
     }
 
     #[sqlx::test]
+    #[traced_test]
     async fn test_list_markers_video_performers_filter(pool: SqlitePool) -> Result<()> {
         let database = Database::with_pool(pool);
 

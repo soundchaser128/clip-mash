@@ -394,7 +394,7 @@ export type PaddingType = (typeof PaddingType)[keyof typeof PaddingType]
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const PaddingType = {
   black: "black",
-  blur: "blur",
+  blur: "blur-sm",
 } as const
 
 export interface NewId {

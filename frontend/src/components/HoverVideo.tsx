@@ -25,9 +25,9 @@ export default function HoverVideo({
   const classes = clsx(className, "object-cover w-full h-full", {
     grayscale: disabled,
     "cursor-pointer": onImageClick,
-    "aspect-[16/9]": aspectRatio === "wide",
+    "aspect-16/9": aspectRatio === "wide",
     "aspect-square": aspectRatio === "square",
-    "aspect-[9/16]": aspectRatio === "tall",
+    "aspect-9/16": aspectRatio === "tall",
   })
 
   return (

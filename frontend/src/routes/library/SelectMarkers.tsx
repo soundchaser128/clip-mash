@@ -231,7 +231,7 @@ const SelectMarkers: React.FC = () => {
       </div>
       {markers.length === 0 && (
         <div className="mt-4 alert alert-info w-fit">
-          <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />
+          <HiInformationCircle className="stroke-current shrink-0 h-6 w-6" />
           <span>
             No markers found for selection. Either create some scene markers in
             Stash or change your search criteria.

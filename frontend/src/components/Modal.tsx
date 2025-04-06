@@ -95,7 +95,7 @@ const Modal: React.FC<ModalProps> = ({
       >
         {isOpen ? (
           <animated.div
-            className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+            className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-xs"
             style={{opacity: style.opacity}}
           />
         ) : null}

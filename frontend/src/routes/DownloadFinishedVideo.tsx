@@ -95,7 +95,7 @@ const DownloadVideoPage = () => {
                 <HiDocumentText className="w-6 h-6 mr-2" />
                 Generate description
               </summary>
-              <ul className="p-2 shadow-xl menu dropdown-content z-[1] bg-base-200 rounded-box w-full">
+              <ul className="p-2 shadow-xl menu dropdown-content z-1 bg-base-200 rounded-box w-full">
                 <li>
                   <button onClick={() => onGenerateDescription("markdown")}>
                     Markdown

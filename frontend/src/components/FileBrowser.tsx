@@ -24,7 +24,7 @@ function FileBrowser<T extends FieldValues>({
   }
 
   return (
-    <section className="w-full flex-grow flex max-h-[55vh] flex-col">
+    <section className="w-full grow flex max-h-[55vh] flex-col">
       <div className="form-control">
         <label htmlFor={name} className="label">
           <span className="label-text">Path</span>

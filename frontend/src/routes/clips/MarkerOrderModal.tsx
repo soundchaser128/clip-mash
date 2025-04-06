@@ -174,7 +174,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
                 <div className="card-body">
                   <h3
                     onClick={() => setSelected(group)}
-                    className="card-title flex-grow-0 cursor-pointer hover:underline transition"
+                    className="card-title grow-0 cursor-pointer hover:underline transition"
                   >
                     {group.name} ({markerCount}{" "}
                     {pluralize("marker", markerCount)})

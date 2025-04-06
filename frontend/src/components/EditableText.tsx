@@ -3,7 +3,7 @@ import React, {useState} from "react"
 import {HiCheck, HiPencil} from "react-icons/hi2"
 
 const inputClasses =
-  "grow w-full block p-0 border-0 border-b-2 border-primary appearance-none focus:outline-none focus:ring-0 focus:border-primary-focus"
+  "grow w-full block p-0 border-0 border-b-2 border-primary appearance-none focus:outline-hidden focus:ring-0 focus:border-primary-focus"
 
 interface Props {
   value?: string

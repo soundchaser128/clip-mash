@@ -689,7 +689,7 @@ function VideoMarkersPage() {
           markPoints={markPoints}
           onMarkerClick={onRemoveMark}
           onTimelineClick={onTimelineClick}
-          className="py-4 flex-grow"
+          className="py-4 grow"
         />
       </div>
     </>

@@ -7,7 +7,7 @@ import {
   Settings,
   cleanupFolder,
   getFileStats,
-  getHealth,
+  getStashHealth,
   migratePreviewImages,
   setConfig,
 } from "../api"
@@ -16,6 +16,8 @@ import {useConfig} from "@/hooks/useConfig"
 import Loader from "@/components/Loader"
 import {formatBytes} from "@/helpers/formatting"
 import {useCreateToast} from "@/hooks/useToast"
+import {AspectRatio} from "@/components/VideoCard"
+import useAspectRatioSetting from "@/hooks/useAspectRatioSetting"
 
 type Inputs = Settings
 
@@ -67,7 +69,7 @@ const useFileStats = () => {
 
 async function testCredentials(inputs: Inputs): Promise<HealthResult> {
   try {
-    const response = await getHealth({
+    const response = await getStashHealth({
       apiKey: inputs.stash.apiKey,
       url: inputs.stash.stashUrl,
     })
@@ -87,21 +89,22 @@ function AppConfigPage() {
   })
   const urlValue = watch("stash.stashUrl") || "http://localhost:9999"
   const apiKeyValue = watch("stash.apiKey")
-  const settingsPage = `${urlValue}/settings?tab=security`
+  const stashSettingsPageUrl = `${urlValue}/settings?tab=security`
   const [healthResult, setHealthResult] = useState<HealthResult>()
   const createToast = useCreateToast()
   const [converting, setConverting] = useState(false)
+  const [aspectRatio, setAspectRatio] = useAspectRatioSetting()
 
   const onSubmit = async (inputs: Inputs) => {
-    const health = await testCredentials(inputs)
     inputs.stash.apiKey = inputs.stash.apiKey?.trim()
     inputs.stash.stashUrl = inputs.stash.stashUrl.trim()
-
-    if (health.success) {
-      await setConfig(inputs)
-      // reload the window to re-fetch the config
-      window.location.reload()
+    if (!inputs.handy?.enabled) {
+      delete inputs.handy
     }
+
+    await setConfig(inputs)
+    // reload the window to re-fetch the config
+    window.location.reload()
   }
 
   const onTestCredentials = useCallback(async () => {
@@ -148,8 +151,32 @@ function AppConfigPage() {
       <h1 className="text-3xl font-bold mb-4 text-center">Settings</h1>
 
       <section className="flex flex-col mb-4">
-        <h2 className="text-xl font-bold mb-2">Stash configuration</h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="w-full self-center">
+        <h2 className="text-xl font-bold mb-2">Interface</h2>
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Preview image aspect ratio</span>
+          </label>
+
+          <select
+            value={aspectRatio}
+            onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
+            className="select select-sm select-bordered"
+          >
+            <option value="wide">Wide</option>
+            <option value="square">Square</option>
+            <option value="tall">Tall</option>
+          </select>
+        </div>
+      </section>
+      <form onSubmit={handleSubmit(onSubmit)} className="w-full">
+        <section className="flex flex-col mb-4">
+          <h2 className="text-xl font-bold mb-2">Stash configuration</h2>
+          <p className="text-sm mb-2">
+            <ExternalLink href="https://stashapp.cc/">Stash</ExternalLink> is an
+            organizer for your porn. If you have a Stash instance running, you
+            can connect it to ClipMash to import the scenes and markers in your
+            library.
+          </p>
           <div className="form-control">
             <label className="label" htmlFor="stashUrl">
               <span className="label-text">URL of your Stash instance:</span>
@@ -159,8 +186,7 @@ function AppConfigPage() {
               placeholder="Example: http://localhost:9999"
               className="input input-bordered"
               defaultValue="http://localhost:9999"
-              required
-              {...register("stash.stashUrl", {required: true})}
+              {...register("stash.stashUrl")}
             />
           </div>
 
@@ -178,7 +204,9 @@ function AppConfigPage() {
               <span className="label-text-alt">
                 The API key is only required when authentication in Stash is
                 enabled. Navigate to{" "}
-                <ExternalLink href={settingsPage}>{settingsPage}</ExternalLink>{" "}
+                <ExternalLink href={stashSettingsPageUrl}>
+                  {stashSettingsPageUrl}
+                </ExternalLink>{" "}
                 to retrieve your API key.
               </span>
             </label>
@@ -187,14 +215,10 @@ function AppConfigPage() {
             <button
               onClick={onTestCredentials}
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-sm btn-secondary"
             >
               <HiCog className="w-6 h-6" />
               Test credentials
-            </button>
-            <button type="submit" className="btn btn-success">
-              <HiCheckCircle className="w-6 h-6" />
-              Submit
             </button>
           </div>
           {healthResult && (
@@ -212,8 +236,48 @@ function AppConfigPage() {
               {!healthResult.success && <code>{healthResult.message}</code>}
             </div>
           )}
-        </form>
-      </section>
+        </section>
+
+        <section className="flex flex-col mb-4">
+          <h2 className="text-xl font-bold mb-2">Handy settings</h2>
+          <p className="text-sm mb-2">
+            ClipMash can send commands to your{" "}
+            <ExternalLink href="https://www.handyfeeling.com/">
+              Handy
+            </ExternalLink>{" "}
+            device for use with the ClipMash TV feature. To enable this feature,
+            you need to enter your Handy connection key.
+          </p>
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text">Enable Handy integration</span>
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary"
+                {...register("handy.enabled")}
+              />
+            </label>
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Handy connection key</span>
+            </label>
+            <input
+              type="password"
+              placeholder="Connection key"
+              className="input input-bordered"
+              disabled={!watch("handy.enabled")}
+              {...register("handy.key")}
+            />
+          </div>
+
+          <button type="submit" className="btn btn-success self-end mt-4">
+            <HiCheckCircle className="w-6 h-6" />
+            Submit
+          </button>
+        </section>
+      </form>
 
       <section className="flex flex-col">
         <h2 className="text-xl font-bold mb-2">File statistics</h2>

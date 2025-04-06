@@ -18,6 +18,14 @@ test("download some videos", async ({ page }) => {
   await page
     .getByPlaceholder("Enter URLs separated by line")
     .fill(videoUrls.join("\n"));
+
+  await page.getByRole("button", { name: "Add tag(s) to all videos" }).click();
+  await page.getByPlaceholder("Enter new tag").fill("Rule 34");
+  await page
+    .getByTestId("modal-content")
+    .getByRole("button", { name: "Add" })
+    .click();
+
   await page.getByRole("button", { name: "Download" }).click();
   const loader = page.getByText(`Downloading ${videoUrls.length} videos...`);
   await expect(loader).toBeVisible();

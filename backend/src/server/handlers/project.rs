@@ -12,14 +12,16 @@ use tracing::{debug, error, info};
 use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
+use crate::data::database::markers::ListMarkersFilter;
+use crate::helpers::random::{generate_id, get_random_word};
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::clip::{ClipService, ClipsResult};
 use crate::service::description_generator::DescriptionType;
 use crate::service::funscript::{self, FunScript, ScriptBuilder};
+use crate::service::generator::CompilationGenerator;
 use crate::service::options_converter::OptionsConverterService;
 use crate::service::streams::{LocalVideoSource, StreamUrlService};
-use crate::util::generate_id;
 
 #[utoipa::path(
     post,
@@ -75,10 +77,70 @@ async fn create_video_inner(
 ) -> Result<(), AppError> {
     let service = OptionsConverterService::new(state.database.clone());
     let options = service.convert_compilation_options(body).await?;
+    let generator = CompilationGenerator::new(
+        state.directories.clone(),
+        &state.ffmpeg_location,
+        state.database.clone(),
+    )
+    .await?;
 
-    let clips = state.generator.gather_clips(&options).await?;
-    state.generator.compile_clips(&options, clips).await?;
+    let clips = generator.gather_clips(&options).await?;
+    generator.compile_clips(&options, clips).await?;
     Ok(())
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/project/clips/interactive",
+    request_body = CreateInteractiveClipsBody,
+    responses(
+        (status = 200, description = "", body = ClipsResponse),
+    )
+)]
+#[axum::debug_handler]
+pub async fn fetch_clips_interactive(
+    state: State<Arc<AppState>>,
+    Json(body): Json<CreateInteractiveClipsBody>,
+) -> Result<Json<ClipsResponse>, AppError> {
+    let filter = match body.query {
+        InteractiveClipsQuery::MarkerTitles { data } => ListMarkersFilter::MarkerTitles(data),
+        InteractiveClipsQuery::Performers { data } => ListMarkersFilter::VideoPerformers(data),
+        InteractiveClipsQuery::VideoTags { data } => ListMarkersFilter::VideoTags(data),
+    };
+
+    let all_markers: Vec<_> = state
+        .database
+        .markers
+        .list_markers(Some(filter), None)
+        .await?
+        .into_iter()
+        .map(|m| SelectedMarker {
+            id: m.rowid.unwrap(),
+            video_id: m.video_id,
+            selected_range: (m.start_time, m.end_time),
+            index_within_video: m.index_within_video as usize,
+            selected: Some(true),
+            title: m.title,
+            loops: 1,
+            source: m.source,
+        })
+        .collect();
+
+    let options = CreateClipsBody {
+        markers: all_markers,
+        seed: Some(body.seed.unwrap_or_else(|| get_random_word())),
+        clips: ClipOptions {
+            clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
+                clip_duration: body.clip_duration,
+                spread: 0.05,
+                length: None,
+                min_clip_duration: Some(1.0),
+            }),
+            order: body.order,
+        },
+    };
+
+    fetch_clips(state, Json(options)).await
 }
 
 #[derive(Serialize, ToSchema)]
@@ -294,4 +356,19 @@ pub async fn generate_description(
         body: description,
         content_type: description_type.content_type().to_string(),
     }))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/project/random-seed",
+    responses(
+        (status = 200, description = "Generate a random seed", body = String),
+    )
+)]
+#[axum::debug_handler]
+/// Generate a possible random seed (a random word)
+pub async fn generate_random_seed() -> Json<String> {
+    use crate::helpers::random;
+
+    Json(random::get_random_word())
 }

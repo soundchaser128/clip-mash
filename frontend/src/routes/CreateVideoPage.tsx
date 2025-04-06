@@ -108,6 +108,7 @@ function ProgressPage() {
       musicVolume: state.data.musicVolume,
       padding: state.data.padding!,
       forceReEncode: false,
+      includeOriginalFileName: state.data.includeOriginalFileName ?? false,
     } satisfies CreateVideoBody
 
     await createVideo(data)

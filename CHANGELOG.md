@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- feat: ClipMash TV: Allows watching a compilation live in your browser (including Handy support)
+- feat: Implement blurry background padding for videos that don't fit the target aspect ratio of the compilation.
+- feat: Added performers database table (not visible in the UI yet)
+- feat: Added Setting for wide/square/tall preview images in the video grid
+- feat: Added slider to control the number of columns in the video grid
+- chore: Upgrade dependency versions
+
 ## 0.22.0
 
 - feat: Support for the new `end_time` field on markers in Stash (@WorksDontBreak)

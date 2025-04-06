@@ -24,6 +24,7 @@ pub struct ListFileEntriesQuery {
 pub struct ListFileEntriesResponse {
     pub entries: Vec<FileSystemEntry>,
     pub directory: String,
+    pub drives: Vec<String>,
 }
 
 #[derive(Serialize, ToSchema, PartialEq, Eq, Debug)]
@@ -105,7 +106,6 @@ fn get_or_home_dir(path: Option<String>) -> Utf8PathBuf {
         .unwrap_or_default()
 }
 
-// TODO for window as well
 #[cfg(not(target_os = "windows"))]
 fn is_hidden(file: &std::path::Path) -> bool {
     file.file_name()
@@ -127,6 +127,26 @@ fn is_hidden(file: &std::path::Path) -> bool {
     }
 }
 
+#[cfg(target_os = "windows")]
+fn list_drives() -> Vec<String> {
+    use sysinfo::Disks;
+
+    let disks = Disks::new_with_refreshed_list();
+    let mut drives: Vec<_> = disks
+        .into_iter()
+        .map(|d| d.mount_point().to_string_lossy().to_string())
+        .collect();
+    drives.sort();
+
+    drives
+}
+
+// no drives on other OSes
+#[cfg(not(target_os = "windows"))]
+fn list_drives() -> Vec<String> {
+    vec![]
+}
+
 #[axum::debug_handler]
 #[utoipa::path(
     get,
@@ -145,6 +165,7 @@ pub async fn list_file_entries(
     let path = get_or_home_dir(path);
     let with_hidden = include_hidden.unwrap_or(false);
 
+    let drives = list_drives();
     let mut entries = tokio::fs::read_dir(&path).await?;
     let mut files = vec![];
     while let Some(entry) = entries.next_entry().await? {
@@ -171,6 +192,7 @@ pub async fn list_file_entries(
     Ok(Json(ListFileEntriesResponse {
         directory: path.to_string(),
         entries: files,
+        drives,
     }))
 }
 
@@ -200,6 +222,7 @@ pub async fn get_file_stats(
         (status = 200, description = "Cleanup the given folder", body = ()),
     )
 )]
+/// Deletes all generated files in the specified folder.
 pub async fn cleanup_folder(
     Path(folder_type): Path<FolderType>,
     State(state): State<Arc<AppState>>,

@@ -3,7 +3,6 @@ use std::time::Instant;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::Section;
-use fraction::Ratio;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
@@ -15,11 +14,14 @@ use super::directories::Directories;
 use super::encoding_optimization::EncodingOptimizationService;
 use super::streams::{LocalVideoSource, StreamUrlService};
 use super::Marker;
-use crate::data::database::{Database, DbSong, DbVideo};
+use crate::data::database::music::DbSong;
+use crate::data::database::videos::DbVideo;
+use crate::data::database::Database;
 use crate::helpers::estimator::Estimator;
+use crate::helpers::random::generate_id;
 use crate::helpers::util::StrExt;
 use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
-use crate::util::{commandline_error, debug_output, format_duration, generate_id};
+use crate::util::{commandline_error, debug_output, format_duration};
 use crate::Result;
 
 #[derive(Debug)]
@@ -38,6 +40,7 @@ pub struct CompilationOptions {
     pub videos: Vec<DbVideo>,
     pub padding: PaddingType,
     pub force_re_encode: bool,
+    pub include_original_file_name: bool,
 }
 
 fn get_clip_file_name(
@@ -47,12 +50,24 @@ fn get_clip_file_name(
     codec: VideoCodec,
     (x_res, y_res): (u32, u32),
     padding: PaddingType,
+    file_path: Option<&str>,
 ) -> String {
     let padding = match padding {
         PaddingType::Black => "black",
         PaddingType::Blur => "blur",
     };
-    format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}-{padding}.mp4")
+    let file_name = file_path
+        .and_then(|p| Utf8Path::new(p).file_stem())
+        .unwrap_or_default();
+
+    let stem = format!("{video_id}_{start}-{end}-{codec}-{x_res}x{y_res}-{padding}");
+    let stem = if file_name.is_empty() {
+        stem
+    } else {
+        format!("{stem}_{file_name}")
+    };
+
+    format!("{stem}.mp4")
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
@@ -94,22 +109,6 @@ pub struct CompilationGenerator {
     database: Database,
     encoding_optimization: EncodingOptimizationService,
     stream_urls: StreamUrlService,
-}
-
-#[derive(Debug, Copy, Clone)]
-enum Orientation {
-    Landscape,
-    Portrait,
-}
-
-impl Orientation {
-    fn new(width: u32, height: u32) -> Self {
-        if width > height {
-            Orientation::Landscape
-        } else {
-            Orientation::Portrait
-        }
-    }
 }
 
 impl CompilationGenerator {
@@ -209,33 +208,24 @@ impl CompilationGenerator {
 
         let sigma = 120;
         let brightness = -0.125;
-
-        let source_orientation = Orientation::new(source_size.0, source_size.1);
-        let target_orientation = Orientation::new(target_size.0, target_size.1);
         let (px_w, px_h) = target_size;
 
-        let transform_filters = match (source_orientation, target_orientation) {
-            (Orientation::Landscape, Orientation::Portrait) => {
-                format!("scale={px_w}:-1, crop=w={px_w}")
-            }
-            (Orientation::Portrait, Orientation::Landscape) => {
-                format!("scale=-1:{px_h}, crop=h={px_h}")
-            }
-            (Orientation::Portrait, Orientation::Portrait) => {
-                format!("scale=-1:{px_h}, pad={px_w}:{px_h}:-1:-1:color=black")
-            }
-            (Orientation::Landscape, Orientation::Landscape) => {
-                format!("scale={px_w}:-1, pad={px_w}:{px_h}:-1:-1:color=black")
-            }
-        };
+        // Scale for the main video - preserve aspect ratio and fit within target dimensions
+        let scale_filter = format!("scale={px_w}:{px_h}:force_original_aspect_ratio=decrease");
 
-        info!("using transform filters: {transform_filters} for source {source_orientation:?} to target {target_orientation:?}");
+        // Scale for the background - will fill target dimensions but maintain aspect ratio
+        // Use "crop" to ensure it fills the entire frame by cropping excess if needed
+        let bg_scale_filter = format!("scale={px_w}:{px_h}:force_original_aspect_ratio=increase:force_divisible_by=2,crop={px_w}:{px_h}");
 
-        format!("
-            split [original][copy];
-            [copy] {transform_filters}, gblur=sigma={sigma}, eq=brightness={brightness}[blurred];
-            [blurred][original]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2, fps={fps}, scale={px_w}:{px_h}
-        ")
+        info!("using scale filter: {scale_filter}");
+
+        format!(
+            "split [original][copy];
+            [copy] {bg_scale_filter}, gblur=sigma={sigma}, eq=brightness={brightness} [blurred];
+            [original] {scale_filter} [scaled];
+            [blurred][scaled] overlay=(W-w)/2:(H-h)/2 [padded];
+            [padded] fps={fps}"
+        )
         .collapse_whitespace()
     }
 
@@ -247,17 +237,13 @@ impl CompilationGenerator {
 
         let clip_str = clip.duration.to_string();
         let seconds_str = clip.start.to_string();
-
-        let video = Ratio::new(clip.video_width, clip.video_height);
-        let target = Ratio::new(clip.width, clip.height);
-
-        let filter = match (clip.padding, target != video) {
-            (PaddingType::Blur, true) => FilterType::Complex(self.blurred_padding_filter(
+        let filter = match clip.padding {
+            PaddingType::Blur => FilterType::Complex(self.blurred_padding_filter(
                 (clip.video_width, clip.video_height),
                 (clip.width, clip.height),
                 clip.fps,
             )),
-            _ => FilterType::Simple(
+            PaddingType::Black => FilterType::Simple(
                 format!(
                     "scale={width}:{height}:force_original_aspect_ratio=decrease,
                 pad={width}:{height}:-1:-1:color=black,
@@ -352,6 +338,7 @@ impl CompilationGenerator {
             .needs_re_encode(&video_ids)
             .await?;
         info!("Using padding type {:?}", options.padding);
+        let db_videos = self.database.videos.get_videos_by_ids(&video_ids).await?;
 
         let total = clips.len();
         let mut paths = vec![];
@@ -369,7 +356,11 @@ impl CompilationGenerator {
                 .expect(&format!("no marker with ID {marker_id} found"));
 
             let video_metadata = self.database.ffprobe.get_info(&marker.video_id).await?;
-            let video = video_metadata.video_parameters();
+            let video_parameters = video_metadata.video_parameters();
+            let db_video = db_videos
+                .iter()
+                .find(|v| v.id == marker.video_id)
+                .expect("no video found");
 
             let url = &stream_urls[&marker.video_id];
             let (width, height) = options.output_resolution;
@@ -380,6 +371,11 @@ impl CompilationGenerator {
                 options.video_codec,
                 options.output_resolution,
                 options.padding,
+                if options.include_original_file_name {
+                    Some(&db_video.file_path)
+                } else {
+                    None
+                },
             ));
             if !out_file.is_file() {
                 info!("creating clip {} / {} at {out_file}", index + 1, total);
@@ -396,8 +392,8 @@ impl CompilationGenerator {
                         quality: options.video_quality,
                         effort: options.encoding_effort,
                         re_encode: needs_re_encode,
-                        video_width: video.width as u32,
-                        video_height: video.height as u32,
+                        video_width: video_parameters.width as u32,
+                        video_height: video_parameters.height as u32,
                         padding: options.padding,
                         force_re_encode: options.force_re_encode,
                     })

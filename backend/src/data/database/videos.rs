@@ -1,18 +1,142 @@
 use std::collections::HashSet;
+use std::fmt;
+use std::str::FromStr;
 
 use camino::Utf8Path;
+use color_eyre::eyre::eyre;
 use futures::TryStreamExt;
+use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, QueryBuilder, Row, SqlitePool};
 use tracing::{debug, info};
+use utoipa::{IntoParams, ToSchema};
 
-use super::{
-    AllVideosFilter, CreateVideo, DbMarker, DbVideo, LocalVideoWithMarkers, VideoSearchQuery,
-    VideoUpdate,
-};
+use super::markers::{DbMarker, VideoWithMarkers};
 use crate::data::database::unix_timestamp_now;
-use crate::server::types::{ListVideoDto, PageParameters};
-use crate::service::video::TAG_SEPARATOR;
+use crate::server::types::{ListVideoDto, PageParameters, VideoLike};
 use crate::Result;
+
+const LEGACY_TAG_SEPARATOR: &str = ";";
+
+#[derive(Debug, Clone, Copy, sqlx::Type, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
+#[sqlx(rename_all = "lowercase")]
+pub enum VideoSource {
+    Folder,
+    Download,
+    Stash,
+}
+
+impl fmt::Display for VideoSource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VideoSource::Folder => write!(f, "folder"),
+            VideoSource::Download => write!(f, "download"),
+            VideoSource::Stash => write!(f, "stash"),
+        }
+    }
+}
+
+impl FromStr for VideoSource {
+    type Err = color_eyre::Report;
+
+    fn from_str(s: &str) -> Result<Self> {
+        match s {
+            "folder" => Ok(VideoSource::Folder),
+            "download" => Ok(VideoSource::Download),
+            "stash" => Ok(VideoSource::Stash),
+            _ => Err(eyre!("invalid source: {}", s)),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct TagCount {
+    pub tag: String,
+    pub count: i64,
+}
+
+#[derive(Debug, Clone, FromRow)]
+pub struct DbVideo {
+    pub id: String,
+    pub file_path: String,
+    pub interactive: bool,
+    pub source: VideoSource,
+    pub duration: f64,
+    pub video_preview_image: Option<String>,
+    pub stash_scene_id: Option<i64>,
+    pub video_created_on: i64,
+    pub video_title: Option<String>,
+    pub video_tags: Option<String>,
+}
+
+pub fn tags_from_string(tags: Option<&str>) -> Vec<String> {
+    let tags = tags.unwrap_or("");
+    if tags.starts_with("[") {
+        serde_json::from_str(tags).unwrap_or_default()
+    } else {
+        tags.split(LEGACY_TAG_SEPARATOR)
+            .map(|s| s.to_string())
+            .collect()
+    }
+}
+
+impl DbVideo {
+    pub fn tags(&self) -> Vec<String> {
+        tags_from_string(self.video_tags.as_deref())
+    }
+}
+
+impl VideoLike for DbVideo {
+    fn video_id(&self) -> &str {
+        &self.id
+    }
+
+    fn stash_scene_id(&self) -> Option<i64> {
+        self.stash_scene_id
+    }
+
+    fn file_path(&self) -> Option<&str> {
+        Some(self.file_path.as_str())
+    }
+}
+
+#[derive(Deserialize, IntoParams, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct VideoSearchQuery {
+    pub query: Option<String>,
+    pub source: Option<VideoSource>,
+    pub has_markers: Option<bool>,
+    pub is_interactive: Option<bool>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateVideo {
+    pub id: String,
+    pub file_path: String,
+    pub interactive: bool,
+    pub source: VideoSource,
+    pub duration: f64,
+    pub video_preview_image: Option<String>,
+    pub stash_scene_id: Option<i64>,
+    pub title: Option<String>,
+    pub tags: Option<String>,
+    pub created_on: Option<i64>,
+}
+
+#[allow(clippy::enum_variant_names)]
+#[derive(Debug, Clone, Copy)]
+pub enum AllVideosFilter {
+    NoVideoDuration,
+    NoPreviewImage,
+    NoTitle,
+    NoPerformers,
+    NonJsonTags,
+}
+
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct VideoUpdate {
+    pub title: Option<String>,
+    pub tags: Option<Vec<String>>,
+}
 
 #[derive(Clone)]
 pub struct VideosDatabase {
@@ -25,7 +149,13 @@ impl VideosDatabase {
     }
 
     pub async fn get_video(&self, id: &str) -> Result<Option<DbVideo>> {
-        let video = sqlx::query_as!(DbVideo, "SELECT * FROM videos WHERE id = $1", id)
+        let video = sqlx::query_as!(
+            DbVideo,
+            "SELECT id, file_path, interactive, source AS \"source: VideoSource\",
+                    duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on
+             FROM videos
+             WHERE id = $1",
+            id)
             .fetch_optional(&self.pool)
             .await?;
         Ok(video)
@@ -59,7 +189,8 @@ impl VideosDatabase {
                 query_builder.push(", ");
             }
             query_builder.push("video_tags = ");
-            query_builder.push_bind(tags.join(TAG_SEPARATOR));
+            let tags = serde_json::to_string(&tags)?;
+            query_builder.push_bind(tags);
         }
 
         query_builder.push(" WHERE id = ");
@@ -86,7 +217,7 @@ impl VideosDatabase {
         Ok(records)
     }
 
-    pub async fn get_video_with_markers(&self, id: &str) -> Result<Option<LocalVideoWithMarkers>> {
+    pub async fn get_video_with_markers(&self, id: &str) -> Result<Option<VideoWithMarkers>> {
         let records = sqlx::query!(
             "SELECT *, m.rowid AS rowid FROM videos v LEFT JOIN markers m ON v.id = m.video_id WHERE v.id = $1",
             id,
@@ -101,7 +232,7 @@ impl VideosDatabase {
                 id: records[0].id.clone(),
                 file_path: records[0].file_path.clone(),
                 interactive: records[0].interactive,
-                source: records[0].source.clone().into(),
+                source: records[0].source.clone().parse().expect("invalid source"),
                 duration: records[0].duration,
                 video_preview_image: records[0].video_preview_image.clone(),
                 stash_scene_id: records[0].stash_scene_id,
@@ -111,66 +242,79 @@ impl VideosDatabase {
             };
             let markers = records
                 .into_iter()
-                .filter_map(|r| {
-                    match (
-                        r.video_id,
-                        r.start_time,
-                        r.end_time,
-                        r.title,
-                        r.rowid,
-                        r.index_within_video,
-                        r.marker_preview_image,
-                        r.marker_created_on,
-                        r.marker_stash_id,
-                    ) {
-                        (
-                            Some(video_id),
-                            Some(start_time),
-                            Some(end_time),
-                            Some(title),
-                            rowid,
-                            Some(index),
-                            marker_preview_image,
-                            Some(marker_created_on),
-                            marker_stash_id,
-                        ) => Some(DbMarker {
-                            rowid,
-                            title,
-                            video_id,
-                            start_time,
-                            end_time,
-                            index_within_video: index,
-                            marker_preview_image,
-                            marker_created_on,
-                            marker_stash_id,
-                        }),
-                        _ => None,
-                    }
+                .filter(|r| r.rowid.is_some())
+                .map(|r| DbMarker {
+                    rowid: r.rowid,
+                    title: r.title,
+                    video_id: r.video_id,
+                    start_time: r.start_time,
+                    end_time: r.end_time,
+                    index_within_video: r.index_within_video,
+                    marker_preview_image: r.marker_preview_image,
+                    marker_created_on: r.marker_created_on,
+                    marker_stash_id: r.marker_stash_id,
                 })
                 .collect();
-            Ok(Some(LocalVideoWithMarkers { video, markers }))
+            Ok(Some(VideoWithMarkers { video, markers }))
         }
     }
 
     pub async fn get_videos(&self, filter: AllVideosFilter) -> Result<Vec<DbVideo>> {
         let query = match filter {
             AllVideosFilter::NoVideoDuration => {
-                sqlx::query_as!(DbVideo, "SELECT * FROM videos WHERE duration = -1.0")
+                sqlx::query_as!(
+                    DbVideo,
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", duration, video_preview_image,
+                                stash_scene_id, video_title, video_tags, video_created_on
+                    FROM videos
+                    WHERE duration = -1.0")
                     .fetch_all(&self.pool)
                     .await
             }
             AllVideosFilter::NoPreviewImage => {
                 sqlx::query_as!(
                     DbVideo,
-                    "SELECT * FROM videos WHERE video_preview_image IS NULL"
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\", duration, video_preview_image,
+                            stash_scene_id, video_title, video_tags, video_created_on
+                    FROM videos
+                    WHERE video_preview_image IS NULL"
                 )
                 .fetch_all(&self.pool)
                 .await
             }
             AllVideosFilter::NoTitle => {
-                sqlx::query_as!(DbVideo, "SELECT * FROM videos WHERE video_title IS NULL")
+                sqlx::query_as!(
+                    DbVideo,
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\",
+                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on
+                    FROM videos
+                    WHERE video_title IS NULL")
                     .fetch_all(&self.pool)
                     .await
+            }
+            AllVideosFilter::NoPerformers => {
+                sqlx::query_as!(
+                    DbVideo,
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\",
+                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on
+                    FROM videos v
+                    WHERE (SELECT count(*) FROM video_performers vp WHERE vp.video_id = v.id) = 0 AND
+                          v.stash_scene_id IS NOT NULL
+                    "
+                )
+                .fetch_all(&self.pool)
+                .await
+            }
+            AllVideosFilter::NonJsonTags => {
+                sqlx::query_as!(
+                    DbVideo,
+                    "SELECT id, file_path, interactive, source AS \"source: VideoSource\",
+                            duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on
+                    FROM videos
+                    WHERE video_tags NOT LIKE '[%'"
+                )
+                .fetch_all(&self.pool)
+                .await
             }
         };
         query.map_err(From::from)
@@ -197,8 +341,8 @@ impl VideosDatabase {
     pub async fn persist_video(&self, video: &CreateVideo) -> Result<DbVideo> {
         let created_on = video.created_on.unwrap_or_else(|| unix_timestamp_now());
         let inserted = sqlx::query!(
-            "INSERT INTO videos 
-            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on) 
+            "INSERT INTO videos
+            (id, file_path, interactive, source, duration, video_preview_image, stash_scene_id, video_title, video_tags, video_created_on)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING video_created_on",
             video.id,
@@ -227,6 +371,28 @@ impl VideosDatabase {
             video_tags: video.tags.clone(),
             video_title: video.title.clone(),
         })
+    }
+
+    pub async fn list_tags(&self, count: i64) -> Result<Vec<TagCount>> {
+        // query! doesn't like the json_each function, so we have to use sqlx::query
+        let results = sqlx::query(
+            "SELECT json_each.value AS tag, COUNT(*) AS occurrences
+            FROM videos, json_each(videos.video_tags)
+            GROUP BY json_each.value
+            ORDER BY occurrences DESC
+            LIMIT $1",
+        )
+        .bind(count)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|row| TagCount {
+            tag: row.get("tag"),
+            count: row.get("occurrences"),
+        })
+        .collect();
+
+        Ok(results)
     }
 
     #[allow(unused_assignments)]
@@ -323,7 +489,7 @@ impl VideosDatabase {
         };
 
         let mut query_builder = QueryBuilder::new(
-            "SELECT v.id, v.file_path, v.interactive, v.duration, v.video_created_on, v.source, v.video_preview_image, 
+            "SELECT v.id, v.file_path, v.interactive, v.duration, v.video_created_on, v.source, v.video_preview_image,
                     v.stash_scene_id, v.video_tags, v.video_title, COUNT(m.video_id) AS marker_count
             FROM videos v
             LEFT JOIN markers m ON v.id = m.video_id ",
@@ -393,7 +559,7 @@ impl VideosDatabase {
                     id: row.id,
                     file_path: row.file_path,
                     interactive: row.interactive,
-                    source: row.source.into(),
+                    source: row.source.parse().expect("invalid source"),
                     duration: row.duration,
                     video_preview_image: row.video_preview_image,
                     stash_scene_id: row.stash_scene_id,

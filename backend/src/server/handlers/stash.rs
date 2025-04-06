@@ -24,7 +24,7 @@ pub struct ConfigQuery {
     )
 )]
 #[axum::debug_handler]
-pub async fn get_health(
+pub async fn get_stash_health(
     Query(ConfigQuery { url, api_key }): Query<ConfigQuery>,
 ) -> Result<impl IntoResponse, AppError> {
     let api = StashApi::new(url, api_key);

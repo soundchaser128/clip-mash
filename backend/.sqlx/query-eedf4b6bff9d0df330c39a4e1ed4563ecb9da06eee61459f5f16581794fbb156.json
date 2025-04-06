@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO video_performers (video_id, performer_id) VALUES ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "eedf4b6bff9d0df330c39a4e1ed4563ecb9da06eee61459f5f16581794fbb156"
+}

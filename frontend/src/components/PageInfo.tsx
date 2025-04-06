@@ -7,11 +7,12 @@ interface Page {
 
 interface Props {
   page: Page
+  startIndex?: 0 | 1
   className?: string
 }
 
-const PageInfo: React.FC<Props> = ({page, className}) => {
-  const startRange = page.pageNumber * page.pageSize + 1
+const PageInfo: React.FC<Props> = ({page, className, startIndex = 0}) => {
+  const startRange = (page.pageNumber - startIndex) * page.pageSize + 1
   const endRange = startRange + page.content.length - 1
 
   return (

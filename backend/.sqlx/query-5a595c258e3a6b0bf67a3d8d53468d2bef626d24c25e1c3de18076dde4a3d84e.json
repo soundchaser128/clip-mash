@@ -1,12 +1,12 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT \n                m.rowid, m.title, m.video_id, v.file_path, m.start_time, \n                m.end_time, m.index_within_video, m.marker_preview_image, \n                v.interactive, m.marker_created_on, v.video_title, v.source,\n                v.video_tags, v.stash_scene_id\n            FROM markers m INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.rowid = $1",
+  "query": "SELECT \n                m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, \n                m.index_within_video, m.marker_preview_image, v.interactive, \n                m.marker_created_on, v.video_title, v.source AS \"source: VideoSource\", v.video_tags,\n                v.stash_scene_id\n            FROM markers m INNER JOIN videos v ON m.video_id = v.id\n            WHERE m.marker_preview_image IS NULL",
   "describe": {
     "columns": [
       {
         "name": "rowid",
         "ordinal": 0,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "title",
@@ -36,7 +36,7 @@
       {
         "name": "index_within_video",
         "ordinal": 6,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "marker_preview_image",
@@ -51,7 +51,7 @@
       {
         "name": "marker_created_on",
         "ordinal": 9,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "video_title",
@@ -59,7 +59,7 @@
         "type_info": "Text"
       },
       {
-        "name": "source",
+        "name": "source: VideoSource",
         "ordinal": 11,
         "type_info": "Text"
       },
@@ -71,11 +71,11 @@
       {
         "name": "stash_scene_id",
         "ordinal": 13,
-        "type_info": "Int64"
+        "type_info": "Integer"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 0
     },
     "nullable": [
       false,
@@ -94,5 +94,5 @@
       true
     ]
   },
-  "hash": "5c4cca730fcfa985bce9889c56b8e08622bfcaeee2d4796477940ee590f718e7"
+  "hash": "5a595c258e3a6b0bf67a3d8d53468d2bef626d24c25e1c3de18076dde4a3d84e"
 }

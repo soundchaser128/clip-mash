@@ -12,7 +12,7 @@ use url::Url;
 use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
-use crate::data::database::DbSong;
+use crate::data::database::music::DbSong;
 use crate::server::error::AppError;
 use crate::server::types::*;
 use crate::service::music::{self, MusicDownloadService};
@@ -23,7 +23,7 @@ pub struct DownloadMusicQuery {
     pub url: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SongDto {
     pub song_id: i64,
@@ -74,7 +74,7 @@ pub async fn stream_song(
     State(state): State<Arc<AppState>>,
     request: axum::http::Request<Body>,
 ) -> Result<impl IntoResponse, AppError> {
-    use tower::ServiceExt;
+    use tower::util::ServiceExt;
     use tower_http::services::ServeFile;
 
     let song = state.database.music.get_song(song_id).await?;
@@ -98,6 +98,7 @@ pub struct SongUpload {
         (status = 200, description = "Uploads a song", body = SongDto),
     )
 )]
+/// Upload a song file
 pub async fn upload_music(
     State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
@@ -114,18 +115,28 @@ pub async fn upload_music(
     Err(eyre!("missing form field `file`").into())
 }
 
+#[derive(Deserialize, IntoParams)]
+pub struct ListSongsQuery {
+    shuffle: Option<bool>,
+}
+
 #[axum::debug_handler]
 #[utoipa::path(
     get,
     path = "/api/song",
+    params(ListSongsQuery),
     responses(
         (status = 200, description = "Lists all songs", body = Vec<SongDto>),
     )
 )]
+/// List all songs
 pub async fn list_songs(
+    Query(ListSongsQuery { shuffle }): Query<ListSongsQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<SongDto>>, AppError> {
-    let songs = state
+    use rand::seq::SliceRandom;
+
+    let mut songs: Vec<SongDto> = state
         .database
         .music
         .list_songs()
@@ -133,6 +144,10 @@ pub async fn list_songs(
         .into_iter()
         .map(From::from)
         .collect();
+
+    if let Some(true) = shuffle {
+        songs.shuffle(&mut rand::rng());
+    }
 
     Ok(Json(songs))
 }
@@ -142,12 +157,13 @@ pub async fn list_songs(
     get,
     path = "/api/song/{id}/beats",
     params(
-        ("id" = String, Path, description = "The ID of the song to get beats for")
+        ("id" = i64, Path, description = "The ID of the song to get beats for")
     ),
     responses(
         (status = 200, description = "Get beats for a song", body = Beats),
     )
 )]
+/// Get beats for a song, or detect them if they are not yet available.
 pub async fn get_beats(
     Path(song_id): Path<i64>,
     state: State<Arc<AppState>>,

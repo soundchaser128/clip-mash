@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info};
+use tracing::{debug, info, Level};
 
 use super::ffmpeg::FfmpegLocation;
 use crate::util::commandline_error;
@@ -13,7 +13,7 @@ pub struct VideoParameters {
     pub codec: String,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct FfProbe {
     pub streams: Vec<Stream>,
     pub format: Format,
@@ -46,27 +46,14 @@ impl FfProbe {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Stream {
     pub index: i64,
     pub codec_name: Option<String>,
-    pub sample_aspect_ratio: Option<String>,
-    pub display_aspect_ratio: Option<String>,
-    pub color_range: Option<String>,
-    pub color_space: Option<String>,
-    pub bits_per_raw_sample: Option<String>,
-    pub channel_layout: Option<String>,
-    pub max_bit_rate: Option<String>,
-    pub nb_frames: Option<String>,
-    /// Number of frames seen by the decoder.
-    /// Requires full decoding and is only available if the 'count_frames'
-    /// setting was enabled.
-    pub nb_read_frames: Option<String>,
     pub codec_long_name: Option<String>,
     pub codec_type: Option<String>,
     pub codec_time_base: Option<String>,
-    pub codec_tag_string: String,
-    pub codec_tag: String,
+
     pub sample_fmt: Option<String>,
     pub sample_rate: Option<String>,
     pub channels: Option<i64>,
@@ -79,58 +66,12 @@ pub struct Stream {
     pub duration_ts: Option<i64>,
     pub duration: Option<String>,
     pub bit_rate: Option<String>,
-    pub disposition: Disposition,
-    pub tags: Option<StreamTags>,
-    pub profile: Option<String>,
     pub width: Option<i64>,
     pub height: Option<i64>,
-    pub coded_width: Option<i64>,
-    pub coded_height: Option<i64>,
-    pub closed_captions: Option<i64>,
-    pub has_b_frames: Option<i64>,
-    pub pix_fmt: Option<String>,
-    pub level: Option<i64>,
-    pub chroma_location: Option<String>,
-    pub refs: Option<i64>,
-    pub is_avc: Option<String>,
-    pub nal_length: Option<String>,
-    pub nal_length_size: Option<String>,
-    pub field_order: Option<String>,
     pub id: Option<String>,
-    #[serde(default)]
-    pub side_data_list: Vec<SideData>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct SideData {
-    pub side_data_type: String,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct Disposition {
-    pub default: i64,
-    pub dub: i64,
-    pub original: i64,
-    pub comment: i64,
-    pub lyrics: i64,
-    pub karaoke: i64,
-    pub forced: i64,
-    pub hearing_impaired: i64,
-    pub visual_impaired: i64,
-    pub clean_effects: i64,
-    pub attached_pic: i64,
-    pub timed_thumbnails: i64,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct StreamTags {
-    pub language: Option<String>,
-    pub creation_time: Option<String>,
-    pub handler_name: Option<String>,
-    pub encoder: Option<String>,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Format {
     pub filename: String,
     pub nb_streams: i64,
@@ -141,7 +82,6 @@ pub struct Format {
     pub duration: Option<String>,
     pub size: Option<String>,
     pub bit_rate: Option<String>,
-    pub probe_score: i64,
     pub tags: Option<FormatTags>,
 }
 
@@ -153,7 +93,7 @@ impl Format {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct FormatTags {
     #[serde(rename = "WMFSDKNeeded")]
     pub wmfsdkneeded: Option<String>,
@@ -187,9 +127,30 @@ pub async fn ffprobe(path: impl AsRef<str>, location: &FfmpegLocation) -> Result
     debug!("running ffprobe with args {args:?}");
     let output = Command::new(location.ffprobe()).args(args).output().await?;
     if output.status.success() {
+        if tracing::event_enabled!(Level::DEBUG) {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            debug!("ffprobe stdout: {}", stdout);
+        }
+
         let json = serde_json::from_slice(&output.stdout)?;
         Ok(json)
     } else {
         commandline_error("ffprobe", output)
+    }
+}
+
+pub async fn get_version(location: &FfmpegLocation) -> Result<String> {
+    use tokio::process::Command;
+
+    let output = Command::new(location.ffmpeg())
+        .arg("-version")
+        .output()
+        .await?;
+    if output.status.success() {
+        let version = String::from_utf8_lossy(&output.stdout);
+        let version = version.lines().next().unwrap_or_default();
+        Ok(version.to_string())
+    } else {
+        commandline_error("ffmpeg", output)
     }
 }

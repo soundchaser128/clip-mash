@@ -21,7 +21,7 @@ fn download_url() -> Result<(&'static str, &'static str)> {
             "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
             "ffmpeg.zip",
         ))
-    } else if cfg!(target_os = "unix") || cfg!(target_os = "linux") {
+    } else if cfg!(target_os = "linux") {
         Ok((
             "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
             "ffmpeg.tar.xz",

@@ -2,12 +2,12 @@ use crate::data::database::Database;
 use crate::data::stash_api::StashApi;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::directories::Directories;
-use crate::service::generator::CompilationGenerator;
 use crate::service::new_version_checker::NewVersionChecker;
 use crate::service::stash_config::StashConfig;
 use crate::Result;
 
 pub mod files;
+pub mod handy;
 pub mod library;
 pub mod music;
 pub mod progress;
@@ -16,7 +16,6 @@ pub mod stash;
 pub mod system;
 
 pub struct AppState {
-    pub generator: CompilationGenerator,
     pub database: Database,
     pub directories: Directories,
     pub ffmpeg_location: FfmpegLocation,

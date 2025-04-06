@@ -1,10 +1,73 @@
+use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, QueryBuilder, SqliteConnection, SqliteExecutor, SqlitePool};
 use tracing::{debug, info};
+use utoipa::ToSchema;
 
-use super::{DbMarker, DbMarkerWithVideo, MarkerCount};
+use super::videos::{tags_from_string, DbVideo, VideoSource};
 use crate::data::database::unix_timestamp_now;
+use crate::data::stash_api::MarkerLike;
 use crate::server::types::{CreateMarker, UpdateMarker};
 use crate::Result;
+
+#[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
+pub struct DbMarker {
+    pub rowid: Option<i64>,
+    pub video_id: String,
+    pub start_time: f64,
+    pub end_time: f64,
+    pub title: String,
+    pub index_within_video: i64,
+    pub marker_preview_image: Option<String>,
+    pub marker_created_on: i64,
+    pub marker_stash_id: Option<i64>,
+}
+
+impl MarkerLike for DbMarker {
+    fn start(&self) -> f64 {
+        self.start_time
+    }
+
+    fn end(&self) -> f64 {
+        self.end_time
+    }
+}
+
+// TODO better name
+#[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
+pub struct DbMarkerWithVideo {
+    pub rowid: Option<i64>,
+    pub video_id: String,
+    pub start_time: f64,
+    pub end_time: f64,
+    pub title: String,
+    pub file_path: String,
+    pub index_within_video: i64,
+    pub marker_preview_image: Option<String>,
+    pub interactive: bool,
+    pub marker_created_on: i64,
+    pub video_title: Option<String>,
+    pub video_tags: Option<String>,
+    pub source: VideoSource,
+    pub stash_scene_id: Option<i64>,
+}
+
+impl DbMarkerWithVideo {
+    pub fn tags(&self) -> Vec<String> {
+        tags_from_string(self.video_tags.as_deref())
+    }
+}
+
+#[derive(Debug)]
+pub struct VideoWithMarkers {
+    pub video: DbVideo,
+    pub markers: Vec<DbMarker>,
+}
+
+#[derive(Serialize, ToSchema, Debug)]
+pub struct MarkerCount {
+    pub title: String,
+    pub count: i64,
+}
 
 #[derive(Debug, Clone)]
 pub struct MarkersDatabase {
@@ -22,7 +85,7 @@ impl MarkersDatabase {
             "SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, 
                 m.end_time, m.index_within_video, m.marker_preview_image, 
-                v.interactive, m.marker_created_on, v.video_title, v.source,
+                v.interactive, m.marker_created_on, v.video_title, v.source AS \"source: VideoSource\",
                 v.video_tags, v.stash_scene_id
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.rowid = $1",
@@ -39,7 +102,7 @@ impl MarkersDatabase {
             "SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, 
                 m.index_within_video, m.marker_preview_image, v.interactive, 
-                m.marker_created_on, v.video_title, v.source, v.video_tags,
+                m.marker_created_on, v.video_title, v.source AS \"source: VideoSource\", v.video_tags,
                 v.stash_scene_id
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             WHERE m.marker_preview_image IS NULL"
@@ -226,7 +289,7 @@ impl MarkersDatabase {
             SELECT 
                 m.rowid, m.title, m.video_id, v.file_path, m.start_time, m.end_time, 
                 m.index_within_video, m.marker_preview_image, v.interactive, 
-                m.marker_created_on, v.video_title, v.source, v.video_tags,
+                m.marker_created_on, v.video_title, v.source AS \"source: VideoSource\", v.video_tags,
                 v.stash_scene_id
             FROM markers m INNER JOIN videos v ON m.video_id = v.id
             ORDER BY v.file_path ASC"
@@ -238,10 +301,10 @@ impl MarkersDatabase {
 
     pub async fn list_markers(
         &self,
-        video_ids: Option<&[String]>,
+        filter: Option<ListMarkersFilter>,
         sort: Option<&str>,
     ) -> Result<Vec<DbMarkerWithVideo>> {
-        info!("fetching markers with video ids {video_ids:?}");
+        info!("fetching markers with filter {filter:?}");
         let mut query_builder = QueryBuilder::new(
             "SELECT m.video_id, m.rowid, m.start_time, m.end_time, 
                     m.title, v.file_path, m.index_within_video, m.marker_preview_image, 
@@ -250,17 +313,50 @@ impl MarkersDatabase {
             FROM markers m
             INNER JOIN videos v ON m.video_id = v.id ",
         );
-        if let Some(video_ids) = video_ids {
-            query_builder.push("WHERE video_id IN (");
-            let mut list = query_builder.separated(",");
-            for video_id in video_ids {
-                list.push_bind(video_id);
+        if let Some(filter) = filter {
+            match filter {
+                ListMarkersFilter::VideoIds(video_ids) => {
+                    query_builder.push("WHERE video_id IN (");
+                    let mut list = query_builder.separated(",");
+                    for video_id in video_ids {
+                        list.push_bind(video_id);
+                    }
+                    list.push_unseparated(") ");
+                }
+                ListMarkersFilter::MarkerTitles(marker_titles) => {
+                    query_builder.push("WHERE title IN (");
+                    let mut list = query_builder.separated(",");
+                    for title in marker_titles {
+                        list.push_bind(title);
+                    }
+                    list.push_unseparated(") ");
+                }
+                ListMarkersFilter::VideoPerformers(performers) => {
+                    query_builder.push(
+                        "INNER JOIN video_performers pv ON v.id = pv.video_id INNER JOIN performers p ON pv.performer_id = p.id WHERE p.name IN (",
+                    );
+
+                    let mut list = query_builder.separated(",");
+                    for performer in performers {
+                        list.push_bind(performer);
+                    }
+                    list.push_unseparated(") ");
+                }
+                ListMarkersFilter::VideoTags(tags) => {
+                    query_builder.push("JOIN json_each(v.video_tags) AS tag WHERE tag.value IN (");
+                    let mut list = query_builder.separated(",");
+
+                    for tag in tags {
+                        list.push_bind(tag);
+                    }
+                    list.push_unseparated(") ");
+                }
             }
-            list.push_unseparated(") ");
         }
+
         query_builder.push("ORDER BY ");
         let order = match sort {
-            Some("duration") => "(m.end_time - m.start_time DESC)",
+            Some("duration") => "(m.end_time - m.start_time) DESC",
             Some("title") => "m.title ASC",
             Some("created") => "m.marker_created_on DESC",
             _ => "m.video_id ASC, m.index_within_video ASC",
@@ -381,7 +477,7 @@ impl MarkersDatabase {
             MarkerCount,
             "SELECT title, count(*) AS count
             FROM markers
-            WHERE title != 'Untitled' AND title LIKE $1
+            WHERE title LIKE $1
             GROUP BY title
             ORDER BY count DESC
             LIMIT $2",
@@ -395,11 +491,24 @@ impl MarkersDatabase {
     }
 }
 
+#[derive(Debug)]
+pub enum ListMarkersFilter {
+    VideoIds(Vec<String>),
+    MarkerTitles(Vec<String>),
+    VideoPerformers(Vec<String>),
+    VideoTags(Vec<String>),
+}
+
 #[cfg(test)]
 mod tests {
+    use tracing_test::traced_test;
+
     use super::*;
+    use crate::data::database::performers::{CreatePerformer, Gender};
     use crate::data::database::Database;
-    use crate::service::fixtures::{persist_marker, persist_video};
+    use crate::service::fixtures::{
+        persist_marker, persist_performer, persist_video, persist_video_with,
+    };
 
     #[sqlx::test]
     async fn test_fix_marker_video_indices(pool: SqlitePool) -> Result<()> {
@@ -425,6 +534,284 @@ mod tests {
 
         assert_eq!(all_markers[3].index_within_video, 3);
         assert_eq!(all_markers[3].start_time, 100.0);
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_list_markers_video_ids_filter(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+
+        // Create two videos
+        let video1 = persist_video(&database).await?;
+        let video2 = persist_video(&database).await?;
+
+        // Create markers for each video
+        for i in 0..3 {
+            persist_marker(&database, &video1.id, i, i as f64, (i + 5) as f64, false).await?;
+        }
+
+        for i in 0..2 {
+            persist_marker(&database, &video2.id, i, i as f64, (i + 3) as f64, false).await?;
+        }
+
+        // Filter by the first video's ID
+        let filter = ListMarkersFilter::VideoIds(vec![video1.id.clone()]);
+        let result = database.markers.list_markers(Some(filter), None).await?;
+
+        // Should only return markers from the first video
+        assert_eq!(result.len(), 3);
+        for marker in &result {
+            assert_eq!(marker.video_id, video1.id);
+        }
+
+        // Filter by both video IDs
+        let filter = ListMarkersFilter::VideoIds(vec![video1.id.clone(), video2.id.clone()]);
+        let result = database.markers.list_markers(Some(filter), None).await?;
+
+        // Should return all markers
+        assert_eq!(result.len(), 5);
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_list_markers_marker_titles_filter(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await?;
+
+        // Create markers with specific titles
+        let titles = ["Action", "Comedy", "Drama", "Action"];
+
+        for (i, title) in titles.iter().enumerate() {
+            let marker = CreateMarker {
+                video_id: video.id.clone(),
+                start: i as f64,
+                end: (i + 1) as f64,
+                index_within_video: i as i64,
+                title: title.to_string(),
+                preview_image_path: None,
+                video_interactive: false,
+                created_on: None,
+                marker_stash_id: None,
+            };
+            database.markers.create_new_marker(marker).await?;
+        }
+
+        // Filter by "Action" title
+        let filter = ListMarkersFilter::MarkerTitles(vec!["Action".to_string()]);
+        let result = database.markers.list_markers(Some(filter), None).await?;
+
+        // Should return 2 markers with title "Action"
+        assert_eq!(result.len(), 2);
+        for marker in &result {
+            assert_eq!(marker.title, "Action");
+        }
+
+        // Filter by multiple titles
+        let filter =
+            ListMarkersFilter::MarkerTitles(vec!["Comedy".to_string(), "Drama".to_string()]);
+        let result = database.markers.list_markers(Some(filter), None).await?;
+
+        // Should return 2 markers (1 Comedy, 1 Drama)
+        assert_eq!(result.len(), 2);
+        assert!(result.iter().any(|m| m.title == "Comedy"));
+        assert!(result.iter().any(|m| m.title == "Drama"));
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_list_markers_video_tags_filter(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+
+        // Create videos with specific tags
+        let video1 = persist_video_with(&database, |v| {
+            v.tags = Some(r#"["action", "thriller"]"#.to_string());
+        })
+        .await?;
+
+        let video2 = persist_video_with(&database, |v| {
+            v.tags = Some(r#"["comedy", "romance"]"#.to_string());
+        })
+        .await?;
+
+        // Create markers for each video
+        for i in 0..2 {
+            persist_marker(&database, &video1.id, i, i as f64, (i + 5) as f64, false).await?;
+        }
+
+        for i in 0..3 {
+            persist_marker(&database, &video2.id, i, i as f64, (i + 3) as f64, false).await?;
+        }
+
+        // Filter by "action" tag
+        let filter = ListMarkersFilter::VideoTags(vec!["action".to_string()]);
+        let result = database.markers.list_markers(Some(filter), None).await?;
+
+        // Should return markers from video1
+        assert_eq!(result.len(), 2);
+        for marker in &result {
+            assert_eq!(marker.video_id, video1.id);
+        }
+
+        // Filter by "comedy" tag
+        let filter = ListMarkersFilter::VideoTags(vec!["comedy".to_string()]);
+        let result = database.markers.list_markers(Some(filter), None).await?;
+
+        // Should return markers from video2
+        assert_eq!(result.len(), 3);
+        for marker in &result {
+            assert_eq!(marker.video_id, video2.id);
+        }
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_list_markers_sorting(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+        let video = persist_video(&database).await?;
+
+        // Create markers with different durations, creation times, and titles
+        let markers_data = [
+            // (title, start, end, created_on_offset)
+            ("B-Title", 0.0, 10.0, 0),
+            ("A-Title", 15.0, 20.0, 1),
+            ("C-Title", 25.0, 55.0, 2),
+        ];
+
+        let base_timestamp = unix_timestamp_now();
+
+        for (i, (title, start, end, time_offset)) in markers_data.iter().enumerate() {
+            let marker = CreateMarker {
+                video_id: video.id.clone(),
+                start: *start,
+                end: *end,
+                index_within_video: i as i64,
+                title: title.to_string(),
+                preview_image_path: None,
+                video_interactive: false,
+                created_on: Some(base_timestamp + time_offset * 3600), // Add hours to timestamp
+                marker_stash_id: None,
+            };
+            database.markers.create_new_marker(marker).await?;
+        }
+
+        // Test sort by duration
+        let result = database
+            .markers
+            .list_markers(None, Some("duration"))
+            .await?;
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0].title, "C-Title"); // Longest duration (30s) should be first
+        assert_eq!(result[1].title, "B-Title"); // Middle duration (10s)
+        assert_eq!(result[2].title, "A-Title"); // Shortest duration (5s)
+
+        // Test sort by title
+        let result = database.markers.list_markers(None, Some("title")).await?;
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0].title, "A-Title");
+        assert_eq!(result[1].title, "B-Title");
+        assert_eq!(result[2].title, "C-Title");
+
+        // Test sort by created_on (most recent first)
+        let result = database.markers.list_markers(None, Some("created")).await?;
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0].title, "C-Title"); // Most recent
+        assert_eq!(result[1].title, "A-Title");
+        assert_eq!(result[2].title, "B-Title"); // Oldest
+
+        // Test default sort (by index_within_video)
+        let result = database.markers.list_markers(None, None).await?;
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0].title, "B-Title"); // index 0
+        assert_eq!(result[1].title, "A-Title"); // index 1
+        assert_eq!(result[2].title, "C-Title"); // index 2
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    #[traced_test]
+    async fn test_list_markers_video_performers_filter(pool: SqlitePool) -> Result<()> {
+        let database = Database::with_pool(pool);
+
+        // Create videos
+        let video1 = persist_video(&database).await?;
+        let video2 = persist_video(&database).await?;
+
+        // Create performers
+        let performer1 =
+            persist_performer(&database, "Alice", Some(Gender::Female), None, None).await?;
+        let performer2 =
+            persist_performer(&database, "Bob", Some(Gender::Male), None, None).await?;
+
+        // Associate performers with videos
+        database
+            .performers
+            .insert_for_video(
+                &[CreatePerformer {
+                    name: performer1.name.clone(),
+                    image_url: None,
+                    stash_id: None,
+                    gender: None,
+                }],
+                &video1.id,
+            )
+            .await?;
+
+        database
+            .performers
+            .insert_for_video(
+                &[CreatePerformer {
+                    name: performer2.name.clone(),
+                    image_url: None,
+                    stash_id: None,
+                    gender: None,
+                }],
+                &video2.id,
+            )
+            .await?;
+
+        // Create markers for each video
+        for i in 0..3 {
+            persist_marker(&database, &video1.id, i, i as f64, (i + 5) as f64, false).await?;
+        }
+
+        for i in 0..2 {
+            persist_marker(&database, &video2.id, i, i as f64, (i + 3) as f64, false).await?;
+        }
+
+        // Filter by the first performer
+        let filter = ListMarkersFilter::VideoPerformers(vec![performer1.name.clone()]);
+        let result = database.markers.list_markers(Some(filter), None).await?;
+
+        // Should only return markers from video1
+        assert_eq!(result.len(), 3);
+        for marker in &result {
+            assert_eq!(marker.video_id, video1.id);
+        }
+
+        // Filter by the second performer
+        let filter = ListMarkersFilter::VideoPerformers(vec![performer2.name.clone()]);
+        let result = database.markers.list_markers(Some(filter), None).await?;
+
+        // Should only return markers from video2
+        assert_eq!(result.len(), 2);
+        for marker in &result {
+            assert_eq!(marker.video_id, video2.id);
+        }
+
+        // Filter by both performers
+        let filter = ListMarkersFilter::VideoPerformers(vec![
+            performer1.name.clone(),
+            performer2.name.clone(),
+        ]);
+        let result = database.markers.list_markers(Some(filter), None).await?;
+
+        // Should return markers from both videos
+        assert_eq!(result.len(), 5);
 
         Ok(())
     }

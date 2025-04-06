@@ -31,6 +31,7 @@ const DownloadVideoPage = () => {
       musicVolume: state.data.musicVolume,
       padding: state.data.padding!,
       forceReEncode: false,
+      includeOriginalFileName: state.data.includeOriginalFileName ?? false,
     } satisfies CreateVideoBody
 
     const response = await generateDescription(format, data)
@@ -103,11 +104,6 @@ const DownloadVideoPage = () => {
                 <li>
                   <button onClick={() => onGenerateDescription("json")}>
                     JSON
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => onGenerateDescription("yaml")}>
-                    YAML
                   </button>
                 </li>
               </ul>

@@ -7,7 +7,10 @@ use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::preview_image::PreviewGenerator;
 use super::stash_config::StashConfig;
-use crate::data::database::{AllVideosFilter, Database, Settings, VideoUpdate};
+use crate::data::database::performers::CreatePerformer;
+use crate::data::database::videos::{AllVideosFilter, VideoUpdate};
+use crate::data::database::{Database, Settings};
+use crate::data::stash_api::StashApi;
 use crate::helpers::parallelize;
 use crate::service::commands::ffprobe;
 use crate::Result;
@@ -69,6 +72,54 @@ impl Migrator {
                     .await?;
             } else {
                 warn!("failed to determine duration for video {}", video.file_path);
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn set_performers_from_stash(&self) -> Result<()> {
+        info!("setting performers from stash if necessary");
+        let settings = self.database.settings.fetch().await;
+        match settings {
+            Ok(settings) if !settings.stash.is_empty() => {
+                let videos = self
+                    .database
+                    .videos
+                    .get_videos(AllVideosFilter::NoPerformers)
+                    .await?;
+                info!("found {} stash videos without performers", videos.len());
+
+                let stash_api = StashApi::with_config(settings.stash);
+                for video in videos {
+                    let scene = stash_api
+                        .find_scene(video.stash_scene_id.expect("must be set because of query"))
+                        .await?;
+                    let performers: Vec<_> = scene
+                        .performers
+                        .into_iter()
+                        .map(|p| CreatePerformer {
+                            name: p.name,
+                            image_url: p.image_path,
+                            stash_id: Some(p.id),
+                            gender: p.gender.map(From::from),
+                        })
+                        .collect();
+                    info!(
+                        "found {} performers for video {}",
+                        performers.len(),
+                        video.id
+                    );
+                    if performers.len() > 0 {
+                        self.database
+                            .performers
+                            .insert_for_video(&performers, &video.id)
+                            .await?;
+                    }
+                }
+            }
+            _ => {
+                info!("no stash settings found, not setting performers")
             }
         }
 
@@ -243,6 +294,28 @@ impl Migrator {
         Ok(())
     }
 
+    async fn migrate_video_tags_to_json(&self) -> Result<()> {
+        let videos = self
+            .database
+            .videos
+            .get_videos(AllVideosFilter::NonJsonTags)
+            .await?;
+        for video in videos {
+            self.database
+                .videos
+                .update_video(
+                    &video.id,
+                    VideoUpdate {
+                        tags: Some(video.tags()),
+                        title: None,
+                    },
+                )
+                .await?;
+        }
+
+        Ok(())
+    }
+
     pub async fn run(&self) -> Result<()> {
         info!("running migrations");
         let start = Instant::now();
@@ -259,6 +332,8 @@ impl Migrator {
             self.populate_ffprobe_info(),
             self.database.markers.fix_all_video_indices(),
             self.migrate_settings(),
+            self.set_performers_from_stash(),
+            self.migrate_video_tags_to_json(),
         )?;
 
         let elapsed = start.elapsed();

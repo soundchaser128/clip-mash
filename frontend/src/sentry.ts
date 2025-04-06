@@ -31,11 +31,9 @@ const Sentry = {
     sentry.init({
       dsn: import.meta.env.VITE_CLIP_MASH_FRONTEND_SENTRY_URI,
       integrations: [
-        new sentry.BrowserTracing({
-          tracePropagationTargets: ["localhost"],
-        }),
-        new sentry.Replay(),
-        new sentry.BrowserProfilingIntegration(),
+        sentry.browserTracingIntegration(),
+        sentry.replayIntegration(),
+        sentry.browserProfilingIntegration(),
       ],
       tracesSampleRate: 1.0,
       replaysSessionSampleRate: 0.1,

@@ -16,18 +16,20 @@ use walkdir::WalkDir;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
-use crate::data::database::{CreateVideo, Database, DbMarker, DbVideo, VideoSource, VideoUpdate};
+use crate::data::database::markers::DbMarker;
+use crate::data::database::performers::CreatePerformer;
+use crate::data::database::videos::{CreateVideo, DbVideo, VideoSource, VideoUpdate};
+use crate::data::database::Database;
 use crate::data::stash_api::{MarkerLike, StashApi, StashMarker};
 use crate::helpers::parallelize;
+use crate::helpers::random::generate_id;
 use crate::server::handlers::AppState;
 use crate::server::types::{CreateMarker, ListVideoDto, UpdateMarker};
 use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
 use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
-use crate::util::generate_id;
 use crate::Result;
 
-pub const TAG_SEPARATOR: &str = ";";
 const VIDEO_EXTENSIONS: &[&str] = &["mp4", "m4v", "webm"];
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -36,14 +38,18 @@ pub enum AddVideosRequest {
     Local {
         path: String,
         recurse: bool,
+        tags: Option<Vec<String>>,
     },
     Download {
         urls: Vec<String>,
+        tags: Option<Vec<String>>,
     },
     #[serde(rename_all = "camelCase")]
-    Stash {
-        scene_ids: Vec<i64>,
-    },
+    Stash { scene_ids: Vec<i64> },
+}
+
+fn tags_to_string(tags: &[String]) -> String {
+    serde_json::to_string(tags).expect("tags must be serializable")
 }
 
 pub struct VideoService {
@@ -90,7 +96,7 @@ impl VideoService {
         .await?
     }
 
-    async fn add_local_video(&self, path: Utf8PathBuf) -> Result<Option<DbVideo>> {
+    async fn add_local_video(&self, path: Utf8PathBuf, tags: &[String]) -> Result<Option<DbVideo>> {
         let video_exists = self
             .database
             .videos
@@ -126,7 +132,7 @@ impl VideoService {
                 video_preview_image: Some(image_path.to_string()),
                 stash_scene_id: None,
                 title: Some(path.file_stem().unwrap().to_string()),
-                tags: None,
+                tags: Some(tags_to_string(tags)),
                 created_on: file_created,
             };
             info!("inserting new video {create_video:#?}");
@@ -142,11 +148,14 @@ impl VideoService {
         &self,
         path: impl AsRef<Utf8Path>,
         recurse: bool,
+        tags: Vec<String>,
     ) -> Result<Vec<DbVideo>> {
         let start = Instant::now();
         let entries = self.gather_files(path.as_ref().to_owned(), recurse).await?;
         debug!("found files {entries:?} (recurse = {recurse})");
-        let futures = entries.into_iter().map(|path| self.add_local_video(path));
+        let futures = entries
+            .into_iter()
+            .map(|path| self.add_local_video(path, &tags));
         let videos = parallelize(futures)
             .await
             .into_iter()
@@ -196,7 +205,12 @@ impl VideoService {
         self.database.markers.create_new_marker(create_marker).await
     }
 
-    async fn persist_downloaded_video(&self, id: String, path: Utf8PathBuf) -> Result<DbVideo> {
+    async fn persist_downloaded_video(
+        &self,
+        id: String,
+        path: Utf8PathBuf,
+        tags: Vec<String>,
+    ) -> Result<DbVideo> {
         let ffprobe = ffprobe(path.as_str(), &self.ffmpeg_location).await?;
         let duration = ffprobe.duration();
         let image_path = self
@@ -213,7 +227,7 @@ impl VideoService {
             video_preview_image: Some(image_path.to_string()),
             stash_scene_id: None,
             title: path.file_stem().map(String::from),
-            tags: None,
+            tags: Some(tags_to_string(&tags)),
             created_on: None,
         };
         info!("persisting downloaded video {video:#?}");
@@ -223,7 +237,7 @@ impl VideoService {
         Ok(video)
     }
 
-    async fn persist_stash_video(&self, scene_ids: Vec<i64>) -> Result<Vec<DbVideo>> {
+    async fn persist_stash_videos(&self, scene_ids: Vec<i64>) -> Result<Vec<DbVideo>> {
         let stash_config = self.database.settings.fetch().await?.stash;
         info!("adding videos from stash with IDs {scene_ids:?}");
 
@@ -262,7 +276,7 @@ impl VideoService {
                 if let Some(studio) = &scene.studio {
                     tags.push(studio.name.as_str());
                 }
-                let tags = tags.join(TAG_SEPARATOR);
+                let tags = serde_json::to_string(&tags).expect("tags must be serializable");
                 let id = generate_id();
                 let ffprobe_info = ffprobe.ok();
 
@@ -279,17 +293,33 @@ impl VideoService {
                     created_on,
                 };
 
-                (create_video, ffprobe_info)
+                let performers: Vec<_> = scene
+                    .performers
+                    .into_iter()
+                    .map(|p| CreatePerformer {
+                        name: p.name,
+                        image_url: p.image_path,
+                        stash_id: Some(p.id),
+                        gender: p.gender.map(From::from),
+                    })
+                    .collect();
+
+                (create_video, ffprobe_info, performers)
             })
             .collect();
 
         let mut videos = vec![];
-        for (create_video, ffprobe) in &create_videos {
+        for (create_video, ffprobe, performers) in &create_videos {
             let id = create_video.id.clone();
             let result = self.database.videos.persist_video(create_video).await?;
             if let Some(ffprobe) = ffprobe {
                 self.database.ffprobe.set_info(&id, &ffprobe).await?;
             }
+            self.database
+                .performers
+                .insert_for_video(performers, &id)
+                .await?;
+
             videos.push(result);
         }
 
@@ -307,18 +337,26 @@ impl VideoService {
 
     pub async fn add_videos(&self, request: AddVideosRequest) -> Result<Vec<DbVideo>> {
         match request {
-            AddVideosRequest::Local { path, recurse } => {
-                self.add_new_local_videos(path, recurse).await
+            AddVideosRequest::Local {
+                path,
+                recurse,
+                tags,
+            } => {
+                self.add_new_local_videos(path, recurse, tags.unwrap_or_default())
+                    .await
             }
-            AddVideosRequest::Download { urls } => {
-                let futures = future::try_join_all(urls.into_iter().map(|url| async move {
-                    let (id, path) = self.download_video(url.parse()?).await?;
-                    self.persist_downloaded_video(id, path).await
+            AddVideosRequest::Download { urls, tags } => {
+                let futures = future::try_join_all(urls.into_iter().map(|url| {
+                    let tags = tags.clone().unwrap_or_default();
+                    async move {
+                        let (id, path) = self.download_video(url.parse()?).await?;
+                        self.persist_downloaded_video(id, path, tags).await
+                    }
                 }));
 
                 futures.await
             }
-            AddVideosRequest::Stash { scene_ids } => self.persist_stash_video(scene_ids).await,
+            AddVideosRequest::Stash { scene_ids } => self.persist_stash_videos(scene_ids).await,
         }
     }
 
@@ -357,7 +395,8 @@ impl VideoService {
             new_tags.extend(scene.performers.iter().map(|p| p.name.clone()));
             let new_tags = Some(new_tags).filter(|t| !t.is_empty());
 
-            video.video_tags = new_tags.clone().map(|t| t.join(TAG_SEPARATOR));
+            video.video_tags =
+                Some(serde_json::to_string(&new_tags).expect("tags must be serializable"));
             video.video_title = new_title.clone();
 
             self.database

@@ -5,6 +5,7 @@ import {useSearchParams} from "react-router-dom"
 interface Options {
   wait?: number
   parameterName?: string
+  replaceAll?: boolean
 }
 
 export type QueryValue = string | boolean | undefined
@@ -14,12 +15,17 @@ export type QueryPairs = QueryPair[]
 function useDebouncedSetQuery({
   wait = 500,
   parameterName = "query",
+  replaceAll = true,
 }: Options = {}) {
   const [params, setParams] = useSearchParams()
 
   const setQuery = (value: string) => {
     if (value.trim().length > 0) {
-      setParams({[parameterName]: value})
+      if (replaceAll) {
+        setParams({[parameterName]: value})
+      } else {
+        addOrReplaceParam(parameterName, value)
+      }
     }
   }
 

@@ -11,7 +11,7 @@ import {
 import {videosNeedEncoding} from "@/api"
 import {getFormState} from "@/helpers/form"
 
-const showPaddingOptions = false
+const showPaddingOptions = true
 
 export const videoOptionsLoader: LoaderFunction = async () => {
   try {
@@ -26,7 +26,12 @@ export const videoOptionsLoader: LoaderFunction = async () => {
 
 type Inputs = Pick<
   FormState,
-  "outputFps" | "videoCodec" | "videoQuality" | "encodingEffort" | "padding"
+  | "outputFps"
+  | "videoCodec"
+  | "videoQuality"
+  | "encodingEffort"
+  | "padding"
+  | "includeOriginalFileName"
 > & {outputWidth: number; outputHeight: number}
 
 const defaultOptions: Inputs = {
@@ -34,8 +39,8 @@ const defaultOptions: Inputs = {
   videoCodec: "h264",
   videoQuality: "medium",
   encodingEffort: "medium",
-  outputWidth: 1280,
-  outputHeight: 720,
+  outputWidth: 1920,
+  outputHeight: 1080,
 }
 
 function VideoOptions() {
@@ -169,6 +174,19 @@ function VideoOptions() {
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
+            </div>
+
+            <div className="form-control">
+              <label className="label" htmlFor="includeOriginalFileName">
+                <span className="label-text">
+                  Include original file name in clip filename?
+                </span>
+                <input
+                  type="checkbox"
+                  className="checkbox"
+                  {...register("includeOriginalFileName")}
+                />
+              </label>
             </div>
 
             {showPaddingOptions && (

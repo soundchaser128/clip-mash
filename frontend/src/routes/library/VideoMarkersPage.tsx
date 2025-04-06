@@ -42,9 +42,12 @@ import {isBetween} from "@/helpers/math"
 
 function getVideoUrl(video: VideoDto, config?: StashConfig): string {
   if (video.source === "Stash" && config) {
-    return `${config.stashUrl}/scene/${video.stashSceneId!}/stream?apikey=${
-      config.apiKey
-    }`
+    const url = `${config.stashUrl}/scene/${video.stashSceneId!}/stream`
+    if (config.apiKey) {
+      return `${url}?apikey=${config.apiKey}`
+    } else {
+      return url
+    }
   } else {
     return `/api/library/video/${video.id}/file`
   }
@@ -408,7 +411,7 @@ function VideoMarkersPage() {
       <div className="flex gap-2">
         <Player
           className="w-2/3 max-h-[82vh]"
-          src={getVideoUrl(video, config.stash)}
+          src={getVideoUrl(video, config?.stash)}
         />
         <div className="flex flex-col w-1/3 justify-between max-h-[60vh] relative">
           {showingForm && (
@@ -651,7 +654,11 @@ function VideoMarkersPage() {
           <div className="w-full flex justify-between">
             {formMode === "hidden" && (
               <>
-                <button onClick={onDeleteAll} className="btn btn-error">
+                <button
+                  disabled={markers.length === 0}
+                  onClick={onDeleteAll}
+                  className="btn btn-error"
+                >
                   <HiTrash className="mr-2" />
                   Delete all
                 </button>

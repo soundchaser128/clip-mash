@@ -15,11 +15,12 @@ use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;
-use crate::data::database::{
-    unix_timestamp_now, CreateVideo, Database, DbMarker, DbVideo, VideoSource,
-};
+use crate::data::database::markers::DbMarker;
+use crate::data::database::performers::{CreatePerformer, DbPerformer, Gender};
+use crate::data::database::videos::{CreateVideo, DbVideo, VideoSource};
+use crate::data::database::{unix_timestamp_now, Database};
+use crate::helpers::random::generate_id;
 use crate::server::types::{Beats, CreateMarker};
-use crate::util::generate_id;
 use crate::Result;
 
 #[derive(Debug, Deserialize)]
@@ -358,7 +359,7 @@ pub async fn persist_video(db: &Database) -> Result<DbVideo> {
     db.videos.persist_video(&video).await
 }
 
-pub async fn persist_video_fn<F: FnOnce(&mut CreateVideo)>(
+pub async fn persist_video_with<F: FnOnce(&mut CreateVideo)>(
     db: &Database,
     before_insert: F,
 ) -> Result<DbVideo> {
@@ -403,6 +404,35 @@ pub async fn persist_marker(
         marker_stash_id: None,
     };
     db.markers.create_new_marker(marker).await
+}
+
+pub async fn persist_performer(
+    db: &Database,
+    name: &str,
+    gender: Option<Gender>,
+    image_url: Option<&str>,
+    stash_id: Option<&str>,
+) -> Result<DbPerformer> {
+    let id = db
+        .performers
+        .insert(&CreatePerformer {
+            name: name.into(),
+            gender,
+            image_url: image_url.map(From::from),
+            stash_id: stash_id.map(From::from),
+        })
+        .await?;
+
+    Ok(DbPerformer {
+        id,
+        name: name.into(),
+        created_on: unix_timestamp_now(),
+        image_url: image_url.map(From::from),
+        stash_id: stash_id.map(From::from),
+        gender,
+        marker_count: 0,
+        video_count: 0,
+    })
 }
 
 pub fn songs() -> Vec<Beats> {

@@ -1,6 +1,11 @@
-import {ListVideoDto, ListVideoDtoPage, updateVideo} from "@/api"
+import {ListVideoDto, PageListVideoDto, updateVideo} from "@/api"
 import VideoCard, {AspectRatio} from "./VideoCard"
-import {useLoaderData, useNavigation, useSearchParams} from "react-router-dom"
+import {
+  useLoaderData,
+  useNavigation,
+  useRevalidator,
+  useSearchParams,
+} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {HiFolder, HiMagnifyingGlass, HiXMark} from "react-icons/hi2"
 import Pagination from "./Pagination"
@@ -10,6 +15,7 @@ import {useConfig} from "@/hooks/useConfig"
 import AddTagModal from "./AddTagModal"
 import clsx from "clsx"
 import PageSizeSelect from "./PageSizeSelect"
+import useAspectRatioSetting from "@/hooks/useAspectRatioSetting"
 import useLocalStorage from "@/hooks/useLocalStorage"
 
 interface Props {
@@ -33,6 +39,25 @@ interface FilterInputs {
   source?: string
 }
 
+function gridCols(n: number): string {
+  switch (n) {
+    case 3:
+      return "grid-cols-3"
+    case 4:
+      return "grid-cols-4"
+    case 5:
+      return "grid-cols-5"
+    case 6:
+      return "grid-cols-6"
+    case 7:
+      return "grid-cols-7"
+    case 8:
+      return "grid-cols-8"
+    default:
+      return "grid-cols-3"
+  }
+}
+
 const VideoGrid: React.FC<Props> = ({
   editableTitles,
   editableTags,
@@ -42,15 +67,14 @@ const VideoGrid: React.FC<Props> = ({
   isVideoDisabled,
   noVideosFoundMessage,
 }) => {
-  const page = useLoaderData() as ListVideoDtoPage
+  const page = useLoaderData() as PageListVideoDto
   const [params] = useSearchParams()
   const [editingTags, setEditingTags] = useState<ListVideoDto | undefined>(
     undefined,
   )
-  const [aspectRatio, setAspectRatio] = useLocalStorage<AspectRatio>(
-    "videoGridAspectRatio",
-    "wide",
-  )
+  const [aspectRatio] = useAspectRatioSetting()
+  const [rowCount, setRowCount] = useLocalStorage("videoGridRowCount", 3)
+  const gridColCount = gridCols(rowCount)
 
   const {addOrReplaceParams, addOrReplaceParam, setQueryDebounced} =
     useDebouncedSetQuery()
@@ -65,6 +89,7 @@ const VideoGrid: React.FC<Props> = ({
   }
 
   const config = useConfig()
+  const revalidator = useRevalidator()
   const videos = page.content
   const {register, handleSubmit, watch} = useForm<FilterInputs>({
     mode: "onChange",
@@ -105,6 +130,12 @@ const VideoGrid: React.FC<Props> = ({
 
   function onShowTagModal(video: ListVideoDto) {
     setEditingTags(video)
+  }
+
+  async function onAddTag(video: ListVideoDto, tag: string) {
+    await updateVideo(video.video.id, {tags: [...video.video.tags, tag]})
+    revalidator.revalidate()
+    setEditingTags(undefined)
   }
 
   return (
@@ -204,38 +235,44 @@ const VideoGrid: React.FC<Props> = ({
         </form>
       )}
 
-      <section className="w-full flex gap-2 py-4 items-center">
-        <PageSizeSelect />
-        <div className="flex items-center gap-1">
-          <label className="label">
-            <span className="label-text">Preview image aspect ratio</span>
-          </label>
+      <section className="w-full flex py-4 items-center justify-between">
+        <div className="flex items-center gap-2">
+          <PageSizeSelect />
 
-          <select
-            value={aspectRatio}
-            onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
-            className="select select-sm select-bordered"
-          >
-            <option value="wide">Wide</option>
-            <option value="square">Square</option>
-            <option value="tall">Tall</option>
-          </select>
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text mr-1">Show details</span>
+              <input
+                type="checkbox"
+                className="checkbox checkbox-secondary"
+                checked={showingDetails}
+                onChange={(e) => setShowingDetails(e.target.checked)}
+                name="showDetails"
+              />
+            </label>
+          </div>
         </div>
-        <label className="label" htmlFor="showDetails">
-          <span className="label-text">Show details</span>
-        </label>
-        <input
-          type="checkbox"
-          className="toggle toggle-secondary"
-          checked={showingDetails}
-          onChange={(e) => setShowingDetails(e.target.checked)}
-          name="showDetails"
-        />
+
+        <div className="flex flex-col">
+          <input
+            type="range"
+            className="range range-sm range-primary w-64"
+            value={rowCount}
+            onChange={(e) => setRowCount(e.target.valueAsNumber)}
+            min={3}
+            max={8}
+          />
+          <div className="w-full flex justify-between text-xs px-2">
+            <span>3</span>
+            <span>8</span>
+          </div>
+        </div>
       </section>
 
       <AddTagModal
-        video={editingTags}
+        isOpen={!!editingTags}
         onClose={() => setEditingTags(undefined)}
+        onSubmit={(tag) => onAddTag(editingTags!, tag)}
       />
 
       {noVideos && (
@@ -257,12 +294,9 @@ const VideoGrid: React.FC<Props> = ({
       )}
 
       <section
-        className={clsx("grid grid-cols-1 w-full mb-4", {
+        className={clsx("grid w-full mb-4", gridColCount, {
           "gap-3": showingDetails,
           "gap-1": !showingDetails,
-          "lg:grid-cols-3": aspectRatio === "wide",
-          "lg:grid-cols-4": aspectRatio === "square",
-          "lg:grid-cols-6": aspectRatio === "tall",
         })}
       >
         {videos.map((video) => (
@@ -272,7 +306,7 @@ const VideoGrid: React.FC<Props> = ({
             actionChildren={
               actionChildren && actionChildren(video, aspectRatio)
             }
-            stashConfig={config.stash}
+            stashConfig={config?.stash}
             onImageClick={onVideoClick}
             disabled={isVideoDisabled ? isVideoDisabled(video) : false}
             onEditTitle={

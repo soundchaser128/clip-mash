@@ -5,8 +5,13 @@ import React, {useContext, useEffect, useReducer} from "react"
 import {useRef} from "react"
 import {HiPause, HiPlay, HiSpeakerWave, HiSpeakerXMark} from "react-icons/hi2"
 
-interface Props {
+export interface VideoSource {
   src: string
+  type: string
+}
+
+interface Props {
+  sources: VideoSource[]
   className?: string
   wrapperClassName?: string
   autoPlay?: boolean
@@ -112,7 +117,7 @@ export function usePlayer() {
   return useContext(PlayerContext)
 }
 
-export function Player({src, className, ...rest}: Props) {
+export function Player({sources, className, ...rest}: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const {dispatch} = usePlayer()
 
@@ -140,10 +145,13 @@ export function Player({src, className, ...rest}: Props) {
       onLoadedMetadata={onLoadedMetadata}
       onTimeUpdate={onTimeUpdate}
       className={className}
-      src={src}
       ref={videoRef}
       muted
-    />
+    >
+      {sources.map((url, index) => (
+        <source key={index} src={url.src} type={url.type} />
+      ))}
+    </video>
   )
 }
 

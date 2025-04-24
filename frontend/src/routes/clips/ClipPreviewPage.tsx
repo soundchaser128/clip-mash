@@ -247,6 +247,9 @@ function PreviewClips() {
       const currentTime = event.currentTarget.currentTime
       if (Math.abs(endTimestamp - currentTime) <= 0.5 && autoPlay) {
         setCurrentClipIndex((c) => (c + 1) % clips.length)
+        if (videoRef.current) {
+          videoRef.current.load()
+        }
       }
     }
   }
@@ -326,12 +329,15 @@ function PreviewClips() {
         {clips.length > 0 && (
           <video
             className="w-3/4 h-[650px]"
-            src={clipUrl}
             muted={videoMuted}
             autoPlay={autoPlay}
             onTimeUpdate={onVideoTimeUpdate}
             ref={videoRef}
-          />
+          >
+            {clipUrl?.map((url, index) => (
+              <source key={index} src={url.src} type={url.type} />
+            ))}
+          </video>
         )}
         <section className="flex flex-col px-4 py-2 w-2/5 bg-base-200 justify-between">
           {helpOpen && <HelpText onBack={() => setHelpOpen(false)} />}

@@ -52,7 +52,7 @@ const SelectMarkers: React.FC = () => {
   const navigate = useNavigate()
   const markers = useFuse({
     query: filter,
-    keys: ["performers", "primaryTag", "sceneTitle", "tags"],
+    keys: ["performers", "primaryTag", "sceneTitle"],
     items: initialMarkers,
   })
 

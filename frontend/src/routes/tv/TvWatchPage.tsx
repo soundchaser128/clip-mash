@@ -88,6 +88,7 @@ const TvWatchPage: React.FC = () => {
   const [volume, setVolume] = useState(1.0)
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const nextVideoRef = useRef<HTMLVideoElement>(null)
   const [currentSong, setCurrentSong] = useState(0)
   const [timePlayed, setTimePlayed] = useState(0)
   const totalDuration = clips?.clips.reduce(
@@ -120,6 +121,12 @@ const TvWatchPage: React.FC = () => {
         const clipLength = endTimestamp - currentClip.range[0]
         setTimePlayed((t) => t + clipLength)
         setIndex((c) => (c + 1) % length)
+        if (videoRef.current) {
+          videoRef.current.load()
+        }
+        if (nextVideoRef.current) {
+          nextVideoRef.current.load()
+        }
       }
     }
   }
@@ -205,7 +212,6 @@ const TvWatchPage: React.FC = () => {
         </Link>
 
         <video
-          src={clipUrl}
           onTimeUpdate={onVideoTimeUpdate}
           className="w-full cursor-pointer"
           style={{height: "calc(100vh - 4rem)"}}
@@ -214,7 +220,11 @@ const TvWatchPage: React.FC = () => {
           preload="auto"
           muted={muted}
           onClick={onTogglePlay}
-        />
+        >
+          {clipUrl?.map((url, index) => (
+            <source key={index} src={url.src} type={url.type} />
+          ))}
+        </video>
         <div className="w-full px-2">
           <progress
             value={timePlayed}
@@ -233,7 +243,11 @@ const TvWatchPage: React.FC = () => {
           </div>
         </div>
 
-        <video preload="auto" className="hidden" src={nextClipUrl} />
+        <video preload="auto" className="hidden" ref={nextVideoRef}>
+          {nextClipUrl?.map((url, index) => (
+            <source key={index} src={url.src} type={url.type} />
+          ))}
+        </video>
 
         {music.length > 0 && (
           <audio

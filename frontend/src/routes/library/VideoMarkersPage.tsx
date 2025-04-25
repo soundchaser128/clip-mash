@@ -21,9 +21,7 @@ import {createMarker, updateMarker} from "./api"
 import Timeline from "@/components/Timeline"
 import Loader from "@/components/Loader"
 import {
-  StashConfig,
   MarkerDto,
-  VideoDto,
   deleteMarker,
   splitMarker,
   VideoDetailsDto,
@@ -39,19 +37,7 @@ import {
   usePlayer,
 } from "@/components/VideoPlayer"
 import {isBetween} from "@/helpers/math"
-
-function getVideoUrl(video: VideoDto, config?: StashConfig): string {
-  if (video.source === "Stash" && config) {
-    const url = `${config.stashUrl}/scene/${video.stashSceneId!}/stream`
-    if (config.apiKey) {
-      return `${url}?apikey=${config.apiKey}`
-    } else {
-      return url
-    }
-  } else {
-    return `/api/library/video/${video.id}/file`
-  }
-}
+import {getVideoSources} from "@/helpers/media"
 
 interface Inputs {
   id?: number
@@ -411,7 +397,7 @@ function VideoMarkersPage() {
       <div className="flex gap-2">
         <Player
           className="w-2/3 max-h-[82vh]"
-          src={getVideoUrl(video, config?.stash)}
+          sources={getVideoSources(video, config?.stash)}
         />
         <div className="flex flex-col w-1/3 justify-between max-h-[60vh] relative">
           {showingForm && (

@@ -8,6 +8,8 @@
 - feat: Added Setting for wide/square/tall preview images in the video grid
 - feat: Added slider to control the number of columns in the video grid
 - chore: Upgrade dependency versions
+- fix: When filtering for markers, don't include tags in the search
+- fix: Use transcoded media source from Stash as a fallback
 
 ## 0.22.0
 

@@ -6,23 +6,23 @@ use color_eyre::Section;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
-use tracing::{debug, info, Level};
+use tracing::{Level, debug, info};
 use utoipa::ToSchema;
 
+use super::Marker;
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::encoding_optimization::EncodingOptimizationService;
 use super::streams::{LocalVideoSource, StreamUrlService};
-use super::Marker;
+use crate::Result;
+use crate::data::database::Database;
 use crate::data::database::music::DbSong;
 use crate::data::database::videos::DbVideo;
-use crate::data::database::Database;
 use crate::helpers::estimator::Estimator;
 use crate::helpers::random::generate_id;
 use crate::helpers::util::StrExt;
 use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
 use crate::util::{commandline_error, debug_output, format_duration};
-use crate::Result;
 
 #[derive(Debug)]
 pub struct CompilationOptions {
@@ -215,7 +215,9 @@ impl CompilationGenerator {
 
         // Scale for the background - will fill target dimensions but maintain aspect ratio
         // Use "crop" to ensure it fills the entire frame by cropping excess if needed
-        let bg_scale_filter = format!("scale={px_w}:{px_h}:force_original_aspect_ratio=increase:force_divisible_by=2,crop={px_w}:{px_h}");
+        let bg_scale_filter = format!(
+            "scale={px_w}:{px_h}:force_original_aspect_ratio=increase:force_divisible_by=2,crop={px_w}:{px_h}"
+        );
 
         info!("using scale filter: {scale_filter}");
 
@@ -497,7 +499,9 @@ impl CompilationGenerator {
 
         let music_volume = options.music_volume;
         let original_volume = 1.0 - options.music_volume;
-        let filter = format!("[0:a:0]volume={original_volume}[a1];[1:a:0]volume={music_volume}[a2];[a1][a2]amix=inputs=2[a]");
+        let filter = format!(
+            "[0:a:0]volume={original_volume}[a1];[1:a:0]volume={music_volume}[a2];[a1][a2]amix=inputs=2[a]"
+        );
 
         let args: Vec<String> = if options.songs.is_empty() {
             vec![

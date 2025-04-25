@@ -3,11 +3,11 @@ use sqlx::{FromRow, QueryBuilder, SqliteConnection, SqliteExecutor, SqlitePool};
 use tracing::{debug, info};
 use utoipa::ToSchema;
 
-use super::videos::{tags_from_string, DbVideo, VideoSource};
+use super::videos::{DbVideo, VideoSource, tags_from_string};
+use crate::Result;
 use crate::data::database::unix_timestamp_now;
 use crate::data::stash_api::MarkerLike;
 use crate::server::types::{CreateMarker, UpdateMarker};
-use crate::Result;
 
 #[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
 pub struct DbMarker {
@@ -504,8 +504,8 @@ mod tests {
     use tracing_test::traced_test;
 
     use super::*;
-    use crate::data::database::performers::{CreatePerformer, Gender};
     use crate::data::database::Database;
+    use crate::data::database::performers::{CreatePerformer, Gender};
     use crate::service::fixtures::{
         persist_marker, persist_performer, persist_video, persist_video_with,
     };

@@ -6,11 +6,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{debug, info, warn};
 
+use crate::Result;
 use crate::data::database::videos::{DbVideo, VideoSource};
 use crate::data::stash_api::StashApi;
 use crate::helpers::math;
 use crate::server::types::{Beats, Clip, StrokeType};
-use crate::Result;
 
 // Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
 
@@ -352,11 +352,11 @@ mod test {
     use tracing_test::traced_test;
 
     use super::StrokeType;
+    use crate::Result;
     use crate::server::types::Beats;
     use crate::service::funscript::{
-        combine_scripts, create_beat_funscript, FunScript, FunScriptSegment,
+        FunScript, FunScriptSegment, combine_scripts, create_beat_funscript,
     };
-    use crate::Result;
 
     #[traced_test]
     #[tokio::test]

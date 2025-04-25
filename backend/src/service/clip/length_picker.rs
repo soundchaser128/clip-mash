@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
+use rand::Rng;
 use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
-use rand::Rng;
 use tracing::{debug, info};
 
 use super::get_divisors;
@@ -127,7 +127,9 @@ impl<'a> Iterator for SongClipLengthPicker<'a> {
         let end = beats[next_beat_index];
         let duration = (end - start) as f64;
 
-        debug!("advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds ({duration} seconds long)");
+        debug!(
+            "advancing by {num_beats_to_advance} beats, next clip from {start} - {end} seconds ({duration} seconds long)"
+        );
         debug!(
             "next beat index: {}, number of beats: {}",
             next_beat_index,

@@ -1,12 +1,12 @@
-use futures::{future, StreamExt, TryFutureExt, TryStreamExt};
+use futures::{StreamExt, TryFutureExt, TryStreamExt, future};
 use sqlx::SqlitePool;
 use tokio::task::spawn_blocking;
 use tracing::info;
 
+use crate::Result;
 use crate::server::types::Beats;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::music;
-use crate::Result;
 
 #[derive(Debug)]
 pub struct DbSong {

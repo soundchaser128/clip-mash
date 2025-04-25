@@ -6,10 +6,10 @@ use regex::Regex;
 use tracing::{debug, info};
 
 use super::commands::ffmpeg::{Ffmpeg, FfmpegLocation};
+use crate::Result;
 use crate::server::handlers::AppState;
 use crate::server::types::{CreateMarker, MarkerDto, MarkerDtoConverter};
 use crate::service::preview_image::PreviewGenerator;
-use crate::Result;
 
 lazy_static! {
     static ref PTS_REGEX: Regex = Regex::new(r"pts_time:([\d\.]+)").unwrap();

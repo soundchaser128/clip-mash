@@ -1,12 +1,12 @@
 use rand::rngs::StdRng;
 use tracing::{debug, info};
 
-use super::length_picker::ClipLengthPicker;
 use super::ClipPicker;
+use super::length_picker::ClipLengthPicker;
 use crate::server::types::{Clip, ClipLengthOptions, RoundRobinClipOptions};
+use crate::service::Marker;
 use crate::service::clip::state::{MarkerState, MarkerStateInfo};
 use crate::service::clip::trim_clips;
-use crate::service::Marker;
 
 pub struct RoundRobinClipPicker;
 
@@ -114,8 +114,8 @@ mod test {
     use crate::server::types::{
         Beats, ClipLengthOptions, MeasureCount, RoundRobinClipOptions, SongClipOptions,
     };
-    use crate::service::clip::round_robin::RoundRobinClipPicker;
     use crate::service::clip::ClipPicker;
+    use crate::service::clip::round_robin::RoundRobinClipPicker;
     use crate::service::fixtures;
 
     #[traced_test]

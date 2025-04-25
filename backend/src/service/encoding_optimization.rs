@@ -1,8 +1,8 @@
 use itertools::Itertools;
 use tracing::info;
 
-use crate::data::database::Database;
 use crate::Result;
+use crate::data::database::Database;
 
 #[derive(Clone)]
 pub struct EncodingOptimizationService {

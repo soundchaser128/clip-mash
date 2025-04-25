@@ -7,9 +7,9 @@ use color_eyre::eyre::bail;
 use tokio::process::Command;
 use tracing::{debug, info};
 
+use crate::Result;
 use crate::service::directories::Directories;
 use crate::util::commandline_error;
-use crate::Result;
 
 fn download_url() -> Result<(&'static str, &'static str)> {
     if cfg!(not(target_arch = "x86_64")) {

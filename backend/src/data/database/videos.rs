@@ -11,9 +11,9 @@ use tracing::{debug, info};
 use utoipa::{IntoParams, ToSchema};
 
 use super::markers::{DbMarker, VideoWithMarkers};
+use crate::Result;
 use crate::data::database::unix_timestamp_now;
 use crate::server::types::{ListVideoDto, PageParameters, VideoLike};
-use crate::Result;
 
 const LEGACY_TAG_SEPARATOR: &str = ";";
 

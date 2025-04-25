@@ -8,10 +8,10 @@ use url::Url;
 use youtube_dl::YoutubeDl;
 
 use super::ffmpeg::FfmpegLocation;
+use crate::Result;
 use crate::helpers::random::generate_id;
 use crate::server::handlers::AppState;
 use crate::service::directories::{Directories, FolderType};
-use crate::Result;
 
 const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
     "yt-dlp.exe"

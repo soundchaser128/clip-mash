@@ -3,8 +3,8 @@ use std::time::SystemTime;
 
 use color_eyre::eyre::OptionExt;
 use performers::PerformersDatabase;
-use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::SqlitePool;
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use tracing::info;
 
 use self::ffprobe::FfProbeInfoDatabase;
@@ -14,8 +14,8 @@ use self::progress::ProgressDatabase;
 use self::settings::SettingsDatabase;
 pub use self::settings::{HandyConfig, Settings};
 use self::videos::VideosDatabase;
-use crate::server::types::Progress;
 use crate::Result;
+use crate::server::types::Progress;
 
 pub mod ffprobe;
 pub mod markers;
@@ -92,12 +92,12 @@ mod test {
     use tracing_test::traced_test;
 
     use super::videos::{VideoSearchQuery, VideoSource, VideoUpdate};
-    use crate::data::database::markers::ListMarkersFilter;
+    use crate::Result;
     use crate::data::database::Database;
+    use crate::data::database::markers::ListMarkersFilter;
     use crate::helpers::random::generate_id;
     use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_with};
-    use crate::Result;
 
     #[sqlx::test]
     async fn test_get_and_persist_video(pool: SqlitePool) {

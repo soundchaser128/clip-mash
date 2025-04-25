@@ -23,7 +23,10 @@ pub fn setup() -> Option<ClientInitGuard> {
                 },
             ));
 
-            info!("Sentry initialized. If you want to disable it, set the environment variable {} to any value.", DISABLE_SENTRY);
+            info!(
+                "Sentry initialized. If you want to disable it, set the environment variable {} to any value.",
+                DISABLE_SENTRY
+            );
             Some(guard)
         } else {
             info!("Sentry URI not found, not initializing Sentry.");

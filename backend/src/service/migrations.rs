@@ -7,13 +7,13 @@ use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
 use super::preview_image::PreviewGenerator;
 use super::stash_config::StashConfig;
+use crate::Result;
 use crate::data::database::performers::CreatePerformer;
 use crate::data::database::videos::{AllVideosFilter, VideoUpdate};
 use crate::data::database::{Database, Settings};
 use crate::data::stash_api::StashApi;
 use crate::helpers::parallelize;
 use crate::service::commands::ffprobe;
-use crate::Result;
 
 fn video_id_from_path(path: &Utf8Path) -> Option<&str> {
     let stem = path.file_stem()?;

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use rand::rngs::StdRng;
 use rand::Rng;
+use rand::rngs::StdRng;
 use serde::Deserialize;
 use tracing::info;
 use utoipa::ToSchema;

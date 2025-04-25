@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
+use rand::Rng;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
-use rand::Rng;
 use tracing::{debug, info};
 
 use super::Clip;

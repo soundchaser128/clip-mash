@@ -10,8 +10,8 @@ use crate::Result;
 const LOGS_DIR: &str = "./logs";
 
 pub fn setup_logger() -> WorkerGuard {
-    use tracing_subscriber::prelude::*;
     use tracing_subscriber::EnvFilter;
+    use tracing_subscriber::prelude::*;
 
     if env::var("RUST_LOG").is_err() {
         // TODO: Audit that the environment access only happens in single-threaded code.

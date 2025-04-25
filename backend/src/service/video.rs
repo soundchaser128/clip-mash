@@ -6,29 +6,29 @@ use color_eyre::eyre::{bail, eyre};
 use futures::future;
 use itertools::Itertools;
 use serde::Deserialize;
-use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
+use time::format_description::well_known::Rfc3339;
 use tokio::task::spawn_blocking;
-use tracing::{debug, info, warn, Level};
+use tracing::{Level, debug, info, warn};
 use url::Url;
 use utoipa::ToSchema;
 use walkdir::WalkDir;
 
 use super::commands::ffmpeg::FfmpegLocation;
 use super::directories::Directories;
+use crate::Result;
+use crate::data::database::Database;
 use crate::data::database::markers::DbMarker;
 use crate::data::database::performers::CreatePerformer;
 use crate::data::database::videos::{CreateVideo, DbVideo, VideoSource, VideoUpdate};
-use crate::data::database::Database;
 use crate::data::stash_api::{MarkerLike, StashApi, StashMarker};
 use crate::helpers::parallelize;
 use crate::helpers::random::generate_id;
 use crate::server::handlers::AppState;
 use crate::server::types::{CreateMarker, ListVideoDto, UpdateMarker};
-use crate::service::commands::{ffprobe, YtDlp, YtDlpOptions};
+use crate::service::commands::{YtDlp, YtDlpOptions, ffprobe};
 use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
-use crate::Result;
 
 const VIDEO_EXTENSIONS: &[&str] = &["mp4", "m4v", "webm"];
 
@@ -531,8 +531,8 @@ impl VideoService {
 
 #[cfg(test)]
 mod tests {
-    use crate::service::fixtures;
     use crate::Result;
+    use crate::service::fixtures;
 
     #[tokio::test]
     #[ignore]

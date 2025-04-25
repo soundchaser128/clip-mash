@@ -1,8 +1,8 @@
 use tracing::info;
 
 use super::{DescriptionGenerator, TemplateContext};
-use crate::data::database::videos::VideoSource;
 use crate::Result;
+use crate::data::database::videos::VideoSource;
 
 pub struct MarkdownDescriptionGenerator;
 

@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
-use crate::data::database::videos::VideoSource;
+use crate::Result;
 use crate::data::database::Database;
+use crate::data::database::videos::VideoSource;
 use crate::data::stash_api::StashApi;
 use crate::server::types::{Clip, VideoLike};
-use crate::Result;
 
 #[derive(Debug, Clone, Copy)]
 pub enum LocalVideoSource {

@@ -64,14 +64,19 @@ impl Migrator {
             info!("determining duration for video {}", video.file_path);
             if !Utf8Path::new(&video.file_path).exists() {
                 info!("video {} does not exist, skipping", video.file_path);
-            } else if let Ok(ffprobe) = ffprobe(&video.file_path, &self.ffmpeg_location).await {
-                let duration = ffprobe.duration().unwrap_or_default();
-                self.database
-                    .videos
-                    .set_video_duration(&video.id, duration)
-                    .await?;
             } else {
-                warn!("failed to determine duration for video {}", video.file_path);
+                match ffprobe(&video.file_path, &self.ffmpeg_location).await {
+                    Ok(ffprobe) => {
+                        let duration = ffprobe.duration().unwrap_or_default();
+                        self.database
+                            .videos
+                            .set_video_duration(&video.id, duration)
+                            .await?;
+                    }
+                    _ => {
+                        warn!("failed to determine duration for video {}", video.file_path);
+                    }
+                }
             }
         }
 

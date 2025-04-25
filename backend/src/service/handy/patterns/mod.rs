@@ -218,22 +218,28 @@ pub struct ControllerStatus {
 }
 
 pub async fn stop() {
-    if let Some(sender) = global::get().await {
-        if let Err(e) = sender.send(Message::Stop).await {
-            error!("Failed to send stop message: {:?}", e);
+    match global::get().await {
+        Some(sender) => {
+            if let Err(e) = sender.send(Message::Stop).await {
+                error!("Failed to send stop message: {:?}", e);
+            }
         }
-    } else {
-        info!("No controller to stop");
+        _ => {
+            info!("No controller to stop");
+        }
     }
 }
 
 pub async fn pause() {
-    if let Some(sender) = global::get().await {
-        if let Err(e) = sender.send(Message::TogglePause).await {
-            error!("Failed to send pause message: {:?}", e);
+    match global::get().await {
+        Some(sender) => {
+            if let Err(e) = sender.send(Message::TogglePause).await {
+                error!("Failed to send pause message: {:?}", e);
+            }
         }
-    } else {
-        info!("No controller to pause");
+        _ => {
+            info!("No controller to pause");
+        }
     }
 }
 

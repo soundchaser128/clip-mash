@@ -1,10 +1,10 @@
 use std::path::Path;
 
-use axum::routing::{get_service, MethodRouter};
-use include_dir::{include_dir, Dir};
+use axum::routing::{MethodRouter, get_service};
+use include_dir::{Dir, include_dir};
 use tower_http::services::{ServeDir, ServeFile};
 
-static BUILD_DIR: Dir<'_> = include_dir!("../frontend/dist");
+static BUILD_DIR: Dir<'_> = include_dir!("./frontend/dist");
 
 pub fn service() -> MethodRouter {
     let base_dir = Path::new("assets");

@@ -3,7 +3,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use lazy_static::lazy_static;
 use rand::rngs::StdRng;
 use rand::seq::IndexedRandom;
-use rand::{rng, SeedableRng};
+use rand::{SeedableRng, rng};
 
 const ADJECTIVES: &str = include_str!("../../data/words/adjectives.txt");
 const ANIMALS: &str = include_str!("../../data/words/animals.txt");

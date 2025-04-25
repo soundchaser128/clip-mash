@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
-use crate::service::stash_config::StashConfig;
 use crate::Result;
+use crate::service::stash_config::StashConfig;
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default, ToSchema)]
 pub struct Settings {

@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{Mutex, mpsc};
 
 use super::{ControllerStatus, Message};
 

@@ -15,13 +15,13 @@ use wiremock::matchers::{method, path};
 use wiremock::{Match, Mock, MockServer, ResponseTemplate};
 
 use super::Marker;
+use crate::Result;
 use crate::data::database::markers::DbMarker;
 use crate::data::database::performers::{CreatePerformer, DbPerformer, Gender};
 use crate::data::database::videos::{CreateVideo, DbVideo, VideoSource};
-use crate::data::database::{unix_timestamp_now, Database};
+use crate::data::database::{Database, unix_timestamp_now};
 use crate::helpers::random::generate_id;
 use crate::server::types::{Beats, CreateMarker};
-use crate::Result;
 
 #[derive(Debug, Deserialize)]
 struct GraphQlQuery {

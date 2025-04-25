@@ -10,11 +10,12 @@ use crate::Result;
 const LOGS_DIR: &str = "./logs";
 
 pub fn setup_logger() -> WorkerGuard {
-    use tracing_subscriber::prelude::*;
     use tracing_subscriber::EnvFilter;
+    use tracing_subscriber::prelude::*;
 
     if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "info");
+        // TODO: Audit that the environment access only happens in single-threaded code.
+        unsafe { env::set_var("RUST_LOG", "info") };
     }
     let file_appender = tracing_appender::rolling::daily(LOGS_DIR, "clip-mash.log");
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);

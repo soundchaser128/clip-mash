@@ -7,10 +7,10 @@ use color_eyre::eyre::eyre;
 use hound::WavReader;
 use tracing::info;
 
+use crate::Result as AppResult;
 use crate::server::types::Beats;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::util::commandline_error;
-use crate::Result as AppResult;
 
 const BUF_SIZE: usize = 512;
 const HOP_SIZE: usize = 256;

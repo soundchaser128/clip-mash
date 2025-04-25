@@ -1,7 +1,7 @@
 use std::process::Output;
 
 use camino::Utf8Path;
-use tracing::{debug, Level};
+use tracing::{Level, debug};
 use url::Url;
 
 pub fn add_api_key(url: &str, api_key: Option<&str>) -> String {

@@ -1,8 +1,8 @@
 use sqlx::SqlitePool;
 use tracing::info;
 
-use crate::service::commands::ffprobe::FfProbe;
 use crate::Result;
+use crate::service::commands::ffprobe::FfProbe;
 
 #[derive(Debug, Clone)]
 pub struct FfProbeInfoDatabase {
@@ -58,12 +58,12 @@ impl FfProbeInfoDatabase {
     }
 
     pub async fn get_videos_without_info(&self) -> Result<Vec<VideoWithFilePath>> {
-        let videos =
-            sqlx::query_as!(VideoWithFilePath,
+        let videos = sqlx::query_as!(
+            VideoWithFilePath,
             "SELECT id, file_path FROM videos WHERE id NOT IN (SELECT video_id FROM ffprobe_info)"
         )
-            .fetch_all(&self.pool)
-            .await?;
+        .fetch_all(&self.pool)
+        .await?;
 
         Ok(videos)
     }

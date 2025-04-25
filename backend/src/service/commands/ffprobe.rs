@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info, Level};
+use tracing::{Level, debug, info};
 
 use super::ffmpeg::FfmpegLocation;
-use crate::util::commandline_error;
 use crate::Result;
+use crate::util::commandline_error;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct VideoParameters {

@@ -1,10 +1,10 @@
 use std::env;
 use std::sync::Arc;
 
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::Json;
 use serde_json::json;
 use tracing::{error, info, warn};
 
@@ -107,21 +107,22 @@ pub async fn restart() {
 )]
 #[axum::debug_handler]
 pub async fn get_app_health(state: State<Arc<AppState>>) -> impl IntoResponse {
-    if let Err(e) = state.database.settings.fetch_optional().await {
-        error!("Failed to fetch settings: {}", e);
-        (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(json!({
-                "status": "error",
-                "message": e.to_string()
-            })),
-        )
-    } else {
-        (
+    match state.database.settings.fetch_optional().await {
+        Err(e) => {
+            error!("Failed to fetch settings: {}", e);
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({
+                    "status": "error",
+                    "message": e.to_string()
+                })),
+            )
+        }
+        _ => (
             StatusCode::OK,
             Json(json!({
                 "status": "ok"
             })),
-        )
+        ),
     }
 }

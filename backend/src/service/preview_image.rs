@@ -5,8 +5,8 @@ use tracing::info;
 
 use super::commands::ffmpeg::{Ffmpeg, FfmpegLocation};
 use super::directories::Directories;
-use crate::server::handlers::AppState;
 use crate::Result;
+use crate::server::handlers::AppState;
 
 pub struct PreviewGenerator {
     directories: Directories,

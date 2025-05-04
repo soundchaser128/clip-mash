@@ -347,7 +347,9 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
               className="select select-bordered"
               {...register("clipOrder.type")}
             >
-              <option value="">Select...</option>
+              <option value="none" disabled>
+                Select...
+              </option>
               <option value="scene">Scene order</option>
               <option value="random">Random</option>
               <option value="fixed">Fixed</option>
@@ -378,7 +380,9 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
             className="select select-bordered"
             {...register("clipStrategy")}
           >
-            <option value="">Select...</option>
+            <option value="none" disabled>
+              Select...
+            </option>
             {clipGenerationOptions(useMusic ?? false).map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}

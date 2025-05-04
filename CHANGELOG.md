@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fix: Don't allow selecting empty dropdown options on clip preview page
+- fix: Video source doesn't change when clip ends on clip preview page
+
 ## 0.23.0
 
 - feat: ClipMash TV: Allows watching a compilation live in your browser (including Handy support)

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.23.1
+
 - fix: Don't allow selecting empty dropdown options on clip preview page
 - fix: Video source doesn't change when clip ends on clip preview page
 

@@ -8,8 +8,8 @@ license = "GPL-3.0"
 [dependencies]
 async-stream = "0.3.6"
 axum = { version = "0.8", features = ["macros", "multipart"] }
-camino = { version = "1.1.9", features = ["serde1"] }
-color-eyre = "0.6.3"
+camino = { version = "1.1.10", features = ["serde1"] }
+color-eyre = "0.6.5"
 directories = "6.0.0"
 float-cmp = "0.10.0"
 futures = "0.3.31"
@@ -18,23 +18,23 @@ hound = "3.5.1"
 include_dir = "0.7.4"
 itertools = "0.14.0"
 lazy_static = "1.5.0"
-mimalloc = "0.1.43"
-num_cpus = "1.16.0"
+mimalloc = "0.1.46"
+num_cpus = "1.17.0"
 num-traits = "0.2.19"
 ordered-float = "5.0"
-rand = "0.9.0"
+rand = "0.9.1"
 regex = "1.11.1"
 reqwest = { version = "0.12.11", default-features = false, features = ["json"] }
 sanitise-file-name = "1.0.0"
 semver = "1.0.24"
-sentry = { version = "0.37", features = ["debug-images"] }
-sentry-tower = { version = "0.37", features = ["axum-matched-path"] }
+sentry = { version = "0.38", features = ["debug-images"] }
+sentry-tower = { version = "0.38", features = ["axum-matched-path"] }
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.134"
-sqlx = { version = "0.8.2", features = ["runtime-tokio", "sqlite"] }
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
 time = { version = "0.3.37", features = ["formatting", "parsing", "macros"] }
-tokio = { version = "1.42.0", features = ["full"] }
-tokio-util = { version = "0.7.13", features = ["io"] }
+tokio = { version = "1.45.1", features = ["full"] }
+tokio-util = { version = "0.7.15", features = ["io"] }
 tower = { version = "0.5.2", features = ["util"] }
 tower-http = { version = "0.6", features = ["fs", "trace"] }
 tracing = "0.1.41"
@@ -42,7 +42,7 @@ tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 url = { version = "2.5.4", features = ["serde"] }
 utoipa = { version = "5.3.0", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "9.0.0", features = ["axum"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
 walkdir = "2.5.0"
 webbrowser = "1.0"
 youtube_dl = { version = "0.10.0", features = [
@@ -56,7 +56,7 @@ xz2 = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]
 # used for listing drives on windows
-sysinfo = "0.34"
+sysinfo = "0.35"
 # used for unzipping the downloaded ffmpeg archive
 zip = "=2.3"
 

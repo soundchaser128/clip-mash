@@ -1,5 +1,5 @@
 [workspace]
-members = ["backend"]
+members = ["crates/clip-mash", "crates/clip-mash-server"]
 resolver = "2"
 
 [profile.dev.package.sqlx-macros]

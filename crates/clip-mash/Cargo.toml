@@ -2,7 +2,6 @@
 name = "clip-mash"
 version = "0.23.0"
 edition = "2024"
-default-run = "clip-mash"
 license = "GPL-3.0"
 
 [dependencies]

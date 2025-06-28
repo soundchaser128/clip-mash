@@ -18,6 +18,8 @@ use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
+mod server;
+
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
 

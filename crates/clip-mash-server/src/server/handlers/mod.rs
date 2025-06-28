@@ -1,10 +1,10 @@
 use crate::Result;
-use crate::data::database::Database;
-use crate::data::stash_api::StashApi;
-use crate::service::commands::ffmpeg::FfmpegLocation;
-use crate::service::directories::Directories;
-use crate::service::new_version_checker::NewVersionChecker;
-use crate::service::stash_config::StashConfig;
+use clip_mash::data::database::Database;
+use clip_mash::data::stash_api::StashApi;
+use clip_mash::service::commands::ffmpeg::FfmpegLocation;
+use clip_mash::service::directories::Directories;
+use clip_mash::service::new_version_checker::NewVersionChecker;
+use clip_mash::service::stash_config::StashConfig;
 
 pub mod files;
 pub mod handy;

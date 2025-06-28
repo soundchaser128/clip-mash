@@ -4,8 +4,8 @@ use axum::response::IntoResponse;
 use serde::Deserialize;
 use utoipa::IntoParams;
 
-use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
+use clip_mash::data::stash_api::StashApi;
 
 #[derive(Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]

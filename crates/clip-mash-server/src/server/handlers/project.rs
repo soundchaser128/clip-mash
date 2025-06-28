@@ -12,16 +12,16 @@ use tracing::{debug, error, info};
 use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
-use crate::data::database::markers::ListMarkersFilter;
-use crate::helpers::random::{generate_id, get_random_word};
 use crate::server::error::AppError;
 use crate::server::types::*;
-use crate::service::clip::{ClipService, ClipsResult};
-use crate::service::description_generator::DescriptionType;
-use crate::service::funscript::{self, FunScript, ScriptBuilder};
-use crate::service::generator::CompilationGenerator;
-use crate::service::options_converter::OptionsConverterService;
-use crate::service::streams::{LocalVideoSource, StreamUrlService};
+use clip_mash::data::database::markers::ListMarkersFilter;
+use clip_mash::helpers::random::{generate_id, get_random_word};
+use clip_mash::service::clip::{ClipService, ClipsResult};
+use clip_mash::service::description_generator::DescriptionType;
+use clip_mash::service::funscript::{self, FunScript, ScriptBuilder};
+use clip_mash::service::generator::CompilationGenerator;
+use clip_mash::service::options_converter::OptionsConverterService;
+use clip_mash::service::streams::{LocalVideoSource, StreamUrlService};
 
 #[utoipa::path(
     post,

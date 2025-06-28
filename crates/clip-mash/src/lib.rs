@@ -1,6 +1,5 @@
 pub mod data;
 pub mod helpers;
-pub mod server;
 pub mod service;
 
 use color_eyre::eyre::Report;

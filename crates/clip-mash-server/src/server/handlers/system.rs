@@ -8,10 +8,10 @@ use axum::response::IntoResponse;
 use serde_json::json;
 use tracing::{error, info, warn};
 
-use crate::data::database::Settings;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
-use crate::service::new_version_checker::AppVersion;
+use clip_mash::data::database::Settings;
+use clip_mash::service::new_version_checker::AppVersion;
 
 #[axum::debug_handler]
 #[utoipa::path(

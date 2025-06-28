@@ -11,20 +11,20 @@ use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::data::database::markers::{ListMarkersFilter, MarkerCount};
-use crate::data::database::videos::{TagCount, VideoSearchQuery, VideoSource, VideoUpdate};
-use crate::data::stash_api::StashApi;
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
 use crate::server::types::{
     CreateMarker, ListVideoDto, MarkerDto, MarkerDtoConverter, Page, PageParameters, StashVideoDto,
     UpdateMarker, VideoDetailsDto, VideoDetailsDtoConverter, VideoDto,
 };
-use crate::service::encoding_optimization::EncodingOptimizationService;
-use crate::service::migrations::Migrator;
-use crate::service::preview_image::PreviewGenerator;
-use crate::service::scene_detection;
-use crate::service::video::{AddVideosRequest, VideoService};
+use clip_mash::data::database::markers::{ListMarkersFilter, MarkerCount};
+use clip_mash::data::database::videos::{TagCount, VideoSearchQuery, VideoSource, VideoUpdate};
+use clip_mash::data::stash_api::StashApi;
+use clip_mash::service::encoding_optimization::EncodingOptimizationService;
+use clip_mash::service::migrations::Migrator;
+use clip_mash::service::preview_image::PreviewGenerator;
+use clip_mash::service::scene_detection;
+use clip_mash::service::video::{AddVideosRequest, VideoService};
 
 #[utoipa::path(
     get,

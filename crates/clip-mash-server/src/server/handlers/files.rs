@@ -11,7 +11,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::server::error::AppError;
 use crate::server::handlers::AppState;
-use crate::service::directories::FolderType;
+use clip_mash::service::directories::FolderType;
 
 #[derive(Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]

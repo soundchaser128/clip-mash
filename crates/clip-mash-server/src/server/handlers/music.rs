@@ -12,11 +12,11 @@ use url::Url;
 use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
-use crate::data::database::music::DbSong;
 use crate::server::error::AppError;
 use crate::server::types::*;
-use crate::service::music::{self, MusicDownloadService};
-use crate::util::expect_file_name;
+use clip_mash::data::database::music::DbSong;
+use clip_mash::service::music::{self, MusicDownloadService};
+use clip_mash::util::expect_file_name;
 
 #[derive(Deserialize, IntoParams)]
 pub struct DownloadMusicQuery {

@@ -3,7 +3,6 @@ set shell := ["nu", "-c"]
 project := justfile_directory()
 frontend := project + "/frontend"
 backend := project + "/backend"
-e2e := project + "/e2e-tests"
 
 default:
   @just --list
@@ -13,9 +12,6 @@ default:
 
 @frontend *cmd:
     cd {{frontend}}; just {{cmd}}
-
-@e2e *cmd:
-    cd {{e2e}}; just {{cmd}}
 
 format:
     just backend format

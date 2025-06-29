@@ -37,7 +37,7 @@ impl StreamUrlService {
     ) -> Option<String> {
         match source {
             VideoSource::Folder | VideoSource::Download => match local_video_source {
-                LocalVideoSource::Url => Some(format!("/api/library/video/{}/file", video_id)),
+                LocalVideoSource::Url => Some(format!("/api/library/video/{video_id}/file")),
                 LocalVideoSource::File => {
                     let video_file_path = videos
                         .iter()

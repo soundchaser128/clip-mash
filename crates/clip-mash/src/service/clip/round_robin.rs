@@ -60,9 +60,7 @@ impl ClipPicker for RoundRobinClipPicker {
             {
                 assert!(
                     end >= start,
-                    "end time {} must be greater than start time {}",
-                    end,
-                    start
+                    "end time {end} must be greater than start time {start}"
                 );
                 let duration = end - start;
                 if (has_music && duration > 0.0) || (!has_music && duration >= min_duration) {

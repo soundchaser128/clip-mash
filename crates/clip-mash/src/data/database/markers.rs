@@ -117,7 +117,7 @@ impl MarkersDatabase {
         marker: CreateMarker,
         connection: &mut SqliteConnection,
     ) -> Result<DbMarker> {
-        let created_on = marker.created_on.unwrap_or_else(|| unix_timestamp_now());
+        let created_on = marker.created_on.unwrap_or_else(unix_timestamp_now);
         let inserted_value = sqlx::query!(
             "INSERT INTO markers (video_id, start_time, end_time, title, index_within_video, marker_preview_image, marker_created_on, marker_stash_id)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -256,8 +256,8 @@ impl MarkersDatabase {
 
         let mut tx = self.pool.begin().await?;
 
-        self.create_new_marker_inner(new_marker_1, &mut *tx).await?;
-        self.create_new_marker_inner(new_marker_2, &mut *tx).await?;
+        self.create_new_marker_inner(new_marker_1, &mut tx).await?;
+        self.create_new_marker_inner(new_marker_2, &mut tx).await?;
         self.delete_marker_with_executor(rowid, &mut *tx).await?;
 
         tx.commit().await?;
@@ -399,7 +399,7 @@ impl MarkersDatabase {
 
         for video_id in all_video_ids {
             let video_id = video_id.id;
-            self.fix_marker_video_indices(&video_id, &mut *transaction)
+            self.fix_marker_video_indices(&video_id, &mut transaction)
                 .await?;
         }
 
@@ -471,7 +471,7 @@ impl MarkersDatabase {
         prefix: Option<&str>,
     ) -> Result<Vec<MarkerCount>> {
         let prefix = prefix
-            .map(|s| format!("{}%", s))
+            .map(|s| format!("{s}%"))
             .unwrap_or_else(|| "%".to_string());
         let results = sqlx::query_as!(
             MarkerCount,

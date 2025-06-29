@@ -190,7 +190,7 @@ impl StashMarker {
                     .into_iter()
                     .map(|p| p.name)
                     .collect(),
-                file_name: scene.files.get(0).map(|f| f.basename.clone()),
+                file_name: scene.files.first().map(|f| f.basename.clone()),
                 start: m.seconds,
                 end: m
                     .end_seconds
@@ -220,8 +220,8 @@ pub struct StashApi {
 impl StashApi {
     pub fn new(api_url: String, api_key: Option<String>) -> Self {
         StashApi {
-            api_url: api_url,
-            api_key: api_key,
+            api_url,
+            api_key,
             client: Client::new(),
         }
     }
@@ -231,9 +231,7 @@ impl StashApi {
     }
 
     fn api_key(&self) -> &str {
-        self.api_key
-            .as_ref()
-            .map(|s| s.as_str())
+        self.api_key.as_deref()
             .unwrap_or_default()
     }
 

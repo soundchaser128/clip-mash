@@ -57,11 +57,11 @@ fn get_host() -> String {
 fn get_address() -> SocketAddr {
     let host = get_host();
     let port = get_port();
-    let addr = format!("{}:{}", host, port);
+    let addr = format!("{host}:{port}");
     info!("listening on {addr}");
 
     addr.parse()
-        .expect(&format!("Unable to parse address '{addr}'"))
+        .unwrap_or_else(|_| panic!("Unable to parse address '{addr}'"))
 }
 
 async fn run() -> Result<()> {

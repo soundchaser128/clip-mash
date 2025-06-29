@@ -12,7 +12,7 @@ async fn main() -> Result<()> {
     let interval_duration = Duration::from_millis(100);
 
     let port: u32 = rand::rng().random_range(1024..65535);
-    eprintln!("Starting server on port {}", port);
+    eprintln!("Starting server on port {port}");
 
     let mut process = Command::new("cargo")
         .arg("run")
@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
             bail!("Server did not start in {} seconds", timeout.as_secs());
         }
 
-        let response = reqwest::get(&format!("http://localhost:{}/api/system/health", port)).await;
+        let response = reqwest::get(&format!("http://localhost:{port}/api/system/health")).await;
         if let Ok(response) = response {
             if response.status().is_success() {
                 break;
@@ -42,7 +42,7 @@ async fn main() -> Result<()> {
     }
 
     let response =
-        reqwest::get(&format!("http://localhost:{}/api-docs/openapi.json", port)).await?;
+        reqwest::get(&format!("http://localhost:{port}/api-docs/openapi.json")).await?;
     let spec = response.text().await?;
 
     let file_name = std::env::args().nth(1).unwrap_or("openapi.json".into());

@@ -26,10 +26,9 @@ serde_json = "1.0.134"
 sqlx = { version = "0.8.2", features = ["runtime-tokio", "sqlite"] }
 time = { version = "0.3.37", features = ["formatting", "parsing", "macros"] }
 tokio = { version = "1.42.0", features = ["full"] }
-tower = { version = "0.5.2", features = ["util"] }
 tracing = "0.1.41"
 url = { version = "2.5.4", features = ["serde"] }
-utoipa = { version = "5.3.0", features = ["axum_extras"] }
+utoipa = "5.3.0"
 walkdir = "2.5.0"
 youtube_dl = { version = "0.10.0", features = [
     "tokio",

@@ -37,7 +37,7 @@ impl PreviewGenerator {
         let destination = self
             .directories
             .preview_image_dir()
-            .join(format!("{}_{}.webp", video_id, offset_seconds));
+            .join(format!("{video_id}_{offset_seconds}.webp"));
 
         info!("generating preview image at {destination}");
 

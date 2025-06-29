@@ -56,13 +56,13 @@ impl MarkerDtoConverter {
                 self.stash_api.get_stream_url(stash_id)
             }
             VideoSource::Folder | VideoSource::Download => {
-                format!("/api/library/video/{}/file", video_id)
+                format!("/api/library/video/{video_id}/file")
             }
         }
     }
 
     fn screenshot_url(&self, marker_id: i64) -> String {
-        format!("/api/library/marker/{}/preview", marker_id)
+        format!("/api/library/marker/{marker_id}/preview")
     }
 
     pub fn from_db(&self, marker: DbMarker, video: &DbVideo) -> MarkerDto {

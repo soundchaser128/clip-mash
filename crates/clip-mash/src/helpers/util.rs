@@ -28,14 +28,14 @@ pub fn commandline_error<T>(command_name: &str, output: Output) -> crate::Result
         output.status.code().unwrap_or(1)
     );
 
-    if let Some(stdout) = std::str::from_utf8(&output.stdout).ok() {
+    if let Ok(stdout) = std::str::from_utf8(&output.stdout) {
         if !stdout.is_empty() {
             message.push_str("\nProcess standard output:\n");
             message.push_str(stdout);
         }
     }
 
-    if let Some(stderr) = std::str::from_utf8(&output.stderr).ok() {
+    if let Ok(stderr) = std::str::from_utf8(&output.stderr) {
         if !stderr.is_empty() {
             message.push_str("\nProcess error output:\n");
             message.push_str(stderr);
@@ -63,7 +63,7 @@ pub fn debug_output(output: Output) {
 pub fn format_duration(seconds: f64) -> String {
     let minutes = (seconds / 60.0).floor();
     let seconds = (seconds % 60.0).floor();
-    format!("{:02}:{:02}", minutes, seconds)
+    format!("{minutes:02}:{seconds:02}")
 }
 
 pub trait StrExt {

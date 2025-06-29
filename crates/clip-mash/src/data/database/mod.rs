@@ -469,7 +469,7 @@ mod test {
         assert_eq!(result.items_total, items_total);
         assert_eq!(result.items_finished, 0.0);
         assert_eq!(result.message, message);
-        assert_eq!(result.done, false);
+        assert!(!result.done);
         assert_eq!(result.eta_seconds, None);
     }
 
@@ -501,7 +501,7 @@ mod test {
         assert_eq!(progress.items_finished, 10.0);
         assert_eq!(progress.eta_seconds, Some(60.0));
         assert_eq!(progress.message, "Encoding videos");
-        assert_eq!(progress.done, false);
+        assert!(!progress.done);
 
         database.progress.finish_progress(&video_id).await.unwrap();
 
@@ -511,7 +511,7 @@ mod test {
             .await
             .unwrap()
             .unwrap();
-        assert_eq!(progress.done, true);
+        assert!(progress.done);
     }
 
     #[sqlx::test]

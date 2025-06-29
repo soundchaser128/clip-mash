@@ -8,3 +8,5 @@
 *.iml
 /target
 .env
+/assets
+/logs

@@ -52,7 +52,7 @@ impl PerformersDatabase {
     }
 
     pub async fn find_by_prefix(&self, prefix: &str) -> Result<Vec<DbPerformer>> {
-        let prefix = format!("{}%", prefix);
+        let prefix = format!("{prefix}%");
         sqlx::query_as!(
             DbPerformer,
             r#"SELECT p.id AS "id!", p.name, p.created_on, p.image_url, p.stash_id, 
@@ -144,7 +144,7 @@ mod tests {
 
         for i in 0..10 {
             let performer = CreatePerformer {
-                name: format!("Performer {}", i),
+                name: format!("Performer {i}"),
                 image_url: Some("image_url".to_string()),
                 stash_id: Some("stash_id".to_string()),
                 gender: None,

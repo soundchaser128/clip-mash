@@ -251,7 +251,7 @@ impl VideoService {
                 let title = scene
                     .title
                     .filter(|t| !t.is_empty())
-                    .or(scene.files.get(0).map(|f| f.basename.clone()));
+                    .or(scene.files.first().map(|f| f.basename.clone()));
                 info!("inserting video from stash with title {title:?}");
                 let stash_id = scene.id.parse().unwrap();
                 let created_on = OffsetDateTime::parse(&scene.created_at, &Rfc3339)
@@ -299,7 +299,7 @@ impl VideoService {
             let id = create_video.id.clone();
             let result = self.database.videos.persist_video(create_video).await?;
             if let Some(ffprobe) = ffprobe {
-                self.database.ffprobe.set_info(&id, &ffprobe).await?;
+                self.database.ffprobe.set_info(&id, ffprobe).await?;
             }
             self.database
                 .performers
@@ -315,7 +315,7 @@ impl VideoService {
                 .iter()
                 .find(|v| v.stash_scene_id == Some(scene_id))
                 .expect("video must exist");
-            self.persist_stash_marker(marker, &video).await?;
+            self.persist_stash_marker(marker, video).await?;
         }
 
         Ok(videos)
@@ -427,7 +427,7 @@ impl VideoService {
                             let total_seconds = seconds.round() as i64;
                             let minutes = total_seconds / 60;
                             let seconds = total_seconds % 60;
-                            format!("{:02}:{:02}", minutes, seconds)
+                            format!("{minutes:02}:{seconds:02}")
                         };
 
                         debug!(

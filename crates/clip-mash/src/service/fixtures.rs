@@ -570,13 +570,12 @@ pub fn songs() -> Vec<Beats> {
 pub async fn generate_video(path: impl AsRef<Utf8Path>, width: u32, height: u32) -> Result<()> {
     let path = Utf8Path::new("testfiles").join(path);
     Command::new("ffmpeg")
-        .args(&[
+        .args([
             "-f",
             "lavfi",
             "-i",
             &format!(
-                "color=size={}x{}:duration=10:rate=30:color=red",
-                width, height
+                "color=size={width}x{height}:duration=10:rate=30:color=red"
             ),
             path.as_str(),
         ])

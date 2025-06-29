@@ -19,8 +19,7 @@ use clip_mash::data::stash_api::StashApi;
 use clip_mash::service::encoding_optimization::EncodingOptimizationService;
 use clip_mash::service::migrations::Migrator;
 use clip_mash::service::preview_image::PreviewGenerator;
-use clip_mash::service::scene_detection;
-use clip_mash::service::video::{AddVideosRequest, VideoService};
+use clip_mash::service::video::AddVideosRequest;
 use clip_mash::types::{
     CreateMarker, ListVideoDto, MarkerDto, MarkerDtoConverter, Page, PageParameters, StashVideoDto,
     UpdateMarker, VideoDetailsDto, VideoDetailsDtoConverter, VideoDto,

@@ -101,6 +101,12 @@ pub struct ClipsResult {
 
 pub struct ClipService {}
 
+impl Default for ClipService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ClipService {
     pub fn new() -> Self {
         Self {}
@@ -212,7 +218,7 @@ pub fn get_divisors(spread: f64) -> [f64; 4] {
     let min_durations = [1.0, 1.0, 1.0, 1.0];
     let max_durations = [1.0, 4.0, 8.0, 16.0];
 
-    return math::lerp_arrays(min_durations, max_durations, spread);
+    math::lerp_arrays(min_durations, max_durations, spread)
 }
 
 #[cfg(test)]

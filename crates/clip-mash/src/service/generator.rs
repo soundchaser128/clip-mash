@@ -72,16 +72,13 @@ fn get_clip_file_name(
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum PaddingType {
+    #[default]
     Black,
     Blur,
 }
 
-impl Default for PaddingType {
-    fn default() -> Self {
-        PaddingType::Black
-    }
-}
 
 #[derive(Debug)]
 struct CreateClip<'a> {
@@ -330,7 +327,7 @@ impl CompilationGenerator {
         let video_dir = self.directories.temp_video_dir();
         tokio::fs::create_dir_all(&video_dir).await?;
         let video_dir = video_dir.canonicalize_utf8()?;
-        let video_ids = self.get_video_ids(&options);
+        let video_ids = self.get_video_ids(options);
         let stream_urls = self
             .stream_urls
             .get_video_streams(&video_ids, LocalVideoSource::File)
@@ -355,7 +352,7 @@ impl CompilationGenerator {
                 .markers
                 .iter()
                 .find(|m| &m.id == marker_id)
-                .expect(&format!("no marker with ID {marker_id} found"));
+                .unwrap_or_else(|| panic!("no marker with ID {marker_id} found"));
 
             let video_metadata = self.database.ffprobe.get_info(&marker.video_id).await?;
             let video_parameters = video_metadata.video_parameters();

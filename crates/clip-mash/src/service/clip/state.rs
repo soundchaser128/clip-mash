@@ -96,7 +96,7 @@ impl MarkerState {
                 if approx_eq!(f64, end_time, start_time, epsilon = 0.001) || remaining_time < 0.001
                 {
                     e.get_mut().pop();
-                    if e.get().len() == 0 {
+                    if e.get().is_empty() {
                         let index = self.markers.iter().position(|m| m.id == id).unwrap();
                         self.markers.remove(index);
                     }

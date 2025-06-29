@@ -87,7 +87,7 @@ impl VideoLike for VideoDto {
 
 impl From<FindScenesQueryFindScenesScenes> for VideoDto {
     fn from(value: FindScenesQueryFindScenesScenes) -> Self {
-        let file = value.files.get(0).expect("must have at least one file");
+        let file = value.files.first().expect("must have at least one file");
         let created_on = OffsetDateTime::parse(&value.created_at, &Rfc3339)
             .map(|time| time.unix_timestamp())
             .unwrap_or_else(|_| unix_timestamp_now());
@@ -97,7 +97,7 @@ impl From<FindScenesQueryFindScenesScenes> for VideoDto {
             file_path: None,
             title: value
                 .title
-                .or(value.files.get(0).map(|m| m.basename.clone()))
+                .or(value.files.first().map(|m| m.basename.clone()))
                 .unwrap_or_default(),
             file_name: file.basename.clone(),
             interactive: value.interactive,

@@ -23,6 +23,12 @@ pub struct NewVersionChecker {
     cached_version: Mutex<Option<AppVersion>>,
 }
 
+impl Default for NewVersionChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NewVersionChecker {
     pub fn new() -> Self {
         Self {

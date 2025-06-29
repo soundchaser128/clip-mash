@@ -21,8 +21,7 @@ fn format_timestamp(value: f64) -> String {
     let milliseconds = (value.fract() * 1000.0).floor() as u32;
 
     format!(
-        "{:02}:{:02}:{:02}.{:03}",
-        hours, minutes, seconds, milliseconds
+        "{hours:02}:{minutes:02}:{seconds:02}.{milliseconds:03}"
     )
 }
 
@@ -109,7 +108,7 @@ impl From<&CompilationOptions> for TemplateContext {
                 .videos
                 .iter()
                 .map(|v| VideoInfo {
-                    source: v.source.clone(),
+                    source: v.source,
                     title: v.video_title.as_ref().unwrap_or(&v.id).to_string(),
                     interactive: if v.interactive { "Yes" } else { "No" },
                 })

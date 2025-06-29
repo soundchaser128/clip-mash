@@ -11,8 +11,8 @@ pub struct EncodingOptimizationService {
 
 impl EncodingOptimizationService {
     pub fn new(database: Database) -> Self {
-        let service = Self { database };
-        service
+        
+        Self { database }
     }
 
     pub async fn needs_re_encode(&self, video_ids: &[&str]) -> Result<bool> {

@@ -225,7 +225,7 @@ pub fn create_beat_funscript(songs: Vec<Beats>, stroke_type: StrokeType) -> FunS
     FunScript {
         actions,
         metadata: Some(OFSMetadata {
-            creator: format!("clip-mash v{}", version),
+            creator: format!("clip-mash v{version}"),
             ..Default::default()
         }),
         ..Default::default()
@@ -263,7 +263,7 @@ fn combine_scripts(segments: Vec<FunScriptSegment>) -> FunScript {
     FunScript {
         actions: resulting_actions,
         metadata: Some(OFSMetadata {
-            creator: format!("clip-mash v{}", version),
+            creator: format!("clip-mash v{version}"),
             ..Default::default()
         }),
         ..Default::default()

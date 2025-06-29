@@ -116,8 +116,8 @@ pub async fn upload_song(
         writer.write_all(&chunk).await?;
     }
 
-    let ffprobe_result = ffprobe(path.as_str(), &ffmpeg_location).await?;
-    let beats = music::detect_beats(&path, &ffmpeg_location).ok();
+    let ffprobe_result = ffprobe(path.as_str(), ffmpeg_location).await?;
+    let beats = music::detect_beats(&path, ffmpeg_location).ok();
 
     let result = database
         .music

@@ -22,11 +22,10 @@ fn validate_options(
     for (title, weight) in &options.weights {
         assert!(
             *weight > 0.0,
-            "weight for title {} must be greater than 0",
-            title
+            "weight for title {title} must be greater than 0"
         );
         let marker_count = markers.iter().filter(|m| &m.title == title).count();
-        assert!(marker_count > 0, "no markers found for title {}", title);
+        assert!(marker_count > 0, "no markers found for title {title}");
     }
 
     let weights_exist = markers

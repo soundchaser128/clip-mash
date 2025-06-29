@@ -12,25 +12,23 @@ pub fn setup() -> Option<ClientInitGuard> {
             DISABLE_SENTRY
         );
         None
-    } else {
-        if let Some(uri) = option_env!("CLIP_MASH_SENTRY_URI") {
-            let guard = sentry::init((
-                uri,
-                sentry::ClientOptions {
-                    release: sentry::release_name!(),
-                    traces_sample_rate: 0.2,
-                    ..Default::default()
-                },
-            ));
+    } else if let Some(uri) = option_env!("CLIP_MASH_SENTRY_URI") {
+        let guard = sentry::init((
+            uri,
+            sentry::ClientOptions {
+                release: sentry::release_name!(),
+                traces_sample_rate: 0.2,
+                ..Default::default()
+            },
+        ));
 
-            info!(
-                "Sentry initialized. If you want to disable it, set the environment variable {} to any value.",
-                DISABLE_SENTRY
-            );
-            Some(guard)
-        } else {
-            info!("Sentry URI not found, not initializing Sentry.");
-            None
-        }
+        info!(
+            "Sentry initialized. If you want to disable it, set the environment variable {} to any value.",
+            DISABLE_SENTRY
+        );
+        Some(guard)
+    } else {
+        info!("Sentry URI not found, not initializing Sentry.");
+        None
     }
 }

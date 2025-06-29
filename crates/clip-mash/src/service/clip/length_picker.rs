@@ -241,8 +241,7 @@ mod test {
         let total_duration = durations.iter().sum::<f64>();
         assert!(
             total_duration >= 20.0,
-            "total duration was {} but expected at least 20",
-            total_duration
+            "total duration was {total_duration} but expected at least 20"
         );
     }
 
@@ -256,9 +255,7 @@ mod test {
         let total: f64 = state.sum();
         assert!(
             total >= expected_duration,
-            "total duration was {} but expected at least {}",
-            total,
-            expected_duration
+            "total duration was {total} but expected at least {expected_duration}"
         );
     }
 
@@ -271,8 +268,7 @@ mod test {
         let total = durations.iter().sum::<f64>();
         assert!(
             total >= 600.0,
-            "total duration was {} but expected at least 600",
-            total
+            "total duration was {total} but expected at least 600"
         );
 
         let distinct_values: HashSet<_> =

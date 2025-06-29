@@ -115,7 +115,7 @@ impl Migrator {
                         performers.len(),
                         video.id
                     );
-                    if performers.len() > 0 {
+                    if !performers.is_empty() {
                         self.database
                             .performers
                             .insert_for_video(&performers, &video.id)
@@ -268,19 +268,19 @@ impl Migrator {
         let mut entries = tokio::fs::read_dir(image_path).await?;
         while let Some(entry) = entries.next_entry().await? {
             let path = Utf8PathBuf::from_path_buf(entry.path()).expect("must be utf-8 path");
-            if path.is_file() {
-                if path.extension() == Some("png") {
+            if path.is_file()
+                && path.extension() == Some("png") {
                     if let Some(video_id) = video_id_from_path(&path) {
                         info!("deleting PNG preview image at {}", path);
                         tokio::fs::remove_file(&path).await?;
                         self.database
                             .videos
-                            .set_video_preview_image(&video_id, None)
+                            .set_video_preview_image(video_id, None)
                             .await?;
                         let markers = self
                             .database
                             .markers
-                            .get_markers_for_video(&video_id)
+                            .get_markers_for_video(video_id)
                             .await?;
                         for marker in markers {
                             self.database
@@ -290,7 +290,6 @@ impl Migrator {
                         }
                     }
                 }
-            }
         }
 
         self.generate_video_preview_images().await?;

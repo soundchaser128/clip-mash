@@ -1,7 +1,5 @@
 use camino::{Utf8Path, Utf8PathBuf};
 use tokio::fs;
-use tokio::io::AsyncWriteExt;
-use tracing::info;
 use url::Url;
 
 use crate::Result;

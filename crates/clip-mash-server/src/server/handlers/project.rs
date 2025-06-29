@@ -128,7 +128,7 @@ pub async fn fetch_clips_interactive(
 
     let options = CreateClipsBody {
         markers: all_markers,
-        seed: Some(body.seed.unwrap_or_else(|| get_random_word())),
+        seed: Some(body.seed.unwrap_or_else(get_random_word)),
         clips: ClipOptions {
             clip_picker: ClipPickerOptions::EqualLength(EqualLengthClipOptions {
                 clip_duration: body.clip_duration,
@@ -261,7 +261,7 @@ pub async fn download_video(
 
     let stream = ReaderStream::new(file);
     let file_name = path.file_name().unwrap();
-    let content_disposition = format!("attachment; filename=\"{}\"", file_name);
+    let content_disposition = format!("attachment; filename=\"{file_name}\"");
 
     let headers = AppendHeaders([
         (header::CONTENT_TYPE, "video/mp4".to_string()),

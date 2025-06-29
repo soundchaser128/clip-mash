@@ -61,11 +61,11 @@ impl IntoResponse for AppError {
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AppError::Io(e) => write!(f, "io error: {}", e),
-            AppError::Report(e) => write!(f, "{}", e),
-            AppError::StatusCode(s) => write!(f, "status code: {}", s),
-            AppError::Validation(map) => write!(f, "validation error: {:?}", map),
-            AppError::Url(e) => write!(f, "url error: {}", e),
+            AppError::Io(e) => write!(f, "io error: {e}"),
+            AppError::Report(e) => write!(f, "{e}"),
+            AppError::StatusCode(s) => write!(f, "status code: {s}"),
+            AppError::Validation(map) => write!(f, "validation error: {map:?}"),
+            AppError::Url(e) => write!(f, "url error: {e}"),
         }
     }
 }

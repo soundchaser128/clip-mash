@@ -34,7 +34,7 @@ fn pick_duration(Range { min, max }: Range, rng: &mut impl Rng) -> Duration {
 
 impl RandomController {
     pub fn new(parameters: RandomParameters) -> Self {
-        let seed = parameters.seed.clone().unwrap_or_else(|| get_random_word());
+        let seed = parameters.seed.clone().unwrap_or_else(get_random_word);
 
         let mut rng = create_seeded_rng(Some(&seed));
         let next_interval = pick_duration(parameters.interval_range, &mut rng);

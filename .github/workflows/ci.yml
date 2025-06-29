@@ -35,4 +35,4 @@ jobs:
       - name: Test Rust
         env:
           SQLX_OFFLINE: "true"
-        run: cd backend && cargo fmt --check --all && cargo nextest run --retries=3
+        run: cargo fmt --check --all && cargo nextest run --retries=3

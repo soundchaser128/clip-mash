@@ -14,7 +14,7 @@ use clip_mash::service::directories::Directories;
 use clip_mash::service::new_version_checker::NewVersionChecker;
 use mimalloc::MiMalloc;
 use reqwest::Method;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -218,7 +218,8 @@ async fn run() -> Result<()> {
         .layer(
             CorsLayer::new()
                 .allow_methods([Method::GET])
-                .allow_origin(Any),
+                .allow_origin(AllowOrigin::exact("http://localhost:1420".parse().unwrap()))
+                .allow_headers([axum::http::header::CONTENT_TYPE]),
         )
         .with_state(state);
 

@@ -40,8 +40,6 @@ tar = "0.4.43"
 xz2 = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]
-# used for listing drives on windows
-sysinfo = "0.34"
 # used for unzipping the downloaded ffmpeg archive
 zip = "=2.3"
 

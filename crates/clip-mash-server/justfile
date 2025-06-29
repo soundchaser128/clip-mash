@@ -26,7 +26,7 @@ fix:
 
 generate-openapi-spec:
     cargo build
-    cargo run --bin generate-openapi-spec ../api-docs.json
+    cargo run --bin generate-openapi-spec ../../api-docs.json
     
 generate-rust-client:
     npx @openapitools/openapi-generator-cli generate -i ../api-docs.json -g rust -o ../rust-client

@@ -465,6 +465,7 @@ dependencies = [
  "include_dir",
  "mimalloc",
  "rand 0.9.1",
+ "reqwest",
  "sanitise-file-name",
  "sentry",
  "sentry-tower",

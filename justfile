@@ -2,7 +2,7 @@ set shell := ["nu", "-c"]
 
 project := justfile_directory()
 frontend := project + "/frontend"
-backend := project + "/crates"
+backend := project + "/crates/clip-mash-server"
 
 default:
   @just --list

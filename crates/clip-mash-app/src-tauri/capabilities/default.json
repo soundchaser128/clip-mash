@@ -2,9 +2,24 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
-    "opener:default"
+    "opener:default",
+    "process:default",
+    "shell:default",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "../../../target/release/clip-mash-server",
+          "sidecar": true
+        }
+      ]
+    },
+    "shell:allow-kill",
+    "core:window:allow-destroy"
   ]
 }

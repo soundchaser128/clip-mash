@@ -18,6 +18,7 @@ use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
+mod helpers;
 mod server;
 
 #[global_allocator]
@@ -238,7 +239,7 @@ async fn run() -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    use clip_mash::helpers::{log, sentry};
+    use crate::helpers::{log, sentry};
 
     color_eyre::install()?;
     let _log_guard = log::setup_logger();

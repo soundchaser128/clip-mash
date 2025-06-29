@@ -4,10 +4,8 @@ use lazy_static::lazy_static;
 use crate::Result;
 
 pub mod estimator;
-pub mod log;
 pub mod math;
 pub mod random;
-pub mod sentry;
 pub mod util;
 
 lazy_static! {

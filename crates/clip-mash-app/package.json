@@ -7,7 +7,17 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "generate": "orval --config ./orval.config.ts",
+    "orval": "orval",
+    "format": "prettier --write src",
+    "format-check": "prettier --check src",
+    "type-check": "tsc",
+    "type-check:watch": "tsc --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "test": "vitest",
+    "test:once": "vitest run"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

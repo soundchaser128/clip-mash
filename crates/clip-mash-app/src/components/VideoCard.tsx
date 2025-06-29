@@ -16,6 +16,7 @@ import EditableText from "./EditableText"
 import HoverVideo from "./HoverVideo"
 import {Link, useLocation} from "react-router-dom"
 import {searchLink} from "@/helpers/links"
+import {BASE_URL} from "@/custom-client"
 
 export type AspectRatio = "tall" | "square" | "wide"
 
@@ -69,7 +70,7 @@ function getPreview(video: VideoDto, config?: StashConfig): string {
       return url
     }
   } else {
-    return `/api/library/video/${video.id}/preview`
+    return `${BASE_URL}/api/library/video/${video.id}/preview`
   }
 }
 
@@ -82,7 +83,7 @@ function getVideo(video: VideoDto, config?: StashConfig): string {
       return url
     }
   } else {
-    return `/api/library/video/${video.id}/file`
+    return `${BASE_URL}/api/library/video/${video.id}/file`
   }
 }
 

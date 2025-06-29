@@ -1,7 +1,8 @@
 import {json} from "react-router-dom"
 
 type Method = "get" | "post" | "put" | "delete" | "patch"
-const BASE_URL = "http://localhost:5174"
+
+export const BASE_URL = "http://localhost:5174"
 
 interface Params {
   url: string

@@ -1,5 +1,5 @@
 import {createStore, StateMachineProvider} from "little-state-machine"
-import React, { useEffect } from "react"
+import React, {useEffect, useState} from "react"
 import ReactDOM from "react-dom/client"
 import {
   createBrowserRouter,
@@ -51,13 +51,47 @@ import TvWatchPage, {interactiveClipsLoader} from "./routes/tv/TvWatchPage"
 import TvStartPage, {markerTitleLoader} from "./routes/tv/TvStartPage"
 import ErrorBoundary from "./components/ErrorBoundary"
 import HomePage from "./routes/HomePage"
-import { sidecar } from "./lib/sidecar"
+import {sidecar} from "./lib/sidecar"
+import {getVersion} from "./api"
+import Loader from "./components/Loader"
 
 sidecar.start().catch(console.error)
 
-const Init = () => {
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
+async function waitForBackend() {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      await getVersion()
+      return
+    } catch (e) {
+      console.log("Waiting for backend to start...")
+      await sleep(1000)
+    }
+  }
+}
+
+const Init = () => {
   useNotification()
+  const [isReady, setIsReady] = useState(false)
+
+  useEffect(() => {
+    waitForBackend()
+      .then(() => {
+        setIsReady(true)
+      })
+      .catch((error) => {
+        console.error("Error waiting for backend:", error)
+        setIsReady(true) // Proceed even if there's an error, to avoid blocking the UI
+      })
+  }, [])
+
+  if (!isReady) {
+    return <Loader />
+  }
 
   return (
     <>

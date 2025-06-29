@@ -1,7 +1,17 @@
 [package]
 name = "clip-mash"
+<<<<<<< HEAD:crates/clip-mash/Cargo.toml
 version = "0.23.0"
 edition = "2024"
+||||||| 84221c9:backend/Cargo.toml
+version = "0.23.0"
+edition = "2021"
+default-run = "clip-mash"
+=======
+version = "0.23.1"
+edition = "2021"
+default-run = "clip-mash"
+>>>>>>> main:backend/Cargo.toml
 license = "GPL-3.0"
 
 [dependencies]

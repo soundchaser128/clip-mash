@@ -231,6 +231,12 @@ function PreviewClips() {
     }
   }, [initialClips, revalidator.state, setClips, wasRevalidated])
 
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.load()
+    }
+  }, [currentClipIndex])
+
   const onNextStage = () => {
     actions.updateForm({
       stage: FormStage.CreateVideo,
@@ -247,9 +253,6 @@ function PreviewClips() {
       const currentTime = event.currentTarget.currentTime
       if (Math.abs(endTimestamp - currentTime) <= 0.5 && autoPlay) {
         setCurrentClipIndex((c) => (c + 1) % clips.length)
-        if (videoRef.current) {
-          videoRef.current.load()
-        }
       }
     }
   }

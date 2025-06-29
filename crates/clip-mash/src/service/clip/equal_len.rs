@@ -3,9 +3,9 @@ use rand::seq::IndexedRandom;
 use tracing::{debug, info};
 
 use super::ClipPicker;
-use crate::server::types::{Clip, EqualLengthClipOptions};
 use crate::service::Marker;
 use crate::service::clip::{get_divisors, trim_clips};
+use crate::types::{Clip, EqualLengthClipOptions};
 
 pub struct EqualLengthClipPicker;
 

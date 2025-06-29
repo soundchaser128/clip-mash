@@ -13,9 +13,9 @@ use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
 use crate::server::error::AppError;
-use crate::server::types::*;
 use clip_mash::data::database::music::DbSong;
 use clip_mash::service::music::{self, MusicDownloadService};
+use clip_mash::types::*;
 use clip_mash::util::expect_file_name;
 
 #[derive(Deserialize, IntoParams)]
@@ -61,7 +61,11 @@ pub async fn download_music(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<SongDto>, AppError> {
     info!("downloading music at url {url}");
-    let music_service = MusicDownloadService::from(state);
+    let music_service = MusicDownloadService::new(
+        state.database.clone(),
+        state.directories.clone(),
+        state.ffmpeg_location.clone(),
+    );
     let url = Url::parse(&url)?;
     let song = music_service.download_song(url).await?;
 
@@ -103,7 +107,11 @@ pub async fn upload_music(
     State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
 ) -> Result<Json<SongDto>, AppError> {
-    let music_service = MusicDownloadService::from(state);
+    let music_service = MusicDownloadService::new(
+        state.database.clone(),
+        state.directories.clone(),
+        state.ffmpeg_location.clone(),
+    );
 
     while let Some(field) = multipart.next_field().await.map_err(Report::from)? {
         if field.name() == Some("file") {

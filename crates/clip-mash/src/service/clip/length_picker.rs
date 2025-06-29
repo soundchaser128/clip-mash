@@ -6,7 +6,7 @@ use rand::seq::IteratorRandom;
 use tracing::{debug, info};
 
 use super::get_divisors;
-use crate::server::types::{Beats, ClipLengthOptions, MeasureCount};
+use crate::types::{Beats, ClipLengthOptions, MeasureCount};
 
 #[derive(Debug)]
 pub struct RandomizedClipLengthPicker<'a> {
@@ -196,9 +196,9 @@ mod test {
     use tracing_test::traced_test;
 
     use crate::helpers::random::create_seeded_rng;
-    use crate::server::types::{Beats, MeasureCount};
     use crate::service::clip::length_picker::{RandomizedClipLengthPicker, SongClipLengthPicker};
     use crate::service::fixtures;
+    use crate::types::{Beats, MeasureCount};
 
     #[traced_test]
     #[test]

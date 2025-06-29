@@ -21,7 +21,7 @@ use crate::data::database::performers::{CreatePerformer, DbPerformer, Gender};
 use crate::data::database::videos::{CreateVideo, DbVideo, VideoSource};
 use crate::data::database::{Database, unix_timestamp_now};
 use crate::helpers::random::generate_id;
-use crate::server::types::{Beats, CreateMarker};
+use crate::types::{Beats, CreateMarker};
 
 #[derive(Debug, Deserialize)]
 struct GraphQlQuery {

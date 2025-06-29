@@ -3,13 +3,13 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::server::docs::ApiDoc;
+use crate::server::handlers::AppState;
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post, put};
 use clip_mash::Result;
 use clip_mash::data::database::Database;
-use clip_mash::server::docs::ApiDoc;
-use clip_mash::server::handlers::AppState;
 use clip_mash::service::commands::ffprobe;
 use clip_mash::service::directories::Directories;
 use clip_mash::service::new_version_checker::NewVersionChecker;
@@ -64,7 +64,7 @@ fn get_address() -> SocketAddr {
 }
 
 async fn run() -> Result<()> {
-    use clip_mash::server::{handlers, static_files};
+    use crate::server::{handlers, static_files};
     use clip_mash::service::commands::ffmpeg;
     use clip_mash::service::migrations;
 

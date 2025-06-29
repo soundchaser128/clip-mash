@@ -10,7 +10,7 @@ use crate::Result;
 use crate::data::database::videos::{DbVideo, VideoSource};
 use crate::data::stash_api::StashApi;
 use crate::helpers::math;
-use crate::server::types::{Beats, Clip, StrokeType};
+use crate::types::{Beats, Clip, StrokeType};
 
 // Funscript structs taken from https://github.com/JPTomorrow/funscript-rs/blob/main/src/funscript.rs
 
@@ -353,10 +353,10 @@ mod test {
 
     use super::StrokeType;
     use crate::Result;
-    use crate::server::types::Beats;
     use crate::service::funscript::{
         FunScript, FunScriptSegment, combine_scripts, create_beat_funscript,
     };
+    use crate::types::Beats;
 
     #[traced_test]
     #[tokio::test]

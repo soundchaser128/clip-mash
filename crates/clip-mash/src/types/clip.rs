@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{Beats, MarkerGroup, SelectedMarker, VideoDto};
-use clip_mash::data::database::videos::VideoSource;
-use clip_mash::service::generator::PaddingType;
+use crate::data::database::videos::VideoSource;
+use crate::service::generator::PaddingType;
 
 #[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "kebab-case", tag = "type")]

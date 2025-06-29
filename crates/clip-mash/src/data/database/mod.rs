@@ -15,7 +15,7 @@ use self::settings::SettingsDatabase;
 pub use self::settings::{HandyConfig, Settings};
 use self::videos::VideosDatabase;
 use crate::Result;
-use crate::server::types::Progress;
+use crate::types::Progress;
 
 pub mod ffprobe;
 pub mod markers;
@@ -96,8 +96,8 @@ mod test {
     use crate::data::database::Database;
     use crate::data::database::markers::ListMarkersFilter;
     use crate::helpers::random::generate_id;
-    use crate::server::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
     use crate::service::fixtures::{persist_marker, persist_video, persist_video_with};
+    use crate::types::{CreateMarker, PageParameters, SortDirection, UpdateMarker};
 
     #[sqlx::test]
     async fn test_get_and_persist_video(pool: SqlitePool) {

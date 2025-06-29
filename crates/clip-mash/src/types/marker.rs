@@ -2,10 +2,10 @@ use camino::Utf8Path;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use clip_mash::data::database::markers::{DbMarker, DbMarkerWithVideo};
-use clip_mash::data::database::videos::{DbVideo, VideoSource};
-use clip_mash::data::stash_api::StashApi;
-use clip_mash::util::expect_file_name;
+use crate::data::database::markers::{DbMarker, DbMarkerWithVideo};
+use crate::data::database::videos::{DbVideo, VideoSource};
+use crate::data::stash_api::StashApi;
+use crate::util::expect_file_name;
 
 #[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]

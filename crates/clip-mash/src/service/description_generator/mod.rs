@@ -4,7 +4,7 @@ use utoipa::ToSchema;
 use super::generator::CompilationOptions;
 use crate::Result;
 use crate::data::database::videos::VideoSource;
-use crate::server::types::VideoCodec;
+use crate::types::VideoCodec;
 use crate::util::StrExt;
 
 mod json;

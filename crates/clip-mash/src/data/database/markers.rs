@@ -7,7 +7,7 @@ use super::videos::{DbVideo, VideoSource, tags_from_string};
 use crate::Result;
 use crate::data::database::unix_timestamp_now;
 use crate::data::stash_api::MarkerLike;
-use crate::server::types::{CreateMarker, UpdateMarker};
+use crate::types::{CreateMarker, UpdateMarker};
 
 #[derive(Debug, Clone, PartialEq, FromRow, Serialize, Deserialize)]
 pub struct DbMarker {

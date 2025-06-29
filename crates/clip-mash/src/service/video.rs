@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::time::{Instant, SystemTime};
 
 use camino::{Utf8Path, Utf8PathBuf};
@@ -24,11 +23,11 @@ use crate::data::database::videos::{CreateVideo, DbVideo, VideoSource, VideoUpda
 use crate::data::stash_api::{MarkerLike, StashApi, StashMarker};
 use crate::helpers::parallelize;
 use crate::helpers::random::generate_id;
-use crate::server::handlers::AppState;
-use crate::server::types::{CreateMarker, ListVideoDto, UpdateMarker};
+// use crate::server::handlers::AppState;
 use crate::service::commands::{YtDlp, YtDlpOptions, ffprobe};
 use crate::service::directories::FolderType;
 use crate::service::preview_image::PreviewGenerator;
+use crate::types::{CreateMarker, ListVideoDto, UpdateMarker};
 
 const VIDEO_EXTENSIONS: &[&str] = &["mp4", "m4v", "webm"];
 
@@ -53,27 +52,14 @@ fn tags_to_string(tags: &[String]) -> String {
 }
 
 pub struct VideoService {
-    database: Database,
-    directories: Directories,
-    ffmpeg_location: FfmpegLocation,
-    stash_api: StashApi,
-    preview_generator: PreviewGenerator,
+    pub database: Database,
+    pub directories: Directories,
+    pub ffmpeg_location: FfmpegLocation,
+    pub stash_api: StashApi,
+    pub preview_generator: PreviewGenerator,
 }
 
 impl VideoService {
-    pub async fn new(state: Arc<AppState>) -> Result<Self> {
-        let stash_api = state.stash_api().await?;
-        let preview_generator =
-            PreviewGenerator::new(state.directories.clone(), state.ffmpeg_location.clone());
-        Ok(VideoService {
-            database: state.database.clone(),
-            directories: state.directories.clone(),
-            ffmpeg_location: state.ffmpeg_location.clone(),
-            stash_api,
-            preview_generator,
-        })
-    }
-
     async fn gather_files(&self, path: Utf8PathBuf, recurse: bool) -> Result<Vec<Utf8PathBuf>> {
         spawn_blocking(move || {
             let files = WalkDir::new(path)

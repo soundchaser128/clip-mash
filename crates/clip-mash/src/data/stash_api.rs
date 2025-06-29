@@ -17,9 +17,9 @@ use super::database::markers::DbMarker;
 use super::database::performers::Gender;
 use super::database::unix_timestamp_now;
 use crate::Result;
-use crate::server::types::PageParameters;
 use crate::service::funscript::FunScript;
 use crate::service::stash_config::StashConfig;
+use crate::types::PageParameters;
 use crate::util::add_api_key;
 
 // How to generate Stash GraphQL schema JSON:

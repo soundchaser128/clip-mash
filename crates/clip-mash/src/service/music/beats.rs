@@ -8,8 +8,8 @@ use hound::WavReader;
 use tracing::info;
 
 use crate::Result as AppResult;
-use crate::server::types::Beats;
 use crate::service::commands::ffmpeg::FfmpegLocation;
+use crate::types::Beats;
 use crate::util::commandline_error;
 
 const BUF_SIZE: usize = 512;

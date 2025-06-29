@@ -13,7 +13,6 @@ use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
 use crate::server::error::AppError;
-use crate::server::types::*;
 use clip_mash::data::database::markers::ListMarkersFilter;
 use clip_mash::helpers::random::{generate_id, get_random_word};
 use clip_mash::service::clip::{ClipService, ClipsResult};
@@ -22,6 +21,7 @@ use clip_mash::service::funscript::{self, FunScript, ScriptBuilder};
 use clip_mash::service::generator::CompilationGenerator;
 use clip_mash::service::options_converter::OptionsConverterService;
 use clip_mash::service::streams::{LocalVideoSource, StreamUrlService};
+use clip_mash::types::*;
 
 #[utoipa::path(
     post,
@@ -346,7 +346,7 @@ pub async fn generate_description(
     State(state): State<Arc<AppState>>,
     Json(body): Json<CreateVideoBody>,
 ) -> Result<impl IntoResponse, AppError> {
-    use crate::service::description_generator::render_description;
+    use clip_mash::service::description_generator::render_description;
 
     let service = OptionsConverterService::new(state.database.clone());
     let options = service.convert_compilation_options(body).await?;
@@ -368,7 +368,7 @@ pub async fn generate_description(
 #[axum::debug_handler]
 /// Generate a possible random seed (a random word)
 pub async fn generate_random_seed() -> Json<String> {
-    use crate::helpers::random;
+    use clip_mash::helpers::random;
 
     Json(random::get_random_word())
 }

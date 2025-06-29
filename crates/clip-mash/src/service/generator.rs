@@ -21,7 +21,7 @@ use crate::data::database::videos::DbVideo;
 use crate::helpers::estimator::Estimator;
 use crate::helpers::random::generate_id;
 use crate::helpers::util::StrExt;
-use crate::server::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
+use crate::types::{Clip, EncodingEffort, VideoCodec, VideoQuality};
 use crate::util::{commandline_error, debug_output, format_duration};
 
 #[derive(Debug)]

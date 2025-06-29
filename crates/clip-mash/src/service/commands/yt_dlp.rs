@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use camino::Utf8PathBuf;
 use color_eyre::eyre::bail;
 use tokio::fs;
@@ -9,8 +7,8 @@ use youtube_dl::YoutubeDl;
 
 use super::ffmpeg::FfmpegLocation;
 use crate::Result;
+// use crate::handlers::AppState;
 use crate::helpers::random::generate_id;
-use crate::server::handlers::AppState;
 use crate::service::directories::{Directories, FolderType};
 
 const YT_DLP_EXECUTABLE: &str = if cfg!(target_os = "windows") {
@@ -35,13 +33,13 @@ pub struct YtDlp {
     dirs: Directories,
 }
 
-impl From<Arc<AppState>> for YtDlp {
-    fn from(value: Arc<AppState>) -> Self {
-        Self {
-            dirs: value.directories.clone(),
-        }
-    }
-}
+// impl From<Arc<AppState>> for YtDlp {
+//     fn from(value: Arc<AppState>) -> Self {
+//         Self {
+//             dirs: value.directories.clone(),
+//         }
+//     }
+// }
 
 impl YtDlp {
     pub fn new(dirs: Directories) -> Self {

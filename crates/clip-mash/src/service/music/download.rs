@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::extract::multipart::Field;
 use camino::{Utf8Path, Utf8PathBuf};
 use tokio::fs;
@@ -10,8 +8,8 @@ use url::Url;
 use crate::Result;
 use crate::data::database::Database;
 use crate::data::database::music::{CreateSong, DbSong};
+// use crate::handlers::AppState;
 use crate::helpers::random::generate_id;
-use crate::server::handlers::AppState;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::commands::{YtDlp, YtDlpOptions, ffprobe};
 use crate::service::directories::{Directories, FolderType};
@@ -29,18 +27,7 @@ pub struct MusicDownloadService {
     ffmpeg_location: FfmpegLocation,
 }
 
-impl From<Arc<AppState>> for MusicDownloadService {
-    fn from(value: Arc<AppState>) -> Self {
-        Self {
-            db: value.database.clone(),
-            dirs: value.directories.clone(),
-            ffmpeg_location: value.ffmpeg_location.clone(),
-        }
-    }
-}
-
 impl MusicDownloadService {
-    #[cfg(test)]
     pub fn new(database: Database, directories: Directories, ffmpeg: FfmpegLocation) -> Self {
         Self {
             db: database,

@@ -5,12 +5,12 @@ use time::format_description::well_known::Rfc3339;
 use utoipa::ToSchema;
 
 use super::{MarkerDto, MarkerDtoConverter};
-use clip_mash::data::database::markers::VideoWithMarkers;
-use clip_mash::data::database::unix_timestamp_now;
-use clip_mash::data::database::videos::{DbVideo, VideoSource};
-use clip_mash::data::stash_api::StashApi;
-use clip_mash::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
-use clip_mash::util::{add_api_key, expect_file_name};
+use crate::data::database::markers::VideoWithMarkers;
+use crate::data::database::unix_timestamp_now;
+use crate::data::database::videos::{DbVideo, VideoSource};
+use crate::data::stash_api::StashApi;
+use crate::data::stash_api::find_scenes_query::FindScenesQueryFindScenesScenes;
+use crate::util::{add_api_key, expect_file_name};
 
 pub trait VideoLike {
     fn video_id(&self) -> &str;

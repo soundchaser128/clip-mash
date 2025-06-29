@@ -4,10 +4,10 @@ use crate::Result;
 use crate::data::database::Database;
 use crate::data::database::music::DbSong;
 use crate::data::database::videos::DbVideo;
-use crate::server::types::{Clip, CreateClipsBody, CreateVideoBody, SelectedMarker};
 use crate::service::Marker;
 use crate::service::clip::CreateClipsOptions;
 use crate::service::generator::CompilationOptions;
+use crate::types::{Clip, CreateClipsBody, CreateVideoBody, SelectedMarker};
 
 pub struct OptionsConverterService {
     db: Database,

@@ -12,11 +12,7 @@ use tracing::{debug, info, warn};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::server::error::AppError;
-use crate::server::handlers::AppState;
-use crate::server::types::{
-    CreateMarker, ListVideoDto, MarkerDto, MarkerDtoConverter, Page, PageParameters, StashVideoDto,
-    UpdateMarker, VideoDetailsDto, VideoDetailsDtoConverter, VideoDto,
-};
+use crate::server::handlers::{AppState, new_video_service};
 use clip_mash::data::database::markers::{ListMarkersFilter, MarkerCount};
 use clip_mash::data::database::videos::{TagCount, VideoSearchQuery, VideoSource, VideoUpdate};
 use clip_mash::data::stash_api::StashApi;
@@ -25,6 +21,10 @@ use clip_mash::service::migrations::Migrator;
 use clip_mash::service::preview_image::PreviewGenerator;
 use clip_mash::service::scene_detection;
 use clip_mash::service::video::{AddVideosRequest, VideoService};
+use clip_mash::types::{
+    CreateMarker, ListVideoDto, MarkerDto, MarkerDtoConverter, Page, PageParameters, StashVideoDto,
+    UpdateMarker, VideoDetailsDto, VideoDetailsDtoConverter, VideoDto,
+};
 
 #[utoipa::path(
     get,
@@ -116,7 +116,7 @@ pub async fn add_new_videos(
     State(state): State<Arc<AppState>>,
     Json(request): Json<AddVideosRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    let video_service = VideoService::new(state).await?;
+    let video_service = new_video_service(state).await?;
     let new_videos: Vec<_> = video_service
         .add_videos(request)
         .await?
@@ -233,7 +233,7 @@ pub struct VideoCleanupResponse {
 pub async fn cleanup_videos(
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    let video_service = VideoService::new(state).await?;
+    let video_service = new_video_service(state).await?;
     let deleted_count = video_service.cleanup_videos().await?;
     Ok(Json(VideoCleanupResponse { deleted_count }))
 }
@@ -322,10 +322,12 @@ pub async fn detect_markers(
     Query(DetectMarkersQuery { threshold }): Query<DetectMarkersQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<MarkerDto>>, AppError> {
-    let created_markers =
-        scene_detection::find_and_persist_markers(&id, threshold.unwrap_or(0.4), state.clone())
-            .await?;
-    Ok(Json(created_markers))
+    // let created_markers =
+    //     scene_detection::find_and_persist_markers(&id, threshold.unwrap_or(0.4), state.clone())
+    //         .await?;
+    // Ok(Json(created_markers))
+
+    todo!("Not implemented")
 }
 
 #[axum::debug_handler]
@@ -511,7 +513,8 @@ pub async fn create_new_marker(
         info!("saving marker {marker:?} to the database");
 
         if let Some(video) = state.database.videos.get_video(&marker.video_id).await? {
-            let preview_generator: PreviewGenerator = state.0.clone().into();
+            let preview_generator =
+                PreviewGenerator::new(state.directories.clone(), state.ffmpeg_location.clone());
             let preview_image = preview_generator
                 .generate_preview(&video.id, &video.file_path, marker.start)
                 .await?;
@@ -635,7 +638,8 @@ pub async fn split_marker(
         .expect("markers must exist");
 
     let mut new_markers = data.markers;
-    let preview_generator: PreviewGenerator = state.0.clone().into();
+    let preview_generator =
+        PreviewGenerator::new(state.directories.clone(), state.ffmpeg_location.clone());
     let file_path = data.video.file_path.clone();
     for marker in &mut new_markers {
         if marker.marker_preview_image.is_none() {
@@ -678,7 +682,7 @@ pub async fn merge_stash_video(
     Path(id): Path<String>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    let video_service = VideoService::new(state).await?;
+    let video_service = new_video_service(state).await?;
     let new_video = video_service.merge_stash_scene(&id).await?;
     info!("new video after merging: {new_video:?}");
 

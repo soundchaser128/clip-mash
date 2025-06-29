@@ -54,8 +54,8 @@ Created with [ClipMash](https://github.com/soundchaser128/clip-mash).
 #[cfg(test)]
 mod tests {
     use super::{DescriptionGenerator, MarkdownDescriptionGenerator, TemplateContext};
-    use crate::server::types::VideoCodec;
     use crate::service::description_generator::ClipInfo;
+    use crate::types::VideoCodec;
 
     #[test]
     fn test_markdown_description() {

@@ -4,7 +4,7 @@ use crate::Result;
 use crate::data::database::Database;
 use crate::data::database::videos::VideoSource;
 use crate::data::stash_api::StashApi;
-use crate::server::types::{Clip, VideoLike};
+use crate::types::{Clip, VideoLike};
 
 #[derive(Debug, Clone, Copy)]
 pub enum LocalVideoSource {

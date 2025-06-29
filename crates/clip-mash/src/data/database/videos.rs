@@ -13,7 +13,7 @@ use utoipa::{IntoParams, ToSchema};
 use super::markers::{DbMarker, VideoWithMarkers};
 use crate::Result;
 use crate::data::database::unix_timestamp_now;
-use crate::server::types::{ListVideoDto, PageParameters, VideoLike};
+use crate::types::{ListVideoDto, PageParameters, VideoLike};
 
 const LEGACY_TAG_SEPARATOR: &str = ";";
 

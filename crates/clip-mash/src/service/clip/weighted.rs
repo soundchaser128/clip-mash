@@ -6,11 +6,11 @@ use rand::rngs::StdRng;
 use tracing::{debug, info};
 
 use super::ClipPicker;
-use crate::server::types::{Clip, WeightedRandomClipOptions};
 use crate::service::Marker;
 use crate::service::clip::length_picker::ClipLengthPicker;
 use crate::service::clip::state::{MarkerState, MarkerStateInfo};
 use crate::service::clip::trim_clips;
+use crate::types::{Clip, WeightedRandomClipOptions};
 
 pub struct WeightedRandomClipPicker;
 
@@ -112,13 +112,13 @@ mod tests {
 
     use super::validate_options;
     use crate::helpers::random::create_seeded_rng;
-    use crate::server::types::{
-        ClipLengthOptions, RandomizedClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
-    };
     use crate::service::clip::ClipPicker;
     use crate::service::clip::round_robin::RoundRobinClipPicker;
     use crate::service::clip::weighted::WeightedRandomClipPicker;
     use crate::service::fixtures;
+    use crate::types::{
+        ClipLengthOptions, RandomizedClipOptions, RoundRobinClipOptions, WeightedRandomClipOptions,
+    };
 
     #[traced_test]
     #[test]

@@ -1,26 +1,24 @@
-use std::sync::Arc;
-
 use camino::{Utf8Path, Utf8PathBuf};
 use tracing::info;
 
 use super::commands::ffmpeg::{Ffmpeg, FfmpegLocation};
 use super::directories::Directories;
 use crate::Result;
-use crate::server::handlers::AppState;
+// use crate::server::handlers::AppState;
 
 pub struct PreviewGenerator {
     directories: Directories,
     ffmpeg_location: FfmpegLocation,
 }
 
-impl From<Arc<AppState>> for PreviewGenerator {
-    fn from(state: Arc<AppState>) -> Self {
-        PreviewGenerator {
-            directories: state.directories.clone(),
-            ffmpeg_location: state.ffmpeg_location.clone(),
-        }
-    }
-}
+// impl From<Arc<AppState>> for PreviewGenerator {
+//     fn from(state: Arc<AppState>) -> Self {
+//         PreviewGenerator {
+//             directories: state.directories.clone(),
+//             ffmpeg_location: state.ffmpeg_location.clone(),
+//         }
+//     }
+// }
 
 impl PreviewGenerator {
     pub fn new(directories: Directories, ffmpeg_location: FfmpegLocation) -> Self {

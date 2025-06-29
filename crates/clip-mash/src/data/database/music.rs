@@ -4,9 +4,9 @@ use tokio::task::spawn_blocking;
 use tracing::info;
 
 use crate::Result;
-use crate::server::types::Beats;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::music;
+use crate::types::Beats;
 
 #[derive(Debug)]
 pub struct DbSong {

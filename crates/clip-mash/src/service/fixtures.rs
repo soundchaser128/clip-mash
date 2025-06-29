@@ -574,9 +574,7 @@ pub async fn generate_video(path: impl AsRef<Utf8Path>, width: u32, height: u32)
             "-f",
             "lavfi",
             "-i",
-            &format!(
-                "color=size={width}x{height}:duration=10:rate=30:color=red"
-            ),
+            &format!("color=size={width}x{height}:duration=10:rate=30:color=red"),
             path.as_str(),
         ])
         .output()

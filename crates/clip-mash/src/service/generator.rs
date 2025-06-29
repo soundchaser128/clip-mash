@@ -79,7 +79,6 @@ pub enum PaddingType {
     Blur,
 }
 
-
 #[derive(Debug)]
 struct CreateClip<'a> {
     url: &'a str,

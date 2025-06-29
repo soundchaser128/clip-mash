@@ -11,7 +11,6 @@ pub struct EncodingOptimizationService {
 
 impl EncodingOptimizationService {
     pub fn new(database: Database) -> Self {
-        
         Self { database }
     }
 

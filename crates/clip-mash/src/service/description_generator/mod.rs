@@ -20,9 +20,7 @@ fn format_timestamp(value: f64) -> String {
     let seconds = value.floor() as u32 % 60;
     let milliseconds = (value.fract() * 1000.0).floor() as u32;
 
-    format!(
-        "{hours:02}:{minutes:02}:{seconds:02}.{milliseconds:03}"
-    )
+    format!("{hours:02}:{minutes:02}:{seconds:02}.{milliseconds:03}")
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Copy, Clone, ToSchema)]

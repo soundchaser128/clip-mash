@@ -41,8 +41,7 @@ async fn main() -> Result<()> {
         elapsed += interval_duration;
     }
 
-    let response =
-        reqwest::get(&format!("http://localhost:{port}/api-docs/openapi.json")).await?;
+    let response = reqwest::get(&format!("http://localhost:{port}/api-docs/openapi.json")).await?;
     let spec = response.text().await?;
 
     let file_name = std::env::args().nth(1).unwrap_or("openapi.json".into());

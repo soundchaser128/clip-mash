@@ -231,8 +231,7 @@ impl StashApi {
     }
 
     fn api_key(&self) -> &str {
-        self.api_key.as_deref()
-            .unwrap_or_default()
+        self.api_key.as_deref().unwrap_or_default()
     }
 
     pub async fn health(&self) -> Result<String> {

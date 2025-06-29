@@ -1,5 +1,9 @@
 [workspace]
-members = ["crates/clip-mash", "crates/clip-mash-server"]
+members = [
+    "crates/clip-mash",
+    "crates/clip-mash-server",
+    "crates/clip-mash-app/src-tauri",
+]
 resolver = "2"
 
 [profile.dev.package.sqlx-macros]

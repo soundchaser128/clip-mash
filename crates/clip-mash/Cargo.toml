@@ -1,0 +1,57 @@
+[package]
+name = "clip-mash"
+version = "0.23.1"
+edition = "2024"
+license = "GPL-3.0"
+
+[dependencies]
+camino = { version = "1.1.9", features = ["serde1"] }
+color-eyre = "0.6.3"
+etcetera = "0.10.0"
+float-cmp = "0.10.0"
+futures = "0.3.31"
+graphql_client = "0.14.0"
+hound = "3.5.1"
+itertools = "0.14.0"
+lazy_static = "1.5.0"
+num_cpus = "1.16.0"
+num-traits = "0.2.19"
+ordered-float = "5.0"
+rand = "0.9.0"
+regex = "1.11.1"
+reqwest = { version = "0.12.11", default-features = false, features = ["json"] }
+semver = "1.0.24"
+serde = { version = "1.0.217", features = ["derive"] }
+serde_json = "1.0.134"
+sqlx = { version = "0.8.2", features = ["runtime-tokio", "sqlite"] }
+time = { version = "0.3.37", features = ["formatting", "parsing", "macros"] }
+tokio = { version = "1.42.0", features = ["full"] }
+tracing = "0.1.41"
+url = { version = "2.5.4", features = ["serde"] }
+utoipa = "5.3.0"
+walkdir = "2.5.0"
+youtube_dl = { version = "0.10.0", features = [
+    "tokio",
+    "downloader-native-tls",
+] }
+
+[target.'cfg(unix)'.dependencies]
+tar = "0.4.43"
+xz2 = "0.1.7"
+
+[target.'cfg(windows)'.dependencies]
+# used for unzipping the downloaded ffmpeg archive
+zip = "=2.3"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+aubio = { version = "0.2.1", features = ["bindgen"] }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+aubio = { version = "0.2.1", features = ["builtin"] }
+
+[dev-dependencies]
+fake = "4"
+tracing-test = "0.2.5"
+mock_instant = "0.5"
+graphql-parser = "0.4.1"
+wiremock = "0.6.2"

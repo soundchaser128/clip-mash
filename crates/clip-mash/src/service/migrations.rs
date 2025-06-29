@@ -248,6 +248,7 @@ impl Migrator {
         Ok(())
     }
 
+    #[allow(deprecated)]
     async fn migrate_settings(&self) -> Result<()> {
         if self.database.settings.fetch_optional().await?.is_none() {
             if let Ok(config) = StashConfig::load(&self.directories) {

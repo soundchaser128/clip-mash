@@ -13,9 +13,11 @@ pub struct StashConfig {
 }
 
 impl StashConfig {
+    #[deprecated]
     pub fn load(directories: &Directories) -> Result<Self> {
         use std::fs;
 
+        #[allow(deprecated)]
         let config_file = directories.config_file_path();
         info!("trying to load config file from {}", config_file);
 

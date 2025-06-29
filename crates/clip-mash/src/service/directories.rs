@@ -3,7 +3,7 @@ use std::fs;
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use directories::ProjectDirs;
+use etcetera::{AppStrategy, AppStrategyArgs, choose_app_strategy};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 use utoipa::ToSchema;
@@ -34,17 +34,42 @@ trait DirectorySupplier {
     fn data_dir(&self) -> &Utf8Path;
 }
 
-impl DirectorySupplier for ProjectDirs {
+pub struct EtceteraDirs {
+    cache_dir: Utf8PathBuf,
+    config_dir: Utf8PathBuf,
+    data_dir: Utf8PathBuf,
+}
+
+impl EtceteraDirs {
+    pub fn new() -> Self {
+        let strategy = choose_app_strategy(AppStrategyArgs {
+            top_level_domain: "com".into(),
+            author: "soundchaser128".into(),
+            app_name: "clip-mash".into(),
+        })
+        .expect("failed to set up etcetera");
+        Self {
+            cache_dir: strategy.cache_dir().try_into().expect("path must be utf-8"),
+            config_dir: strategy
+                .config_dir()
+                .try_into()
+                .expect("path must be utf-8"),
+            data_dir: strategy.data_dir().try_into().expect("path must be utf-8"),
+        }
+    }
+}
+
+impl DirectorySupplier for EtceteraDirs {
     fn cache_dir(&self) -> &Utf8Path {
-        Utf8Path::from_path(self.cache_dir()).expect("path must be utf-8")
+        &self.cache_dir
     }
 
     fn config_dir(&self) -> &Utf8Path {
-        Utf8Path::from_path(self.config_dir()).expect("path must be utf-8")
+        &self.config_dir
     }
 
     fn data_dir(&self) -> &Utf8Path {
-        Utf8Path::from_path(self.data_dir()).expect("path must be utf-8")
+        &self.data_dir
     }
 }
 
@@ -97,10 +122,7 @@ impl Directories {
                 );
                 Box::new(EnvDirectorySupplier::new(value))
             }
-            Err(_) => Box::new(
-                ProjectDirs::from("xyz", "soundchaser128", "stash-compilation-maker")
-                    .expect("could not determine config path"),
-            ),
+            Err(_) => Box::new(EtceteraDirs::new()),
         };
 
         for directory in &[dirs.config_dir(), dirs.cache_dir(), dirs.data_dir()] {
@@ -151,15 +173,16 @@ impl Directories {
     }
 
     pub fn preview_image_dir(&self) -> Utf8PathBuf {
-        self.cache_dir().join("preview-images")
+        self.data_dir().join("preview-images")
     }
 
+    #[deprecated]
     pub fn config_file_path(&self) -> Utf8PathBuf {
         self.config_dir().join("config.json")
     }
 
     pub fn music_dir(&self) -> Utf8PathBuf {
-        self.cache_dir().join("music")
+        self.data_dir().join("music")
     }
 
     pub fn temp_video_dir(&self) -> Utf8PathBuf {
@@ -175,7 +198,7 @@ impl Directories {
     }
 
     pub fn downloaded_video_dir(&self) -> Utf8PathBuf {
-        self.cache_dir().join("videos").join("downloaded")
+        self.data_dir().join("videos").join("downloaded")
     }
 
     pub fn info(&self) {

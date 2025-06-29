@@ -2,18 +2,23 @@ use std::sync::Arc;
 
 use axum::Json;
 use axum::body::Body;
+use axum::extract::multipart::Field;
 use axum::extract::{Multipart, Path, Query, State};
 use axum::response::IntoResponse;
+use clip_mash::data::database::Database;
+use clip_mash::service::commands::ffmpeg::FfmpegLocation;
+use clip_mash::service::commands::ffprobe;
 use color_eyre::Report;
 use color_eyre::eyre::eyre;
 use serde::{Deserialize, Serialize};
+use tokio::io::AsyncWriteExt;
 use tracing::info;
 use url::Url;
 use utoipa::{IntoParams, ToSchema};
 
 use super::AppState;
 use crate::server::error::AppError;
-use clip_mash::data::database::music::DbSong;
+use clip_mash::data::database::music::{CreateSong, DbSong};
 use clip_mash::service::music::{self, MusicDownloadService};
 use clip_mash::types::*;
 use clip_mash::util::expect_file_name;
@@ -93,6 +98,39 @@ pub struct SongUpload {
     file: String,
 }
 
+pub async fn upload_song(
+    service: &MusicDownloadService,
+    ffmpeg_location: &FfmpegLocation,
+    database: &Database,
+    mut field: Field<'_>,
+) -> crate::Result<DbSong> {
+    use tokio::fs;
+
+    let file_name = field.file_name().expect("field must have a file name");
+    let output_dir = service.get_download_directory().await?;
+    let path = output_dir.join(file_name);
+    info!("uploading song to {path}");
+    let mut writer = fs::File::create(&path).await?;
+
+    while let Some(chunk) = field.chunk().await? {
+        writer.write_all(&chunk).await?;
+    }
+
+    let ffprobe_result = ffprobe(path.as_str(), &ffmpeg_location).await?;
+    let beats = music::detect_beats(&path, &ffmpeg_location).ok();
+
+    let result = database
+        .music
+        .persist_song(CreateSong {
+            duration: ffprobe_result.format.duration().unwrap_or_default(),
+            file_path: path.to_string(),
+            url: format!("file:{path}"),
+            beats,
+        })
+        .await?;
+    Ok(result)
+}
+
 #[axum::debug_handler]
 #[utoipa::path(
     post,
@@ -115,7 +153,13 @@ pub async fn upload_music(
 
     while let Some(field) = multipart.next_field().await.map_err(Report::from)? {
         if field.name() == Some("file") {
-            let song = music_service.upload_song(field).await?;
+            let song = upload_song(
+                &music_service,
+                &state.ffmpeg_location,
+                &state.database,
+                field,
+            )
+            .await?;
             return Ok(Json(song.into()));
         }
     }

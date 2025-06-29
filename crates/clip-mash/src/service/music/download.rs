@@ -1,4 +1,3 @@
-use axum::extract::multipart::Field;
 use camino::{Utf8Path, Utf8PathBuf};
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
@@ -8,7 +7,6 @@ use url::Url;
 use crate::Result;
 use crate::data::database::Database;
 use crate::data::database::music::{CreateSong, DbSong};
-// use crate::handlers::AppState;
 use crate::helpers::random::generate_id;
 use crate::service::commands::ffmpeg::FfmpegLocation;
 use crate::service::commands::{YtDlp, YtDlpOptions, ffprobe};
@@ -36,7 +34,7 @@ impl MusicDownloadService {
         }
     }
 
-    async fn get_download_directory(&self) -> Result<Utf8PathBuf> {
+    pub async fn get_download_directory(&self) -> Result<Utf8PathBuf> {
         let base_dir = self.dirs.music_dir();
         let song_id = generate_id();
         let output_dir = base_dir.join(song_id);
@@ -98,33 +96,6 @@ impl MusicDownloadService {
                 .await?;
             Ok(result)
         }
-    }
-
-    pub async fn upload_song(&self, mut field: Field<'_>) -> Result<DbSong> {
-        let file_name = field.file_name().expect("field must have a file name");
-        let output_dir = self.get_download_directory().await?;
-        let path = output_dir.join(file_name);
-        info!("uploading song to {path}");
-        let mut writer = fs::File::create(&path).await?;
-
-        while let Some(chunk) = field.chunk().await? {
-            writer.write_all(&chunk).await?;
-        }
-
-        let ffprobe_result = ffprobe(path.as_str(), &self.ffmpeg_location).await?;
-        let beats = music::detect_beats(&path, &self.ffmpeg_location).ok();
-
-        let result = self
-            .db
-            .music
-            .persist_song(CreateSong {
-                duration: ffprobe_result.format.duration().unwrap_or_default(),
-                file_path: path.to_string(),
-                url: format!("file:{path}"),
-                beats,
-            })
-            .await?;
-        Ok(result)
     }
 }
 

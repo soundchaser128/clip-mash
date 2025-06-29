@@ -820,7 +820,6 @@ dependencies = [
  "clip-mash",
  "color-eyre",
  "futures",
- "include_dir",
  "mimalloc",
  "rand 0.9.1",
  "reqwest",
@@ -841,7 +840,6 @@ dependencies = [
  "url",
  "utoipa",
  "utoipa-swagger-ui",
- "webbrowser",
 ]
 
 [[package]]
@@ -2514,25 +2512,6 @@ checksum = "3acae9609540aa318d1bc588455225fb2085b9ed0c4f6bd0d9d5bcd86f1a0344"
 dependencies = [
  "icu_normalizer",
  "icu_properties",
-]
-
-[[package]]
-name = "include_dir"
-version = "0.7.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "923d117408f1e49d914f1a379a309cffe4f18c05cf4e3d12e613a15fc81bd0dd"
-dependencies = [
- "include_dir_macros",
-]
-
-[[package]]
-name = "include_dir_macros"
-version = "0.7.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cab85a7ed0bd5f0e76d93846e0147172bed2e2d3f859bcc33a8d9699cad1a75"
-dependencies = [
- "proc-macro2",
- "quote",
 ]
 
 [[package]]
@@ -6565,22 +6544,6 @@ checksum = "33b6dd2ef9186f1f2072e409e99cd22a975331a6b3591b12c764e0e55c60d5d2"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "webbrowser"
-version = "1.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aaf4f3c0ba838e82b4e5ccc4157003fb8c324ee24c058470ffb82820becbde98"
-dependencies = [
- "core-foundation 0.10.1",
- "jni",
- "log",
- "ndk-context",
- "objc2 0.6.1",
- "objc2-foundation 0.3.1",
- "url",
- "web-sys",
 ]
 
 [[package]]

@@ -13,7 +13,6 @@ axum = { version = "0.8", features = ["macros", "multipart"] }
 camino = { version = "1.1.9", features = ["serde1"] }
 color-eyre = "0.6.3"
 futures = "0.3.31"
-include_dir = "0.7.4"
 mimalloc = "0.1.43"
 rand = "0.9.1"
 sanitise-file-name = "1.0.0"
@@ -25,14 +24,13 @@ time = { version = "0.3.37", features = ["formatting", "parsing", "macros"] }
 tokio = { version = "1.42.0", features = ["full"] }
 tokio-util = { version = "0.7.13", features = ["io"] }
 tower = { version = "0.5.2", features = ["util"] }
-tower-http = { version = "0.6", features = ["fs", "trace"] }
+tower-http = { version = "0.6", features = ["fs", "trace", "cors"] }
 tracing = "0.1.41"
 tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 url = { version = "2.5.4", features = ["serde"] }
 utoipa = { version = "5.3.0", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "9.0.0", features = ["axum"] }
-webbrowser = "1.0"
 reqwest = { version = "0.12.11", default-features = false, features = ["json"] }
 
 [target.'cfg(windows)'.dependencies]

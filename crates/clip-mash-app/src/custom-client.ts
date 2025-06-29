@@ -1,6 +1,7 @@
 import {json} from "react-router-dom"
 
 type Method = "get" | "post" | "put" | "delete" | "patch"
+const BASE_URL = "http://localhost:5174"
 
 interface Params {
   url: string
@@ -19,7 +20,7 @@ export const customInstance = async <T>({
   data,
   headers,
 }: Params): Promise<T> => {
-  let fullUrl = url
+  let fullUrl = BASE_URL + url
   if (params) {
     const filtered = Object.entries(params).filter(
       ([, value]) => value !== "" && value !== null && value !== undefined,

@@ -1,7 +1,6 @@
 use std::env;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::time::Duration;
 
 use crate::server::docs::ApiDoc;
 use crate::server::handlers::AppState;
@@ -14,6 +13,8 @@ use clip_mash::service::commands::ffprobe;
 use clip_mash::service::directories::Directories;
 use clip_mash::service::new_version_checker::NewVersionChecker;
 use mimalloc::MiMalloc;
+use reqwest::Method;
+use tower_http::cors::{Any, CorsLayer};
 use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -65,7 +66,7 @@ fn get_address() -> SocketAddr {
 }
 
 async fn run() -> Result<()> {
-    use crate::server::{handlers, static_files};
+    use crate::server::handlers;
     use clip_mash::service::commands::ffmpeg;
     use clip_mash::service::migrations;
 
@@ -211,26 +212,17 @@ async fn run() -> Result<()> {
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .nest("/api", api_routes)
-        .fallback_service(static_files::service())
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
         .layer(sentry_tower::NewSentryLayer::new_from_top())
         .layer(sentry_tower::SentryHttpLayer::with_transaction())
+        .layer(
+            CorsLayer::new()
+                .allow_methods([Method::GET])
+                .allow_origin(Any),
+        )
         .with_state(state);
 
     let addr = get_address();
-
-    let is_debug_build = cfg!(debug_assertions);
-    if !is_debug_build {
-        tokio::spawn(async move {
-            tokio::time::sleep(Duration::from_millis(500)).await;
-            if webbrowser::open(&format!("http://{addr}")).is_err() {
-                warn!(
-                    "failed to open UI in browser, please navigate to http://localhost:{}",
-                    addr.port()
-                );
-            }
-        });
-    }
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;

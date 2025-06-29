@@ -24,10 +24,7 @@ pub enum FolderType {
 
 impl FolderType {
     pub fn can_cleanup(&self) -> bool {
-        match self {
-            FolderType::TempVideo | FolderType::CompilationVideo => true,
-            _ => false,
-        }
+        matches!(self, FolderType::TempVideo | FolderType::CompilationVideo)
     }
 }
 

@@ -7,6 +7,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use camino::Utf8Path;
+use clip_mash::service::scene_detection;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 use utoipa::{IntoParams, ToSchema};
@@ -321,12 +322,18 @@ pub async fn detect_markers(
     Query(DetectMarkersQuery { threshold }): Query<DetectMarkersQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<MarkerDto>>, AppError> {
-    // let created_markers =
-    //     scene_detection::find_and_persist_markers(&id, threshold.unwrap_or(0.4), state.clone())
-    //         .await?;
-    // Ok(Json(created_markers))
-
-    todo!("Not implemented")
+    let directories = state.directories.clone();
+    let stash_api = state.stash_api().await?;
+    let created_markers = scene_detection::find_and_persist_markers(
+        &id,
+        threshold.unwrap_or(0.4),
+        directories,
+        stash_api,
+        &state.database,
+        &state.ffmpeg_location,
+    )
+    .await?;
+    Ok(Json(created_markers))
 }
 
 #[axum::debug_handler]

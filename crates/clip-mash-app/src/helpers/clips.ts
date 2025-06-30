@@ -1,5 +1,6 @@
 import {Clip} from "@/api"
 import {VideoSource} from "@/components/VideoPlayer"
+import {BASE_URL} from "@/custom-client"
 
 export function getClipUrl(
   streams: Record<string, string>,
@@ -9,11 +10,12 @@ export function getClipUrl(
     return undefined
   } else {
     const streamUrl = streams[currentClip.videoId]
+    console.log(streams, currentClip)
     const hash = `t=${currentClip.range[0]},${currentClip.range[1]}`
     if (streamUrl.startsWith("/")) {
       return [
         {
-          src: streamUrl + "#" + hash,
+          src: BASE_URL + streamUrl + "#" + hash,
           type: "video/mp4",
         },
       ]

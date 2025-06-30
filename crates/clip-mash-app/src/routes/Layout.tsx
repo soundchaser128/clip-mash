@@ -65,16 +65,16 @@ const AssistantLayout: React.FC = () => {
   const version = useRouteLoaderData("root") as AppVersion
 
   const onReset = async () => {
-    if (
-      confirm(
-        "Are you sure you want to reset the form and return to the start?",
-      )
-    ) {
-      const id = state.data.videoId
-      await deleteProgress(id!)
-      actions.resetForm()
-      navigate("/")
-    }
+    // if (
+    //   confirm(
+    //     "Are you sure you want to reset the form and return to the start?",
+    //   )
+    // ) {
+    const id = state.data.videoId
+    await deleteProgress(id!)
+    actions.resetForm()
+    navigate("/")
+    // }
   }
 
   const onSaveToDisk = async () => {

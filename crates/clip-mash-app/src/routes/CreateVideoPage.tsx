@@ -13,6 +13,7 @@ import useNotification from "../hooks/useNotification"
 import {useNavigate} from "react-router-dom"
 import ExternalLink from "@/components/ExternalLink"
 import {pluralize} from "@/helpers/formatting"
+import {BASE_URL} from "@/custom-client"
 
 const TWO_MINUTES = 120
 const ONE_HOUR = 3600
@@ -65,7 +66,7 @@ function ProgressPage() {
   )
 
   const openEventSource = useCallback(() => {
-    const es = new EventSource(`/api/progress/${videoId}/stream`)
+    const es = new EventSource(`${BASE_URL}/api/progress/${videoId}/stream`)
     es.onmessage = (event) => {
       const data = JSON.parse(event.data) as Progress | null
       data && handleProgress(data)

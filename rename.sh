@@ -10,4 +10,6 @@ if [[ "$TARGET_TRIPLE" == *"windows"* ]]; then
 else
     SUFFIX=""
 fi
-cp target/$BUILD_TYPE}/clip-mash-server "target/${BUILD_TYPE}/clip-mash-server-${TARGET_TRIPLE}${SUFFIX}"
+cp "target/$BUILD_TYPE/clip-mash-server" "target/${BUILD_TYPE}/clip-mash-server-${TARGET_TRIPLE}${SUFFIX}"
+
+echo "Renamed binary to target/${BUILD_TYPE}/clip-mash-server-${TARGET_TRIPLE}${SUFFIX}"

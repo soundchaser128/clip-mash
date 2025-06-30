@@ -17,9 +17,9 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: lts/*
       - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get -y --no-install-recommends install ffmpeg libglib2.0-dev
+        run: sudo apt-get update && sudo apt-get -y --no-install-recommends install ffmpeg libglib2.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - name: Setup Rust toolchain
         run: rustup toolchain install stable --profile minimal
       - name: Install Tauri dependencies

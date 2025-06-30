@@ -801,6 +801,7 @@ dependencies = [
 name = "clip-mash-app"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "serde",
  "serde_json",
  "tauri",

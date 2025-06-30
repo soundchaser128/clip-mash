@@ -1,5 +1,6 @@
 import {StashConfig, VideoDto} from "@/api"
 import {VideoSource} from "@/components/VideoPlayer"
+import {BASE_URL} from "@/custom-client"
 
 function stashVideoSources(
   video: VideoDto,
@@ -35,7 +36,7 @@ export function getVideoSources(
   } else {
     return [
       {
-        src: `/api/library/video/${video.id}/file`,
+        src: `${BASE_URL}/api/library/video/${video.id}/file`,
         type: "video/mp4",
       },
     ]

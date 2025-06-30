@@ -217,9 +217,9 @@ async fn run() -> Result<()> {
         .layer(sentry_tower::SentryHttpLayer::with_transaction())
         .layer(
             CorsLayer::new()
-                .allow_methods([Method::GET])
                 .allow_origin(AllowOrigin::exact("http://localhost:1420".parse().unwrap()))
-                .allow_headers([axum::http::header::CONTENT_TYPE]),
+                .allow_headers([axum::http::header::CONTENT_TYPE])
+                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE]),
         )
         .with_state(state);
 

@@ -22,6 +22,15 @@ import {updateMarker} from "../../api"
 import useFuse from "../../hooks/useFuse"
 import HoverVideo from "@/components/HoverVideo"
 import {dateTimeFormat, formatSeconds, sumDurations} from "@/helpers/time"
+import {BASE_URL} from "@/custom-client"
+
+function getScreenshotUrl(url: string): string {
+  if (url.startsWith("/api")) {
+    return `${BASE_URL}${url}`
+  } else {
+    return url
+  }
+}
 
 const SelectMarkers: React.FC = () => {
   const initialMarkers = useLoaderData() as MarkerDto[]
@@ -257,7 +266,7 @@ const SelectMarkers: React.FC = () => {
               <figure>
                 <HoverVideo
                   videoSource={streamUrl}
-                  imageSource={marker.screenshotUrl}
+                  imageSource={getScreenshotUrl(marker.screenshotUrl)}
                   onImageClick={() => onCheckboxToggle(marker.id)}
                   disabled={!selectedMarker.selected}
                   aspectRatio="wide"

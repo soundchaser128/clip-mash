@@ -25,6 +25,7 @@ import {
   getDefaultOptions,
 } from "./clips/settings/ClipSettingsForm"
 import {getPageSize} from "@/components/PageSizeSelect"
+import {waitFor} from "@testing-library/react"
 
 export const DEFAULT_CLIP_BASE_DURATION = 10
 export const DEFAULT_SPREAD = 0.25
@@ -202,9 +203,26 @@ export const musicLoader: LoaderFunction = async () => {
   return data
 }
 
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function waitForBackend() {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      console.log("Checking if backend is ready...")
+      return await getVersion()
+    } catch (e) {
+      console.log("Waiting for backend to start...")
+      await sleep(1000)
+    }
+  }
+}
+
 export const versionLoader: LoaderFunction = async () => {
   try {
-    return await getVersion()
+    return await waitForBackend()
   } catch (e) {
     console.warn("Failed to get version", e)
     return {

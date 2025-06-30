@@ -20,13 +20,11 @@ jobs:
           node-version: 20
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get -y --no-install-recommends install ffmpeg
-      - name: Build Node
-        run: cd frontend && npm ci && npm run format-check && npm run lint && npm run test && npm run build
       - name: Setup Rust toolchain
         run: rustup toolchain install stable --profile minimal
+      - name: Install Tauri dependencies
+        run: cd crates/clip-mash-app && npm ci && npm run format-check && npm run lint && npm run test && npm run build
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: "backend -> target"
       - name: Install cargo-nextest
         uses: baptiste0928/cargo-install@v3
         with:

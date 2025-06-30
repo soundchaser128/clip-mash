@@ -9,6 +9,7 @@ import {Link} from "react-router-dom"
 import ExternalLink from "../components/ExternalLink"
 import {CreateVideoBody, DescriptionType, generateDescription} from "@/api"
 import {saveBlobToDisk} from "@/helpers/json"
+import {BASE_URL} from "@/custom-client"
 
 const DownloadVideoPage = () => {
   const {state} = useStateMachine()
@@ -73,14 +74,14 @@ const DownloadVideoPage = () => {
         </p>
         <section className="flex flex-col gap-2">
           <a
-            href={`/api/project/download?videoId=${encodeURIComponent(
+            href={`${BASE_URL}/api/project/download?videoId=${encodeURIComponent(
               videoId,
             )}`}
             className="btn btn-success btn-lg"
             download
           >
             <HiArrowDownTray className="w-6 h-6 mr-2" />
-            Download video
+            Download Video
           </a>
           <div className="join self-center">
             <ExternalLink

@@ -44,9 +44,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
   groups,
   onClose,
 }) => {
-  const [selected, setSelected] = useState<MarkerGroup | undefined>(
-    groups?.at(0),
-  )
+  const [selected, setSelected] = useState<MarkerGroup | undefined>(groups[0])
 
   const hasUntitledMrakers = markers.some((m) => m.title === "Untitled")
 

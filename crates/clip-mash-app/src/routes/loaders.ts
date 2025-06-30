@@ -25,7 +25,6 @@ import {
   getDefaultOptions,
 } from "./clips/settings/ClipSettingsForm"
 import {getPageSize} from "@/components/PageSizeSelect"
-import {waitFor} from "@testing-library/react"
 
 export const DEFAULT_CLIP_BASE_DURATION = 10
 export const DEFAULT_SPREAD = 0.25

@@ -368,7 +368,7 @@ function VideoMarkersPage() {
   useHotkeys("m s", () => onSplitMarker())
   useHotkeys("m i", () => onConsumeMarkPoints())
 
-  const onItemClick = (item: unknown, index: number) => {
+  const onItemClick = (_: unknown, index: number) => {
     const marker = markers[index]
     onShowForm("edit", marker)
     dispatch({type: "jumpAbsolute", payload: marker.start})

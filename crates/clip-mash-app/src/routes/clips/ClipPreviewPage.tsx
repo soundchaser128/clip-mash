@@ -43,7 +43,7 @@ const ClipInfo: React.FC<ClipInfoProps> = ({
   onNextStage,
   currentMarker,
 }) => {
-  const currentClip = clips.at(currentClipIndex)?.clip
+  const currentClip = clips[currentClipIndex]?.clip
 
   return (
     <div className="mb-4 grid grid-cols-3">
@@ -200,7 +200,7 @@ function PreviewClips() {
   const [currentClipIndex, setCurrentClipIndex] = useState(0)
   const [autoPlay, setAutoPlay] = useState(false)
   // TODO don't crash when clips are empty
-  const currentClip = clips.at(currentClipIndex)?.clip
+  const currentClip = clips[currentClipIndex].clip
 
   const clipUrl = getClipUrl(streams, currentClip)
   const navigate = useNavigate()

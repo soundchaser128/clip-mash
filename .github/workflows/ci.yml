@@ -29,6 +29,10 @@ jobs:
         uses: baptiste0928/cargo-install@v3
         with:
           crate: cargo-nextest
+      - name: Build server
+        run: cargo build -p clip-mash-server
+      - name: Rename server binary
+        run: ./rename.sh debug
       - name: Test Rust
         env:
           SQLX_OFFLINE: "true"

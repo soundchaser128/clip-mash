@@ -17,22 +17,23 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: lts/*
       - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get -y --no-install-recommends install ffmpeg
-      - name: Build Node
-        run: cd frontend && npm ci && npm run format-check && npm run lint && npm run test && npm run build
+        run: sudo apt-get update && sudo apt-get -y --no-install-recommends install ffmpeg libglib2.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - name: Setup Rust toolchain
         run: rustup toolchain install stable --profile minimal
+      - name: Install Tauri dependencies
+        run: cd crates/clip-mash-app && npm ci && npm run format-check && npm run lint && npm run test && npm run build
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: "backend -> target"
       - name: Install cargo-nextest
-        uses: baptiste0928/cargo-install@v1
+        uses: baptiste0928/cargo-install@v3
         with:
           crate: cargo-nextest
-          locked: true
+      - name: Build server
+        run: cargo build -p clip-mash-server
+      - name: Rename server binary
+        run: ./rename.sh debug
       - name: Test Rust
         env:
           SQLX_OFFLINE: "true"
-        run: cd backend && cargo fmt --check --all && cargo nextest run --retries=3
+        run: cargo fmt --check --all && cargo nextest run --retries=3

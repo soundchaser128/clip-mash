@@ -6,3 +6,7 @@
 /backend/clip-mash-data
 .idea
 *.iml
+/target
+.env
+/assets
+/logs

@@ -1,43 +1,44 @@
 set shell := ["nu", "-c"]
 
 project := justfile_directory()
-frontend := project + "/frontend"
-backend := project + "/backend"
-e2e := project + "/e2e-tests"
+tauri := project + "/crates/clip-mash-app"
+server := project + "/crates/clip-mash-server"
 
 default:
   @just --list
 
-@backend *cmd:
-    cd {{backend}}; just {{cmd}}
+@server *cmd:
+    cd {{server}}; just {{cmd}}
 
-@frontend *cmd:
-    cd {{frontend}}; just {{cmd}}
+@tauri *cmd:
+    cd {{tauri}}; just {{cmd}}
 
-@e2e *cmd:
-    cd {{e2e}}; just {{cmd}}
+build-server:
+    cargo build --release -p clip-mash-server
+    let triple = rustc -vV | parse --regex "host: (?<triple>.*)"
+    cp target/release/clip-mash-server target/release/clip-mash-server
 
-format:
-    just backend format
-    just frontend format
+;; format:
+;;     just server format
+;;     just tauri format
 
-check:
-    just backend check
-    just frontend check
+;; check:
+;;     just server check
+;;     just tauri check
 
-build:
-    just frontend build
-    just backend build
+;; build:
+;;     just tauri build
+;;     just server build
 
-setup:
-    just frontend setup
-    just backend setup
+;; setup:
+;;     just tauri setup
+;;     just server setup
 
-fix:
-    just backend fix
-    just frontend fix
+;; fix:
+;;     just server fix
+;;     just tauri fix
 
-generate-code:
-    just backend generate-openapi-spec
-    just frontend generate-client
-    rm api-docs.json
+;; generate-code:
+;;     just server generate-openapi-spec
+;;     just tauri generate-client
+;;     rm api-docs.json

@@ -13,3 +13,6 @@ default:
 @tauri *cmd:
     cd {{tauri}}; just {{cmd}}
 
+format:
+    @just tauri format
+    cargo +nightly fmt

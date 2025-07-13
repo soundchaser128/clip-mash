@@ -237,7 +237,7 @@ const VideoGrid: React.FC<Props> = ({
 
       <section className="w-full flex py-4 items-center justify-between">
         <div className="flex items-center gap-2">
-          <PageSizeSelect />
+          <PageSizeSelect numberOfColumns={rowCount} />
 
           <div className="form-control">
             <label className="label cursor-pointer">

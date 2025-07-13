@@ -30,3 +30,4 @@ generate-openapi-spec:
     
 generate-rust-client:
     npx @openapitools/openapi-generator-cli generate -i ../api-docs.json -g rust -o ../rust-client
+    

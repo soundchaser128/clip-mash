@@ -16,7 +16,11 @@ export function getPageSize(queryParams: URLSearchParams): number {
   }
 }
 
-const PageSizeSelect: React.FC = () => {
+interface PageSizeSelectProps {
+  numberOfColumns: number
+}
+
+const PageSizeSelect: React.FC<PageSizeSelectProps> = ({numberOfColumns}) => {
   const {addOrReplaceParams} = useDebouncedSetQuery()
   const [perPage, setPerPage] = useLocalStorage(
     "pageSize",
@@ -30,6 +34,17 @@ const PageSizeSelect: React.FC = () => {
       ["page", "0"],
     ])
   }
+
+  const pageSizeOptions = [
+    4 * numberOfColumns,
+    8 * numberOfColumns,
+    12 * numberOfColumns,
+    16 * numberOfColumns,
+    20 * numberOfColumns,
+    24 * numberOfColumns,
+    48 * numberOfColumns,
+  ]
+
   return (
     <div className="flex items-center gap-1">
       <label className="label">
@@ -40,12 +55,11 @@ const PageSizeSelect: React.FC = () => {
         onChange={(e) => onPerPageChange(Number(e.target.value))}
         className="select select-sm select-bordered"
       >
-        <option>15</option>
-        <option>30</option>
-        <option>60</option>
-        <option>120</option>
-        <option>240</option>
-        <option>480</option>
+        {pageSizeOptions.map((size) => (
+          <option key={size} value={size}>
+            {size}
+          </option>
+        ))}
       </select>
     </div>
   )

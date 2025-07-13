@@ -34,6 +34,7 @@ youtube_dl = { version = "0.10.0", features = [
     "tokio",
     "downloader-native-tls",
 ] }
+cached = { version = "0.55.1", features = ["async"] }
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.43"

@@ -51,9 +51,6 @@ import TvWatchPage, {interactiveClipsLoader} from "./routes/tv/TvWatchPage"
 import TvStartPage, {markerTitleLoader} from "./routes/tv/TvStartPage"
 import ErrorBoundary from "./components/ErrorBoundary"
 import HomePage from "./routes/HomePage"
-import {sidecar} from "./lib/sidecar"
-
-sidecar.start().catch(console.error)
 
 const Init = () => {
   useNotification()

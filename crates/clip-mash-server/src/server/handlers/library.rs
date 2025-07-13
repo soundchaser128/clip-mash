@@ -15,7 +15,9 @@ use utoipa::{IntoParams, ToSchema};
 use crate::server::error::AppError;
 use crate::server::handlers::{AppState, new_video_service};
 use clip_mash::data::database::markers::{ListMarkersFilter, MarkerCount};
-use clip_mash::data::database::videos::{TagCount, VideoSearchQuery, VideoSource, VideoUpdate};
+use clip_mash::data::database::videos::{
+    TagCount, VideoSearchQuery, VideoSource, VideoUpdate, get_video_cached,
+};
 use clip_mash::data::stash_api::StashApi;
 use clip_mash::service::encoding_optimization::EncodingOptimizationService;
 use clip_mash::service::migrations::Migrator;
@@ -346,7 +348,8 @@ pub async fn get_video_file(
     use tower::util::ServiceExt;
     use tower_http::services::ServeFile;
 
-    let video = state.database.videos.get_video(&id).await?;
+    let database = &state.database.videos;
+    let video = get_video_cached(database, &id).await?;
     if let Some(video) = video {
         let result = ServeFile::new(video.file_path).oneshot(request).await;
         Ok(result)
@@ -365,7 +368,8 @@ pub async fn get_video_preview(
     use tower::util::ServiceExt;
     use tower_http::services::ServeFile;
 
-    let video = state.database.videos.get_video(&id).await?;
+    let database = &state.database.videos;
+    let video = get_video_cached(database, &id).await?;
     if let Some(preview_image) = video.and_then(|v| v.video_preview_image) {
         let mut result = ServeFile::new(preview_image)
             .oneshot(request)

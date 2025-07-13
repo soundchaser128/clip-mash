@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::fmt;
 use std::str::FromStr;
 
+use cached::proc_macro::cached;
 use camino::Utf8Path;
 use color_eyre::eyre::eyre;
 use futures::TryStreamExt;
@@ -141,6 +142,16 @@ pub struct VideoUpdate {
 #[derive(Clone)]
 pub struct VideosDatabase {
     pool: SqlitePool,
+}
+
+#[cached(
+    result = true,
+    time = 60,
+    key = "String",
+    convert = r#"{ id.to_string() }"#
+)]
+pub async fn get_video_cached(db: &VideosDatabase, id: &str) -> Result<Option<DbVideo>> {
+    db.get_video(id).await
 }
 
 impl VideosDatabase {

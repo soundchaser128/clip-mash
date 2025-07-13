@@ -1,31 +1,41 @@
-use anyhow::anyhow;
+use log::{error, info};
 use tauri::Manager;
-use tauri_plugin_shell::{ShellExt, process::CommandChild};
+use tauri::async_runtime::JoinHandle;
 
 struct AppState {
-    sidecar_process: CommandChild,
+    _server_handle: JoinHandle<()>,
 }
 
-// TODO no sidcear, but start server in a separate thread in the same process?
-fn start_sidecar(app: &tauri::AppHandle) -> tauri::Result<CommandChild> {
-    let handle = app
-        .shell()
-        .sidecar("../../../target/release/clip-mash-server")
-        .map_err(|e| anyhow!("Failed to get sidecar: {}", e))?;
+fn start_server() -> Result<JoinHandle<()>, Box<dyn std::error::Error>> {
+    use tauri::async_runtime::spawn;
 
-    let (_rx, child) = handle
-        .spawn()
-        .map_err(|e| anyhow!("Failed to spawn sidecar: {}", e))?;
+    // Spawn the server on the runtime
+    let server_handle = spawn(async {
+        info!("Starting clip-mash server in background thread");
+        if let Err(e) = clip_mash_server::start_server().await {
+            error!("Server failed to start: {}", e);
+        }
+    });
 
-    Ok(child)
+    Ok(server_handle)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_log::Builder::default().build())
+        .setup(|app| {
+            let server_handle = start_server().map_err(|e| {
+                error!("Failed to start server: {}", e);
+                e
+            })?;
+            app.manage(AppState {
+                _server_handle: server_handle,
+            });
+            info!("Tauri app setup complete, server starting in background");
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

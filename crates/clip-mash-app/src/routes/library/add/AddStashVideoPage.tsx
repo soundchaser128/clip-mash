@@ -118,7 +118,7 @@ const AddStashVideoPage: React.FC = () => {
         </button>
       </section>
       <section className="py-2 grid grid-cols-3">
-        <PageSizeSelect />
+        <PageSizeSelect numberOfColumns={3} />
         <PageInfo page={data} className="text-center" startIndex={1} />
         <span />
       </section>

@@ -13,7 +13,7 @@ color-eyre = "0.6.3"
 directories = "6.0.0"
 float-cmp = "0.10.0"
 futures = "0.3.31"
-graphql_client = "0.14.0"
+graphql_client = "0.15.0"
 hound = "3.5.1"
 include_dir = "0.7.4"
 itertools = "0.14.0"
@@ -27,8 +27,8 @@ regex = "1.11.1"
 reqwest = { version = "0.12.11", default-features = false, features = ["json"] }
 sanitise-file-name = "1.0.0"
 semver = "1.0.24"
-sentry = { version = "0.37", features = ["debug-images"] }
-sentry-tower = { version = "0.37", features = ["axum-matched-path"] }
+sentry = { version = "0.42", features = ["debug-images"] }
+sentry-tower = { version = "0.46", features = ["axum-matched-path"] }
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.134"
 sqlx = { version = "0.8.2", features = ["runtime-tokio", "sqlite"] }
@@ -56,9 +56,9 @@ xz2 = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]
 # used for listing drives on windows
-sysinfo = "0.34"
+sysinfo = "0.37"
 # used for unzipping the downloaded ffmpeg archive
-zip = "=2.3"
+zip = "=7.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 aubio = { version = "0.2.1", features = ["bindgen"] }
@@ -72,6 +72,6 @@ opt-level = 3
 [dev-dependencies]
 fake = "4"
 tracing-test = "0.2.5"
-mock_instant = "0.5"
+mock_instant = "0.6"
 graphql-parser = "0.4.1"
 wiremock = "0.6.2"

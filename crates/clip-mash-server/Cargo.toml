@@ -14,29 +14,29 @@ clip-mash = { path = "../clip-mash" }
 
 async-stream = "0.3.6"
 axum = { version = "0.8", features = ["macros", "multipart"] }
-camino = { version = "1.1.9", features = ["serde1"] }
-color-eyre = "0.6.3"
+camino = { version = "1.2.2", features = ["serde1"] }
+color-eyre = "0.6.5"
 futures = "0.3.31"
-mimalloc = "0.1.43"
-rand = "0.9.1"
-reqwest = { version = "0.12.11", default-features = false, features = ["json"] }
+mimalloc = "0.1.48"
+rand = "0.9.2"
+reqwest = { version = "0.13.1", default-features = false, features = ["json"] }
 sanitise-file-name = "1.0.0"
-sentry = { version = "0.37", features = ["debug-images"] }
-sentry-tower = { version = "0.37", features = ["axum-matched-path"] }
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = "1.0.134"
-time = { version = "0.3.37", features = ["formatting", "parsing", "macros"] }
-tokio = { version = "1.42.0", features = ["full"] }
-tokio-util = { version = "0.7.13", features = ["io"] }
-tower = { version = "0.5.2", features = ["util"] }
+sentry = { version = "0.46", features = ["debug-images"] }
+sentry-tower = { version = "0.46", features = ["axum-matched-path"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+time = { version = "0.3.46", features = ["formatting", "parsing", "macros"] }
+tokio = { version = "1.49.0", features = ["full"] }
+tokio-util = { version = "0.7.18", features = ["io"] }
+tower = { version = "0.5.3", features = ["util"] }
 tower-http = { version = "0.6", features = ["fs", "trace", "cors"] }
-tracing = "0.1.41"
-tracing-appender = "0.2.3"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
-url = { version = "2.5.4", features = ["serde"] }
-utoipa = { version = "5.3.0", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "9.0.0", features = ["axum"] }
+tracing = "0.1.44"
+tracing-appender = "0.2.4"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+url = { version = "2.5.8", features = ["serde"] }
+utoipa = { version = "5.4.0", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
 
 [target.'cfg(windows)'.dependencies]
 # used for listing drives on windows
-sysinfo = "0.34"
+sysinfo = "0.38"

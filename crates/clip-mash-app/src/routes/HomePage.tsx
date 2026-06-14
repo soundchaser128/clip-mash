@@ -7,10 +7,10 @@ import {
 } from "react-router-dom"
 import {updateForm} from "./actions"
 import {useEffect, useRef, useState} from "react"
-import {FormStage, SerializedFormState} from "../types/form-state"
+import {FormStage, type SerializedFormState} from "../types/form-state"
 import Layout from "../components/Layout"
 import {HiFolder, HiPlay, HiRocketLaunch} from "react-icons/hi2"
-import {AppVersion} from "@/api"
+import type {AppVersion} from "@/api"
 
 const HomePage = () => {
   const videoId = useLoaderData() as string

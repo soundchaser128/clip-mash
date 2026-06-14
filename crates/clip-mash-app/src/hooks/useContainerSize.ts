@@ -1,5 +1,6 @@
 import useResizeObserver from "@react-hook/resize-observer"
-import React, {useLayoutEffect, useState} from "react"
+import type React from "react"
+import {useLayoutEffect, useState} from "react"
 
 export interface ContainerSize {
   width: number

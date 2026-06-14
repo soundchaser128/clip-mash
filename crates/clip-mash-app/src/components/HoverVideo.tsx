@@ -1,7 +1,7 @@
 import HoverVideoPlayer from "react-hover-video-player"
 import Loader from "./Loader"
 import clsx from "clsx"
-import {AspectRatio} from "./VideoCard"
+import type {AspectRatio} from "./VideoCard"
 
 interface Props {
   videoSource: string

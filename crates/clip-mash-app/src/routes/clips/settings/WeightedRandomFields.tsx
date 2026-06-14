@@ -1,9 +1,9 @@
 import {useLoaderData} from "react-router-dom"
 import WeightsModal from "./WeightsModal"
-import {ClipsLoaderData} from "@/routes/loaders"
+import type {ClipsLoaderData} from "@/routes/loaders"
 import {useStateMachine} from "little-state-machine"
 import {useFormContext} from "react-hook-form"
-import {ClipFormInputs} from "./ClipSettingsForm"
+import type {ClipFormInputs} from "./ClipSettingsForm"
 import {MusicFormFields, RandomizedLengthFormFields} from "./common"
 
 const WeightedRandomFields: React.FC<{

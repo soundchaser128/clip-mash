@@ -1,7 +1,7 @@
 import clsx from "clsx"
-import React from "react"
+import type React from "react"
 import {HiChevronLeft, HiChevronRight} from "react-icons/hi2"
-import {Link, To, useSearchParams} from "react-router-dom"
+import {Link, type To, useSearchParams} from "react-router-dom"
 
 interface PaginationProps {
   currentPage: number

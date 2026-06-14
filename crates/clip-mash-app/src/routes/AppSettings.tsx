@@ -4,7 +4,7 @@ import {useForm} from "react-hook-form"
 import ExternalLink from "../components/ExternalLink"
 import {
   FolderType,
-  Settings,
+  type Settings,
   cleanupFolder,
   getFileStats,
   getStashHealth,
@@ -16,7 +16,7 @@ import {useConfig} from "@/hooks/useConfig"
 import Loader from "@/components/Loader"
 import {formatBytes} from "@/helpers/formatting"
 import {useCreateToast} from "@/hooks/useToast"
-import {AspectRatio} from "@/components/VideoCard"
+import type {AspectRatio} from "@/components/VideoCard"
 import useAspectRatioSetting from "@/hooks/useAspectRatioSetting"
 
 type Inputs = Settings

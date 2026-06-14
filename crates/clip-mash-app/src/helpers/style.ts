@@ -1,6 +1,6 @@
 import {scaleSequential} from "d3-scale"
 import {interpolatePlasma} from "d3-scale-chromatic"
-import React from "react"
+import type React from "react"
 
 export function getSegmentColor(index: number, count: number): string {
   const colorScale = scaleSequential()

@@ -1,5 +1,5 @@
 import {formatDuration} from "date-fns"
-import {SelectedMarker} from "../api"
+import type {SelectedMarker} from "../api"
 
 function padNumber(n: number, padding = 2): string {
   return n.toString().padStart(padding, "0")

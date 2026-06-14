@@ -1,6 +1,6 @@
 import {
-  HandyConnectedResponse,
-  HandyPattern,
+  type HandyConnectedResponse,
+  type HandyPattern,
   generateRandomSeed,
   handyConnected,
   listMarkerTitles,
@@ -11,7 +11,8 @@ import {
 import Heading from "@/components/Heading"
 import Modal from "@/components/Modal"
 import {useConfig} from "@/hooks/useConfig"
-import React, {useEffect, useState} from "react"
+import type React from "react"
+import {useEffect, useState} from "react"
 import {useForm} from "react-hook-form"
 import {
   HiAdjustmentsHorizontal,
@@ -24,7 +25,7 @@ import {
 import {FaDice} from "react-icons/fa6"
 import {
   Link,
-  LoaderFunction,
+  type LoaderFunction,
   useLoaderData,
   useNavigate,
   useSearchParams,

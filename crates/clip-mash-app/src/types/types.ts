@@ -1,4 +1,4 @@
-import {ClipOptions} from "../api"
+import type {ClipOptions} from "../api"
 
 export interface JsonError {
   name: "JsonError"

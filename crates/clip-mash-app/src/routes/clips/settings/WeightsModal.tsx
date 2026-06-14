@@ -1,5 +1,6 @@
 import {useStateMachine} from "little-state-machine"
-import React, {useMemo, useState} from "react"
+import type React from "react"
+import {useMemo, useState} from "react"
 import {useRevalidator} from "react-router-dom"
 import {updateForm} from "../../actions"
 import {HiCheck, HiCog8Tooth} from "react-icons/hi2"
@@ -7,9 +8,9 @@ import clsx from "clsx"
 import {pluralize} from "@/helpers/formatting"
 import Modal from "@/components/Modal"
 import {useImmer} from "use-immer"
-import {Clip} from "@/api"
+import type {Clip} from "@/api"
 import {useFormContext} from "react-hook-form"
-import {ClipFormInputs} from "./ClipSettingsForm"
+import type {ClipFormInputs} from "./ClipSettingsForm"
 
 interface WeightsModalProps {
   className?: string

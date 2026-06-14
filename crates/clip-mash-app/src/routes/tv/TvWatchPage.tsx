@@ -1,6 +1,6 @@
 import {
-  ClipsResponse,
-  SongDto,
+  type ClipsResponse,
+  type SongDto,
   fetchClipsInteractive,
   listSongs,
   pauseHandy,
@@ -21,14 +21,14 @@ import {
 import useDebouncedSetQuery from "@/hooks/useDebouncedQuery"
 import {
   Link,
-  LoaderFunction,
+  type LoaderFunction,
   useLoaderData,
   useSearchParams,
 } from "react-router-dom"
 import DataList, {Data, Description} from "@/components/DataList"
 import {clamp} from "@/helpers/math"
 import Heading from "@/components/Heading"
-import {TvQueryType} from "./TvStartPage"
+import type {TvQueryType} from "./TvStartPage"
 import {formatSeconds} from "@/helpers/time"
 
 function removeExtension(fileName: string) {

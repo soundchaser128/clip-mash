@@ -1,5 +1,6 @@
 import {useStateMachine} from "little-state-machine"
-import React, {useEffect} from "react"
+import type React from "react"
+import {useEffect} from "react"
 import {useRevalidator} from "react-router-dom"
 import {updateForm} from "../../actions"
 import {
@@ -12,10 +13,10 @@ import {
   HiTrash,
 } from "react-icons/hi2"
 import {FormProvider, useForm} from "react-hook-form"
-import {ClipLengthOptions, ClipOrder} from "../../../api"
-import {ClipStrategy} from "@/types/types"
+import type {ClipLengthOptions, ClipOrder} from "../../../api"
+import type {ClipStrategy} from "@/types/types"
 import RoundRobinFields from "./RoundRobinFields"
-import {FormState} from "@/types/form-state"
+import type {FormState} from "@/types/form-state"
 import WeightedRandomFields from "./WeightedRandomFields"
 import EqualLengthFields from "./EqualLengthFields"
 import MarkerOrderModal from "../MarkerOrderModal"

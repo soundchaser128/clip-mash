@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import {StashConfig, ListVideoDto, VideoDto} from "@/api"
+import type {StashConfig, ListVideoDto, VideoDto} from "@/api"
 import {
   HiAdjustmentsVertical,
   HiArrowDownTray,
@@ -11,7 +11,7 @@ import {
   HiXMark,
 } from "react-icons/hi2"
 import {dateTimeFormat, formatSeconds} from "@/helpers/time"
-import React from "react"
+import type React from "react"
 import EditableText from "./EditableText"
 import HoverVideo from "./HoverVideo"
 import {Link, useLocation} from "react-router-dom"

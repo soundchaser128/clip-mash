@@ -1,5 +1,6 @@
-import React, {useState} from "react"
-import {useForm, FieldErrors} from "react-hook-form"
+import type React from "react"
+import {useState} from "react"
+import {useForm, type FieldErrors} from "react-hook-form"
 import {
   HiClock,
   HiTrash,
@@ -21,10 +22,10 @@ import {createMarker, updateMarker} from "./api"
 import Timeline from "@/components/Timeline"
 import Loader from "@/components/Loader"
 import {
-  MarkerDto,
+  type MarkerDto,
   deleteMarker,
   splitMarker,
-  VideoDetailsDto,
+  type VideoDetailsDto,
   detectMarkers,
 } from "@/api"
 import {useConfig} from "@/hooks/useConfig"

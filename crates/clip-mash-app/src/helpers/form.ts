@@ -1,4 +1,4 @@
-import {FormState} from "@/types/form-state"
+import type {FormState} from "@/types/form-state"
 
 export function getFormState(): FormState | null {
   const json = sessionStorage.getItem("form-state")

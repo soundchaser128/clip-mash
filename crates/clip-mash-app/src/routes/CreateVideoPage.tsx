@@ -3,8 +3,8 @@ import {useCallback, useEffect, useRef, useState} from "react"
 import {HiRocketLaunch} from "react-icons/hi2"
 import {formatSeconds} from "../helpers/time"
 import {
-  CreateVideoBody,
-  Progress,
+  type CreateVideoBody,
+  type Progress,
   createVideo,
   deleteProgress,
   getProgressInfo,

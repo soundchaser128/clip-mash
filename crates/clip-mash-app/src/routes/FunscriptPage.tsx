@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useEffect, useRef, useState} from "react"
 import {
-  CreateBeatFunscriptBody,
+  type CreateBeatFunscriptBody,
   getBeatFunscript,
   getCombinedFunscript,
   listFinishedVideos,

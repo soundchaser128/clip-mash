@@ -5,7 +5,7 @@ import ThemeSwitcher from "./ThemeSwitcher"
 import {useToast} from "@/hooks/useToast"
 import Toast from "./Toast"
 import SentryInfo from "./SentryInfo"
-import {AppVersion} from "@/api"
+import type {AppVersion} from "@/api"
 import UpdateAvailableAlert from "./UpdateAvailableAlert"
 
 interface Props {

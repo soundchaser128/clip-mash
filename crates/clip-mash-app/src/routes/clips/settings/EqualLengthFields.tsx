@@ -1,5 +1,5 @@
 import {useFormContext} from "react-hook-form"
-import {ClipFormInputs} from "./ClipSettingsForm"
+import type {ClipFormInputs} from "./ClipSettingsForm"
 import {
   ClipDurationSpreadField,
   CompilationDurationField,

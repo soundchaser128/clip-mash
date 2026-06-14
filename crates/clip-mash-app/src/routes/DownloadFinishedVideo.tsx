@@ -7,7 +7,11 @@ import {
 } from "react-icons/hi2"
 import {Link} from "react-router-dom"
 import ExternalLink from "../components/ExternalLink"
-import {CreateVideoBody, DescriptionType, generateDescription} from "@/api"
+import {
+  type CreateVideoBody,
+  type DescriptionType,
+  generateDescription,
+} from "@/api"
 import {saveBlobToDisk} from "@/helpers/json"
 import {BASE_URL} from "@/custom-client"
 

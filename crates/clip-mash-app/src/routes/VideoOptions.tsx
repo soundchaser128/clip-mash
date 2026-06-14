@@ -1,7 +1,7 @@
 import {useStateMachine} from "little-state-machine"
 import {useForm} from "react-hook-form"
-import {LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
-import {FormStage, FormState} from "@/types/form-state"
+import {type LoaderFunction, useLoaderData, useNavigate} from "react-router-dom"
+import {FormStage, type FormState} from "@/types/form-state"
 import {updateForm} from "./actions"
 import {
   HiArrowsRightLeft,

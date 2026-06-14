@@ -1,7 +1,8 @@
 import {useStateMachine} from "little-state-machine"
 import {useForm} from "react-hook-form"
 import {updateForm} from "../actions"
-import React, {useState} from "react"
+import type React from "react"
+import {useState} from "react"
 import {Link, useLoaderData, useNavigate} from "react-router-dom"
 import {formatSeconds, sumDurations} from "@/helpers/time"
 import {
@@ -13,9 +14,9 @@ import {
 } from "react-icons/hi2"
 import {useImmer} from "use-immer"
 import clsx from "clsx"
-import {SongDto} from "@/api"
+import type {SongDto} from "@/api"
 import HelpModal from "@/components/HelpModal"
-import {FormStage, FormState} from "@/types/form-state"
+import {FormStage, type FormState} from "@/types/form-state"
 import SongsTable from "./SongsTable"
 import {produce} from "immer"
 

@@ -5,7 +5,7 @@ import useNotification from "../../../hooks/useNotification"
 import Loader from "../../../components/Loader"
 import {useState} from "react"
 import {pluralize} from "@/helpers/formatting"
-import {AddVideosRequest, addNewVideos} from "../../../api"
+import {type AddVideosRequest, addNewVideos} from "../../../api"
 import ExternalLink from "@/components/ExternalLink"
 import AddTagModal from "@/components/AddTagModal"
 

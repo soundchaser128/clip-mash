@@ -1,4 +1,4 @@
-import {SongDto} from "@/api"
+import type {SongDto} from "@/api"
 import ExternalLink from "@/components/ExternalLink"
 import {formatSeconds} from "@/helpers/time"
 

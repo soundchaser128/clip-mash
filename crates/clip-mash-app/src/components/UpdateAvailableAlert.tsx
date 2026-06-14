@@ -1,7 +1,7 @@
 import {useRouteLoaderData} from "react-router-dom"
 import ExternalLink from "./ExternalLink"
 import Toast from "./Toast"
-import {AppVersion} from "@/api"
+import type {AppVersion} from "@/api"
 import useLocalStorage from "@/hooks/useLocalStorage"
 
 export default function UpdateAvailableAlert() {

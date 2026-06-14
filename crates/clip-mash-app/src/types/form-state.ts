@@ -1,5 +1,5 @@
-import {ClipFormInputs} from "@/routes/clips/settings/ClipSettingsForm"
-import {
+import type {ClipFormInputs} from "@/routes/clips/settings/ClipSettingsForm"
+import type {
   Clip,
   ClipOrder,
   EncodingEffort,

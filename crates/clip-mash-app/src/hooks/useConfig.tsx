@@ -1,5 +1,5 @@
 import {createContext, useContext, useState, useEffect} from "react"
-import {Settings, getConfig} from "../api"
+import {type Settings, getConfig} from "../api"
 
 const ConfigContext = createContext<Settings | undefined>(undefined)
 

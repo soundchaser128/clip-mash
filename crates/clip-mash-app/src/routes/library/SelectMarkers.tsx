@@ -13,7 +13,7 @@ import {
   HiVideoCamera,
   HiXMark,
 } from "react-icons/hi2"
-import {MarkerDto, SelectedMarker} from "../../api"
+import type {MarkerDto, SelectedMarker} from "../../api"
 import {updateForm} from "../actions"
 import {FormStage} from "../../types/form-state"
 import JumpToTop from "../../components/JumpToTop"

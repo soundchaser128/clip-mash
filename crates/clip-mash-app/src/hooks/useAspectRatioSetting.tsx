@@ -1,4 +1,4 @@
-import {AspectRatio} from "@/components/VideoCard"
+import type {AspectRatio} from "@/components/VideoCard"
 import useLocalStorage from "./useLocalStorage"
 
 function useAspectRatioSetting(): [AspectRatio, (value: AspectRatio) => void] {

@@ -1,6 +1,6 @@
 import {useFormContext} from "react-hook-form"
-import {ClipFormInputs} from "./ClipSettingsForm"
-import React from "react"
+import type {ClipFormInputs} from "./ClipSettingsForm"
+import type React from "react"
 import {formatSeconds} from "@/helpers/time"
 
 export const CompilationDurationField: React.FC<{

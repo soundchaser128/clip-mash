@@ -2,7 +2,7 @@ import {
   parseTimestamp,
   formatSeconds,
   sumDurations,
-  HasDuration,
+  type HasDuration,
 } from "../helpers/time"
 import {describe, expect, it} from "vitest"
 

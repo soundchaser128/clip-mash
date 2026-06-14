@@ -1,11 +1,11 @@
 import {Result} from "@badrap/result"
 import {parseTimestamp} from "../../helpers/time"
-import {JsonError} from "../../types/types"
+import type {JsonError} from "../../types/types"
 import {
-  CreateMarker,
-  MarkerDto,
-  UpdateMarker,
-  VideoDto,
+  type CreateMarker,
+  type MarkerDto,
+  type UpdateMarker,
+  type VideoDto,
   createNewMarker,
   updateMarker as updateMarkerApi,
 } from "../../api"

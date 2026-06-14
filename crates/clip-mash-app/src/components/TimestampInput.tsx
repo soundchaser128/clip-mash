@@ -1,10 +1,10 @@
 import clsx from "clsx"
 import {
-  Control,
+  type Control,
   Controller,
-  FieldError,
-  FieldValues,
-  Path,
+  type FieldError,
+  type FieldValues,
+  type Path,
 } from "react-hook-form"
 
 interface Props<T extends FieldValues> {

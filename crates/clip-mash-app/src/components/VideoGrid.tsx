@@ -1,5 +1,5 @@
-import {ListVideoDto, PageListVideoDto, updateVideo} from "@/api"
-import VideoCard, {AspectRatio} from "./VideoCard"
+import {type ListVideoDto, type PageListVideoDto, updateVideo} from "@/api"
+import VideoCard, {type AspectRatio} from "./VideoCard"
 import {
   useLoaderData,
   useNavigation,
@@ -9,7 +9,7 @@ import {
 import {useForm} from "react-hook-form"
 import {HiFolder, HiMagnifyingGlass, HiXMark} from "react-icons/hi2"
 import Pagination from "./Pagination"
-import useDebouncedSetQuery, {QueryPairs} from "@/hooks/useDebouncedQuery"
+import useDebouncedSetQuery, {type QueryPairs} from "@/hooks/useDebouncedQuery"
 import {useState} from "react"
 import {useConfig} from "@/hooks/useConfig"
 import AddTagModal from "./AddTagModal"

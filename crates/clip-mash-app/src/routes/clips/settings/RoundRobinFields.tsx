@@ -1,5 +1,5 @@
 import {useFormContext} from "react-hook-form"
-import {ClipFormInputs} from "./ClipSettingsForm"
+import type {ClipFormInputs} from "./ClipSettingsForm"
 import {useStateMachine} from "little-state-machine"
 import {MusicFormFields, RandomizedLengthFormFields} from "./common"
 

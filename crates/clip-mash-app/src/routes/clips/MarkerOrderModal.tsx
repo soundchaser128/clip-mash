@@ -1,5 +1,6 @@
 import {useStateMachine} from "little-state-machine"
-import React, {useState} from "react"
+import type React from "react"
+import {useState} from "react"
 import Modal from "@/components/Modal"
 import {pluralize} from "@/helpers/formatting"
 import {
@@ -11,11 +12,11 @@ import {
   HiTrash,
 } from "react-icons/hi2"
 import {updateForm} from "../actions"
-import {MarkerDto, MarkerCount, MarkerGroup} from "@/api"
+import type {MarkerDto, MarkerCount, MarkerGroup} from "@/api"
 import {produce} from "immer"
 import clsx from "clsx"
 import {useFormContext} from "react-hook-form"
-import {ClipFormInputs} from "./settings/ClipSettingsForm"
+import type {ClipFormInputs} from "./settings/ClipSettingsForm"
 
 function getMarkerCounts(markers: MarkerDto[]): MarkerCount[] {
   const counts = new Map<string, number>()

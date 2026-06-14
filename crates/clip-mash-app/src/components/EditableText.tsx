@@ -1,5 +1,6 @@
 import clsx from "clsx"
-import React, {useState} from "react"
+import type React from "react"
+import {useState} from "react"
 import {HiCheck, HiPencil} from "react-icons/hi2"
 
 const inputClasses =

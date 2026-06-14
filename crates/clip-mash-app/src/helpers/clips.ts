@@ -1,5 +1,5 @@
-import {Clip} from "@/api"
-import {VideoSource} from "@/components/VideoPlayer"
+import type {Clip} from "@/api"
+import type {VideoSource} from "@/components/VideoPlayer"
 import {BASE_URL} from "@/custom-client"
 
 export function getClipUrl(

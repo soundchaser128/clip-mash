@@ -1,4 +1,5 @@
-import React, {useEffect, useState} from "react"
+import type React from "react"
+import {useEffect, useState} from "react"
 import {
   Link,
   useLoaderData,
@@ -7,10 +8,14 @@ import {
   useSearchParams,
 } from "react-router-dom"
 import VideoCard from "../../../components/VideoCard"
-import {StashLoaderData} from "../../loaders"
+import type {StashLoaderData} from "../../loaders"
 import Pagination from "../../../components/Pagination"
 import {HiCheck, HiChevronLeft, HiPlus} from "react-icons/hi2"
-import {AddVideosRequest, StashVideoDto, addNewVideos} from "../../../api"
+import {
+  type AddVideosRequest,
+  type StashVideoDto,
+  addNewVideos,
+} from "../../../api"
 import {useConfig} from "../../../hooks/useConfig"
 import useDebouncedSetQuery from "../../../hooks/useDebouncedQuery"
 import {useCreateToast} from "@/hooks/useToast"

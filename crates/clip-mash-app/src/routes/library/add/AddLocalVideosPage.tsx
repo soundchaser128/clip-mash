@@ -3,7 +3,11 @@ import {useNavigate, useSearchParams} from "react-router-dom"
 import {useForm} from "react-hook-form"
 import {useEffect, useState} from "react"
 import Loader from "@/components/Loader"
-import {addNewVideos, listFileEntries, ListFileEntriesResponse} from "@/api"
+import {
+  addNewVideos,
+  listFileEntries,
+  type ListFileEntriesResponse,
+} from "@/api"
 import FileBrowser from "@/components/FileBrowser"
 import {useCreateToast} from "@/hooks/useToast"
 import AddTagModal from "@/components/AddTagModal"

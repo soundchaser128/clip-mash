@@ -1,8 +1,8 @@
-import {HandyPattern} from "@/api"
+import type {HandyPattern} from "@/api"
 import Heading from "@/components/Heading"
-import {DeepPartial} from "@/types/types"
+import type {DeepPartial} from "@/types/types"
 import {produce} from "immer"
-import {UseFormRegister, useForm} from "react-hook-form"
+import {type UseFormRegister, useForm} from "react-hook-form"
 import {HiCheck} from "react-icons/hi2"
 
 interface Props {

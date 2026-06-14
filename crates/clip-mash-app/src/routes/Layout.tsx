@@ -1,5 +1,5 @@
 import {useStateMachine} from "little-state-machine"
-import React from "react"
+import type React from "react"
 import {
   Link,
   Outlet,
@@ -11,9 +11,13 @@ import {HiCog, HiOutlineDocumentArrowDown, HiXMark} from "react-icons/hi2"
 import {resetForm} from "./actions"
 import Layout from "../components/Layout"
 import Steps from "../components/Steps"
-import {FormState, FormStage, SerializedFormState} from "../types/form-state"
+import {
+  type FormState,
+  FormStage,
+  type SerializedFormState,
+} from "../types/form-state"
 import {saveJsonToDisk} from "@/helpers/json"
-import {AppVersion, deleteProgress} from "@/api"
+import {type AppVersion, deleteProgress} from "@/api"
 
 const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
   return (

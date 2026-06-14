@@ -1,5 +1,5 @@
-import {StashConfig, VideoDto} from "@/api"
-import {VideoSource} from "@/components/VideoPlayer"
+import type {StashConfig, VideoDto} from "@/api"
+import type {VideoSource} from "@/components/VideoPlayer"
 import {BASE_URL} from "@/custom-client"
 
 function stashVideoSources(

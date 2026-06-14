@@ -31,7 +31,7 @@ export const customInstance = async <T>({
     fullUrl += "?" + search.toString()
   }
 
-  let requestBody = undefined
+  let requestBody
 
   if (data instanceof FormData) {
     requestBody = data

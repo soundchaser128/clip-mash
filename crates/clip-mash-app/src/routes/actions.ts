@@ -1,5 +1,5 @@
-import {GlobalState} from "little-state-machine"
-import {FormStage, FormState} from "../types/form-state"
+import type {GlobalState} from "little-state-machine"
+import {FormStage, type FormState} from "../types/form-state"
 
 export function updateForm(
   state: GlobalState,

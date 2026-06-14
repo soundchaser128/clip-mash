@@ -16,7 +16,7 @@ import {
   useSearchParams,
 } from "react-router-dom"
 import {
-  PageListVideoDto,
+  type PageListVideoDto,
   cleanupVideos,
   deleteVideo,
   mergeStashVideo,

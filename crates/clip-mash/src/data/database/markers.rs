@@ -205,8 +205,6 @@ impl MarkersDatabase {
         query_builder.push_bind(id);
         query_builder.push(" RETURNING *, rowid");
 
-        debug!("sql: '{}'", query_builder.sql());
-
         let query = query_builder.build();
         let row = query.fetch_one(&self.pool).await?;
         let record = DbMarker::from_row(&row)?;
@@ -362,7 +360,7 @@ impl MarkersDatabase {
             _ => "m.video_id ASC, m.index_within_video ASC",
         };
         query_builder.push(order);
-        debug!("sql: '{}'", query_builder.sql());
+
         let query = query_builder.build();
         let records = query.fetch_all(&self.pool).await?;
         let markers = records

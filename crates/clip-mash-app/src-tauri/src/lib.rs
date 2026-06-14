@@ -33,7 +33,7 @@ pub fn run() {
             app.manage(AppState {
                 _server_handle: server_handle,
             });
-            info!("Tauri app setup complete, server starting in background");
+            info!("Server starting in background...");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![])

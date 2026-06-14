@@ -106,7 +106,7 @@ mod tests {
 
     use float_cmp::assert_approx_eq;
     use itertools::Itertools;
-    use rand::Rng;
+    use rand::RngExt;
     use tracing_test::traced_test;
 
     use super::validate_options;

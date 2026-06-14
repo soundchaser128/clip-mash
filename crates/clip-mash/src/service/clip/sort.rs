@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use rand::Rng;
+use rand::RngExt;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use tracing::{debug, info};

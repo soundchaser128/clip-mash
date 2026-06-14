@@ -1,9 +1,8 @@
 use std::collections::HashSet;
 use std::fmt;
 use std::str::FromStr;
-use std::time::Duration;
 
-use cached::proc_macro::cached;
+use cached::cached;
 use camino::Utf8Path;
 use color_eyre::eyre::eyre;
 use futures::TryStreamExt;
@@ -145,12 +144,7 @@ pub struct VideosDatabase {
     pool: SqlitePool,
 }
 
-#[cached(
-    result = true,
-    time = 60,
-    key = "String",
-    convert = r#"{ id.to_string() }"#
-)]
+#[cached(ttl = 60, key = "String", convert = r#"{ id.to_string() }"#)]
 pub async fn get_video_cached(db: &VideosDatabase, id: &str) -> Result<Option<DbVideo>> {
     db.get_video(id).await
 }
@@ -456,7 +450,7 @@ impl VideosDatabase {
             }
             first = false;
         }
-        debug!("sql for count: '{}'", query_builder.sql());
+
         let query = query_builder.build();
         let count = query.fetch_one(&self.pool).await?.get::<i64, _>(0);
         Ok(count)
@@ -555,8 +549,6 @@ impl VideosDatabase {
         query_builder.push_bind(limit);
         query_builder.push(" OFFSET ");
         query_builder.push_bind(offset);
-
-        debug!("sql: '{}'", query_builder.sql());
 
         let query = query_builder.build();
         let records = query.fetch_all(&self.pool).await?;

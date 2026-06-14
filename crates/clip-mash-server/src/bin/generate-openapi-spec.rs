@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use color_eyre::Result;
 use color_eyre::eyre::bail;
-use rand::Rng;
+use rand::RngExt;
 use tokio::process::Command;
 
 #[tokio::main]

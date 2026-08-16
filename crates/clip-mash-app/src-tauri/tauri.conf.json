@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ClipMash",
+  "version": "0.1.0",
+  "identifier": "com.soundchaser128.clip-mash",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "ClipMash",
+        "width": 1280,
+        "height": 800
+      }
+    ],
+    "security": {
+      "csp": null,
+      "devCsp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/android-chrome-512x512.png",
+      "icons/android-chrome-192x192.png",
+      "icons/favicon-32x32.png",
+      "icons/apple-touch-icon.png",
+      "icons/favicon.ico"
+    ]
+  }
+}

@@ -242,7 +242,7 @@ pub async fn start_server() -> Result<()> {
     use crate::helpers::{log, sentry};
 
     color_eyre::install()?;
-    // let _log_guard = log::setup_logger();
+    let _log_guard = log::setup_logger();
     let _sentry_guard = sentry::setup();
 
     if let Err(e) = log::cleanup_logs() {

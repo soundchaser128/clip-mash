@@ -3,9 +3,10 @@ use std::fs;
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
+use etcetera::app_strategy::choose_native_strategy;
 use etcetera::{AppStrategy, AppStrategyArgs, choose_app_strategy};
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::{info, warn};
 use utoipa::ToSchema;
 
 use crate::Result;
@@ -112,6 +113,87 @@ pub struct Directories {
 
 const ENV_VAR: &str = "CLIP_MASH_BASE_DIR";
 
+/// Moves `src` to `dest` if `src` exists and `dest` doesn't yet, so we never
+/// clobber data that already lives in the new location.
+fn move_if_missing(src: &Utf8Path, dest: &Utf8Path) {
+    if !src.exists() || dest.exists() {
+        return;
+    }
+
+    if let Some(parent) = dest.parent() {
+        if let Err(e) = fs::create_dir_all(parent) {
+            warn!("failed to create parent directory {}: {}", parent, e);
+            return;
+        }
+    }
+
+    info!("migrating legacy directory {} -> {}", src, dest);
+    if let Err(e) = fs::rename(src, dest) {
+        warn!("failed to migrate {} to {}: {}", src, dest, e);
+    }
+}
+
+fn legacy_directories() -> Option<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
+    let strategy = choose_native_strategy(AppStrategyArgs {
+        top_level_domain: "xyz".into(),
+        author: "soundchaser128".into(),
+        app_name: "stash-compilation-maker".into(),
+    })
+    .ok()?;
+
+    let data_dir: Utf8PathBuf = strategy.data_dir().try_into().ok()?;
+    let cache_dir = strategy.cache_dir().try_into().ok()?;
+
+    // `directories::ProjectDirs::config_dir` used Application Support on macOS,
+    // which is also where its data directory lived. Etcetera's native Apple
+    // strategy otherwise uses Library/Preferences for configuration.
+    #[cfg(target_os = "macos")]
+    let config_dir = data_dir.clone();
+    #[cfg(not(target_os = "macos"))]
+    let config_dir = strategy.config_dir().try_into().ok()?;
+
+    Some((data_dir, config_dir, cache_dir))
+}
+
+fn migrate_legacy_directories(dirs: &Directories) {
+    if std::env::var(ENV_VAR).is_ok() {
+        // base directory is set explicitly, unaffected by the identifier change
+        return;
+    }
+
+    let Some((legacy_data, legacy_config, legacy_cache)) = legacy_directories() else {
+        return;
+    };
+
+    if !legacy_data.exists() && !legacy_config.exists() && !legacy_cache.exists() {
+        // fresh install, nothing to migrate
+        return;
+    }
+
+    move_if_missing(&legacy_data.join("videos.sqlite3"), &dirs.database_file());
+    move_if_missing(
+        &legacy_config.join("config.json"),
+        &dirs.config_dir().join("config.json"),
+    );
+    move_if_missing(
+        &legacy_cache.join("preview-images"),
+        &dirs.preview_image_dir(),
+    );
+    move_if_missing(&legacy_cache.join("music"), &dirs.music_dir());
+    move_if_missing(
+        &legacy_cache.join("videos").join("downloaded"),
+        &dirs.downloaded_video_dir(),
+    );
+    move_if_missing(
+        &legacy_cache.join("videos").join("clips"),
+        &dirs.temp_video_dir(),
+    );
+    move_if_missing(
+        &legacy_cache.join("videos").join("finished"),
+        &dirs.compilation_video_dir(),
+    );
+}
+
 impl Directories {
     pub fn new() -> Result<Self> {
         let dirs: Box<dyn DirectorySupplier + Send + Sync> = match std::env::var(ENV_VAR) {
@@ -132,6 +214,8 @@ impl Directories {
         let dirs = Directories {
             dirs: Arc::new(dirs),
         };
+
+        migrate_legacy_directories(&dirs);
 
         for directory in &[
             dirs.preview_image_dir(),

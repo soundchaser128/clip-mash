@@ -1,0 +1,13 @@
+set shell := ["nu", "-c"]
+
+default:
+    @just --list
+
+start:
+    npm run tauri dev
+
+build:
+    npm run tauri build 
+
+format:
+    npm run format

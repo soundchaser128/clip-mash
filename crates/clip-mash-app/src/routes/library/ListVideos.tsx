@@ -30,7 +30,7 @@ import {useCreateToast} from "@/hooks/useToast"
 import clsx from "clsx"
 
 export default function ListVideos() {
-  const {actions} = useStateMachine({updateForm})
+  const {actions} = useStateMachine({actions: {updateForm}})
   const navigate = useNavigate()
   const page = useLoaderData() as PageListVideoDto
   const revalidator = useRevalidator()

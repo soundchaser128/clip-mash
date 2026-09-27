@@ -1,6 +1,6 @@
 import type React from "react"
 import {useState} from "react"
-import {useForm, type FieldErrors} from "react-hook-form"
+import {useForm, type FieldErrors, type Resolver} from "react-hook-form"
 import {
   HiClock,
   HiTrash,
@@ -116,7 +116,7 @@ function HelpPanel({onBack}: {onBack: () => void}) {
   )
 }
 
-const handleValidation = (values: Inputs) => {
+const handleValidation: Resolver<Inputs> = (values) => {
   const {start, end, title} = values
   const errors: FieldErrors<Inputs> = {}
   if ((end || 0) <= start) {
@@ -132,9 +132,16 @@ const handleValidation = (values: Inputs) => {
     }
   }
 
+  if (Object.keys(errors).length > 0) {
+    return {
+      values: {},
+      errors,
+    }
+  }
+
   return {
     values,
-    errors,
+    errors: {},
   }
 }
 

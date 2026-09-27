@@ -69,7 +69,7 @@ const MusicSettingsForm: React.FC<MusicSettingsFormProps> = ({
 
 export default function Music() {
   const songs = useLoaderData() as SongDto[]
-  const {actions, state} = useStateMachine({updateForm})
+  const {actions, state} = useStateMachine({actions: {updateForm}})
 
   const [selection, setSelection] = useImmer<number[]>(
     state.data.songs?.map((song) => song.songId) || [],

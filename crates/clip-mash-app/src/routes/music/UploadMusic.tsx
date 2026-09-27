@@ -8,7 +8,7 @@ import useNotification from "@/hooks/useNotification"
 const UploadMusic: React.FC = () => {
   const [file, setFile] = useState<File>()
   const [loading, setLoading] = useState(false)
-  const {state, actions} = useStateMachine({updateForm})
+  const {state, actions} = useStateMachine({actions: {updateForm}})
   const revalidator = useRevalidator()
   const sendNotification = useNotification()
   const navigate = useNavigate()

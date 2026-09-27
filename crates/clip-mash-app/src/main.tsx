@@ -1,4 +1,4 @@
-import {createStore, StateMachineProvider} from "little-state-machine"
+import {createStore} from "little-state-machine"
 import React from "react"
 import ReactDOM from "react-dom/client"
 import {
@@ -189,14 +189,12 @@ Sentry.setup()
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <StateMachineProvider>
-      <DndProvider backend={HTML5Backend}>
-        <ConfigProvider>
-          <ToastProvider>
-            <RouterProvider router={router} />
-          </ToastProvider>
-        </ConfigProvider>
-      </DndProvider>
-    </StateMachineProvider>
+    <DndProvider backend={HTML5Backend}>
+      <ConfigProvider>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </ConfigProvider>
+    </DndProvider>
   </React.StrictMode>,
 )

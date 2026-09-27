@@ -3,7 +3,7 @@ import {useStateMachine} from "little-state-machine"
 import {useNavigate} from "react-router-dom"
 
 export default function TroubleshootingInfo() {
-  const {actions} = useStateMachine({resetForm})
+  const {actions} = useStateMachine({actions: {resetForm}})
   const navigate = useNavigate()
 
   const onReset = () => {

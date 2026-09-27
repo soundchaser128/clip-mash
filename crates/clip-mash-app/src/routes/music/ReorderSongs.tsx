@@ -7,7 +7,7 @@ import {updateForm} from "../actions"
 import {useNavigate} from "react-router-dom"
 
 const ReorderSongs: React.FC = () => {
-  const {state, actions} = useStateMachine({updateForm})
+  const {state, actions} = useStateMachine({actions: {updateForm}})
   const songs = state.data?.songs || []
   const [selection, setSelection] = useImmer(songs.map((s) => s.songId))
   const navigate = useNavigate()

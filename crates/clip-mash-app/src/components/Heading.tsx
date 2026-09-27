@@ -1,4 +1,5 @@
 import clsx from "clsx"
+import {JSX} from "react/jsx-runtime"
 
 interface Props {
   children: React.ReactNode

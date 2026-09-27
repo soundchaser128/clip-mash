@@ -65,7 +65,7 @@ const LocalFileSteps: React.FC<{state: FormState}> = ({state}) => {
 }
 
 const AssistantLayout: React.FC = () => {
-  const {actions, state} = useStateMachine({resetForm})
+  const {actions, state} = useStateMachine({actions: {resetForm}})
   const version = useRouteLoaderData("root") as AppVersion
 
   const onReset = async () => {

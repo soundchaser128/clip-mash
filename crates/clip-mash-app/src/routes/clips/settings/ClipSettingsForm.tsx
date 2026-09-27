@@ -149,7 +149,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   confirmBeforeSubmit,
   setHelpOpen,
 }) => {
-  const {actions, state} = useStateMachine({updateForm})
+  const {actions, state} = useStateMachine({actions: {updateForm}})
   const formContext = useForm<ClipFormInputs>({
     defaultValues: getDefaultOptions(state.data),
     mode: "onChange",

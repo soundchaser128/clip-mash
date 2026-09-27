@@ -46,7 +46,7 @@ const defaultOptions: Inputs = {
 function VideoOptions() {
   const needsEncode = useLoaderData() as boolean
 
-  const {actions, state} = useStateMachine({updateForm})
+  const {actions, state} = useStateMachine({actions: {updateForm}})
   const navigate = useNavigate()
   const {register, handleSubmit, setValue, watch} = useForm<Inputs>({
     defaultValues: {...defaultOptions, ...state.data},

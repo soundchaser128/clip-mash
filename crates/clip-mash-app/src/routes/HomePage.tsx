@@ -14,7 +14,7 @@ import type {AppVersion} from "@/api"
 
 const HomePage = () => {
   const videoId = useLoaderData() as string
-  const {actions, state} = useStateMachine({updateForm})
+  const {actions, state} = useStateMachine({actions: {updateForm}})
   const [project, setProject] = useState(state.data?.fileName || "")
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)

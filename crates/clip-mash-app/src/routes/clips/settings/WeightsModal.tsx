@@ -24,7 +24,7 @@ interface MarkerCount {
 
 const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
   const revalidator = useRevalidator()
-  const {state, actions} = useStateMachine({updateForm})
+  const {state, actions} = useStateMachine({actions: {updateForm}})
   const {
     formState: {errors},
     setValue,

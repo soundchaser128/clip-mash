@@ -39,7 +39,7 @@ function ProgressPage() {
     state.data.videoId
   }].mp4`
   const sendNotification = useNotification()
-  const eventSource = useRef<EventSource>()
+  const eventSource = useRef<EventSource | null>(null)
   const {videoId} = state.data
   const navigate = useNavigate()
   const [error, setError] = useState<string>()

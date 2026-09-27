@@ -227,7 +227,7 @@ const MarkerGroupsForm: React.FC<MarkerGroupsFormProps> = ({
 
 const MarkerOrderModal: React.FC<{className?: string}> = ({className}) => {
   const [open, setOpen] = useState(false)
-  const {state, actions} = useStateMachine({updateForm})
+  const {state, actions} = useStateMachine({actions: {updateForm}})
   const initialTitles = getMarkerCounts(state.data.markers || [])
   const stateOrder = state.data.clipOptions?.clipOrder
   const groups =

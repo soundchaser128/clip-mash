@@ -10,7 +10,7 @@ import VideoGrid from "@/components/VideoGrid"
 import PageInfo from "@/components/PageInfo"
 
 export default function ListVideos() {
-  const {state, actions} = useStateMachine({updateForm})
+  const {state, actions} = useStateMachine({actions: {updateForm}})
   const page = useLoaderData() as PageListVideoDto
   const videos = page.content
   const navigate = useNavigate()

@@ -34,7 +34,7 @@ function getScreenshotUrl(url: string): string {
 
 const SelectMarkers: React.FC = () => {
   const initialMarkers = useLoaderData() as MarkerDto[]
-  const {actions, state} = useStateMachine({updateForm})
+  const {actions, state} = useStateMachine({actions: {updateForm}})
   const revalidator = useRevalidator()
 
   const [selection, setSelection] = useImmer<Record<string, SelectedMarker>>(

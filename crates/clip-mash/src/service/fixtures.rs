@@ -34,7 +34,7 @@ pub struct GraphQlQueryMatcher<'a> {
     query: &'a str,
 }
 
-pub fn graphql_query(query: &str) -> GraphQlQueryMatcher {
+pub fn graphql_query(query: &str) -> GraphQlQueryMatcher<'_> {
     GraphQlQueryMatcher { query }
 }
 

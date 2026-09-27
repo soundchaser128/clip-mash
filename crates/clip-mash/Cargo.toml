@@ -5,36 +5,36 @@ edition = "2024"
 license = "GPL-3.0"
 
 [dependencies]
-camino = { version = "1.2.2", features = ["serde1"] }
+camino = { version = "1.2.6", features = ["serde1"] }
 color-eyre = "0.6.5"
 etcetera = "0.11.0"
 float-cmp = "0.10.0"
-futures = "0.3.32"
+futures = "0.3.34"
 graphql_client = "0.16.0"
 hound = "3.5.1"
-itertools = "0.14.0"
+itertools = "0.15.0"
 lazy_static = "1.5.0"
 num_cpus = "1.17.0"
 num-traits = "0.2.19"
-ordered-float = "5.3"
-rand = "0.10.1"
-regex = "1.12.4"
-reqwest = { version = "0.13.4", features = ["json"] }
+ordered-float = "5.5"
+rand = "0.10.3"
+regex = "1.13.1"
+reqwest = { version = "0.13.5", features = ["json"] }
 semver = "1.0.28"
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 sqlx = { version = "0.9.0", features = ["runtime-tokio", "sqlite"] }
-time = { version = "0.3.47", features = ["formatting", "parsing", "macros"] }
-tokio = { version = "1.52.3", features = ["full"] }
+time = { version = "0.3.55", features = ["formatting", "parsing", "macros"] }
+tokio = { version = "1.53.1", features = ["full"] }
 tracing = "0.1.44"
 url = { version = "2.5.8", features = ["serde"] }
-utoipa = "5.5.0"
+utoipa = "6.0.0"
 walkdir = "2.5.0"
 youtube_dl = { version = "0.10.0", features = [
     "tokio",
     "downloader-native-tls",
 ] }
-cached = { version = "2.0.2", features = ["async"] }
+cached = { version = "4.0.0", features = ["async"] }
 
 [target.'cfg(unix)'.dependencies]
 tar = "0.4.46"

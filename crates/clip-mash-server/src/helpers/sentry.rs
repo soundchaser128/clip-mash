@@ -1,6 +1,6 @@
 use std::env;
 
-use sentry::ClientInitGuard;
+use sentry::{ClientInitGuard, ClientOptions};
 use tracing::info;
 
 const DISABLE_SENTRY: &str = "CLIP_MASH_DISABLE_SENTRY";
@@ -15,11 +15,9 @@ pub fn setup() -> Option<ClientInitGuard> {
     } else if let Some(uri) = option_env!("CLIP_MASH_SENTRY_URI") {
         let guard = sentry::init((
             uri,
-            sentry::ClientOptions {
-                release: sentry::release_name!(),
-                traces_sample_rate: 0.2,
-                ..Default::default()
-            },
+            ClientOptions::new()
+                .maybe_release(sentry::release_name!())
+                .traces_sample_rate(0.2),
         ));
 
         info!(

@@ -214,7 +214,7 @@ async fn run() -> Result<()> {
         .nest("/api", api_routes)
         .layer(DefaultBodyLimit::max(CONTENT_LENGTH_LIMIT))
         .layer(sentry_tower::NewSentryLayer::new_from_top())
-        .layer(sentry_tower::SentryHttpLayer::with_transaction())
+        .layer(sentry_tower::SentryHttpLayer::new().enable_transaction())
         .layer(
             CorsLayer::new()
                 .allow_origin(AllowOrigin::list(vec![

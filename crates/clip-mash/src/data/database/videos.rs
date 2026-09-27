@@ -144,7 +144,7 @@ pub struct VideosDatabase {
     pool: SqlitePool,
 }
 
-#[cached(ttl = 60, key = "String", convert = r#"{ id.to_string() }"#)]
+#[cached(ttl_secs = 60, key = "String", convert = r#"{ id.to_string() }"#)]
 pub async fn get_video_cached(db: &VideosDatabase, id: &str) -> Result<Option<DbVideo>> {
     db.get_video(id).await
 }

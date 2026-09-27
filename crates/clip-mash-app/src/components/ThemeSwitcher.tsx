@@ -16,7 +16,7 @@ const ThemeSwitcher = () => {
   }
 
   useEffect(() => {
-    document.body.dataset["theme"] = theme
+    document.body.dataset.theme = theme
   }, [theme])
 
   return (

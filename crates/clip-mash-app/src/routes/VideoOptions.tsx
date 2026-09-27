@@ -70,146 +70,142 @@ function VideoOptions() {
   }
 
   return (
-    <>
-      <form className="grid grid-cols-3" onSubmit={handleSubmit(onSubmit)}>
-        <div />
-        {!needsEncode && (
-          <div className="place-self-center alert alert-info">
-            <HiInformationCircle /> All videos have the same encoding
-            parameters, no encoding will be performed.
-          </div>
-        )}
-        {needsEncode && (
-          <div className="flex flex-col gap-4 self-center max-w-lg">
-            <div className="fieldset w-full">
-              <label className="label" htmlFor="outputWidth">
-                <span className="text-sm">Output resolution</span>
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  className="input w-1/2"
-                  {...register("outputWidth", {valueAsNumber: true})}
-                />
-                <span>x</span>
-                <input
-                  type="number"
-                  className="input w-1/2"
-                  {...register("outputHeight", {valueAsNumber: true})}
-                />
-                <button
-                  onClick={onSwapResolutionValues}
-                  type="button"
-                  className="btn btn-square btn-sm"
-                >
-                  <HiArrowsRightLeft />
-                </button>
-              </div>
-            </div>
-
-            <div className="fieldset">
-              <label className="label" htmlFor="outputFps">
-                <span className="text-sm">Output frames per second</span>
-              </label>
+    <form className="grid grid-cols-3" onSubmit={handleSubmit(onSubmit)}>
+      <div />
+      {!needsEncode && (
+        <div className="place-self-center alert alert-info">
+          <HiInformationCircle /> All videos have the same encoding parameters,
+          no encoding will be performed.
+        </div>
+      )}
+      {needsEncode && (
+        <div className="flex flex-col gap-4 self-center max-w-lg">
+          <div className="fieldset w-full">
+            <label className="label" htmlFor="outputWidth">
+              <span className="text-sm">Output resolution</span>
+            </label>
+            <div className="flex items-center gap-2">
               <input
                 type="number"
-                placeholder="Type here"
-                className="input"
-                {...register("outputFps", {valueAsNumber: true})}
+                className="input w-1/2"
+                {...register("outputWidth", {valueAsNumber: true})}
               />
+              <span>x</span>
+              <input
+                type="number"
+                className="input w-1/2"
+                {...register("outputHeight", {valueAsNumber: true})}
+              />
+              <button
+                onClick={onSwapResolutionValues}
+                type="button"
+                className="btn btn-square btn-sm"
+              >
+                <HiArrowsRightLeft />
+              </button>
             </div>
-            <div className="fieldset">
-              <label className="label" htmlFor="videoCodec">
-                <span className="text-sm">Video codec</span>
-              </label>
-              <select className="select" {...register("videoCodec")}>
-                <option disabled value="none">
-                  Select codec
-                </option>
-                <option value="h264">
-                  H.264 (most common, quick to encode)
-                </option>
-                <option value="h265">
-                  H.265 (more efficient, slower to encode)
-                </option>
-                <option value="av1">
-                  AV1 (even more efficient, slower to encode)
-                </option>
-              </select>
-            </div>
-
-            <div className="fieldset">
-              <label className="label" htmlFor="videoQuality">
-                <span className="text-sm">Video quality</span>
-              </label>
-              <select className="select" {...register("videoQuality")}>
-                <option disabled value="none">
-                  Select quality
-                </option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="lossless">Almost lossless</option>
-              </select>
-            </div>
-
-            <div className="fieldset">
-              <label className="label" htmlFor="encodingEffort">
-                <span className="text-sm">Encoding effort</span>
-              </label>
-              <select className="select" {...register("encodingEffort")}>
-                <option disabled value="none">
-                  Select encoding effort
-                </option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
-
-            <div className="fieldset">
-              <label className="label" htmlFor="includeOriginalFileName">
-                <span className="text-sm">
-                  Include original file name in clip filename?
-                </span>
-                <input
-                  type="checkbox"
-                  className="checkbox"
-                  {...register("includeOriginalFileName")}
-                />
-              </label>
-            </div>
-
-            {showPaddingOptions && (
-              <div className="fieldset">
-                <label className="label" htmlFor="padding">
-                  <span className="text-sm">
-                    Padding for videos with different aspect ratios
-                  </span>
-                </label>
-                <select className="select" {...register("padding")}>
-                  <option disabled value="none">
-                    Select padding
-                  </option>
-                  <option value="black">Black</option>
-                  <option value="blur">
-                    Blurred video content (experimental)
-                  </option>
-                </select>
-              </div>
-            )}
           </div>
-        )}
 
-        <div className="w-full flex justify-between mb-4">
-          <span />
-          <button type="submit" className="btn btn-success">
-            Next
-            <HiChevronRight className="ml-1" />
-          </button>
+          <div className="fieldset">
+            <label className="label" htmlFor="outputFps">
+              <span className="text-sm">Output frames per second</span>
+            </label>
+            <input
+              type="number"
+              placeholder="Type here"
+              className="input"
+              {...register("outputFps", {valueAsNumber: true})}
+            />
+          </div>
+          <div className="fieldset">
+            <label className="label" htmlFor="videoCodec">
+              <span className="text-sm">Video codec</span>
+            </label>
+            <select className="select" {...register("videoCodec")}>
+              <option disabled value="none">
+                Select codec
+              </option>
+              <option value="h264">H.264 (most common, quick to encode)</option>
+              <option value="h265">
+                H.265 (more efficient, slower to encode)
+              </option>
+              <option value="av1">
+                AV1 (even more efficient, slower to encode)
+              </option>
+            </select>
+          </div>
+
+          <div className="fieldset">
+            <label className="label" htmlFor="videoQuality">
+              <span className="text-sm">Video quality</span>
+            </label>
+            <select className="select" {...register("videoQuality")}>
+              <option disabled value="none">
+                Select quality
+              </option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="lossless">Almost lossless</option>
+            </select>
+          </div>
+
+          <div className="fieldset">
+            <label className="label" htmlFor="encodingEffort">
+              <span className="text-sm">Encoding effort</span>
+            </label>
+            <select className="select" {...register("encodingEffort")}>
+              <option disabled value="none">
+                Select encoding effort
+              </option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <div className="fieldset">
+            <label className="label" htmlFor="includeOriginalFileName">
+              <span className="text-sm">
+                Include original file name in clip filename?
+              </span>
+              <input
+                type="checkbox"
+                className="checkbox"
+                {...register("includeOriginalFileName")}
+              />
+            </label>
+          </div>
+
+          {showPaddingOptions && (
+            <div className="fieldset">
+              <label className="label" htmlFor="padding">
+                <span className="text-sm">
+                  Padding for videos with different aspect ratios
+                </span>
+              </label>
+              <select className="select" {...register("padding")}>
+                <option disabled value="none">
+                  Select padding
+                </option>
+                <option value="black">Black</option>
+                <option value="blur">
+                  Blurred video content (experimental)
+                </option>
+              </select>
+            </div>
+          )}
         </div>
-      </form>
-    </>
+      )}
+
+      <div className="w-full flex justify-between mb-4">
+        <span />
+        <button type="submit" className="btn btn-success">
+          Next
+          <HiChevronRight className="ml-1" />
+        </button>
+      </div>
+    </form>
   )
 }
 

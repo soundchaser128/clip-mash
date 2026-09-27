@@ -15,7 +15,7 @@ export function getClipUrl(
     if (streamUrl.startsWith("/")) {
       return [
         {
-          src: BASE_URL + streamUrl + "#" + hash,
+          src: `${BASE_URL + streamUrl}#${hash}`,
           type: "video/mp4",
         },
       ]
@@ -25,7 +25,7 @@ export function getClipUrl(
       transcodeUrl.hash = hash
       return [
         {
-          src: streamUrl + "#" + hash,
+          src: `${streamUrl}#${hash}`,
           type: "video/mp4",
         },
         {

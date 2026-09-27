@@ -28,7 +28,7 @@ export const customInstance = async <T>({
     )
     const search = new URLSearchParams(filtered)
 
-    fullUrl += "?" + search.toString()
+    fullUrl += `?${search.toString()}`
   }
 
   let requestBody

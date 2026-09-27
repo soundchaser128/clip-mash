@@ -161,7 +161,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
   const clipStrategy = watch("clipStrategy")
   const clipOrder = watch("clipOrder.type")
   const useMusic = watch("useMusic")
-  const hasSongs = state.data.songs?.length || 0 > 0
+  const hasSongs = state.data.songs?.length !== 0
   const totalClipDuration = sumDurations(state.data.selectedMarkers || [])
 
   const validate = (values: ClipFormInputs) => {

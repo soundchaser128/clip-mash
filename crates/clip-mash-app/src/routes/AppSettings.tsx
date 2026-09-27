@@ -132,7 +132,7 @@ function AppConfigPage() {
     } catch (e) {
       createToast({
         type: "error",
-        message: "Error cleaning up: " + (e as Error).message,
+        message: `Error cleaning up: ${(e as Error).message}`,
       })
     }
   }

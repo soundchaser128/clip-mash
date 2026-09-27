@@ -8,7 +8,7 @@ const RoundRobinClipStrategyForm: React.FC<{
 }> = ({totalClipDuration}) => {
   const {state} = useStateMachine()
   const {watch} = useFormContext<ClipFormInputs>()
-  const hasSongs = state.data.songs?.length || 0 > 0
+  const hasSongs = state.data.songs?.length !== 0
   const useMusic = watch("useMusic")
 
   return (

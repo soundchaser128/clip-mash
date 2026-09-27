@@ -178,7 +178,7 @@ function ProgressPage() {
               / <strong>{formatSeconds(progress.itemsTotal, "short")}</strong>{" "}
               of the compilation finished
             </p>
-            {progress.etaSeconds != undefined && (
+            {progress.etaSeconds !== undefined && (
               <p>
                 Estimated time remaining:{" "}
                 <strong

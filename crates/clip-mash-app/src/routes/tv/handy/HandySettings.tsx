@@ -18,38 +18,36 @@ interface RangeInputProps {
 
 const RangeInput: React.FC<RangeInputProps> = ({label, name, register}) => {
   return (
-    <>
-      <div className="w-full gap-2">
-        <label className="label">
-          <span className="text-sm">{label}</span>
-        </label>
-        <div className="flex gap-2 items-center">
-          <input
-            className="input"
-            required
-            type="number"
-            min={0}
-            max={100}
-            {...register(`${name}.min`, {
-              valueAsNumber: true,
-              required: true,
-            })}
-          />
-          -
-          <input
-            className="input"
-            required
-            type="number"
-            min={0}
-            max={100}
-            {...register(`${name}.max`, {
-              valueAsNumber: true,
-              required: true,
-            })}
-          />
-        </div>
+    <div className="w-full gap-2">
+      <label className="label">
+        <span className="text-sm">{label}</span>
+      </label>
+      <div className="flex gap-2 items-center">
+        <input
+          className="input"
+          required
+          type="number"
+          min={0}
+          max={100}
+          {...register(`${name}.min`, {
+            valueAsNumber: true,
+            required: true,
+          })}
+        />
+        -
+        <input
+          className="input"
+          required
+          type="number"
+          min={0}
+          max={100}
+          {...register(`${name}.max`, {
+            valueAsNumber: true,
+            required: true,
+          })}
+        />
       </div>
-    </>
+    </div>
   )
 }
 

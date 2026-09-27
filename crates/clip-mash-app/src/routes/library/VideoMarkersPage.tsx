@@ -125,7 +125,7 @@ const handleValidation: Resolver<Inputs> = (values) => {
       message: "End must be after start",
     }
   }
-  if (!title || !title.trim()) {
+  if (!title?.trim()) {
     errors.title = {
       type: "required",
       message: "Must enter a title",
@@ -248,7 +248,7 @@ function VideoMarkersPage() {
   const onRemoveMark = (t: number, e: React.MouseEvent) => {
     e.stopPropagation()
     setMarkPoints((draft) => {
-      const idx = draft.findIndex((m) => m === t)
+      const idx = draft.indexOf(t)
       draft.splice(idx, 1)
     })
   }
@@ -343,7 +343,7 @@ function VideoMarkersPage() {
 
     const newMarkers: MarkerDto[] = []
     const points = [...markPoints]
-    if (points[0] != 0.0) {
+    if (points[0] !== 0.0) {
       points.unshift(0.0)
     }
 

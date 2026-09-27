@@ -97,7 +97,7 @@ const VideoCardPreview: React.FC<Props> = ({
 }) => {
   return (
     <HoverVideo
-      onImageClick={() => onImageClick && onImageClick(video.video.id)}
+      onImageClick={() => onImageClick?.(video.video.id)}
       imageSource={getPreview(video.video, stashConfig)}
       videoSource={getVideo(video.video, stashConfig)}
       disabled={disabled}
@@ -161,7 +161,7 @@ const VideoCardWithDetails: React.FC<Props> = ({
     >
       <figure>
         <HoverVideo
-          onImageClick={() => onImageClick && onImageClick(video.video.id)}
+          onImageClick={() => onImageClick?.(video.video.id)}
           imageSource={getPreview(video.video, stashConfig)}
           videoSource={getVideo(video.video, stashConfig)}
           disabled={disabled}

@@ -26,7 +26,7 @@ const Modal: React.FC<ModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null)
 
   const handleClose = useCallback(() => {
-    onClose && onClose()
+    onClose?.()
   }, [onClose])
 
   const handleClickOutside = useCallback(
@@ -75,7 +75,7 @@ const Modal: React.FC<ModalProps> = ({
     },
     onRest: () => {
       if (isOpen) {
-        onAnimationFinished && onAnimationFinished()
+        onAnimationFinished?.()
       }
     },
   })

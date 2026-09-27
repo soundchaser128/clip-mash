@@ -297,9 +297,7 @@ const VideoGrid: React.FC<Props> = ({
           <VideoCard
             key={video.video.id}
             video={video}
-            actionChildren={
-              actionChildren && actionChildren(video, aspectRatio)
-            }
+            actionChildren={actionChildren?.(video, aspectRatio)}
             stashConfig={config?.stash}
             onImageClick={onVideoClick}
             disabled={isVideoDisabled ? isVideoDisabled(video) : false}

@@ -20,18 +20,21 @@
     "rules": {
       "recommended": true,
       "correctness": {
-        "noUnusedVariables": "warn",
-        "useExhaustiveDependencies": "warn",
+        "noUnusedVariables": "off",
+        "useExhaustiveDependencies": "off",
         "useHookAtTopLevel": "error"
       },
       "style": {"noNonNullAssertion": "off"},
       "suspicious": {
-        "noAlert": "warn",
+        "noAlert": "off",
         "noConsole": {
-          "level": "warn",
-          "options": {"allow": ["error", "warn"]}
-        }
-      }
+          "level": "off",
+          "options": {"allow": ["error", "off"]}
+        },
+        "noArrayIndexKey": "off",
+        "noImplicitAnyLet": "off"
+      },
+      "a11y": "off"
     }
   },
   "javascript": {

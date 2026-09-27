@@ -54,7 +54,7 @@ const getClipLengths = (
   state: FormState,
   spread: number,
 ): ClipLengthOptions => {
-  if (!options.clipLengths || !options.clipLengths.type) {
+  if (!options.clipLengths?.type) {
     return {
       type: "randomized",
       baseDuration: 20,

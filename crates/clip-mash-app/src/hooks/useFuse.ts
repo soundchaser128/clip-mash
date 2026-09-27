@@ -14,7 +14,7 @@ function useFuse<T>({items, keys, query, threshold = 0.1}: Options<T>): T[] {
     return fuse
   }, [items, keys, threshold])
 
-  if (query && query.trim()) {
+  if (query?.trim()) {
     const result = fuse.search(query)
     return result.map((i) => i.item)
   } else {

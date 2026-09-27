@@ -227,7 +227,7 @@ const Timeline: React.FC<Props> = ({
             key={time}
             style={{left: `calc(${(time / length) * 100}% + ${marginLeft}px)`}}
             className="top-0 absolute py-2 bg-green-500/50 w-2 -translate-x-0.5 h-[36px] z-10 cursor-pointer"
-            onClick={(e) => onMarkerClick && onMarkerClick(time, e)}
+            onClick={(e) => onMarkerClick?.(time, e)}
           />
         ))}
         <TimelineSegments

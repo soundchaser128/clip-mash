@@ -29,7 +29,7 @@ const Toast: React.FC<Props> = ({
 
   const handleClose = () => {
     setVisible(false)
-    onClose && onClose()
+    onClose?.()
   }
 
   if (!visible) {

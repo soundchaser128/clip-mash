@@ -47,7 +47,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
       const marker = state.data.selectedMarkers?.find(
         (m) => m.id === clip.markerId,
       )
-      if (marker && marker.title && marker.selected) {
+      if (marker?.title && marker.selected) {
         const count = counts.get(marker.title) ?? {total: 0, current: 0}
         counts.set(marker.title, {
           total: count.total,

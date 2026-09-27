@@ -70,7 +70,7 @@ const HomePage = () => {
               <input
                 type="text"
                 placeholder="Project name (optional)"
-                className="input input-lg input-primary input-bordered join-item"
+                className="input input-lg input-primary  join-item"
                 value={project}
                 onChange={(e) => setProject(e.target.value)}
               />

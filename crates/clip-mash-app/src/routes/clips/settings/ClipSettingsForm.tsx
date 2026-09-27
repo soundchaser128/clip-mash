@@ -340,14 +340,11 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
         </div>
 
         {!useMusic && (
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label">
-              <span className="label-text">Clip order</span>
+              <span className="text-sm">Clip order</span>
             </label>
-            <select
-              className="select select-bordered"
-              {...register("clipOrder.type")}
-            >
+            <select className="select" {...register("clipOrder.type")}>
               <option value="none" disabled>
                 Select...
               </option>
@@ -361,9 +358,9 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
         {clipOrder === "fixed" && <MarkerOrderModal className="mt-4" />}
 
         {hasSongs && (
-          <div className="form-control mt-2">
+          <div className="fieldset mt-2">
             <label className="label">
-              <span className="label-text">Use music for clip generation?</span>
+              <span className="text-sm">Use music for clip generation?</span>
               <input
                 type="checkbox"
                 className="checkbox"
@@ -373,14 +370,11 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
           </div>
         )}
 
-        <div className="form-control">
+        <div className="fieldset">
           <label className="label">
-            <span className="label-text">Clip generation method</span>
+            <span className="text-sm">Clip generation method</span>
           </label>
-          <select
-            className="select select-bordered"
-            {...register("clipStrategy")}
-          >
+          <select className="select" {...register("clipStrategy")}>
             <option value="none" disabled>
               Select...
             </option>
@@ -402,12 +396,12 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
           <EqualLengthFields totalClipDuration={totalClipDuration} />
         )}
 
-        <div className="form-control">
+        <div className="fieldset">
           <label className="label">
-            <span className="label-text">Random seed</span>
+            <span className="text-sm">Random seed</span>
           </label>
           <input
-            className="input input-bordered"
+            className="input"
             type="text"
             placeholder="Enter a value to control random number generation (optional)"
             {...register("seed")}
@@ -419,7 +413,7 @@ const ClipSettingsForm: React.FC<SettingsFormProps> = ({
           <button
             disabled={!formState.isValid}
             type="submit"
-            className="btn btn-success "
+            className="btn btn-success"
           >
             <HiRocketLaunch />
             Generate

@@ -317,7 +317,7 @@ const TvWatchPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="form-control">
+            <div className="fieldset">
               <input
                 className="range range-primary"
                 type="range"
@@ -328,12 +328,12 @@ const TvWatchPage: React.FC = () => {
                 onChange={onClipDurationChange}
               />
               <label className="label">
-                <span className="label-text mb-4">
+                <span className="text-sm mb-4">
                   Clip duration ({clipDuration}s)
                 </span>
               </label>
             </div>
-            <div className="form-control">
+            <div className="fieldset">
               <input
                 className="range range-primary"
                 type="range"
@@ -344,11 +344,11 @@ const TvWatchPage: React.FC = () => {
                 onChange={onVolumeChange}
               />
               <label className="label">
-                <span className="label-text mb-4">Volume</span>
+                <span className="text-sm mb-4">Volume</span>
               </label>
             </div>
             {music.length > 0 && (
-              <div className="form-control">
+              <div className="fieldset">
                 <input
                   className="range range-primary"
                   type="range"
@@ -359,7 +359,7 @@ const TvWatchPage: React.FC = () => {
                   onChange={onBalanceChange}
                 />
                 <label className="label">
-                  <span className="label-text mb-4">Audio balance</span>
+                  <span className="text-sm mb-4">Audio balance</span>
                 </label>
               </div>
             )}

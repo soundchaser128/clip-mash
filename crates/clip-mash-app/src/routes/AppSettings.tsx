@@ -152,15 +152,15 @@ function AppConfigPage() {
 
       <section className="flex flex-col mb-4">
         <h2 className="text-xl font-bold mb-2">Interface</h2>
-        <div className="form-control">
+        <div className="fieldset">
           <label className="label">
-            <span className="label-text">Preview image aspect ratio</span>
+            <span className="text-sm">Preview image aspect ratio</span>
           </label>
 
           <select
             value={aspectRatio}
             onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
-            className="select select-sm select-bordered"
+            className="select select-sm"
           >
             <option value="wide">Wide</option>
             <option value="square">Square</option>
@@ -177,31 +177,31 @@ function AppConfigPage() {
             can connect it to ClipMash to import the scenes and markers in your
             library.
           </p>
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label" htmlFor="stashUrl">
-              <span className="label-text">URL of your Stash instance:</span>
+              <span className="text-sm">URL of your Stash instance:</span>
             </label>
             <input
               type="url"
               placeholder="Example: http://localhost:9999"
-              className="input input-bordered"
+              className="input"
               defaultValue="http://localhost:9999"
               {...register("stash.stashUrl")}
             />
           </div>
 
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label" htmlFor="apiKey">
-              <span className="label-text">API key (optional):</span>
+              <span className="text-sm">API key (optional):</span>
             </label>
             <input
               type="password"
               placeholder="eyJhbGc..."
-              className="input input-bordered"
+              className="input"
               {...register("stash.apiKey")}
             />
             <label className="label">
-              <span className="label-text-alt">
+              <span className="text-xs">
                 The API key is only required when authentication in Stash is
                 enabled. Navigate to{" "}
                 <ExternalLink href={stashSettingsPageUrl}>
@@ -248,9 +248,9 @@ function AppConfigPage() {
             device for use with the ClipMash TV feature. To enable this feature,
             you need to enter your Handy connection key.
           </p>
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label cursor-pointer">
-              <span className="label-text">Enable Handy integration</span>
+              <span className="text-sm">Enable Handy integration</span>
               <input
                 type="checkbox"
                 className="checkbox checkbox-primary"
@@ -259,14 +259,14 @@ function AppConfigPage() {
             </label>
           </div>
 
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label">
-              <span className="label-text">Handy connection key</span>
+              <span className="text-sm">Handy connection key</span>
             </label>
             <input
               type="password"
               placeholder="Connection key"
-              className="input input-bordered"
+              className="input"
               disabled={!watch("handy.enabled")}
               {...register("handy.key")}
             />
@@ -317,7 +317,7 @@ function AppConfigPage() {
       </section>
 
       <section className="mt-4 flex justify-between items-center">
-        <p className="label-text">
+        <p className="text-sm">
           Convert preview images to the WebP format.
           <br />
           Reduces disk usage of the preview image folder.

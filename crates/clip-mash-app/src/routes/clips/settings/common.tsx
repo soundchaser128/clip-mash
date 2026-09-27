@@ -12,7 +12,7 @@ export const CompilationDurationField: React.FC<{
   return (
     <div>
       <label className="label">
-        <span className="label-text">Compilation length</span>
+        <span className="text-sm">Compilation length</span>
       </label>
       <input
         type="range"
@@ -34,13 +34,13 @@ export const CompilationDurationField: React.FC<{
 export const MinClipDurationField = () => {
   const {register} = useFormContext<ClipFormInputs>()
   return (
-    <div className="form-control">
+    <div className="fieldset">
       <label className="label">
-        <span className="label-text">Minimum clip length (seconds)</span>
+        <span className="text-sm">Minimum clip length (seconds)</span>
       </label>
       <input
         type="number"
-        className="input input-bordered w-full"
+        className="input w-full"
         required
         min="0"
         step="0.1"
@@ -57,7 +57,7 @@ export const ClipDurationSpreadField = () => {
   return (
     <div>
       <label className="label">
-        <span className="label-text">Clip duration spread</span>
+        <span className="text-sm">Clip duration spread</span>
       </label>
       <input
         type="range"
@@ -87,9 +87,9 @@ export const MusicFormFields: React.FC<{
 
   return (
     <>
-      <div className="form-control">
+      <div className="fieldset">
         <label className="label">
-          <span className="label-text">Beats per measure</span>
+          <span className="text-sm">Beats per measure</span>
         </label>
         <input
           type="hidden"
@@ -97,19 +97,19 @@ export const MusicFormFields: React.FC<{
         />
         <input
           type="number"
-          className="input input-bordered"
+          className="input"
           required
           {...register(`${strategy}.clipLengths.beatsPerMeasure`, {
             valueAsNumber: true,
           })}
         />
       </div>
-      <div className="form-control">
+      <div className="fieldset">
         <label className="label">
-          <span className="label-text">Cut after ... measures</span>
+          <span className="text-sm">Cut after ... measures</span>
         </label>
         <select
-          className="select select-bordered"
+          className="select"
           {...register(`${strategy}.clipLengths.cutAfterMeasures.type`)}
         >
           <option disabled value="none">
@@ -121,13 +121,13 @@ export const MusicFormFields: React.FC<{
       </div>
 
       {measureCountType === "fixed" && (
-        <div className="form-control">
+        <div className="fieldset">
           <label className="label cursor-pointer">
-            <span className="label-text">Cut after how many measures?</span>
+            <span className="text-sm">Cut after how many measures?</span>
           </label>
           <input
             type="number"
-            className="input input-bordered"
+            className="input"
             required
             {...register(`${strategy}.clipLengths.cutAfterMeasures.count`, {
               valueAsNumber: true,
@@ -138,26 +138,26 @@ export const MusicFormFields: React.FC<{
 
       {measureCountType === "random" && (
         <>
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label cursor-pointer">
-              <span className="label-text">Minimum</span>
+              <span className="text-sm">Minimum</span>
             </label>
             <input
               type="number"
-              className="input input-bordered"
+              className="input"
               required
               {...register(`${strategy}.clipLengths.cutAfterMeasures.min`, {
                 valueAsNumber: true,
               })}
             />
           </div>
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label cursor-pointer">
-              <span className="label-text">Maximum</span>
+              <span className="text-sm">Maximum</span>
             </label>
             <input
               type="number"
-              className="input input-bordered"
+              className="input"
               required
               {...register(`${strategy}.clipLengths.cutAfterMeasures.max`, {
                 valueAsNumber: true,
@@ -183,11 +183,11 @@ export const RandomizedLengthFormFields: React.FC<{
       />
       <div className="form-field">
         <label className="label">
-          <span className="label-text">Maximum clip length (seconds)</span>
+          <span className="text-sm">Maximum clip length (seconds)</span>
         </label>
         <input
           type="number"
-          className="input input-bordered w-full"
+          className="input w-full"
           required
           {...register(`${strategy}.clipLengths.baseDuration`, {
             valueAsNumber: true,

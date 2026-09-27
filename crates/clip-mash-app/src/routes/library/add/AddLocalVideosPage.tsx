@@ -115,9 +115,9 @@ export default function SelectVideos() {
               </button>
             </div>
 
-            <div className="form-control justify-between w-full">
+            <div className="fieldset justify-between w-full">
               <label className="label cursor-pointer">
-                <span className="label-text">
+                <span className="text-sm">
                   Look at all the subdirectories as well
                 </span>
                 <input

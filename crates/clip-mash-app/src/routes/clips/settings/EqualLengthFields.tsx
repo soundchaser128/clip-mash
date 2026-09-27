@@ -13,13 +13,13 @@ const EqualLengthFields: React.FC<{totalClipDuration: number}> = ({
 
   return (
     <>
-      <div className="form-control">
+      <div className="fieldset">
         <label className="label">
-          <span className="label-text">Base clip duration (seconds)</span>
+          <span className="text-sm">Base clip duration (seconds)</span>
         </label>
         <input
           type="number"
-          className="input input-bordered"
+          className="input"
           {...register("equalLength.clipDuration", {valueAsNumber: true})}
         />
       </div>

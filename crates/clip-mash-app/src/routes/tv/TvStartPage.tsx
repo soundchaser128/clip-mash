@@ -210,7 +210,7 @@ const TvStartPage: React.FC = () => {
           watch a compilation generated for you in the browser!
         </p>
 
-        <div role="tablist" className="tabs tabs-bordered mb-4">
+        <div role="tablist" className="tabs tabs-border mb-4">
           <input
             type="radio"
             role="tab"
@@ -257,9 +257,9 @@ const TvStartPage: React.FC = () => {
           ))}
         </ul>
 
-        <div className="form-control self-stretch mt-2">
+        <div className="fieldset self-stretch mt-2">
           <label className="label">
-            <span className="label-text mr-2">With Music</span>
+            <span className="text-sm mr-2">With Music</span>
 
             <input
               type="checkbox"
@@ -270,13 +270,13 @@ const TvStartPage: React.FC = () => {
           </label>
         </div>
 
-        <div className="form-control self-stretch mt-2">
+        <div className="fieldset self-stretch mt-2">
           <label className="label">
-            <span className="label-text mr-2">Seed</span>
+            <span className="text-sm mr-2">Seed</span>
             <div className="join">
               <input
                 type="text"
-                className="input input-sm input-bordered join-item"
+                className="input input-sm  join-item"
                 {...register("seed")}
               />
               <button

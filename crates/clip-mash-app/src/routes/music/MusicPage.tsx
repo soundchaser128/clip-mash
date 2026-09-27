@@ -45,9 +45,9 @@ const MusicSettingsForm: React.FC<MusicSettingsFormProps> = ({
   return (
     <form onChange={handleSubmit(onSubmit)} className="p-4">
       <h2 className="text-xl font-bold mb-2">Music settings</h2>
-      <div className="form-control self-start">
+      <div className="fieldset self-start">
         <label className="label">
-          <span className="label-text">Music volume</span>
+          <span className="text-sm">Music volume</span>
         </label>
         <input
           type="range"

@@ -81,20 +81,20 @@ function VideoOptions() {
         )}
         {needsEncode && (
           <div className="flex flex-col gap-4 self-center max-w-lg">
-            <div className="form-control w-full">
+            <div className="fieldset w-full">
               <label className="label" htmlFor="outputWidth">
-                <span className="label-text">Output resolution</span>
+                <span className="text-sm">Output resolution</span>
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
-                  className="input input-bordered w-1/2"
+                  className="input w-1/2"
                   {...register("outputWidth", {valueAsNumber: true})}
                 />
                 <span>x</span>
                 <input
                   type="number"
-                  className="input input-bordered w-1/2"
+                  className="input w-1/2"
                   {...register("outputHeight", {valueAsNumber: true})}
                 />
                 <button
@@ -107,25 +107,22 @@ function VideoOptions() {
               </div>
             </div>
 
-            <div className="form-control">
+            <div className="fieldset">
               <label className="label" htmlFor="outputFps">
-                <span className="label-text">Output frames per second</span>
+                <span className="text-sm">Output frames per second</span>
               </label>
               <input
                 type="number"
                 placeholder="Type here"
-                className="input input-bordered"
+                className="input"
                 {...register("outputFps", {valueAsNumber: true})}
               />
             </div>
-            <div className="form-control">
+            <div className="fieldset">
               <label className="label" htmlFor="videoCodec">
-                <span className="label-text">Video codec</span>
+                <span className="text-sm">Video codec</span>
               </label>
-              <select
-                className="select select-bordered"
-                {...register("videoCodec")}
-              >
+              <select className="select" {...register("videoCodec")}>
                 <option disabled value="none">
                   Select codec
                 </option>
@@ -141,14 +138,11 @@ function VideoOptions() {
               </select>
             </div>
 
-            <div className="form-control">
+            <div className="fieldset">
               <label className="label" htmlFor="videoQuality">
-                <span className="label-text">Video quality</span>
+                <span className="text-sm">Video quality</span>
               </label>
-              <select
-                className="select select-bordered"
-                {...register("videoQuality")}
-              >
+              <select className="select" {...register("videoQuality")}>
                 <option disabled value="none">
                   Select quality
                 </option>
@@ -159,14 +153,11 @@ function VideoOptions() {
               </select>
             </div>
 
-            <div className="form-control">
+            <div className="fieldset">
               <label className="label" htmlFor="encodingEffort">
-                <span className="label-text">Encoding effort</span>
+                <span className="text-sm">Encoding effort</span>
               </label>
-              <select
-                className="select select-bordered"
-                {...register("encodingEffort")}
-              >
+              <select className="select" {...register("encodingEffort")}>
                 <option disabled value="none">
                   Select encoding effort
                 </option>
@@ -176,9 +167,9 @@ function VideoOptions() {
               </select>
             </div>
 
-            <div className="form-control">
+            <div className="fieldset">
               <label className="label" htmlFor="includeOriginalFileName">
-                <span className="label-text">
+                <span className="text-sm">
                   Include original file name in clip filename?
                 </span>
                 <input
@@ -190,16 +181,13 @@ function VideoOptions() {
             </div>
 
             {showPaddingOptions && (
-              <div className="form-control">
+              <div className="fieldset">
                 <label className="label" htmlFor="padding">
-                  <span className="label-text">
+                  <span className="text-sm">
                     Padding for videos with different aspect ratios
                   </span>
                 </label>
-                <select
-                  className="select select-bordered"
-                  {...register("padding")}
-                >
+                <select className="select" {...register("padding")}>
                   <option disabled value="none">
                     Select padding
                   </option>

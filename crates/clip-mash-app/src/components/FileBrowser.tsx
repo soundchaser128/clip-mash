@@ -30,20 +30,15 @@ function FileBrowser<T extends FieldValues>({
 
   return (
     <section className="w-full flex-grow flex max-h-[55vh] flex-col">
-      <div className="form-control">
+      <div className="fieldset">
         <label htmlFor={name} className="label">
-          <span className="label-text">Path</span>
+          <span className="text-sm">Path</span>
         </label>
         <Controller
           name={name}
           control={control}
           render={({field}) => (
-            <input
-              type="text"
-              className="input input-bordered mb-4"
-              required
-              {...field}
-            />
+            <input type="text" className="input mb-4" required {...field} />
           )}
         />
       </div>

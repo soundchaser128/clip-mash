@@ -1,4 +1,4 @@
-import {json} from "react-router-dom"
+import {data as routeData} from "react-router-dom"
 
 type Method = "get" | "post" | "put" | "delete" | "patch"
 
@@ -53,7 +53,7 @@ export const customInstance = async <T>({
     return response.json()
   } else {
     const text = await response.text()
-    throw json(
+    throw routeData(
       {error: text, request: url},
       {
         status: response.status,

@@ -21,11 +21,11 @@ const RangeInput: React.FC<RangeInputProps> = ({label, name, register}) => {
     <>
       <div className="w-full gap-2">
         <label className="label">
-          <span className="label-text">{label}</span>
+          <span className="text-sm">{label}</span>
         </label>
         <div className="flex gap-2 items-center">
           <input
-            className="input input-bordered"
+            className="input"
             required
             type="number"
             min={0}
@@ -37,7 +37,7 @@ const RangeInput: React.FC<RangeInputProps> = ({label, name, register}) => {
           />
           -
           <input
-            className="input input-bordered"
+            className="input"
             required
             type="number"
             min={0}
@@ -111,15 +111,12 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
       <p className="text-sm mb-2">
         Set up the pattern for the Handy to follow.
       </p>
-      <div className="form-control">
+      <div className="fieldset">
         <label className="label">
-          <span className="label-text">Pattern type</span>
+          <span className="text-sm">Pattern type</span>
         </label>
 
-        <select
-          {...register("type")}
-          className="select select-bordered select-primary"
-        >
+        <select {...register("type")} className="select select-primary">
           <option value="random">Random</option>
           <option value="accellerate">Accelerate</option>
           <option value="cycle-accellerate">Accellerating cycle</option>
@@ -142,13 +139,13 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
 
       {type === "accellerate" && (
         <>
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label">
-              <span className="label-text">Session duration in minutes</span>
+              <span className="text-sm">Session duration in minutes</span>
             </label>
 
             <input
-              className="input input-bordered"
+              className="input"
               required
               type="number"
               min={1}
@@ -159,13 +156,13 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
             />
           </div>
 
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label">
-              <span className="label-text">Start speed</span>
+              <span className="text-sm">Start speed</span>
             </label>
 
             <input
-              className="input input-bordered"
+              className="input"
               required
               type="number"
               min={1}
@@ -176,13 +173,13 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
             />
           </div>
 
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label">
-              <span className="label-text">End speed</span>
+              <span className="text-sm">End speed</span>
             </label>
 
             <input
-              className="input input-bordered"
+              className="input"
               required
               type="number"
               min={1}
@@ -203,13 +200,13 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
             register={register}
           />
 
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label">
-              <span className="label-text">Randomness</span>
+              <span className="text-sm">Randomness</span>
             </label>
 
             <input
-              className="input input-bordered"
+              className="input"
               required
               type="number"
               min={1}
@@ -242,13 +239,13 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
             register={register}
           />
 
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label">
-              <span className="label-text">Session duration (in minutes)</span>
+              <span className="text-sm">Session duration (in minutes)</span>
             </label>
 
             <input
-              className="input input-bordered"
+              className="input"
               required
               type="number"
               min={1}
@@ -259,13 +256,13 @@ const HandySettings: React.FC<Props> = ({onSubmit}) => {
             />
           </div>
 
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label">
-              <span className="label-text">Cycle duration (in minutes)</span>
+              <span className="text-sm">Cycle duration (in minutes)</span>
             </label>
 
             <input
-              className="input input-bordered"
+              className="input"
               required
               type="number"
               min={1}

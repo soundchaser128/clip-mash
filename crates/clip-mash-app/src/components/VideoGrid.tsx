@@ -155,12 +155,9 @@ const VideoGrid: React.FC<Props> = ({
           <div className="flex gap-1">
             <div className="flex items-center gap-1">
               <label className="label" htmlFor="source">
-                <span className="label-text">Video source</span>
+                <span className="text-sm">Video source</span>
               </label>
-              <select
-                className="select select-sm select-bordered"
-                {...register("source")}
-              >
+              <select className="select select-sm" {...register("source")}>
                 <option disabled value="none">
                   Filter video source
                 </option>
@@ -173,12 +170,9 @@ const VideoGrid: React.FC<Props> = ({
 
             <div className="flex gap-1 items-center">
               <label className="label" htmlFor="sort">
-                <span className="label-text">Sort by</span>
+                <span className="text-sm">Sort by</span>
               </label>
-              <select
-                className="select select-sm select-bordered"
-                {...register("sort")}
-              >
+              <select className="select select-sm" {...register("sort")}>
                 <option disabled value="none">
                   Sort by...
                 </option>
@@ -191,10 +185,10 @@ const VideoGrid: React.FC<Props> = ({
             {!hideMarkerCountFilter && (
               <div className="flex gap-1 items-center">
                 <label className="label" htmlFor="hasMarkers">
-                  <span className="label-text">Has markers</span>
+                  <span className="text-sm">Has markers</span>
                 </label>
                 <select
-                  className="select select-sm select-bordered"
+                  className="select select-sm"
                   {...register("hasMarkers")}
                 >
                   <option disabled value="none">
@@ -209,10 +203,10 @@ const VideoGrid: React.FC<Props> = ({
 
             <div className="flex gap-1 items-center">
               <label className="label" htmlFor="isInteractive">
-                <span className="label-text">Interactive</span>
+                <span className="text-sm">Interactive</span>
               </label>
               <select
-                className="select select-sm select-bordered"
+                className="select select-sm"
                 {...register("isInteractive")}
               >
                 <option disabled value="none">
@@ -239,9 +233,9 @@ const VideoGrid: React.FC<Props> = ({
         <div className="flex items-center gap-2">
           <PageSizeSelect numberOfColumns={rowCount} />
 
-          <div className="form-control">
+          <div className="fieldset">
             <label className="label cursor-pointer">
-              <span className="label-text mr-1">Show details</span>
+              <span className="text-sm mr-1">Show details</span>
               <input
                 type="checkbox"
                 className="checkbox checkbox-secondary"

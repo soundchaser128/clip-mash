@@ -27,8 +27,8 @@ function TimestampInput<T extends FieldValues>({
           <input
             type="text"
             className={clsx(
-              "input grow input-bordered",
-              error && "border-error focus:outline-none",
+              "input grow ",
+              error && "border-error focus:outline-hidden",
             )}
             {...field}
             required

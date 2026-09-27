@@ -48,12 +48,12 @@ const PageSizeSelect: React.FC<PageSizeSelectProps> = ({numberOfColumns}) => {
   return (
     <div className="flex items-center gap-1">
       <label className="label">
-        <span className="label-text">Items per page</span>
+        <span className="text-sm">Items per page</span>
       </label>
       <select
         value={perPage}
         onChange={(e) => onPerPageChange(Number(e.target.value))}
-        className="select select-sm select-bordered"
+        className="select select-sm"
       >
         {pageSizeOptions.map((size) => (
           <option key={size} value={size}>

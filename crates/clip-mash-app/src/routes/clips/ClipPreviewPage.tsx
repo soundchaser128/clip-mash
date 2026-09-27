@@ -48,7 +48,7 @@ const ClipInfo: React.FC<ClipInfoProps> = ({
 
   return (
     <div className="mb-4 grid grid-cols-3">
-      <div className="text-sm text-opacity-80">
+      <div className="text-sm text-base-content/80">
         Preview the clips included in the final compilation. You can change the
         settings for clip generation and apply to see changes instantly. The
         number and color of the timeline segment identify the video it comes
@@ -388,9 +388,9 @@ function PreviewClips() {
                     <HiForward />
                   </button>
                 </div>
-                <div className="form-control">
+                <div className="fieldset">
                   <label className="label cursor-pointer">
-                    <span className="label-text mr-2">Mute video</span>
+                    <span className="text-sm mr-2">Mute video</span>
                     <input
                       type="checkbox"
                       className="toggle"
@@ -401,9 +401,9 @@ function PreviewClips() {
                 </div>
 
                 {hasAudio && (
-                  <div className="form-control">
+                  <div className="fieldset">
                     <label className="label cursor-pointer">
-                      <span className="label-text mr-2">Enable music</span>
+                      <span className="text-sm mr-2">Enable music</span>
                       <input
                         type="checkbox"
                         className="toggle"

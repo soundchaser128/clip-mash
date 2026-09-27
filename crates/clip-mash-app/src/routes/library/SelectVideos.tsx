@@ -102,9 +102,9 @@ export default function ListVideos() {
         noVideosFoundMessage="No videos with markers found. Try going back to the library and adding some markers."
         actionChildren={(video) => (
           <>
-            <div className="form-control">
+            <div className="fieldset">
               <label className="label cursor-pointer">
-                <span className="label-text">Include</span>
+                <span className="text-sm">Include</span>
                 <input
                   type="checkbox"
                   className="toggle toggle-sm toggle-primary ml-2"

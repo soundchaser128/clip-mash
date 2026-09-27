@@ -117,9 +117,7 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
       </button>
       {weightsError && (
         <p className="label">
-          <span className="label-text-alt text-error">
-            {weightsError.message}
-          </span>
+          <span className="text-xs text-error">{weightsError.message}</span>
         </p>
       )}
       <Modal position="top" size="fluid" isOpen={open} onClose={onClose}>
@@ -138,13 +136,13 @@ const WeightsModal: React.FC<WeightsModalProps> = ({className, clips}) => {
             return (
               <div
                 className={clsx(
-                  "form-control",
+                  "fieldset",
                   !enabled && "opacity-50 cursor-not-allowed",
                 )}
                 key={title}
               >
                 <label className="label">
-                  <span className="label-text">
+                  <span className="text-sm">
                     <strong>{title}</strong> ({count?.total} {markerLabel},{" "}
                     {count?.current} {clipLabel})
                   </span>

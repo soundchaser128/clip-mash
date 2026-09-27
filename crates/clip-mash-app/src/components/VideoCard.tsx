@@ -152,15 +152,12 @@ const VideoCardWithDetails: React.FC<Props> = ({
 
   return (
     <article
-      className={clsx(
-        "card card-compact bg-base-200 shadow-xl animate-in fade-in",
-        {
-          "ring ring-green-500": video.markerCount > 0,
-          "opacity-50": disabled,
-          "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl":
-            zoomOnHover,
-        },
-      )}
+      className={clsx("card card-sm bg-base-200 shadow-xl animate-in fade-in", {
+        "ring-3 ring-green-500": video.markerCount > 0,
+        "opacity-50": disabled,
+        "transition-transform duration-150 hover:scale-105 hover:z-40 hover:shadow-2xl":
+          zoomOnHover,
+      })}
     >
       <figure>
         <HoverVideo

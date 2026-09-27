@@ -409,23 +409,23 @@ function VideoMarkersPage() {
               <h2 className="text-xl font-bold">
                 {formMode === "create" ? "Add new" : "Edit"} marker
               </h2>
-              <div className="form-control">
+              <div className="fieldset">
                 <label htmlFor="title" className="label">
-                  <span className="label-text">Marker title</span>
-                  <span className="label-text-alt text-error">
+                  <span className="text-sm">Marker title</span>
+                  <span className="text-xs text-error">
                     {errors.title?.message}
                   </span>
                 </label>
                 <input
                   type="text"
                   placeholder="Type here..."
-                  className="input input-bordered w-full"
+                  className="input w-full"
                   {...register("title", {required: true})}
                 />
               </div>
-              <div className="form-control">
+              <div className="fieldset">
                 <label htmlFor="start" className="label">
-                  <span className="label-text">Start time</span>
+                  <span className="text-sm">Start time</span>
                 </label>
                 <div className="flex w-full">
                   <TimestampInput
@@ -454,10 +454,10 @@ function VideoMarkersPage() {
                 </div>
               </div>
 
-              <div className="form-control">
+              <div className="fieldset">
                 <label htmlFor="end" className="label">
-                  <span className="label-text">End time</span>
-                  <span className="label-text-alt text-error">
+                  <span className="text-sm">End time</span>
+                  <span className="text-xs text-error">
                     {errors.end?.message}
                   </span>
                 </label>
@@ -489,12 +489,12 @@ function VideoMarkersPage() {
                 </div>
               </div>
               {video.source === "Stash" && (
-                <div className="form-control">
+                <div className="fieldset">
                   <label
                     htmlFor="createInStash"
                     className="label cursor-pointer"
                   >
-                    <span className="label-text">
+                    <span className="text-sm">
                       Create marker in Stash as well?
                     </span>
 

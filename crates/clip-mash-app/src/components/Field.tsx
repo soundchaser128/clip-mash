@@ -8,9 +8,9 @@ interface Props {
 
 const Field: React.FC<Props> = ({children, label, name}) => {
   return (
-    <div className="form-control">
+    <div className="fieldset">
       <label htmlFor={name} className="label">
-        <span className="label-text">{label}</span>
+        <span className="text-sm">{label}</span>
       </label>
       {children}
     </div>

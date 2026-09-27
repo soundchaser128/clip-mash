@@ -89,18 +89,18 @@ const AddStashVideoPage: React.FC = () => {
         </h1>
       </div>
       <section className="grid grid-cols-3 w-full">
-        <div className="form-control">
+        <div className="fieldset">
           <input
             type="text"
-            className="input input-bordered input-primary w-96"
+            className="input input-primary w-96"
             placeholder="Filter..."
             value={query}
             onChange={onFilterChange}
           />
         </div>
-        <div className="form-control place-self-center">
+        <div className="fieldset place-self-center">
           <label className="label cursor-pointer">
-            <span className="label-text mr-3">Show videos with markers</span>
+            <span className="text-sm mr-3">Show videos with markers</span>
             <input
               type="checkbox"
               className="checkbox checkbox-primary"

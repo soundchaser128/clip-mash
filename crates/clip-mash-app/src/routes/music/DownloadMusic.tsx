@@ -46,7 +46,7 @@ const DownloadMusic: React.FC = () => {
       </p>
       <Field name="musicUrl" label="Music URL">
         <input
-          className="input input-bordered w-full"
+          className="input w-full"
           placeholder="Supports YouTube, Vimeo, ..."
           {...register("musicUrl")}
         />

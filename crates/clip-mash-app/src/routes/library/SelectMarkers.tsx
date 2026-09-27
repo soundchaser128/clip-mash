@@ -191,22 +191,22 @@ const SelectMarkers: React.FC = () => {
           <input
             type="text"
             placeholder="Filter..."
-            className="input input-bordered w-full lg:w-96"
+            className="input w-full lg:w-96"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
 
-          <div className="form-control">
-            <div className="input-group">
+          <div className="fieldset">
+            <div className="join">
               <input
                 type="number"
                 placeholder="Limit maximum marker length (in seconds)"
-                className="input input-bordered w-full lg:w-96"
+                className="input join-item w-full lg:w-96"
                 value={maxMarkerLength || ""}
                 onChange={(e) => setMaxMarkerLength(e.target.valueAsNumber)}
               />
               <button
-                className="btn btn-success"
+                className="btn btn-success join-item"
                 type="button"
                 onClick={onLimitDuration}
               >
@@ -240,7 +240,7 @@ const SelectMarkers: React.FC = () => {
       </div>
       {markers.length === 0 && (
         <div className="mt-4 alert alert-info w-fit">
-          <HiInformationCircle className="stroke-current flex-shrink-0 h-6 w-6" />
+          <HiInformationCircle className="stroke-current shrink-0 h-6 w-6" />
           <span>
             No markers found for selection. Either create some scene markers in
             Stash or change your search criteria.
@@ -259,7 +259,7 @@ const SelectMarkers: React.FC = () => {
             <article
               key={marker.id}
               className={clsx(
-                "card card-compact bg-base-200 shadow-xl",
+                "card card-sm bg-base-200 shadow-xl",
                 !selectedMarker.selected && "opacity-50",
               )}
             >
@@ -325,9 +325,9 @@ const SelectMarkers: React.FC = () => {
                   </div>
 
                   <div className="grid grid-rows-2">
-                    <div className="form-control">
+                    <div className="fieldset">
                       <label className="label cursor-pointer">
-                        <span className="label-text">Include</span>
+                        <span className="text-sm">Include</span>
                         <input
                           type="checkbox"
                           className="toggle toggle-sm toggle-primary"
@@ -341,11 +341,11 @@ const SelectMarkers: React.FC = () => {
 
                     <div className="flex flex-row justify-between">
                       <label className="label">
-                        <span className="label-text grow">Loops</span>
+                        <span className="text-sm grow">Loops</span>
                       </label>
                       <input
                         type="number"
-                        className="input input-sm input-bordered w-24"
+                        className="input input-sm  w-24"
                         value={selectedMarker.loops || 1}
                         disabled={!selectedMarker.selected}
                         onChange={(e) =>

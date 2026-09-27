@@ -23,7 +23,9 @@ jobs:
       - name: Setup Rust toolchain
         run: rustup toolchain install stable --profile minimal
       - name: Install Tauri dependencies
-        run: cd crates/clip-mash-app && npm ci && npm run format-check && npm run lint && npm run test && npm run build
+        run: cd crates/clip-mash-app && npm ci
+      - name: Check Typescript
+        run: npm run format:check && npm run lint && npm run test && npm run build
       - uses: Swatinem/rust-cache@v2
       - name: Install cargo-nextest
         uses: baptiste0928/cargo-install@v3

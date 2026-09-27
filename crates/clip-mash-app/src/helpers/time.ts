@@ -8,7 +8,7 @@ function padNumber(n: number, padding = 2): string {
 type DurationFormat = "long" | "short" | "short-with-ms"
 
 export function formatSeconds(
-  input: number | [number, number] | number[] | undefined,
+  input: number | [number, number] | number[] | undefined | null,
   durationFormat: DurationFormat = "long",
 ): string {
   let duration = 0

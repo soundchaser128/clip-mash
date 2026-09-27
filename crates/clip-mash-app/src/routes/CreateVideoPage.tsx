@@ -185,7 +185,7 @@ function ProgressPage() {
                   className="tooltip"
                   data-tip={formatSeconds(progress.etaSeconds)}
                 >
-                  {formatEta(progress.etaSeconds)}
+                  {formatEta(progress.etaSeconds ?? 0)}
                 </strong>
               </p>
             )}

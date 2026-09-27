@@ -4,7 +4,7 @@ import mousetrap from "mousetrap"
 type MousetrapCallback = (
   e: mousetrap.ExtendedKeyboardEvent,
   combo: string,
-) => boolean | undefined
+) => void
 
 type PromiseCallback = (e: KeyboardEvent, combo: string) => Promise<void>
 
